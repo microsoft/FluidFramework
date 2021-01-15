@@ -14,9 +14,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { Ink } from "@fluidframework/ink";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -25,15 +23,15 @@ import { IClientConfiguration } from "@fluidframework/protocol-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { SharedString, SparseMatrix } from "@fluidframework/sequence";
-import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     ChannelFactoryRegistry,
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
-    LocalTestObjectProvider,
     OpProcessingController,
-    TinyliciousTestObjectProvider,
+    TestObjectProvider,
 } from "@fluidframework/test-utils";
+import { LocalServerTestDriver, TinyliciousTestDriver } from "@fluidframework/test-drivers";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import * as old from "./oldVersion";
 
 /* eslint-enable import/no-extraneous-dependencies */
@@ -50,18 +48,7 @@ export interface ITestObjectProvider {
     urlResolver: IUrlResolver | old.IUrlResolver,
     defaultCodeDetails: IFluidCodeDetails | old.IFluidCodeDetails,
     opProcessingController: OpProcessingController | old.OpProcessingController,
-}
 
-/**
- * Arguments given to the function passed into generateTest, generateLocalCompatTest or generateTestWithCompat
- */
-export interface ILocalTestObjectProvider extends ITestObjectProvider {
-    /**
-     * Used to create a test Container.
-     * In generateLocalCompatTest(), this Container and its runtime will be arbitrarily-versioned.
-     */
-    deltaConnectionServer: ILocalDeltaConnectionServer,
-    urlResolver: LocalResolver | old.LocalResolver,
 }
 
 export interface ITestOptions {
@@ -198,7 +185,7 @@ function getOldDataStoreFactory(containerOptions?: ITestContainerConfig) {
 }
 
 export const generateLocalNonCompatTest = (
-    tests: (compatArgs: ILocalTestObjectProvider) => void,
+    tests: (compatArgs: ITestObjectProvider) => void,
     options: ITestOptions = {},
 ) => {
     describe("non-compat", () => {
@@ -210,21 +197,23 @@ export const generateLocalNonCompatTest = (
                 containerOptions?.runtimeOptions,
             );
 
-        const localTestObjectProvider = new LocalTestObjectProvider(
+        const localDriver = LocalServerTestDriver.createWithOptions(options);
+        const testObjectProvider = new TestObjectProvider(
+            localDriver,
             runtimeFactory,
-            options.serviceConfiguration,
         );
 
-        tests(localTestObjectProvider);
+        tests(testObjectProvider);
 
         afterEach(async () => {
-            await localTestObjectProvider.reset();
+            localDriver.reset(options);
+            testObjectProvider.reset();
         });
     });
 };
 
 export const generateLocalCompatTest = (
-    tests: (compatArgs: ILocalTestObjectProvider) => void,
+    tests: (compatArgs: ITestObjectProvider) => void,
     options: ITestOptions = {},
 ) => {
     describe("compat - old loader, new runtime", function() {
@@ -235,15 +224,15 @@ export const generateLocalCompatTest = (
                 containerOptions?.runtimeOptions,
             ) as any as old.IRuntimeFactory;
 
-        const localTestObjectProvider = new old.LocalTestObjectProvider(
+        const testObjectProvider = new old.LocalTestObjectProvider(
             runtimeFactory,
             options.serviceConfiguration,
         );
 
-        tests(localTestObjectProvider);
+        tests(testObjectProvider);
 
         afterEach(async function() {
-            await localTestObjectProvider.reset();
+            await testObjectProvider.reset();
         });
     });
 
@@ -255,15 +244,17 @@ export const generateLocalCompatTest = (
                 containerOptions?.runtimeOptions,
             ) as any as IRuntimeFactory;
 
-        const localTestObjectProvider = new LocalTestObjectProvider(
+        const driver = LocalServerTestDriver.createWithOptions(options);
+        const testObjectProvider = new TestObjectProvider<ITestContainerConfig>(
+            driver,
             runtimeFactory,
-            options.serviceConfiguration,
         );
 
-        tests(localTestObjectProvider);
+        tests(testObjectProvider);
 
         afterEach(async function() {
-            await localTestObjectProvider.reset();
+            driver.reset(options);
+            testObjectProvider.reset();
         });
     });
 
@@ -274,16 +265,18 @@ export const generateLocalCompatTest = (
                 getOldDataStoreFactory(containerOptions),
                 containerOptions?.runtimeOptions,
             );
-
-        const localTestObjectProvider = new LocalTestObjectProvider(
+        const driver = LocalServerTestDriver.createWithOptions(options);
+        driver.reset(options);
+        const testObjectProvider = new TestObjectProvider(
+            driver,
             runtimeFactory,
-            options.serviceConfiguration,
         );
 
-        tests(localTestObjectProvider);
+        tests(testObjectProvider);
 
         afterEach(async function() {
-            await localTestObjectProvider.reset();
+            driver.reset(options);
+            testObjectProvider.reset();
         });
     });
 
@@ -295,21 +288,21 @@ export const generateLocalCompatTest = (
                 containerOptions?.runtimeOptions,
             );
 
-        const localTestObjectProvider = new old.LocalTestObjectProvider(
+        const testObjectProvider = new old.LocalTestObjectProvider(
             runtimeFactory,
             options.serviceConfiguration,
         );
 
-        tests(localTestObjectProvider);
+        tests(testObjectProvider);
 
         afterEach(async function() {
-            await localTestObjectProvider.reset();
+            await testObjectProvider.reset();
         });
     });
 };
 
 export const generateLocalTest = (
-    tests: (compatArgs: ILocalTestObjectProvider) => void,
+    tests: (compatArgs: ITestObjectProvider) => void,
     options: ITestOptions = {},
 ) => {
     describe("local server", () => {
@@ -332,14 +325,15 @@ const generateTinyliciousTest = (
                     containerOptions?.runtimeOptions,
                 );
 
-            const testObjectProvider = new TinyliciousTestObjectProvider(
+            const testObjectProvider = new TestObjectProvider(
+                new TinyliciousTestDriver(),
                 runtimeFactory,
             );
 
             tests(testObjectProvider);
 
             afterEach(async () => {
-                await testObjectProvider.reset();
+                testObjectProvider.reset();
             });
         });
     }

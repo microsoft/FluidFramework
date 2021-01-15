@@ -4,8 +4,10 @@
  */
 
 import { Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
-import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
-import { IUrlResolver, IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import { ITestDriver } from "@fluidframework/test-drivers";
+import { v4 as uuid } from "uuid";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
 import { OpProcessingController } from "./opProcessingController";
@@ -18,29 +20,54 @@ const defaultCodeDetails: IFluidCodeDetails = {
 /**
  * Shared base class for test object provider.  Contain code for loader and container creation and loading
  */
-export abstract class BaseTestObjectProvider<TestContainerConfigType> {
+export  class TestObjectProvider<TestContainerConfigType> {
+    private _documentServiceFactory: IDocumentServiceFactory | undefined;
+    private _urlResolver: IUrlResolver | undefined;
+    private _opProcessingController?: OpProcessingController;
+    private _documentId?: string;
+
     /**
      * Manage objects for loading and creating container, including the driver, loader, and OpProcessingController
      * @param createFluidEntryPoint - callback to create a fluidEntryPoint, with an optiona; set of channel name
      * and factory for TestFluidObject
      */
     constructor(
+        public readonly driver: ITestDriver,
         private readonly createFluidEntryPoint: (testContainerConfig?: TestContainerConfigType) => fluidEntryPoint,
-        private readonly createCreateRequest: (docId: string) => IRequest,
     ) {
 
+    }
+    get documentServiceFactory() {
+        if (!this._documentServiceFactory) {
+            this._documentServiceFactory = this.driver.createDocumentServiceFactory();
+        }
+        return this._documentServiceFactory;
+    }
+
+    get urlResolver() {
+        if (!this._urlResolver) {
+            this._urlResolver = this.driver.createUrlResolver();
+        }
+        return this._urlResolver;
+    }
+
+    get documentId() {
+        if (this._documentId === undefined) {
+            this._documentId = uuid();
+        }
+        return this._documentId;
     }
 
     get defaultCodeDetails() {
         return defaultCodeDetails;
     }
 
-    abstract get documentServiceFactory(): IDocumentServiceFactory;
-    abstract get urlResolver(): IUrlResolver;
-    abstract get opProcessingController(): OpProcessingController;
-
-    protected abstract get documentId(): string;
-    protected abstract get documentLoadUrl(): string;
+    get opProcessingController(): OpProcessingController {
+        if (this._opProcessingController === undefined) {
+            this._opProcessingController = new OpProcessingController();
+        }
+        return this._opProcessingController;
+    }
 
     private createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>) {
         const codeLoader = new LocalCodeLoader(packageEntries);
@@ -68,7 +95,10 @@ export abstract class BaseTestObjectProvider<TestContainerConfigType> {
     public async makeTestContainer(testContainerConfig?: TestContainerConfigType) {
         const loader = this.makeTestLoader(testContainerConfig);
         const container =
-            await createAndAttachContainer(defaultCodeDetails, loader, this.createCreateRequest(this.documentId));
+            await createAndAttachContainer(
+                defaultCodeDetails,
+                loader,
+                this.driver.createCreateNewRequest(this.documentId));
         this.opProcessingController.addDeltaManagers(container.deltaManager);
         return container;
     }
@@ -80,9 +110,16 @@ export abstract class BaseTestObjectProvider<TestContainerConfigType> {
      */
     public async loadTestContainer(testContainerConfig?: TestContainerConfigType) {
         const loader = this.makeTestLoader(testContainerConfig);
-        const container = await loader.resolve({ url: this.documentLoadUrl });
+        const container = await loader.resolve({ url: this.driver.createContainerUrl(this.documentId) });
         await waitContainerToCatchUp(container);
         this.opProcessingController.addDeltaManagers(container.deltaManager);
         return container;
+    }
+
+    public reset() {
+        this._documentServiceFactory = undefined;
+        this._urlResolver = undefined;
+        this._opProcessingController = undefined;
+        this._documentId = undefined;
     }
 }
