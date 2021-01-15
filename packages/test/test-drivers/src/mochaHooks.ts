@@ -35,7 +35,7 @@ _global.getFluidTestDriver = (): TestDriver => {
                 break;
 
             default:
-                throw new Error(`No fluid test driver registered for type "${fluidTestDriverType}"`);
+                throw new Error(`No Fluid test driver registered for type "${fluidTestDriverType}"`);
         }
     }
     return fluidTestDriver;
