@@ -107,10 +107,9 @@ export class OdspSummaryUploadManager {
             );
             // We are setting the content as empty because we won't use it anywhere.
             // Instead we will use the hash of the blob from pathToBlobSha cache.
-            summaryTree.tree[key] = {
-                type: api.SummaryType.Blob,
-                content: "",
-            };
+            summaryTree.tree[key].type = api.SummaryType.Blob;
+            (summaryTree.tree[key] as any).content = undefined;
+
             // fullBlobPath does not start with "/"
             const fullBlobPath = path === "" ? key : `${path}/${key}`;
             this.blobTreeDedupCaches.blobShaToPath.set(hash, fullBlobPath);
@@ -316,7 +315,7 @@ export class OdspSummaryUploadManager {
                         hash = await hashFile(IsoBuffer.from(value.content, value.encoding));
                         cachedPath = this.blobTreeDedupCaches.blobShaToPath.get(hash);
                     }
-                    summaryObject.content = "";
+                    (summaryObject as any).content = "";
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that
                     // cached path for the given blob. Also update the caches for future use.
                     if (cachedPath === undefined || parentHandle === undefined) {
