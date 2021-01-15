@@ -31,11 +31,11 @@ import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { SegmentPropertiesManager } from "./segmentPropertiesManager";
 
 export interface ReferencePosition {
-    properties: Properties.PropertySet;
+    properties?: Properties.PropertySet;
     refType: ops.ReferenceType;
     // True if this reference is a segment.
     isLeaf(): boolean;
-    getSegment(): ISegment;
+    getSegment(): ISegment | undefined;
     getOffset(): number;
     addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp);
     hasTileLabels();
@@ -64,7 +64,7 @@ export interface IMergeBlock extends IMergeNodeCommon {
     childCount: number;
     children: IMergeNode[];
     partialLengths?: PartialSequenceLengths;
-    hierBlock(): IHierBlock;
+    hierBlock(): IHierBlock | undefined;
     assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean);
     setOrdinal(child: IMergeNode, index: number);
 }
@@ -87,7 +87,7 @@ export interface ISegment extends IMergeNodeCommon, IRemovalInfo {
     readonly type: string;
     readonly segmentGroups: SegmentGroupCollection;
     readonly trackingCollection: TrackingGroupCollection;
-    propertyManager: SegmentPropertiesManager;
+    propertyManager?: SegmentPropertiesManager;
     localSeq?: number;
     localRemovedSeq?: number;
     seq?: number;  // If not present assumed to be previous to window min
@@ -164,7 +164,7 @@ export interface InsertContext {
     candidateSegment?: ISegment;
     prepareEvents?: boolean;
     structureChange?: boolean;
-    leaf: (segment: ISegment, pos: number, ic: InsertContext) => ISegmentChanges;
+    leaf: (segment: ISegment | undefined, pos: number, ic: InsertContext) => ISegmentChanges;
     continuePredicate?: (continueFromBlock: IMergeBlock) => boolean;
 }
 
@@ -346,7 +346,7 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
         this.children = new Array<IMergeNode>(MaxNodesInBlock);
     }
 
-    hierBlock() {
+    hierBlock(): HierMergeBlock | undefined {
         return undefined;
     }
 
@@ -439,14 +439,14 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     public seq: number = UniversalSequenceNumber;
     index: number;
     ordinal: string;
-    removedSeq: number;
-    removedClientId: number;
-    removedClientOverlap: number[];
+    removedSeq?: number;
+    removedClientId?: number;
+    removedClientOverlap?: number[];
     removalsByBranch?: IRemovalInfo[];
     readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
     readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
-    propertyManager: SegmentPropertiesManager;
-    properties: Properties.PropertySet;
+    propertyManager?: SegmentPropertiesManager;
+    properties?: Properties.PropertySet;
     localRefs?: LocalReferenceCollection;
     abstract readonly type: string;
     localSeq?: number;
@@ -459,8 +459,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         return this.propertyManager.addProperties(newProps, op, seq, collabWindow);
     }
 
-    hasProperty(key: string) {
-        return this.properties && (this.properties[key] !== undefined);
+    hasProperty(key: string): boolean {
+        return !!this.properties && (this.properties[key] !== undefined);
     }
 
     isLeaf() {
@@ -639,7 +639,6 @@ export class Marker extends BaseSegment implements ReferencePosition {
     }
     public readonly type = Marker.type;
 
-    nestBuddy: Marker;
     public static make(
         refType: ops.ReferenceType, props?: Properties.PropertySet) {
         const marker = new Marker(refType);
@@ -684,7 +683,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
     }
 
     hasSimpleType(simpleTypeName: string) {
-        return this.hasProperty(reservedMarkerSimpleTypeKey) &&
+        return !!this.properties &&
             this.properties[reservedMarkerSimpleTypeKey] === simpleTypeName;
     }
 
@@ -692,7 +691,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
         return this.properties;
     }
 
-    getId(): string {
+    getId(): string | undefined {
         if (this.properties && this.properties[reservedMarkerIdKey]) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return this.properties[reservedMarkerIdKey];
@@ -1657,7 +1656,7 @@ export class MergeTree {
             }
             return segment.removalsByBranch[index];
         } else {
-            return <IRemovalInfo>segment;
+            return segment as IRemovalInfo;
         }
     }
 
@@ -2078,9 +2077,14 @@ export class MergeTree {
             }
             return false;
         });
-        const localSeq = ++this.collabWindow.localSeq;
-        insertSegment.seq = UnassignedSequenceNumber;
-        insertSegment.localSeq = localSeq;
+
+        if (this.collabWindow.collaborating) {
+            insertSegment.localSeq = ++this.collabWindow.localSeq;
+            insertSegment.seq = UnassignedSequenceNumber;
+        }else {
+            insertSegment.seq = UniversalSequenceNumber;
+        }
+
         insertSegment.clientId = clientId;
 
         if (Marker.is(insertSegment)) {
@@ -2104,7 +2108,7 @@ export class MergeTree {
         }
 
         if (this.collabWindow.collaborating) {
-            this.addToPendingList(insertSegment, undefined, localSeq);
+            this.addToPendingList(insertSegment, undefined, insertSegment.localSeq);
         }
     }
 
@@ -2359,7 +2363,7 @@ export class MergeTree {
         const children = block.children;
         let childIndex: number;
         let child: IMergeNode;
-        let newNode: IMergeNode;
+        let newNode: IMergeNode | undefined;
         let fromSplit: IMergeBlock;
         let found = false;
         for (childIndex = 0; childIndex < block.childCount; childIndex++) {
@@ -2758,9 +2762,8 @@ export class MergeTree {
 
     private blockUpdate(block: IMergeBlock) {
         let len = 0;
-        let hierBlock: IHierBlock;
-        if (MergeTree.blockUpdateMarkers) {
-            hierBlock = block.hierBlock();
+        const hierBlock = block.hierBlock();
+        if (hierBlock) {
             hierBlock.rightmostTiles = Properties.createMap<Marker>();
             hierBlock.leftmostTiles = Properties.createMap<Marker>();
             hierBlock.rangeStacks = {};
@@ -2768,7 +2771,7 @@ export class MergeTree {
         for (let i = 0; i < block.childCount; i++) {
             const child = block.children[i];
             len += nodeTotalLength(this, child);
-            if (MergeTree.blockUpdateMarkers) {
+            if (hierBlock) {
                 hierBlock.addNodeReferences(this, child);
             }
             if (this.blockUpdateActions) {
@@ -2778,7 +2781,8 @@ export class MergeTree {
         block.cachedLength = len;
     }
 
-    private blockUpdatePathLengths(block: IMergeBlock, seq: number, clientId: number, newStructure = false) {
+    private blockUpdatePathLengths(startBlock: IMergeBlock, seq: number, clientId: number, newStructure = false) {
+        let block: IMergeBlock | undefined = startBlock;
         while (block !== undefined) {
             if (newStructure) {
                 this.nodeUpdateLengthNewStructure(block);
