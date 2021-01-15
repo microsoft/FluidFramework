@@ -9,7 +9,10 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+import {
+    LocalDocumentServiceFactory,
+    LocalResolver,
+} from "@fluidframework/local-driver";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
