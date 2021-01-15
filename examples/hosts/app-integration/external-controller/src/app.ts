@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
-
 import { DiceRollerController } from "./controller";
-import { IKeyValueDataObject, KeyValueContainerRuntimeFactory } from "./kvpair-dataobject";
+import {
+    Fluid,
+    IKeyValueDataObject,
+    KeyValueDataObject,
+    KeyValueInstantiationFactory,
+} from "./kvpair-dataobject";
 import { renderDiceRoller } from "./view";
 // import { renderDiceRoller } from "./reactView";
 
@@ -18,27 +21,24 @@ if (location.hash.length === 0) {
 const documentId = location.hash.substring(1);
 document.title = documentId;
 
+const dataObjectId = "dice";
+
 async function start(): Promise<void> {
-    // Get Fluid Container (creates if new url)
-    const container = await getTinyliciousContainer(documentId, KeyValueContainerRuntimeFactory, createNew);
+    // Get or create the document
+    const fluidDocument = createNew
+        ? await Fluid.createDocument(documentId)
+        : await Fluid.getDocument(documentId);
 
-    // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our dice roller is available at the URL "/".
-    const url = "/";
-    const response = await container.request({ url });
+    // We'll create the data object when we create the new document.
+    const keyValueDataObject: IKeyValueDataObject = createNew
+        ? await fluidDocument.createDataObject<KeyValueDataObject>(KeyValueInstantiationFactory.type, dataObjectId)
+        : await fluidDocument.getDataObject<KeyValueDataObject>(dataObjectId);
 
-    // Verify the response to make sure we got what we expected.
-    if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        throw new Error(`Unable to retrieve data object at URL: "${url}"`);
-    } else if (response.value === undefined) {
-        throw new Error(`Empty response from URL: "${url}"`);
-    }
-
-    // In this app, we know our container code provides a default data object that is an IDiceRoller.
-    const keyValueDataObject: IKeyValueDataObject = response.value;
+    // Our controller manipulates the data object (model).
     const diceRollerController = new DiceRollerController(keyValueDataObject);
     await diceRollerController.initialize(createNew);
 
-    // Given an IDiceRoller, we can render the value and provide controls for users to roll it.
+    // We render a view which uses the controller.
     const div = document.getElementById("content") as HTMLDivElement;
     renderDiceRoller(diceRollerController, div);
 }

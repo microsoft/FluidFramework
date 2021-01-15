@@ -76,9 +76,17 @@ export class RestGitService {
     }
 
     public async getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
+        let config;
+        if (this.writeToExternalStorage) {
+            const getRefParams: IGetRefParamsExternal = {
+                config: { enabled: true },
+            };
+            config = encodeURIComponent(JSON.stringify(getRefParams));
+        }
         const query = querystring.stringify({
             count,
             sha,
+            config,
         });
         return this.get(`/repos/${this.getRepoPath()}/commits?${query}`);
     }
