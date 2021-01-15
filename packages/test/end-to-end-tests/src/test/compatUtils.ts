@@ -187,14 +187,14 @@ export const generateNonCompatTest = (
     options: ITestOptions = {},
 ) => {
     describe("non-compat", () => {
-        tests(()=>{
+        tests(() => {
             // Run with all current versions
             const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
-                createRuntimeFactory(
-                    TestDataObject.type,
-                    getDataStoreFactory(containerOptions),
-                    containerOptions?.runtimeOptions,
-                );
+            createRuntimeFactory(
+                TestDataObject.type,
+                getDataStoreFactory(containerOptions),
+                containerOptions?.runtimeOptions,
+            );
 
             const driver = getFluidTestDriver();
             const testObjectProvider = new TestObjectProvider(
@@ -219,11 +219,10 @@ export const generatCompatTest = (
                 containerOptions?.runtimeOptions,
             ) as any as old.IRuntimeFactory;
 
-            const testObjectProvider = new old.LocalTestObjectProvider(
+            return new old.LocalTestObjectProvider(
                 runtimeFactory,
                 options.serviceConfiguration,
             );
-            return testObjectProvider;
         });
     });
 
@@ -237,11 +236,10 @@ export const generatCompatTest = (
             ) as any as IRuntimeFactory;
 
             const driver = getFluidTestDriver();
-            const testObjectProvider = new TestObjectProvider<ITestContainerConfig>(
+            return  new TestObjectProvider<ITestContainerConfig>(
                 driver,
                 runtimeFactory,
             );
-            return testObjectProvider;
         });
     });
 
@@ -254,11 +252,10 @@ export const generatCompatTest = (
                 containerOptions?.runtimeOptions,
             );
             const driver = getFluidTestDriver();
-            const testObjectProvider = new TestObjectProvider(
+            return new TestObjectProvider(
                 driver,
                 runtimeFactory,
             );
-            return testObjectProvider;
         });
     });
 
