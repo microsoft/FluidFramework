@@ -117,7 +117,7 @@ async function bumpLegacyDependencies(context:Context, versionBump: VersionChang
             if (split.length <= 1) {
                 continue;
             }
-            const range = split.pop();
+            const range = split.pop()!;
             const packageName = split.join("@");
             const depPackage = context.fullPackageMap.get(packageName);
             if (depPackage) {
@@ -126,7 +126,13 @@ async function bumpLegacyDependencies(context:Context, versionBump: VersionChang
                 if (typeof versionBump === "string") {
                     dep[name] = `npm:${packageName}@^${semver.major(depPackage.version)}.${semver.minor(depPackage.version) - 1}.0`;
                 } else {
-                    dep[name] = `npm:${packageName}@^${versionBump.major}.${versionBump.minor - 2}.0}`;
+                    const depMinor = semver.minor(range);
+                    // N-1 is bumped to pre-release versions, while N-2/everything else is bumped to release
+                    if (depMinor === versionBump.minor - 2) {
+                        dep[name] = `npm:${packageName}@^${versionBump.major}.${depMinor + 1}.0-0}`;
+                    } else {
+                        dep[name] = `npm:${packageName}@^${versionBump.major}.${depMinor + 1}.0}`;
+                    }
                 }
 
             }
