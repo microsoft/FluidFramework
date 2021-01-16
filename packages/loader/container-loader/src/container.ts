@@ -426,7 +426,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private get serviceFactory() {return this.loader.services.documentServiceFactory;}
     private get urlResolver() {return this.loader.services.urlResolver;}
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     public get options() { return this.loader.services.options;}
     private get scope() { return this.loader.services.scope;}
     private get codeLoader() { return this.loader.services.codeLoader;}

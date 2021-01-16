@@ -4,9 +4,9 @@
  */
 
 import fs from "fs";
-import { assert , fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { assert, fromBase64ToUtf8, stringToBuffer } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { buildSnapshotTree, stringToBuffer } from "@fluidframework/driver-utils";
+import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@fluidframework/replay-driver";
 

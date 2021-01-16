@@ -6,6 +6,7 @@ import {
     ISnapshotTree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
+import { stringToBuffer } from "@fluidframework/common-utils";
 import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
 import { debug } from "./debug";
 
@@ -31,6 +32,12 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
         return this.cachedRead(blobId);
     }
 
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
+        const res: Promise<ArrayBufferLike> = this.cachedRead(blobId).then((value) => {
+            return stringToBuffer(value, "base64");
+        });
+            return res;
+    }
     public stopPrefetch() {
         this.prefetchEnabled = false;
         this.prefetchCache.clear();
