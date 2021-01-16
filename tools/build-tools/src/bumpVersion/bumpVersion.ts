@@ -107,6 +107,10 @@ async function bumpLegacyDependencies(context:Context, versionBump: VersionChang
         if (!pkg) {
             fatal("Unable to find package @fluid-internal/end-to-end-tests");
         }
+
+        // The dependency names don't have an enforced pattern, but they do retain a stable ordering
+        // Keep a count of how many times we've encounted each dependency to properly set N-1, N-2, etc
+        const pkgFrequencies = new Map<string, number>();
         for (const { name, version, dev } of pkg.combinedDependencies) {
             if (!version.startsWith("npm:")) {
                 continue;
@@ -121,18 +125,18 @@ async function bumpLegacyDependencies(context:Context, versionBump: VersionChang
             const packageName = split.join("@");
             const depPackage = context.fullPackageMap.get(packageName);
             if (depPackage) {
+                const frequency = (pkgFrequencies.get(packageName) ?? 0) + 1;
+                pkgFrequencies.set(packageName, frequency);
+
                 const dep = dev ? pkg.packageJson.devDependencies : pkg.packageJson.dependencies;
 
+                // N-1 (the first time we see the package) is bumped to pre-release versions,
+                // while N-2 etc is bumped to release
+                const suffix = frequency === 1 ? "-0" : "";
                 if (typeof versionBump === "string") {
-                    dep[name] = `npm:${packageName}@^${semver.major(depPackage.version)}.${semver.minor(depPackage.version) - 1}.0`;
+                    dep[name] = `npm:${packageName}@^${semver.major(depPackage.version)}.${semver.minor(depPackage.version) - frequency + 1}.0${suffix}`;
                 } else {
-                    const depMinor = semver.minor(range);
-                    // N-1 is bumped to pre-release versions, while N-2/everything else is bumped to release
-                    if (depMinor === versionBump.minor - 2) {
-                        dep[name] = `npm:${packageName}@^${versionBump.major}.${depMinor + 1}.0-0}`;
-                    } else {
-                        dep[name] = `npm:${packageName}@^${versionBump.major}.${depMinor + 1}.0}`;
-                    }
+                    dep[name] = `npm:${packageName}@^${versionBump.major}.${versionBump.minor - frequency}.0${suffix}}`;
                 }
 
             }
