@@ -150,6 +150,8 @@ export interface ISnapshotTreeBaseEntry {
 
 export interface ISnapshotTreeValueEntry extends ISnapshotTreeBaseEntry {
     value: SnapshotTreeValue;
+    // Indicates that this tree entry is unreferenced. If this is not present, the tree entry is considered referenced.
+    unreferenced?: true;
 }
 
 export interface ISnapshotTreeHandleEntry extends ISnapshotTreeBaseEntry {
@@ -243,11 +245,6 @@ export interface HostStoragePolicy {
      * Passing true results in faster loads and keeping cache more current, but it increases bandwidth consumption.
      */
     concurrentSnapshotFetch?: boolean;
-
-    /**
-     * Use post call to fetch the latest snapshot
-     */
-    usePostForTreesLatest?: boolean;
 }
 
 /**
