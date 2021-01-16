@@ -121,14 +121,8 @@ describe("loader/runtime compatibility", () => {
                     args.deltaConnectionServer),
             ];
 
-            const dataObjects = await Promise.all(containersP.map(
-                async (containerP) => containerP.then(
-                    async (c) => requestFluidObject<TestDataObject | oldTypes.OldTestDataObject>(
-                        c as IFluidRouter,
-                        "default",
-                    ),
-                ),
-            ));
+            const dataObjects = await Promise.all(containersP.map(async (containerP) => containerP.then(
+                async (c) => requestFluidObject<TestDataObject | oldTypes.OldTestDataObject>(c as IFluidRouter, "default"))));
 
             // get initial test value from each data store
             dataObjects.map(async (c) => {

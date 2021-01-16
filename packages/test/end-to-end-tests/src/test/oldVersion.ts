@@ -54,7 +54,6 @@ import {
     V2,
 } from "./compatUtils";
 import * as newVer from "./newVersion";
-/* eslint-enable import/no-extraneous-dependencies */
 
 const defaultDocumentId = "defaultDocumentId";
 const defaultDocumentLoadUrl = `fluid-test://localhost/${defaultDocumentId}`;
@@ -106,10 +105,7 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
 
     get deltaConnectionServer() {
         if (!this._deltaConnectionServer) {
-            this._deltaConnectionServer = newVer.LocalDeltaConnectionServer.create(
-                undefined,
-                this.serviceConfiguration,
-            );
+            this._deltaConnectionServer = newVer.LocalDeltaConnectionServer.create(undefined, this.serviceConfiguration);
         }
         return this._deltaConnectionServer;
     }
@@ -197,6 +193,8 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
     }
 }
 
+/* eslint-enable import/no-extraneous-dependencies */
+
 // A simple old-version dataStore with runtime/root exposed for testing
 // purposes. Used to test compatibility of context reload between
 // different runtime versions.
@@ -248,19 +246,19 @@ function convertRegistry(registry: newVer.ChannelFactoryRegistry = []): ChannelF
     return oldRegistry;
 }
 
-const createOldPrimedDataStoreFactory = (
+function createOldPrimedDataStoreFactory(
     registry?: newVer.ChannelFactoryRegistry,
-): IFluidDataStoreFactory => {
+): IFluidDataStoreFactory {
     return new DataObjectFactory(
         OldTestDataObject.type,
         OldTestDataObject,
         [...convertRegistry(registry)].map((r) => r[1]),
         {});
-};
+}
 
-const createOldTestFluidDataStoreFactory = (
+function createOldTestFluidDataStoreFactory(
     registry?: newVer.ChannelFactoryRegistry,
-): IFluidDataStoreFactory => {
+): IFluidDataStoreFactory {
     return new TestFluidObjectFactory(convertRegistry(registry));
 };
 
@@ -276,13 +274,13 @@ function getOldDataStoreFactory(containerOptions?: ITestContainerConfig) {
     }
 }
 
-const createOldTestRuntimeFactory = (
+function createOldTestRuntimeFactory(
     type: string,
     dataStoreFactory: newVer.IFluidDataStoreFactory | IFluidDataStoreFactory,
     runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
-): IRuntimeFactory => {
+): IRuntimeFactory {
     return new TestContainerRuntimeFactory(type, dataStoreFactory as IFluidDataStoreFactory, runtimeOptions);
-};
+}
 
 export function createOldRuntimeFactory(dataStore): IRuntimeFactory {
     const type = OldTestDataObject.type;
@@ -344,7 +342,7 @@ export function createLocalTestObjectProvider(
         return oldContainerRuntime
             ? createOldTestRuntimeFactory(type, dataStoreFactory, containerOptions?.runtimeOptions)
             : createRuntimeFactory(type, dataStoreFactory, containerOptions?.runtimeOptions);
-    };
+    }
 
     const localTestObjectProvider = oldLoader
         ? new LocalTestObjectProvider(
