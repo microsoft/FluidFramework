@@ -4,56 +4,44 @@
  */
 
 /* eslint-disable import/no-extraneous-dependencies */
-export * from "old-container-definitions";
-export * from "old-core-interfaces";
-export { IDocumentServiceFactory, IUrlResolver } from "old-driver-definitions";
-export { IFluidDataStoreFactory } from "old-runtime-definitions";
-export { OpProcessingController } from "old-test-utils";
-export { LocalResolver } from "old-local-driver";
-
-import {
+export {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
     DataObjectFactory,
 } from "old-aqueduct";
-import { SharedCell } from "old-cell";
-import { IContainer, IFluidModule, IRuntimeFactory } from "old-container-definitions";
-import { Loader } from "old-container-loader";
-import { IContainerRuntimeOptions } from "old-container-runtime";
-import { IFluidCodeDetails } from "old-core-interfaces";
-import { SharedCounter } from "old-counter";
-import { IChannelFactory } from "old-datastore-definitions";
-import { IDocumentServiceFactory } from "old-driver-definitions";
-import { Ink } from "old-ink";
-import { LocalDocumentServiceFactory, LocalResolver } from "old-local-driver";
-import { SharedDirectory, SharedMap } from "old-map";
-import { SharedMatrix } from "old-matrix";
-import { ConsensusQueue } from "old-ordered-collection";
-import { ConsensusRegisterCollection } from "old-register-collection";
-import { IFluidDataStoreFactory } from "old-runtime-definitions";
-import { SharedString, SparseMatrix } from "old-sequence";
-import {
-    ChannelFactoryRegistry,
-    createAndAttachContainer,
+export * from "old-container-definitions";
+export * from "old-core-interfaces";
+export { Container, Loader } from "old-container-loader";
+export { ContainerRuntime, IContainerRuntimeOptions } from "old-container-runtime";
+export { IDocumentServiceFactory, IUrlResolver } from "old-driver-definitions";
+export { IFluidDataStoreFactory } from "old-runtime-definitions";
+export { IChannelFactory } from "old-datastore-definitions";
+export {
     createLocalLoader,
-    fluidEntryPoint,
-    LocalCodeLoader,
-    OpProcessingController,
-    TestContainerRuntimeFactory,
+    createAndAttachContainer,
     TestFluidObjectFactory,
+    TestContainerRuntimeFactory,
+    LocalCodeLoader,
+    ChannelFactoryRegistry,
+    OpProcessingController,
 } from "old-test-utils";
+export { SharedDirectory, SharedMap } from "old-map";
+export { SharedString, SparseMatrix } from "old-sequence";
+export { LocalDocumentServiceFactory, LocalResolver } from "old-local-driver";
+export { ConsensusRegisterCollection } from "old-register-collection";
+export { SharedCell } from "old-cell";
+export { SharedCounter } from "old-counter";
+export { Ink } from "old-ink";
+export { SharedMatrix } from "old-matrix";
+export { ConsensusQueue } from "old-ordered-collection";
 
-import {
-    createPrimedDataStoreFactory,
-    createRuntimeFactory,
-    DataObjectFactoryType,
-    getDataStoreFactory,
-    ILocalTestObjectProvider,
-    ITestContainerConfig,
-    V1,
-    V2,
-} from "./compatUtils";
-import * as newVer from "./newVersion";
+import { IFluidCodeDetails } from "old-core-interfaces";
+import { Loader } from "old-container-loader";
+import { IDocumentServiceFactory } from "old-driver-definitions";
+import { LocalDocumentServiceFactory, LocalResolver } from "old-local-driver";
+import { IClientConfiguration } from "@fluidframework/protocol-definitions";
+import { fluidEntryPoint, LocalCodeLoader, createAndAttachContainer, OpProcessingController } from "old-test-utils";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
 const defaultDocumentId = "defaultDocumentId";
 const defaultDocumentLoadUrl = `fluid-test://localhost/${defaultDocumentId}`;
@@ -93,8 +81,8 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
      */
     constructor(
         private readonly createFluidEntryPoint: (testContainerConfig?: TestContainerConfigType) => fluidEntryPoint,
-        private readonly serviceConfiguration?: Partial<newVer.IClientConfiguration>,
-        private _deltaConnectionServer?: newVer.ILocalDeltaConnectionServer | undefined,
+        private readonly serviceConfiguration?: Partial<IClientConfiguration>,
+        private _deltaConnectionServer?: ILocalDeltaConnectionServer | undefined,
     ) {
 
     }
@@ -105,7 +93,7 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
 
     get deltaConnectionServer() {
         if (!this._deltaConnectionServer) {
-            this._deltaConnectionServer = newVer.LocalDeltaConnectionServer.create(undefined, this.serviceConfiguration);
+            this._deltaConnectionServer = LocalDeltaConnectionServer.create(undefined, this.serviceConfiguration);
         }
         return this._deltaConnectionServer;
     }
@@ -194,160 +182,3 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
 }
 
 /* eslint-enable import/no-extraneous-dependencies */
-
-// A simple old-version dataStore with runtime/root exposed for testing
-// purposes. Used to test compatibility of context reload between
-// different runtime versions.
-export class OldTestDataObject extends DataObject {
-    public static readonly type = "@fluid-example/test-dataStore";
-    public get _context() { return this.context; }
-    public get _runtime() { return this.runtime; }
-    public get _root() { return this.root; }
-}
-
-export class OldTestDataObjectV1 extends OldTestDataObject {
-    public static readonly version = V1;
-    public readonly version = V1;
-}
-
-export class OldTestDataObjectV2 extends OldTestDataObject {
-    public static readonly version = V2;
-    public readonly version = V2;
-    public static readonly testKey = "version2";
-    protected async hasInitialized() {
-        this.root.set(OldTestDataObjectV2.testKey, true);
-    }
-}
-
-const registryMapping = {
-    [newVer.SharedMap.getFactory().type]                    : SharedMap.getFactory(),
-    [newVer.SharedString.getFactory().type]                 : SharedString.getFactory(),
-    [newVer.SharedDirectory.getFactory().type]              : SharedDirectory.getFactory(),
-    [newVer.ConsensusRegisterCollection.getFactory().type]  : ConsensusRegisterCollection.getFactory(),
-    [newVer.SharedCell.getFactory().type]                   : SharedCell.getFactory(),
-    [newVer.Ink.getFactory().type]                          : Ink.getFactory(),
-    [newVer.SharedMatrix.getFactory().type]                 : SharedMatrix.getFactory(),
-    [newVer.ConsensusQueue.getFactory().type]               : ConsensusQueue.getFactory(),
-    [newVer.SparseMatrix.getFactory().type]                 : SparseMatrix.getFactory(),
-    [newVer.SharedCounter.getFactory().type]                : SharedCounter.getFactory(),
-};
-
-// convert a channel factory registry for TestFluidDataStoreFactory to one with old channel factories
-function convertRegistry(registry: newVer.ChannelFactoryRegistry = []): ChannelFactoryRegistry {
-    const oldRegistry: [string | undefined, IChannelFactory][] = [];
-    for (const [key, factory] of registry) {
-        const oldFactory = registryMapping[factory.type];
-        if (oldFactory === undefined) {
-            throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
-        }
-        oldRegistry.push([key, oldFactory]);
-    }
-
-    return oldRegistry;
-}
-
-function createOldPrimedDataStoreFactory(
-    registry?: newVer.ChannelFactoryRegistry,
-): IFluidDataStoreFactory {
-    return new DataObjectFactory(
-        OldTestDataObject.type,
-        OldTestDataObject,
-        [...convertRegistry(registry)].map((r) => r[1]),
-        {});
-}
-
-function createOldTestFluidDataStoreFactory(
-    registry?: newVer.ChannelFactoryRegistry,
-): IFluidDataStoreFactory {
-    return new TestFluidObjectFactory(convertRegistry(registry));
-};
-
-function getOldDataStoreFactory(containerOptions?: ITestContainerConfig) {
-    switch (containerOptions?.fluidDataObjectType) {
-        case undefined:
-        case DataObjectFactoryType.Primed:
-            return createOldPrimedDataStoreFactory(containerOptions?.registry);
-        case DataObjectFactoryType.Test:
-            return createOldTestFluidDataStoreFactory(containerOptions?.registry);
-        default:
-            throw new Error("unknown data store factory type");
-    }
-}
-
-function createOldTestRuntimeFactory(
-    type: string,
-    dataStoreFactory: newVer.IFluidDataStoreFactory | IFluidDataStoreFactory,
-    runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
-): IRuntimeFactory {
-    return new TestContainerRuntimeFactory(type, dataStoreFactory as IFluidDataStoreFactory, runtimeOptions);
-}
-
-export function createOldRuntimeFactory(dataStore): IRuntimeFactory {
-    const type = OldTestDataObject.type;
-    const factory = new DataObjectFactory(type, dataStore, [], {});
-    return new ContainerRuntimeFactoryWithDefaultDataStore(
-        factory,
-        [[type, Promise.resolve(new DataObjectFactory(type, dataStore, [], {}))]],
-    );
-}
-
-export async function createOldContainer(
-    documentId,
-    packageEntries,
-    server,
-    urlResolver
-): Promise<IContainer> {
-    const loader = createLocalLoader(packageEntries, server, urlResolver, { hotSwapContext: true });
-    return createAndAttachContainer(documentId, defaultCodeDetails, loader, urlResolver);
-}
-
-export async function loadContainer(
-    oldLoader: boolean,
-    oldContainerRuntime: boolean,
-    oldDataStoreRuntime: boolean,
-    type: string,
-    runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
-    deltaConnectionServer: newVer.ILocalDeltaConnectionServer,
-): Promise<IContainer> {
-    const dataStoreFactory = oldDataStoreRuntime
-        ? createOldPrimedDataStoreFactory()
-        : createPrimedDataStoreFactory();
-
-    const containerFactory = oldContainerRuntime
-        ? createOldTestRuntimeFactory(type, dataStoreFactory, runtimeOptions)
-        : createRuntimeFactory(type, dataStoreFactory, runtimeOptions);
-
-    const fluidModule = { fluidExport: containerFactory };
-    const localTestObjectProvider = oldLoader
-        ? new LocalTestObjectProvider(
-            () => fluidModule as IFluidModule, undefined, deltaConnectionServer)
-        : new newVer.LocalTestObjectProvider(
-            () => fluidModule as newVer.IFluidModule, undefined, deltaConnectionServer);
-    return localTestObjectProvider.loadTestContainer();
-}
-
-export function createLocalTestObjectProvider(
-    oldLoader: boolean,
-    oldContainerRuntime: boolean,
-    oldDataStoreRuntime: boolean,
-    type: string,
-    serviceConfiguration?: Partial<newVer.IClientConfiguration>,
-): ILocalTestObjectProvider {
-    const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
-        const dataStoreFactory = oldDataStoreRuntime
-            ? getOldDataStoreFactory(containerOptions)
-            : getDataStoreFactory(containerOptions);
-
-        return oldContainerRuntime
-            ? createOldTestRuntimeFactory(type, dataStoreFactory, containerOptions?.runtimeOptions)
-            : createRuntimeFactory(type, dataStoreFactory, containerOptions?.runtimeOptions);
-    }
-
-    const localTestObjectProvider = oldLoader
-        ? new LocalTestObjectProvider(
-            containerFactoryFn as () => IRuntimeFactory, serviceConfiguration)
-        : new newVer.LocalTestObjectProvider(
-            containerFactoryFn as () => newVer.IRuntimeFactory, serviceConfiguration);
-
-    return localTestObjectProvider;
-}
