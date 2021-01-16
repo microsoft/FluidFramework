@@ -7,9 +7,9 @@
 export * from "old-container-definitions2";
 export * from "old-core-interfaces2";
 export { IDocumentServiceFactory, IUrlResolver } from "old-driver-definitions2";
+export { LocalResolver } from "old-local-driver2";
 export { IFluidDataStoreFactory } from "old-runtime-definitions2";
 export { OpProcessingController } from "old-test-utils2";
-export { LocalResolver } from "old-local-driver2";
 
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
@@ -17,7 +17,7 @@ import {
     DataObjectFactory,
 } from "old-aqueduct2";
 import { SharedCell } from "old-cell2";
-import { IContainer, IFluidModule, IRuntimeFactory } from "old-container-definitions2";
+import { IContainer,  IRuntimeFactory } from "old-container-definitions2";
 import { Loader } from "old-container-loader2";
 import { IContainerRuntimeOptions } from "old-container-runtime2";
 import { IFluidCodeDetails } from "old-core-interfaces2";
@@ -44,11 +44,10 @@ import {
 } from "old-test-utils2";
 
 import {
-    createPrimedDataStoreFactory,
     createRuntimeFactory,
     DataObjectFactoryType,
     getDataStoreFactory,
-    ILocalTestObjectProvider,
+    ITestObjectProvider,
     ITestContainerConfig,
     V1,
     V2,
@@ -304,38 +303,14 @@ export async function createOldContainer(
     return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
 }
 
-export async function loadContainer(
-    oldLoader: boolean,
-    oldContainerRuntime: boolean,
-    oldDataStoreRuntime: boolean,
-    type: string,
-    runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
-    deltaConnectionServer: newVer.ILocalDeltaConnectionServer,
-): Promise<newVer.IContainer | IContainer> {
-    const dataStoreFactory = oldDataStoreRuntime
-        ? createOldPrimedDataStoreFactory()
-        : createPrimedDataStoreFactory();
-
-    const containerFactory = oldContainerRuntime
-        ? createOldTestRuntimeFactory(type, dataStoreFactory, runtimeOptions)
-        : createRuntimeFactory(type, dataStoreFactory, runtimeOptions);
-
-    const fluidModule = { fluidExport: containerFactory };
-    const localTestObjectProvider = oldLoader
-        ? new LocalTestObjectProvider(
-            () => fluidModule as IFluidModule, undefined, deltaConnectionServer)
-        : new newVer.LocalTestObjectProvider(
-            () => fluidModule as newVer.IFluidModule, undefined, deltaConnectionServer);
-    return localTestObjectProvider.loadTestContainer();
-}
-
-export function createLocalTestObjectProvider(
+export function createTestObjectProvider(
     oldLoader: boolean,
     oldContainerRuntime: boolean,
     oldDataStoreRuntime: boolean,
     type: string,
     serviceConfiguration?: Partial<newVer.IClientConfiguration>,
-): ILocalTestObjectProvider {
+    driver?: newVer.ITestDriver,
+): ITestObjectProvider {
     const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
         const dataStoreFactory = oldDataStoreRuntime
             ? getOldDataStoreFactory(containerOptions)
@@ -346,11 +321,16 @@ export function createLocalTestObjectProvider(
             : createRuntimeFactory(type, dataStoreFactory, containerOptions?.runtimeOptions);
     };
 
-    const localTestObjectProvider = oldLoader
-        ? new LocalTestObjectProvider(
-            containerFactoryFn as () => IRuntimeFactory, serviceConfiguration)
-        : new newVer.LocalTestObjectProvider(
-            containerFactoryFn as () => newVer.IRuntimeFactory, serviceConfiguration);
-
-    return localTestObjectProvider;
+    // back-compat: 0.33 begins using TestObjectProvider instead of LocalTestObjectProvider
+    // Once this file references 0.33, oldLoader should create a TestObjectProvider instead
+    if (oldLoader) {
+        return new LocalTestObjectProvider(
+            containerFactoryFn as () => IRuntimeFactory, serviceConfiguration);
+    } else {
+        if (driver === undefined) {
+            throw new Error("Must provide a driver when using the current loader");
+        }
+        return new newVer.TestObjectProvider(
+            driver, containerFactoryFn as () => newVer.IRuntimeFactory);
+    }
 }
