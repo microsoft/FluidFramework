@@ -308,7 +308,7 @@ export async function loadContainer(
     type: string,
     runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
     deltaConnectionServer: newVer.ILocalDeltaConnectionServer,
-): Promise<newVer.IContainer | IContainer> {
+): Promise<IContainer> {
     const dataStoreFactory = oldDataStoreRuntime
         ? createOldPrimedDataStoreFactory()
         : createPrimedDataStoreFactory();
