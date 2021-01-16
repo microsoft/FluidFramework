@@ -90,6 +90,7 @@ export interface ITree {
 }
 
 export interface ISnapshotTree {
+    id? : string;
     blobs: { [path: string]: string };
     // TODO: Commits should be removed from here to ISnapshotTreeEx once ODSP snapshots move away from commits
     commits: { [path: string]: string };

@@ -308,7 +308,6 @@ describe("Data Store Context Tests", () => {
                 const buffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
                 const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
                 const snapshotTree: ISnapshotTree = {
-                    id: "dummy",
                     blobs: { [attributesBlobKey]: "fluidDataStoreAttributes" },
                     commits: {},
                     trees: {},
@@ -350,7 +349,6 @@ describe("Data Store Context Tests", () => {
                 const buffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
                 const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
                 const snapshotTree: ISnapshotTree = {
-                    id: "dummy",
                     blobs: { [attributesBlobKey]: "fluidDataStoreAttributes" },
                     commits: {},
                     trees: {},
@@ -397,7 +395,6 @@ describe("Data Store Context Tests", () => {
                     ["fluidDataStoreAttributes", attributesBuffer.toString("base64")],
                 ]);
                 const snapshotTree: ISnapshotTree = {
-                    id: "dummy",
                     blobs: {
                         [attributesBlobKey]: "fluidDataStoreAttributes",
                     },
@@ -440,7 +437,6 @@ describe("Data Store Context Tests", () => {
                     ["gcDetails", gcDetailsBuffer.toString("base64")],
                 ]);
                 const snapshotTree: ISnapshotTree = {
-                    id: "dummy",
                     blobs: {
                         [attributesBlobKey]: "fluidDataStoreAttributes",
                         [gcBlobKey]: "gcDetails",
@@ -489,7 +485,6 @@ describe("Data Store Context Tests", () => {
                     ["gcDetails", gcDetailsBuffer.toString("base64")],
                 ]);
                 const snapshotTree: ISnapshotTree = {
-                    id: "dummy",
                     blobs: {
                         [attributesBlobKey]: "fluidDataStoreAttributes",
                         [gcBlobKey]: "gcDetails",

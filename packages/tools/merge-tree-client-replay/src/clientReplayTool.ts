@@ -21,6 +21,7 @@ import {
     ITree,
     ITreeEntry,
     MessageType,
+    TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import { IAttachMessage } from "@fluidframework/runtime-definitions";
 import {
@@ -307,7 +308,7 @@ export class ClientReplayTool {
         if (attachMessage.snapshot) {
             const snapshotTreeEntry: IFullPathTreeEntry = {
                 value: attachMessage.snapshot,
-                type: attachMessage.type,
+                type: attachMessage.type as TreeEntry,
                 fullPath: attachMessage.id,
                 path: undefined,
                 mode: undefined,
