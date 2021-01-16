@@ -318,8 +318,6 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
                 throw new Error("Should not have Handle type in summary tree");
             }
 
-            case SummaryType.Commit: // to be removed in future
-                unreachableCase(value as never, "Unexpected summary tree type");
             default:
                 unreachableCase(value, "Unexpected summary tree type");
         }

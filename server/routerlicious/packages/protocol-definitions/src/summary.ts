@@ -22,7 +22,6 @@ export interface ISummaryCommitter {
 }
 
 export const enum SummaryType {
-    Commit = 0,
     Tree = 1,
     Blob = 2,
     Handle = 3,
@@ -32,7 +31,8 @@ export const enum SummaryType {
 export interface ISummaryHandle {
     type: SummaryType.Handle;
 
-    handleType: SummaryType;
+    // No handles, all other SummaryType are Ok
+    handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;
 
     // Stored handle reference
     handle: string;
