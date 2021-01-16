@@ -27,10 +27,10 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.26.0",
+    "@fluidframework/common-utils": "^0.27.0-0",
     "@fluidframework/driver-definitions": "^0.33.0",
     "@fluidframework/driver-utils": "^0.33.0",
-    "@fluidframework/protocol-definitions": "^0.1017.1",
+    "@fluidframework/protocol-definitions": "^0.1018.0-0",
     "@fluidframework/replay-driver": "^0.33.0",
     "assert": "^2.0.0"
   },

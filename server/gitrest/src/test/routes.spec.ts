@@ -13,6 +13,7 @@ import {
 } from "@fluidframework/gitresources";
 import {
     ICreateRefParamsExternal,
+    IGetRefParamsExternal,
 } from "@fluidframework/server-services-client";
 import * as async from "async";
 import lorem from "lorem-ipsum";
@@ -140,6 +141,10 @@ describe("GitRest", () => {
         const testRef: ICreateRefParamsExternal = {
             ref: "refs/heads/main",
             sha: "cf0b592907d683143b28edd64d274ca70f68998e",
+            config: { enabled: true },
+        };
+
+        const testReadParams: IGetRefParamsExternal = {
             config: { enabled: true },
         };
 
@@ -459,6 +464,7 @@ describe("GitRest", () => {
                             testRepoName,
                             lastCommit,
                             1,
+                            testReadParams,
                             externalStorageManager);
                         const parentCommit = commits[0];
                         assert.ok(parentCommit.commit);

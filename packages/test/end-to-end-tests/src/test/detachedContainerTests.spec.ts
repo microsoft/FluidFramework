@@ -25,12 +25,13 @@ import { MessageType, ISequencedDocumentMessage } from "@fluidframework/protocol
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { convertContainerToDriverSerializedFormat, requestFluidObject } from "@fluidframework/runtime-utils";
+import { createLocalResolverCreateNewRequest } from "@fluidframework/local-driver";
 import {
-    ILocalTestObjectProvider,
     generateLocalTest,
     generateLocalNonCompatTest,
     ITestContainerConfig,
     DataObjectFactoryType,
+    ITestObjectProvider,
 } from "./compatUtils";
 
 const detachedContainerRefSeqNumber = 0;
@@ -64,7 +65,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (args: ILocalTestObjectProvider) => {
+const tests = (args: ITestObjectProvider) => {
     let request: IRequest;
     let loader: Loader;
     const pkg = args.defaultCodeDetails;
@@ -79,7 +80,7 @@ const tests = (args: ILocalTestObjectProvider) => {
     });
 
     beforeEach(async () => {
-        request = args.urlResolver.createCreateNewRequest(documentId);
+        request = createLocalResolverCreateNewRequest(documentId);
         loader = args.makeTestLoader(testContainerConfig) as Loader;
     });
 
@@ -255,6 +256,7 @@ const tests = (args: ILocalTestObjectProvider) => {
         const snapshotTree = container.serialize();
         const summaryForAttach = convertContainerToDriverSerializedFormat(snapshotTree);
         const resolvedUrl = await args.urlResolver.resolve(request);
+        assert(resolvedUrl);
         const service = await args.documentServiceFactory.createContainer(summaryForAttach as any, resolvedUrl);
         const absoluteUrl = await args.urlResolver.getAbsoluteUrl(service.resolvedUrl, "/");
 
@@ -614,13 +616,13 @@ describe("Detached Container", () => {
     generateLocalTest(tests);
 
     // non compat test
-    generateLocalNonCompatTest((args: ILocalTestObjectProvider) => {
+    generateLocalNonCompatTest((args: ITestObjectProvider) => {
         let request: IRequest;
         let loader: Loader;
         const pkg = args.defaultCodeDetails;
 
         beforeEach(async () => {
-            request = args.urlResolver.createCreateNewRequest(documentId);
+            request = createLocalResolverCreateNewRequest(documentId);
             loader = args.makeTestLoader(testContainerConfig) as Loader;
         });
 
