@@ -39,6 +39,29 @@ export interface IUrlResolver {
 }
 
 /**
+* Information that can be returned by a lightweight, seperately exported driver function. Used to preanalyze a URL
+* for driver compatibility and preload information.
+*/
+export interface DriverPreCheckInfo {
+    /**
+     * @deprecated - only needed as long as long as Loader.request() does not work as intended. When
+     * Loader.request() caches and resolves pathing properly, this can be removed. #4489, #4491
+     */
+    containerPath: string;
+
+    /**
+     * A code details hint that can potentially be used to prefetch container code prior to having a snapshot.
+     */
+    codeDetailsHint?: string;
+
+    /**
+     * Domains that will be connected to on the critical boot path. Hosts can choose to preconnect to these for
+     * improved performance.
+     */
+    criticalBootDomains?: string[];
+  }
+
+/**
  * Additional key in the loader request header
  */
 export enum DriverHeader {

@@ -4,7 +4,7 @@
  */
 
 import { GitManager, Historian, ICredentials } from "@fluidframework/server-services-client";
-import { generateToken } from "@fluidframework/server-services-utils";
+import { generateToken, getCorrelationId } from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
 import Axios from "axios";
 
@@ -55,7 +55,8 @@ export class TenantManager implements core.ITenantManager {
             `${details.data.storage.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`,
             true,
             false,
-            credentials);
+            credentials,
+            getCorrelationId);
         const gitManager = new GitManager(historian);
         const tenant = new Tenant(details.data, gitManager);
 
@@ -70,6 +71,7 @@ export class TenantManager implements core.ITenantManager {
 
     public async getKey(tenantId: string): Promise<string> {
         const result = await Axios.get(`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/key`);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return result.data;
     }
 }

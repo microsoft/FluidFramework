@@ -354,15 +354,17 @@ export class SparseMatrixFactory implements IChannelFactory {
         return SparseMatrixFactory.Attributes;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
+     */
     public async load(
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string,
         attributes: IChannelAttributes,
     ): Promise<ISharedObject> {
         const sharedObject = new SparseMatrix(runtime, id, attributes);
-        await sharedObject.load(branchId, services);
+        await sharedObject.load(services);
         return sharedObject;
     }
 

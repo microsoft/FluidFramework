@@ -26,7 +26,6 @@ export abstract class SequencedLambda implements IPartitionLambda {
                 });
         }, 1);
 
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         this.q.error = (error) => {
             const documentError = {
                 documentId: this.documentId,

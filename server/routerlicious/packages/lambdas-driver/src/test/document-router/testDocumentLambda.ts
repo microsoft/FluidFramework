@@ -64,7 +64,7 @@ export class TestLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
         if (this.failCreatelambda) {
-            return Promise.reject("Test failure");
+            return Promise.reject(new Error("Test failure"));
         } else {
             const lambda = new TestLambda(config, context);
             this.lambdas.push(lambda);

@@ -4,6 +4,7 @@
  */
 
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
@@ -75,10 +76,9 @@ export class MapFactory implements IChannelFactory {
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string,
         attributes: IChannelAttributes): Promise<ISharedMap> {
         const map = new SharedMap(id, runtime, attributes);
-        await map.load(branchId, services);
+        await map.load(services);
 
         return map;
     }
@@ -151,7 +151,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     ) {
         super(id, runtime, attributes);
         this.kernel = new MapKernel(
-            runtime,
+            this.serializer,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             () => this.isAttached(),
@@ -206,7 +206,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     /**
     * {@inheritDoc ISharedMap.get}
     */
-    public get<T = any>(key: string): T {
+    public get<T = any>(key: string): T | undefined {
         return this.kernel.get<T>(key);
     }
 
@@ -247,9 +247,9 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
-    * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshot}
+    * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
     */
-    public snapshot(): ITree {
+   protected snapshotCore(serializer: IFluidSerializer): ITree {
         let currentSize = 0;
         let counter = 0;
         let headerBlob: IMapDataObjectSerializable = {};
@@ -260,7 +260,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
             id: null,
         };
 
-        const data = this.kernel.getSerializedStorage();
+        const data = this.kernel.getSerializedStorage(serializer);
 
         // If single property exceeds this size, it goes into its own blob
         const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
@@ -323,15 +323,13 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     public getSerializableStorage(): IMapDataObjectSerializable {
-        return this.kernel.getSerializableStorage();
+        return this.kernel.getSerializableStorage(this.serializer);
     }
 
     /**
     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
     */
-    protected async loadCore(
-        branchId: string | undefined,
-        storage: IChannelStorageService) {
+    protected async loadCore(storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
 
         const data = fromBase64ToUtf8(header);

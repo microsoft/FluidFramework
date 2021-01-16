@@ -8,11 +8,11 @@ import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluid
 import {
     ConnectionMode,
     IClient,
+    IClientConfiguration,
     IConnect,
     IConnected,
     IDocumentMessage,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
@@ -114,10 +114,6 @@ export class LocalDocumentDeltaConnection
         return this.details.existing;
     }
 
-    public get parentBranch(): string | null {
-        return this.details.parentBranch;
-    }
-
     public get maxMessageSize(): number {
         return this.details.maxMessageSize;
     }
@@ -138,7 +134,7 @@ export class LocalDocumentDeltaConnection
         return testProtocolVersions[0];
     }
 
-    public get serviceConfiguration(): IServiceConfiguration {
+    public get serviceConfiguration(): IClientConfiguration {
         return this.details.serviceConfiguration;
     }
 
@@ -193,7 +189,7 @@ export class LocalDocumentDeltaConnection
     }
 
     public close() {
-        // Do nothing
+        this.disconnectClient("client close");
     }
 
     /**

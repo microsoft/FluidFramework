@@ -23,7 +23,7 @@ export interface MergeTreeChunkLegacy extends VersionedMergeTreeChunk {
     chunkSegmentCount: number;
     chunkLengthChars: number;
     totalLengthChars: number;
-totalSegmentCount: number;
+    totalSegmentCount: number;
     chunkSequenceNumber: number;
     chunkMinSequenceNumber?: number;
     segmentTexts: JsonSegmentSpecs[];
@@ -77,7 +77,7 @@ export function serializeAsMinSupportedVersion(
     chunk: VersionedMergeTreeChunk,
     logger: ITelemetryLogger,
     options: PropertySet | undefined,
-    serializer?: IFluidSerializer,
+    serializer: IFluidSerializer,
     bind?: IFluidHandle) {
     let targetChuck: MergeTreeChunkLegacy;
 
@@ -116,7 +116,7 @@ export function serializeAsMinSupportedVersion(
         default:
             throw new Error(`Unsupported chunk path: ${path} version: ${chunk.version}`);
     }
-    return serializer !== undefined ? serializer.stringify(targetChuck, bind) : JSON.stringify(targetChuck);
+    return serializer.stringify(targetChuck, bind);
 }
 
 export function serializeAsMaxSupportedVersion(
@@ -124,10 +124,10 @@ export function serializeAsMaxSupportedVersion(
     chunk: VersionedMergeTreeChunk,
     logger: ITelemetryLogger,
     options: PropertySet | undefined,
-    serializer?: IFluidSerializer,
+    serializer: IFluidSerializer,
     bind?: IFluidHandle) {
     const targetChuck = toLatestVersion(path, chunk, logger, options);
-    return serializer !== undefined ? serializer.stringify(targetChuck, bind) : JSON.stringify(targetChuck);
+    return serializer.stringify(targetChuck, bind);
 }
 
 export function toLatestVersion(
@@ -135,14 +135,6 @@ export function toLatestVersion(
     chunk: VersionedMergeTreeChunk,
     logger: ITelemetryLogger,
     options: PropertySet | undefined): MergeTreeChunkV1 {
-    if (chunk.version !== "1") {
-        logger.send({
-            eventName: "MergeTreeChunk:toLatestVersion",
-            category: "generic",
-            fromChunkVersion: chunk.version,
-            toChunkVersion: "1",
-        });
-    }
     switch (chunk.version) {
         case undefined: {
             const chunkLegacy = chunk as MergeTreeChunkLegacy;

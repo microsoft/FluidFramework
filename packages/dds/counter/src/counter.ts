@@ -4,6 +4,7 @@
  */
 
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -128,7 +129,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      *
      * @returns the snapshot of the current state of the counter
      */
-    public snapshot(): ITree {
+    protected snapshotCore(serializer: IFluidSerializer): ITree {
         // Get a serializable form of data
         const content: ICounterSnapshotFormat = {
             value: this.value,
@@ -155,15 +156,9 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     }
 
     /**
-     * Load counter from snapshot
-     *
-     * @param branchId - Not used
-     * @param storage - the storage to get the snapshot from
-     * @returns - promise that resolved when the load is completed
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
-    protected async loadCore(
-        branchId: string | undefined,
-        storage: IChannelStorageService): Promise<void> {
+    protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const rawContent = await storage.read(snapshotFileName);
 
         const content = rawContent !== undefined

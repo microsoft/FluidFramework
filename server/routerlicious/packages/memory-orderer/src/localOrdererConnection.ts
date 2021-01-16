@@ -9,7 +9,6 @@ import {
     IClientJoin,
     IDocumentMessage,
     IDocumentSystemMessage,
-    IServiceConfiguration,
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -19,12 +18,16 @@ import {
     IOrdererConnection,
     IProducer,
     IRawOperationMessage,
+    IServiceConfiguration,
     RawOperationType,
 } from "@fluidframework/server-services-core";
 import { ISubscriber } from "./pubsub";
 
 export class LocalOrdererConnection implements IOrdererConnection {
-    public readonly parentBranch: string;
+    // Back-compat, removal tracked with issue #4346
+    public readonly parentBranch = null;
+
+    public readonly maxMessageSize: number;
 
     constructor(
         public socket: ISubscriber,
@@ -35,13 +38,12 @@ export class LocalOrdererConnection implements IOrdererConnection {
         public readonly documentId: string,
         public readonly clientId: string,
         private readonly client: IClient,
-        public readonly maxMessageSize: number,
         public readonly serviceConfiguration: IServiceConfiguration,
     ) {
-        this.parentBranch = document.parent ? document.parent.documentId : null;
+        this.maxMessageSize = serviceConfiguration.maxMessageSize;
     }
 
-    public async connect() {
+    public async connect(clientJoinMessageServerMetadata?: any) {
         // Send the connect message
         const clientDetail: IClientJoin = {
             clientId: this.clientId,
@@ -53,8 +55,9 @@ export class LocalOrdererConnection implements IOrdererConnection {
             contents: null,
             data: JSON.stringify(clientDetail),
             referenceSequenceNumber: -1,
-            traces: [],
+            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.ClientJoin,
+            serverMetadata: clientJoinMessageServerMetadata,
         };
 
         const message: IRawOperationMessage = {
@@ -93,7 +96,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
             contents: null,
             data: JSON.stringify(this.clientId),
             referenceSequenceNumber: -1,
-            traces: [],
+            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.ClientLeave,
         };
         const message: IRawOperationMessage = {
@@ -112,18 +115,20 @@ export class LocalOrdererConnection implements IOrdererConnection {
     }
 
     private submitRawOperation(messages: IRawOperationMessage[]) {
-        // Add trace
-        messages.forEach((message) => {
-            const operation = message.operation;
-            if (operation && operation.traces) {
-                operation.traces.push(
-                    {
-                        action: "start",
-                        service: "alfred",
-                        timestamp: performance.now(),
-                    });
-            }
-        });
+        if (this.serviceConfiguration.enableTraces) {
+            // Add trace
+            messages.forEach((message) => {
+                const operation = message.operation;
+                if (operation && operation.traces) {
+                    operation.traces.push(
+                        {
+                            action: "start",
+                            service: "alfred",
+                            timestamp: performance.now(),
+                        });
+                }
+            });
+        }
 
         const boxcar: IBoxcarMessage = {
             contents: messages,

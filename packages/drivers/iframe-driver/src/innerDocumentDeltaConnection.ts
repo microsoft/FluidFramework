@@ -8,10 +8,10 @@ import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
+    IClientConfiguration,
     IConnected,
     IDocumentMessage,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
@@ -94,15 +94,6 @@ export class InnerDocumentDeltaConnection
     }
 
     /**
-     * Get the parent branch for the document
-     *
-     * @returns the parent branch
-     */
-    public get parentBranch(): string | null {
-        return this.details.parentBranch;
-    }
-
-    /**
      * Get the maximum size of a message before chunking is required
      *
      * @returns the maximum size of a message before chunking is required
@@ -121,7 +112,7 @@ export class InnerDocumentDeltaConnection
     /**
      * Configuration details provided by the service
      */
-    public get serviceConfiguration(): IServiceConfiguration {
+    public get serviceConfiguration(): IClientConfiguration {
         return this.details.serviceConfiguration;
     }
 

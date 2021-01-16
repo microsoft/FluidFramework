@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { IContainer } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -20,8 +21,8 @@ import {
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
 import {
-    generateTestWithCompat,
-    ICompatLocalTestObjectProvider,
+    generateTest,
+    ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
 } from "./compatUtils";
@@ -43,7 +44,9 @@ const testContainerConfig: ITestContainerConfig = {
 function generate(
     name: string, ctor: ISharedObjectConstructor<IConsensusOrderedCollection>,
     input: any[], output: any[]) {
-    const tests = (args: ICompatLocalTestObjectProvider) => {
+    const tests = (args: ITestObjectProvider) => {
+        let container1: IContainer;
+        let container2: IContainer;
         let dataStore1: ITestFluidObject;
         let dataStore2: ITestFluidObject;
         let sharedMap1: ISharedMap;
@@ -52,12 +55,12 @@ function generate(
 
         beforeEach(async () => {
             // Create a Container for the first client.
-            const container1 = await args.makeTestContainer(testContainerConfig);
+            container1 = await args.makeTestContainer(testContainerConfig);
             dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
             sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
             // Load the Container that was created by the first client.
-            const container2 = await args.loadTestContainer(testContainerConfig);
+            container2 = await args.loadTestContainer(testContainerConfig);
             dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
             sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 
@@ -78,6 +81,8 @@ function generate(
                 sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
                 sharedMap3.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
             ]);
+            assert(collection2Handle);
+            assert(collection3Handle);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
 
@@ -108,6 +113,8 @@ function generate(
                 sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
                 sharedMap3.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
             ]);
+            assert(collection2Handle);
+            assert(collection3Handle);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
 
@@ -148,6 +155,8 @@ function generate(
                 sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
                 sharedMap3.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
             ]);
+            assert(collection2Handle);
+            assert(collection3Handle);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
 
@@ -205,6 +214,7 @@ function generate(
             // Pull the collection off of the 2nd container
             const collection2Handle =
                 await sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection");
+            assert(collection2Handle);
             const collection2 = await collection2Handle.get();
 
             // acquire one handle in each container
@@ -223,6 +233,7 @@ function generate(
 
             const collection2Handle =
                 await sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection");
+            assert(collection2Handle);
             const collection2 = await collection2Handle.get();
 
             await collection1.add("testValue");
@@ -244,12 +255,13 @@ function generate(
 
             const collection2Handle =
                 await sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection");
+            assert(collection2Handle);
             const collection2 = await collection2Handle.get();
 
             let waitRejected = false;
             waitAcquireAndComplete(collection2)
                 .catch(() => { waitRejected = true; });
-            dataStore2.runtime.deltaManager.close();
+            container2.deltaManager.close();
 
             await collection1.add("testValue");
 
@@ -266,6 +278,8 @@ function generate(
                 sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
                 sharedMap3.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
             ]);
+            assert(collection2Handle);
+            assert(collection3Handle);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
             await args.opProcessingController.pauseProcessing();
@@ -338,7 +352,7 @@ function generate(
     };
 
     describe(name, () => {
-        generateTestWithCompat(tests);
+        generateTest(tests, { tinylicious: true });
     });
 }
 

@@ -4,7 +4,8 @@
  */
 
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IChannelSummarizeResult, IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
@@ -19,9 +20,10 @@ export interface IChannel extends IFluidLoadable {
     readonly attributes: IChannelAttributes;
 
     /**
-     * Generates snapshot of the channel.
+     * Generates summary of the channel.
+     * @returns A tree representing the summary of the channel.
      */
-    snapshot(): ITree;
+    summarize(fullTree?: boolean, trackState?: boolean): IChannelSummarizeResult;
 
     /**
      * True if the data structure is attached to storage.
@@ -32,6 +34,12 @@ export interface IChannel extends IFluidLoadable {
      * Enables the channel to send and receive ops
      */
     connect(services: IChannelServices): void;
+
+    /**
+     * Returns the GC data for this channel. It contains a list of GC nodes that contains references to
+     * other GC nodes.
+     */
+    getGCData(): IGarbageCollectionData;
 }
 
 /**
@@ -141,7 +149,6 @@ export interface IChannelFactory {
      * @param runtime - Data store runtime containing state/info/helper methods about the data store.
      * @param id - ID of the channel.
      * @param services - Services to read objects at a given path using the delta connection.
-     * @param branchId - The branch ID.
      * @param channelAttributes - The attributes for the the channel to be loaded.
      * @returns The loaded object
      *
@@ -154,7 +161,6 @@ export interface IChannelFactory {
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string | undefined,
         channelAttributes: Readonly<IChannelAttributes>,
     ): Promise<IChannel>;
 

@@ -10,9 +10,10 @@ export {
     DataObjectFactory,
 } from "old-aqueduct";
 export * from "old-container-definitions";
+export * from "old-core-interfaces";
 export { Container, Loader } from "old-container-loader";
 export { ContainerRuntime, IContainerRuntimeOptions } from "old-container-runtime";
-export { IDocumentServiceFactory } from "old-driver-definitions";
+export { IDocumentServiceFactory, IUrlResolver } from "old-driver-definitions";
 export { IFluidDataStoreFactory } from "old-runtime-definitions";
 export { IChannelFactory } from "old-datastore-definitions";
 export {
@@ -34,14 +35,11 @@ export { Ink } from "old-ink";
 export { SharedMatrix } from "old-matrix";
 export { ConsensusQueue } from "old-ordered-collection";
 
-import {
-    IFluidCodeDetails,
-    IProxyLoaderFactory,
-} from "old-container-definitions";
+import { IFluidCodeDetails } from "old-core-interfaces";
 import { Loader } from "old-container-loader";
 import { IDocumentServiceFactory } from "old-driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "old-local-driver";
-import { IServiceConfiguration } from "@fluidframework/protocol-definitions";
+import { IClientConfiguration } from "@fluidframework/protocol-definitions";
 import { fluidEntryPoint, LocalCodeLoader, createAndAttachContainer, OpProcessingController } from "old-test-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
@@ -66,7 +64,7 @@ const defaultCodeDetails: IFluidCodeDetails = {
  * Since the channel is just a pass thru to the call back, the type is parameterized to allow use channel
  * from different version. The only types that required to compatible when using different versions are:
  *   fluidEntryPoint
- *   IServiceConfiguration
+ *   IClientConfiguration
  *   ILocalDeltaConnectionServer
  */
 export class LocalTestObjectProvider<TestContainerConfigType> {
@@ -83,7 +81,7 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
      */
     constructor(
         private readonly createFluidEntryPoint: (testContainerConfig?: TestContainerConfigType) => fluidEntryPoint,
-        private readonly serviceConfiguration?: Partial<IServiceConfiguration>,
+        private readonly serviceConfiguration?: Partial<IClientConfiguration>,
         private _deltaConnectionServer?: ILocalDeltaConnectionServer | undefined,
     ) {
 
@@ -123,13 +121,11 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
 
     private createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>) {
         const codeLoader = new LocalCodeLoader(packageEntries);
-        return new Loader(
-            this.urlResolver,
-            this.documentServiceFactory,
+        return new Loader({
+            urlResolver: this.urlResolver,
+            documentServiceFactory: this.documentServiceFactory,
             codeLoader,
-            {},
-            {},
-            new Map<string, IProxyLoaderFactory>());
+        });
     }
 
     /**

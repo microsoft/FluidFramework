@@ -65,16 +65,6 @@ services:
             - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
-    routemanager:
-        build:
-            context: .
-            target: runner
-        command: node packages/routerlicious/dist/kafka-service/index.js routemanager /usr/src/server/packages/lambdas-driver/dist/document-router/index.js
-        environment:
-            - DEBUG=fluid:*
-            - NODE_ENV=development
-            - documentLambda=/usr/src/server/packages/routerlicious/dist/routemanager/index.js
-        restart: always
     riddler:
         build:
             context: .
@@ -87,7 +77,7 @@ services:
             - NODE_ENV=development
         restart: always
     historian:
-        image: prague.azurecr.io/historian:30824
+        image: mcr.microsoft.com/fluidframework/routerlicious/historian:latest
         ports:
             - "3001:3000"
         environment:
@@ -95,7 +85,7 @@ services:
             - NODE_ENV=development
         restart: always
     gitrest:
-        image: prague.azurecr.io/gitrest:30825
+        image: mcr.microsoft.com/fluidframework/routerlicious/gitrest:latest
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
@@ -103,7 +93,7 @@ services:
             - git:/home/node/documents
         restart: always
     git:
-        image: prague.azurecr.io/gitssh:654
+        image: mcr.microsoft.com/fluidframework/routerlicious/gitssh:latest
         ports:
             - "3022:22"
         volumes:

@@ -102,7 +102,7 @@ export class SnapshotLegacy {
      */
     emit(
         catchUpMsgs: ISequencedDocumentMessage[],
-        serializer?: IFluidSerializer,
+        serializer: IFluidSerializer,
         bind?: IFluidHandle,
     ): ITree {
         const chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, this.chunkSize);
@@ -159,15 +159,17 @@ export class SnapshotLegacy {
             segments === chunk1.totalSegmentCount,
             { eventName: "emit: mismatch in totalSegmentCount" });
 
-        tree.entries.push({
-            mode: FileMode.File,
-            path: this.mergeTree.options?.catchUpBlobName ?? SnapshotLegacy.catchupOps,
-            type: TreeEntry.Blob,
-            value: {
-                contents: serializer ? serializer.stringify(catchUpMsgs, bind) : JSON.stringify(catchUpMsgs),
-                encoding: "utf-8",
-            },
-        });
+        if(catchUpMsgs !== undefined && catchUpMsgs.length > 0) {
+            tree.entries.push({
+                mode: FileMode.File,
+                path: this.mergeTree.options?.catchUpBlobName ?? SnapshotLegacy.catchupOps,
+                type: TreeEntry.Blob,
+                value: {
+                    contents: serializer ? serializer.stringify(catchUpMsgs, bind) : JSON.stringify(catchUpMsgs),
+                    encoding: "utf-8",
+                },
+            });
+        }
 
         return tree;
     }

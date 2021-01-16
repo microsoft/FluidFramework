@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IClient, IDocumentMessage, IServiceConfiguration } from "@fluidframework/protocol-definitions";
+import { IClient, IDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     ICollection,
     IContext,
@@ -13,6 +13,7 @@ import {
     IOrderer,
     ISequencedOperationMessage,
     IQueuedMessage,
+    IServiceConfiguration,
 } from "@fluidframework/server-services-core";
 
 export interface IConcreteNode extends EventEmitter {
@@ -49,7 +50,8 @@ export interface IConnectMessage {
 export interface IConnectedMessage {
     clientId: string;
     existing: boolean;
-    parentBranch: string;
+    // Back-compat, removal tracked with issue #4346
+    parentBranch: null;
     maxMessageSize: number;
     serviceConfiguration: IServiceConfiguration;
 }

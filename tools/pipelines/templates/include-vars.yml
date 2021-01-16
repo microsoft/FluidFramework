@@ -20,6 +20,7 @@ parameters:
   type: string
 
 variables:
+- group: prague-key-vault
 - name: skipComponentGovernanceDetection
   value: true
 - name: shouldPublish

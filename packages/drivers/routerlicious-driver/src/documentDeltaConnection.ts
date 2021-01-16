@@ -11,6 +11,7 @@ import {
     createGenericNetworkError,
 } from "@fluidframework/driver-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
+import { TelemetryNullLogger } from "@fluidframework/common-utils";
 
 export enum R11sErrorType {
     authorizationError = "authorizationError",
@@ -20,19 +21,21 @@ export enum R11sErrorType {
 function createNetworkError(
     errorMessage: string,
     canRetry: boolean,
-    statusCode?: number,
-    retryAfterSeconds?: number,
+    statusCode: number,
+    retryAfterSeconds: number,
 ) {
     switch (statusCode) {
         case 401:
         case 403:
-            return new NetworkErrorBasic(errorMessage, R11sErrorType.authorizationError, canRetry);
+            return new NetworkErrorBasic(
+                errorMessage, R11sErrorType.authorizationError, canRetry, statusCode);
             break;
         case 404:
-            return new NetworkErrorBasic(errorMessage, R11sErrorType.fileNotFoundOrAccessDeniedError, canRetry);
+            return new NetworkErrorBasic(
+                errorMessage, R11sErrorType.fileNotFoundOrAccessDeniedError, canRetry, statusCode);
             break;
         case 500:
-            return new GenericNetworkError(errorMessage, canRetry);
+            return new GenericNetworkError(errorMessage, canRetry, statusCode);
             break;
         default:
             return createGenericNetworkError(errorMessage, canRetry, retryAfterSeconds, statusCode);
@@ -69,6 +72,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 io,
                 client,
                 url,
+                new TelemetryNullLogger(),
             );
             return connection;
         } catch (errorObject) {

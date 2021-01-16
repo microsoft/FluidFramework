@@ -20,7 +20,7 @@ class MockRuntime {
         if (id === "objectId") {
             return {
                 request: async (r) => {
-                    if (r.url === "" || r.url === "route") {
+                    if (r.url === "/" || r.url === "/route") {
                         return createFluidObjectResponse({ route: r.url } as IFluidObject);
                     }
                     return { status: 404, mimeType: "text/plain", value: "not found" };
@@ -50,13 +50,13 @@ describe("defaultRouteRequestHandler", () => {
         const response = await handler(requestParser, runtime);
         assert(response);
         assert.equal(response.status, 200);
-        assert.equal(response.value.route, "");
+        assert.equal(response.value.route, "/");
 
         const requestParser2 = RequestParser.create({ url: "/", headers: {} });
         const response2 = await handler(requestParser2, runtime);
         assert(response2);
         assert.equal(response2.status, 200);
-        assert.equal(response.value.route, "");
+        assert.equal(response.value.route, "/");
     });
 
     it("Data store request with non-existing default ID", async () => {

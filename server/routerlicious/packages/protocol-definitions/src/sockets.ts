@@ -4,7 +4,7 @@
  */
 
 import { ConnectionMode, IClient, ISignalClient } from "./clients";
-import { IServiceConfiguration } from "./config";
+import { IClientConfiguration } from "./config";
 import { ISequencedDocumentMessage, ISignalMessage } from "./protocol";
 import { ITokenClaims } from "./tokens";
 
@@ -72,10 +72,11 @@ export interface IConnected {
      */
     maxMessageSize: number;
 
+    // Back-compat, removal tracked with issue #4346
     /**
      * The parent branch for the document
      */
-    parentBranch: string | null;
+    parentBranch: null;
 
     /**
      * Messages sent during the connection
@@ -105,7 +106,7 @@ export interface IConnected {
     /**
      * Configuration details provided by the service
      */
-    serviceConfiguration: IServiceConfiguration;
+    serviceConfiguration: IClientConfiguration;
 
     /**
      * Connection mode of client.

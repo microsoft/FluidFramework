@@ -27,6 +27,7 @@
     "postinstall": "npm run postinstall:lerna",
     "lint": "lerna run lint --no-sort --stream",
     "lint:fix": "lerna run lint:fix --no-sort --stream",
+    "lint:strict": "lerna run lint --stream -- -- -- --report-unused-disable-directives",
     "policy-check": "fluid-repo-policy-check",
     "policy-check:fix": "fluid-repo-policy-check -r",
     "post-lerna-install:default": "[ -f package-lock.json ] && mv package-lock.json lerna-package-lock.json; [ -f package-lock.json.bak ] && mv package-lock.json.bak package-lock.json; exit 0",
@@ -71,7 +72,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.9319",
+    "@fluidframework/build-tools": "^0.2.12384",
     "@microsoft/api-documenter": "^7.4.6",
     "@microsoft/api-extractor": "^7.7.2",
     "concurrently": "^5.2.0",

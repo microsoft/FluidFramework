@@ -3,18 +3,17 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-use-before-define */
-
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
 import * as core from "@fluidframework/server-services-core";
-import { validateTokenClaims } from "@fluidframework/server-services-utils";
+import { validateTokenClaims, throttle, IThrottleMiddlewareOptions } from "@fluidframework/server-services-utils";
 import { Request, Response, Router } from "express";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import requestAPI from "request";
-import { getParam } from "../../../utils";
+import winston from "winston";
+import { getParam, Constants } from "../../../utils";
 import {
     craftClientJoinMessage,
     craftClientLeaveMessage,
@@ -28,8 +27,14 @@ export function create(
     config: Provider,
     producer: core.IProducer,
     tenantManager: core.ITenantManager,
-    storage: core.IDocumentStorage): Router {
+    storage: core.IDocumentStorage,
+    throttler: core.IThrottler): Router {
     const router: Router = Router();
+
+    const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+        throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+        throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
+    };
 
     function returnResponse<T>(
         resultP: Promise<T>,
@@ -47,33 +52,44 @@ export function create(
         }, (error) => response.status(400).end(error.toString()));
     }
 
-    router.get("/ping", async (request, response) => {
+    router.get("/ping", throttle(throttler, winston, {
+        ...commonThrottleOptions,
+        throttleIdPrefix: "ping",
+    }), async (request, response) => {
         response.sendStatus(200);
     });
 
-    router.patch("/:tenantId/:id/root", async (request, response) => {
-        const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
-        const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
-        const validP = verifyRequest(request, tenantManager, storage, maxTokenLifetimeSec, isTokenExpiryEnabled);
-        returnResponse(validP, request, response, mapSetBuilder);
-    });
+    router.patch(
+        "/:tenantId/:id/root",
+        throttle(throttler, winston, commonThrottleOptions),
+        async (request, response) => {
+            const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
+            const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
+            const validP = verifyRequest(request, tenantManager, storage, maxTokenLifetimeSec, isTokenExpiryEnabled);
+            returnResponse(validP, request, response, mapSetBuilder);
+        },
+    );
 
-    router.post("/:tenantId/:id/blobs", async (request, response) => {
-        const tenantId = getParam(request.params, "tenantId");
-        const blobData = request.body as IBlobData;
-        const historian = config.get("worker:blobStorageUrl") as string;
-        const requestToken = fromUtf8ToBase64(tenantId);
-        const uri = `${historian}/repos/${tenantId}/git/blobs?token=${requestToken}`;
-        const requestBody: git.ICreateBlobParams = {
-            content: blobData.content,
-            encoding: "base64",
-        };
-        uploadBlob(uri, requestBody).then((data: git.ICreateBlobResponse) => {
-            response.status(200).json(data);
-        }, (err) => {
-            response.status(400).end(err.toString());
-        });
-    });
+    router.post(
+        "/:tenantId/:id/blobs",
+        throttle(throttler, winston, commonThrottleOptions),
+        async (request, response) => {
+            const tenantId = getParam(request.params, "tenantId");
+            const blobData = request.body as IBlobData;
+            const historian = config.get("worker:blobStorageUrl") as string;
+            const requestToken = fromUtf8ToBase64(tenantId);
+            const uri = `${historian}/repos/${tenantId}/git/blobs?token=${requestToken}`;
+            const requestBody: git.ICreateBlobParams = {
+                content: blobData.content,
+                encoding: "base64",
+            };
+            uploadBlob(uri, requestBody).then((data: git.ICreateBlobResponse) => {
+                response.status(200).json(data);
+            }, (err) => {
+                response.status(400).end(err.toString());
+            });
+        },
+    );
 
     return router;
 }
@@ -84,6 +100,7 @@ function mapSetBuilder(request: Request): any[] {
     for (const reqOp of reqOps) {
         ops.push(craftMapSet(reqOp));
     }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return ops;
 }
 
@@ -146,13 +163,13 @@ const verifyRequest = async (
 async function verifyToken(request: Request, tenantManager: core.ITenantManager, maxTokenLifetimeSec: number, isTokenExpiryEnabled: boolean): Promise<void> {
     const token = request.headers["access-token"] as string;
     if (!token) {
-        return Promise.reject("Missing access token");
+        return Promise.reject(new Error("Missing access token"));
     }
     const tenantId = getParam(request.params, "tenantId");
     const documentId = getParam(request.params, "id");
     const claims = validateTokenClaims(token, documentId, tenantId, maxTokenLifetimeSec, isTokenExpiryEnabled);
     if (!claims) {
-        return Promise.reject("Invalid access token");
+        return Promise.reject(new Error("Invalid access token"));
     }
     return tenantManager.verifyToken(claims.tenantId, token);
 }
@@ -161,7 +178,7 @@ async function checkDocumentExistence(request: Request, storage: core.IDocumentS
     const tenantId = getParam(request.params, "tenantId");
     const documentId = getParam(request.params, "id");
     if (!tenantId || !documentId) {
-        return Promise.reject("Invalid tenant or document id");
+        return Promise.reject(new Error("Invalid tenant or document id"));
     }
     return storage.getDocument(tenantId, documentId);
 }

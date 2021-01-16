@@ -7,12 +7,12 @@ import { IEventProvider, IErrorEvent, ITelemetryBaseLogger } from "@fluidframewo
 import {
     ConnectionMode,
     IClient,
+    IClientConfiguration,
     ICreateBlobResponse,
     IDocumentMessage,
     IErrorTrackingService,
     INack,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalClient,
     ISignalMessage,
     ISnapshotTree,
@@ -65,7 +65,7 @@ export interface IDocumentStorageService {
     getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
 
     /**
-     * Reads the object with the given ID
+     * Reads the object with the given ID, returns content in base64
      */
     read(id: string): Promise<string>;
 
@@ -127,11 +127,6 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
     existing: boolean;
 
     /**
-     * The parent branch for the document
-     */
-    parentBranch: string | null;
-
-    /**
      * Maximum size of a message that can be sent to the server. Messages larger than this size must be chunked.
      */
     maxMessageSize: number;
@@ -159,7 +154,7 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
     /**
      * Configuration details provided by the service
      */
-    serviceConfiguration: IServiceConfiguration;
+    serviceConfiguration: IClientConfiguration;
 
     /**
      * Last known sequence number to ordering service at the time of connection
@@ -183,12 +178,33 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
     /**
      * Disconnects the given delta connection
      */
-    close();
+    close(): void;
+}
+
+export enum LoaderCachingPolicy {
+    /**
+     * The loader should not implement any prefetching or caching policy.
+     */
+    NoCaching,
+
+    /**
+     * The loader should implement prefetching policy, i.e. it should prefetch resources from the latest snapshot.
+     */
+    Prefetch,
+}
+
+export interface IDocumentServicePolicies {
+    readonly caching?: LoaderCachingPolicy;
 }
 
 export interface IDocumentService {
 
     resolvedUrl: IResolvedUrl;
+
+    /**
+     * Policies implemented/instructed by driver.
+     */
+    policies?: IDocumentServicePolicies;
 
     /**
      * Access to storage associated with the document...
@@ -204,11 +220,6 @@ export interface IDocumentService {
      * Subscribes to the document delta stream
      */
     connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
-
-    /**
-     * Creates a branch of the document with the given ID. Returns the new ID.
-     */
-    branch(): Promise<string>;
 
     /**
      * Returns the error tracking service

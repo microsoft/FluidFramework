@@ -9,7 +9,6 @@ import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { getLocatorFromOdspUrl, storeLocatorInOdspUrl, encodeOdspFluidDataStoreLocator } from "./odspFluidFileLink";
-import { resolveDataStore } from "./resolveDataStore";
 import { IOdspResolvedUrl, OdspDocumentInfo, OdspFluidDataStoreLocator, SharingLinkHeader } from "./contracts";
 import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 import { createOdspUrl } from "./createOdspUrl";
@@ -24,6 +23,11 @@ import {
     tokenFromResponse,
 } from "./tokenFetch";
 
+/**
+ * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
+ * url format and the ones which have things like driveId, siteId, itemId etc encoded in nav param.
+ * This resolver also handles share links and try to generate one for the use by the app.
+ */
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     private readonly logger: ITelemetryLogger;
     private readonly sharingLinkCache = new PromiseCache<string, string>();
@@ -34,6 +38,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         private readonly identityType: IdentityType = "Enterprise",
         logger?: ITelemetryBaseLogger,
         private readonly appName?: string,
+        private readonly msGraphOrigin?: string,
     ) {
         this.logger = ChildLogger.create(logger, "OdspDriver");
         this.getSharingLinkToken = this.toInstrumentedSharingLinkTokenFetcher(this.logger, tokenFetcher);
@@ -152,6 +157,8 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             this.identityType,
             this.logger,
             "existingAccess",
+            undefined,
+            this.msGraphOrigin,
         ).then((shareLink) => {
                 if (!shareLink) {
                     throw new Error("Failed to get share link");
@@ -197,14 +204,6 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         });
 
         return shareLinkUrl.href;
-    }
-
-    /**
-     * Retrieves data store path information from a storage URL. Returns undefined if the resolver
-     * does not handle this URL
-     */
-    public static resolveDataStore(url: URL): string | undefined {
-        return resolveDataStore(url);
     }
 
     /**

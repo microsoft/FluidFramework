@@ -8,7 +8,6 @@ import {
     IConnect,
     IConnected,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
@@ -20,6 +19,7 @@ import {
     IDatabaseManager,
     IDocumentStorage,
     ILogger,
+    IServiceConfiguration,
     IWebSocket,
     IWebSocketServer,
     MongoDatabaseManager,
@@ -93,7 +93,6 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             testTenantManager,
             new EmptyTaskMessageSender(),
             {},
-            16 * 1024,
             generateToken,
             async () => new TestHistorian(testDbFactory.testDatabase),
             logger,

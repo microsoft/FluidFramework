@@ -20,7 +20,7 @@ export interface IEnvelope {
     contents: any;
 }
 
-export interface ISignalEnvelop {
+export interface ISignalEnvelope {
     /**
      * The target for the envelope, undefined for the container
      */

@@ -27,8 +27,14 @@ export class DocumentStorageService implements IDocumentStorageService {
     // The values of this cache is useless. We only need the keys. So we are always putting
     // empty strings as values.
     private readonly blobsShaCache = new Map<string, string>();
+    private _logTailSha: string | undefined = undefined;
+
     public get repositoryUrl(): string {
         return "";
+    }
+
+    public get logTailSha(): string | undefined {
+        return this._logTailSha;
     }
 
     constructor(public readonly id: string, public manager: gitStorage.GitManager) {
@@ -45,8 +51,11 @@ export class DocumentStorageService implements IDocumentStorageService {
             requestVersion = versions[0];
         }
 
-        const tree = await this.manager.getTree(requestVersion.treeId);
-        return buildHierarchy(tree, this.blobsShaCache);
+        const rawTree = await this.manager.getTree(requestVersion.treeId);
+        const tree = buildHierarchy(rawTree, this.blobsShaCache);
+
+        this._logTailSha = ".logTail" in tree.trees ? tree.trees[".logTail"].blobs.logTail : undefined;
+        return tree;
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
@@ -165,6 +174,11 @@ export class DocumentStorageService implements IDocumentStorageService {
             // root of tree should be unnamed
             path.shift();
         }
+        if (path.length === 0) {
+            const tryId = previousFullSnapshot.id;
+            assert(!!tryId, "Parent summary does not have handle for specified path.");
+            return tryId;
+        }
 
         return this.getIdFromPathCore(handleType, path, previousFullSnapshot);
     }
@@ -175,21 +189,18 @@ export class DocumentStorageService implements IDocumentStorageService {
         /** Previous snapshot, subtree relative to this path part */
         previousSnapshot: ISnapshotTree,
     ): string {
+        assert(path.length > 0, "Expected at least 1 path part");
         const key = path[0];
         if (path.length === 1) {
             switch (handleType) {
                 case SummaryType.Blob: {
                     const tryId = previousSnapshot.blobs[key];
-                    if (!tryId) {
-                        throw Error("Parent summary does not have blob handle for specified path.");
-                    }
+                    assert(!!tryId, "Parent summary does not have blob handle for specified path.");
                     return tryId;
                 }
                 case SummaryType.Tree: {
                     const tryId = previousSnapshot.trees[key]?.id;
-                    if (!tryId) {
-                        throw Error("Parent summary does not have tree handle for specified path.");
-                    }
+                    assert(!!tryId, "Parent summary does not have tree handle for specified path.");
                     return tryId;
                 }
                 default:

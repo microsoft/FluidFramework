@@ -37,7 +37,8 @@ describe("TableDocument", () => {
             [[codeDetails, TableDocument.getFactory()]],
             deltaConnectionServer,
             urlResolver);
-        const container = await createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+        const container = await createAndAttachContainer(
+            codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
         tableDocument = await requestFluidObject<TableDocument>(container, "default");
 
         opProcessingController = new OpProcessingController(deltaConnectionServer);

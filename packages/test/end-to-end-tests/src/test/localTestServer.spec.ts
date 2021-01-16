@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import { IContainer, ILoader } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { SharedString } from "@fluidframework/sequence";
@@ -31,8 +30,10 @@ describe("LocalTestServer", () => {
     const factory = new TestFluidObjectFactory([[stringId, SharedString.getFactory()]]);
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let urlResolver: IUrlResolver;
+    let urlResolver: LocalResolver;
     let opProcessingController: OpProcessingController;
+    let container1: IContainer;
+    let container2: IContainer;
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;
     let sharedString1: SharedString;
@@ -40,7 +41,8 @@ describe("LocalTestServer", () => {
 
     async function createContainer(): Promise<IContainer> {
         const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
-        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+        return createAndAttachContainer(
+            codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(): Promise<IContainer> {
@@ -53,17 +55,17 @@ describe("LocalTestServer", () => {
         urlResolver = new LocalResolver();
 
         // Create a Container for the first client.
-        const container1 = await createContainer();
+        container1 = await createContainer();
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
         // Load the Container that was created by the first client.
-        const container2 = await loadContainer();
+        container2 = await loadContainer();
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
-        opProcessingController.addDeltaManagers(dataObject1.runtime.deltaManager, dataObject2.runtime.deltaManager);
+        opProcessingController = new OpProcessingController();
+        opProcessingController.addDeltaManagers(container1.deltaManager, container2.deltaManager);
     });
 
     describe("Document.existing", () => {
@@ -108,15 +110,15 @@ describe("LocalTestServer", () => {
             assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 0, "User2 received message count is incorrect");
 
-            await opProcessingController.process(dataObject1.runtime.deltaManager);
+            await opProcessingController.process(container1.deltaManager);
             assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 0, "User2 received message count is incorrect");
 
-            await opProcessingController.process(dataObject2.runtime.deltaManager);
+            await opProcessingController.process(container2.deltaManager);
             assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
 
-            await opProcessingController.processIncoming(dataObject1.runtime.deltaManager);
+            await opProcessingController.processIncoming(container1.deltaManager);
             assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
 

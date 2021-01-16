@@ -231,33 +231,19 @@
         },
         {
             "type": "node",
-            "request": "attach",
-            "name": "Attach to routemanager",
-            "address": "localhost",
-            "port": 5863,
-            "restart": true,
-            "sourceMaps": true,
-            "localRoot": "${workspaceFolder}",
-            "remoteRoot": "/usr/src/server",
-            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
-            "protocol":"inspector",
-            "trace": "sm"
-        },
-        {
-            "type": "node",
             "request": "launch",
             "name": "Debug Current Test",
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
             "stopOnEntry": false,
             "env": {
-                "TS_NODE_PROJECT": "${fileDirname}/../../tsconfig.json",
+                "TS_NODE_PROJECT": "${fileDirname}/tsconfig.json",
             },
             "args": ["--no-timeouts", "--exit", "--require", "ts-node/register","${file}", ],
             "cwd": "${workspaceFolder}",
             "skipFiles": [
                 "<node_internals>/**/*.js"
-            ]
+            ],
+            "preLaunchTask": "fluid-build $cwd --nolint"
         }
 
     ]

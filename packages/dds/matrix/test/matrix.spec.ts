@@ -7,6 +7,7 @@ import "mocha";
 
 import { strict as assert } from "assert";
 import { Serializable } from "@fluidframework/datastore-definitions";
+import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
 import {
     MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
@@ -18,32 +19,63 @@ import {
 import { SharedMatrix, SharedMatrixFactory } from "../src";
 import { fill, check, insertFragmented, extract, expectSize } from "./utils";
 import { TestConsumer } from "./testconsumer";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+
+function createConnectedMatrix(id: string, runtimeFactory: MockContainerRuntimeFactory) {
+    const dataStoreRuntime = new MockFluidDataStoreRuntime();
+    const matrix = new SharedMatrix(dataStoreRuntime, id, SharedMatrixFactory.Attributes);
+    matrix.connect({
+        deltaConnection: runtimeFactory
+            .createContainerRuntime(dataStoreRuntime)
+            .createDeltaConnection(),
+        objectStorage: new MockStorage(),
+    });
+    return matrix;
+}
+
+function createLocalMatrix(id: string) {
+    const factory = new SharedMatrixFactory();
+    return factory.create(new MockFluidDataStoreRuntime(), id);
+}
+
+function createMatrixForReconnection(id: string, runtimeFactory: MockContainerRuntimeFactoryForReconnection) {
+    const dataStoreRuntime = new MockFluidDataStoreRuntime();
+    const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
+    const services = {
+        deltaConnection: containerRuntime.createDeltaConnection(),
+        objectStorage: new MockStorage(),
+    };
+
+    const matrix = new SharedMatrix(dataStoreRuntime, id, SharedMatrixFactory.Attributes);
+    matrix.connect(services);
+    return { matrix, containerRuntime };
+}
 
 describe("Matrix", () => {
     describe("local client", () => {
         let matrix: SharedMatrix<number>;
         let consumer: TestConsumer<undefined | null | number>;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
 
-        // Snapshots the given `SharedMatrix`, loads the snapshot into a 2nd SharedMatrix, vets that the two are
+        // Summarizes the given `SharedMatrix`, loads the summarize into a 2nd SharedMatrix, vets that the two are
         // equivalent, and then returns the 2nd matrix.
-        async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
-            // Create a snapshot
-            const objectStorage = new MockStorage(matrix.snapshot());
+        async function summarize<T extends Serializable>(matrix: SharedMatrix<T>) {
+            // Create a summary
+            const objectStorage = MockStorage.createFromSummary(matrix.summarize().summary);
 
-            // Create a local DataStoreRuntime since we only want to load the snapshot for a local client.
+            // Create a local DataStoreRuntime since we only want to load the summary for a local client.
             const dataStoreRuntime = new MockFluidDataStoreRuntime();
             dataStoreRuntime.local = true;
 
-            // Load the snapshot into a newly created 2nd SharedMatrix.
+            // Load the summmary into a newly created 2nd SharedMatrix.
             const matrix2 = new SharedMatrix<T>(dataStoreRuntime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
-            await matrix2.load(/*branchId: */ null as any, {
+            await matrix2.load({
                 deltaConnection: new MockEmptyDeltaConnection(),
                 objectStorage
             });
 
             // Vet that the 2nd matrix is equivalent to the original.
             expectSize(matrix2, matrix.rowCount, matrix.colCount);
-            assert.deepEqual(extract(matrix), extract(matrix2), 'Matrix must round-trip through snapshot/load.');
+            assert.deepEqual(extract(matrix), extract(matrix2), 'Matrix must round-trip through summarize/load.');
 
             return matrix2;
         }
@@ -52,7 +84,7 @@ describe("Matrix", () => {
             const actual = extract(matrix);
             assert.deepEqual(actual, expected, "Matrix must match expected.");
             assert.deepEqual(extract(consumer), actual, "Matrix must notify IMatrixConsumers of all changes.");
-            return await snapshot(matrix);
+            return await summarize(matrix);
         }
 
         beforeEach(async () => {
@@ -63,10 +95,10 @@ describe("Matrix", () => {
         });
 
         afterEach(async () => {
-            // Paranoid check that ensures that the SharedMatrix loaded from the snapshot also
-            // round-trips through snapshot/load.  (Also, may help detect snapshot/loaded bugs
+            // Paranoid check that ensures that the SharedMatrix loaded from the summary also
+            // round-trips through summarize/load.  (Also, may help detect summarize/loaded bugs
             // in the event that the test case forgets to call/await `expect()`.)
-            await snapshot(await snapshot(matrix));
+            await summarize(await summarize(matrix));
 
             assert.deepEqual(extract(consumer), extract(matrix),
                 "Matrix must notify IMatrixConsumers of all changes.");
@@ -223,7 +255,7 @@ describe("Matrix", () => {
             });
         });
 
-        describe("snapshot", () => {
+        describe("summarize", () => {
             it("mutate after load", async () => {
                 matrix.insertCols(0, 2);
                 matrix.insertRows(0, 2);
@@ -232,7 +264,7 @@ describe("Matrix", () => {
                     2, 3,
                 ]);
 
-                // The 'matrix' returned by 'expect' is the result of snapshotting and loading 'matrix'.
+                // The 'matrix' returned by 'expect' is the result of summarizeting and loading 'matrix'.
                 const matrix2 = await expect([
                     [0, 1],
                     [2, 3],
@@ -289,37 +321,23 @@ describe("Matrix", () => {
         beforeEach(async () => {
             containerRuntimeFactory = new MockContainerRuntimeFactory();
 
-            // Create and connect the first SharedMatrix.
-            const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-            matrix1 = new SharedMatrix(dataStoreRuntime1, "matrix1", SharedMatrixFactory.Attributes);
-            matrix1.connect({
-                deltaConnection: containerRuntimeFactory
-                    .createContainerRuntime(dataStoreRuntime1)
-                    .createDeltaConnection(),
-                objectStorage: new MockStorage(),
-            });
+            // Create the first SharedMatrix.
+            matrix1 = createConnectedMatrix("matrix1", containerRuntimeFactory);
             consumer1 = new TestConsumer(matrix1);
 
-            // Create and connect the second SharedMatrix.
-            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-            matrix2 = new SharedMatrix(dataStoreRuntime2, "matrix2", SharedMatrixFactory.Attributes);
-            matrix2.connect({
-                deltaConnection: containerRuntimeFactory
-                    .createContainerRuntime(dataStoreRuntime2)
-                    .createDeltaConnection(),
-                objectStorage: new MockStorage(),
-            });
+            // Create a second SharedMatrix.
+            matrix2 = createConnectedMatrix("matrix2", containerRuntimeFactory);
             consumer2 = new TestConsumer(matrix2);
         });
 
-        afterEach(async () => {
-            await expect();
-
-            matrix1.closeMatrix(consumer1);
-            matrix2.closeMatrix(consumer2);
-        });
-
         describe("conflict", () => {
+            afterEach(async () => {
+                await expect();
+    
+                matrix1.closeMatrix(consumer1);
+                matrix2.closeMatrix(consumer2);
+            });
+
             it("setCell", async () => {
                 matrix1.insertCols(0, 1);
                 matrix1.insertRows(0, 1);
@@ -603,7 +621,7 @@ describe("Matrix", () => {
         });
     });
 
-    describe("SharedMatrix reconnection", () => {
+    describe("Reconnection", () => {
         let matrix1: SharedMatrix;
         let matrix2: SharedMatrix;
         let consumer1: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
@@ -632,24 +650,16 @@ describe("Matrix", () => {
         beforeEach(async () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
-            // Create and connect the first SharedMatrix.
-            const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
-            matrix1 = new SharedMatrix(dataStoreRuntime1, "matrix1", SharedMatrixFactory.Attributes);
-            matrix1.connect({
-                deltaConnection: containerRuntime1.createDeltaConnection(),
-                objectStorage: new MockStorage(),
-            });
+            // Create the first SharedMatrix.
+            const response1 = createMatrixForReconnection("matrix1", containerRuntimeFactory);
+            matrix1 = response1.matrix;
+            containerRuntime1 = response1.containerRuntime;
             consumer1 = new TestConsumer(matrix1);
 
-            // Create and connect the second SharedMatrix.
-            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-            matrix2 = new SharedMatrix(dataStoreRuntime2, "matrix2", SharedMatrixFactory.Attributes);
-            matrix2.connect({
-                deltaConnection: containerRuntime2.createDeltaConnection(),
-                objectStorage: new MockStorage(),
-            });
+            // Create a second SharedMatrix.
+            const response2 = createMatrixForReconnection("matrix2", containerRuntimeFactory);
+            matrix2 = response2.matrix;
+            containerRuntime2 = response2.containerRuntime;
             consumer2 = new TestConsumer(matrix2);
         });
 
@@ -826,5 +836,75 @@ describe("Matrix", () => {
                 [undefined, 0],
             ]);
         });
+    });
+
+    describe("Garbage Collection", () => {
+        class GCSharedMatrixProvider implements IGCTestProvider {
+            private colCount = 0;
+            private subMatrixCount = 0;
+            private _expectedRoutes: string[] = [];
+            private readonly matrix1: SharedMatrix;
+            private readonly matrix2: SharedMatrix;
+            private readonly containerRuntimeFactory: MockContainerRuntimeFactory;
+
+            constructor() {
+                this.containerRuntimeFactory = new MockContainerRuntimeFactory();
+                this.matrix1 = createConnectedMatrix("matrix1", this.containerRuntimeFactory);
+                this.matrix2 = createConnectedMatrix("matrix2", this.containerRuntimeFactory);
+                // Insert a row into the matrix where we will set cells.
+                this.matrix1.insertRows(0, 1);
+            }
+
+            public get sharedObject() {
+                // Return the remote SharedMatrix because we want to verify its summary data.
+                return this.matrix2;
+            }
+
+            public get expectedOutboundRoutes() {
+                return this._expectedRoutes;
+            }
+
+            public async addOutboundRoutes() {
+                const newSubMatrixId = `subMatrix-${++this.subMatrixCount}`;
+                const subMatrix = createLocalMatrix(newSubMatrixId);
+
+                this.matrix1.insertCols(this.colCount, 1);
+                this.matrix1.setCell(0, this.colCount, subMatrix.handle);
+                this.colCount++;
+                this._expectedRoutes.push(subMatrix.handle.absolutePath);
+                this.containerRuntimeFactory.processAllMessages();
+            }
+
+            public async deleteOutboundRoutes() {
+                // Delete the last handle that was added.
+                const lastAddedCol = this.colCount - 1;
+                const deletedHandle = this.matrix1.getCell(0, lastAddedCol) as IFluidHandle;
+                assert(deletedHandle, "Route must be added before deleting");
+
+                this.matrix1.setCell(0, lastAddedCol, undefined);
+                // Remove deleted handle's route from expected routes.
+                this._expectedRoutes = this._expectedRoutes.filter((route) => route !== deletedHandle.absolutePath);
+                this.containerRuntimeFactory.processAllMessages();
+            }
+
+            public async addNestedHandles() {
+                const subMatrix = createLocalMatrix(`subMatrix-${++this.subMatrixCount}`);
+                const subMatrix2 = createLocalMatrix(`subMatrix-${++this.subMatrixCount}`);
+                const containingObject = {
+                    subMatrixHandle: subMatrix.handle,
+                    nestedObj: {
+                        subMatrix2Handle: subMatrix2.handle,
+                    },
+                };
+
+                this.matrix1.insertCols(this.colCount, 1);
+                this.matrix1.setCell(0, this.colCount, containingObject);
+                this.colCount++;
+                this._expectedRoutes.push(subMatrix.handle.absolutePath, subMatrix2.handle.absolutePath);
+                this.containerRuntimeFactory.processAllMessages();
+            }
+        }
+
+        runGCTests(GCSharedMatrixProvider);
     });
 });

@@ -13,7 +13,6 @@ import {
     IDocumentMessage,
     IDocumentSystemMessage,
     INack,
-    IServiceConfiguration,
     ISignalMessage,
     MessageType,
     NackErrorType,
@@ -30,17 +29,6 @@ import {
     getRandomInt,
     generateClientId,
 } from "../utils";
-
-export const DefaultServiceConfiguration: IServiceConfiguration = {
-    blockSize: 64436,
-    maxMessageSize: 16 * 1024,
-    summary: {
-        idleTime: 5000,
-        maxOps: 1000,
-        maxTime: 5000 * 12,
-        maxAckWaitTime: 600000,
-    },
-};
 
 interface IRoom {
 
@@ -63,10 +51,14 @@ function getRoomId(room: IRoom) {
     return `${room.tenantId}/${room.documentId}`;
 }
 
+const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocketConn`;
+
+const getSubmitOpThrottleId = (clientId: string) => `${clientId}_SubmitOp`;
+
 // Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
     // Trace sampling.
-    if (getRandomInt(100) === 0 && message.operation && message.operation.traces) {
+    if (message.operation && message.operation.traces && getRandomInt(100) === 0) {
         message.operation.traces.push(
             {
                 action: "start",
@@ -106,6 +98,43 @@ function selectProtocolVersion(connectVersions: string[]): string {
     }
 }
 
+/**
+ * @returns ThrottlingError if throttled; undefined if not throttled or no throttler provided.
+ */
+function checkThrottle(
+    throttler: core.IThrottler | undefined,
+    throttleId: string,
+    logger?: core.ILogger): core.ThrottlingError | undefined {
+    if (!throttler) {
+        return;
+    }
+
+    const messageMetaData = {
+        key: throttleId,
+        weight: 1,
+        event_type: "throttling",
+    };
+
+    try {
+        throttler.incrementCount(throttleId);
+    } catch (e) {
+        if (e instanceof core.ThrottlingError) {
+            logger?.info(`Throttled: ${throttleId}`, {
+                messageMetaData: {
+                    ...messageMetaData,
+                    reason: e.message,
+                    retryAfterInSeconds: e.retryAfter,
+                },
+            });
+            return e;
+        } else {
+            logger?.error(
+                `Throttle increment failed: ${safeStringify(e, undefined, 2)}`,
+                { messageMetaData });
+        }
+    }
+}
+
 export function configureWebSocketServices(
     webSocketServer: core.IWebSocketServer,
     orderManager: core.IOrdererManager,
@@ -116,7 +145,9 @@ export function configureWebSocketServices(
     logger: core.ILogger,
     maxNumberOfClientsPerDocument: number = 1000000,
     maxTokenLifetimeSec: number = 60 * 60,
-    isTokenExpiryEnabled: boolean = false) {
+    isTokenExpiryEnabled: boolean = false,
+    connectThrottler?: core.IThrottler,
+    submitOpThrottler?: core.IThrottler) {
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, core.IOrdererConnection>();
@@ -158,7 +189,15 @@ export function configureWebSocketServices(
         }
 
         async function connectDocument(message: IConnect): Promise<IConnectedClient> {
+            const throttleError = checkThrottle(
+                connectThrottler,
+                getSocketConnectThrottleId(message.tenantId),
+                logger);
+            if (throttleError) {
+                return Promise.reject(throttleError);
+            }
             if (!message.token) {
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject("Must provide an authorization token");
             }
 
@@ -170,12 +209,14 @@ export function configureWebSocketServices(
                 maxTokenLifetimeSec,
                 isTokenExpiryEnabled);
             if (!claims) {
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject("Invalid claims");
             }
 
             try {
                 await tenantManager.verifyToken(claims.tenantId, token);
             } catch (err) {
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject("Invalid token");
             }
 
@@ -205,6 +246,7 @@ export function configureWebSocketServices(
             const connectVersions = message.versions ? message.versions : ["^0.1.0"];
             const version = selectProtocolVersion(connectVersions);
             if (!version) {
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject(
                     `Unsupported client protocol.` +
                     `Server: ${protocolVersions}. ` +
@@ -217,6 +259,7 @@ export function configureWebSocketServices(
             const [details, clients] = await Promise.all([detailsP, clientsP]);
 
             if (clients.length > maxNumberOfClientsPerDocument) {
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject({
                     code: 400,
                     message: "Too many clients are already connected to this document.",
@@ -235,6 +278,7 @@ export function configureWebSocketServices(
                 if (lifeTimeMSec > 0) {
                     setExpirationTimer(lifeTimeMSec);
                 } else {
+                    // eslint-disable-next-line prefer-promise-reject-errors
                     return Promise.reject("Invalid token expiry");
                 }
             }
@@ -266,8 +310,13 @@ export function configureWebSocketServices(
                     existing: details.existing,
                     maxMessageSize: connection.maxMessageSize,
                     mode: "write",
-                    parentBranch: connection.parentBranch,
-                    serviceConfiguration: connection.serviceConfiguration,
+                    // Back-compat, removal tracked with issue #4346
+                    parentBranch: null,
+                    serviceConfiguration: {
+                        blockSize: connection.serviceConfiguration.blockSize,
+                        maxMessageSize: connection.serviceConfiguration.maxMessageSize,
+                        summary: connection.serviceConfiguration.summary,
+                    },
                     initialClients: clients,
                     initialMessages: [],
                     initialSignals: [],
@@ -281,8 +330,13 @@ export function configureWebSocketServices(
                     existing: details.existing,
                     maxMessageSize: 1024, // Readonly client can't send ops.
                     mode: "read",
+                    // Back-compat, removal tracked with issue #4346
                     parentBranch: null, // Does not matter for now.
-                    serviceConfiguration: DefaultServiceConfiguration,
+                    serviceConfiguration: {
+                        blockSize: core.DefaultServiceConfiguration.blockSize,
+                        maxMessageSize: core.DefaultServiceConfiguration.maxMessageSize,
+                        summary: core.DefaultServiceConfiguration.summary,
+                    },
                     initialClients: clients,
                     initialMessages: [],
                     initialSignals: [],
@@ -323,6 +377,20 @@ export function configureWebSocketServices(
         socket.on(
             "submitOp",
             (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[]) => {
+                const throttleError = checkThrottle(
+                    submitOpThrottler,
+                    getSubmitOpThrottleId(clientId),
+                    logger);
+                if (throttleError) {
+                    const nackMessage = createNackMessage(
+                        throttleError.code,
+                        NackErrorType.ThrottlingError,
+                        throttleError.message,
+                        throttleError.retryAfter);
+                    socket.emit("nack", "", [nackMessage]);
+                    return;
+                }
+
                 // Verify the user has an orderer connection.
                 if (!connectionsMap.has(clientId)) {
                     let nackMessage: INack;

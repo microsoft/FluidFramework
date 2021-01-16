@@ -34,12 +34,6 @@ export enum MessageType {
     // Forced snapshot
     Save = "saveOp",
 
-    // System message to indicate the creation of a new fork
-    Fork = "fork",
-
-    // Message sent when forwarding a sequenced message to an upstream branch
-    Integrate = "integrate",
-
     // Message to indicate the need of a remote agent for a document.
     RemoteHelp = "remoteHelp",
 

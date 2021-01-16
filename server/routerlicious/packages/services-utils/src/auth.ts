@@ -16,7 +16,7 @@ export function validateTokenClaims(
     documentId: string,
     tenantId: string,
     maxTokenLifetimeSec: number,
-    isTokenExpiryEnabled: boolean): ITokenClaims {
+    isTokenExpiryEnabled: boolean): ITokenClaims | undefined {
     const claims = jwt.decode(token) as ITokenClaims;
 
     if (!claims || claims.documentId !== documentId || claims.tenantId !== tenantId) {
@@ -50,10 +50,10 @@ export function generateToken(
     user?: IUser,
     lifetime: number = 60 * 60,
     ver: string = "1.0"): string {
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define, no-param-reassign
+    // eslint-disable-next-line no-param-reassign
     user = (user) ? user : generateUser();
     if (user.id === "" || user.id === undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-use-before-define, no-param-reassign
+        // eslint-disable-next-line no-param-reassign
         user = generateUser();
     }
 

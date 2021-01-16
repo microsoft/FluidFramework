@@ -18,6 +18,7 @@ import {
     ContainerWarning,
     ILoader,
     AttachState,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -26,12 +27,17 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
-    ITreeEntry,
 } from "@fluidframework/protocol-definitions";
 import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
+import { IGarbageCollectionData, IGarbageCollectionSummaryDetails } from "./garbageCollection";
 import { IInboundSignalMessage } from "./protocol";
-import { ISummaryTreeWithStats, ISummarizerNode, SummarizeInternalFn, CreateChildSummarizerNodeParam } from "./summary";
+import {
+    CreateChildSummarizerNodeParam,
+    IChannelSummarizeResult,
+    ISummarizerNodeWithGC,
+    SummarizeInternalFn,
+} from "./summary";
 import { ITaskManager } from "./agent";
 
 /**
@@ -160,15 +166,9 @@ export interface IFluidDataStoreChannel extends IDisposable {
     bindToContext(): void;
 
     /**
-     * @deprecated - Replaced by getAttachSummary()
-     * Retrieves the snapshot used as part of the initial snapshot message
-     */
-    getAttachSnapshot(): ITreeEntry[];
-
-    /**
      * Retrieves the summary used as part of the initial summary message
      */
-    getAttachSummary(): ISummaryTreeWithStats
+    getAttachSummary(): IChannelSummarizeResult;
 
     /**
      * Processes the op.
@@ -186,7 +186,18 @@ export interface IFluidDataStoreChannel extends IDisposable {
      * @param fullTree - true to bypass optimizations and force a full summary tree.
      * @param trackState - This tells whether we should track state from this summary.
      */
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<IChannelSummarizeResult>;
+
+    /**
+     * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context
+     * including any of its children. Each node has a list of outbound routes to other GC nodes in the document.
+     */
+    getGCData(): Promise<IGarbageCollectionData>;
+
+    /**
+     * After GC has run, called to notify this channel of routes that are used in it.
+     */
+    updateUsedRoutes(usedRoutes: string[]): void;
 
     /**
      * Notifies this object about changes in the connection state.
@@ -205,42 +216,11 @@ export interface IFluidDataStoreChannel extends IDisposable {
     reSubmit(type: string, content: any, localOpMetadata: unknown);
 }
 
-/**
- * @deprecated 0.21 summarizerNode - use ISummarizerNode instead
- */
-export interface ISummaryTracker {
-    /**
-     * The reference sequence number of the most recent acked summary.
-     */
-    readonly referenceSequenceNumber: number;
-    /**
-     * The latest sequence number of change to this node or subtree.
-     */
-    readonly latestSequenceNumber: number;
-    /**
-     * Gets the id to use when summarizing, or undefined if it has changed.
-     */
-    getId(): Promise<string | undefined>;
-    /**
-     * Updates the latest sequence number representing change to this node or subtree.
-     * @param latestSequenceNumber - new latest sequence number
-     */
-    updateLatestSequenceNumber(latestSequenceNumber: number): void;
-    /**
-     * Creates a child ISummaryTracker node based off information from its parent.
-     * @param key - key of node for newly created child ISummaryTracker
-     * @param latestSequenceNumber - initial value for latest sequence number of change
-     */
-    createOrGetChild(key: string, latestSequenceNumber: number): ISummaryTracker;
-    /**
-     * Retrives a child ISummaryTracker node based off the key.
-     * @param key - key of the child ISummaryTracker node.
-     * @returns - The child ISummaryTracker node.
-     */
-    getChild(key: string): ISummaryTracker | undefined;
-}
-
-export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => ISummarizerNode;
+export type CreateChildSummarizerNodeFn = (
+    summarizeInternal: SummarizeInternalFn,
+    getGCDataFn: () => Promise<IGarbageCollectionData>,
+    getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
+) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {
     (event: "leader" | "notleader" | "attaching" | "attached", listener: () => void);
@@ -271,9 +251,8 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
      * TODO: should remove after detachedNew is in place
      */
     readonly existing: boolean;
-    readonly options: any;
+    readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
-    readonly parentBranch: string | null;
     readonly connected: boolean;
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -303,7 +282,6 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
      * Ambient services provided with the context
      */
     readonly scope: IFluidObject;
-    readonly summaryTracker: ISummaryTracker;
 
     /**
      * Context for handle resolution, represents a route to a data store

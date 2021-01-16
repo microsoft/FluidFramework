@@ -26,6 +26,7 @@ import {
     IRawOperationMessage,
     IScribe,
     ISequencedOperationMessage,
+    IServiceConfiguration,
     RawOperationType,
     SequencedOperationType,
     IQueuedMessage,
@@ -67,14 +68,12 @@ export class ScribeLambda extends SequencedLambda {
         private readonly summaryReader: ISummaryReader,
         private readonly checkpointManager: ICheckpointManager,
         scribe: IScribe,
+        private readonly serviceConfiguration: IServiceConfiguration,
         private readonly producer: IProducer | undefined,
         private protocolHandler: ProtocolOpHandler,
         private term: number,
         private protocolHead: number,
         messages: ISequencedDocumentMessage[],
-        private readonly generateServiceSummary: boolean,
-        private readonly clearCacheAfterServiceSummary: boolean,
-        private readonly ignoreStorageException?: boolean,
     ) {
         super(context);
 
@@ -110,7 +109,7 @@ export class ScribeLambda extends SequencedLambda {
                         this.term = lastSummary.term;
                         const lastScribe = JSON.parse(lastSummary.scribe) as IScribe;
                         this.protocolHead = lastSummary.protocolHead;
-                        this.protocolHandler = initializeProtocol(this.documentId, lastScribe.protocolState, this.term);
+                        this.protocolHandler = initializeProtocol(lastScribe.protocolState, this.term);
                         this.setStateFromCheckpoint(lastScribe);
                         this.pendingMessages = new Deque<ISequencedDocumentMessage>(
                             lastSummary.messages.filter(
@@ -208,7 +207,7 @@ export class ScribeLambda extends SequencedLambda {
                             this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
                             // If this flag is set, we should ignore any storage speciic error and move forward
                             // to process the next message.
-                            if (this.ignoreStorageException) {
+                            if (this.serviceConfiguration.scribe.ignoreStorageException) {
                                 await this.sendSummaryNack(
                                     {
                                         errorMessage: "Failed to summarize the document.",
@@ -230,7 +229,7 @@ export class ScribeLambda extends SequencedLambda {
                         value.operation.minimumSequenceNumber === value.operation.sequenceNumber,
                         `${value.operation.minimumSequenceNumber} != ${value.operation.sequenceNumber}`);
 
-                    if (this.generateServiceSummary) {
+                    if (this.serviceConfiguration.scribe.generateServiceSummary) {
                         const operation = value.operation as ISequencedDocumentAugmentedMessage;
                         const scribeCheckpoint = this.generateCheckpoint(this.lastOffset);
                         try {
@@ -242,19 +241,19 @@ export class ScribeLambda extends SequencedLambda {
                             );
 
                             if (summaryResponse) {
-                                if (this.clearCacheAfterServiceSummary) {
+                                if (this.serviceConfiguration.scribe.clearCacheAfterServiceSummary) {
                                     this.clearCache = true;
                                 }
                                 await this.sendSummaryConfirmationMessage(
                                     operation.sequenceNumber,
-                                    this.clearCacheAfterServiceSummary);
+                                    this.serviceConfiguration.scribe.clearCacheAfterServiceSummary);
                                 this.context.log.info(
                                     `Service summary success @${operation.sequenceNumber}`, { messageMetaData });
                             }
                         } catch (ex) {
                             // If this flag is set, we should ignore any storage speciic error and move forward
                             // to process the next message.
-                            if (this.ignoreStorageException) {
+                            if (this.serviceConfiguration.scribe.ignoreStorageException) {
                                 this.context.log.error(
                                     `Service summary failure @${operation.sequenceNumber}`, { messageMetaData });
                             } else {
@@ -313,7 +312,7 @@ export class ScribeLambda extends SequencedLambda {
     }
 
     private revertProtocolState(protocolState: IProtocolState, pendingOps: ISequencedDocumentMessage[]) {
-        this.protocolHandler = initializeProtocol(this.documentId, protocolState, this.term);
+        this.protocolHandler = initializeProtocol(protocolState, this.term);
         this.pendingMessages = new Deque(pendingOps);
     }
 
@@ -377,7 +376,7 @@ export class ScribeLambda extends SequencedLambda {
             clientSequenceNumber: -1,
             contents,
             referenceSequenceNumber: -1,
-            traces: [],
+            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.SummaryAck,
         };
 
@@ -389,7 +388,7 @@ export class ScribeLambda extends SequencedLambda {
             clientSequenceNumber: -1,
             contents,
             referenceSequenceNumber: -1,
-            traces: [],
+            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.SummaryNack,
         };
 
@@ -414,7 +413,7 @@ export class ScribeLambda extends SequencedLambda {
             contents: null,
             data: JSON.stringify(controlMessage),
             referenceSequenceNumber: -1,
-            traces: [],
+            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.Control,
         };
 

@@ -4,8 +4,10 @@
  */
 
 export * from "./interfaces";
+export * from "./testObjectProvider";
 export * from "./localLoader";
 export * from "./localCodeLoader";
 export * from "./opProcessingController";
 export * from "./testContainerRuntimeFactory";
 export * from "./testFluidObject";
+export * from "./timeoutUtils";

@@ -9,7 +9,10 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+import {
+    LocalDocumentServiceFactory,
+    LocalResolver,
+} from "@fluidframework/local-driver";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -102,7 +105,8 @@ describe("Document Dirty", () => {
             codeLoader,
         });
 
-        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+        return createAndAttachContainer(
+            codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
     }
 
     beforeEach(async () => {
@@ -114,8 +118,8 @@ describe("Document Dirty", () => {
         dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
         containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
         sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
-        opProcessingController.addDeltaManagers(dataObject.runtime.deltaManager);
+        opProcessingController = new OpProcessingController();
+        opProcessingController.addDeltaManagers(container.deltaManager);
 
         // Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
         // re-sent. Do it here so that the extra events don't mess with rest of the test.

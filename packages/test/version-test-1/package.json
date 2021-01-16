@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/version-test-1",
-  "version": "0.29.0",
+  "version": "0.33.0",
   "private": true,
   "description": "Fluid object to test version conversion.",
   "homepage": "https://fluidframework.com",
@@ -13,10 +13,11 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build-v2": "cd @fluid-internal/version-test-2 && test -e dist/main.bundle.js || npm run webpack",
-    "build:compile": "npm run tsc",
+    "build:compile": "npm run tsc && npm run build:test",
     "build:compile:min": "npm run build:compile",
     "build:full": "concurrently npm:build npm:webpack",
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
+    "build:test": "tsc --project tests/tsconfig.json",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src tests",
     "eslint:fix": "eslint --format stylish src tests --fix",
@@ -36,18 +37,18 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.29.0",
-    "@fluidframework/base-host": "^0.29.0",
-    "@fluidframework/common-utils": "^0.25.0",
-    "@fluidframework/runtime-utils": "^0.29.0",
-    "@fluidframework/view-interfaces": "^0.29.0",
+    "@fluidframework/aqueduct": "^0.33.0",
+    "@fluidframework/base-host": "^0.33.0",
+    "@fluidframework/common-utils": "^0.27.0-0",
+    "@fluidframework/runtime-utils": "^0.33.0",
+    "@fluidframework/view-interfaces": "^0.33.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
-    "@fluidframework/eslint-config-fluid": "^0.21.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.21.0",
     "@fluidframework/test-tools": "^0.2.3074",
-    "@fluidframework/webpack-fluid-loader": "^0.29.0",
+    "@fluidframework/webpack-fluid-loader": "^0.33.0",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",
     "@types/node": "^10.17.24",

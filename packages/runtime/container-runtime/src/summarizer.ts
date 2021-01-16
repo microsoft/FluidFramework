@@ -11,8 +11,10 @@ import {
     Timer,
     IPromiseTimerResult,
 } from "@fluidframework/common-utils";
-import { ChildLogger, CustomErrorWithProps, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IFluidRunnable } from "@fluidframework/core-interfaces";
+import { ChildLogger, LoggingError, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import {
+    IFluidRunnable,
+} from "@fluidframework/core-interfaces";
 import { IDeltaManager, IErrorBase } from "@fluidframework/container-definitions";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import {
@@ -29,6 +31,7 @@ import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 // Send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec
 const maxSummarizeTimeoutCount = 5; // Double and resend 5 times
+const maxSummarizeAckWaitTime = 120000; // 2 minutes
 
 const minOpsForLastSummary = 50;
 
@@ -43,6 +46,22 @@ export interface IProvideSummarizer {
     readonly ISummarizer: ISummarizer;
 }
 
+export interface ISummarizerInternalsProvider {
+    /** Encapsulates the work to walk the internals of the running container to generate a summary */
+    generateSummary(
+        full: boolean,
+        safe: boolean,
+        summaryLogger: ITelemetryLogger,
+    ): Promise<GenerateSummaryData | undefined>;
+
+    /** Callback whenever a new SummaryAck is received, to update internal tracking state */
+    refreshLatestSummaryAck(
+        proposalHandle: string,
+        ackHandle: string,
+        summaryLogger: ITelemetryLogger,
+    ): Promise<void>;
+}
+
 const summarizingError = "summarizingError";
 
 export interface ISummarizingWarning extends IErrorBase {
@@ -53,7 +72,7 @@ export interface ISummarizingWarning extends IErrorBase {
     readonly logged: boolean;
 }
 
-export class SummarizingWarning extends CustomErrorWithProps implements ISummarizingWarning {
+export class SummarizingWarning extends LoggingError implements ISummarizingWarning {
     readonly errorType = summarizingError;
     readonly canRetry = true;
 
@@ -227,7 +246,7 @@ export class RunningSummarizer implements IDisposable {
         logger: ITelemetryLogger,
         summaryWatcher: IClientSummaryWatcher,
         configuration: ISummaryConfiguration,
-        generateSummary: (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>,
+        internalsProvider: Pick<ISummarizerInternalsProvider, "generateSummary">,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
         immediateSummary: boolean,
@@ -239,7 +258,7 @@ export class RunningSummarizer implements IDisposable {
             logger,
             summaryWatcher,
             configuration,
-            generateSummary,
+            internalsProvider,
             lastOpSeqNumber,
             firstAck,
             immediateSummary,
@@ -266,19 +285,22 @@ export class RunningSummarizer implements IDisposable {
     private readonly summarizeTimer: Timer;
     private readonly pendingAckTimer: PromiseTimer;
     private readonly heuristics: SummarizerHeuristics;
+    private readonly logger: ITelemetryLogger;
 
     private constructor(
         private readonly clientId: string,
         private readonly onBehalfOfClientId: string,
-        private readonly logger: ITelemetryLogger,
+        baseLogger: ITelemetryLogger,
         private readonly summaryWatcher: IClientSummaryWatcher,
         private readonly configuration: ISummaryConfiguration,
-        private readonly generateSummary: (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>,
+        private readonly internalsProvider: Pick<ISummarizerInternalsProvider, "generateSummary">,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
         private immediateSummary: boolean = false,
         private readonly raiseSummarizingError: (description: string) => void,
     ) {
+        this.logger = new ChildLogger(baseLogger, "Running", undefined, { summaryGenTag: () => this.summarizeCount });
+
         this.heuristics = new SummarizerHeuristics(
             configuration,
             (reason) => this.trySummarize(reason),
@@ -289,13 +311,19 @@ export class RunningSummarizer implements IDisposable {
             maxSummarizeTimeoutTime,
             () => this.summarizeTimerHandler(maxSummarizeTimeoutTime, 1));
 
+        // Cap the maximum amount of time client will wait for a summarize op ack to maxSummarizeAckWaitTime
+        const maxAckWaitTime = Math.min(this.configuration.maxAckWaitTime, maxSummarizeAckWaitTime);
+
         this.pendingAckTimer = new PromiseTimer(
-            this.configuration.maxAckWaitTime,
+            maxAckWaitTime,
             () => {
                 this.raiseSummarizingError("SummaryAckWaitTimeout");
+                // Note: summaryGenTag (from ChildLogger definition) may be 0,
+                // since this code path is hit when RunningSummarizer first starts up,
+                // before this instance has kicked off a new summarize run.
                 this.logger.sendErrorEvent({
                     eventName: "SummaryAckWaitTimeout",
-                    maxAckWaitTime: this.configuration.maxAckWaitTime,
+                    maxAckWaitTime,
                     refSequenceNumber: this.heuristics.lastAttempted.refSequenceNumber,
                     summarySequenceNumber: this.heuristics.lastAttempted.summarySequenceNumber,
                     timePending: Date.now() - this.heuristics.lastAttempted.summaryTime,
@@ -310,6 +338,17 @@ export class RunningSummarizer implements IDisposable {
         this.pendingAckTimer.clear();
         this._disposed = true;
     }
+
+    /**
+     * RunningSummarizer's logger includes the sequenced index of the current summary on each event.
+     * If some other Summarizer code wants that event on their logs they can get it here,
+     * but only if they're logging about that same summary.
+     * @param summaryOpRefSeq - RefSeq number of the summary op, to ensure the log correlation will be correct
+     */
+    public tryGetCorrelatedLogger = (summaryOpRefSeq) =>
+        this.heuristics.lastAttempted.refSequenceNumber === summaryOpRefSeq
+            ? this.logger
+            : undefined;
 
     public handleSystemOp(op: ISequencedDocumentMessage) {
         switch (op.type) {
@@ -433,6 +472,8 @@ export class RunningSummarizer implements IDisposable {
     }
 
     private async summarizeCore(reason: string, safe: boolean): Promise<boolean | undefined> {
+        ++this.summarizeCount;
+
         // Wait to generate and send summary
         const summaryData = await this.generateSummaryWithLogging(reason, safe);
         this.heuristics.recordAttempt(summaryData?.referenceSequenceNumber);
@@ -491,9 +532,8 @@ export class RunningSummarizer implements IDisposable {
 
     private async generateSummaryWithLogging(message: string, safe: boolean): Promise<GenerateSummaryData | undefined> {
         const summarizingEvent = PerformanceEvent.start(this.logger, {
-            eventName: "Summarizing",
+            eventName: "GenerateSummary",
             message,
-            summarizeCount: ++this.summarizeCount,
             timeSinceLastAttempt: Date.now() - this.heuristics.lastAttempted.summaryTime,
             timeSinceLastSummary: Date.now() - this.heuristics.lastAcked.summaryTime,
             safe: safe || undefined,
@@ -502,7 +542,7 @@ export class RunningSummarizer implements IDisposable {
         // Wait for generate/send summary
         let summaryData: GenerateSummaryData | undefined;
         try {
-            summaryData = await this.generateSummary(this.immediateSummary, safe);
+            summaryData = await this.internalsProvider.generateSummary(this.immediateSummary, safe, this.logger);
         } catch (error) {
             summarizingEvent.cancel({ category: "error" }, error);
             return;
@@ -571,13 +611,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     constructor(
         private readonly runtime: ISummarizerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
-        // eslint-disable-next-line max-len
-        private readonly generateSummaryCore: (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>,
-        private readonly refreshLatestAck: (
-            proposalHandle: string,
-            ackHandle: string,
-            referenceSequenceNumber: number
-        ) => Promise<void>,
+        private readonly internalsProvider: ISummarizerInternalsProvider,
         summaryCollection?: SummaryCollection,
     ) {
         super();
@@ -702,7 +736,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.logger,
             this.summaryCollection.createWatcher(startResult.clientId),
             this.configurationGetter(),
-            async (full: boolean, safe: boolean) => this.generateSummary(full, safe),
+            this /* Pick<ISummarizerInternalsProvider, "generateSummary"> */,
             this.runtime.deltaManager.lastSequenceNumber,
             initialAttempt,
             this.immediateSummary,
@@ -721,9 +755,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError" }, error);
 
             // Raise error to parent container.
-            this.emit("summarizingError", createSummarizingWarning("Summarizer: handleAckError", true));
+            this.emit("summarizingError", createSummarizingWarning("Summarizer: HandleSummaryAckFatalError", true));
 
-            this.stop("handleAckError");
+            this.stop("HandleSummaryAckFatalError");
         });
 
         // Listen for ops
@@ -763,7 +797,12 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         return this.runtime.nextSummarizerD.promise;
     }
 
-    private async generateSummary(full: boolean, safe: boolean): Promise<GenerateSummaryData | undefined> {
+    /** Implementation of SummarizerInternalsProvider.generateSummary */
+    public async generateSummary(
+        full: boolean,
+        safe: boolean,
+        summaryLogger: ITelemetryLogger,
+    ): Promise<GenerateSummaryData | undefined> {
         if (this.onBehalfOfClientId !== this.runtime.summarizerClientId
             && this.runtime.clientId !== this.runtime.summarizerClientId) {
             // We are no longer the summarizer; a different client is, so we should stop ourself
@@ -771,23 +810,24 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             return undefined;
         }
 
-        return this.generateSummaryCore(full, safe);
+        return this.internalsProvider.generateSummary(full, safe, summaryLogger);
     }
 
     private async handleSummaryAcks() {
         let refSequenceNumber = this.summaryCollection.initialSequenceNumber;
         while (this.runningSummarizer) {
+            const summaryLogger = this.runningSummarizer.tryGetCorrelatedLogger(refSequenceNumber) ?? this.logger;
             try {
                 const ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber);
                 refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
 
-                await this.refreshLatestAck(
+                await this.internalsProvider.refreshLatestSummaryAck(
                     ack.summaryOp.contents.handle,
                     ack.summaryAckNack.contents.handle,
-                    refSequenceNumber,
+                    summaryLogger,
                 );
             } catch (error) {
-                this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError", refSequenceNumber }, error);
+                summaryLogger.sendErrorEvent({ eventName: "HandleSummaryAckError", refSequenceNumber }, error);
             }
             refSequenceNumber++;
         }

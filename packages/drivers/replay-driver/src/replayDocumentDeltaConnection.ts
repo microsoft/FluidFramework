@@ -11,10 +11,10 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
+    IClientConfiguration,
     IConnected,
     IDocumentMessage,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
@@ -204,6 +204,7 @@ export class ReplayDocumentDeltaConnection
             initialClients: [],
             maxMessageSize: ReplayDocumentDeltaConnection.ReplayMaxMessageSize,
             mode: "write",
+            // Back-compat, removal tracked with issue #4346
             parentBranch: null,
             serviceConfiguration: {
                 blockSize: 64436,
@@ -257,10 +258,6 @@ export class ReplayDocumentDeltaConnection
         return this.details.existing;
     }
 
-    public get parentBranch(): string | null {
-        return this.details.parentBranch;
-    }
-
     public get version(): string {
         return this.details.version;
     }
@@ -277,7 +274,7 @@ export class ReplayDocumentDeltaConnection
         return this.details.initialClients;
     }
 
-    public get serviceConfiguration(): IServiceConfiguration {
+    public get serviceConfiguration(): IClientConfiguration {
         return this.details.serviceConfiguration;
     }
 

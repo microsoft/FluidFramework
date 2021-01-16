@@ -7,6 +7,31 @@ import * as git from "@fluidframework/gitresources";
 import * as api from "@fluidframework/protocol-definitions";
 
 /**
+ * Required params to create ref with config
+ */
+export interface ICreateRefParamsExternal extends git.ICreateRefParams {
+    config?: IExternalWriterConfig;
+}
+
+/**
+ * Required params to get ref with config
+ */
+export interface IGetRefParamsExternal {
+    config?: IExternalWriterConfig;
+}
+
+/**
+ * Required params to patch ref with config
+ */
+export interface IPatchRefParamsExternal extends git.IPatchRefParams {
+    config?: IExternalWriterConfig
+}
+
+interface IExternalWriterConfig {
+    enabled: boolean;
+}
+
+/**
  * Git cache data
  */
 export interface IGitCache {

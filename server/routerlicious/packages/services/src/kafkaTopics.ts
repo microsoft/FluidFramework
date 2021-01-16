@@ -48,7 +48,7 @@ export async function ensureTopics(
             } else {
                 const topicError = result.find((value) => value.error);
                 if (topicError) {
-                    reject(`Failed to create topic "${topicError.topic}". Error: ${topicError.error}`);
+                    reject(new Error(`Failed to create topic "${topicError.topic}". Error: ${topicError.error}`));
                 } else {
                     resolve();
                 }

@@ -30,7 +30,16 @@ export class Anchor extends DataObject implements IProvideFluidHTMLView, IProvid
         return this.defaultFluidObjectInternal;
     }
 
-    private static readonly factory = new DataObjectFactory("anchor", Anchor, [], {});
+    private static readonly factory = new DataObjectFactory(
+        "anchor",
+        Anchor,
+        [],
+        {},
+        [
+            LastEditedTrackerDataObject.getFactory().registryEntry,
+            Vltava.getFactory().registryEntry,
+        ],
+        );
 
     public static getFactory() {
         return Anchor.factory;
@@ -47,7 +56,7 @@ export class Anchor extends DataObject implements IProvideFluidHTMLView, IProvid
     }
 
     protected async initializingFirstTime() {
-        const defaultFluidObject = await Vltava.getFactory().createInstance(this.context.containerRuntime);
+        const defaultFluidObject = await Vltava.getFactory().createChildInstance(this.context);
         this.root.set(this.defaultFluidObjectId, defaultFluidObject.handle);
 
         const lastEditedFluidObject = await LastEditedTrackerDataObject.getFactory().createChildInstance(this.context);
@@ -56,11 +65,11 @@ export class Anchor extends DataObject implements IProvideFluidHTMLView, IProvid
 
     protected async hasInitialized() {
         this.defaultFluidObjectInternal =
-            (await this.root.get<IFluidHandle>(this.defaultFluidObjectId).get())
-                .IFluidHTMLView;
+            (await this.root.get<IFluidHandle>(this.defaultFluidObjectId)?.get())
+                ?.IFluidHTMLView;
 
         this.lastEditedFluidObject =
-            (await this.root.get<IFluidHandle>(this.lastEditedFluidObjectId).get())
-                .IFluidLastEditedTracker;
+            (await this.root.get<IFluidHandle>(this.lastEditedFluidObjectId)?.get())
+                ?.IFluidLastEditedTracker;
     }
 }

@@ -14,8 +14,8 @@ import {
     ITestFluidObject,
 } from "@fluidframework/test-utils";
 import {
-    generateTestWithCompat,
-    ICompatLocalTestObjectProvider,
+    generateTest,
+    ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
 } from "./compatUtils";
@@ -27,7 +27,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (args: ICompatLocalTestObjectProvider) => {
+const tests = (args: ITestObjectProvider) => {
     let dataObject1: ITestFluidObject;
     let sharedMap1: ISharedMap;
     let sharedMap2: ISharedMap;
@@ -124,6 +124,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         let user3ValueChangedCount: number = 0;
         sharedMap1.on("valueChanged", (changed, local, msg) => {
             if (!local) {
+                assert(msg);
                 if (msg.type === MessageType.Operation) {
                     assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 1");
                     user1ValueChangedCount = user1ValueChangedCount + 1;
@@ -132,6 +133,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         });
         sharedMap2.on("valueChanged", (changed, local, msg) => {
             if (!local) {
+                assert(msg);
                 if (msg.type === MessageType.Operation) {
                     assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 2");
                     user2ValueChangedCount = user2ValueChangedCount + 1;
@@ -140,6 +142,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         });
         sharedMap3.on("valueChanged", (changed, local, msg) => {
             if (!local) {
+                assert(msg);
                 if (msg.type === MessageType.Operation) {
                     assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 3");
                     user3ValueChangedCount = user3ValueChangedCount + 1;
@@ -265,7 +268,7 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
          * https://github.com/microsoft/FluidFramework/issues/2400
          *
          * - A SharedMap in local (detached) state set a key.
-         * - The map is then attached so that it is avaible to remote clients.
+         * - The map is then attached so that it is available to remote clients.
          * - One of the remote clients sets a new value to the same key.
          * - The expected behavior is that the first SharedMap updates the key with the new value. But in the bug
          *   the first SharedMap stores the key in its pending state even though it does not send out an op. So,
@@ -283,9 +286,10 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 
         await args.opProcessingController.process();
 
-        // The new map should be availble in the remote client and it should contain that key that was
+        // The new map should be available in the remote client and it should contain that key that was
         // set in local state.
-        const newSharedMap2 = await sharedMap2.get<IFluidHandle<SharedMap>>("newSharedMap").get();
+        const newSharedMap2 = await sharedMap2.get<IFluidHandle<SharedMap>>("newSharedMap")?.get();
+        assert(newSharedMap2);
         assert.equal(newSharedMap2.get("newKey"), "newValue", "The data set in local state is not available in map 2");
 
         // Set a new value for the same key in the remote map.
@@ -300,5 +304,5 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
 };
 
 describe("Map", () => {
-    generateTestWithCompat(tests);
+    generateTest(tests, { tinylicious: true });
 });

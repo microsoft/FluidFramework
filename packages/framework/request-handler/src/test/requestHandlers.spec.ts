@@ -23,7 +23,7 @@ class MockRuntime {
         if (id === "objectId") {
             return {
                 request: async (r) => {
-                    if (r.url === "" || r.url === "route") {
+                    if (r.url === "" || r.url === "/route") {
                         return createFluidObjectResponse({ route: r.url } as IFluidObject);
                     }
                     return { status: 404, mimeType: "text/plain", value: "not found" };
@@ -89,7 +89,7 @@ describe("RequestParser", () => {
             const requestParser = RequestParser.create({ url: "/objectId/route", headers: { wait: true } });
             const response = await innerRequestHandler(requestParser, runtime);
             assert.equal(response.status, 200);
-            assert.equal(response.value.route, "route");
+            assert.equal(response.value.route, "/route");
         });
 
         it("Data store request with non-existing sub route", async () => {

@@ -18,7 +18,7 @@
     "docker:build": "docker build -t monitoring .",
     "docker:start": "docker run --rm -t monitoring",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "start": "node dist/index.js",
     "start:debug": "node --inspect=0.0.0.0:5858 dist/index.js",
@@ -36,7 +36,7 @@
     "debug": "^4.1.1",
     "jsonwebtoken": "^8.5.1",
     "nconf": "^0.10.0",
-    "uuid": "^3.3.2",
+    "uuid": "^8.3.1",
     "winston": "3.2.1"
   },
   "devDependencies": {

@@ -435,32 +435,32 @@ describe("Matrix", () => {
         }
 
         describe("local client", () => {
-            // Snapshots the given `SharedMatrix`, loads the snapshot into a 2nd SharedMatrix, vets that the two are
+            // Summarizes the given `SharedMatrix`, loads the summary into a 2nd SharedMatrix, vets that the two are
             // equivalent, and then returns the 2nd matrix.
-            async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
-                // Create a snapshot
-                const objectStorage = new MockStorage(matrix.snapshot());
+            async function summarize<T extends Serializable>(matrix: SharedMatrix<T>) {
+                // Create a summay
+                const objectStorage = MockStorage.createFromSummary(matrix.summarize().summary);
 
-                // Create a local DataStoreRuntime since we only want to load the snapshot for a local client.
+                // Create a local DataStoreRuntime since we only want to load the summary for a local client.
                 const dataStoreRuntime = new MockFluidDataStoreRuntime();
                 dataStoreRuntime.local = true;
 
-                // Load the snapshot into a newly created 2nd SharedMatrix.
+                // Load the summary into a newly created 2nd SharedMatrix.
                 const matrix2 = new SharedMatrix<T>(dataStoreRuntime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
-                await matrix2.load(/*branchId: */ null as any, {
+                await matrix2.load({
                     deltaConnection: new MockEmptyDeltaConnection(),
                     objectStorage
                 });
 
                 // Vet that the 2nd matrix is equivalent to the original.
                 //
-                // BUG: In the case of a disconnected client, the MergeTree snapshot is missing segments
+                // BUG: In the case of a disconnected client, the MergeTree summary is missing segments
                 //      inserted via 'insertAtReferencePositionLocal()'.
                 //
                 //      (See https://github.com/microsoft/FluidFramework/issues/3950)
                 //
                 // expectSize(matrix2, matrix.rowCount, matrix.colCount);
-                // assert.deepEqual(extract(matrix), extract(matrix2), 'Matrix must round-trip through snapshot/load.');
+                // assert.deepEqual(extract(matrix), extract(matrix2), 'Matrix must round-trip through summarize/load.');
 
                 return matrix2;
             }
@@ -485,10 +485,10 @@ describe("Matrix", () => {
             });
 
             afterEach(async () => {
-                // Paranoid check that ensures that the SharedMatrix loaded from the snapshot also
-                // round-trips through snapshot/load.  (Also, may help detect snapshot/loaded bugs
+                // Paranoid check that ensures that the SharedMatrix loaded from the summary also
+                // round-trips through summarize/load.  (Also, may help detect summarize/loaded bugs
                 // in the event that the test case forgets to call/await `expect()`.)
-                await snapshot(await snapshot(matrix1));
+                await summarize(await summarize(matrix1));
 
                 // Ensure that IMatrixConsumer observed all changes to matrix.
                 assert.deepEqual(extract(consumer1), extract(matrix1), "Matrix must notify IMatrixConsumers of all changes.");

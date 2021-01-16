@@ -9,6 +9,7 @@ import {
     ContainerWarning,
     IDeltaManager,
     ILoader,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import {
     IFluidObject,
@@ -69,11 +70,9 @@ export interface IContainerRuntime extends
     IContainerRuntimeBaseWithCombinedEvents {
     readonly id: string;
     readonly existing: boolean;
-    readonly options: any;
+    readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
-    readonly codeDetails: IFluidCodeDetails;
-    readonly parentBranch: string | null;
     readonly connected: boolean;
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;

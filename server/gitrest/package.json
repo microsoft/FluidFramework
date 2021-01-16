@@ -13,7 +13,7 @@
     "build:compile": "npm run tsc",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "start": "node dist/www.js",
@@ -21,9 +21,10 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluidframework/gitresources": "^0.1014.0-7764",
-    "@fluidframework/server-services-core": "0.1014.0-7764",
-    "axios": "^0.21.0",
+    "@fluidframework/gitresources": "^0.1017.1",
+    "@fluidframework/server-services-client": "^0.1017.1",
+    "@fluidframework/server-services-utils": "^0.1017.1",
+    "axios": "^0.21.1",
     "body-parser": "^1.17.2",
     "compression": "^1.7.3",
     "cors": "^2.8.5",
@@ -34,6 +35,7 @@
     "nconf": "^0.10.0",
     "nodegit": "^0.26.1",
     "split": "^1.0.0",
+    "uuid": "^3.3.2",
     "winston": "^2.4.4"
   },
   "devDependencies": {
@@ -50,6 +52,7 @@
     "@types/nodegit": "^0.26.7",
     "@types/rimraf": "^2.0.2",
     "@types/supertest": "^2.0.7",
+    "@types/uuid": "^3.4.4",
     "@types/winston": "^2.4.4",
     "@typescript-eslint/eslint-plugin": "~4.2.0",
     "@typescript-eslint/parser": "~4.2.0",

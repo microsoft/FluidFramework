@@ -8,10 +8,31 @@
             "type": "process",
             "command": "node",
             "args": [
-                "${workspaceRoot}/node_modules/@fluid-internal/build-tools/dist/fluidBuild.js",
+                "${workspaceRoot}/node_modules/@fluidframework/build-tools/dist/fluidBuild/fluidBuild.js",
                 "--root",
                 "${workspaceRoot}",
                 "--vscode"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                {
+                    "base": "$tsc",
+                    "fileLocation": "absolute",
+                },
+                "$tslint5"
+            ]
+        },
+        {
+            "label": "fluid-build $cwd --nolint",
+            "type": "process",
+            "command": "node",
+            "args": [
+                "${workspaceRoot}/node_modules/@fluidframework/build-tools/dist/fluidBuild/fluidBuild.js",
+                "--root",
+                "${workspaceRoot}",
+                "--vscode",
+                "--nolint",
+                "${fileDirname}"
             ],
             "group": "build",
             "problemMatcher": [

@@ -12,8 +12,8 @@ import {
     ITestFluidObject,
 } from "@fluidframework/test-utils";
 import {
-    generateTestWithCompat,
-    ICompatLocalTestObjectProvider,
+    generateTest,
+    ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
 } from "./compatUtils";
@@ -25,7 +25,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (args: ICompatLocalTestObjectProvider) => {
+const tests = (args: ITestObjectProvider) => {
     let sharedString1: SharedString;
     let sharedString2: SharedString;
 
@@ -62,10 +62,11 @@ const tests = (args: ICompatLocalTestObjectProvider) => {
         const newContainer = await args.loadTestContainer(testContainerConfig) as Container;
         const newComponent = await requestFluidObject<ITestFluidObject>(newContainer, "default");
         const newSharedString = await newComponent.getSharedObject<SharedString>(stringId);
-        assert.equal(newSharedString.getText(), text, "The new container should receive the inserted text on creation");
+        assert.equal(
+            newSharedString.getText(), text, "The new container should receive the inserted text on creation");
     });
 };
 
 describe("SharedString", () => {
-    generateTestWithCompat(tests);
+    generateTest(tests, { tinylicious: true });
 });

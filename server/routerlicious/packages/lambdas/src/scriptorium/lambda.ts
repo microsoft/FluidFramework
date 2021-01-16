@@ -89,10 +89,11 @@ export class ScriptoriumLambda implements IPartitionLambda {
     }
 
     private async insertOp(messages: ISequencedOperationMessage[]) {
+        const dbOps = messages.map((message) => ({ ...message,
+            mongoTimestamp: new Date(message.operation.timestamp) }));
         return this.opCollection
-            .insertMany(messages, false)
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            .catch((error) => {
+            .insertMany(dbOps, false)
+            .catch(async (error) => {
                 // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
                 // All other errors result in a rejected promise.
                 if (error.code !== 11000) {

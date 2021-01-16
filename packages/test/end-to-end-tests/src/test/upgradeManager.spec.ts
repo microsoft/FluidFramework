@@ -13,7 +13,6 @@ import {
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -39,7 +38,7 @@ class TestDataObject extends DataObject {
     public get _root() { return this.root; }
 }
 
-describe("UpgradeManager", () => {
+describe("UpgradeManager (hot-swap)", () => {
     const documentId = "upgradeManagerTest";
     const documentLoadUrl = `fluid-test://localhost/${documentId}`;
     const codeDetails: IFluidCodeDetails = {
@@ -48,7 +47,7 @@ describe("UpgradeManager", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let urlResolver: IUrlResolver;
+    let urlResolver: LocalResolver;
     let documentServiceFactory: LocalDocumentServiceFactory;
     let opProcessingController: OpProcessingController;
 
@@ -58,9 +57,11 @@ describe("UpgradeManager", () => {
             urlResolver,
             documentServiceFactory,
             codeLoader,
+            options: { hotSwapContext: true },
         });
 
-        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+        return createAndAttachContainer(
+            codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {
@@ -69,6 +70,7 @@ describe("UpgradeManager", () => {
             urlResolver,
             documentServiceFactory,
             codeLoader,
+            options: { hotSwapContext: true },
         });
 
         return loader.resolve({ url: documentLoadUrl });
@@ -78,7 +80,7 @@ describe("UpgradeManager", () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
         urlResolver = new LocalResolver();
         documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController = new OpProcessingController();
     });
 
     afterEach(async () => {
@@ -105,7 +107,7 @@ describe("UpgradeManager", () => {
         const dataObjects = await Promise.all(containers.map(
             async (container) => requestFluidObject<TestDataObject>(container, "default")));
 
-        opProcessingController.addDeltaManagers(...dataObjects.map((c) => c._runtime.deltaManager));
+        opProcessingController.addDeltaManagers(...containers.map((c) => c.deltaManager));
 
         dataObjects.map((c, i) => {
             c._runtime.getQuorum().on("addProposal", () => { ++addCounts[i]; });
@@ -143,7 +145,7 @@ describe("UpgradeManager", () => {
         const container = await createContainer(TestDataObject.getFactory());
         const dataObject = await requestFluidObject<TestDataObject>(container, "default");
 
-        opProcessingController.addDeltaManagers(dataObject._runtime.deltaManager);
+        opProcessingController.addDeltaManagers(container.deltaManager);
         const upgradeManager = new UpgradeManager((container as any).context.runtime);
 
         const upgradeP = new Promise<void>((resolve) => {
@@ -182,7 +184,7 @@ describe("UpgradeManager", () => {
         });
 
         const dataObject = await requestFluidObject<TestDataObject>(container1, "default");
-        opProcessingController.addDeltaManagers(dataObject._runtime.deltaManager);
+        opProcessingController.addDeltaManagers(container1.deltaManager);
 
         // Set a key in the root map of the first container's dataObject. The Container is created in "read" mode so the
         // first op it sends will get nack'd and it reconnects.

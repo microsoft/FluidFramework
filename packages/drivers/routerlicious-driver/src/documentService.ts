@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import assert from "assert";
 import * as api from "@fluidframework/driver-definitions";
 import { IClient, IErrorTrackingService } from "@fluidframework/protocol-definitions";
 import { GitManager, Historian, ICredentials, IGitCache } from "@fluidframework/server-services-client";
-import Axios from "axios";
 import io from "socket.io-client";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
@@ -30,11 +30,14 @@ export class DocumentService implements api.IDocumentService {
         private readonly historianApi: boolean,
         private readonly directCredentials: ICredentials | undefined,
         private readonly gitCache: IGitCache | undefined,
+        private readonly logger: ITelemetryLogger | undefined,
         protected tokenProvider: ITokenProvider,
         protected tenantId: string,
         protected documentId: string,
     ) {
     }
+
+    private documentStorageService: DocumentStorageService | undefined;
 
     /**
      * Connects to a storage endpoint for snapshot service.
@@ -46,7 +49,10 @@ export class DocumentService implements api.IDocumentService {
             return new NullBlobStorageService();
         }
 
-        const storageToken = await this.tokenProvider.fetchStorageToken();
+        const storageToken = await this.tokenProvider.fetchStorageToken(
+            this.tenantId,
+            this.documentId,
+        );
         // Craft credentials - either use the direct credentials (i.e. a GitHub user + PAT) - or make use of our
         // tenant token
         let credentials: ICredentials | undefined;
@@ -85,7 +91,8 @@ export class DocumentService implements api.IDocumentService {
             }
         }
 
-        return new DocumentStorageService(this.documentId, gitManager);
+        this.documentStorageService = new DocumentStorageService(this.documentId, gitManager);
+        return this.documentStorageService;
     }
 
     /**
@@ -94,8 +101,11 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document delta storage service for routerlicious driver.
      */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
-        const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, this.tokenProvider);
-        return new DocumentDeltaStorageService(this.tenantId, this.documentId, deltaStorage);
+        assert(this.documentStorageService, "Storage service not initialized");
+
+        const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, this.tokenProvider, this.logger);
+        return new DocumentDeltaStorageService(this.tenantId, this.documentId,
+            deltaStorage, this.documentStorageService);
     }
 
     /**
@@ -104,7 +114,10 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document delta stream service for routerlicious driver.
      */
     public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
-        const ordererToken = await this.tokenProvider.fetchOrdererToken();
+        const ordererToken = await this.tokenProvider.fetchOrdererToken(
+            this.tenantId,
+            this.documentId,
+        );
         return R11sDocumentDeltaConnection.create(
             this.tenantId,
             this.documentId,
@@ -112,18 +125,6 @@ export class DocumentService implements api.IDocumentService {
             io,
             client,
             this.ordererUrl);
-    }
-
-    public async branch(): Promise<string> {
-        const ordererToken = await this.tokenProvider.fetchOrdererToken();
-        let headers: { Authorization: string } | null = null;
-        headers = {
-            Authorization: `Basic ${fromUtf8ToBase64(`${this.tenantId}:${ordererToken.jwt}`)}`,
-        };
-
-        // eslint-disable-next-line max-len
-        const result = await Axios.post<string>(`${this.ordererUrl}/documents/${this.tenantId}/${this.documentId}/forks`, { headers });
-        return result.data;
     }
 
     public getErrorTrackingService() {

@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { Deferred, TelemetryNullLogger } from "@fluidframework/common-utils";
+import sinon from "sinon";
+import { Deferred } from "@fluidframework/common-utils";
 import {
     ISequencedDocumentMessage,
     ISummaryAck,
@@ -12,7 +13,7 @@ import {
     ISummaryProposal,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import sinon from "sinon";
+import { MockLogger } from "@fluidframework/test-runtime-utils";
 import { RunningSummarizer } from "../summarizer";
 import { SummaryCollection } from "../summaryCollection";
 
@@ -22,6 +23,7 @@ describe("Runtime", () => {
             describe("Summary Schedule", () => {
                 let runCount: number;
                 let clock: sinon.SinonFakeTimers;
+                let mockLogger: MockLogger;
                 let summaryCollection: SummaryCollection;
                 let summarizer: RunningSummarizer;
                 const summarizerClientId = "test";
@@ -33,7 +35,7 @@ describe("Runtime", () => {
                     idleTime: 5000, // 5 sec (idle)
                     maxTime: 5000 * 12, // 1 min (active)
                     maxOps: 1000, // 1k ops (active)
-                    maxAckWaitTime: 600000, // 10 min
+                    maxAckWaitTime: 120000, // 2 min
                 };
                 let shouldDeferGenerateSummary: boolean = false;
                 let deferGenerateSummary: Deferred<void>;
@@ -92,14 +94,15 @@ describe("Runtime", () => {
                     clock.reset();
                     runCount = 0;
                     lastRefSeq = 0;
+                    mockLogger = new MockLogger();
                     summaryCollection = new SummaryCollection(0);
                     summarizer = await RunningSummarizer.start(
                         summarizerClientId,
                         onBehalfOfClientId,
-                        new TelemetryNullLogger(),
+                        mockLogger,
                         summaryCollection.createWatcher(summarizerClientId),
                         summaryConfig,
-                        async () => {
+                        { generateSummary: async () => {
                             runCount++;
 
                             // immediate broadcast
@@ -121,7 +124,7 @@ describe("Runtime", () => {
                                 handle: "test-handle",
                                 clientSequenceNumber: lastClientSeq,
                             };
-                        },
+                        } },
                         0,
                         { refSequenceNumber: 0, summaryTime: Date.now() },
                         false,
@@ -143,6 +146,11 @@ describe("Runtime", () => {
                     // now should run
                     await emitNextOp(1);
                     assert.strictEqual(runCount, 1);
+                    assert(mockLogger.matchEvents([
+                        { eventName: "Running:GenerateSummary_start", summaryGenTag: runCount },
+                        { eventName: "Running:GenerateSummary_end", summaryGenTag: runCount },
+                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                    ]), "unexpected log sequence");
 
                     // should not run, because our summary hasnt been acked/nacked yet
                     await emitNextOp(summaryConfig.maxOps + 1);
@@ -150,8 +158,19 @@ describe("Runtime", () => {
 
                     // should run, because another op has come in, and our summary has been acked
                     await emitAck();
+                    assert.strictEqual(runCount, 2);
+                    assert(mockLogger.matchEvents([
+                        { eventName: "Running:SummaryAck", summaryGenTag: (runCount - 1) }, // ack for previous run
+                        { eventName: "Running:GenerateSummary_start", summaryGenTag: runCount },
+                        { eventName: "Running:GenerateSummary_end", summaryGenTag: runCount },
+                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                    ]), "unexpected log sequence");
+
                     await emitNextOp();
                     assert.strictEqual(runCount, 2);
+                    assert(!mockLogger.matchEvents([
+                        { eventName: "Running:SummaryAck" },
+                    ]), "No ack expected yet");
                 });
 
                 it("Should summarize after configured idle time when not pending", async () => {

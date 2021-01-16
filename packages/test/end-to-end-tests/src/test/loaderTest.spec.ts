@@ -12,7 +12,6 @@ import {
 import { IContainer, ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { createAndAttachContainer, createLocalLoader, OpProcessingController } from "@fluidframework/test-utils";
@@ -74,7 +73,7 @@ describe("Loader.request", () => {
     let dataStore1: TestSharedDataObject1;
     let dataStore2: TestSharedDataObject2;
     let loader: ILoader;
-    let urlResolver: IUrlResolver;
+    let urlResolver: LocalResolver;
     let opProcessingController: OpProcessingController;
 
     async function createContainer(): Promise<IContainer> {
@@ -87,7 +86,8 @@ describe("Loader.request", () => {
                 ],
             );
         loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
-        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+        return createAndAttachContainer(
+            codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
     }
 
     beforeEach(async () => {
@@ -102,7 +102,7 @@ describe("Loader.request", () => {
         // this binds dataStore2 to dataStore1
         dataStore1._root.set("key", dataStore2.handle);
 
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController = new OpProcessingController();
         opProcessingController.addDeltaManagers(container.deltaManager);
     });
 
@@ -146,9 +146,6 @@ describe("Loader.request", () => {
         // this binds newDataStore to dataStore1
         dataStore1._root.set("key", newDataStore.handle);
 
-        // Flush all the ops
-        await opProcessingController.process();
-
         // the dataStore3 shouldn't exist in container2 yet.
         try {
             await requestFluidObject(container2, {
@@ -157,7 +154,8 @@ describe("Loader.request", () => {
             });
             assert(false, "Loader pause flags doesn't pause container op processing");
         } catch (e) {
-            assert.strictEqual(e.message, `DataStore ${newDataStore.id} does not exist`);
+            const topFrame: string | undefined = e?.stack.split("\n")[1].trimLeft();
+            assert(topFrame?.startsWith("at DataStores.getDataStore"), "Expected an error in DataStores.getDataStore");
         }
 
         (container2 as Container).resume();

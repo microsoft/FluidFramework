@@ -5,10 +5,16 @@
 
 import * as querystring from "querystring";
 import * as git from "@fluidframework/gitresources";
-import { ICreateRefParamsExternal, IPatchRefParamsExternal } from "@fluidframework/server-services-core";
+import {
+    IGetRefParamsExternal,
+    ICreateRefParamsExternal,
+    IPatchRefParamsExternal } from "@fluidframework/server-services-client";
+import { ITenantStorage } from "@fluidframework/server-services-core";
+import * as uuid from "uuid";
 import request from "request";
 import * as winston from "winston";
-import { ICache, IStorage } from "./definitions";
+import { getCorrelationId } from "@fluidframework/server-services-utils";
+import { ICache } from "./definitions";
 
 // We include the historian version in the user-agent string
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -34,7 +40,10 @@ function endsWith(value: string, endings: string[]): boolean {
 export class RestGitService {
     private readonly authHeader: string;
 
-    constructor(private readonly storage: IStorage, private readonly cache: ICache) {
+    constructor(
+        private readonly storage: ITenantStorage,
+        private readonly cache: ICache,
+        private readonly writeToExternalStorage: boolean) {
         if (storage.credentials) {
             const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
             this.authHeader = `Basic ${token.toString("base64")}`;
@@ -67,9 +76,17 @@ export class RestGitService {
     }
 
     public async getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
+        let config;
+        if (this.writeToExternalStorage) {
+            const getRefParams: IGetRefParamsExternal = {
+                config: { enabled: true },
+            };
+            config = encodeURIComponent(JSON.stringify(getRefParams));
+        }
         const query = querystring.stringify({
             count,
             sha,
+            config,
         });
         return this.get(`/repos/${this.getRepoPath()}/commits?${query}`);
     }
@@ -106,14 +123,29 @@ export class RestGitService {
     }
 
     public async getRef(ref: string): Promise<git.IRef> {
+        if (this.writeToExternalStorage) {
+            const getRefParams: IGetRefParamsExternal = {
+                config: { enabled: true },
+            };
+            const params = encodeURIComponent(JSON.stringify(getRefParams));
+            return this.get(`/repos/${this.getRepoPath()}/git/refs/${ref}?config=${params}`);
+        }
         return this.get(`/repos/${this.getRepoPath()}/git/refs/${ref}`);
     }
 
     public async createRef(params: ICreateRefParamsExternal): Promise<git.IRef> {
+        // We modify this param to prevent writes to external storage if tenant is not linked
+        if (!this.writeToExternalStorage) {
+            params.config.enabled = false;
+        }
         return this.post(`/repos/${this.getRepoPath()}/git/refs`, params);
     }
 
     public async updateRef(ref: string, params: IPatchRefParamsExternal): Promise<git.IRef> {
+        // We modify this param to prevent writes to external storage if tenant is not linked
+        if (!this.writeToExternalStorage) {
+            params.config.enabled = false;
+        }
         return this.patch(`/repos/${this.getRepoPath()}/git/refs/${ref}`, params);
     }
 
@@ -252,6 +284,7 @@ export class RestGitService {
         const options: request.OptionsWithUrl = {
             headers: {
                 "User-Agent": userAgent,
+                "x-correlation-id": getCorrelationId() || uuid.v4(),
             },
             json: true,
             method: "GET",
@@ -268,6 +301,7 @@ export class RestGitService {
             headers: {
                 "Content-Type": "application/json",
                 "User-Agent": userAgent,
+                "x-correlation-id": getCorrelationId() || uuid.v4(),
             },
             json: true,
             method: "POST",
@@ -282,6 +316,7 @@ export class RestGitService {
         const options: request.OptionsWithUrl = {
             headers: {
                 "User-Agent": userAgent,
+                "x-correlation-id": getCorrelationId() || uuid.v4(),
             },
             method: "DELETE",
             url: `${this.storage.url}${url}`,
@@ -297,6 +332,7 @@ export class RestGitService {
             headers: {
                 "Content-Type": "application/json",
                 "User-Agent": userAgent,
+                "x-correlation-id": getCorrelationId() || uuid.v4(),
             },
             json: true,
             method: "PATCH",

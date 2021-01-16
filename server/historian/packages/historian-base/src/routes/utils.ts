@@ -4,7 +4,10 @@
  */
 
 import { Response } from "express";
-import { ICache, ITenantService, RestGitService } from "../services";
+// In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
+// eslint-disable-next-line import/no-unresolved
+import { Params } from "express-serve-static-core";
+import { ICache, ITenantService, RestGitService, ITenantCustomDataExternal } from "../services";
 
 /**
  * Helper function to handle a promise that should be returned to the user
@@ -54,7 +57,10 @@ export async function createGitService(
     }
 
     const details = await tenantService.getTenant(tenantId, token);
-    const service = new RestGitService(details.storage, cache);
+    const customData: ITenantCustomDataExternal = details.customData;
+    const writeToExternalStorage = customData.externalStorageData !== undefined &&
+    customData.externalStorageData !== null;
+    const service = new RestGitService(details.storage, cache, writeToExternalStorage);
 
     return service;
 }
@@ -77,3 +83,12 @@ export function queryParamToString(value: any): string {
     if (typeof value !== "string") { return undefined; }
     return value;
 }
+
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+export function getParam(params: Params, key: string) {
+    return Array.isArray(params) ? undefined : params[key];
+}
+
+export const Constants = Object.freeze({
+    throttleIdSuffix: "HistorianRest",
+});

@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { makeHandlesSerializable, parseHandles, ValueType } from "@fluidframework/shared-object-base";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
@@ -178,7 +177,7 @@ export class MapKernel implements IValueTypeCreator {
 
     /**
      * Create a new shared map kernel.
-     * @param runtime - The data store runtime the shared object using the kernel will be associated with
+     * @param serializer - The serializer to serialize / parse handles
      * @param handle - The handle of the shared object using the kernel
      * @param submitMessage - A callback to submit a message through the shared object
      * @param isAttached - To query whether the shared object should generate ops
@@ -186,14 +185,14 @@ export class MapKernel implements IValueTypeCreator {
      * @param eventEmitter - The object that will emit map events
      */
     constructor(
-        private readonly runtime: IFluidDataStoreRuntime,
+        private readonly serializer: IFluidSerializer,
         private readonly handle: IFluidHandle,
         private readonly submitMessage: (op: any, localOpMetadata: unknown) => void,
         private readonly isAttached: () => boolean,
         valueTypes: Readonly<IValueType<any>[]>,
         public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
-        this.localValueMaker = new LocalValueMaker(runtime);
+        this.localValueMaker = new LocalValueMaker(serializer);
         this.messageHandlers = this.getMessageHandlers();
         for (const type of valueTypes) {
             this.localValueMaker.registerValueType(type);
@@ -275,12 +274,13 @@ export class MapKernel implements IValueTypeCreator {
     /**
      * {@inheritDoc ISharedMap.get}
      */
-    public get<T = any>(key: string): T {
+    public get<T = any>(key: string): T | undefined {
         if (!this.data.has(key)) {
             return undefined;
         }
 
-        const localValue = this.data.get(key);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const localValue = this.data.get(key)!;
 
         return localValue.value as T;
     }
@@ -291,14 +291,17 @@ export class MapKernel implements IValueTypeCreator {
     public async wait<T = any>(key: string): Promise<T> {
         // Return immediately if the value already exists
         if (this.has(key)) {
-            return this.get<T>(key);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return this.get<T>(key)!;
         }
 
         // Otherwise subscribe to changes
         return new Promise<T>((resolve) => {
             const callback = (changed: IValueChanged) => {
                 if (key === changed.key) {
-                    resolve(this.get<T>(changed.key));
+                    // eslint-disable-next-line max-len
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+                    resolve(this.get<T>(changed.key)!);
                     this.eventEmitter.removeListener("valueChanged", callback);
                 }
             };
@@ -329,7 +332,7 @@ export class MapKernel implements IValueTypeCreator {
         const localValue = this.localValueMaker.fromInMemory(value);
         const serializableValue = makeSerializable(
             localValue,
-            this.runtime.IFluidSerializer,
+            this.serializer,
             this.handle);
 
         // Set the value locally.
@@ -365,7 +368,7 @@ export class MapKernel implements IValueTypeCreator {
         // may be possible to remove custom value type serialization entirely.
         const transformedValue = makeHandlesSerializable(
             params,
-            this.runtime.IFluidSerializer,
+            this.serializer,
             this.handle);
 
         // Set the value locally.
@@ -378,7 +381,7 @@ export class MapKernel implements IValueTypeCreator {
 
         // If we are not attached, don't submit the op.
         if (!this.isAttached()) {
-            return;
+            return this;
         }
 
         // This is a special form of serialized valuetype only used for set, containing info for initialization.
@@ -436,31 +439,27 @@ export class MapKernel implements IValueTypeCreator {
 
     /**
      * Serializes the data stored in the shared map to a JSON string
+     * @param serializer - The serializer to use to serialize handles in its values.
      * @returns A JSON string containing serialized map data
      */
-    public getSerializedStorage(): IMapDataObjectSerialized {
+    public getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
         const serializableMapData: IMapDataObjectSerialized = {};
         this.data.forEach((localValue, key) => {
-            serializableMapData[key] = localValue.makeSerialized(
-                this.runtime.IFluidSerializer,
-                this.handle);
+            serializableMapData[key] = localValue.makeSerialized(serializer, this.handle);
         });
         return serializableMapData;
     }
 
-    public getSerializableStorage(): IMapDataObjectSerializable {
+    public getSerializableStorage(serializer: IFluidSerializer): IMapDataObjectSerializable {
         const serializableMapData: IMapDataObjectSerializable = {};
         this.data.forEach((localValue, key) => {
-            serializableMapData[key] = makeSerializable(
-                localValue,
-                this.runtime.IFluidSerializer,
-                this.handle);
+            serializableMapData[key] = makeSerializable(localValue, serializer, this.handle);
         });
         return serializableMapData;
     }
 
-    public serialize(): string {
-        return JSON.stringify(this.getSerializableStorage());
+    public serialize(serializer: IFluidSerializer): string {
+        return JSON.stringify(this.getSerializableStorage(serializer));
     }
 
     /**
@@ -493,7 +492,8 @@ export class MapKernel implements IValueTypeCreator {
     public trySubmitMessage(op: any, localOpMetadata: unknown): boolean {
         const type: string = op.type;
         if (this.messageHandlers.has(type)) {
-            this.messageHandlers.get(type).submit(op as IMapOperation, localOpMetadata);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.messageHandlers.get(type)!.submit(op as IMapOperation, localOpMetadata);
             return true;
         }
         return false;
@@ -510,8 +510,9 @@ export class MapKernel implements IValueTypeCreator {
     public tryProcessMessage(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): boolean {
         const op = message.contents as IMapOperation;
         if (this.messageHandlers.has(op.type)) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.messageHandlers
-                .get(op.type)
+                .get(op.type)!
                 .process(op, local, message, localOpMetadata);
             return true;
         }
@@ -525,11 +526,11 @@ export class MapKernel implements IValueTypeCreator {
      * @param local - Whether the message originated from the local client
      * @param op - The message if from a remote set, or null if from a local set
      */
-    private setCore(key: string, value: ILocalValue, local: boolean, op: ISequencedDocumentMessage): void {
+    private setCore(key: string, value: ILocalValue, local: boolean, op: ISequencedDocumentMessage | null): void {
         const previousValue = this.get(key);
         this.data.set(key, value);
         const event: IValueChanged = { key, previousValue };
-        this.eventEmitter.emit("valueChanged", event, local, op, this);
+        this.eventEmitter.emit("valueChanged", event, local, op, this.eventEmitter);
     }
 
     /**
@@ -537,9 +538,9 @@ export class MapKernel implements IValueTypeCreator {
      * @param local - Whether the message originated from the local client
      * @param op - The message if from a remote clear, or null if from a local clear
      */
-    private clearCore(local: boolean, op: ISequencedDocumentMessage): void {
+    private clearCore(local: boolean, op: ISequencedDocumentMessage | null): void {
         this.data.clear();
-        this.eventEmitter.emit("clear", local, op, this);
+        this.eventEmitter.emit("clear", local, op, this.eventEmitter);
     }
 
     /**
@@ -549,12 +550,12 @@ export class MapKernel implements IValueTypeCreator {
      * @param op - The message if from a remote delete, or null if from a local delete
      * @returns True if the key existed and was deleted, false if it did not exist
      */
-    private deleteCore(key: string, local: boolean, op: ISequencedDocumentMessage): boolean {
+    private deleteCore(key: string, local: boolean, op: ISequencedDocumentMessage | null): boolean {
         const previousValue = this.get(key);
         const successfullyRemoved = this.data.delete(key);
         if (successfullyRemoved) {
             const event: IValueChanged = { key, previousValue };
-            this.eventEmitter.emit("valueChanged", event, local, op, this);
+            this.eventEmitter.emit("valueChanged", event, local, op, this.eventEmitter);
         }
         return successfullyRemoved;
     }
@@ -567,7 +568,8 @@ export class MapKernel implements IValueTypeCreator {
         // we will get the value for the pendingKeys and clear the map
         const temp = new Map<string, ILocalValue>();
         this.pendingKeys.forEach((value, key) => {
-            temp.set(key, this.data.get(key));
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            temp.set(key, this.data.get(key)!);
         });
         this.data.clear();
         temp.forEach((value, key) => {
@@ -589,7 +591,7 @@ export class MapKernel implements IValueTypeCreator {
         if (serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared]) {
             return this.localValueMaker.fromSerializable(serializable);
         } else {
-            return this.localValueMaker.fromSerializable(
+            return this.localValueMaker.fromSerializableValueType(
                 serializable,
                 this.makeMapValueOpEmitter(key),
             );
@@ -692,8 +694,8 @@ export class MapKernel implements IValueTypeCreator {
                         return;
                     }
 
-                    const context = local ? undefined : this.makeLocal(op.key, op.value);
-
+                    // needProcessKeyOperation should have returned false if local is true
+                    const context = this.makeLocal(op.key, op.value);
                     this.setCore(op.key, context, local, message);
                 },
                 submit: (op: IMapSetOperation, localOpMetadata: unknown) => {
@@ -720,10 +722,10 @@ export class MapKernel implements IValueTypeCreator {
                     const previousValue = localValue.value;
                     const translatedValue = parseHandles(
                         op.value.value,
-                        this.runtime.IFluidSerializer);
+                        this.serializer);
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IValueChanged = { key: op.key, previousValue };
-                    this.eventEmitter.emit("valueChanged", event, local, message, this);
+                    this.eventEmitter.emit("valueChanged", event, local, message, this.eventEmitter);
                 },
                 submit: (op: IMapValueTypeOperation, localOpMetadata: unknown) => {
                     this.submitMessage(op, localOpMetadata);
@@ -763,7 +765,7 @@ export class MapKernel implements IValueTypeCreator {
         const emit = (opName: string, previousValue: any, params: any) => {
             const translatedParams = makeHandlesSerializable(
                 params,
-                this.runtime.IFluidSerializer,
+                this.serializer,
                 this.handle);
 
             const op: IMapValueTypeOperation = {
@@ -778,7 +780,7 @@ export class MapKernel implements IValueTypeCreator {
             this.submitMessage(op, undefined /* localOpMetadata */);
 
             const event: IValueChanged = { key, previousValue };
-            this.eventEmitter.emit("valueChanged", event, true, null, this);
+            this.eventEmitter.emit("valueChanged", event, true, null, this.eventEmitter);
         };
 
         return { emit };

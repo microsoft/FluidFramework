@@ -24,15 +24,16 @@ import {
     ContainerWarning,
     AttachState,
     IFluidModule,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
+    IClientConfiguration,
     IClientDetails,
     IDocumentAttributes,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalMessage,
     ISnapshotTree,
     ITree,
@@ -109,10 +110,6 @@ export class ContainerContext implements IContainerContext {
         return this.attributes.branch;
     }
 
-    public get parentBranch(): string | null {
-        return this.container.parentBranch;
-    }
-
     public get runtimeVersion(): string | undefined {
         return this.runtime?.runtimeVersion;
     }
@@ -125,7 +122,7 @@ export class ContainerContext implements IContainerContext {
         return "summarize" in this.runtime;
     }
 
-    public get serviceConfiguration(): IServiceConfiguration | undefined {
+    public get serviceConfiguration(): IClientConfiguration | undefined {
         return this.container.serviceConfiguration;
     }
 
@@ -133,8 +130,7 @@ export class ContainerContext implements IContainerContext {
         return this.container.audience;
     }
 
-    public get options(): any {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    public get options(): ILoaderOptions {
         return this.container.options;
     }
 

@@ -75,7 +75,12 @@ export class TenantManager {
         const tenant = await this.getTenantDocument(tenantId);
         if (!tenant) {
             winston.error("Tenant is disabled or does not exist.");
-            return Promise.reject("Tenant is disabled or does not exist.");
+            return Promise.reject(new Error("Tenant is disabled or does not exist."));
+        }
+
+        const accessInfo = tenant.customData.externalStorageData?.accessInfo;
+        if (accessInfo) {
+            tenant.customData.externalStorageData.accessInfo = this.decryptAccessInfo(accessInfo);
         }
 
         return {
@@ -123,7 +128,7 @@ export class TenantManager {
         const encryptedTenantKey = this.secretManager.encryptSecret(tenantKey);
         if (encryptedTenantKey == null) {
             winston.error("Tenant key encryption failed.");
-            return Promise.reject("Tenant key encryption failed.");
+            return Promise.reject(new Error("Tenant key encryption failed."));
         }
 
         const id = await collection.insertOne({
@@ -169,7 +174,10 @@ export class TenantManager {
     public async updateCustomData(tenantId: string, customData: ITenantCustomData): Promise<ITenantCustomData> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
-
+        const accessInfo = customData.externalStorageData?.accessInfo;
+        if (accessInfo) {
+            customData.externalStorageData.accessInfo = this.encryptAccessInfo(accessInfo);
+        }
         await collection.update({ _id: tenantId }, { customData }, null);
 
         return (await this.getTenantDocument(tenantId)).customData;
@@ -183,7 +191,7 @@ export class TenantManager {
         const tenantKey = this.secretManager.decryptSecret(encryptedTenantKey);
         if (tenantKey == null) {
             winston.error("Tenant key decryption failed.");
-            return Promise.reject("Tenant key decryption failed.");
+            return Promise.reject(new Error("Tenant key decryption failed."));
         }
 
         return tenantKey;
@@ -200,7 +208,7 @@ export class TenantManager {
         const encryptedTenantKey = this.secretManager.encryptSecret(tenantKey);
         if (encryptedTenantKey == null) {
             winston.error("Tenant key encryption failed.");
-            return Promise.reject("Tenant key encryption failed.");
+            return Promise.reject(new Error("Tenant key encryption failed."));
         }
 
         await collection.update({ _id: tenantId }, { key: encryptedTenantKey }, null);
@@ -277,5 +285,16 @@ export class TenantManager {
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
         await collection.update({ _id: tenantId }, { disabled: true }, null);
+    }
+
+    private encryptAccessInfo(accessInfo: any): string {
+        const encryptedAccessInfo = this.secretManager.encryptSecret(JSON.stringify(accessInfo));
+        return encryptedAccessInfo;
+    }
+
+    private decryptAccessInfo(encryptedAccessInfo: string): any {
+        const accessInfo = JSON.parse(this.secretManager.decryptSecret(encryptedAccessInfo));
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return accessInfo;
     }
 }

@@ -39,14 +39,14 @@ export function createLocalLoader(
 
 ### `createAndAttachContainer`
 
-This method creates and attaches a `Container` with the given `documentId`, `source` and an `IUrlResolver`. An `ILoader` should also be passed in that will be used to load the `Container`:
+This method creates and attaches a `Container` with the given `source` and an `attachRequest`. An `ILoader` should also be passed in that will be used to load the `Container`. The `attachRequest` format varies per url resolver. Most resolvers have helper methods for creating attach requests. You should use the
+helper method on the url resolver passed to the loader to generate the `attachRequest`:
 
 ```typescript
 export async function createAndAttachContainer(
-    documentId: string,
     source: IFluidCodeDetails,
     loader: ILoader,
-    urlResolver: IUrlResolver,
+    attachRequest: IRequest,
 ): Promise<IContainer>
 ```
 
@@ -84,7 +84,7 @@ const matrix = testFluidObject.getSharedObject<SparseMatrix>("matrix");
 
 For example, consider the scenario where you perform some operations on a DDS and want to verify that the remote client's DDS have applied the operations. You have to wait until the op is sent to the server, the server processes the op, sends it to the remote client and the remote client processes the op.
 
-You can use the `OpProcessingController` to wait for all that to happen by calling `process` on it. Check how [SharedStringTest](..\end-to-end-tests\src\test\sharedStringEndToEndTests.spec.ts) does that.
+You can use the `OpProcessingController` to wait for all that to happen by calling `process` on it. Check how [SharedStringTest](../end-to-end-tests/src/test/sharedStringEndToEndTests.spec.ts) does that.
 
 ## Usage
 
@@ -117,7 +117,8 @@ The typical usage for testing a Fluid object is as follows:
 5. Create and attach a `Container` by giving it a `documentId` which is used as a URL to resolve the container:
     ```typescript
     const documentId = "testDocument";
-    const container = await createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+    const container = await createAndAttachContainer(
+            codeDetails, loader, urlResolver.createCreateNewRequest(documentId))
     ```
     > We used the same `IFluidCodeDetails` that was used to create the `Loader` in step 3.
 
@@ -145,6 +146,6 @@ These steps are demonstrated in the image below:
 > Note that the LocalDriver is created by the `createLocalLoader` method and does not need to explicitly created.
 
 ## Example
-The above usage is taken from [SharedStringTest](..\end-to-end-tests\src\test\sharedStringEndToEndTests.spec.ts) which is a very basic example of how to use these utils.
+The above usage is taken from [SharedStringTest](../end-to-end-tests/src/test/sharedStringEndToEndTests.spec.ts) which is a very basic example of how to use these utils.
 
-There are a number of other examples (some a little more complex) in the same [directory](..\end-to-end-tests\src\test).
+There are a number of other examples (some a little more complex) in the same [directory](../end-to-end-tests/src/test).

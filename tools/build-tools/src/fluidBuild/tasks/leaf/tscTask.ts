@@ -6,10 +6,11 @@
 import * as assert from "assert";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 import { logVerbose } from "../../../common/logging";
-import { readFileAsync, existsSync } from "../../../common/utils";
+import { readFileAsync, existsSync, isSameFileOrDir } from "../../../common/utils";
 import path from "path";
 import * as ts from "typescript";
 import * as TscUtils from "../../tscUtils";
+import * as fs from "fs";
 const isEqual = require("lodash.isequal");
 
 interface ITsBuildInfo {
@@ -20,21 +21,62 @@ interface ITsBuildInfo {
     }
 }
 
+interface TscTaskMatchOptions {
+    tsConfig?: string;
+};
+
 export class TscTask extends LeafTask {
     private _tsBuildInfoFullPath: string | undefined;
     private _tsBuildInfo: ITsBuildInfo | undefined;
     private _tsConfig: ts.ParsedCommandLine | undefined;
     private _tsConfigFullPath: string | undefined;
+    private _projectReference: TscTask | undefined;
+    private _sourceStats: fs.Stats[] | undefined;
+
+    public matchTask(command: string, options?: TscTaskMatchOptions): LeafTask | undefined {
+        if (!options?.tsConfig) { return super.matchTask(command); }
+        if (command !== "tsc") { return undefined; }
+        const configFile = this.configFileFullPath;
+        if (!configFile) { return undefined; }
+        return isSameFileOrDir(configFile, options.tsConfig)? this : undefined;
+    }
 
     protected addDependentTasks(dependentTasks: LeafTask[]) {
         if (this.addChildTask(dependentTasks, this.node, "npm run build:genver")) {
             this.logVerboseDependency(this.node, "build:genver");
         }
+
+        const testConfig = path.join("src", "test", "tsconfig.json");
+        const isTestTsc = this.configFileFullPath && isSameFileOrDir(this.configFileFullPath, this.getPackageFileFullPath(testConfig));
         for (const child of this.node.dependentPackages) {
             // TODO: Need to look at the output from tsconfig
             if (this.addChildTask(dependentTasks, child, "tsc")) {
                 this.logVerboseDependency(child, "tsc");
             }
+
+            if (isTestTsc) {
+                // TODO: Not all test package depends on test from dependents.
+                // Can check if the dependent's tsconfig has declaration generated or not
+                if (this.addChildTask(dependentTasks, child, "npm run build:test")) {
+                    this.logVerboseDependency(child, "build:test");
+                }
+            }
+        }
+
+        const config = this.readTsConfig();
+        if (config?.projectReferences) {
+            // TODO: make less assumptions
+            if (config.projectReferences.length !== 1) {
+                throw new Error("Only one project references is supported");
+            }
+            if (!isSameFileOrDir(config.projectReferences[0].path, this.node.pkg.directory)) {
+                throw new Error("Only package root project is supported for project references");
+            }
+            this._projectReference = this.addChildTask(dependentTasks, this.node, "tsc") as TscTask | undefined;
+            if (!this._projectReference) {
+                throw new Error("tsc not found for project reference");
+            }
+            this.logVerboseDependency(this.node, "tsc");
         }
     }
 
@@ -46,9 +88,9 @@ export class TscTask extends LeafTask {
 
         // Using tsc incremental information
         const tsBuildInfo = await this.readTsBuildInfo();
-        if (tsBuildInfo === undefined) { 
+        if (tsBuildInfo === undefined) {
             this.logVerboseTrigger("tsBuildInfo not found");
-            return false; 
+            return false;
         }
 
         // Check previous build errors
@@ -62,7 +104,12 @@ export class TscTask extends LeafTask {
         for (const key of Object.keys(fileInfos)) {
             try {
                 // Resolve relative path based on the directory of the tsBuildInfo file
-                const fullPath = path.resolve(tsBuildInfoFileDirectory, key);
+                let fullPath = path.resolve(tsBuildInfoFileDirectory, key);
+
+                // If we have project reference, see if this is in reference to one of the file, and map it to the d.ts file instead
+                if (this._projectReference) {
+                    fullPath = this._projectReference.remapSrcDeclFile(fullPath);
+                }
                 const hash = await this.node.buildContext.fileHashCache.getFileHash(fullPath);
                 if (hash !== fileInfos[key].version) {
                     this.logVerboseTrigger(`version mismatch for ${key}, ${hash}, ${fileInfos[key].version}`);
@@ -79,6 +126,30 @@ export class TscTask extends LeafTask {
         return this.checkTsConfig(tsBuildInfoFileDirectory, tsBuildInfo);
     }
 
+    private remapSrcDeclFile(fullPath: string) {
+        if (!this._sourceStats) {
+            const config = this.readTsConfig();
+            this._sourceStats = config ? config.fileNames.map(fs.lstatSync) : [];
+        }
+
+        const parsed = path.parse(fullPath);
+        const directory = parsed.dir;
+        const stat = fs.lstatSync(fullPath);
+        if (this._sourceStats.some(value => isEqual(value, stat))) {
+            return this.remapOutFile(this.readTsConfig()!, directory, `${parsed.name}.d.ts`);
+        }
+        return fullPath;
+    }
+
+    private patchOptionPaths(object: any, dir: string) {
+        for (const key of ["configFilePath", "declarationDir", "outDir", "rootDir", "project"]) {
+            const value = object[key];
+            if (value !== undefined) {
+                object[key] = path.resolve(dir, value);
+            }
+        }
+    }
+
     private checkTsConfig(tsBuildInfoFileDirectory: string, tsBuildInfo: ITsBuildInfo) {
         const options = this.readTsConfig();
         if (!options) {
@@ -87,22 +158,12 @@ export class TscTask extends LeafTask {
 
         const configOptions = { ...options.options };
         const tsBuildInfoOptions = { ...tsBuildInfo.program.options };
-        // Patch relative path based on tsBuildInfo file directory.
-        const pathKeys = ["configFilePath", "declarationDir", "outDir", "rootDir", "project"];
-        const patch = (object: any, keys: string[], dir: string) => {
-            for (const key of keys) {
-                const value = object[key];
-                if (value !== undefined) {
-                    object[key] = path.resolve(dir, value);
-                }
-            }
-        }
-
         const configFileFullPath = this.configFileFullPath;
         if (!configFileFullPath) { assert.fail(); };
 
-        patch(configOptions, pathKeys, path.dirname(configFileFullPath));
-        patch(tsBuildInfoOptions, pathKeys, tsBuildInfoFileDirectory);
+        // Patch relative path based on the file directory where the config comes from
+        this.patchOptionPaths(configOptions, path.dirname(configFileFullPath));
+        this.patchOptionPaths(tsBuildInfoOptions, tsBuildInfoFileDirectory);
 
         if (!isEqual(configOptions, tsBuildInfoOptions)) {
             logVerbose(`${this.node.pkg.nameColored}: ts option changed ${configFileFullPath}`);
@@ -119,7 +180,7 @@ export class TscTask extends LeafTask {
         if (this._tsConfig == undefined) {
             const parsedCommand = this.parsedCommandLine;
             if (!parsedCommand) { return undefined; }
-                
+
             const configFileFullPath = this.configFileFullPath;
             if (!configFileFullPath) { return undefined; }
 
@@ -128,8 +189,15 @@ export class TscTask extends LeafTask {
                 logVerbose(`${this.node.pkg.nameColored}: ts fail to parse ${configFileFullPath}`);
                 return undefined;
             }
+
+            // Fix up relative path from the command line based on the package directory
+            const commandOptions = { ...parsedCommand.options };
+            this.patchOptionPaths(commandOptions, this.node.pkg.directory);
+
+            // Parse the config file relative to the config file directory
             const configDir = path.parse(configFileFullPath).dir;
-            const options = ts.parseJsonConfigFileContent(config, ts.sys, configDir, parsedCommand.options, configFileFullPath);
+            const options = ts.parseJsonConfigFileContent(config, ts.sys, configDir, commandOptions, configFileFullPath);
+
             if (options.errors.length) {
                 logVerbose(`${this.node.pkg.nameColored}: ts fail to parse file content ${configFileFullPath}`);
                 return undefined;
@@ -193,14 +261,18 @@ export class TscTask extends LeafTask {
         const tsBuildInfoFileName = this.tsBuildInfoFileName;
         if (!tsBuildInfoFileName) { return undefined; }
 
+        return this.remapOutFile(options, path.parse(configFileFullPath).dir, tsBuildInfoFileName);
+    }
+
+    private remapOutFile(options: ts.ParsedCommandLine, directory: string, fileName: string) {
         if (options.options.outDir) {
             if (options.options.rootDir) {
-                const relative = path.relative(options.options.rootDir, path.parse(configFileFullPath).dir);
-                return path.join(options.options.outDir, relative, tsBuildInfoFileName);
+                const relative = path.relative(options.options.rootDir, directory);
+                return path.join(options.options.outDir, relative, fileName);
             }
-            return path.join(options.options.outDir, tsBuildInfoFileName);
+            return path.join(options.options.outDir, fileName);
         }
-        return path.join(path.parse(configFileFullPath).dir, tsBuildInfoFileName);
+        return path.join(directory, fileName);
     }
 
     private get tsBuildInfoFileFullPath() {
@@ -252,40 +324,55 @@ export class TscTask extends LeafTask {
 
 // Base class for tasks that are dependent on a tsc compile
 export abstract class TscDependentTask extends LeafWithDoneFileTask {
-    private tscTask: TscTask | undefined;
+    protected tscTasks: TscTask[] = [];
     protected get recheckLeafIsUpToDate() {
         return true;
     }
 
     protected async getDoneFileContent() {
         try {
-            const doneFileContent = { tsBuildInfoFile: {}, config: "" };
-            if (this.tscTask) {
-                const tsBuildInfo = await this.tscTask.readTsBuildInfo();
+            const tsBuildInfoFiles: ITsBuildInfo[] = [];
+            for (const tscTask of this.tscTasks) {
+                const tsBuildInfo = await tscTask.readTsBuildInfo();
                 if (tsBuildInfo === undefined) {
+                    // If any of the tsc task don't have build info, we can't track
                     return undefined;
                 }
-                doneFileContent.tsBuildInfoFile = tsBuildInfo;
-                const configFile = this.configFileFullPath;
-                if (existsSync(configFile)) {
-                    // Include the config file if it exists so that we can detect changes
-                    doneFileContent.config = await readFileAsync(this.configFileFullPath, "utf8");
-                }
+                tsBuildInfoFiles.push(tsBuildInfo);
             }
-            return JSON.stringify(doneFileContent);
-        } catch(e) {
+
+            const configFile = this.configFileFullPath;
+            let config = "";
+            if (existsSync(configFile)) {
+                // Include the config file if it exists so that we can detect changes
+                config = await readFileAsync(this.configFileFullPath, "utf8");
+            }
+
+            return JSON.stringify({ tsBuildInfoFiles, config });
+        } catch (e) {
             this.logVerboseTask(`error generating done file content ${e}`);
             return undefined;
         }
     }
 
     protected addDependentTasks(dependentTasks: LeafTask[]) {
-        const tscTask = this.addChildTask(dependentTasks, this.node, "tsc");
-        if (tscTask) {
-            this.tscTask = tscTask as TscTask;
-            this.logVerboseDependency(this.node, "tsc");
+        if (this.tscTasks.length === 0) {
+            // derived class didn't populate it.
+           this.addTscTask(dependentTasks);
         }
     }
+    protected addTscTask(dependentTasks: LeafTask[], options?: any) {
+        const tscTask = this.addChildTask(dependentTasks, this.node, "tsc", options);
+        if (!tscTask) {
+            if (options) {
+                throw new Error(`Unable to find tsc task matching ${options.tsConfig} for dependent task ${this.command}`);
+            } else {
+                throw new Error(`Unable to find tsc task for dependent task ${this.command}`);
+            }
+        }
+        this.tscTasks.push(tscTask as TscTask);
+        this.logVerboseDependency(this.node, tscTask.command);
+    }
 
-    protected abstract get configFileFullPath() : string;
+    protected abstract get configFileFullPath(): string;
 };

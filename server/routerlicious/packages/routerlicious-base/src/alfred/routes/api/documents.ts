@@ -3,15 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorage } from "@fluidframework/server-services-core";
+import { IDocumentStorage, IThrottler } from "@fluidframework/server-services-core";
+import { throttle, IThrottleMiddlewareOptions } from "@fluidframework/server-services-utils";
 import { Router } from "express";
+import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { getParam } from "../../../utils";
+import { getParam, Constants } from "../../../utils";
 
-export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): Router {
+export function create(
+    storage: IDocumentStorage,
+    appTenants: IAlfredTenant[],
+    throttler: IThrottler): Router {
     const router: Router = Router();
 
-    router.get("/:tenantId?/:id", (request, response, next) => {
+    const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+        throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
+        throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
+    };
+
+    router.get("/:tenantId?/:id", throttle(throttler, winston, commonThrottleOptions), (request, response, next) => {
         const documentP = storage.getDocument(
             getParam(request.params, "tenantId") || appTenants[0].id,
             getParam(request.params, "id"));
@@ -25,41 +35,9 @@ export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): 
     });
 
     /**
-     * Lists all forks of the specified document
-     */
-    router.get("/:tenantId?/:id/forks", (request, response, next) => {
-        const forksP = storage.getForks(
-            getParam(request.params, "tenantId") || appTenants[0].id,
-            getParam(request.params, "id"));
-        forksP.then(
-            (forks) => {
-                response.status(200).json(forks);
-            },
-            (error) => {
-                response.status(400).json(error);
-            });
-    });
-
-    /**
-     * Creates a new fork for the specified document
-     */
-    router.post("/:tenantId?/:id/forks", (request, response, next) => {
-        const forkIdP = storage.createFork(
-            getParam(request.params, "tenantId") || appTenants[0].id,
-            getParam(request.params, "id"));
-        forkIdP.then(
-            (forkId) => {
-                response.status(201).json(forkId);
-            },
-            (error) => {
-                response.status(400).json(error);
-            });
-    });
-
-    /**
      * Creates a new document with initial summary.
      */
-    router.post("/:tenantId", (request, response, next) => {
+    router.post("/:tenantId", throttle(throttler, winston, commonThrottleOptions), (request, response, next) => {
         // Tenant and document
         const tenantId = getParam(request.params, "tenantId");
         const id = request.body.id;

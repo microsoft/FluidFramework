@@ -42,10 +42,11 @@ export class NodeCodeLoader {
             }
             const codeEntrypoint = await this.installOrWaitForPackages(packageName);
             const entry = import(codeEntrypoint);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return entry;
         } else {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            Promise.reject("Invalid Package");
+            Promise.reject(new Error("Invalid Package"));
         }
     }
 
@@ -53,7 +54,7 @@ export class NodeCodeLoader {
         // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
         const dataStores = pkg.match(/(.*)\/(.*)@(.*)/);
         if (!dataStores) {
-            return Promise.reject("Invalid package");
+            return Promise.reject(new Error("Invalid package"));
         }
         const [, scope, name] = dataStores;
 
@@ -97,7 +98,6 @@ export class NodeCodeLoader {
         return new Promise((resolve, reject) => {
             const watcher = fs.watch(targetDirectory, (eventType, newFileName) => {
                 if (eventType === "rename" && newFileName === fileName) {
-                    // eslint-disable-next-line @typescript-eslint/no-use-before-define
                     clearTimeout(waitTimer);
                     watcher.close();
                     resolve();
@@ -106,7 +106,7 @@ export class NodeCodeLoader {
             const waitTimer = setTimeout(() => {
                 watcher.close();
                 clearTimeout(waitTimer);
-                reject(`${fileName} in ${targetDirectory} was not generated within ${waitTimeout} msecs`);
+                reject(new Error(`${fileName} in ${targetDirectory} was not generated within ${waitTimeout} msecs`));
             }, waitTimeout);
 
             if (fs.existsSync(`${targetDirectory}/${fileName}`)) {

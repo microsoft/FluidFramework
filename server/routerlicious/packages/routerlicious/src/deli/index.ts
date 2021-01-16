@@ -77,7 +77,13 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
     await broadcasterLambda.start();
 
-    return new DeliLambdaFactory(mongoManager, collection, tenantManager, combinedProducer, reverseProducer);
+    return new DeliLambdaFactory(
+        mongoManager,
+        collection,
+        tenantManager,
+        combinedProducer,
+        reverseProducer,
+        core.DefaultServiceConfiguration);
 }
 
 export async function create(config: Provider): Promise<core.IPartitionLambdaFactory> {

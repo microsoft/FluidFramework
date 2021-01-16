@@ -60,7 +60,10 @@ export class LocalDocumentService implements api.IDocumentService {
         if (this.innerDocumentService) {
             return this.innerDocumentService.connectToDeltaStream(client);
         }
-        const ordererToken = await this.tokenProvider.fetchOrdererToken();
+        const ordererToken = await this.tokenProvider.fetchOrdererToken(
+            this.tenantId,
+            this.documentId,
+        );
         const documentDeltaConnection = await LocalDocumentDeltaConnection.create(
             this.tenantId,
             this.documentId,
@@ -79,13 +82,6 @@ export class LocalDocumentService implements api.IDocumentService {
         });
 
         return documentDeltaConnection;
-    }
-
-    /**
-     * Returns null
-     */
-    public async branch(): Promise<string> {
-        throw new Error("Not implemented");
     }
 
     /**

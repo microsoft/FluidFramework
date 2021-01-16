@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Deferred, fromBase64ToUtf8, assert } from "@fluidframework/common-utils";
+import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { IValueChanged, MapKernel } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
@@ -123,6 +124,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     ) {
         super(id, dataStoreRuntime, attributes);
 
+        this.loadedDeferred.promise.catch((error)=>{
+            this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
+        });
+
         this.client = new MergeTree.Client(
             segmentFromSpec,
             ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient"),
@@ -165,7 +170,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         });
 
         this.intervalMapKernel = new MapKernel(
-            this.runtime,
+            this.serializer,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             () => this.isAttached(),
@@ -242,7 +247,12 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return this.client.getLength();
     }
 
-    public getPosition(segment): number {
+    /**
+     * Returns the current position of a segment, and -1 if the segment
+     * does not exist in this sequence
+     * @param segment - The segment to get the position of
+     */
+    public getPosition(segment: MergeTree.ISegment): number {
         return this.client.getPosition(segment);
     }
 
@@ -316,10 +326,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         if (!this.isAttached()) {
             return;
         }
-        const translated = makeHandlesSerializable(
-            message,
-            this.runtime.IFluidSerializer,
-            this.handle);
+        const translated = makeHandlesSerializable(message, this.serializer, this.handle);
         const metadata = this.client.peekPendingSegmentGroups(
             message.type === MergeTree.MergeTreeDeltaType.GROUP ? message.ops.length : 1);
 
@@ -407,26 +414,31 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return sharedCollection;
     }
 
-    public snapshot(): ITree {
-        const tree: ITree = {
-            entries: [
+    protected snapshotCore(serializer: IFluidSerializer): ITree {
+        const entries = [];
+        // TODO: once the change to conditionally read these has propagated
+        // conditionally write them as well
+        // if (this.intervalMapKernel.size > 0) {
+            entries.push(
                 {
                     mode: FileMode.File,
                     path: snapshotFileName,
                     type: TreeEntry.Blob,
                     value: {
-                        contents: this.intervalMapKernel.serialize(),
+                        contents: this.intervalMapKernel.serialize(serializer),
                         encoding: "utf-8",
                     },
-                },
-                {
-                    mode: FileMode.Directory,
-                    path: contentPath,
-                    type: TreeEntry.Tree,
-                    value: this.snapshotMergeTree(),
-                },
-
-            ],
+                });
+        // }
+        entries.push(
+            {
+                mode: FileMode.Directory,
+                path: contentPath,
+                type: TreeEntry.Tree,
+                value: this.snapshotMergeTree(serializer),
+            });
+        const tree: ITree = {
+            entries,
             // eslint-disable-next-line no-null/no-null
             id: null,
         };
@@ -480,13 +492,16 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
     }
 
-    protected async loadCore(
-        branchId: string | undefined,
-        storage: IChannelStorageService) {
-        const header = await storage.read(snapshotFileName);
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
+     */
+    protected async loadCore(storage: IChannelStorageService) {
+        if (await storage.contains(snapshotFileName)) {
+            const header = await storage.read(snapshotFileName);
 
-        const data: string = header ? fromBase64ToUtf8(header) : undefined;
-        this.intervalMapKernel.populate(data);
+            const data: string = header ? fromBase64ToUtf8(header) : undefined;
+            this.intervalMapKernel.populate(data);
+        }
 
         try {
             // this will load the header, and return a promise
@@ -495,7 +510,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             const { catchupOpsP } = await this.client.load(
                 this.runtime,
                 new ObjectStoragePartition(storage, contentPath),
-                branchId);
+                this.serializer);
 
             // setup a promise to process the
             // catch up ops, and finishing the loading process
@@ -577,24 +592,21 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         this.loadFinished();
     }
 
-    private snapshotMergeTree(): ITree {
+    private snapshotMergeTree(serializer: IFluidSerializer): ITree {
         // Are we fully loaded? If not, things will go south
         assert(this.loadedDeferred.isCompleted, "Snapshot called when not fully loaded");
-        assert(!!this.runtime.deltaManager, "DeltaManager does not exit");
         const minSeq = this.runtime.deltaManager.minimumSequenceNumber;
 
         this.processMinSequenceNumberChanged(minSeq);
 
         this.messagesSinceMSNChange.forEach((m) => m.minimumSequenceNumber = minSeq);
 
-        return this.client.snapshot(this.runtime, this.handle, this.messagesSinceMSNChange);
+        return this.client.snapshot(this.runtime, this.handle, serializer, this.messagesSinceMSNChange);
     }
 
     private processMergeTreeMsg(
         rawMessage: ISequencedDocumentMessage) {
-        const message = parseHandles(
-            rawMessage,
-            this.runtime.IFluidSerializer);
+        const message = parseHandles(rawMessage, this.serializer);
 
         const ops: MergeTree.IMergeTreeDeltaOp[] = [];
         function transfromOps(event: SequenceDeltaEvent) {
@@ -653,8 +665,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             // Initialize the interval collections
             this.initializeIntervalCollections();
             if (error) {
-                this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
                 this.loadedDeferred.reject(error);
+                throw error;
             } else {
                 // it is important this series remains synchronous
                 // first we stop defering incoming ops, and apply then all

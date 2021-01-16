@@ -15,6 +15,7 @@ import {
     ContainerWarning,
     ILoader,
     AttachState,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
@@ -49,7 +50,7 @@ export interface IFluidDataStoreRuntime extends
     readonly channelsRoutingContext: IFluidHandleContext;
     readonly objectsRoutingContext: IFluidHandleContext;
 
-    readonly options: any;
+    readonly options: ILoaderOptions;
 
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
@@ -58,8 +59,6 @@ export interface IFluidDataStoreRuntime extends
     readonly documentId: string;
 
     readonly existing: boolean;
-
-    readonly parentBranch: string | null;
 
     readonly connected: boolean;
 

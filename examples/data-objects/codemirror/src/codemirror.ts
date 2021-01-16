@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import {
     IFluidLoadable,
     IFluidRouter,
@@ -229,11 +230,7 @@ export class CodeMirrorComponent
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return {
-            mimeType: "fluid/object",
-            status: 200,
-            value: this,
-        };
+        return defaultFluidObjectRequestHandler(this, request);
     }
 
     private async initialize() {
@@ -252,7 +249,7 @@ export class CodeMirrorComponent
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
-        this.text = await this.root.get<IFluidHandle<SharedString>>("text").get();
+        this.text = await this.root.get<IFluidHandle<SharedString>>("text")?.get();
     }
 
     public render(elm: HTMLElement): void {

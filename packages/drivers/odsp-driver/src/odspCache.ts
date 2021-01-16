@@ -120,10 +120,10 @@ export interface IPersistedCache {
     updateUsage(entry: ICacheEntry, seqNumber: number): void;
 
     /**
-     * Removes all the entries from the cache for given docId.
-     * @param docId - DocId for which all entries needs to be deleted from cache.
+     * Removes the entries from the cache for given parametres.
+     * @param file - file entry to be deleted.
      */
-    removeAllEntriesForDocId(docId: string): Promise<void>;
+    removeEntries(file: IFileEntry): Promise<void>;
 }
 
 /**
@@ -132,7 +132,7 @@ export interface IPersistedCache {
  * (Based off of the same class in promiseCache.ts, could be consolidated)
  */
 class GarbageCollector<TKey> {
-    private readonly gcTimeouts = new Map<TKey, NodeJS.Timeout>();
+    private readonly gcTimeouts = new Map<TKey, ReturnType<typeof setTimeout>>();
 
     constructor(
         private readonly cleanup: (key: TKey) => void,
@@ -194,11 +194,16 @@ export class PersistedCacheWithErrorHandling implements IPersistedCache {
         }
     }
 
-    async removeAllEntriesForDocId(docId: string): Promise<void> {
+    async removeEntries(file: IFileEntry): Promise<void> {
         try {
-            await this.cache.removeAllEntriesForDocId(docId);
+            await this.cache.removeEntries(file);
         } catch (error) {
-            this.logger.sendErrorEvent({ eventName: "removeAllEntriesForDocId", docId }, error);
+            this.logger.sendErrorEvent(
+                {
+                    eventName: "removeCacheEntries",
+                    docId: file.docId,
+                },
+            error);
         }
     }
 }
@@ -233,13 +238,16 @@ export class LocalPersistentCache implements IPersistedCache {
     updateUsage(entry: ICacheEntry, seqNumber: number): void {
     }
 
-    async removeAllEntriesForDocId(docId: string): Promise<void> {
+    async removeEntries(file: IFileEntry): Promise<void> {
         Array.from(this.cache)
-        .filter(([key]) => {
-            key.startsWith(docId);
+        .filter(([cachekey]) => {
+            const docIdFromKey = cachekey.split("_");
+            if (docIdFromKey[0] === file.docId) {
+                return true;
+            }
         })
-        .map(([key]) => {
-            this.cache.delete(key);
+        .map(([cachekey]) => {
+            this.cache.delete(cachekey);
         });
     }
 
@@ -328,8 +336,8 @@ export class LocalPersistentCacheAdapter implements IPersistedCache {
         this.cache.updateUsage(entry, seqNumber);
     }
 
-    async removeAllEntriesForDocId(docId: string): Promise<void> {
+    async removeEntries(file: IFileEntry): Promise<void> {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.cache.removeAllEntriesForDocId(docId);
+        this.cache.removeEntries(file);
     }
 }
