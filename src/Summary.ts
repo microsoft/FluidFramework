@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidHandle, ISerializedHandle } from '@fluidframework/core-interfaces';
 import { EditId, TraitLabel } from './Identifiers';
 import { assert, assertNotUndefined } from './Common';
 import { editsPerChunk, OrderedEditSet } from './EditLog';
@@ -10,7 +11,6 @@ import { newEdit, setTrait } from './EditUtilities';
 import { ChangeNode, Edit, Change } from './PersistedTypes';
 import { Snapshot } from './Snapshot';
 import { initialTree } from './InitialTree';
-import { IFluidHandle, ISerializedHandle } from '@fluidframework/core-interfaces';
 
 /**
  * Format version for summaries which is supported.

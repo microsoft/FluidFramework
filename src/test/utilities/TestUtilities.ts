@@ -138,6 +138,24 @@ export function assertNoDelta(tree: SharedTree, editor: () => void) {
 	});
 }
 
+/**
+ * Used to test error throwing in async functions.
+ */
+export async function asyncFunctionThrowsCorrectly(
+	asyncFunction: () => Promise<unknown>,
+	expectedError: string
+): Promise<boolean> {
+	let errorMessage;
+
+	try {
+		await asyncFunction();
+	} catch (error) {
+		errorMessage = error.message;
+	}
+
+	return errorMessage === expectedError;
+}
+
 /** Left node of 'simpleTestTree' */
 export const left: ChangeNode = makeEmptyNode();
 

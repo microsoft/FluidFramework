@@ -3,14 +3,14 @@ import * as fs from 'fs';
 import { assert, expect } from 'chai';
 import { Change, StablePlace } from '../PersistedTypes';
 import { deserialize, SharedTreeSummary } from '../Summary';
+import { DetachedSequenceId, EditId, NodeId } from '../Identifiers';
+import { newEdit } from '../EditUtilities';
 import {
 	leftConsistent,
 	makeEmptyNode,
 	setUpTestSharedTree,
 	simpleTestTreeConsistent,
 } from './utilities/TestUtilities';
-import { DetachedSequenceId, EditId, NodeId } from '../Identifiers';
-import { newEdit } from '../EditUtilities';
 
 function summaryFilePath(formatVersion: string): string {
 	const summaryFileName = `${formatVersion}.json`;

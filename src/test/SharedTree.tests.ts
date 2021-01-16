@@ -26,7 +26,6 @@ import {
 	assertNoDelta,
 } from './utilities/TestUtilities';
 import { runSharedTreeUndoRedoTestSuite } from './utilities/UndoRedoTests';
-import { transpileSummaryToReadFormat } from '../SummaryBackCompatibility';
 
 describe('SharedTree', () => {
 	describe('SharedTree before initialization', () => {
@@ -397,7 +396,9 @@ describe('SharedTree', () => {
 
 			containerRuntimeFactory.processAllMessages();
 
-			let id, edit;
+			let id;
+			let edit;
+
 			assertNoDelta(tree, () => {
 				const build = Change.build([], 0 as DetachedSequenceId);
 				[id, edit] = newEdit([build]);
@@ -516,7 +517,7 @@ describe('SharedTree', () => {
 			// The history should have been dropped by the default handling behavior.
 			// It will contain a single entry setting the tree to equal the head revision.
 			expect(tree.edits.length).to.equal(1);
-			expect(tree.edits.tryGetEdit(editID)).to.be.undefined;
+			expect(await tree.edits.tryGetEdit(editID)).to.be.undefined;
 		});
 	});
 

@@ -12,6 +12,7 @@ import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
 import { Transaction } from '../Transaction';
 import {
+	asyncFunctionThrowsCorrectly,
 	initialSnapshot,
 	left,
 	leftTraitLabel,
@@ -162,22 +163,35 @@ describe('CachingLogViewer', () => {
 
 	const log = getSimpleLog();
 
-	it('detects non-integer revisions when setting snapshots', () => {
+	it('detects non-integer revisions when setting snapshots', async () => {
 		const viewer = new CachingLogViewer(log, initialSimpleTree, /* expensiveValidation */ true);
-		expect(() => viewer.setKnownRevision(2.4, simpleTreeSnapshot)).to.throw('revision must be an integer');
+		expect(
+			await asyncFunctionThrowsCorrectly(
+				() => viewer.setKnownRevision(2.4, simpleTreeSnapshot),
+				'revision must be an integer'
+			)
+		).to.be.true;
 	});
 
-	it('detects out-of-bounds revisions when setting snapshots', () => {
+	it('detects out-of-bounds revisions when setting snapshots', async () => {
 		const viewer = new CachingLogViewer(log, initialSimpleTree, /* expensiveValidation */ true);
-		expect(() => viewer.setKnownRevision(1000, simpleTreeSnapshot)).to.throw(
-			'revision must correspond to the result of a SequencedEdit'
-		);
+		expect(
+			await asyncFunctionThrowsCorrectly(
+				() => viewer.setKnownRevision(1000, simpleTreeSnapshot),
+				'revision must correspond to the result of a SequencedEdit'
+			)
+		).to.be.true;
 	});
 
-	it('detects invalid snapshots', () => {
+	it('detects invalid snapshots', async () => {
 		const viewer = new CachingLogViewer(log, initialSimpleTree, /* expensiveValidation */ true);
 		// Set the head revision snapshot to something different than what is produced by applying edits sequentially.
-		expect(() => viewer.setKnownRevision(2, initialSnapshot)).to.throw('setKnownRevision passed invalid snapshot');
+		expect(
+			await asyncFunctionThrowsCorrectly(
+				() => viewer.setKnownRevision(2, initialSnapshot),
+				'setKnownRevision passed invalid snapshot'
+			)
+		).to.be.true;
 	});
 
 	it('reuses cached snapshots for sequenced edits', async () => {

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IsoBuffer } from '@fluidframework/common-utils';
 import { assert, assertArrayOfOne, assertNotUndefined, compareIterables, fail } from './Common';
 import { Edit } from './PersistedTypes';
 import { EditId } from './Identifiers';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IsoBuffer } from '@fluidframework/common-utils';
 
 /**
  * An ordered set of Edits associated with a SharedTree.
@@ -117,10 +117,10 @@ export class EditLog implements OrderedEditSet {
 	private readonly editChunks: editChunk[];
 	private readonly localEdits: Edit[] = [];
 
-	private loadedChunkMruCache: number[] = [];
+	private readonly loadedChunkMruCache: number[] = [];
 	private readonly maximumEvictedIndex: number;
 
-	private allEditIds: Map<EditId, OrderedEditId> = new Map();
+	private readonly allEditIds: Map<EditId, OrderedEditId> = new Map();
 
 	/**
 	 * Construct an `EditLog` using the given options.
@@ -220,7 +220,7 @@ export class EditLog implements OrderedEditSet {
 
 			if (edits === undefined) {
 				assert(handle !== undefined, 'An edit chunk should include at least a handle or edits.');
-				const edits = JSON.parse(IsoBuffer.from(await handle.get()).toString()).edits;
+				const edits = JSON.parse(IsoBuffer.from(await handle.get()).toString()).edits as Edit[];
 				assert(edits.length === editsPerChunk, 'The chunk does not contain the correct number of edits.');
 				editChunk.edits = edits;
 

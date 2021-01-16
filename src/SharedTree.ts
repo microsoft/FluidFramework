@@ -294,13 +294,15 @@ export class SharedTree extends SharedObject {
 	}
 
 	private deserializeHandle(serializedHandle: ISerializedHandle): IFluidHandle<ArrayBufferLike> {
-		return this.serializer.parse(JSON.stringify(serializedHandle));
+		const deserializeHandle = this.serializer.parse(JSON.stringify(serializedHandle));
+		assert(typeof deserializeHandle === 'object');
+		return deserializeHandle as IFluidHandle<ArrayBufferLike>;
 	}
 
 	private toSerializable(value: IFluidHandle<ArrayBufferLike>): ISerializedHandle {
 		// Stringify to convert to the serialized handle values - and then parse
 		const stringified = this.serializer.stringify(value, this.handle);
-		return JSON.parse(stringified);
+		return JSON.parse(stringified) as ISerializedHandle;
 	}
 
 	/**
@@ -390,7 +392,7 @@ export class SharedTree extends SharedObject {
 
 		// TODO:#47830: Store the associated revision on the snapshot.
 		// The current view should only be stored in the cache if the revision it's associated with is known.
-		logViewer.setKnownRevision(editLog.length, currentView);
+		void logViewer.setKnownRevision(editLog.length, currentView);
 		return { editLog, logViewer };
 	}
 
