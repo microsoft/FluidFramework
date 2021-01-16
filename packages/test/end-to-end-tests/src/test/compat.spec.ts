@@ -103,40 +103,52 @@ describe("loader/runtime compatibility", () => {
 
             const containersP: Promise<IContainer | old.IContainer>[] = [
                 loadContainer( // new everything
-                    { fluidExport: createRuntimeFactory(
-                        TestDataObject.type,
-                        createPrimedDataStoreFactory(),
-                        runtimeOptions) },
+                    {
+                        fluidExport: createRuntimeFactory(
+                            TestDataObject.type,
+                            createPrimedDataStoreFactory(),
+                            runtimeOptions),
+                    },
                     args.deltaConnectionServer),
                 loadContainerWithOldLoader( // old loader, new container/data store runtimes
-                    { fluidExport: createRuntimeFactory(
-                        TestDataObject.type,
-                        createPrimedDataStoreFactory(),
-                        runtimeOptions) },
+                    {
+                        fluidExport: createRuntimeFactory(
+                            TestDataObject.type,
+                            createPrimedDataStoreFactory(),
+                            runtimeOptions),
+                    },
                     args.deltaConnectionServer),
                 loadContainerWithOldLoader( // old everything
-                    { fluidExport: createOldRuntimeFactory(
-                        TestDataObject.type,
-                        createOldPrimedDataStoreFactory(),
-                        runtimeOptions) },
+                    {
+                        fluidExport: createOldRuntimeFactory(
+                            TestDataObject.type,
+                            createOldPrimedDataStoreFactory(),
+                            runtimeOptions),
+                    },
                     args.deltaConnectionServer),
                 loadContainer( // new loader, old container/data store runtimes
-                    { fluidExport: createOldRuntimeFactory(
-                        TestDataObject.type,
-                        createOldPrimedDataStoreFactory(),
-                        runtimeOptions) },
+                    {
+                        fluidExport: createOldRuntimeFactory(
+                            TestDataObject.type,
+                            createOldPrimedDataStoreFactory(),
+                            runtimeOptions),
+                    },
                     args.deltaConnectionServer),
                 loadContainer( // new loader/container runtime, old data store runtime
-                    { fluidExport: createRuntimeFactory(
-                        TestDataObject.type,
-                        createOldPrimedDataStoreFactory(),
-                        runtimeOptions) },
+                    {
+                        fluidExport: createRuntimeFactory(
+                            TestDataObject.type,
+                            createOldPrimedDataStoreFactory(),
+                            runtimeOptions),
+                    },
                     args.deltaConnectionServer),
                 loadContainerWithOldLoader( // old loader/container runtime, new data store runtime
-                    { fluidExport: createOldRuntimeFactory(
-                        TestDataObject.type,
-                        createPrimedDataStoreFactory(),
-                        runtimeOptions) },
+                    {
+                        fluidExport: createOldRuntimeFactory(
+                            TestDataObject.type,
+                            createPrimedDataStoreFactory(),
+                            runtimeOptions),
+                    },
                     args.deltaConnectionServer),
             ];
 
