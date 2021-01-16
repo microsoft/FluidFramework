@@ -14,6 +14,7 @@ import {
     IsoBuffer,
     Uint8ArrayToString,
     performance,
+    unreachableCase,
 } from "@fluidframework/common-utils";
 import {
     PerformanceEvent,
@@ -1070,7 +1071,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     break;
                 }
                 default: {
-                    throw new Error(`Unknown tree type ${summaryObject.type}`);
+                    unreachableCase(summaryObject, `Unknown type: ${(summaryObject as any).type}`);
                 }
             }
 

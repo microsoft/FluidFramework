@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { assert, gitHashFile, IsoBuffer, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import * as resources from "@fluidframework/gitresources";
 import { buildHierarchy, getGitType, getGitMode } from "@fluidframework/protocol-base";
@@ -159,7 +159,7 @@ export class DocumentStorageService implements IDocumentStorageService {
             }
 
             default:
-                throw Error(`Unexpected summary object type: "${object.type}".`);
+                unreachableCase(object, `Unknown type: ${(object as any).type}`);
         }
     }
 

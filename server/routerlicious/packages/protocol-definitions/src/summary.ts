@@ -28,11 +28,13 @@ export const enum SummaryType {
     Attachment = 4,
 }
 
+export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;
+
 export interface ISummaryHandle {
     type: SummaryType.Handle;
 
     // No handles, all other SummaryType are Ok
-    handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;
+    handleType: SummaryTypeNoHandle;
 
     // Stored handle reference
     handle: string;
