@@ -15,7 +15,6 @@ import {
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidCodeDetails, IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -43,7 +42,7 @@ describe("Ops on Reconnect", () => {
         config: {},
     };
 
-    let urlResolver: IUrlResolver;
+    let urlResolver: LocalResolver;
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let documentServiceFactory: LocalDocumentServiceFactory;
     let opProcessingController: OpProcessingController;
@@ -94,7 +93,8 @@ describe("Ops on Reconnect", () => {
 
     async function createContainer(): Promise<IContainer> {
         const loader = await createLoader();
-        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+        return createAndAttachContainer(
+            codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
     }
 
     async function setupSecondContainersDataObject(): Promise<ITestFluidObject> {
@@ -286,9 +286,11 @@ describe("Ops on Reconnect", () => {
 
             // Get dataObject2 in the second container.
             const container2Object1Map1 = await container2Object1.getSharedObject<SharedMap>(map1Id);
-            const container2Object2 =
-                await container2Object1Map1.get<
-                    IFluidHandle<ITestFluidObject & IFluidLoadable>>("dataStore2Key").get();
+            assert(container2Object1Map1);
+            const container2Object2Handle =
+                container2Object1Map1.get<IFluidHandle<ITestFluidObject & IFluidLoadable>>("dataStore2Key");
+            assert(container2Object2Handle);
+            const container2Object2 = await container2Object2Handle.get();
             assert.ok(container2Object2, "Could not get dataStore2 in the second container");
 
             // Disconnect the client.
@@ -388,9 +390,10 @@ describe("Ops on Reconnect", () => {
 
             // Get dataObject2 in the second container.
             const container2Object1Map1 = await container2Object1.getSharedObject<SharedMap>(map1Id);
-            const container2Object2 =
-                await container2Object1Map1.get<
-                    IFluidHandle<ITestFluidObject & IFluidLoadable>>("dataStore2Key").get();
+            const container2Object2Handle =
+                container2Object1Map1.get<IFluidHandle<ITestFluidObject & IFluidLoadable>>("dataStore2Key");
+            assert(container2Object2Handle);
+            const container2Object2 = await container2Object2Handle.get();
             assert.ok(container2Object2, "Could not get dataStore2 in the second container");
 
             // Set values in the DDSes across the two dataStores interleaved with each other.

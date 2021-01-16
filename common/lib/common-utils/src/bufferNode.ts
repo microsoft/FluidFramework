@@ -41,7 +41,7 @@ export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
 /**
  * Convert base64 or utf8 string to array buffer
  */
-export function toBuffer(input: string, encoding: string): ArrayBufferLike {
+export function stringToBuffer(input: string, encoding: string): ArrayBufferLike {
     const iso = IsoBuffer.from(input, encoding);
     // In a Node environment, IsoBuffer may be a Node.js Buffer.  Node.js will
     // pool multiple small Buffer instances into a single ArrayBuffer, in which
@@ -50,3 +50,12 @@ export function toBuffer(input: string, encoding: string): ArrayBufferLike {
         ? iso.buffer
         : iso.buffer.slice(iso.byteOffset, iso.byteOffset + iso.byteLength);
 }
+
+/**
+ * Convert binary blob to string format
+ *
+ * @param blob - the binary blob
+ * @returns the blob in string format
+ */
+export const bufferToString = (blob: ArrayBufferLike, encoding: string): string =>
+    IsoBuffer.from(blob).toString(encoding);

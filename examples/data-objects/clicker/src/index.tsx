@@ -34,7 +34,7 @@ export class Clicker extends DataObject implements IFluidHTMLView {
 
     protected async hasInitialized() {
         const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
-        this._counter = await counterHandle.get();
+        this._counter = await counterHandle?.get();
         this.setupAgent();
     }
 

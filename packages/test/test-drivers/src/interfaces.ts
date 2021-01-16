@@ -11,7 +11,14 @@ export interface ITestDriver{
     /**
      * The type of server the test driver executes against
      */
-    type: TestDriverTypes;
+    readonly type: TestDriverTypes;
+
+    /**
+     * The semantic version of the test drivers package.
+     * In general this version will match that of the  client
+     * interfaces and implementation exposed and used by the test driver.
+     */
+    readonly version: string;
 
     /**
      * Creates a document service factory targetting the server

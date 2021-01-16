@@ -416,8 +416,11 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     protected snapshotCore(serializer: IFluidSerializer): ITree {
-        const tree: ITree = {
-            entries: [
+        const entries = [];
+        // TODO: once the change to conditionally read these has propagated
+        // conditionally write them as well
+        // if (this.intervalMapKernel.size > 0) {
+            entries.push(
                 {
                     mode: FileMode.File,
                     path: snapshotFileName,
@@ -426,15 +429,17 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                         contents: this.intervalMapKernel.serialize(serializer),
                         encoding: "utf-8",
                     },
-                },
-                {
-                    mode: FileMode.Directory,
-                    path: contentPath,
-                    type: TreeEntry.Tree,
-                    value: this.snapshotMergeTree(serializer),
-                },
-
-            ],
+                });
+        // }
+        entries.push(
+            {
+                mode: FileMode.Directory,
+                path: contentPath,
+                type: TreeEntry.Tree,
+                value: this.snapshotMergeTree(serializer),
+            });
+        const tree: ITree = {
+            entries,
             // eslint-disable-next-line no-null/no-null
             id: null,
         };

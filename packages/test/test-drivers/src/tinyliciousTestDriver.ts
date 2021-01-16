@@ -11,9 +11,11 @@ import {
     InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
 import { ITestDriver } from "./interfaces";
+import { pkgVersion } from "./packageVersion";
 
 export class TinyliciousTestDriver implements ITestDriver {
     public readonly type = "tinylicious";
+    public readonly version = pkgVersion;
 
     createDocumentServiceFactory(): RouterliciousDocumentServiceFactory {
         return new RouterliciousDocumentServiceFactory(
