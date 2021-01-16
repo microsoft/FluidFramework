@@ -167,7 +167,7 @@ describe('CachingLogViewer', () => {
 		const viewer = new CachingLogViewer(log, initialSimpleTree, /* expensiveValidation */ true);
 		expect(
 			await asyncFunctionThrowsCorrectly(
-				() => viewer.setKnownRevision(2.4, simpleTreeSnapshot),
+				async () => viewer.setKnownRevision(2.4, simpleTreeSnapshot),
 				'revision must be an integer'
 			)
 		).to.be.true;
@@ -177,7 +177,7 @@ describe('CachingLogViewer', () => {
 		const viewer = new CachingLogViewer(log, initialSimpleTree, /* expensiveValidation */ true);
 		expect(
 			await asyncFunctionThrowsCorrectly(
-				() => viewer.setKnownRevision(1000, simpleTreeSnapshot),
+				async () => viewer.setKnownRevision(1000, simpleTreeSnapshot),
 				'revision must correspond to the result of a SequencedEdit'
 			)
 		).to.be.true;
@@ -188,7 +188,7 @@ describe('CachingLogViewer', () => {
 		// Set the head revision snapshot to something different than what is produced by applying edits sequentially.
 		expect(
 			await asyncFunctionThrowsCorrectly(
-				() => viewer.setKnownRevision(2, initialSnapshot),
+				async () => viewer.setKnownRevision(2, initialSnapshot),
 				'setKnownRevision passed invalid snapshot'
 			)
 		).to.be.true;
