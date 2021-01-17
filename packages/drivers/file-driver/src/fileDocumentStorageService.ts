@@ -183,7 +183,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             if (tree && tree.entries) {
                 tree.entries.forEach((entry) => {
                     if (entry.path === ".component" && entry.type === api.TreeEntry.Blob) {
-                        const blob: api.IBlob = entry.value as api.IBlob;
+                        const blob: api.IBlob = entry.value;
                         const content = blob.contents.split(":");
                         if (content[0] === `{"pkg"`) {
                             dataStoreName = content[1].substring(1, content[1].lastIndexOf(`"`));
@@ -229,7 +229,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             const commits: { [key: string]: api.ITree } = {};
             for (const entry of tree.entries) {
                 if (entry.type === api.TreeEntry.Commit) {
-                    const commitId = entry.value as string;
+                    const commitId = entry.value;
                     let commit = this.commitsWriter[commitId];
                     if (commit === undefined) {
                         // Read from disk any commits that were referenced in original snapshot
@@ -265,7 +265,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             tree.entries.sort((a, b) => a.path.localeCompare(b.path));
             tree.entries.map((entry) => {
                 if (entry.type === api.TreeEntry.Tree) {
-                    this.sortTree(entry.value as api.ITree);
+                    this.sortTree(entry.value);
                 }
             });
         }
@@ -306,7 +306,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
 function removeNullTreIds(tree: api.ITree) {
     for (const node of tree.entries) {
         if (node.type === api.TreeEntry.Tree) {
-            removeNullTreIds(node.value as api.ITree);
+            removeNullTreIds(node.value);
         }
     }
     assert(tree.id === undefined || tree.id === null);

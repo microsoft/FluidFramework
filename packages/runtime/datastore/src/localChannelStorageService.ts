@@ -5,7 +5,7 @@
 
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import { IBlob, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
+import { ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import { listBlobsAtTreePath } from "@fluidframework/runtime-utils";
 
 export class LocalChannelStorageService implements IChannelStorageService {
@@ -38,7 +38,7 @@ export class LocalChannelStorageService implements IChannelStorageService {
             switch (entry.type) {
                 case TreeEntry.Blob:
                     if (path === entry.path) {
-                        const blob = entry.value as IBlob;
+                        const blob = entry.value;
                         return blob.encoding === "utf-8"
                             ? fromUtf8ToBase64(blob.contents)
                             : blob.contents;
@@ -47,7 +47,7 @@ export class LocalChannelStorageService implements IChannelStorageService {
 
                 case TreeEntry.Tree:
                     if (path.startsWith(entry.path)) {
-                        return this.readSyncInternal(path.substr(entry.path.length + 1), entry.value as ITree);
+                        return this.readSyncInternal(path.substr(entry.path.length + 1), entry.value);
                     }
                     break;
 
