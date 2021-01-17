@@ -158,6 +158,10 @@ export class DocumentStorageService implements IDocumentStorageService {
                 return object.id;
             }
 
+            // Remove this case when upgrading next version of server packages
+            case SummaryType.Commit:
+                throw new Error("remove");
+
             default:
                 unreachableCase(object, `Unknown type: ${(object as any).type}`);
         }
