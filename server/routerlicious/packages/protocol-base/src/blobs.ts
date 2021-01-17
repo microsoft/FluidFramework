@@ -10,7 +10,6 @@ import {
     IAttachment,
     ISnapshotTreeEx,
     ITree,
-    ITreeEntry,
     TreeEntry,
     SummaryType,
     SummaryObject,
@@ -100,7 +99,7 @@ export function buildHierarchy(
 /**
  * Basic implementation of a blob ITreeEntry
  */
-export class BlobTreeEntry implements ITreeEntry {
+export class BlobTreeEntry {
     public readonly mode = FileMode.File;
     public readonly type = TreeEntry.Blob;
     public readonly value: IBlob;
@@ -119,7 +118,7 @@ export class BlobTreeEntry implements ITreeEntry {
 /**
  * Basic implementation of a commit ITreeEntry
  */
-export class CommitTreeEntry implements ITreeEntry {
+export class CommitTreeEntry {
     public readonly mode = FileMode.Commit;
     public readonly type = TreeEntry.Commit;
 
@@ -134,7 +133,7 @@ export class CommitTreeEntry implements ITreeEntry {
 /**
  * Basic implementation of a tree ITreeEntry
  */
-export class TreeTreeEntry implements ITreeEntry {
+export class TreeTreeEntry {
     public readonly mode = FileMode.Directory;
     public readonly type = TreeEntry.Tree;
 
@@ -149,7 +148,7 @@ export class TreeTreeEntry implements ITreeEntry {
 /**
  * Basic implementation of an attachment ITreeEntry
  */
-export class AttachmentTreeEntry implements ITreeEntry {
+export class AttachmentTreeEntry {
     public readonly mode = FileMode.File;
     public readonly type = TreeEntry.Attachment;
     public readonly value: IAttachment;
