@@ -53,7 +53,7 @@ describe("LocalChannelStorageService", () => {
                             {
                                 mode: FileMode.File,
                                 path: "foo",
-                                type: TreeEntry.Tree,
+                                type: TreeEntry.Blob,
                                 value: {
                                     encoding: "utf8",
                                     contents: "bar",
