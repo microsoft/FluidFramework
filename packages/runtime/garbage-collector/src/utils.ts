@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IGCData } from "@fluidframework/runtime-definitions";
+import { assert } from "@fluidframework/common-utils";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 
 /**
  * Helper function that clones the GC data.
  * @param gcData - The GC data to clone.
  * @returns a clone of the given GC data.
  */
-export function cloneGCData(gcData: IGCData): IGCData {
+export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData {
     const clonedGCNodes: { [ id: string ]: string[] } = {};
     for (const [id, outboundRoutes] of Object.entries(gcData.gcNodes)) {
         clonedGCNodes[id] = Array.from(outboundRoutes);
@@ -20,7 +21,29 @@ export function cloneGCData(gcData: IGCData): IGCData {
     };
 }
 
-export class GCDataBuilder implements IGCData {
+/**
+ * Helper function that generates the used routes of the children from a given node's used routes.
+ * @param usedRoutes - The used routes of a node.
+ * @returns A map of used routes of each children of the the given node.
+ */
+export function getChildNodesUsedRoutes(usedRoutes: string[]) {
+    const usedNodesRoutes: Map<string, string[]> = new Map();
+    for (const route of usedRoutes) {
+        assert(route.startsWith("/"), "Used route should always be an absolute route");
+        const childId = route.split("/")[1];
+        const childUsedRoute = route.slice(childId.length + 1);
+
+        const childUsedRoutes = usedNodesRoutes.get(childId);
+        if (childUsedRoutes !== undefined) {
+            childUsedRoutes.push(childUsedRoute);
+        } else {
+            usedNodesRoutes.set(childId, [ childUsedRoute ]);
+        }
+    }
+    return usedNodesRoutes;
+}
+
+export class GCDataBuilder implements IGarbageCollectionData {
     public readonly gcNodes: { [ id: string ]: string[] } = {};
 
     public addNode(id: string, outboundRoutes: string[]) {
@@ -63,7 +86,7 @@ export class GCDataBuilder implements IGCData {
         }
     }
 
-    public getGCData(): IGCData {
+    public getGCData(): IGarbageCollectionData {
         return {
             gcNodes: this.gcNodes,
         };

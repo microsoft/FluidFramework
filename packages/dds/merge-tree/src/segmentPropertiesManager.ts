@@ -36,7 +36,7 @@ export class SegmentPropertiesManager {
         newProps: Properties.PropertySet,
         op?: ICombiningOp,
         seq?: number,
-        collabWindow?: CollaborationWindow): Properties.PropertySet {
+        collabWindow?: CollaborationWindow): Properties.PropertySet | undefined {
         if (!this.segment.properties) {
             this.pendingRewriteCount = 0;
             this.segment.properties = Properties.createMap<any>();

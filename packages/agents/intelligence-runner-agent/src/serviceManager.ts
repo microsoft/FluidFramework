@@ -33,9 +33,9 @@ export class IntelligentServicesManager {
                 // And then run plugin insights rate limited
                 this.rateLimiter = new RateLimiter(
                     async () => {
-                        const output = await this.documentInsights
-                            .get<IFluidHandle<ISharedMap>>(this.sharedString.id)
-                            .get();
+                        const handle = this.documentInsights.get<IFluidHandle<ISharedMap>>(this.sharedString.id);
+                        if (!handle) { return; }
+                        const output = await handle.get();
 
                         // Run the shared services
                         const text = this.sharedString.getText();

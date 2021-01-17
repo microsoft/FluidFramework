@@ -4,7 +4,7 @@
  */
 
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
-import { ILoader } from "./loader";
+import { ILoader, ILoaderOptions } from "./loader";
 
 /**
  * Abstraction layer to support different Loaders in different Node execution contexts
@@ -20,7 +20,7 @@ export interface IProxyLoaderFactory {
      */
     createProxyLoader(
         id: string,
-        options: any,
+        options: ILoaderOptions,
         resolved: IFluidResolvedUrl,
         fromSequenceNumber: number): Promise<ILoader>;
 }

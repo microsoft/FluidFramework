@@ -24,7 +24,7 @@ describe("FlowDocument", () => {
         const deltaConnectionServer = LocalDeltaConnectionServer.create();
         const urlResolver = new LocalResolver();
         const loader = createLocalLoader([[codeDetails, FlowDocument.getFactory()]], deltaConnectionServer, urlResolver);
-        const container = await createAndAttachContainer(documentUrl, codeDetails, loader, urlResolver);
+        const container = await createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentUrl));
         doc = await requestFluidObject<FlowDocument>(container, "default");
     });
 
