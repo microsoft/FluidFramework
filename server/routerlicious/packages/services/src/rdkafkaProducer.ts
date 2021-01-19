@@ -15,8 +15,7 @@ const kafka = tryImportNodeRdkafka();
 export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
 	enableIdempotence: boolean;
 	pollIntervalMs: number;
-	// optional additional options 
-	a
+	additionalOptions?: kafkaTypes.ProducerGlobalConfig;
 }
 
 /**
@@ -56,7 +55,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 		this.connecting = true;
 
-		this.producer = new kafka.HighLevelProducer({
+		const options: kafkaTypes.ProducerGlobalConfig = {
 			"metadata.broker.list": this.endpoints.kafka.join(","),
 			"socket.keepalive.enable": true,
 			"socket.nagle.disable": true,
@@ -65,7 +64,10 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			"queue.buffering.max.messages": 100000,
 			"queue.buffering.max.ms": 0.5,
 			"batch.num.messages": 10000,
-		});
+			...this.producerOptions.additionalOptions,
+		};
+
+		this.producer = new kafka.HighLevelProducer(options);
 
 		this.producer.on("ready", () => {
 			this.connected = true;
@@ -110,7 +112,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 		this.connecting = this.connected = false;
 
-		await new Promise((resolve) => {
+		await new Promise<void>((resolve) => {
 			const producer = this.producer;
 			this.producer = undefined;
 			if (producer && producer.isConnected()) {

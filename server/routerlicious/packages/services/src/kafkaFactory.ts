@@ -33,7 +33,7 @@ export function createProducer(
     enableIdempotence?: boolean,
     pollIntervalMs?: number): IProducer {
     if (type === "rdkafka") {
-        return new RdkafkaProducer({ kafka: [kafkaEndPoint] }, clientId, topic, enableIdempotence, pollIntervalMs);
+        return new RdkafkaProducer({ kafka: [kafkaEndPoint] }, clientId, topic, { enableIdempotence, pollIntervalMs });
     }
 
     return new KafkaNodeProducer({ kafkaHost: kafkaEndPoint }, clientId, topic);

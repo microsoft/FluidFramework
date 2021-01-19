@@ -14,12 +14,10 @@ import { tryImportNodeRdkafka } from "./tryImport";
 const kafka = tryImportNodeRdkafka();
 
 export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
-	optimizedRebalance: boolean;
-	consumeLoopTimeout: number;
+	consumeTimeout: number;
 	consumeLoopTimeoutDelay: number;
-
-	// optional additional options 
-	a
+	optimizedRebalance: boolean;
+	additionalOptions?: kafkaTypes.ConsumerGlobalConfig;
 }
 
 /**
@@ -45,7 +43,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		super(endpoints, clientId, topic, options);
 
 		this.consumerOptions = {
-			consumeLoopTimeout: 200,
+			consumeTimeout: 200,
 			consumeLoopTimeoutDelay: 100,
 			optimizedRebalance: false,
 			...options,
@@ -63,24 +61,23 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			this.zooKeeperClient = new ZookeeperClient(zooKeeperEndpoint);
 		}
 
-		this.consumer = new kafka.KafkaConsumer(
-			{
-				"metadata.broker.list": this.endpoints.kafka.join(","),
-				"socket.keepalive.enable": true,
-				"socket.nagle.disable": true,
-				"client.id": this.clientId,
-				"group.id": this.groupId,
-				"enable.auto.commit": false,
-				"fetch.min.bytes": 1,
-				"fetch.max.bytes": 1024 * 1024,
-				"offset_commit_cb": true,
-				"rebalance_cb": this.consumerOptions.optimizedRebalance ? this.rebalance.bind(this) : true,
-			},
-			{
-				"auto.offset.reset": "latest",
-			});
+		const options: kafkaTypes.ConsumerGlobalConfig = {
+			"metadata.broker.list": this.endpoints.kafka.join(","),
+			"socket.keepalive.enable": true,
+			"socket.nagle.disable": true,
+			"client.id": this.clientId,
+			"group.id": this.groupId,
+			"enable.auto.commit": false,
+			"fetch.min.bytes": 1,
+			"fetch.max.bytes": 1024 * 1024,
+			"offset_commit_cb": true,
+			"rebalance_cb": this.consumerOptions.optimizedRebalance ? this.rebalance.bind(this) : true,
+			...this.consumerOptions.additionalOptions,
+		};
 
-		this.consumer.setDefaultConsumeLoopTimeout(this.consumerOptions.consumeLoopTimeout);
+		this.consumer = new kafka.KafkaConsumer(options, { "auto.offset.reset": "latest" });
+
+		this.consumer.setDefaultConsumeTimeout(this.consumerOptions.consumeTimeout);
 		this.consumer.setDefaultConsumeLoopTimeoutDelay(this.consumerOptions.consumeLoopTimeoutDelay);
 
 		this.consumer.on("ready", () => {
@@ -226,7 +223,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			this.closed = true;
 		}
 
-		await new Promise((resolve) => {
+		await new Promise<void>((resolve) => {
 			if (this.consumer && this.consumer.isConnected()) {
 				this.consumer.disconnect(resolve);
 			} else {
