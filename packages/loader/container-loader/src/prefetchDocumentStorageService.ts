@@ -33,10 +33,12 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        const res: Promise<ArrayBufferLike> = this.cachedRead(blobId).then((value) => {
-            return stringToBuffer(value, "base64");
-        });
-            return res;
+        // const res: Promise<ArrayBufferLike> = this.cachedRead(blobId).then((value) => {
+        //     return stringToBuffer(value, "base64");
+        // });
+        //     return res;]
+        const value = await this.cachedRead(blobId);
+        return stringToBuffer(value, "base64");
     }
     public stopPrefetch() {
         this.prefetchEnabled = false;
