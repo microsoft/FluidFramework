@@ -11,7 +11,7 @@ import {
     ISummaryTree,
     SummaryType,
     SummaryObject,
-    ISnapshotTree,
+    ISnapshotTreeEx,
 } from "@fluidframework/protocol-definitions";
 import { IGitCache, IGitManager } from "@fluidframework/server-services-client";
 import {
@@ -79,7 +79,7 @@ export class DocumentStorage implements IDocumentStorage {
             getQuorumTreeEntries(documentId, sequenceNumber, sequenceNumber, term, quorumSnapshot);
 
         const [protocolTree, appSummaryTree] = await Promise.all([
-            gitManager.createTree({ entries, id: null }),
+            gitManager.createTree({ entries }),
             gitManager.getTree(handle, false),
         ]);
 
@@ -325,7 +325,7 @@ export async function writeSummaryTree(
     manager: IGitManager,
     summaryTree: ISummaryTree,
     blobsShaCache: Set<string>,
-    snapshot: ISnapshotTree | undefined,
+    snapshot: ISnapshotTreeEx | undefined,
 ): Promise<string> {
     const entries = await Promise.all(Object.keys(summaryTree.tree).map(async (key) => {
         const entry = summaryTree.tree[key];
@@ -348,7 +348,7 @@ async function writeSummaryTreeObject(
     blobsShaCache: Set<string>,
     key: string,
     object: SummaryObject,
-    snapshot: ISnapshotTree | undefined,
+    snapshot: ISnapshotTreeEx | undefined,
     currentPath = "",
 ): Promise<string> {
     switch (object.type) {
@@ -373,7 +373,7 @@ async function writeSummaryTreeObject(
 function getIdFromPath(
     handleType: SummaryType,
     handlePath: string,
-    fullSnapshot: ISnapshotTree,
+    fullSnapshot: ISnapshotTreeEx,
 ): string {
     const path = handlePath.split("/").map((part) => decodeURIComponent(part));
     if (path[0] === "") {
@@ -387,24 +387,16 @@ function getIdFromPath(
 function getIdFromPathCore(
     handleType: SummaryType,
     path: string[],
-    snapshot: ISnapshotTree,
+    snapshot: ISnapshotTreeEx,
 ): string {
     const key = path[0];
     if (path.length === 1) {
         switch (handleType) {
             case SummaryType.Blob: {
-                const tryId = snapshot.blobs[key];
-                if (!tryId) {
-                    throw Error("Parent summary does not have blob handle for specified path.");
-                }
-                return tryId;
+                return snapshot.blobs[key];
             }
             case SummaryType.Tree: {
-                const tryId = snapshot.trees[key]?.id;
-                if (!tryId) {
-                    throw Error("Parent summary does not have tree handle for specified path.");
-                }
-                return tryId;
+                return snapshot.trees[key]?.id;
             }
             default:
                 throw Error(`Unexpected handle summary object type: "${handleType}".`);

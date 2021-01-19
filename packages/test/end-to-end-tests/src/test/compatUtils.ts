@@ -31,6 +31,7 @@ import {
     TestObjectProvider,
 } from "@fluidframework/test-utils";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import { LocalServerTestDriver, TinyliciousTestDriver } from "@fluidframework/test-drivers";
 import * as old from "./oldVersion";
 
 /* eslint-enable import/no-extraneous-dependencies */
@@ -195,13 +196,11 @@ export const generateNonCompatTest = (
                 getDataStoreFactory(containerOptions),
                 containerOptions?.runtimeOptions,
             );
-
             const driver = getFluidTestDriver();
-            const testObjectProvider = new TestObjectProvider(
+            return new TestObjectProvider(
                 driver,
                 runtimeFactory,
             );
-            return testObjectProvider;
         });
     });
 };

@@ -78,7 +78,11 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
     beforeEach(async () => {
         args = argsFactory();
+<<<<<<< HEAD
         request  = getFluidTestDriver().createCreateNewRequest(args.documentId);
+=======
+        request = createLocalResolverCreateNewRequest(documentId);
+>>>>>>> d2d20b6231f65191b96f9065db389de7a96ef387
         loader = args.makeTestLoader(testContainerConfig) as Loader;
     });
 

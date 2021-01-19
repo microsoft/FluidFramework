@@ -34,13 +34,11 @@ const waitForSignal =
 
 const tests = (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
-    beforeEach(()=>{
-        args = argsFactory();
-    });
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;
 
     beforeEach(async () => {
+        args = argsFactory();
         const container1 = await args.makeTestContainer(testContainerConfig) as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 
