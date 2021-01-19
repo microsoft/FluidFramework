@@ -17,7 +17,7 @@ describe("ChannelStorageService", () => {
         };
         const storage: Pick<IDocumentStorageService, "read"> = {
             read: async (id: string) => {
-                assert.fail();
+                throw new Error("not implemented");
             },
         };
         const ss = new ChannelStorageService(tree, storage);
