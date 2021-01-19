@@ -1361,8 +1361,7 @@ export class MergeTree {
     }
 
     // Interior node with all node children
-    private pack(block: IMergeBlock) {
-        const parent = block.parent;
+    private packParent(parent: IMergeBlock) {
         const children = parent.children;
         let childIndex: number;
         let childBlock: IMergeBlock;
@@ -1408,7 +1407,7 @@ export class MergeTree {
         }
         parent.childCount = childCount;
         if (this.underflow(parent) && (parent.parent)) {
-            this.pack(parent);
+            this.packParent(parent.parent);
         } else {
             this.nodeUpdateOrdinals(parent);
             this.blockUpdatePathLengths(parent, UnassignedSequenceNumber, -1, true);
@@ -1455,7 +1454,7 @@ export class MergeTree {
                         if (MergeTree.options.measureWindowTime) {
                             packClockStart = clock();
                         }
-                        this.pack(block);
+                        this.packParent(block.parent);
 
                         if (MergeTree.options.measureWindowTime) {
                             this.packTime += elapsedMicroseconds(packClockStart);
@@ -2112,7 +2111,7 @@ export class MergeTree {
     public resolveRemoteClientPosition(
         remoteClientPosition: number,
         remoteClientRefSeq: number,
-        remoteClientId: number): number {
+        remoteClientId: number): number | undefined {
         const segmentInfo = this.getContainingSegment(
             remoteClientPosition,
             remoteClientRefSeq,
@@ -2353,7 +2352,7 @@ export class MergeTree {
         let childIndex: number;
         let child: IMergeNode;
         let newNode: IMergeNode | undefined;
-        let fromSplit: IMergeBlock;
+        let fromSplit: IMergeBlock | undefined;
         let found = false;
         for (childIndex = 0; childIndex < block.childCount; childIndex++) {
             child = children[childIndex];
