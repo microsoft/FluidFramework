@@ -1,4 +1,3 @@
-import path from 'path';
 import * as fs from 'fs';
 import { assert, expect } from 'chai';
 import { Change, StablePlace } from '../PersistedTypes';
@@ -12,12 +11,7 @@ import {
 	simpleTestTreeConsistent,
 } from './utilities/TestUtilities';
 
-function summaryFilePath(formatVersion: string): string {
-	const summaryFileName = `${formatVersion}.json`;
-	return path.resolve('packages/shared-tree/src/test/summary-files/', summaryFileName);
-}
-
-describe('Summary back compatibility', () => {
+describe.only('Summary back compatibility', () => {
 	const setupEditId = '9406d301-7449-48a5-b2ea-9be637b0c6e4' as EditId;
 	const { tree: expectedTree, containerRuntimeFactory } = setUpTestSharedTree({
 		initialTree: simpleTestTreeConsistent,
@@ -35,7 +29,8 @@ describe('Summary back compatibility', () => {
 
 	testedVersions.forEach((version) => {
 		it(`correctly loads version ${version}`, () => {
-			const serializeSummary = fs.readFileSync(summaryFilePath(version), 'utf8');
+			// This path can't be found by the mocha test explorer but is found by `npm test`
+			const serializeSummary = fs.readFileSync(`src/test/summary-files/${version}.json`, 'utf8');
 
 			const { tree } = setUpTestSharedTree();
 
