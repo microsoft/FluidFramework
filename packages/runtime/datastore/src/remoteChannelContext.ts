@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import {
     IChannel,
@@ -19,12 +19,20 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     CreateChildSummarizerNodeFn,
+    gcBlobKey,
     IContextSummarizeResult,
     IFluidDataStoreContext,
+    IGarbageCollectionData,
+    IGarbageCollectionSummaryDetails,
     ISummarizeInternalResult,
     ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions";
-import { createServiceEndpoints, IChannelContext, summarizeChannel } from "./channelContext";
+import {
+    attributesBlobKey,
+    createServiceEndpoints,
+    IChannelContext,
+    summarizeChannel,
+} from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
@@ -40,6 +48,18 @@ export class RemoteChannelContext implements IChannelContext {
         readonly objectStorage: ChannelStorageService,
     };
     private readonly summarizerNode: ISummarizerNodeWithGC;
+
+    /**
+     * This loads the GC details from the base snapshot of this context.
+     */
+    private readonly gcDetailsInInitialSummaryP = new LazyPromise<IGarbageCollectionSummaryDetails>(async () => {
+        if (await this.services.objectStorage.contains(gcBlobKey)) {
+            return readAndParse<IGarbageCollectionSummaryDetails>(this.services.objectStorage, gcBlobKey);
+        } else {
+            return {};
+        }
+    });
+
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -47,9 +67,9 @@ export class RemoteChannelContext implements IChannelContext {
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
         private readonly id: string,
-        baseSnapshot: Promise<ISnapshotTree> | ISnapshotTree,
+        baseSnapshot:  ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
-        extraBlobs: Promise<Map<string, string>> | undefined,
+        extraBlobs: Map<string, string> | undefined,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         private readonly attachMessageType?: string,
     ) {
@@ -59,12 +79,17 @@ export class RemoteChannelContext implements IChannelContext {
             submitFn,
             () => dirtyFn(this.id),
             storageService,
-            Promise.resolve(baseSnapshot),
+            baseSnapshot,
             extraBlobs);
 
         const thisSummarizeInternal =
             async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
-        this.summarizerNode = createSummarizerNode(thisSummarizeInternal);
+
+        this.summarizerNode = createSummarizerNode(
+            thisSummarizeInternal,
+            async () => this.getGCDataInternal(),
+            async () => this.gcDetailsInInitialSummaryP,
+        );
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -122,10 +147,10 @@ export class RemoteChannelContext implements IChannelContext {
         assert(!this.isLoaded, "Remote channel must not already be loaded when loading");
 
         let attributes: IChannelAttributes | undefined;
-        if (await this.services.objectStorage.contains(".attributes")) {
+        if (await this.services.objectStorage.contains(attributesBlobKey)) {
             attributes = await readAndParse<IChannelAttributes | undefined>(
                 this.services.objectStorage,
-                ".attributes");
+                attributesBlobKey);
         }
 
         let factory: IChannelFactory | undefined;
@@ -207,5 +232,44 @@ export class RemoteChannelContext implements IChannelContext {
         // and we don't propagate the connection state when we are not loaded.  So we have to set it again here.
         this.services.deltaConnection.setConnectionState(this.dataStoreContext.connected);
         return this.channel;
+    }
+
+    /**
+     * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context.
+     * Each node has a set of outbound routes to other GC nodes in the document.
+     * If there is no new data in this context since the last summary, previous GC data is used.
+     * If there is new data, the GC data is generated again (by calling getGCDataInternal).
+     */
+    public async getGCData(): Promise<IGarbageCollectionData> {
+        return this.summarizerNode.getGCData();
+    }
+
+    /**
+     * Generates the data used for garbage collection. This is called when there is new data since last summary. It
+     * loads the context and calls into the channel to get its GC data.
+     */
+    private async getGCDataInternal(): Promise<IGarbageCollectionData> {
+        const channel = await this.getChannel();
+        return channel.getGCData();
+    }
+
+    /**
+     * After GC has run, called to notify the context of routes used in it. These are used for the following:
+     * 1. To identify if this context is being referenced in the document or not.
+     * 2. To determine if it needs to re-summarize in case used routes changed since last summary.
+     * 3. These are added to the summary generated by the context.
+     * @param usedRoutes - The routes that are used in this context.
+     */
+    public updateUsedRoutes(usedRoutes: string[]) {
+        /**
+         * Currently, DDSs are always considered referenced and are not garbage collected. Update the summarizer node's
+         * used routes to contain a route to this channel context.
+         * Once we have GC at DDS level, this will be updated to use the passed usedRoutes. See -
+         * https://github.com/microsoft/FluidFramework/issues/4611
+         */
+        // back-compat: 0.33 - updateUsedRoutes is added in 0.33. Remove the check here when N >= 0.36.
+        if (this.summarizerNode.updateUsedRoutes !== undefined) {
+            this.summarizerNode.updateUsedRoutes([""]);
+        }
     }
 }

@@ -20,6 +20,7 @@ import {
     ContainerWarning,
     ILoader,
     AttachState,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 
 import { DebugLogger } from "@fluidframework/telemetry-utils";
@@ -45,6 +46,7 @@ import { FluidSerializer, getNormalizedObjectStoragePathParts, mergeStats } from
 import {
     IChannelSummarizeResult,
     IFluidDataStoreChannel,
+    IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
@@ -376,7 +378,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public readonly documentId: string;
     public readonly id: string = uuid();
     public readonly existing: boolean;
-    public options: any = {};
+    public options: ILoaderOptions = {};
     public clientId: string | undefined = uuid();
     public readonly path = "";
     public readonly connected = true;
@@ -504,9 +506,19 @@ export class MockFluidDataStoreRuntime extends EventEmitter
                 tree: {},
             },
             stats,
-            gcNodes: [],
+            gcData: {
+                gcNodes: {},
+            },
         };
     }
+
+    public async getGCData(): Promise<IGarbageCollectionData> {
+        return {
+            gcNodes: {},
+        };
+    }
+
+    public updateUsedRoutes(usedRoutes: string[]) {}
 
     public getAttachSnapshot(): ITreeEntry[] {
         return [];
@@ -521,7 +533,9 @@ export class MockFluidDataStoreRuntime extends EventEmitter
                 tree: {},
             },
             stats,
-            gcNodes: [],
+            gcData: {
+                gcNodes: {},
+            },
         };
     }
 

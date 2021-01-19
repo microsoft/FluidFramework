@@ -8,11 +8,11 @@ import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluid
 import {
     ConnectionMode,
     IClient,
+    IClientConfiguration,
     IConnect,
     IConnected,
     IDocumentMessage,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
@@ -134,7 +134,7 @@ export class LocalDocumentDeltaConnection
         return testProtocolVersions[0];
     }
 
-    public get serviceConfiguration(): IServiceConfiguration {
+    public get serviceConfiguration(): IClientConfiguration {
         return this.details.serviceConfiguration;
     }
 
@@ -189,7 +189,7 @@ export class LocalDocumentDeltaConnection
     }
 
     public close() {
-        // Do nothing
+        this.disconnectClient("client close");
     }
 
     /**

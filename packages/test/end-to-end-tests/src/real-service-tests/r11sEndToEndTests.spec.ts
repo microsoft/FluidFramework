@@ -115,8 +115,6 @@ describe(`r11s End-To-End tests`, () => {
         request = urlResolver.createCreateNewRequest(documentId);
 
         const tokenProvider = new InsecureTokenProvider(
-            params.tenantId,
-            documentId,
             params.tenantSecret,
             getUser(),
         );
@@ -149,7 +147,7 @@ describe(`r11s End-To-End tests`, () => {
         // Now load the container from another loader.
         const params = getParameters();
         const urlResolver2 = getResolver(params);
-        const tokenProvider2 = new InsecureTokenProvider(params.tenantId, container.id, params.tenantSecret, getUser());
+        const tokenProvider2 = new InsecureTokenProvider(params.tenantSecret, getUser());
         const loader2 = createTestLoader(urlResolver2, tokenProvider2);
         // Create a new request url from the resolvedUrl of the first container.
         const requestUrl2 = await urlResolver2.getAbsoluteUrl(container.resolvedUrl, "");

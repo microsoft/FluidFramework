@@ -7,12 +7,12 @@ import { IEventProvider, IErrorEvent, ITelemetryBaseLogger } from "@fluidframewo
 import {
     ConnectionMode,
     IClient,
+    IClientConfiguration,
     ICreateBlobResponse,
     IDocumentMessage,
     IErrorTrackingService,
     INack,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalClient,
     ISignalMessage,
     ISnapshotTree,
@@ -68,11 +68,6 @@ export interface IDocumentStorageService {
      * Reads the object with the given ID, returns content in base64
      */
     read(id: string): Promise<string>;
-
-    /**
-     * Reads the object with the given ID, returns content in utf8
-     */
-    readString(id: string): Promise<string>;
 
     /**
      * Writes to the object with the given ID
@@ -159,7 +154,7 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
     /**
      * Configuration details provided by the service
      */
-    serviceConfiguration: IServiceConfiguration;
+    serviceConfiguration: IClientConfiguration;
 
     /**
      * Last known sequence number to ordering service at the time of connection

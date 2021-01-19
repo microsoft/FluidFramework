@@ -58,21 +58,20 @@ describe("Odsp Error", () => {
                 "message should contain original message");
             assert.notEqual(-1, networkError.message.indexOf("testStatusText"),
                 "message should contain Response.statusText");
-            assert.notEqual(-1, networkError.message.indexOf("default"),
-                "message should contain Response.type");
+            assert((networkError as any).type === "default", "message should contain Response.type");
             assert.equal(false, networkError.canRetry, "canRetry should be false");
         }
     });
 
     it("throwOdspNetworkError sprequestguid exists", async () => {
         const error1: any = createOdspNetworkErrorWithResponse("Error", 400);
-        const errorBag = { ...error1.getCustomProperties() };
+        const errorBag = { ...error1.getTelemetryProperties() };
         assert.equal("xxx-xxx", errorBag.sprequestguid, "sprequestguid should be 'xxx-xxx'");
     });
 
     it("throwOdspNetworkError sprequestguid undefined", async () => {
         const error1: any = createOdspNetworkError("Error", 400);
-        const errorBag = { ...error1.getCustomProperties() };
+        const errorBag = { ...error1.getTelemetryProperties() };
         assert.equal(undefined, errorBag.sprequestguid, "sprequestguid should not be defined");
     });
 
@@ -221,7 +220,7 @@ describe("Odsp Error", () => {
     it("Check Epoch Mismatch error props", async () => {
         const error: any = createOdspNetworkErrorWithResponse("Epoch Mismatch", 409);
         assert.strictEqual(error.errorType, OdspErrorType.epochVersionMismatch, "Error type should be epoch mismatch");
-        const errorBag = { ...error.getCustomProperties() };
+        const errorBag = { ...error.getTelemetryProperties() };
         assert.strictEqual(errorBag.errorType, OdspErrorType.epochVersionMismatch, "Error type should exist in prop bag");
     });
 });

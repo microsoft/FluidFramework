@@ -13,11 +13,11 @@ import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
     IClient,
+    IClientConfiguration,
     IConnect,
     IConnected,
     IDocumentMessage,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
@@ -247,7 +247,7 @@ export class DocumentDeltaConnection
     /**
      * Configuration details provided by the service
      */
-    public get serviceConfiguration(): IServiceConfiguration {
+    public get serviceConfiguration(): IClientConfiguration {
         return this.details.serviceConfiguration;
     }
 
@@ -332,7 +332,7 @@ export class DocumentDeltaConnection
 
     protected closeCore(socketProtocolError: boolean, err: DriverError) {
         if (this.closed) {
-            // We see cases where socket is closed while we have two "disconect" listeners - one from DeltaManager,
+            // We see cases where socket is closed while we have two "disconnect" listeners - one from DeltaManager,
             // one - early handler that should have been removed on establishing connection. This causes asserts in
             // OdspDocumentDeltaConnection.disconnect() due to not expectting two calls.
             this.logger.sendErrorEvent(

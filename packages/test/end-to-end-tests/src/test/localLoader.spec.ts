@@ -9,7 +9,6 @@ import { IContainer, ILoader } from "@fluidframework/container-definitions";
 import { IFluidHandle, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -72,6 +71,7 @@ export class TestDataObject extends DataObject {
 
     protected async hasInitialized() {
         const counterHandle = await this.root.wait<IFluidHandle<SharedCounter>>(counterKey);
+        assert(counterHandle);
         this.counter = await counterHandle.get();
     }
 }
@@ -95,12 +95,13 @@ describe("LocalLoader", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let urlResolver: IUrlResolver;
+    let urlResolver: LocalResolver;
     let opProcessingController: OpProcessingController;
 
     async function createContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {
         const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
-        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+        return createAndAttachContainer(
+            codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {
@@ -132,7 +133,7 @@ describe("LocalLoader", () => {
         beforeEach(async () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
             urlResolver = new LocalResolver();
-            opProcessingController = new OpProcessingController(deltaConnectionServer);
+            opProcessingController = new OpProcessingController();
         });
 
         afterEach(async () => {
@@ -172,6 +173,8 @@ describe("LocalLoader", () => {
             const container1 = await createContainer(testDataObjectFactory);
             const dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
 
+            opProcessingController.addDeltaManagers(container1.deltaManager);
+
             dataObject1.increment();
             assert.equal(dataObject1.value, 1, "Local update by 'dataObject1' must be promptly observable");
 
@@ -180,9 +183,7 @@ describe("LocalLoader", () => {
             const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
             assert(dataObject1 !== dataObject2, "Each container must return a separate TestDataObject instance.");
 
-            opProcessingController.addDeltaManagers(
-                container1.deltaManager,
-                container2.deltaManager);
+            opProcessingController.addDeltaManagers(container2.deltaManager);
 
             await opProcessingController.process();
             assert.equal(
@@ -229,7 +230,7 @@ describe("LocalLoader", () => {
             beforeEach(async () => {
                 deltaConnectionServer = LocalDeltaConnectionServer.create();
                 urlResolver = new LocalResolver();
-                opProcessingController = new OpProcessingController(deltaConnectionServer);
+                opProcessingController = new OpProcessingController();
 
                 const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
 
@@ -281,7 +282,7 @@ describe("LocalLoader", () => {
             });
 
             it("Controlled inbounds and outbounds", async () => {
-                opProcessingController = new OpProcessingController(deltaConnectionServer);
+                opProcessingController = new OpProcessingController();
                 opProcessingController.addDeltaManagers(
                     container1.deltaManager,
                     container2.deltaManager);

@@ -11,10 +11,10 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
+    IClientConfiguration,
     IConnected,
     IDocumentMessage,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
@@ -68,10 +68,6 @@ export class ReplayControllerStatic extends ReplayController {
     }
 
     public async read(blobId: string): Promise<string> {
-        return Promise.reject(new Error("Invalid operation"));
-    }
-
-    public async readString(blobId: string): Promise<string> {
         return Promise.reject(new Error("Invalid operation"));
     }
 
@@ -278,7 +274,7 @@ export class ReplayDocumentDeltaConnection
         return this.details.initialClients;
     }
 
-    public get serviceConfiguration(): IServiceConfiguration {
+    public get serviceConfiguration(): IClientConfiguration {
         return this.details.serviceConfiguration;
     }
 

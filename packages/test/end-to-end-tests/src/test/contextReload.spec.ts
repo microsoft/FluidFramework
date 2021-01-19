@@ -75,7 +75,7 @@ class OldTestDataStoreV2 extends OldTestDataStore {
     }
 }
 
-describe("context reload", function() {
+describe("context reload (hot-swap)", function() {
     const documentId = "contextReloadTest";
     const documentLoadUrl = `fluid-test://localhost/${documentId}`;
     const codeDetails = (version: string): old.IFluidCodeDetails => {
@@ -91,24 +91,25 @@ describe("context reload", function() {
         await containers[0].getQuorum().propose("code", codeDetails(version));
         // wait for "contextChanged" events on all containers
         return Promise.all(containers.map(
-            async (container) => new Promise((resolve, reject) =>
+            async (container) => new Promise<void>((resolve, reject) =>
                 container.on("contextChanged", (code: IFluidCodeDetails) =>
                     // eslint-disable-next-line prefer-promise-reject-errors
                     typeof code.package === "object" && code.package.version === version ? resolve() : reject()))));
     };
 
-    async function createContainer(packageEntries, server, urlResolver): Promise<IContainer> {
-        const loader: ILoader = createLocalLoader(packageEntries, server, urlResolver);
-        return createAndAttachContainer(documentId, defaultCodeDetails, loader, urlResolver);
+    async function createContainer(packageEntries, server, urlResolver: LocalResolver): Promise<IContainer> {
+        const loader: ILoader = createLocalLoader(packageEntries, server, urlResolver, { hotSwapContext: true });
+        return createAndAttachContainer(defaultCodeDetails, loader, urlResolver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(packageEntries, server, urlResolver): Promise<IContainer> {
-        const loader: ILoader = createLocalLoader(packageEntries, server, urlResolver);
+        const loader: ILoader = createLocalLoader(packageEntries, server, urlResolver, { hotSwapContext: true });
         return loader.resolve({ url: documentLoadUrl });
     }
 
     async function createContainerWithOldLoader(packageEntries, server, urlResolver): Promise<old.IContainer> {
-        const loader = old.createLocalLoader(packageEntries, server, urlResolver);
+        // back-compat remove in 0.34: cast of function
+        const loader = (old.createLocalLoader as any)(packageEntries, server, urlResolver, { hotSwapContext: true });
         return old.createAndAttachContainer(documentId, defaultCodeDetails, loader, urlResolver);
     }
 
@@ -156,7 +157,7 @@ describe("context reload", function() {
 
             // wait for summary ack/nack (non-immediate summary will result in test timeout)
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            await new Promise((resolve, reject) => this.container.on("op", (op) => {
+            await new Promise<void>((resolve, reject) => this.container.on("op", (op) => {
                 if (op.type === "summaryAck") {
                     resolve();
                 } else if (op.type === "summaryNack") {
@@ -216,7 +217,7 @@ describe("context reload", function() {
             this.dataStoreV1 = await requestFluidObject<TestDataStore>(this.container, "default");
             assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
 
-            this.opProcessingController = new OpProcessingController(this.deltaConnectionServer);
+            this.opProcessingController = new OpProcessingController();
             this.opProcessingController.addDeltaManagers(this.container.deltaManager);
         });
 
@@ -231,7 +232,7 @@ describe("context reload", function() {
         it("loads version 2", async () => {
             const deltaConnectionServer = LocalDeltaConnectionServer.create();
             const urlResolver = new LocalResolver();
-            const opProcessingController = new OpProcessingController(deltaConnectionServer);
+            const opProcessingController = new OpProcessingController();
 
             const packageEntries = [
                 [codeDetails(V1), createRuntimeFactory(TestDataStoreV1)],
@@ -314,7 +315,7 @@ describe("context reload", function() {
                 this.dataStoreV1 = await requestFluidObject<TestDataStore>(this.container, "default");
                 assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
 
-                this.opProcessingController = new OpProcessingController(this.deltaConnectionServer);
+                this.opProcessingController = new OpProcessingController();
                 this.opProcessingController.addDeltaManagers(this.container.deltaManager);
             });
 

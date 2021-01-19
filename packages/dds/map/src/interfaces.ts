@@ -5,7 +5,7 @@
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
 /**
  * Type of "valueChanged" event parameter.
@@ -121,7 +121,7 @@ export interface IValueTypeCreator {
  * @remarks
  * When used as a Map, operates on its keys.
  */
-export interface IDirectory extends Map<string, any> {
+export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents> {
     /**
      * The absolute path of the directory.
      */
@@ -132,7 +132,7 @@ export interface IDirectory extends Map<string, any> {
      * @param key - Key to retrieve from
      * @returns The stored value, or undefined if the key is not set
      */
-    get<T = any>(key: string): T;
+    get<T = any>(key: string): T | undefined;
 
     /**
      * A form of get except it will only resolve the promise once the key exists in the directory.
@@ -161,7 +161,7 @@ export interface IDirectory extends Map<string, any> {
      * @param subdirName - Name of the child directory to get
      * @returns The requested IDirectory
      */
-    getSubDirectory(subdirName: string): IDirectory;
+    getSubDirectory(subdirName: string): IDirectory | undefined;
 
     /**
      * Checks whether this directory has a child directory with the given name.
@@ -188,22 +188,41 @@ export interface IDirectory extends Map<string, any> {
      * @param relativePath - Path of the IDirectory to get, relative to this IDirectory
      * @returns The requested IDirectory
      */
-    getWorkingDirectory(relativePath: string): IDirectory;
+    getWorkingDirectory(relativePath: string): IDirectory | undefined;
 }
 
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (
         changed: IDirectoryValueChanged,
         local: boolean,
-        op: ISequencedDocumentMessage,
-        target: IEventThisPlaceHolder) => void);
+        op: ISequencedDocumentMessage | null,
+        target: IEventThisPlaceHolder,
+    ) => void);
+    (event: "clear", listener: (
+        local: boolean,
+        op: ISequencedDocumentMessage | null,
+        target: IEventThisPlaceHolder,
+    ) => void);
+}
+
+export interface IDirectoryEvents extends IEvent {
+    (event: "containedValueChanged", listener: (
+        changed: IValueChanged,
+        local: boolean,
+        target: IEventThisPlaceHolder,
+    ) => void);
 }
 
 /**
  * Interface describing a shared directory.
  */
-export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents>, IDirectory {
-
+export interface ISharedDirectory extends
+    ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>,
+    Omit<IDirectory, "on" | "once" | "off"> {
+    // The Omit type excludes symbols, which we don't want to exclude.  Adding them back here manually.
+    // https://github.com/microsoft/TypeScript/issues/31671
+    [Symbol.iterator](): IterableIterator<[string, any]>;
+    readonly [Symbol.toStringTag]: string;
 }
 
 /**
@@ -220,8 +239,13 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (
         changed: IDirectoryValueChanged,
         local: boolean,
-        op: ISequencedDocumentMessage,
+        op: ISequencedDocumentMessage | null,
         target: IEventThisPlaceHolder) => void);
+    (event: "clear", listener: (
+        local: boolean,
+        op: ISequencedDocumentMessage | null,
+        target: IEventThisPlaceHolder
+    ) => void);
 }
 
 /**
@@ -233,7 +257,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
      * @param key - Key to retrieve from
      * @returns The stored value, or undefined if the key is not set
      */
-    get<T = any>(key: string): T;
+    get<T = any>(key: string): T | undefined;
 
     /**
      * A form of get except it will only resolve the promise once the key exists in the map.
@@ -288,7 +312,7 @@ export interface ISerializedValue {
     /**
      * String representation of the value.
      */
-    value: string;
+    value: string | undefined;
 }
 
 /**

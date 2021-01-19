@@ -16,6 +16,22 @@ alfred:
   tenants: []
   key: jwt_key
   maxNumberOfClientsPerDocument: 1000000
+  throttling:
+    restCalls:
+        maxPerMs: 1000000
+        maxBurst: 1000000
+        minCooldownIntervalInMs: 1000000
+        minThrottleIntervalInMs: 1000000
+    socketConnections:
+        maxPerMs: 1000000
+        maxBurst: 1000000
+        minCooldownIntervalInMs: 1000000
+        minThrottleIntervalInMs: 1000000
+    submitOps:
+        maxPerMs: 1000000
+        maxBurst: 1000000
+        minCooldownIntervalInMs: 1000000
+        minThrottleIntervalInMs: 1000000
 
 deli:
   name: deli
@@ -48,6 +64,7 @@ zookeeper:
 
 mongodb:
   url: mongodb_url
+  expireAfterSeconds: -1
 
 rabbitmq:
   connectionString: ""
@@ -58,6 +75,11 @@ redis:
   tls: false
 
 redis2:
+  url: redis_url
+  port: 6379
+  tls: false
+
+redisForThrottling:
   url: redis_url
   port: 6379
   tls: false

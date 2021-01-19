@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/clicker-reducer",
-  "version": "0.31.0",
+  "version": "0.33.0",
   "description": "Minimal Fluid object sample to implement a collaborative counter using Fluid React hooks",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -18,7 +18,7 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
@@ -36,16 +36,16 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.31.0",
-    "@fluidframework/counter": "^0.31.0",
-    "@fluidframework/react": "^0.31.0",
+    "@fluidframework/aqueduct": "^0.33.0",
+    "@fluidframework/counter": "^0.33.0",
+    "@fluidframework/react": "^0.33.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
     "@fluidframework/eslint-config-fluid": "^0.21.0",
-    "@fluidframework/webpack-fluid-loader": "^0.31.0",
+    "@fluidframework/webpack-fluid-loader": "^0.33.0",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",

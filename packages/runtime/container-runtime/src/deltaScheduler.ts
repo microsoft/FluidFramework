@@ -85,9 +85,9 @@ export class DeltaScheduler {
                 // queue, yield the thread and schedule a resume.
 
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                this.deltaManager.inbound.systemPause();
+                this.deltaManager.inbound.pause();
                 setTimeout(() => {
-                    this.deltaManager.inbound.systemResume();
+                    this.deltaManager.inbound.resume();
                 });
 
                 this.processingStartTime = undefined;

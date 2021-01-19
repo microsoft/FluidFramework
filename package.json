@@ -20,8 +20,8 @@
     "bundle-analysis:collect": "npm run webpack:profile && fluid-collect-bundle-analyses",
     "bundle-analysis:run": "fluid-run-bundle-analyses",
     "ci:build": "npm run build:genver && lerna run build:compile --stream",
-    "ci:test": "npm run test:report;t1=$?;npm run test:copyresults; exit $t1",
-    "ci:test:coverage": "npm run test:coverage;t1=$?;npm run test:copyresults; exit $t1",
+    "ci:test": "npm run test:report ; t1=$? ; npm run test:copyresults ; exit $t1",
+    "ci:test:coverage": "npm run test:coverage ; t1=$? ; npm run test:copyresults ; exit $t1",
     "clean": "lerna run clean --stream --parallel && npm run clean:docs && npm run clean:nyc",
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
@@ -102,7 +102,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.10790",
+    "@fluidframework/build-tools": "^0.2.12384",
     "@fluidframework/test-tools": "^0.2.3074",
     "@mattetti/custom-api-documenter": "^0.3.3",
     "@microsoft/api-extractor": "^7.7.2",
@@ -114,8 +114,8 @@
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
     "run-script-os": "^1.0.7",
-    "start-server-and-test": "^1.11.6",
-    "tinylicious": "^0.3.10860",
+    "start-server-and-test": "^1.11.7",
+    "tinylicious": "^0.4.11798",
     "typescript": "~3.7.4"
   },
   "fluidBuild": {

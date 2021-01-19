@@ -28,13 +28,13 @@ import { isSystemType, isSystemMessage } from "@fluidframework/protocol-base";
 import {
     ConnectionMode,
     IClient,
+    IClientConfiguration,
     IClientDetails,
     IDocumentMessage,
     IDocumentSystemMessage,
     INack,
     INackContent,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalMessage,
     ITrace,
     MessageType,
@@ -45,7 +45,7 @@ import {
     createWriteError,
     createGenericNetworkError,
 } from "@fluidframework/driver-utils";
-import { CreateContainerError } from "@fluidframework/container-utils";
+import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import { debug } from "./debug";
 import { DeltaQueue } from "./deltaQueue";
 import { logNetworkFailure, waitForConnectedState } from "./networkUtils";
@@ -67,7 +67,7 @@ export const getRetryDelayFromError = (error: any): number | undefined => error?
 
 function getNackReconnectInfo(nackContent: INackContent) {
     const reason = `Nack: ${nackContent.message}`;
-    const canRetry = ![403, 429].includes(nackContent.code);
+    const canRetry = nackContent.code !== 403;
     return createGenericNetworkError(reason, canRetry, nackContent.retryAfter, nackContent.code);
 }
 
@@ -111,7 +111,7 @@ export class DeltaManager
     IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
     IEventProvider<IDeltaManagerInternalEvents>
 {
-    public get disposed() { return this.isDisposed; }
+    public get disposed() { return this.closed; }
 
     public readonly clientDetails: IClientDetails;
     public get IDeltaSender() { return this; }
@@ -130,7 +130,6 @@ export class DeltaManager
     // Connection mode used when reconnecting on error or disconnect.
     private readonly defaultReconnectionMode: ConnectionMode;
 
-    private isDisposed: boolean = false;
     private pending: ISequencedDocumentMessage[] = [];
     private fetching = false;
 
@@ -242,7 +241,7 @@ export class DeltaManager
         return this.connection.version;
     }
 
-    public get serviceConfiguration(): IServiceConfiguration | undefined {
+    public get serviceConfiguration(): IClientConfiguration | undefined {
         return this.connection?.serviceConfiguration;
     }
 
@@ -442,7 +441,6 @@ export class DeltaManager
 
     public dispose() {
         throw new Error("Not implemented.");
-        this.isDisposed = true;
     }
 
     /**
@@ -476,7 +474,7 @@ export class DeltaManager
         // If so, it's time to process any accumulated ops
         // Or request OPs from snapshot / or point zero (if we have no ops at all)
         if (this.pending.length > 0) {
-            this.catchUp([], "DocumentOpen");
+            this.processPendingOps("DocumentOpen");
         } else if (this.connection !== undefined || this.connectionP !== undefined) {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.fetchMissingDeltas("DocumentOpen", this.lastQueuedSequenceNumber);
@@ -837,6 +835,17 @@ export class DeltaManager
                 }
             }
 
+            if (to !== undefined && this.lastQueuedSequenceNumber >= to) {
+                // the client caught up while we were trying to fetch ops from storage
+                // bail out since we no longer need to request these ops
+                telemetryEvent.end({
+                    deltasRetrievedTotal,
+                    requests,
+                    lastQueuedSequenceNumber: this.lastQueuedSequenceNumber,
+                });
+                return;
+            }
+
             let delay: number;
             if (deltasRetrievedLast !== 0) {
                 delay = 0;
@@ -906,9 +915,9 @@ export class DeltaManager
         this._inboundSignal.clear();
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this._inbound.systemPause();
+        this._inbound.pause();
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this._inboundSignal.systemPause();
+        this._inboundSignal.pause();
 
         // Drop pending messages - this will ensure catchUp() does not go into infinite loop
         this.pending = [];
@@ -1265,14 +1274,15 @@ export class DeltaManager
                     const message1 = this.comparableMessagePayload(this.previouslyProcessedMessage);
                     const message2 = this.comparableMessagePayload(message);
                     if (message1 !== message2) {
-                        const error = {
-                            errorType: ContainerErrorType.dataCorruption,
-                            message: "Two messages with same seq# and different payload!",
-                            clientId: this.connection?.clientId,
-                            sequenceNumber: message.sequenceNumber,
-                            message1,
-                            message2,
-                        };
+                        const error = new DataCorruptionError(
+                            "Two messages with same seq# and different payload!",
+                            {
+                                clientId: this.connection?.clientId,
+                                sequenceNumber: message.sequenceNumber,
+                                message1,
+                                message2,
+                            },
+                        );
                         this.close(error);
                     }
                 }
@@ -1284,6 +1294,12 @@ export class DeltaManager
                 this.lastQueuedSequenceNumber = message.sequenceNumber;
                 this.previouslyProcessedMessage = message;
                 this._inbound.push(message);
+
+                if (this.pending.length > 0) {
+                    // we processed a correctly sequenced inbound op while some are pending
+                    // pending might include ops after the current sequence number, so process them now
+                    this.processPendingOps(`EnqueueMessages_${telemetryEventSuffix}`);
+                }
             }
         }
 
@@ -1392,8 +1408,10 @@ export class DeltaManager
 
         await this.getDeltas(telemetryEventSuffix, from, to, (messages) => {
             this.refreshDelayInfo(this.deltaStorageDelayId);
-            this.catchUpCore(messages, telemetryEventSuffix);
+            this.enqueueMessages(messages, telemetryEventSuffix);
         });
+
+        this.refreshDelayInfo(this.deltaStorageDelayId);
 
         this.fetching = false;
     }
@@ -1418,17 +1436,13 @@ export class DeltaManager
         }
         this.logger.sendPerformanceEvent(props);
 
-        this.catchUpCore(messages, telemetryEventSuffix);
+        this.enqueueMessages(messages, telemetryEventSuffix);
     }
 
-    private catchUpCore(messages: ISequencedDocumentMessage[], telemetryEventSuffix?: string): void {
-        // Apply current operations
-        this.enqueueMessages(messages, telemetryEventSuffix);
-
-        // Then sort pending operations and attempt to apply them again.
-        // This could be optimized to stop handling messages once we realize we need to fetch missing values.
-        // But for simplicity, and because catching up should be rare, we just process all of them.
-        // Optimize for case of no handler - we put ops back into this.pending in such case
+    /**
+     * Sorts pending ops and attempts to apply them
+     */
+    private processPendingOps(telemetryEventSuffix?: string): void {
         if (this.handler !== undefined) {
             const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
             this.pending = [];

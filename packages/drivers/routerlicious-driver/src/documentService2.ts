@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IDocumentDeltaConnection, IResolvedUrl } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 import { ICredentials } from "@fluidframework/server-services-client";
@@ -23,6 +24,7 @@ export class DocumentService2 extends DocumentService {
         errorTracking: api.IErrorTrackingService,
         disableCache: boolean, historianApi: boolean,
         directCredentials: ICredentials | undefined,
+        logger: ITelemetryLogger,
         tokenProvider: ITokenProvider,
         tenantId: string,
         documentId: string) {
@@ -36,6 +38,7 @@ export class DocumentService2 extends DocumentService {
             historianApi,
             directCredentials,
             undefined,
+            logger,
             tokenProvider,
             tenantId,
             documentId);
@@ -49,7 +52,10 @@ export class DocumentService2 extends DocumentService {
      */
     public async connectToDeltaStream(
         client: api.IClient): Promise<IDocumentDeltaConnection> {
-        const ordererToken = await this.tokenProvider.fetchOrdererToken();
+        const ordererToken = await this.tokenProvider.fetchOrdererToken(
+            this.tenantId,
+            this.documentId,
+        );
         return WSDeltaConnection.create(
             this.tenantId,
             this.documentId,

@@ -8,7 +8,7 @@ In this walkthrough, we'll learn about using the Fluid Framework by building a s
 through our [Quick Start]({{< relref "./quick-start.md" >}}) guide.
 
 {{< fluid_bundle_loader idPrefix="dice-roller"
-    bundleName="dice-roller.9af6bdd702e6cd4ad6cf.js" >}}
+    bundleName="dice-roller.12142020.js" >}}
 
 In our DiceRoller app we'll show users a die with a button to roll it.  When the die is rolled, we'll use Fluid
 Framework to sync the data across clients so everyone sees the same result.  We'll do this using the following steps.

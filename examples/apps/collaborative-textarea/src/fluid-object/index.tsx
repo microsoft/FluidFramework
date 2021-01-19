@@ -43,7 +43,7 @@ export class CollaborativeText extends DataObject implements IFluidHTMLView {
 
     protected async hasInitialized() {
         // Store the text if we are loading the first time or loading from existing
-        this.text = await this.root.get<IFluidHandle<SharedString>>(this.textKey).get();
+        this.text = await this.root.get<IFluidHandle<SharedString>>(this.textKey)?.get();
     }
 
     /**

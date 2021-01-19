@@ -27,6 +27,7 @@ import {
     ContainerWarning,
     ICriticalContainerError,
     AttachState,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import {
     IContainerRuntime,
@@ -78,9 +79,11 @@ import {
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
+    IGarbageCollectionData,
+    IGarbageCollectionSummaryDetails,
     IEnvelope,
     IInboundSignalMessage,
-    ISignalEnvelop,
+    ISignalEnvelope,
     NamedFluidDataStoreRegistryEntries,
     ISummaryStats,
     ISummaryTreeWithStats,
@@ -114,11 +117,13 @@ import { SummaryCollection } from "./summaryCollection";
 import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager } from "./blobManager";
-import { DataStores } from "./dataStores";
-
-const chunksBlobName = ".chunks";
-const blobsTreeName = ".blobs";
-export const nonDataStorePaths = [".protocol", ".logTail", ".serviceProtocol", blobsTreeName];
+import { DataStores, getSnapshotForDataStores } from "./dataStores";
+import {
+    blobsTreeName,
+    chunksBlobName,
+    IContainerRuntimeMetadata,
+    metadataBlobName,
+} from "./snapshot";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -214,6 +219,9 @@ export interface IContainerRuntimeOptions {
 
     // Flag that enables running garbage collection to delete unused Fluid objects.
     runGC?: boolean;
+
+    // Override summary configurations
+    summaryConfigOverrides?: Partial<ISummaryConfiguration>;
 }
 
 interface IRuntimeMessageMetadata {
@@ -369,9 +377,9 @@ export class ScheduleManager {
         this.localPaused = localPaused;
         if (localPaused) {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            this.deltaManager.inbound.systemPause();
+            this.deltaManager.inbound.pause();
         } else {
-            this.deltaManager.inbound.systemResume();
+            this.deltaManager.inbound.resume();
         }
     }
 
@@ -475,14 +483,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         const registry = new ContainerRuntimeDataStoreRegistry(registryEntries);
 
-        const chunkId = context.baseSnapshot?.blobs[chunksBlobName];
-        const chunks = context.baseSnapshot && chunkId ? context.storage ?
-            await readAndParse<[string, string[]][]>(context.storage, chunkId) :
-            readAndParseFromBlobs<[string, string[]][]>(context.baseSnapshot.blobs, chunkId) : [];
+        const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
+            const blobId = context.baseSnapshot?.blobs[blobName];
+            if (context.baseSnapshot && blobId) {
+                return context.storage ?
+                    readAndParse<T>(context.storage, blobId) :
+                    readAndParseFromBlobs<T>(context.baseSnapshot.blobs, blobId);
+            }
+        };
+        const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
+        const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
 
         const runtime = new ContainerRuntime(
             context,
             registry,
+            metadata,
             chunks,
             runtimeOptions,
             containerScope,
@@ -508,8 +523,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.existing!;
     }
 
-    public get options(): any {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    public get options(): ILoaderOptions {
         return this.context.options;
     }
 
@@ -621,9 +635,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private get summaryConfiguration() {
-        return this.context.serviceConfiguration
-            ? { ...DefaultSummaryConfiguration, ...this.context.serviceConfiguration.summary }
-            : DefaultSummaryConfiguration;
+        return  {
+            ... DefaultSummaryConfiguration,
+            ... this.context?.serviceConfiguration?.summary,
+            ... this.runtimeOptions.summaryConfigOverrides,
+         };
     }
 
     private _disposed = false;
@@ -645,6 +661,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
+        metadata: IContainerRuntimeMetadata = { snapshotFormatVersion: undefined },
         chunks: [string, string[]][],
         private readonly runtimeOptions: IContainerRuntimeOptions = {
             generateSummaries: true,
@@ -691,16 +708,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 throwOnFailure: true,
             },
         );
+        // Add self route (empty string) to used routes in the summarizer node as the runtime is always considered used.
+        this.summarizerNode.updateUsedRoutes([""]);
 
         this.dataStores = new DataStores(
-            context.baseSnapshot,
+            getSnapshotForDataStores(context.baseSnapshot, metadata.snapshotFormatVersion),
             this,
             (attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
-            (id: string, createParam: CreateChildSummarizerNodeParam) =>
-                (summarizeInternal: SummarizeInternalFn) => this.summarizerNode.createChild(
+            (id: string, createParam: CreateChildSummarizerNodeParam) => (
+                    summarizeInternal: SummarizeInternalFn,
+                    getGCDataFn: () => Promise<IGarbageCollectionData>,
+                    getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
+                ) => this.summarizerNode.createChild(
                     summarizeInternal,
                     id,
                     createParam,
+                    undefined,
+                    getGCDataFn,
+                    getInitialGCSummaryDetailsFn,
                 ),
             this._logger);
 
@@ -887,7 +912,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             const dataStore = await this.getDataStore(id, wait);
             const subRequest = requestParser.createSubRequest(1);
-            subRequest.url = subRequest.url.slice(1);
+            // We always expect createSubRequest to include a leading slash, but asserting here to protect against
+            // unintentionally modifying the url if that changes.
+            assert(subRequest.url.startsWith("/"), "Expected createSubRequest url to include a leading slash");
             return dataStore.IFluidRouter.request(subRequest);
         }
 
@@ -1056,7 +1083,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public processSignal(message: ISignalMessage, local: boolean) {
-        const envelope = message.content as ISignalEnvelop;
+        const envelope = message.content as ISignalEnvelope;
         const transformed: IInboundSignalMessage = {
             clientId: message.clientId,
             content: envelope.contents.content,
@@ -1264,12 +1291,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
-        const envelope: ISignalEnvelop = { address: undefined, contents: { type, content } };
+        const envelope: ISignalEnvelope = { address: undefined, contents: { type, content } };
         return this.context.submitSignalFn(envelope);
     }
 
     public submitDataStoreSignal(address: string, type: string, content: any) {
-        const envelope: ISignalEnvelop = { address, contents: { type, content } };
+        const envelope: ISignalEnvelope = { address, contents: { type, content } };
         return this.context.submitSignalFn(envelope);
     }
 
@@ -1345,13 +1372,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { ...attemptData, reason: "disconnected" };
             }
 
+            if (this.runtimeOptions.runGC) {
+                // Get the container's GC data and run GC on the reference graph in it.
+                const gcData = await this.dataStores.getGCData();
+                const { referencedNodeIds } = runGarbageCollection(gcData.gcNodes, [ "/" ], this.logger);
+
+                // Remove this node's route ("/") and notify data stores of routes that are used in it.
+                const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
+                this.dataStores.updateUsedRoutes(usedRoutes);
+            }
+
             const trace = Trace.start();
             const summarizeResult = await this.summarize(fullTree || safe, true /* trackState */);
-
-            if (this.runtimeOptions.runGC) {
-                // Run garbage collection on the GC nodes returned by summarize.
-                runGarbageCollection(summarizeResult.gcNodes, [ "/" ], this.logger);
-            }
 
             const generateData: IGeneratedSummaryData = {
                 summaryStats: summarizeResult.stats,

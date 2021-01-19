@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/get-tinylicious-container",
-  "version": "0.31.0",
+  "version": "0.33.0",
   "description": "Tool for getting a Tinylicious-configured container for testing app scenarios",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -11,13 +11,14 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
-    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:commonjs": "npm run tsc",
+    "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
@@ -25,21 +26,17 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/container-definitions": "^0.31.0",
-    "@fluidframework/container-loader": "^0.31.0",
-    "@fluidframework/core-interfaces": "^0.31.0",
-    "@fluidframework/driver-definitions": "^0.31.0",
-    "@fluidframework/driver-utils": "^0.31.0",
-    "@fluidframework/protocol-definitions": "^0.1015.0",
-    "@fluidframework/routerlicious-driver": "^0.31.0",
-    "jsrsasign": "^10.0.2",
-    "uuid": "^8.3.1"
+    "@fluidframework/container-definitions": "^0.33.0",
+    "@fluidframework/container-loader": "^0.33.0",
+    "@fluidframework/core-interfaces": "^0.33.0",
+    "@fluidframework/driver-definitions": "^0.33.0",
+    "@fluidframework/routerlicious-driver": "^0.33.0",
+    "@fluidframework/tinylicious-driver": "^0.33.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.19.2",
     "@fluidframework/eslint-config-fluid": "^0.21.0",
     "@fluidframework/test-tools": "^0.2.3074",
-    "@types/jsrsasign": "^8.0.8",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~4.2.0",

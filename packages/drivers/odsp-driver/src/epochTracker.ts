@@ -5,10 +5,11 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { OdspErrorType } from "@fluidframework/odsp-doclib-utils";
+import { fluidEpochMismatchError, OdspErrorType } from "@fluidframework/odsp-doclib-utils";
 import { fetchAndParseAsJSONHelper, fetchHelper, IOdspResponse } from "./odspUtils";
 import { ICacheEntry, IFileEntry, LocalPersistentCacheAdapter } from "./odspCache";
 import { RateLimiter } from "./rateLimiter";
+import { throwOdspNetworkError } from "./odspError";
 
 /**
  * This class is a wrapper around fetch calls. It adds epoch to the request made so that the
@@ -161,11 +162,9 @@ export class EpochTracker {
         // If epoch is undefined, then don't compare it because initially for createNew or TreesLatest
         // initializes this value. Sometimes response does not contain epoch as it is still in
         // implementation phase at server side. In that case also, don't compare it with our epoch value.
-        // [Issue: https://github.com/microsoft/FluidFramework/issues/4513]
-        // Temporarily disabling the client epoch validation until server fixes the epoch returned.
-        // if (this.fluidEpoch && epochFromResponse && (this.fluidEpoch !== epochFromResponse)) {
-        //     throwOdspNetworkError("Epoch Mismatch", fluidEpochMismatchError);
-        // }
+        if (this.fluidEpoch && epochFromResponse && (this.fluidEpoch !== epochFromResponse)) {
+            throwOdspNetworkError("Epoch Mismatch", fluidEpochMismatchError);
+        }
         if (epochFromResponse) {
             if (this._fluidEpoch === undefined) {
                 this.logger.sendTelemetryEvent(
@@ -176,10 +175,8 @@ export class EpochTracker {
                         fromCache,
                     },
                 );
-                // [Issue: https://github.com/microsoft/FluidFramework/issues/4513]
-                // Only putting it for 1 time only as the server returns incorrect epoch.
-                this._fluidEpoch = epochFromResponse;
             }
+            this._fluidEpoch = epochFromResponse;
         }
     }
 
@@ -190,15 +187,14 @@ export class EpochTracker {
         fromCache: boolean = false,
     ) {
         if (error.errorType === OdspErrorType.epochVersionMismatch) {
-            this.logger.sendErrorEvent(
-                {
-                    eventName: "EpochVersionMismatch",
-                    fromCache,
-                    clientEpoch: this.fluidEpoch,
-                    serverEpoch: epochFromResponse ?? undefined,
-                    fetchType,
-                },
-            error);
+            const err = {
+                ...error,
+                fromCache,
+                clientEpoch: this.fluidEpoch,
+                serverEpoch: epochFromResponse ?? undefined,
+                fetchType,
+            };
+            this.logger.sendErrorEvent({ eventName: "EpochVersionMismatch" }, err);
             assert(!!this.fileEntry, "File Entry should be set to clear the cached entries!!");
             // If the epoch mismatches, then clear all entries for such file entry from cache.
             await this.persistedCache.removeEntries(this.fileEntry);

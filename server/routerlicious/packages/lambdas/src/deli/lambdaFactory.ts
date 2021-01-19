@@ -15,11 +15,12 @@ import {
     IPartitionLambda,
     IPartitionLambdaFactory,
     IProducer,
+    IServiceConfiguration,
     ITenantManager,
     MongoManager,
 } from "@fluidframework/server-services-core";
 import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
-import { FileMode, IServiceConfiguration } from "@fluidframework/protocol-definitions";
+import { FileMode } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
@@ -221,7 +222,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
         const [serviceProtocolTree, lastSummaryTree] = await Promise.all([
             // eslint-disable-next-line no-null/no-null
-            gitManager.createTree({ entries: serviceProtocolEntries, id: null }),
+            gitManager.createTree({ entries: serviceProtocolEntries }),
             gitManager.getTree(lastCommit.tree.sha, false),
         ]);
 

@@ -37,6 +37,7 @@ export interface IDevServerUser extends IUser {
 export interface IBaseRouteOptions {
     port: number;
     npm?: string;
+    hotSwapContext?: "true" | "false";
 }
 
 export interface ILocalRouteOptions extends IBaseRouteOptions {
@@ -177,6 +178,7 @@ async function createWebLoader(
             new MultiUrlResolver(documentId, window.location.origin, options, true) : urlResolver,
         documentServiceFactory,
         codeLoader,
+        options: { hotSwapContext: options.hotSwapContext === "true" },
     });
 }
 
