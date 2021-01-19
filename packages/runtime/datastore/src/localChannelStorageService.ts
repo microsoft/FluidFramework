@@ -13,23 +13,27 @@ export class LocalChannelStorageService implements IChannelStorageService {
     }
 
     public async read(path: string): Promise<string> {
-        const blob = this.readBlobSyncInternal(path, this.tree);
+        const blob = this.readBlobSync(path);
         return blob !== undefined ? Promise.resolve(blob.contents) : Promise.reject(new Error("Not found"));
     }
 
     public async readBlob(path: string): Promise<ArrayBufferLike> {
-        const blob = this.readBlobSyncInternal(path, this.tree);
+        const blob = this.readBlobSync(path);
         return blob !== undefined ? stringToBuffer(blob.contents, blob.encoding) :
             Promise.reject(new Error("Not found"));
     }
 
     public async contains(path: string): Promise<boolean> {
-        const blob = this.readBlobSyncInternal(path, this.tree);
+        const blob = this.readBlobSync(path);
         return blob !== undefined ? blob.contents !== undefined : false;
     }
 
     public async list(path: string): Promise<string[]> {
         return listBlobsAtTreePath(this.tree, path);
+    }
+
+    private readBlobSync(path: string): IBlob | undefined {
+        return this.readBlobSyncInternal(path, this.tree);
     }
 
     private readBlobSyncInternal(path: string, tree: ITree): IBlob | undefined {
