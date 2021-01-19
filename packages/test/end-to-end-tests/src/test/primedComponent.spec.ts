@@ -23,7 +23,11 @@ class TestDataObject extends DataObject {
     }
 }
 
-const tests = (args: ITestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    beforeEach(()=>{
+        args = argsFactory();
+    });
     let dataObject: TestDataObject;
 
     beforeEach(async () => {
