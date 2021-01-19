@@ -655,13 +655,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Stop inbound message processing while we complete the snapshot
         try {
-            await this.deltaManager.inbound.systemPause();
+            await this.deltaManager.inbound.pause();
             await this.snapshotCore(tagMessage, fullTree);
         } catch (ex) {
             this.logger.logException({ eventName: "SnapshotExceptionError" }, ex);
             throw ex;
         } finally {
-            this.deltaManager.inbound.systemResume();
+            this.deltaManager.inbound.resume();
         }
     }
 
@@ -807,35 +807,53 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const codeDetails = this.getCodeDetailsFromQuorum();
 
         await Promise.all([
-            this.deltaManager.inbound.systemPause(),
-            this.deltaManager.inboundSignal.systemPause()]);
+            this.deltaManager.inbound.pause(),
+            this.deltaManager.inboundSignal.pause()]);
 
         if (await this.context.satisfies(codeDetails) === true) {
-            this.deltaManager.inbound.systemResume();
-            this.deltaManager.inboundSignal.systemResume();
+            this.deltaManager.inbound.resume();
+            this.deltaManager.inboundSignal.resume();
             return;
         }
 
-        const previousContextState = await this.context.snapshotRuntimeState();
+        // By default, close the container and let the host reload.
+        // If hotSwapContext is true in the loader options, then try
+        // to reload the context without closing the container.
+        type ReloadState = { hotSwap: true; prevState: IRuntimeState } | { hotSwap: false };
+        let state: ReloadState = { hotSwap: false };
+        if (this.options.hotSwapContext === true) {
+            const prevState = await this.context.snapshotRuntimeState();
+            state = { hotSwap: true, prevState };
+        }
         this.context.dispose(new Error("ContextDisposedForReload"));
 
-        // don't fire this event if we are transitioning from a null runtime to a real runtime
+        // We always hot-swap, but we don't fire the contextDisposed event
+        // if we are transitioning from a null runtime to a real runtime
         // with detached container we no longer need the null runtime, but for legacy
         // reasons need to keep it around (old documents without summary before code proposal).
         // client's shouldn't need to care about this transition, as it is a implementation detail.
         // if we didn't do this check, the clients would need to do it themselves,
         // which would futher spread the usage of the hasNullRuntime property
         // making it harder to deprecate.
-        if (!this.hasNullRuntime()) {
+        if (this.hasNullRuntime()) {
+            if (!state.hotSwap) {
+                state = { hotSwap: true, prevState: {} };
+            }
+        } else {
             this.emit("contextDisposed", codeDetails, this.context?.codeDetails);
         }
+
         if (this.closed) {
+            return;
+        }
+        if (!state.hotSwap) {
+            this.close();
             return;
         }
         let snapshot: ISnapshotTree | undefined;
         const blobs = new Map();
-        if (previousContextState.snapshot !== undefined) {
-            snapshot = buildSnapshotTree(previousContextState.snapshot.entries, blobs);
+        if (state.prevState.snapshot !== undefined) {
+            snapshot = buildSnapshotTree(state.prevState.snapshot.entries, blobs);
 
             /**
              * Should be removed / updated after issue #2914 is fixed.
@@ -862,10 +880,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             term: this._deltaManager.referenceTerm,
         };
 
-        await this.loadContext(codeDetails, attributes, snapshot, previousContextState);
+        await this.loadContext(codeDetails, attributes, snapshot, state.prevState);
 
-        this.deltaManager.inbound.systemResume();
-        this.deltaManager.inboundSignal.systemResume();
+        this.deltaManager.inbound.resume();
+        this.deltaManager.inboundSignal.resume();
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
@@ -1208,7 +1226,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         values: [string, any][],
     ): ProtocolOpHandler {
         const protocol = new ProtocolOpHandler(
-            attributes.branch,
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
             attributes.term,

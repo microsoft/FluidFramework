@@ -9,7 +9,6 @@ import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { getLocatorFromOdspUrl, storeLocatorInOdspUrl, encodeOdspFluidDataStoreLocator } from "./odspFluidFileLink";
-import { resolveDataStore } from "./resolveDataStore";
 import { IOdspResolvedUrl, OdspDocumentInfo, OdspFluidDataStoreLocator, SharingLinkHeader } from "./contracts";
 import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 import { createOdspUrl } from "./createOdspUrl";
@@ -205,14 +204,6 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         });
 
         return shareLinkUrl.href;
-    }
-
-    /**
-     * Retrieves data store path information from a storage URL. Returns undefined if the resolver
-     * does not handle this URL
-     */
-    public static resolveDataStore(url: URL): string | undefined {
-        return resolveDataStore(url);
     }
 
     /**

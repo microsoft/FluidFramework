@@ -18,6 +18,7 @@ import {
     ContainerWarning,
     ILoader,
     AttachState,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -26,11 +27,10 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
-    ITreeEntry,
 } from "@fluidframework/protocol-definitions";
 import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
-import { IGCData } from "./garbageCollection";
+import { IGarbageCollectionData, IGarbageCollectionSummaryDetails } from "./garbageCollection";
 import { IInboundSignalMessage } from "./protocol";
 import {
     CreateChildSummarizerNodeParam,
@@ -166,12 +166,6 @@ export interface IFluidDataStoreChannel extends
     bindToContext(): void;
 
     /**
-     * @deprecated - Replaced by getAttachSummary()
-     * Retrieves the snapshot used as part of the initial snapshot message
-     */
-    getAttachSnapshot(): ITreeEntry[];
-
-    /**
      * Retrieves the summary used as part of the initial summary message
      */
     getAttachSummary(): IChannelSummarizeResult;
@@ -195,10 +189,15 @@ export interface IFluidDataStoreChannel extends
     summarize(fullTree?: boolean, trackState?: boolean): Promise<IChannelSummarizeResult>;
 
     /**
-     * Returns the GC data for this data store. It contains a list of GC nodes that contains references to
-     * other GC nodes.
+     * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context
+     * including any of its children. Each node has a list of outbound routes to other GC nodes in the document.
      */
-    getGCData(): Promise<IGCData>;
+    getGCData(): Promise<IGarbageCollectionData>;
+
+    /**
+     * After GC has run, called to notify this channel of routes that are used in it.
+     */
+    updateUsedRoutes(usedRoutes: string[]): void;
 
     /**
      * Notifies this object about changes in the connection state.
@@ -219,8 +218,8 @@ export interface IFluidDataStoreChannel extends
 
 export type CreateChildSummarizerNodeFn = (
     summarizeInternal: SummarizeInternalFn,
-    getGCDataFn: () => Promise<IGCData>,
-    getInitialGCDataFn: () => Promise<IGCData | undefined>,
+    getGCDataFn: () => Promise<IGarbageCollectionData>,
+    getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
 ) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {
@@ -252,7 +251,7 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
      * TODO: should remove after detachedNew is in place
      */
     readonly existing: boolean;
-    readonly options: any;
+    readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
     readonly connected: boolean;
     readonly leader: boolean;

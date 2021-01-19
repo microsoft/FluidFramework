@@ -15,7 +15,11 @@ import {
     IChannelServices,
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
-import { IChannelSummarizeResult, IGCData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import {
+    IChannelSummarizeResult,
+    IGarbageCollectionData,
+    ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions";
 import { convertToSummaryTreeWithStats, FluidSerializer } from "@fluidframework/runtime-utils";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { SharedObjectHandle } from "./handle";
@@ -215,7 +219,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         this._isSummarizing = true;
 
         let summaryTree: ISummaryTreeWithStats;
-        let gcData: IGCData;
+        let gcData: IGarbageCollectionData;
         try {
             const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
             const snapshot: ITree = this.snapshotCore(serializer);
@@ -241,7 +245,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * {@inheritDoc (ISharedObject:interface).getGCData}
      */
-    public getGCData(): IGCData {
+    public getGCData(): IGarbageCollectionData {
         // We run the full summarize logic to get the list of outbound routes from this object. This is a little
         // expensive but its okay for now. It will be udpated to not use full summarize and make it more efficient.
         // See: https://github.com/microsoft/FluidFramework/issues/4547
@@ -252,7 +256,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         assert(!this._isSummarizing, "Possible re-entrancy! Summary should not already be in progress.");
         this._isSummarizing = true;
 
-        let gcData: IGCData;
+        let gcData: IGarbageCollectionData;
         try {
             const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
             this.snapshotCore(serializer);

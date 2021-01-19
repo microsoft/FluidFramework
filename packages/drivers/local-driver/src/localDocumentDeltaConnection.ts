@@ -189,7 +189,7 @@ export class LocalDocumentDeltaConnection
     }
 
     public close() {
-        // Do nothing
+        this.disconnectClient("client close");
     }
 
     /**

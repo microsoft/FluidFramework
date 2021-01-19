@@ -415,8 +415,11 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     protected snapshotCore(serializer: IFluidSerializer): ITree {
-        const tree: ITree = {
-            entries: [
+        const entries = [];
+        // TODO: once the change to conditionally read these has propagated
+        // conditionally write them as well
+        // if (this.intervalMapKernel.size > 0) {
+            entries.push(
                 {
                     mode: FileMode.File,
                     path: snapshotFileName,
@@ -425,15 +428,17 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                         contents: this.intervalMapKernel.serialize(serializer),
                         encoding: "utf-8",
                     },
-                },
-                {
-                    mode: FileMode.Directory,
-                    path: contentPath,
-                    type: TreeEntry.Tree,
-                    value: this.snapshotMergeTree(serializer),
-                },
-
-            ],
+                });
+        // }
+        entries.push(
+            {
+                mode: FileMode.Directory,
+                path: contentPath,
+                type: TreeEntry.Tree,
+                value: this.snapshotMergeTree(serializer),
+            });
+        const tree: ITree = {
+            entries,
             // eslint-disable-next-line no-null/no-null
             id: null,
         };
@@ -491,10 +496,12 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService) {
-        const header = await storage.read(snapshotFileName);
+        if (await storage.contains(snapshotFileName)) {
+            const header = await storage.read(snapshotFileName);
 
-        const data: string = header ? fromBase64ToUtf8(header) : undefined;
-        this.intervalMapKernel.populate(data);
+            const data: string = header ? fromBase64ToUtf8(header) : undefined;
+            this.intervalMapKernel.populate(data);
+        }
 
         try {
             // this will load the header, and return a promise

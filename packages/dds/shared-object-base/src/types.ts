@@ -6,7 +6,7 @@
 import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { IChannel, IChannelServices } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IChannelSummarizeResult, IGCData } from "@fluidframework/runtime-definitions";
+import { IChannelSummarizeResult, IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 
 export interface ISharedObjectEvents extends IErrorEvent {
     (event: "pre-op" | "op",
@@ -46,5 +46,5 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
      * Returns the GC data for this shared object. It contains a list of GC nodes that contains references to
      * other GC nodes.
      */
-    getGCData(): IGCData;
+    getGCData(): IGarbageCollectionData;
 }

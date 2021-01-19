@@ -54,4 +54,6 @@ export interface ICollection<T> {
     deleteMany(filter: any): Promise<any>;
 
     createIndex(index: any, unique: boolean): Promise<void>;
+
+    createTTLIndex?(index: any, mongoExpireAfterSeconds?: number): Promise<void>;
 }

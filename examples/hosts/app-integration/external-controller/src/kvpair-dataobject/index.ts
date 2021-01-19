@@ -5,3 +5,4 @@
 
 export * from "./containerCode";
 export * from "./DataObject";
+export * from "./FluidStatic";

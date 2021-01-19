@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ILoader, IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { ILoader, ILoaderOptions, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { WebWorkerLoader } from "./webWorkerLoader";
 
@@ -15,7 +15,7 @@ export class WebWorkerLoaderFactory implements IProxyLoaderFactory {
     public readonly environment = "webworker";
     public async createProxyLoader(
         id: string,
-        options: any,
+        options: ILoaderOptions,
         resolved: IFluidResolvedUrl,
         fromSequenceNumber: number,
     ): Promise<ILoader> {

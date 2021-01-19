@@ -5,6 +5,7 @@
 
 import * as querystring from "querystring";
 import { AxiosError, AxiosInstance, AxiosRequestConfig, default as Axios } from "axios";
+import * as uuid from "uuid";
 import { debug } from "./debug";
 
 export class RestWrapper {
@@ -73,21 +74,34 @@ export class RestWrapper {
         if (this.defaultHeaders) {
             options.headers = { ...this.defaultHeaders, ...options.headers };
         }
+        if (!options.headers?.["x-correlation-id"]) {
+            options.headers = { ...{ "x-correlation-id": uuid.v4() }, ...options.headers };
+        }
 
-        const response = await this.axios.request<T>(options)
-            .catch(async (error: AxiosError) => {
-                if (error && error.config) {
-                    // eslint-disable-next-line max-len
-                    debug(`[${error.config.method}] request to [${error.config.url}] failed with [${error.code}] [${error.message}]`);
-                } else {
-                    debug(`request to ${options.url} failed ${error ? error.message : ""}`);
-                }
+        return new Promise<T>((resolve, reject) => {
+            this.axios.request<T>(options)
+                .then((response) => { resolve(response.data); })
+                .catch((error: AxiosError) => {
+                    if (error && error.config) {
+                        // eslint-disable-next-line max-len
+                        debug(`[${error.config.method}] request to [${error.config.url}] failed with [${error.code}] [${error.message}]`);
+                    } else {
+                        debug(`request to ${options.url} failed ${error ? error.message : ""}`);
+                    }
 
-                return error.response && error.response.status !== statusCode
-                    ? Promise.reject(error.response.status)
-                    : Promise.reject(error);
-            });
-        return response.data;
+                    if (error?.response?.status === 429 && error?.response?.data?.retryAfter > 0) {
+                        setTimeout(() => {
+                            this.request<T>(options, statusCode)
+                                .then(resolve)
+                                .catch(reject);
+                        }, error.response.data.retryAfter * 1000);
+                    } else if (error.response && error.response.status !== statusCode) {
+                        reject(error.response.status);
+                    } else {
+                        reject(error);
+                    }
+                });
+        });
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types
