@@ -13,7 +13,7 @@ This document contains high-level overviews of several desired SharedTree featur
 
 1. Provide a way to detect if two edits [commute](https://en.wikipedia.org/wiki/Commutative_property) for a particular version of the document (edits might commute for some documents but not others, so providing the document is required).
    This can be conservative in that it would be allowed to return false if it is unclear it they commute.
-   A basic implementation of this would be a check if the write set of each change does not overlap the read set + write set of the other.
+   A basic implementation of this would be a check if the _write set_ of each change does not overlap the _read set + write set_ of the other.
 
 1. Provide a way to detect if the applying an edit had the _intended_ effect (ex: was it turned into a noop due to conflicts, or has high risk of other kinds of merge issues)
 
@@ -44,9 +44,9 @@ particularly when the initial edit requires Automatic Conflict Resolution, and/o
 
 These costs can be mitigated by encoding optimizations (Ex: allowing edits to refer to trees in snapshots and/or other edits to avoid duplication).
 
-If these mitigation are not enough, directly supporting history editing within SharedTree's Edits could be added without breaking existing documents or legacy support for the old approach
+If necessary, directly supporting history editing within SharedTree's Edits could be added without breaking existing documents or legacy support for the old approach
 (other than optionally reading the metadata when viewing history).
-This will be done if the future only if a cost/benefit analysis suggests it would be a good idea.
+This is not on the roadmap and would only be considered after a formal cost/benefit analysis.
 
 ## Example History Edit
 
@@ -76,8 +76,8 @@ A(A) --> B(B) --> C(C) --> Merge(Merge)
 
 ### Low Level Commuting Merge
 
-If B commutes with C in the revision output from A, and X commutes with C in the revision output from A: the history edit is considered non-conflicted, since there is a clear way to construct the Merge edit.
-This is the only case supported by the "Low Level Commuting Merge".
+If B commutes with C in the revision output from A, and X commutes with C in the revision output from A, then the history edit is considered non-conflicted, since there is a clear way to construct the Merge edit.
+This is the only case supported by the "Low Level Commuting Merge."
 
 In this case Merge can be constructed as inverse(B) followed by X.
 Note that computing the inverse depends on the revision.
