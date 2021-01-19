@@ -41,16 +41,15 @@ export function getGitMode(value: SummaryObject): string {
  * @param value - summary object
  * @returns the type of summary object
  */
-export function getGitType(value: SummaryObject): "blob" | "tree" | "attachment" {
+export function getGitType(value: SummaryObject): "blob" | "tree" {
     const type = value.type === SummaryType.Handle ? value.handleType : value.type;
 
     switch (type) {
         case SummaryType.Blob:
+        case SummaryType.Attachment:
             return "blob";
         case SummaryType.Tree:
             return "tree";
-        case SummaryType.Attachment:
-            return "attachment";
         default:
             unreachableCase(type, `Unknown type: ${type}`);
     }
