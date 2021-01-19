@@ -6,9 +6,6 @@
 import { strict as assert } from "assert";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { Loader } from "@fluidframework/container-loader";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
     TestFluidObjectFactory,
@@ -48,7 +45,6 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
     const sparseMatrixId = "sparsematrixKey";
     const sharedCounterId = "sharedcounterKey";
 
-    let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let loader: Loader;
     let request: IRequest;
     let opProcessingController: OpProcessingController;
@@ -63,7 +59,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         };
     }
 
-    function createTestLoader(urlResolver: IUrlResolver): Loader {
+    function createTestLoader(): Loader {
         const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
             [sharedStringId, SharedString.getFactory()],
             [sharedMapId, SharedMap.getFactory()],
@@ -77,9 +73,9 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             [sharedCounterId, SharedCounter.getFactory()],
         ]);
         const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-        const documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
+        const documentServiceFactory = getFluidTestDriver().createDocumentServiceFactory();
         return new Loader({
-            urlResolver,
+            urlResolver: getFluidTestDriver().createUrlResolver(),
             documentServiceFactory,
             codeLoader,
         });
@@ -98,11 +94,9 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
     };
 
     beforeEach(async () => {
-        testDeltaConnectionServer = LocalDeltaConnectionServer.create();
-        const urlResolver = new LocalResolver();
-        request = urlResolver.createCreateNewRequest(documentId);
-        loader = createTestLoader(urlResolver);
-        opProcessingController = new OpProcessingController(testDeltaConnectionServer);
+        request = getFluidTestDriver().createCreateNewRequest(documentId);
+        loader = createTestLoader();
+        opProcessingController = new OpProcessingController();
     });
 
     it("Dehydrated container snapshot", async () => {
@@ -351,8 +345,8 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         await rehydratedContainer.attach(request);
 
         // Now load the container from another loader.
-        const urlResolver2 = new LocalResolver();
-        const loader2 = createTestLoader(urlResolver2);
+        const urlResolver2 = getFluidTestDriver().createUrlResolver();
+        const loader2 = createTestLoader();
         assert(rehydratedContainer.resolvedUrl);
         const requestUrl2 = await urlResolver2.getAbsoluteUrl(rehydratedContainer.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
@@ -396,8 +390,8 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         await rehydratedContainer.attach(request);
 
         // Now load the container from another loader.
-        const urlResolver2 = new LocalResolver();
-        const loader2 = createTestLoader(urlResolver2);
+        const urlResolver2 = getFluidTestDriver().createUrlResolver();
+        const loader2 = createTestLoader();
         assert(rehydratedContainer.resolvedUrl);
         const requestUrl2 = await urlResolver2.getAbsoluteUrl(rehydratedContainer.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });

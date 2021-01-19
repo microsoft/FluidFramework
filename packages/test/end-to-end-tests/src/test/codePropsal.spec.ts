@@ -11,17 +11,15 @@ import {
     IFluidPackage,
     isFluidPackage,
 } from "@fluidframework/core-interfaces";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createAndAttachContainer,
-    createLocalLoader,
+    createLoader as createLoaderUtil,
     ITestFluidObject,
     OpProcessingController,
     SupportedExportInterfaces,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 interface ICodeProposalTestPackage extends IFluidPackage{
@@ -56,11 +54,10 @@ describe("CodeProposal.EndToEnd", () => {
         fluid: {},
     };
 
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
     let opProcessingController: OpProcessingController;
     let hotSwapContext = false;
 
-    function createLoader(urlResolver: LocalResolver) {
+    function createLoader() {
         const codeDetailsComparer: IFluidCodeDetailsComparer = {
             get IFluidCodeDetailsComparer() {return this;},
             compare: async (a, b)=>
@@ -79,31 +76,29 @@ describe("CodeProposal.EndToEnd", () => {
             IFluidCodeDetailsComparer: codeDetailsComparer,
 
         };
-        return createLocalLoader(
+        return createLoaderUtil(
             [
                 [{ package: packageV1 }, fluidExport],
                 [{ package: packageV2 },fluidExport],
                 [{ package: packageV1dot5 }, fluidExport],
             ],
-            deltaConnectionServer, urlResolver,
+            getFluidTestDriver().createDocumentServiceFactory(),
+            getFluidTestDriver().createUrlResolver(),
             { hotSwapContext });
     }
 
     async function createContainer(code: IFluidCodeDetails): Promise<IContainer> {
-        const urlResolver = new LocalResolver();
-        const loader = createLoader(urlResolver);
-        return createAndAttachContainer(code, loader, urlResolver.createCreateNewRequest(documentId));
+        const loader = createLoader();
+        return createAndAttachContainer(code, loader, getFluidTestDriver().createCreateNewRequest(documentId));
     }
 
     async function loadContainer(): Promise<IContainer> {
-        const urlResolver = new LocalResolver();
-        const loader = createLoader(urlResolver);
+        const loader = createLoader();
         return loader.resolve({ url: documentLoadUrl });
     }
 
     let containers: IContainer[];
     beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
         containers = [];
 
         const codeDetails: IFluidCodeDetails = { package: packageV1 };
@@ -111,7 +106,7 @@ describe("CodeProposal.EndToEnd", () => {
         // Create a Container for the first client.
         containers.push(await createContainer(codeDetails));
 
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController = new OpProcessingController();
         opProcessingController.addDeltaManagers(containers[0].deltaManager);
 
         await opProcessingController.process();
@@ -391,6 +386,5 @@ describe("CodeProposal.EndToEnd", () => {
 
     afterEach(async () => {
         await testRoundTrip();
-        await deltaConnectionServer.webSocketServer.close();
     });
 });

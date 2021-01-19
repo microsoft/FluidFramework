@@ -9,17 +9,15 @@ import { IContainer, ILoader } from "@fluidframework/container-definitions";
 import { IFluidHandle, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
-import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createAndAttachContainer,
-    createLocalLoader,
     OpProcessingController,
     ITestFluidObject,
     TestFluidObjectFactory,
+    createLoader,
 } from "@fluidframework/test-utils";
 
 const counterKey = "count";
@@ -94,18 +92,22 @@ describe("LocalLoader", () => {
         config: {},
     };
 
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let urlResolver: LocalResolver;
     let opProcessingController: OpProcessingController;
 
     async function createContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {
-        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+        const loader: ILoader = createLoader(
+            [[codeDetails, factory]],
+            getFluidTestDriver().createDocumentServiceFactory(),
+            getFluidTestDriver().createUrlResolver());
         return createAndAttachContainer(
-            codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
+            codeDetails, loader, getFluidTestDriver().createCreateNewRequest(documentId));
     }
 
     async function loadContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {
-        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+        const loader: ILoader = createLoader(
+            [[codeDetails, factory]],
+            getFluidTestDriver().createDocumentServiceFactory(),
+            getFluidTestDriver().createUrlResolver());
         return loader.resolve({ url: documentLoadUrl });
     }
 
@@ -113,8 +115,6 @@ describe("LocalLoader", () => {
         let dataObject: TestDataObject;
 
         beforeEach(async () => {
-            deltaConnectionServer = LocalDeltaConnectionServer.create();
-            urlResolver = new LocalResolver();
             const container = await createContainer(testDataObjectFactory);
             dataObject = await requestFluidObject<TestDataObject>(container, "default");
         });
@@ -123,21 +123,11 @@ describe("LocalLoader", () => {
             assert(dataObject instanceof TestDataObject,
                 "requestFluidObject() must return the expected dataObject type.");
         });
-
-        afterEach(async () => {
-            await deltaConnectionServer.webSocketServer.close();
-        });
     });
 
     describe("2 dataObjects", () => {
         beforeEach(async () => {
-            deltaConnectionServer = LocalDeltaConnectionServer.create();
-            urlResolver = new LocalResolver();
             opProcessingController = new OpProcessingController();
-        });
-
-        afterEach(async () => {
-            await deltaConnectionServer.webSocketServer.close();
         });
 
         it("early open / late close", async () => {
@@ -203,9 +193,6 @@ describe("LocalLoader", () => {
             let text: SharedString;
 
             beforeEach(async () => {
-                deltaConnectionServer = LocalDeltaConnectionServer.create();
-                urlResolver = new LocalResolver();
-
                 const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
                 const container = await createContainer(factory);
                 const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
@@ -214,10 +201,6 @@ describe("LocalLoader", () => {
 
             it("opened", async () => {
                 assert(text instanceof SharedString, "createType() must return the expected dataObject type.");
-            });
-
-            afterEach(async () => {
-                await deltaConnectionServer.webSocketServer.close();
             });
         });
 
@@ -228,8 +211,6 @@ describe("LocalLoader", () => {
             let text2: SharedString;
 
             beforeEach(async () => {
-                deltaConnectionServer = LocalDeltaConnectionServer.create();
-                urlResolver = new LocalResolver();
                 opProcessingController = new OpProcessingController();
 
                 const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
@@ -258,10 +239,6 @@ describe("LocalLoader", () => {
                 assert.strictEqual(text1.getLength(), 2, "The SharedString in dataObject1 is has incorrect length.");
                 assert.strictEqual(text2.getLength(), 2, "The SharedString in dataObject2 is has incorrect length.");
             });
-
-            afterEach(async () => {
-                await deltaConnectionServer.webSocketServer.close();
-            });
         });
 
         describe("Controlling dataObject coauth via OpProcessingController", () => {
@@ -271,9 +248,6 @@ describe("LocalLoader", () => {
             let dataObject2: TestDataObject;
 
             beforeEach(async () => {
-                deltaConnectionServer = LocalDeltaConnectionServer.create();
-                urlResolver = new LocalResolver();
-
                 container1 = await createContainer(testDataObjectFactory);
                 dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
 
@@ -312,10 +286,6 @@ describe("LocalLoader", () => {
 
                 await opProcessingController.processIncoming(container1.deltaManager);
                 assert.equal(dataObject1.value, 2, "Expected user 1 to see the increment now");
-            });
-
-            afterEach(async () => {
-                await deltaConnectionServer.webSocketServer.close();
             });
         });
     });

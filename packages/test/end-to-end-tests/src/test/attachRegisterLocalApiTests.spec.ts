@@ -8,8 +8,6 @@ import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
     ITestFluidObject,
@@ -31,7 +29,6 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
     const mapId2 = "mapId2";
 
     let request: IRequest;
-    let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let loader: Loader;
 
     const createTestStatementForAttachedDetached = (name: string, attached: boolean) =>
@@ -65,7 +62,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             [mapId2, SharedMap.getFactory()],
         ]);
         const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-        const documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
+        const documentServiceFactory = getFluidTestDriver().createDocumentServiceFactory();
         return new Loader({
             urlResolver,
             documentServiceFactory,
@@ -74,9 +71,8 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
     }
 
     beforeEach(async () => {
-        testDeltaConnectionServer = LocalDeltaConnectionServer.create();
-        const urlResolver = new LocalResolver();
-        request = urlResolver.createCreateNewRequest(documentId);
+        const urlResolver = getFluidTestDriver().createUrlResolver();
+        request = getFluidTestDriver().createCreateNewRequest(documentId);
         loader = createTestLoader(urlResolver);
     });
 
@@ -632,9 +628,5 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             "DataStore 1 should end up in attached state");
         assert.strictEqual(dataStore2.runtime.attachState, AttachState.Attached,
             "DataStore 2 should end up in attached state as its handle was stored in map of bound dataStore");
-    });
-
-    afterEach(async () => {
-        await testDeltaConnectionServer.webSocketServer.close();
     });
 });

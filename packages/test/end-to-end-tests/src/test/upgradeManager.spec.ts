@@ -13,15 +13,14 @@ import {
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createAndAttachContainer,
     LocalCodeLoader,
     OpProcessingController,
 } from "@fluidframework/test-utils";
+import { TestDriver } from "@fluidframework/test-driver-definitions";
 
 class TestDataObject extends DataObject {
     public static readonly type = "@fluid-example/test-dataObject";
@@ -45,30 +44,27 @@ describe("UpgradeManager (hot-swap)", () => {
         package: "localLoaderTestPackage",
         config: {},
     };
-
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let urlResolver: LocalResolver;
-    let documentServiceFactory: LocalDocumentServiceFactory;
+    let driver: TestDriver;
     let opProcessingController: OpProcessingController;
 
     async function createContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const loader = new Loader({
-            urlResolver,
-            documentServiceFactory,
+            urlResolver: driver.createUrlResolver(),
+            documentServiceFactory: driver.createDocumentServiceFactory(),
             codeLoader,
             options: { hotSwapContext: true },
         });
 
         return createAndAttachContainer(
-            codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
+            codeDetails, loader, driver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const loader = new Loader({
-            urlResolver,
-            documentServiceFactory,
+            urlResolver: driver.createUrlResolver(),
+            documentServiceFactory: driver.createDocumentServiceFactory(),
             codeLoader,
             options: { hotSwapContext: true },
         });
@@ -77,14 +73,8 @@ describe("UpgradeManager (hot-swap)", () => {
     }
 
     beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
-        urlResolver = new LocalResolver();
-        documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+        driver = getFluidTestDriver();
         opProcessingController = new OpProcessingController();
-    });
-
-    afterEach(async () => {
-        await deltaConnectionServer.webSocketServer.close();
     });
 
     it("prevents multiple approved proposals", async () => {
@@ -197,7 +187,7 @@ describe("UpgradeManager (hot-swap)", () => {
 
         // disconnect one client, which should initiate upgrade
         assert(container2.clientId);
-        documentServiceFactory.disconnectClient(container2.clientId, "test");
+        container2.close();
 
         await upgradeP;
     });

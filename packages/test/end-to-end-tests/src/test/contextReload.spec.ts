@@ -15,14 +15,13 @@ import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createAndAttachContainer,
-    createLocalLoader,
+    LocalCodeLoader,
     OpProcessingController,
 } from "@fluidframework/test-utils";
+import { Loader } from "@fluidframework/container-loader";
 import * as old from "./oldVersion";
 
 const V1 = "0.1.0";
@@ -76,8 +75,6 @@ class OldTestDataStoreV2 extends OldTestDataStore {
 }
 
 describe("context reload (hot-swap)", function() {
-    const documentId = "contextReloadTest";
-    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
     const codeDetails = (version: string): old.IFluidCodeDetails => {
         return {
             package: { name: TestDataStore.type, version } as unknown as old.IFluidPackage,
@@ -97,20 +94,42 @@ describe("context reload (hot-swap)", function() {
                     typeof code.package === "object" && code.package.version === version ? resolve() : reject()))));
     };
 
-    async function createContainer(packageEntries, server, urlResolver: LocalResolver): Promise<IContainer> {
-        const loader: ILoader = createLocalLoader(packageEntries, server, urlResolver, { hotSwapContext: true });
-        return createAndAttachContainer(defaultCodeDetails, loader, urlResolver.createCreateNewRequest(documentId));
+    async function createContainer(packageEntries, documentId): Promise<IContainer> {
+        const loader: ILoader = new Loader({
+            codeLoader: new LocalCodeLoader(packageEntries),
+            options:{ hotSwapContext: true },
+            urlResolver: getFluidTestDriver().createUrlResolver(),
+            documentServiceFactory: getFluidTestDriver().createDocumentServiceFactory(),
+        });
+        return createAndAttachContainer(
+            defaultCodeDetails,
+            loader,
+            getFluidTestDriver().createCreateNewRequest(documentId));
     }
 
-    async function loadContainer(packageEntries, server, urlResolver): Promise<IContainer> {
-        const loader: ILoader = createLocalLoader(packageEntries, server, urlResolver, { hotSwapContext: true });
-        return loader.resolve({ url: documentLoadUrl });
+    async function loadContainer(packageEntries, documentId): Promise<IContainer> {
+        const loader: ILoader = new Loader({
+            codeLoader: new LocalCodeLoader(packageEntries),
+            options:{ hotSwapContext: true },
+            urlResolver: getFluidTestDriver().createUrlResolver(),
+            documentServiceFactory: getFluidTestDriver().createDocumentServiceFactory(),
+        });
+        return loader.resolve({ url: getFluidTestDriver().createContainerUrl(documentId) });
     }
 
-    async function createContainerWithOldLoader(packageEntries, server, urlResolver): Promise<old.IContainer> {
+    async function createContainerWithOldLoader(
+        packageEntries, documentId): Promise<old.IContainer> {
         // back-compat remove in 0.34: cast of function
-        const loader = (old.createLocalLoader as any)(packageEntries, server, urlResolver, { hotSwapContext: true });
-        return old.createAndAttachContainer(documentId, defaultCodeDetails, loader, urlResolver);
+        const loader = new old.Loader({
+            codeLoader: new old.LocalCodeLoader(packageEntries),
+            options:{ hotSwapContext: true },
+            urlResolver: getFluidTestDriver().createUrlResolver(),
+            documentServiceFactory:
+                getFluidTestDriver().createDocumentServiceFactory() as any as old.IDocumentServiceFactory,
+        });
+        const container = await loader.createDetachedContainer(defaultCodeDetails);
+        await container.attach(getFluidTestDriver().createCreateNewRequest(documentId));
+        return container;
     }
 
     const createRuntimeFactory = (dataStore): IRuntimeFactory => {
@@ -205,15 +224,14 @@ describe("context reload (hot-swap)", function() {
 
     describe("single container", () => {
         beforeEach(async function() {
-            this.deltaConnectionServer = LocalDeltaConnectionServer.create();
-            this.urlResolver = new LocalResolver();
+            const docId = Date.now().toString();
+            this.urlResolver = getFluidTestDriver().createUrlResolver();
             this.container = await createContainer(
                 [
                     [codeDetails(V1), createRuntimeFactory(TestDataStoreV1)],
                     [codeDetails(V2), createRuntimeFactory(TestDataStoreV2)],
                 ],
-                this.deltaConnectionServer,
-                this.urlResolver);
+                docId);
             this.dataStoreV1 = await requestFluidObject<TestDataStore>(this.container, "default");
             assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
 
@@ -222,16 +240,11 @@ describe("context reload (hot-swap)", function() {
         });
 
         tests();
-
-        afterEach(async function() {
-            await this.deltaConnectionServer.webSocketServer.close();
-        });
     });
 
     describe("two containers", () => {
         it("loads version 2", async () => {
-            const deltaConnectionServer = LocalDeltaConnectionServer.create();
-            const urlResolver = new LocalResolver();
+            const docId = Date.now().toString();
             const opProcessingController = new OpProcessingController();
 
             const packageEntries = [
@@ -240,8 +253,8 @@ describe("context reload (hot-swap)", function() {
             ];
 
             const containers: IContainer[] = [];
-            containers.push(await createContainer(packageEntries, deltaConnectionServer, urlResolver));
-            containers.push(await loadContainer(packageEntries, deltaConnectionServer, urlResolver));
+            containers.push(await createContainer(packageEntries, docId));
+            containers.push(await loadContainer(packageEntries, docId));
 
             let success = true;
             containers.map((container) => container.on("warning", () => success = false));
@@ -283,12 +296,11 @@ describe("context reload (hot-swap)", function() {
     describe("compat", () => {
         describe("old loader, new runtime", () => {
             beforeEach(async function() {
-                this.deltaConnectionServer = LocalDeltaConnectionServer.create();
-                this.urlResolver = new LocalResolver();
+                const docId = Date.now().toString();
                 this.container = await createContainerWithOldLoader([
                     [codeDetails(V1), createOldRuntimeFactory(OldTestDataStoreV1)],
                     [codeDetails(V2), createRuntimeFactory(TestDataStoreV2)],
-                ], this.deltaConnectionServer, this.urlResolver);
+                ], docId);
                 this.dataStoreV1 = await requestFluidObject<OldTestDataStore>(this.container, "default");
                 assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
 
@@ -304,14 +316,12 @@ describe("context reload (hot-swap)", function() {
         });
         describe("new loader, old runtime", () => {
             beforeEach(async function() {
-                this.deltaConnectionServer = LocalDeltaConnectionServer.create();
-                this.urlResolver = new LocalResolver();
+                const docId = Date.now().toString();
                 this.container = await createContainer([
                     [codeDetails(V1), createRuntimeFactory(TestDataStoreV1)],
                     [codeDetails(V2), createOldRuntimeFactory(OldTestDataStoreV2)],
                 ],
-                this.deltaConnectionServer,
-                this.urlResolver);
+                docId);
                 this.dataStoreV1 = await requestFluidObject<TestDataStore>(this.container, "default");
                 assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
 

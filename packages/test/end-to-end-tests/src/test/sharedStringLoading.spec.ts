@@ -14,8 +14,6 @@ import {
     SupportedExportInterfaces,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import {
     IDocumentService,
     IDocumentServiceFactory,
@@ -28,7 +26,6 @@ import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
 
 describe("SharedString", () => {
     it("Failure to Load in Shared String", async ()=>{
-        const deltaConnectionServer = LocalDeltaConnectionServer.create();
         const stringId = "sharedStringKey";
         const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
         const fluidExport: SupportedExportInterfaces = {
@@ -37,16 +34,14 @@ describe("SharedString", () => {
         const text = "hello world";
         const documentId = "sstest";
         { // creating client
-            const urlResolver = new LocalResolver();
-            const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
             const codeDetails = { package: "no-dynamic-pkg" };
             const codeLoader = new LocalCodeLoader([
                 [codeDetails, fluidExport],
             ]);
 
             const loader = new Loader({
-                urlResolver,
-                documentServiceFactory,
+                urlResolver: getFluidTestDriver().createUrlResolver(),
+                documentServiceFactory: getFluidTestDriver().createDocumentServiceFactory(),
                 codeLoader,
             });
 
@@ -56,32 +51,28 @@ describe("SharedString", () => {
             assert(sharedString);
             sharedString.insertText(0, text);
 
-            await container.attach(urlResolver.createCreateNewRequest(documentId));
+            await container.attach(getFluidTestDriver().createCreateNewRequest(documentId));
         }
         { // normal load client
-            const urlResolver = new LocalResolver();
-            const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
             const codeDetails = { package: "no-dynamic-pkg" };
             const codeLoader = new LocalCodeLoader([
                 [codeDetails, fluidExport],
             ]);
 
             const loader = new Loader({
-                urlResolver,
-                documentServiceFactory,
+                urlResolver: getFluidTestDriver().createUrlResolver(),
+                documentServiceFactory: getFluidTestDriver().createDocumentServiceFactory(),
                 codeLoader,
             });
 
-            const container = await loader.resolve(urlResolver.createCreateNewRequest(documentId));
+            const container = await loader.resolve(getFluidTestDriver().createCreateNewRequest(documentId));
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
             const sharedString  = await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
             assert(sharedString);
             assert.strictEqual(sharedString.getText(0), text);
         }
         { // failure load client
-            const urlResolver = new LocalResolver();
-            const realSf: IDocumentServiceFactory =
-                new LocalDocumentServiceFactory(deltaConnectionServer);
+            const realSf: IDocumentServiceFactory = getFluidTestDriver().createDocumentServiceFactory();
             const documentServiceFactory: IDocumentServiceFactory = {
                 ...realSf,
                 createDocumentService: async (resolvedUrl,logger) => {
@@ -118,12 +109,12 @@ describe("SharedString", () => {
             ]);
 
             const loader = new Loader({
-                urlResolver,
+                urlResolver: getFluidTestDriver().createUrlResolver(),
                 documentServiceFactory,
                 codeLoader,
             });
 
-            const container = await loader.resolve(urlResolver.createCreateNewRequest(documentId));
+            const container = await loader.resolve(getFluidTestDriver().createCreateNewRequest(documentId));
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
 
             try {
@@ -134,7 +125,6 @@ describe("SharedString", () => {
     });
 
     it("Text operations successfully round trip on detached create", async ()=>{
-        const deltaConnectionServer = LocalDeltaConnectionServer.create();
         const stringId = "sharedStringKey";
         const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
         const fluidExport: SupportedExportInterfaces = {
@@ -144,16 +134,14 @@ describe("SharedString", () => {
         const documentId = "sstest";
         let initialText = "";
         { // creating client
-            const urlResolver = new LocalResolver();
-            const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
             const codeDetails = { package: "no-dynamic-pkg" };
             const codeLoader = new LocalCodeLoader([
                 [codeDetails, fluidExport],
             ]);
 
             const loader = new Loader({
-                urlResolver,
-                documentServiceFactory,
+                urlResolver: getFluidTestDriver().createUrlResolver(),
+                documentServiceFactory: getFluidTestDriver().createDocumentServiceFactory(),
                 codeLoader,
             });
 
@@ -177,23 +165,21 @@ describe("SharedString", () => {
             }
             initialText = sharedString.getText();
 
-            await container.attach(urlResolver.createCreateNewRequest(documentId));
+            await container.attach(getFluidTestDriver().createCreateNewRequest(documentId));
         }
         { // normal load client
-            const urlResolver = new LocalResolver();
-            const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
             const codeDetails = { package: "no-dynamic-pkg" };
             const codeLoader = new LocalCodeLoader([
                 [codeDetails, fluidExport],
             ]);
 
             const loader = new Loader({
-                urlResolver,
-                documentServiceFactory,
+                urlResolver: getFluidTestDriver().createUrlResolver(),
+                documentServiceFactory: getFluidTestDriver().createDocumentServiceFactory(),
                 codeLoader,
             });
 
-            const container = await loader.resolve(urlResolver.createCreateNewRequest(documentId));
+            const container = await loader.resolve(getFluidTestDriver().createCreateNewRequest(documentId));
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
             const sharedString  = await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
             assert(sharedString);

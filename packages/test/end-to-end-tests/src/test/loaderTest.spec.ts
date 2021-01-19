@@ -12,9 +12,7 @@ import {
 import { IContainer, ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { LocalResolver } from "@fluidframework/local-driver";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createAndAttachContainer, createLocalLoader, OpProcessingController } from "@fluidframework/test-utils";
+import { createAndAttachContainer, createLoader, OpProcessingController } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 class TestSharedDataObject1 extends DataObject {
@@ -69,11 +67,9 @@ describe("Loader.request", () => {
         config: {},
     };
 
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
     let dataStore1: TestSharedDataObject1;
     let dataStore2: TestSharedDataObject2;
     let loader: ILoader;
-    let urlResolver: LocalResolver;
     let opProcessingController: OpProcessingController;
 
     async function createContainer(): Promise<IContainer> {
@@ -85,15 +81,16 @@ describe("Loader.request", () => {
                     [testSharedDataObjectFactory2.type, Promise.resolve(testSharedDataObjectFactory2)],
                 ],
             );
-        loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
+        loader = createLoader(
+            [[codeDetails, runtimeFactory]],
+            getFluidTestDriver().createDocumentServiceFactory(),
+            getFluidTestDriver().createUrlResolver(),
+        );
         return createAndAttachContainer(
-            codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
+            codeDetails, loader, getFluidTestDriver().createCreateNewRequest(documentId));
     }
 
     beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
-        urlResolver = new LocalResolver();
-
         const container = await createContainer();
         dataStore1 = await requestFluidObject(container, "default");
 
@@ -168,9 +165,5 @@ describe("Loader.request", () => {
             headers: { wait: false },   // data store load default wait to true currently
         });
         assert(newDataStore2 instanceof TestSharedDataObject2, "requestFromLoader returns the wrong type for object2");
-    });
-
-    afterEach(async () => {
-        await deltaConnectionServer.webSocketServer.close();
     });
 });

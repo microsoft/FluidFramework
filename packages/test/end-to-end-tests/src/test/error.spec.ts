@@ -15,35 +15,33 @@ import {
     IDocumentServiceFactory,
     DriverErrorType,
     IThrottlingWarning,
+    IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { createWriteError } from "@fluidframework/driver-utils";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import {
     createOdspNetworkError,
     invalidFileNameStatusCode,
     OdspErrorType,
 } from "@fluidframework/odsp-doclib-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 
 describe("Errors Types", () => {
-    const id = "fluid-test://localhost/errorTest";
-    const testRequest: IRequest = { url: id };
-
-    let testDeltaConnectionServer: ILocalDeltaConnectionServer;
-    let urlResolver: LocalResolver;
+    let urlResolver: IUrlResolver;
+    let testRequest: IRequest;
     let testResolved: IFluidResolvedUrl;
     let documentServiceFactory: IDocumentServiceFactory;
     let codeLoader: LocalCodeLoader;
     let loader: Loader;
 
     it("GeneralError Test", async () => {
+        const id = Date.now().toString();
         // Setup
-        testDeltaConnectionServer = LocalDeltaConnectionServer.create();
-        urlResolver = new LocalResolver();
-        testResolved = await urlResolver.resolve(testRequest) as IFluidResolvedUrl;
-        documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
+        urlResolver = getFluidTestDriver().createUrlResolver();
+        testRequest = { url:getFluidTestDriver().createContainerUrl(id) };
+        testResolved =
+            await urlResolver.resolve(testRequest) as IFluidResolvedUrl;
+        documentServiceFactory = getFluidTestDriver().createDocumentServiceFactory();
 
         const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
         mockFactory.createDocumentService = async (resolvedUrl) => {
@@ -72,8 +70,6 @@ describe("Errors Types", () => {
         } catch (error) {
             assert.equal(error.errorType, ContainerErrorType.genericError, "Error should be a genericError");
         }
-
-        await testDeltaConnectionServer.webSocketServer.close();
     });
 
     it("GeneralError Logging Test", async () => {

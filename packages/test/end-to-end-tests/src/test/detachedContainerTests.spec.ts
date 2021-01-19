@@ -25,7 +25,6 @@ import { MessageType, ISequencedDocumentMessage } from "@fluidframework/protocol
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { convertContainerToDriverSerializedFormat, requestFluidObject } from "@fluidframework/runtime-utils";
-import { createLocalResolverCreateNewRequest } from "@fluidframework/local-driver";
 import {
     generateTest,
     generateNonCompatTest,
@@ -79,7 +78,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
     beforeEach(async () => {
         args = argsFactory();
-        request = createLocalResolverCreateNewRequest(args.documentId);
+        request  = getFluidTestDriver().createCreateNewRequest(args.documentId);
         loader = args.makeTestLoader(testContainerConfig) as Loader;
     });
 
@@ -622,7 +621,7 @@ describe("Detached Container", () => {
 
         beforeEach(async () => {
             args = argsFactory();
-            request = createLocalResolverCreateNewRequest(args.documentId);
+            request = getFluidTestDriver().createCreateNewRequest(args.documentId);
             loader = args.makeTestLoader(testContainerConfig) as Loader;
         });
 
