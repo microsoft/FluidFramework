@@ -198,8 +198,21 @@ export class LocalChannelContext implements IChannelContext {
         }
     }
 
+    /**
+     * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context.
+     * Each node has a set of outbound routes to other GC nodes in the document. This should be called only after
+     * the context has loaded.
+     */
     public async getGCData(): Promise<IGarbageCollectionData> {
         assert(this.isLoaded && this.channel !== undefined, "Channel should be loaded to run GC");
         return this.channel.getGCData();
+    }
+
+    public updateUsedRoutes(usedRoutes: string[]) {
+        /**
+         * Currently, DDSs are always considered referenced and are not garbage collected.
+         * Once we have GC at DDS level, this channel context's used routes will be updated as per the passed
+         * value. See - https://github.com/microsoft/FluidFramework/issues/4611
+         */
     }
 }

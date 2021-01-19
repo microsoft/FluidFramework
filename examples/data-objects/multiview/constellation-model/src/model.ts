@@ -57,12 +57,14 @@ export class Constellation extends DataObject implements IConstellation {
     }
 
     private async updateStarsFromRoot() {
-        const starHandles = this.root.get<IFluidHandle<ICoordinate>[]>(starListKey);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const starHandles = this.root.get<IFluidHandle<ICoordinate>[]>(starListKey)!;
         this._stars = await Promise.all(starHandles.map(async (starHandle) => starHandle.get()));
     }
 
     public async addStar(x: number, y: number): Promise<void> {
-        const starHandles = this.root.get<IFluidHandle<ICoordinate>[]>(starListKey);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const starHandles = this.root.get<IFluidHandle<ICoordinate>[]>(starListKey)!;
         const newStar = await Coordinate.getFactory().createChildInstance(this.context);
         newStar.x = x;
         newStar.y = y;

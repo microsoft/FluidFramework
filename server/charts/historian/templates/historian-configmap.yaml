@@ -26,8 +26,20 @@ data:
             "tls": {{ .Values.historian.redis.tls }},
             "pass": "{{ .Values.historian.redis.password }}"
         },
+        "redisForThrottling": {
+            "host": "{{ .Values.historian.redisForThrottling.url }}",
+            "port": "{{ .Values.historian.redisForThrottling.port }}",
+            "tls": {{ .Values.historian.redisForThrottling.tls }},
+            "pass": "{{ .Values.historian.redisForThrottling.password }}"
+        },
         "error": {
             "track": {{ .Values.historian.error.track }},
             "endpoint": "{{ .Values.historian.error.endpoint }}"
+        },
+        "throttling": {
+            "maxRequestsPerMs": {{ .Values.historian.throttling.maxRequestsPerMs }},
+            "maxRequestBurst": {{ .Values.historian.throttling.maxRequestBurst }},
+            "minCooldownIntervalInMs": {{ .Values.historian.throttling.minCooldownIntervalInMs }},
+            "minThrottleIntervalInMs": {{ .Values.historian.throttling.minThrottleIntervalInMs }}
         }
     }
