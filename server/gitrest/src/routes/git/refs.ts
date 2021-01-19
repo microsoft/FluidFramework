@@ -153,14 +153,6 @@ function getRefId(id): string {
     return `refs/${id}`;
 }
 
-function getReadParams(params): IGetRefParamsExternal | undefined {
-    if (params) {
-        const getRefParams: IGetRefParamsExternal = JSON.parse(decodeURIComponent(params));
-        return getRefParams;
-    }
-    return undefined;
-}
-
 export function create(
     store: nconf.Provider,
     repoManager: utils.RepositoryManager,
@@ -181,7 +173,7 @@ export function create(
             request.params.owner,
             request.params.repo,
             getRefId(request.params[0]),
-            getReadParams(request.query?.config),
+            utils.getReadParams(request.query?.config),
             externalStorageManager);
         handleResponse(resultP, response);
     });

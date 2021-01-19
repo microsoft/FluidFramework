@@ -8,6 +8,7 @@ import * as path from "path";
 import * as util from "util";
 import git from "nodegit";
 import * as resources from "@fluidframework/gitresources";
+import { IGetRefParamsExternal } from "@fluidframework/server-services-client";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
 import * as winston from "winston";
 
@@ -51,6 +52,17 @@ function committerToICommitter(committer: git.Signature, time: Date): resources.
 
 function oidToCommitHash(oid: git.Oid): resources.ICommitHash {
     return { sha: oid.tostrS(), url: "" };
+}
+
+/**
+ * Helper function to decode externalstorage read params
+ */
+export function getReadParams(params): IGetRefParamsExternal | undefined {
+    if (params) {
+        const getRefParams: IGetRefParamsExternal = JSON.parse(decodeURIComponent(params));
+        return getRefParams;
+    }
+    return undefined;
 }
 
 /**

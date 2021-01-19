@@ -18,7 +18,11 @@ async function ensureConnected(container: Container) {
     }
 }
 
-const tests = (args: ITestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    beforeEach(()=>{
+        args = argsFactory();
+    });
     let container1: Container;
     let dataObject1: ITestFluidObject;
     beforeEach(async () => {
