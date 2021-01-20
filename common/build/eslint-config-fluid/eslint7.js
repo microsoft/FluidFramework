@@ -260,6 +260,7 @@ module.exports = {
         ],
 
         // eslint-plugin-unicorn
+        "unicorn/better-regex": "error",
         "unicorn/filename-case": [
             "error",
             {
