@@ -1007,6 +1007,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             let id: string | undefined;
             let value: SnapshotTreeValue | undefined;
 
+            // Tracks if an entry is unreferenced. Currently, only tree entries can be marked as unreferenced. If the
+            // property is not present, the tree entry is considered referenced. If the property is present and is
+            // true (which is the only value it can have), the tree entry is considered unreferenced.
+            let unreferenced: true | undefined;
+
             switch (summaryObject.type) {
                 case api.SummaryType.Tree: {
                     const result = await this.convertSummaryToSnapshotTree(
@@ -1016,6 +1021,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         depth + 1,
                         `${path}/${key}`);
                     value = result.snapshotTree;
+                    unreferenced = summaryObject.unreferenced;
                     reusedBlobs += result.reusedBlobs;
                     blobs += result.blobs;
                     break;
@@ -1082,6 +1088,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     ...baseEntry,
                     id,
                     value,
+                    unreferenced,
                 };
             } else if (id) {
                 entry = {
