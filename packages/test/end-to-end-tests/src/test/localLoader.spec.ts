@@ -85,8 +85,6 @@ const testDataObjectFactory = new DataObjectFactory(
 );
 
 describe("LocalLoader", () => {
-    const documentId = "localLoaderTest";
-    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
     const codeDetails: IFluidCodeDetails = {
         package: "localLoaderTestPackage",
         config: {},
@@ -94,7 +92,7 @@ describe("LocalLoader", () => {
 
     let opProcessingController: OpProcessingController;
 
-    async function createContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {
+    async function createContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
         const loader: ILoader = createLoader(
             [[codeDetails, factory]],
             getFluidTestDriver().createDocumentServiceFactory(),
@@ -103,19 +101,20 @@ describe("LocalLoader", () => {
             codeDetails, loader, getFluidTestDriver().createCreateNewRequest(documentId));
     }
 
-    async function loadContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {
+    async function loadContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
         const loader: ILoader = createLoader(
             [[codeDetails, factory]],
             getFluidTestDriver().createDocumentServiceFactory(),
             getFluidTestDriver().createUrlResolver());
-        return loader.resolve({ url: documentLoadUrl });
+        return loader.resolve({ url: getFluidTestDriver().createContainerUrl(documentId) });
     }
 
     describe("1 dataObject", () => {
         let dataObject: TestDataObject;
 
         beforeEach(async () => {
-            const container = await createContainer(testDataObjectFactory);
+            const documentId = Date.now().toString();
+            const container = await createContainer(documentId, testDataObjectFactory);
             dataObject = await requestFluidObject<TestDataObject>(container, "default");
         });
 
@@ -131,11 +130,13 @@ describe("LocalLoader", () => {
         });
 
         it("early open / late close", async () => {
+            const documentId = Date.now().toString();
+
             // Create / load both instance of TestDataObject before applying ops.
-            const container1 = await createContainer(testDataObjectFactory);
+            const container1 = await createContainer(documentId, testDataObjectFactory);
             const dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
 
-            const container2 = await loadContainer(testDataObjectFactory);
+            const container2 = await loadContainer(documentId, testDataObjectFactory);
             const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
 
             assert(dataObject1 !== dataObject2, "Each container must return a separate TestDataObject instance.");
@@ -160,7 +161,8 @@ describe("LocalLoader", () => {
         });
 
         it("late open / early close", async () => {
-            const container1 = await createContainer(testDataObjectFactory);
+            const documentId = Date.now().toString();
+            const container1 = await createContainer(documentId, testDataObjectFactory);
             const dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
 
             opProcessingController.addDeltaManagers(container1.deltaManager);
@@ -169,7 +171,7 @@ describe("LocalLoader", () => {
             assert.equal(dataObject1.value, 1, "Local update by 'dataObject1' must be promptly observable");
 
             // Wait until ops are pending before opening second TestDataObject instance.
-            const container2 = await loadContainer(testDataObjectFactory);
+            const container2 = await loadContainer(documentId, testDataObjectFactory);
             const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
             assert(dataObject1 !== dataObject2, "Each container must return a separate TestDataObject instance.");
 
@@ -193,8 +195,9 @@ describe("LocalLoader", () => {
             let text: SharedString;
 
             beforeEach(async () => {
+                const documentId = Date.now().toString();
                 const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
-                const container = await createContainer(factory);
+                const container = await createContainer(documentId, factory);
                 const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
                 text = await dataObject.getSharedObject("text");
             });
@@ -212,14 +215,14 @@ describe("LocalLoader", () => {
 
             beforeEach(async () => {
                 opProcessingController = new OpProcessingController();
-
+                const documentId = Date.now().toString();
                 const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
 
-                const container1 = await createContainer(factory);
+                const container1 = await createContainer(documentId, factory);
                 dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
                 text1 = await dataObject1.getSharedObject<SharedString>("text");
 
-                const container2 = await loadContainer(factory);
+                const container2 = await loadContainer(documentId, factory);
                 dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
                 text2 = await dataObject2.getSharedObject<SharedString>("text");
 
@@ -248,10 +251,12 @@ describe("LocalLoader", () => {
             let dataObject2: TestDataObject;
 
             beforeEach(async () => {
-                container1 = await createContainer(testDataObjectFactory);
+                const documentId = Date.now().toString();
+
+                container1 = await createContainer(documentId, testDataObjectFactory);
                 dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
 
-                container2 = await loadContainer(testDataObjectFactory);
+                container2 = await loadContainer(documentId, testDataObjectFactory);
                 dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
             });
 

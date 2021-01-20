@@ -29,7 +29,6 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 const detachedContainerRefSeqNumber = 0;
 
 describe(`Dehydrate Rehydrate Container Test`, () => {
-    const documentId = "deReHydrateContainerTest";
     const codeDetails: IFluidCodeDetails = {
         package: "detachedContainerTestPackage1",
         config: {},
@@ -94,6 +93,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
     };
 
     beforeEach(async () => {
+        const documentId = Date.now().toString();
         request = getFluidTestDriver().createCreateNewRequest(documentId);
         loader = createTestLoader();
         opProcessingController = new OpProcessingController();

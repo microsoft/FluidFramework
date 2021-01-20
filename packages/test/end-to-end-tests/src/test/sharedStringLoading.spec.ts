@@ -32,7 +32,7 @@ describe("SharedString", () => {
             IFluidDataStoreFactory: new TestFluidObjectFactory(registry),
         };
         const text = "hello world";
-        const documentId = "sstest";
+        const documentId = Date.now().toString();
         { // creating client
             const codeDetails = { package: "no-dynamic-pkg" };
             const codeLoader = new LocalCodeLoader([
@@ -131,7 +131,7 @@ describe("SharedString", () => {
             IFluidDataStoreFactory: new TestFluidObjectFactory(registry),
         };
         const text = "hello world";
-        const documentId = "sstest";
+        const documentId = Date.now().toString();
         let initialText = "";
         { // creating client
             const codeDetails = { package: "no-dynamic-pkg" };

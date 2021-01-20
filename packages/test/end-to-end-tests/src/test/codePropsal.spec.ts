@@ -35,8 +35,6 @@ function isCodeProposalTestPackage(pkg: unknown): pkg is ICodeProposalTestPackag
 }
 
 describe("CodeProposal.EndToEnd", () => {
-    const documentId = "codeProposalTest";
-    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
     const packageV1: ICodeProposalTestPackage = {
         name: "test",
         version: 1,
@@ -87,24 +85,24 @@ describe("CodeProposal.EndToEnd", () => {
             { hotSwapContext });
     }
 
-    async function createContainer(code: IFluidCodeDetails): Promise<IContainer> {
+    async function createContainer(code: IFluidCodeDetails, documentId: string): Promise<IContainer> {
         const loader = createLoader();
         return createAndAttachContainer(code, loader, getFluidTestDriver().createCreateNewRequest(documentId));
     }
 
-    async function loadContainer(): Promise<IContainer> {
+    async function loadContainer(documentId: string): Promise<IContainer> {
         const loader = createLoader();
-        return loader.resolve({ url: documentLoadUrl });
+        return loader.resolve({ url: getFluidTestDriver().createContainerUrl(documentId) });
     }
 
     let containers: IContainer[];
     beforeEach(async () => {
         containers = [];
-
+        const documentId = Date.now().toString();
         const codeDetails: IFluidCodeDetails = { package: packageV1 };
 
         // Create a Container for the first client.
-        containers.push(await createContainer(codeDetails));
+        containers.push(await createContainer(codeDetails, documentId));
 
         opProcessingController = new OpProcessingController();
         opProcessingController.addDeltaManagers(containers[0].deltaManager);
@@ -112,7 +110,7 @@ describe("CodeProposal.EndToEnd", () => {
         await opProcessingController.process();
 
         // Load the Container that was created by the first client.
-        containers.push(await loadContainer());
+        containers.push(await loadContainer(documentId));
         opProcessingController.addDeltaManagers(containers[1].deltaManager);
 
         assert.deepStrictEqual(
@@ -151,8 +149,8 @@ describe("CodeProposal.EndToEnd", () => {
             containers[0].proposeCodeDetails(proposal),
             opProcessingController.process(),
         ]);
-
         assert.strictEqual(res[0], true, "Code proposal should be accepted");
+        await opProcessingController.process();
 
         for (let i = 0; i < containers.length; i++) {
             assert.strictEqual(containers[i].closed, true, `containers[${i}] should be closed`);
@@ -250,6 +248,7 @@ describe("CodeProposal.EndToEnd", () => {
             ]);
 
             assert.strictEqual(res[0], true, "Code proposal should be accepted");
+            await opProcessingController.process();
 
             for (let i = 0; i < containers.length; i++) {
                 assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
@@ -321,6 +320,8 @@ describe("CodeProposal.EndToEnd", () => {
 
             assert.strictEqual(res[0], true, "Code proposal should be accepted");
             assert.strictEqual(containers[0].closed, false, "containers[0] should not be closed");
+            await opProcessingController.process();
+
             assert.deepStrictEqual(
                 containers[0].codeDetails,
                 proposal,

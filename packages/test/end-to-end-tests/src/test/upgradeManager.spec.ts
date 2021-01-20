@@ -38,8 +38,6 @@ class TestDataObject extends DataObject {
 }
 
 describe("UpgradeManager (hot-swap)", () => {
-    const documentId = "upgradeManagerTest";
-    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
     const codeDetails: IFluidCodeDetails = {
         package: "localLoaderTestPackage",
         config: {},
@@ -47,7 +45,7 @@ describe("UpgradeManager (hot-swap)", () => {
     let driver: TestDriver;
     let opProcessingController: OpProcessingController;
 
-    async function createContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {
+    async function createContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const loader = new Loader({
             urlResolver: driver.createUrlResolver(),
@@ -60,7 +58,7 @@ describe("UpgradeManager (hot-swap)", () => {
             codeDetails, loader, driver.createCreateNewRequest(documentId));
     }
 
-    async function loadContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {
+    async function loadContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const loader = new Loader({
             urlResolver: driver.createUrlResolver(),
@@ -69,7 +67,7 @@ describe("UpgradeManager (hot-swap)", () => {
             options: { hotSwapContext: true },
         });
 
-        return loader.resolve({ url: documentLoadUrl });
+        return loader.resolve({ url: getFluidTestDriver().createContainerUrl(documentId) });
     }
 
     beforeEach(async () => {
@@ -83,14 +81,15 @@ describe("UpgradeManager (hot-swap)", () => {
         const addCounts = Array(clients).fill(0);
         const approveCounts = Array(clients).fill(0);
         const containers: IContainer[] = [];
+        const documentId = Date.now().toString();
 
         // Create the first Container.
-        const container1 = await createContainer(TestDataObject.getFactory());
+        const container1 = await createContainer(documentId, TestDataObject.getFactory());
         containers.push(container1);
 
         // Load rest of the Containers.
         const restOfContainersP =
-            Array(clients - 1).fill(undefined).map(async () => loadContainer(TestDataObject.getFactory()));
+            Array(clients - 1).fill(undefined).map(async () => loadContainer(documentId, TestDataObject.getFactory()));
         const restOfContainers = await Promise.all(restOfContainersP);
         containers.push(...restOfContainers);
 
@@ -132,7 +131,9 @@ describe("UpgradeManager (hot-swap)", () => {
     });
 
     it("1 client low priority is immediate", async () => {
-        const container = await createContainer(TestDataObject.getFactory());
+        const documentId = Date.now().toString();
+
+        const container = await createContainer(documentId, TestDataObject.getFactory());
         const dataObject = await requestFluidObject<TestDataObject>(container, "default");
 
         opProcessingController.addDeltaManagers(container.deltaManager);
@@ -155,11 +156,13 @@ describe("UpgradeManager (hot-swap)", () => {
     });
 
     it("2 clients low priority is delayed", async () => {
+        const documentId = Date.now().toString();
+
         // Create the first Container.
-        const container1 = await createContainer(TestDataObject.getFactory());
+        const container1 = await createContainer(documentId, TestDataObject.getFactory());
 
         // Load the second Container.
-        const container2 = await loadContainer(TestDataObject.getFactory()) as Container;
+        const container2 = await loadContainer(documentId, TestDataObject.getFactory()) as Container;
 
         const upgradeManager = new UpgradeManager((container1 as any).context.runtime);
 
