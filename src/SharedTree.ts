@@ -73,7 +73,7 @@ export enum SharedTreeEvent {
 	EditCommitted = 'committedEdit',
 
 	/**
-	 * A chunk of edits has been uploaded use the `uploadBlob` API.
+	 * A chunk of edits has been uploaded using the `uploadBlob` API.
 	 */
 	EditsBlobbed = 'blobbedEdits',
 }
