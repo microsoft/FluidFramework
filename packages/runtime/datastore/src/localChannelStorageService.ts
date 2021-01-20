@@ -4,7 +4,7 @@
  */
 
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { stringToBuffer } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8, stringToBuffer } from "@fluidframework/common-utils";
 import { IBlob, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import { listBlobsAtTreePath } from "@fluidframework/runtime-utils";
 
@@ -17,8 +17,10 @@ export class LocalChannelStorageService implements IChannelStorageService {
         if (blob === undefined) {
             throw new Error("Blob Not Found");
         }
-        // assert(blob.encoding === "base64", "blob does not have base64 encoding");
-        return blob.contents;
+        if (blob.encoding === "utf8") {
+            return blob.contents;
+        }
+        return fromBase64ToUtf8(blob.contents);
     }
 
     public async readBlob(path: string): Promise<ArrayBufferLike> {
