@@ -6,7 +6,7 @@
 import * as bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
-// eslint-disable-next-line no-duplicate-imports
+// eslint-disable-next-line @typescript-eslint/no-duplicate-imports
 import { Express } from "express";
 import morgan from "morgan";
 import * as nconf from "nconf";

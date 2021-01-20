@@ -357,7 +357,7 @@ export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey
 
 export const enum RBColor {
     RED,
-    BLACK
+    BLACK,
 }
 
 export interface RBNode<TKey, TData> {

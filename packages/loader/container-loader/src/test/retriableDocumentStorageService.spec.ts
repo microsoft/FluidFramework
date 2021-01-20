@@ -79,7 +79,7 @@ describe("RetriableDocumentStorageService Tests", () => {
         internalService.read = async (id: string) => {
             if (retryTimes > 0) {
                 retryTimes -= 1;
-                // eslint-disable-next-line no-throw-literal
+                // eslint-disable-next-line @typescript-eslint/no-throw-literal
                 throw "error";
             }
             return "true";

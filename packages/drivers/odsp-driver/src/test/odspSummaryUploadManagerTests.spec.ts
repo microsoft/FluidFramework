@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable dot-notation */
+/* eslint-disable @typescript-eslint/dot-notation */
+
 import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";

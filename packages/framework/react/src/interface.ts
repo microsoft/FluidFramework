@@ -608,7 +608,7 @@ export interface ISyncedState {
     /**
      * Get values from the synced state for a syncedStateId as key
      */
-    get: <T, >(key: string) => T | undefined;
+    get: <T >(key: string) => T | undefined;
     /**
      * Add a listener to the synced state using a provided callback
      */
