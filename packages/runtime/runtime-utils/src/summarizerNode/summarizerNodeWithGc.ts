@@ -113,17 +113,35 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         });
     }
 
+    /**
+     * Loads state from this node's initial GC summary details. This contains the following data from the last summary
+     * seen by the server for this client:
+     * - usedRoutes: This is used to figure out if the used state of this node changed since last summary.
+     * - gcData: The garbage collection data of this node that is required for running GC.
+     */
+    private async loadInitialGCSummaryDetails() {
+        // If referenceUsedRoutes is not undefined, don't do anything because we have already initialized.
+        if (this.referenceUsedRoutes === undefined) {
+            const gcDetailsInInitialSummary = await this.gcDetailsInInitialSummaryP;
+            this.referenceUsedRoutes = gcDetailsInInitialSummary.usedRoutes;
+
+            // If the GC details has GC data, initialize our GC data from it.
+            if (gcDetailsInInitialSummary.gcData !== undefined) {
+                this.gcData = cloneGCData(gcDetailsInInitialSummary.gcData);
+            }
+        }
+    }
+
     public async summarize(fullTree: boolean, trackState: boolean = true): Promise<IContextSummarizeResult> {
+        // Load GC details from the initial summary, if it's not already loaded. If this is the first time this node is
+        // being summarized, the used routes in it are needed to find out if this node has changed since last summary.
+        // If it hasn't changed, the GC data in it needs to be returned as part of the summary.
+        await this.loadInitialGCSummaryDetails();
+
         // If GC is not disabled and we are tracking a summary, GC should have run and updated the used routes for this
         //  summary by calling updateUsedRoutes which sets wipSerializedUsedRoutes.
         if (!this.gcDisabled && this.isTrackingInProgress()) {
             assert(this.wipSerializedUsedRoutes !== undefined, "wip used routes should be set if tracking a summary");
-
-            // Update the reference used routes from the initial GC details. This is used to find out if the used routes
-            // has changed from the last state seen by the server. If so, we cannot reuse previous summary.
-            if (this.referenceUsedRoutes === undefined) {
-                this.referenceUsedRoutes = (await this.gcDetailsInInitialSummaryP).usedRoutes;
-            }
         }
 
         // If trackState is true, get summary from base summarizer node which tracks summary state.
@@ -161,20 +179,15 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         assert(!this.gcDisabled, "Getting GC data should not be called when GC is disabled!");
         assert(this.getGCDataFn !== undefined, "GC data cannot be retrieved without getGCDataFn");
 
-        if (!this.hasDataChanged()) {
-            // There is no new data since last summary. If we have the GC data from previous run, return it.
-            if (this.gcData !== undefined) {
-                return cloneGCData(this.gcData);
-            }
+        // Load GC details from the initial summary, if not already loaded. If this is the first time this function is
+        // called and the node's data has not changed since last summary, the GC data in initial details is returned.
+        await this.loadInitialGCSummaryDetails();
 
-            // This is the first time GC data is requested in this client, so we need to get GC data from the initial
-            // summary. Note: This info may not be available for clients with old summary. In such cases, we fall back
-            // to getting GC data by calling getGCDataFn.
-            const gcDataInInitialSummary = (await this.gcDetailsInInitialSummaryP).gcData;
-            if (gcDataInInitialSummary !== undefined) {
-                this.gcData = cloneGCData(gcDataInInitialSummary);
-                return gcDataInInitialSummary;
-            }
+        // If there is no new data since last summary and we have GC data from the previous run, return it. We may not
+        // have data from previous GC run for clients with older summary format before GC was added. They won't have
+        // GC details in their initial summary.
+        if (!this.hasDataChanged() && this.gcData !== undefined) {
+            return cloneGCData(this.gcData);
         }
 
         const gcData = await this.getGCDataFn();
