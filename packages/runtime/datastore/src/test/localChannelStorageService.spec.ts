@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { stringToBuffer } from "@fluidframework/common-utils";
 import { ITree, FileMode, TreeEntry } from "@fluidframework/protocol-definitions";
 import { LocalChannelStorageService } from "../localChannelStorageService";
 
@@ -15,8 +16,13 @@ describe("LocalChannelStorageService", () => {
 
         const ss = new LocalChannelStorageService(tree);
 
-        assert.equal(await ss.contains("/"), false);
-        assert.deepEqual(await ss.list(""), []);
+        assert.strictEqual(await ss.contains("/"), false);
+        assert.deepStrictEqual(await ss.list(""), []);
+        try {
+            await ss.readBlob("test");
+        } catch (error) {
+            assert.strictEqual(error.message, "Blob Not Found");
+        }
     });
 
     it("Top Level Blob", async () => {
@@ -36,9 +42,10 @@ describe("LocalChannelStorageService", () => {
 
         const ss = new LocalChannelStorageService(tree);
 
-        assert.equal(await ss.contains("foo"), true);
+        assert.strictEqual(await ss.contains("foo"), true);
         assert.deepStrictEqual(await ss.list(""), ["foo"]);
-        assert.equal(await ss.read("foo"), "bar");
+        assert.strictEqual(await ss.read("foo"), "bar");
+        assert.deepStrictEqual(await ss.readBlob("foo"), stringToBuffer("bar","utf8"));
     });
 
     it("Nested Blob", async () => {
@@ -66,8 +73,9 @@ describe("LocalChannelStorageService", () => {
         };
         const ss = new LocalChannelStorageService(tree);
 
-        assert.equal(await ss.contains("nested/foo"), true);
+        assert.strictEqual(await ss.contains("nested/foo"), true);
         assert.deepStrictEqual(await ss.list("nested/"), ["foo"]);
-        assert.equal(await ss.read("nested/foo"), "bar");
+        assert.strictEqual(await ss.read("nested/foo"), "bar");
+        assert.deepStrictEqual(await ss.readBlob("nested/foo"), stringToBuffer("bar","utf8"));
     });
 });

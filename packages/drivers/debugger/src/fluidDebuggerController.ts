@@ -251,6 +251,13 @@ export class DebugReplayController extends ReplayController implements IDebugger
         throw new Error("Reading blob before storage is setup properly");
     }
 
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
+        if (this.storage !== undefined) {
+            return this.storage.readBlob(blobId);
+        }
+        throw new Error("Reading blob before storage is setup properly");
+    }
+
     public async getVersions(
         versionId: string,
         count: number): Promise<IVersion[]> {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert , IsoBuffer } from "@fluidframework/common-utils";
+import { assert , IsoBuffer, stringToBuffer } from "@fluidframework/common-utils";
 import { ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { convertSummaryTreeToITree, listBlobsAtTreePath } from "@fluidframework/runtime-utils";
@@ -38,6 +38,25 @@ export class MockStorage implements IChannelStorageService {
         }
     }
 
+    private static readBlobCore(tree: ITree, paths: string[]): IBlob {
+        if (tree) {
+            for (const entry of tree.entries) {
+                if (entry.path === paths[0]) {
+                    if (entry.type === "Blob") {
+                        // eslint-disable-next-line prefer-rest-params
+                        assert(paths.length === 1, JSON.stringify({ ...arguments }));
+                        return entry.value as IBlob;
+                    }
+                    if (entry.type === "Tree") {
+                        return MockStorage.readBlobCore(entry.value as ITree, paths.slice(1));
+                    }
+                    return undefined;
+                }
+            }
+            return undefined;
+        }
+    }
+
     constructor(protected tree?: ITree) {
     }
 
@@ -45,6 +64,12 @@ export class MockStorage implements IChannelStorageService {
         const blob = MockStorage.readCore(this.tree, path.split("/"));
         assert(blob !== undefined, `Blob does not exist: ${path}`);
         return blob;
+    }
+
+    public async readBlob(path: string): Promise<ArrayBufferLike> {
+        const blob = MockStorage.readBlobCore(this.tree, path.split("/"));
+        assert(blob !== undefined, `Blob does not exist: ${path}`);
+        return stringToBuffer(blob.contents, blob.encoding);
     }
 
     public async contains(path: string): Promise<boolean> {
