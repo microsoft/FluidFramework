@@ -19,42 +19,14 @@
 
 export { initialTree } from './InitialTree';
 export { BlobId, SharedTree, SharedTreeEvent, SharedTreeEditor } from './SharedTree';
-export { TreeNodeHandle } from './TreeNodeHandle';
 export { Delta } from './Forest';
-export { SharedTreeSummaryBase, SharedTreeSummarizer, fullHistorySummarizer, noHistorySummarizer } from './Summary';
-export { SharedTreeSummary_0_0_2 } from './SummaryBackCompatibility';
-export { sharedTreeAssertionErrorType, isSharedTreeEvent } from './Common';
-export {
-	Edit,
-	EditWithoutId,
-	EditBase,
-	ChangeType,
-	Change,
-	Build,
-	Insert,
-	Detach,
-	SetValue,
-	Constraint,
-	ConstraintEffect,
-	TraitMap,
-	TreeNodeSequence,
-	Payload,
-	NodeData,
-	TreeNode,
-	ChangeNode,
-	EditNode,
-	EditResult,
-	StablePlace,
-	StableRange,
-	TraitLocation,
-	Side,
-	Delete,
-	Move,
-} from './PersistedTypes';
+export { SharedTreeSummary, SharedTreeSummarizer } from './Summary';
+export { sharedTreeAssertionErrorType } from './Common';
+export * from './PersistedTypes';
 export * from './Factory';
 export * from './HistoryEditFactory';
 export * from './Identifiers';
-export { OrderedEditSet, EditLogSummary, SerializedChunk } from './EditLog';
+export * from './EditLog';
 export {
 	EditValidationResult,
 	NodeInTrait,
@@ -65,7 +37,8 @@ export {
 	SnapshotPlace,
 	SnapshotRange,
 } from './Snapshot';
-export { setTrait, newEdit } from './EditUtilities';
+export { setTrait } from './EditUtilities';
 export { LogViewer } from './LogViewer';
 export { Checkout, CheckoutEvent } from './Checkout';
+export { PrefetchingCheckout } from './PrefetchingCheckout';
 export { BasicCheckout } from './BasicCheckout';

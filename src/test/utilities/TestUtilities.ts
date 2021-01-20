@@ -4,26 +4,14 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { expect } from 'chai';
-import { DataObject } from '@fluidframework/aqueduct';
-import { Container } from '@fluidframework/container-loader';
-import { requestFluidObject } from '@fluidframework/runtime-utils';
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from '@fluidframework/test-runtime-utils';
-import {
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-	LocalTestObjectProvider,
-	TestContainerRuntimeFactory,
-	TestFluidObjectFactory,
-} from '@fluidframework/test-utils';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { expect } from 'chai';
 import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
-import { fail } from '../../Common';
-import { ChangeNode, NodeData, TraitLocation } from '../../PersistedTypes';
+import { ChangeNode, TraitLocation } from '../../PersistedTypes';
 import { SharedTree } from '../../SharedTree';
 import { newEdit, setTrait } from '../../EditUtilities';
 import { fullHistorySummarizer, SharedTreeSummarizer } from '../../Summary';
@@ -64,15 +52,6 @@ export interface SharedTreeTestingOptions {
 	 * If not set, full history will be preserved.
 	 */
 	summarizer?: SharedTreeSummarizer;
-	/**
-	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
-	 */
-	setupEditId?: EditId;
-
-	/**
-	 * Telemetry logger injected into the SharedTree.
-	 */
-	logger?: ITelemetryBaseLogger;
 }
 
 export const testTrait: TraitLocation = {
@@ -84,22 +63,9 @@ export const testTrait: TraitLocation = {
 export function setUpTestSharedTree(
 	options: SharedTreeTestingOptions = { localMode: true }
 ): SharedTreeTestingComponents {
-	const { id, initialTree, localMode, containerRuntimeFactory, setupEditId } = options;
-	let componentRuntime: MockFluidDataStoreRuntime;
-	if (options.logger) {
-		const proxyHandler: ProxyHandler<MockFluidDataStoreRuntime> = {
-			get: (target, prop, receiver) => {
-				if (prop === 'logger' && options.logger) {
-					return options.logger;
-				}
-				return target[prop as keyof MockFluidDataStoreRuntime];
-			},
-		};
-		componentRuntime = new Proxy(new MockFluidDataStoreRuntime(), proxyHandler);
-	} else {
-		componentRuntime = new MockFluidDataStoreRuntime();
-	}
+	const { id, initialTree, localMode, containerRuntimeFactory } = options;
 
+	const componentRuntime = new MockFluidDataStoreRuntime();
 	// Enable expensiveValidation
 	const tree = new SharedTree(componentRuntime, id || 'testSharedTree', true);
 	tree.summarizer = options.summarizer ?? fullHistorySummarizer;
@@ -118,7 +84,7 @@ export function setUpTestSharedTree(
 	}
 
 	if (initialTree !== undefined) {
-		setTestTree(tree, initialTree, setupEditId);
+		setTestTree(tree, initialTree);
 	}
 
 	return {
@@ -128,103 +94,11 @@ export function setUpTestSharedTree(
 	};
 }
 
-class TestDataObject extends DataObject {
-	public static readonly type = '@fluid-example/test-dataStore';
-	public get _root() {
-		return this.root;
-	}
-}
-
-enum DataObjectFactoryType {
-	Primed, // default
-	Test,
-}
-
-/** Configuration used for the LocalTestObjectProvider created by setUpLocalServerTestSharedTree. */
-export interface ITestContainerConfig {
-	// TestFluidDataObject instead of PrimedDataStore
-	fluidDataObjectType?: DataObjectFactoryType;
-
-	// An array of channel name and DDS factory pairs to create on container creation time
-	registry?: ChannelFactoryRegistry;
-}
-
-/** Objects returned by setUpLocalServerTestSharedTree */
-export interface LocalServerSharedTreeTestingComponents {
-	/** The LocalTestObjectProvider created if one was not set in the options. */
-	localTestObjectProvider: LocalTestObjectProvider<ITestContainerConfig>;
-	/** The SharedTree created and set up. */
-	tree: SharedTree;
-}
-
-/** Options used to customize setUpLocalServerTestSharedTree */
-export interface LocalServerSharedTreeTestingOptions {
-	/**
-	 * Id for the SharedTree to be created.
-	 * If two SharedTrees have the same id and the same localTestObjectProvider,
-	 * they will collaborate (send edits to each other)
-	 */
-	id?: string;
-	/** Node to initialize the SharedTree with. */
-	initialTree?: ChangeNode;
-	/** If set, uses the provider to create the container and create the SharedTree. */
-	localTestObjectProvider?: LocalTestObjectProvider<ITestContainerConfig>;
-	/**
-	 * If not set, full history will be preserved.
-	 */
-	summarizer?: SharedTreeSummarizer;
-	/**
-	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
-	 */
-	setupEditId?: EditId;
-}
-
-/**
- * Sets up and returns an object of components useful for testing SharedTree with a local server.
- * Required for tests that involve the uploadBlob API
- */
-export async function setUpLocalServerTestSharedTree(
-	options: LocalServerSharedTreeTestingOptions
-): Promise<LocalServerSharedTreeTestingComponents> {
-	const { id, initialTree, localTestObjectProvider, setupEditId, summarizer } = options;
-
-	const treeId = id || 'test';
-	const registry: ChannelFactoryRegistry = [[treeId, SharedTree.getFactory()]];
-	const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
-		new TestContainerRuntimeFactory(TestDataObject.type, new TestFluidObjectFactory(registry), {
-			initialSummarizerDelayMs: 0,
-		});
-
-	let provider: LocalTestObjectProvider<ITestContainerConfig>;
-	let container: Container;
-
-	if (localTestObjectProvider !== undefined) {
-		provider = localTestObjectProvider;
-		container = await provider.loadTestContainer();
-	} else {
-		provider = new LocalTestObjectProvider(runtimeFactory);
-		container = (await provider.makeTestContainer()) as Container;
-	}
-
-	const dataObject = await requestFluidObject<ITestFluidObject>(container, 'default');
-	const tree = await dataObject.getSharedObject<SharedTree>(treeId);
-
-	if (initialTree !== undefined && localTestObjectProvider === null) {
-		setTestTree(tree, initialTree, setupEditId);
-	}
-
-	if (summarizer !== undefined) {
-		tree.summarizer = summarizer;
-	}
-
-	return { tree, localTestObjectProvider: provider };
-}
-
 /** Sets testTrait to contain `node`. */
-export function setTestTree(tree: SharedTree, node: ChangeNode, overrideId?: EditId): EditId {
+export function setTestTree(tree: SharedTree, node: ChangeNode): EditId {
 	const edit = newEdit(setTrait(testTrait, [node]));
-	tree.processLocalEdit({ ...edit, id: overrideId || edit.id });
-	return overrideId || edit.id;
+	tree.processLocalEdit(edit);
+	return edit.id;
 }
 
 /** Creates an empty node for testing purposes. */
@@ -260,52 +134,11 @@ export function assertNoDelta(tree: SharedTree, editor: () => void) {
 	});
 }
 
-/**
- * Used to test error throwing in async functions.
- */
-export async function asyncFunctionThrowsCorrectly(
-	asyncFunction: () => Promise<unknown>,
-	expectedError: string
-): Promise<boolean> {
-	let errorMessage;
-
-	try {
-		await asyncFunction();
-	} catch (error) {
-		errorMessage = error.message;
-	}
-
-	return errorMessage === expectedError;
-}
-
-/*
- * Returns true if two nodes have equivalent data, otherwise false.
- * Does not compare children or payloads.
- * @param nodes - two or more nodes to compare
- */
-export function areNodesEquivalent(...nodes: NodeData[]): boolean {
-	if (nodes.length < 2) {
-		fail('Too few nodes to compare');
-	}
-
-	for (let i = 1; i < nodes.length; i++) {
-		if (nodes[i].definition !== nodes[0].definition) {
-			return false;
-		}
-
-		if (nodes[i].identifier !== nodes[0].identifier) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
 /** Left node of 'simpleTestTree' */
-export const left: ChangeNode = makeEmptyNode('a083857d-a8e1-447a-ba7c-92fd0be9db2b' as NodeId);
+export const left: ChangeNode = makeEmptyNode();
 
 /** Right node of 'simpleTestTree' */
-export const right: ChangeNode = makeEmptyNode('78849e85-cb7f-4b93-9fdc-18439c60fe30' as NodeId);
+export const right: ChangeNode = makeEmptyNode();
 
 /** Label for the 'left' trait in 'simpleTestTree' */
 export const leftTraitLabel = 'left' as TraitLabel;
@@ -315,7 +148,7 @@ export const rightTraitLabel = 'right' as TraitLabel;
 
 /** A simple, three node tree useful for testing. Contains one node under a 'left' trait and one under a 'right' trait. */
 export const simpleTestTree: ChangeNode = {
-	...makeEmptyNode('25de3875-9537-47ec-8699-8a85e772a509' as NodeId),
+	...makeEmptyNode(),
 	traits: { [leftTraitLabel]: [left], [rightTraitLabel]: [right] },
 };
 

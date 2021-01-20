@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert, assertNotUndefined, copyPropertyIfDefined, fail } from './Common';
+import { assert, assertNotUndefined, compareIterables, fail } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
-import { ChangeNode, TraitLocation, StableRange, Side, StablePlace, NodeData } from './PersistedTypes';
+import { ChangeNode, TraitMap, TraitLocation, StableRange, Side, StablePlace, NodeData } from './PersistedTypes';
 import { compareTraits } from './EditUtilities';
-import { compareSnapshotNodes, getChangeNodeFromSnapshot } from './SnapshotUtilities';
 import { createForest, Delta, Forest as GenericForest } from './Forest';
 
 /**
@@ -86,7 +85,7 @@ export class Snapshot {
 	 */
 	public static fromTree(root: ChangeNode): Snapshot {
 		function insertNodeRecursive(node: ChangeNode, newSnapshotNodes: Map<NodeId, SnapshotNode>): NodeId {
-			const { identifier, definition } = node;
+			const { identifier, payload, definition } = node;
 			const traits: Map<TraitLabel, readonly NodeId[]> = new Map();
 			// eslint-disable-next-line no-restricted-syntax
 			for (const key in node.traits) {
@@ -98,8 +97,7 @@ export class Snapshot {
 					);
 				}
 			}
-			const snapshotNode: SnapshotNode = { identifier, definition, traits };
-			copyPropertyIfDefined(node, snapshotNode, 'payload');
+			const snapshotNode: SnapshotNode = { identifier, ...(payload ? { payload } : {}), definition, traits };
 			newSnapshotNodes.set(snapshotNode.identifier, snapshotNode);
 			return snapshotNode.identifier;
 		}
@@ -113,9 +111,32 @@ export class Snapshot {
 		this.forest = forest;
 	}
 
+	private getChangeNodeFromSnapshotNode(node: SnapshotNode): ChangeNode {
+		/** Given the traits of a SnapshotNode, return the corresponding traits on a Node */
+		const makeTraits = (traits: ReadonlyMap<TraitLabel, readonly NodeId[]>): TraitMap => {
+			const entries = [...traits.entries()];
+			const traitMap = {};
+			Object.assign(
+				traitMap,
+				...entries.map(([label, trait]) => ({
+					[label]: trait.map((nodeId) => this.getChangeNodeFromSnapshotNode(this.getSnapshotNode(nodeId))),
+				}))
+			);
+
+			return traitMap;
+		};
+
+		return {
+			identifier: node.identifier,
+			...(node.payload ? { payload: node.payload } : {}),
+			definition: node.definition,
+			traits: makeTraits(node.traits),
+		};
+	}
+
 	/** Return a tree of JSON-compatible `ChangeNode`s representing the current state of this `Snapshot` */
 	public getChangeNodeTree(): ChangeNode {
-		return getChangeNodeFromSnapshot(this, this.root);
+		return this.getChangeNodeFromSnapshotNode(this.forest.get(this.root));
 	}
 
 	/**
@@ -136,7 +157,7 @@ export class Snapshot {
 	 * @returns a `ChangeNode` derived from the `SnapshotNode` in this snapshot with the given `NodeId`.
 	 */
 	public getChangeNode(id: NodeId): ChangeNode {
-		return getChangeNodeFromSnapshot(this, id);
+		return this.getChangeNodeFromSnapshotNode(this.forest.get(id));
 	}
 
 	/**
@@ -207,7 +228,6 @@ export class Snapshot {
 				return EditValidationResult.Invalid;
 			}
 
-			// Detached nodes and the root are invalid anchors.
 			if (this.forest.tryGetParent(referenceSibling) === undefined) {
 				return EditValidationResult.Invalid;
 			}
@@ -411,12 +431,31 @@ export class Snapshot {
 
 	/** Compares this snapshot to another for equality. */
 	public equals(snapshot: Snapshot): boolean {
-		if (this.root !== snapshot.root) {
+		if (this.size !== snapshot.size) {
 			return false;
 		}
 
 		// TODO:#49100:Perf: make this faster and/or remove use by PrefetchingCheckout.
-		return this.forest.equals(snapshot.forest, compareSnapshotNodes);
+
+		const compareSnapshotNodes = (nodeA: SnapshotNode, nodeB: SnapshotNode): boolean => {
+			if (nodeA.identifier !== nodeB.identifier) {
+				return false;
+			}
+
+			if (nodeA.definition !== nodeB.definition) {
+				return false;
+			}
+
+			if (nodeA.payload?.base64 !== nodeB.payload?.base64) {
+				return false;
+			}
+
+			const idA = this.getTraitLabel(nodeA.identifier);
+			const idB = this.getTraitLabel(nodeB.identifier);
+			return idA === idB;
+		};
+
+		return compareIterables(this, snapshot, compareSnapshotNodes);
 	}
 
 	private *iterateNodeDescendants(nodeId: NodeId): IterableIterator<SnapshotNode> {
@@ -444,6 +483,48 @@ export class Snapshot {
 	}
 }
 
+function compareSnapshotNodes(nodeA: SnapshotNode, nodeB: SnapshotNode): boolean {
+	if (nodeA === nodeB) {
+		return true;
+	}
+
+	if (nodeA.identifier !== nodeB.identifier) {
+		return false;
+	}
+
+	if (nodeA.definition !== nodeB.definition) {
+		return false;
+	}
+
+	if (nodeA.payload?.base64 !== nodeB.payload?.base64) {
+		return false;
+	}
+
+	if (nodeA.traits.size !== nodeB.traits.size) {
+		return false;
+	}
+
+	for (const traitA of nodeA.traits) {
+		const [traitLabelA, nodeSequenceA] = traitA;
+		const nodeSequenceB = nodeB.traits.get(traitLabelA);
+		if (!nodeSequenceB) {
+			return false;
+		}
+
+		if (nodeSequenceA.length !== nodeSequenceB.length) {
+			return false;
+		}
+
+		for (let i = 0; i < nodeSequenceA.length; i++) {
+			if (nodeSequenceA[i] !== nodeSequenceB[i]) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
 function getIndex(side: Side, index: TraitNodeIndex): PlaceIndex {
 	// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 	return (side + index) as PlaceIndex;
@@ -463,21 +544,8 @@ export interface NodeInTrait {
  * @public
  */
 export enum EditValidationResult {
-	/**
-	 * The edit contained one or more malformed changes (e.g. was missing required fields such as `id`),
-	 * or contained a sequence of changes that could not possibly be applied sequentially without error
-	 * (e.g. an edit which tries to insert the same detached node twice).
-	 */
 	Malformed,
-	/**
-	 * The edit is well-formed but cannot be applied to the current view, generally because concurrent changes
-	 * caused one or more merge conflicts.
-	 * For example, the edit refers to the `StablePlace` after node `C`, but `C` has since been deleted.
-	 */
 	Invalid,
-	/**
-	 * The edit is well-formed and can be applied to the current view.
-	 */
 	Valid,
 }
 

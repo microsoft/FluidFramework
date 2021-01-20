@@ -61,11 +61,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const insertIndex = tree.edits.getIndexOfId(insertId);
-			const undoId: EditId = undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(insertIndex),
-				tree.logViewer.getSnapshotInSession(insertIndex)
-			);
+			const undoId: EditId = undoTree.editor.revert(insertId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -81,11 +77,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(leftTraitAfterUndo.length).to.equal(1);
 
 			// Redo testing
-			const undoIndex = tree.edits.getIndexOfId(undoId);
-			undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(undoIndex),
-				tree.logViewer.getSnapshotInSession(undoIndex)
-			);
+			undoTree.editor.revert(undoId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -119,11 +111,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const deleteIndex = tree.edits.getIndexOfId(deleteId);
-			const undoId: EditId = undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(deleteIndex),
-				tree.logViewer.getSnapshotInSession(deleteIndex)
-			);
+			const undoId: EditId = undoTree.editor.revert(deleteId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -138,11 +126,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(leftTraitAfterUndo.length).to.equal(2);
 
 			// Redo testing
-			const undoIndex = tree.edits.getIndexOfId(undoId);
-			undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(undoIndex),
-				tree.logViewer.getSnapshotInSession(undoIndex)
-			);
+			undoTree.editor.revert(undoId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -176,11 +160,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const setValueIndex = tree.edits.getIndexOfId(setValueId);
-			const undoId: EditId = undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(setValueIndex),
-				tree.logViewer.getSnapshotInSession(setValueIndex)
-			);
+			const undoId: EditId = undoTree.editor.revert(setValueId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -197,11 +177,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(nodeAfterUndo.payload).to.be.undefined;
 
 			// Redo testing
-			const undoIndex = tree.edits.getIndexOfId(undoId);
-			undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(undoIndex),
-				tree.logViewer.getSnapshotInSession(undoIndex)
-			);
+			undoTree.editor.revert(undoId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -237,11 +213,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const firstInsertIndex = tree.edits.getIndexOfId(firstInsertId);
-			const undoId: EditId = undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(firstInsertIndex),
-				tree.logViewer.getSnapshotInSession(firstInsertIndex)
-			);
+			const undoId: EditId = undoTree.editor.revert(firstInsertId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -261,11 +233,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(nodeAfterUndo.identifier).to.equal(secondNode.identifier);
 
 			// Redo testing
-			const undoIndex = tree.edits.getIndexOfId(undoId);
-			undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(undoIndex),
-				tree.logViewer.getSnapshotInSession(undoIndex)
-			);
+			undoTree.editor.revert(undoId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -300,11 +268,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const deleteIndex = tree.edits.getIndexOfId(deleteId);
-			const undoId: EditId = undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(deleteIndex),
-				tree.logViewer.getSnapshotInSession(deleteIndex)
-			);
+			const undoId: EditId = undoTree.editor.revert(deleteId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -323,11 +287,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(nodeAfterUndo.identifier).to.equal(firstNode.identifier);
 
 			// Redo testing
-			const undoIndex = tree.edits.getIndexOfId(undoId);
-			undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(undoIndex),
-				tree.logViewer.getSnapshotInSession(undoIndex)
-			);
+			undoTree.editor.revert(undoId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -361,11 +321,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const setValueIndex = tree.edits.getIndexOfId(setValueId);
-			const undoId: EditId = undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(setValueIndex),
-				tree.logViewer.getSnapshotInSession(setValueIndex)
-			);
+			const undoId: EditId = undoTree.editor.revert(setValueId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -382,11 +338,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(nodeAfterUndo.payload).to.be.undefined;
 
 			// Redo testing
-			const undoIndex = tree.edits.getIndexOfId(undoId);
-			undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(undoIndex),
-				tree.logViewer.getSnapshotInSession(undoIndex)
-			);
+			undoTree.editor.revert(undoId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();

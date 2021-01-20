@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, copyPropertyIfDefined, fail } from './Common';
+import { assert, fail } from './Common';
 import { DetachedSequenceId, NodeId, TraitLabel } from './Identifiers';
 import {
 	EditResult,
@@ -282,10 +282,10 @@ export class Transaction {
 
 		const newNode: SnapshotNode = {
 			identifier: node.identifier,
+			...(node.payload ? { payload: node.payload } : {}),
 			definition: node.definition,
 			traits,
 		};
-		copyPropertyIfDefined(node, newNode, 'payload');
 
 		map.set(newNode.identifier, newNode);
 		return newNode.identifier;

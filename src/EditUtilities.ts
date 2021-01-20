@@ -15,10 +15,10 @@ import { Edit, TreeNodeSequence, EditNode, ChangeNode, Change, StableRange, Trai
 /**
  * Returns true if the provided Edits have equivalent properties.
  */
-export function compareEdits(editIdA: EditId, editIdB: EditId): boolean {
+export function compareEdits(editA: Edit, editB: Edit): boolean {
 	// TODO #45414: We should also be deep comparing the list of changes in the edit. This is not straightforward.
 	// We can use our edit validation code when we write it since it will need to do deep walks of the changes.
-	return editIdA === editIdB;
+	return editA.id === editB.id;
 }
 
 /**
