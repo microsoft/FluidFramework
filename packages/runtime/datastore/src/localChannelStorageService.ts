@@ -4,7 +4,7 @@
  */
 
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8, stringToBuffer } from "@fluidframework/common-utils";
 import { IBlob, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import { listBlobsAtTreePath } from "@fluidframework/runtime-utils";
 
@@ -13,41 +13,49 @@ export class LocalChannelStorageService implements IChannelStorageService {
     }
 
     public async read(path: string): Promise<string> {
-        const contents = this.readSync(path);
-        return contents !== undefined ? Promise.resolve(contents) : Promise.reject(new Error("Not found"));
+        const blob = this.readBlobSync(path);
+        if (blob === undefined) {
+            throw new Error("Blob Not Found");
+        }
+        if (blob.encoding === "utf8") {
+            return blob.contents;
+        }
+        return fromBase64ToUtf8(blob.contents);
+    }
+
+    public async readBlob(path: string): Promise<ArrayBufferLike> {
+        const blob = this.readBlobSync(path);
+        if (blob === undefined) {
+            throw new Error("Blob Not Found");
+        }
+        return stringToBuffer(blob.contents, blob.encoding);
     }
 
     public async contains(path: string): Promise<boolean> {
-        const contents = this.readSync(path);
-        return contents !== undefined;
+        const blob = this.readBlobSync(path);
+        return blob !== undefined ? blob.contents !== undefined : false;
     }
 
     public async list(path: string): Promise<string[]> {
         return listBlobsAtTreePath(this.tree, path);
     }
 
-    /**
-     * Provides a synchronous access point to locally stored data
-     */
-    private readSync(path: string): string | undefined {
-        return this.readSyncInternal(path, this.tree);
+    private readBlobSync(path: string): IBlob | undefined {
+        return this.readBlobSyncInternal(path, this.tree);
     }
 
-    private readSyncInternal(path: string, tree: ITree): string | undefined {
+    private readBlobSyncInternal(path: string, tree: ITree): IBlob | undefined {
         for (const entry of tree.entries) {
             switch (entry.type) {
                 case TreeEntry.Blob:
                     if (path === entry.path) {
-                        const blob = entry.value as IBlob;
-                        return blob.encoding === "utf-8"
-                            ? fromUtf8ToBase64(blob.contents)
-                            : blob.contents;
+                        return entry.value as IBlob;
                     }
                     break;
 
                 case TreeEntry.Tree:
                     if (path.startsWith(entry.path)) {
-                        return this.readSyncInternal(path.substr(entry.path.length + 1), entry.value as ITree);
+                        return this.readBlobSyncInternal(path.substr(entry.path.length + 1), entry.value as ITree);
                     }
                     break;
 
