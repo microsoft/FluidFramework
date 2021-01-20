@@ -68,8 +68,13 @@ export enum SharedTreeEvent {
 	EditCommitted = 'committedEdit',
 }
 
+// TODO:#48151: Support reference payloads, and use this type to identify them.
 /**
- * TODO:#48151: Support reference payloads, and use this type to identify them.
+ * Note: if API extractor supported it, ideally this would use a "private" tag and not be exported by the package.
+ * See discussion on the following issue threads:
+ * https://github.com/microsoft/rushstack/issues/1664#issuecomment-568216792
+ * https://github.com/microsoft/rushstack/issues/1260#issuecomment-489774076
+ * @internal
  */
 export type BlobId = string;
 
