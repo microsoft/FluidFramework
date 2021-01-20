@@ -4,7 +4,8 @@
  */
 import { ReferenceType, Marker, reservedMarkerIdKey } from "@fluidframework/merge-tree";
 import { MockContainerRuntimeFactory,
-    MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
+    MockFluidDataStoreRuntime,
+    MockStorage } from "@fluidframework/test-runtime-utils";
 import { assert } from "@fluidframework/common-utils";
 import { SharedString } from "../sharedString";
 import { sharedStringWithSequentialIdMixin } from "../sharedStringWithSequentialId";
@@ -30,8 +31,7 @@ describe("SharedStringWithSequential Id", () => {
                         objectStorage: new MockStorage(),
                     };
                     sharedStringWithSequentialId.initializeLocal();
-                    sharedStringWithSequentialId.connect(services1);
-                });
+                    sharedStringWithSequentialId.connect(services1);    });
 
     function validateMarker(marker: Marker): void {
         const id = marker.getId();
@@ -55,7 +55,6 @@ describe("SharedStringWithSequential Id", () => {
 
     it("should have a marker id after marker insertion after existing marker", async ()=> {
         sharedStringWithSequentialId.insertMarker(0, ReferenceType.Tile);
-        containerRuntimeFactory.processAllMessages();
         sharedStringWithSequentialId.insertMarker(1, ReferenceType.Tile);
 
         // Process all messages.
@@ -74,7 +73,6 @@ describe("SharedStringWithSequential Id", () => {
 
     it("should have a marker id after marker insertion before existing marker", async ()=> {
         sharedStringWithSequentialId.insertMarker(0, ReferenceType.Tile, { insert1: true });
-        containerRuntimeFactory.processAllMessages();
         sharedStringWithSequentialId.insertMarker(0, ReferenceType.Tile, { insert2: true });
 
         // Process all messages.
@@ -93,9 +91,7 @@ describe("SharedStringWithSequential Id", () => {
 
     it("should have a marker id after marker insertion between two markers", async ()=> {
         sharedStringWithSequentialId.insertMarker(0, ReferenceType.Tile);
-        containerRuntimeFactory.processAllMessages();
         sharedStringWithSequentialId.insertMarker(1, ReferenceType.Tile);
-        containerRuntimeFactory.processAllMessages();
         sharedStringWithSequentialId.insertMarker(1, ReferenceType.Tile);
         containerRuntimeFactory.processAllMessages();
 

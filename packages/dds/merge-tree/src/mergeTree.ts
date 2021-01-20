@@ -1307,7 +1307,7 @@ export class MergeTree {
                                 this.mergeTreeMaintenanceCallback({
                                     operation: MergeTreeMaintenanceType.UNLINK,
                                     deltaSegments: [{ segment }],
-                                });
+                                }, undefined);
                             }
 
                             segment.parent = undefined;
@@ -1332,7 +1332,7 @@ export class MergeTree {
                                     this.mergeTreeMaintenanceCallback({
                                         operation: MergeTreeMaintenanceType.APPEND,
                                         deltaSegments: [{ segment: prevSegment }, { segment }],
-                                    });
+                                    }, undefined);
                                 }
                                 segment.parent = undefined;
                                 segment.trackingCollection.trackingGroups.forEach((tg) => tg.unlink(segment));
@@ -1892,6 +1892,7 @@ export class MergeTree {
             if (verboseOps) {
                 console.log(`segment group has ${pendingSegmentGroup.segments.length} segments`);
             }
+            const deltaSegments: IMergeTreeSegmentDelta[] = [];
             pendingSegmentGroup.segments.map((pendingSegment) => {
                 overwrite = !pendingSegment.ack(pendingSegmentGroup, opArgs, this) || overwrite;
                 if (MergeTree.options.zamboniSegments) {
@@ -1900,7 +1901,19 @@ export class MergeTree {
                 if (!nodesToUpdate.includes(pendingSegment.parent)) {
                     nodesToUpdate.push(pendingSegment.parent);
                 }
+                deltaSegments.push({
+                    segment:pendingSegment,
+                });
             });
+            if(this.mergeTreeMaintenanceCallback) {
+                this.mergeTreeMaintenanceCallback(
+                    {
+                        deltaSegments,
+                        operation: MergeTreeMaintenanceType.ACKNOWLEDGED,
+                    },
+                    opArgs,
+                );
+            }
             const clientId = this.collabWindow.clientId;
             for (const node of nodesToUpdate) {
                 this.blockUpdatePathLengths(node, seq, clientId, overwrite);
@@ -2237,7 +2250,7 @@ export class MergeTree {
             this.mergeTreeMaintenanceCallback({
                 operation: MergeTreeMaintenanceType.SPLIT,
                 deltaSegments: [{ segment }, { segment: next }],
-            });
+            }, undefined);
         }
 
         return { next };

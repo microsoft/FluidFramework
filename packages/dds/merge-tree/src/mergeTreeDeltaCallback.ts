@@ -25,6 +25,7 @@ export const enum MergeTreeMaintenanceType {
      *    b) The segment's tracking collection is empty (e.g., not being tracked for undo/redo).
      */
     UNLINK  = -3,
+    ACKNOWLEDGED = -4,
 }
 
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
@@ -70,4 +71,4 @@ export type MergeTreeDeltaCallback =
 export interface IMergeTreeMaintenanceCallbackArgs extends IMergeTreeDeltaCallbackArgs<MergeTreeMaintenanceType> { }
 
 export type MergeTreeMaintenanceCallback =
-    (MaintenanceArgs: IMergeTreeMaintenanceCallbackArgs) => void;
+    (MaintenanceArgs: IMergeTreeMaintenanceCallbackArgs, opArgs: IMergeTreeDeltaOpArgs | undefined) => void;
