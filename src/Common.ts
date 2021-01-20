@@ -25,6 +25,8 @@ class SharedTreeAssertionError extends Error {
 	public constructor(message: string) {
 		super(message);
 		this.name = 'Assertion error';
+
+        // eslint-disable-next-line @typescript-eslint/unbound-method
 		Error.captureStackTrace?.(this);
 	}
 }
