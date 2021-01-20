@@ -9,6 +9,8 @@ import { IFluidDataStoreRuntime, IChannelStorageService } from '@fluidframework/
 import { AttachState } from '@fluidframework/container-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import type { IFluidSerializer } from '@fluidframework/core-interfaces';
+import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ChildLogger } from '@fluidframework/telemetry-utils';
 import { assert, fail } from './Common';
 import { EditLog, OrderedEditSet } from './EditLog';
 import {
@@ -202,6 +204,8 @@ export class SharedTree extends SharedObject {
 	 */
 	public payloadCache: Map<BlobId, Payload> = new Map();
 
+	protected readonly logger: ITelemetryLogger;
+
 	/**
 	 * Iff true, the snapshots passed to setKnownRevision will be asserted to be correct.
 	 */
@@ -216,7 +220,8 @@ export class SharedTree extends SharedObject {
 	public constructor(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation = false) {
 		super(id, runtime, SharedTreeFactory.Attributes);
 		this.expensiveValidation = expensiveValidation;
-		const { editLog, logViewer } = loadSummary(initialSummary, this.expensiveValidation);
+		this.logger = ChildLogger.create(super.logger, 'SharedTree');
+		const { editLog, logViewer } = loadSummary(initialSummary, this.expensiveValidation, this.logger);
 		this.editLog = editLog;
 		this.logViewer = logViewer;
 	}
@@ -326,7 +331,7 @@ export class SharedTree extends SharedObject {
 	 * @internal
 	 */
 	public loadSummary(summary: SharedTreeSummary): void {
-		const { editLog, logViewer } = loadSummary(summary, this.expensiveValidation);
+		const { editLog, logViewer } = loadSummary(summary, this.expensiveValidation, this.logger);
 		this.editLog = editLog;
 		this.logViewer = logViewer;
 	}
@@ -408,13 +413,14 @@ export class SharedTree extends SharedObject {
 
 function loadSummary(
 	summary: SharedTreeSummary,
-	expensiveValidation: boolean
+	expensiveValidation: boolean,
+	logger: ITelemetryLogger
 ): { editLog: EditLog; logViewer: LogViewer } {
 	const { version, sequencedEdits, currentTree } = summary;
 	assert(version === formatVersion);
 	const currentView = Snapshot.fromTree(currentTree);
 	const editLog = new EditLog(sequencedEdits);
-	const logViewer = new CachingLogViewer(editLog, initialTree, expensiveValidation);
+	const logViewer = new CachingLogViewer(editLog, initialTree, expensiveValidation, undefined, logger);
 
 	// TODO:#47830: Store the associated revision on the snapshot.
 	// The current view should only be stored in the cache if the revision it's associated with is known.
