@@ -146,7 +146,7 @@ async function fetchBlobsFromSnapshotTree(
             console.error(`No data store tree for data store = ${dataStore}, path = ${prefix}, version = ${dataStoreVersions[0].id}`);
             continue;
         }
-        assert(dataStoreSnapShotTree === undefined || dataStoreSnapShotTree.id === tree.commits[dataStore]);
+        assert(dataStoreSnapShotTree.id === undefined || dataStoreSnapShotTree.id === tree.commits[dataStore]);
         assert(tree.commits[dataStore] === dataStoreVersions[0].id);
         const dataStoreBlobs = await fetchBlobsFromSnapshotTree(
             storage,
