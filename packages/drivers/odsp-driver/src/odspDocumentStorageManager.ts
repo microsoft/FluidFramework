@@ -80,7 +80,7 @@ function buildHierarchy(
         const entryPathDir = entry.path.slice(0, Math.max(0, lastIndex));
         const entryPathBase = entry.path.slice(lastIndex + 1);
 
-        // The flat output is breadth-first so we can assume we see tree nodes prior to their contents
+        // ODSP snapshots are created breadth-first so we can assume we see tree nodes prior to their contents
         const node = lookup[entryPathDir];
 
         // Add in either the blob or tree

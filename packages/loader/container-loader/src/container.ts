@@ -1027,9 +1027,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._attachState = AttachState.Attached;
 
         // Fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
-        const [maybeSnapshotTree, versionId] = await this.fetchSnapshotTree(specifiedVersion);
+        const { snapshot, versionId } = await this.fetchSnapshotTree(specifiedVersion);
 
-        const attributes = await this.getDocumentAttributes(this.storageService, maybeSnapshotTree);
+        const attributes = await this.getDocumentAttributes(this.storageService, snapshot);
 
         // Attach op handlers to start processing ops
         this.attachDeltaManagerOpHandler(attributes);
@@ -1037,13 +1037,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // ...load in the existing quorum
         // Initialize the protocol handler
         const protocolHandlerP =
-            this.loadAndInitializeProtocolState(attributes, this.storageService, maybeSnapshotTree);
+            this.loadAndInitializeProtocolState(attributes, this.storageService, snapshot);
 
         let loadDetailsP: Promise<void>;
 
         // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
         // the initial details
-        if (maybeSnapshotTree !== undefined) {
+        if (snapshot !== undefined) {
             this._existing = true;
             loadDetailsP = Promise.resolve();
         } else {
@@ -1061,7 +1061,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         [this._protocolHandler] = await Promise.all([protocolHandlerP, loadDetailsP]);
 
         const codeDetails = this.getCodeDetailsFromQuorum();
-        await this.loadContext(codeDetails, attributes, maybeSnapshotTree);
+        await this.loadContext(codeDetails, attributes, snapshot);
 
         // Propagate current connection state through the system.
         this.propagateConnectionState();
@@ -1648,10 +1648,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * @returns The snapshot requested, or the latest snapshot if no version was specified, plus version ID
      */
     private async fetchSnapshotTree(specifiedVersion: string | undefined | null):
-        Promise<[ISnapshotTree | undefined, string | undefined]>
+        Promise<{snapshot?: ISnapshotTree; versionId?: string}>
     {
         if (specifiedVersion === null) {
-            return [undefined, undefined];
+            return {};
         }
         const version = await this.getVersion(specifiedVersion ?? this.id);
 
@@ -1660,12 +1660,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.logger.sendErrorEvent({ eventName: "NoVersionFoundWhenSpecified", id: specifiedVersion });
         }
         this._loadedFromVersion = version;
-        const tree = await this.storageService.getSnapshotTree(version) ?? undefined;
+        const snapshot = await this.storageService.getSnapshotTree(version) ?? undefined;
 
-        if (tree === undefined && version !== undefined) {
+        if (snapshot === undefined && version !== undefined) {
             this.logger.sendErrorEvent({ eventName: "getSnapshotTreeFailed", id: version.id });
         }
-        return [tree, version?.id];
+        return { snapshot, versionId: version?.id };
     }
 
     private async loadContext(

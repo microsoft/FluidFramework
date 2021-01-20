@@ -187,10 +187,14 @@ export class DocumentStorageService implements IDocumentStorageService {
         if (path.length === 1) {
             switch (handleType) {
                 case SummaryType.Blob: {
-                    return previousSnapshot.blobs[key];
+                    const tryId = previousSnapshot.blobs[key];
+                    assert(!!tryId, "Parent summary does not have blob handle for specified path.");
+                    return tryId;
                 }
                 case SummaryType.Tree: {
-                    return previousSnapshot.trees[key]?.id;
+                    const tryId = previousSnapshot.trees[key]?.id;
+                    assert(!!tryId, "Parent summary does not have tree handle for specified path.");
+                    return tryId;
                 }
                 default:
                     throw Error(`Unexpected handle summary object type: "${handleType}".`);

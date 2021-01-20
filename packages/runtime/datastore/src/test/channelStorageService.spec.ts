@@ -21,7 +21,7 @@ describe("ChannelStorageService", () => {
                 throw new Error("not implemented");
             },
             readBlob: async (id: string) => {
-                assert.fail();
+                throw new Error("not implemented");
             },
         };
         const ss = new ChannelStorageService(tree, storage);
