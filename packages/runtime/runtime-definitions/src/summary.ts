@@ -68,7 +68,7 @@ export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
      * True if GC is disabled. If so, don't track GC related state for a summary.
      * This is propagated to all child nodes.
      */
-    readonly gcDisabled?: true;
+    readonly gcDisabled?: boolean;
 }
 
 export enum CreateSummarizerNodeSource {

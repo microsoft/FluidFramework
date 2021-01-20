@@ -218,7 +218,7 @@ export interface IContainerRuntimeOptions {
     initialSummarizerDelayMs?: number;
 
     // Flag that will disable garbage collection if set to true.
-    disableGC?: true;
+    disableGC?: boolean;
 
     // Override summary configurations
     summaryConfigOverrides?: Partial<ISummaryConfiguration>;
@@ -706,7 +706,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // We also are not decoding the base summaries at the root.
                 throwOnFailure: true,
                 // If GC is disabled, let the summarizer node know so that it does not track GC state.
-                gcDisabled: this.runtimeOptions.disableGC ?? undefined,
+                gcDisabled: this.runtimeOptions.disableGC,
             },
         );
 
@@ -1377,7 +1377,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 const { referencedNodeIds } = runGarbageCollection(gcData.gcNodes, [ "/" ], this.logger);
 
                 // Update our summarizer node's used routes. Updating used routes in summarizer node before summarizing
-                // is required and asserted by the the summarizer node.
+                // is required and asserted by the the summarizer node. We are the root and are always referenced, so
+                // the used routes is only self-route (empty string).
                 this.summarizerNode.updateUsedRoutes([""]);
 
                 // Remove this node's route ("/") and notify data stores of routes that are used in it.
