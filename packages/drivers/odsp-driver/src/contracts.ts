@@ -133,7 +133,8 @@ export enum SnapshotType {
 export interface ISnapshotRequest {
     type: SnapshotType;
     message: string;
-    sequenceNumber: number;
+    // Server only looks at it when the Snapshot type is "container".
+    sequenceNumber?: number;
     entries: SnapshotTreeEntry[];
 }
 
