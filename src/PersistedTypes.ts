@@ -8,7 +8,7 @@
 // and thus have no impact on serialization as long as the primitive type they are an alias for does not change.
 // This does mean that the various UuidString types must remain strings, and must never change the format unless the process for changing
 // persisted types (as documented below) is followed.
-import { Definition, DetachedSequenceId, NodeId, TraitLabel, UuidString } from './Identifiers';
+import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel, UuidString } from './Identifiers';
 import { assertNotUndefined, assert } from './Common';
 
 /**
@@ -39,11 +39,34 @@ import { assertNotUndefined, assert } from './Common';
  */
 
 /**
+ * A collection of changes to the tree that are applied atomically along with a unique identifier for the edit.
+ * If any individual change fails to apply, the entire Edit will fail to apply.
+ * @public
+ */
+export interface Edit extends EditBase {
+	/**
+	 * Unique identifier for this edit. Must never be reused.
+	 * Used for referencing and de-duplicating edits.
+	 */
+	readonly id: EditId;
+}
+
+/**
  * A collection of changes to the tree that are applied atomically. If any individual change fails to apply,
  * the entire Edit will fail to apply.
  * @public
  */
-export interface Edit {
+export interface EditWithoutId extends EditBase {
+	/**
+	 * Used to explicitly state that EditWithoutId cannot contain an id and prevents type Edit from being assigned to type EditWithoutId.
+	 */
+	readonly id?: never;
+}
+
+/**
+ * The information included in an edit.
+ */
+interface EditBase {
 	/**
 	 * Actual changes to apply.
 	 * Applied in order as part of a single transaction.

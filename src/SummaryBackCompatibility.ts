@@ -1,6 +1,6 @@
 import { editsPerChunk } from './EditLog';
 import { EditId } from './Identifiers';
-import { Edit } from './PersistedTypes';
+import { Edit, EditWithoutId } from './PersistedTypes';
 import { ErrorString, SharedTreeSummary } from './Summary';
 
 const readFormatVersion = '0.1.0';
@@ -30,7 +30,7 @@ export function transpileSummaryToReadFormat(summary: SharedTreeSummary): Shared
 		const { sequencedEdits } = summary;
 
 		if (sequencedEdits !== undefined) {
-			const editChunks: Edit[][] = [];
+			const editChunks: EditWithoutId[][] = [];
 			const editIds: EditId[] = [];
 
 			sequencedEdits?.map(({ changes, id }) => {

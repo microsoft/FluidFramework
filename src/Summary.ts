@@ -8,7 +8,7 @@ import { EditId, TraitLabel } from './Identifiers';
 import { assert, assertNotUndefined } from './Common';
 import { editsPerChunk, OrderedEditSet } from './EditLog';
 import { newEdit, setTrait } from './EditUtilities';
-import { ChangeNode, Edit, Change } from './PersistedTypes';
+import { ChangeNode, Edit, Change, EditWithoutId } from './PersistedTypes';
 import { Snapshot } from './Snapshot';
 import { initialTree } from './InitialTree';
 
@@ -45,7 +45,7 @@ export interface SharedTreeSummary {
 	readonly currentTree: ChangeNode;
 
 	// TODO:#49901: Remove when writing version 0.1.0
-	readonly sequencedEdits?: readonly { id: EditId; changes: readonly Change[] }[];
+	readonly sequencedEdits?: readonly Edit[];
 
 	/**
 	 * Information that can populate an edit log.
@@ -65,7 +65,7 @@ export interface SerializedEditLogSummary {
 	/**
 	 * A list of either handles corresponding to a chunk of edits or the edit chunk.
 	 */
-	readonly editChunks?: readonly (ISerializedHandle | Edit[])[];
+	readonly editChunks?: readonly (ISerializedHandle | EditWithoutId[])[];
 
 	/**
 	 * A list of edits IDs for all sequenced edits.
@@ -122,7 +122,7 @@ export function fullHistorySummarizer(
 	const editChunks = assertNotUndefined(editLogSummary.editChunks);
 	const editIds = assertNotUndefined(editLogSummary.editIds);
 
-	const sequencedEdits: { changes: readonly Change[]; id: EditId }[] = [];
+	const sequencedEdits: Edit[] = [];
 	assertNotUndefined(editChunks).forEach((chunk, chunkIndex) => {
 		assert(
 			Array.isArray(chunk),
@@ -169,11 +169,11 @@ export function noHistorySummarizer(
 		currentTree.identifier === initialTree.identifier && currentTree.definition === initialTree.definition,
 		'root definition and identifier should be immutable.'
 	);
-	const [id, edit] = newEdit(changes);
+	const edit = newEdit(changes);
 
 	return {
 		currentTree,
-		sequencedEdits: [{ id, changes: edit.changes }],
+		sequencedEdits: [{ id: edit.id, changes: edit.changes }],
 		version: formatVersion,
 	};
 }

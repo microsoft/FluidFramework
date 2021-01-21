@@ -153,7 +153,7 @@ export class PrefetchingCheckout extends Checkout {
 		return this.loadedView.view;
 	}
 
-	protected handleNewEdit(id: EditId, edit: Edit, view: Snapshot): void {
+	protected handleNewEdit(edit: Edit, view: Snapshot): void {
 		// We want to avoid the case where the new edit show up (while in progress),
 		// then disappears (because its not in loadedView yet),
 		// then reappears (once loadedView is updated to include it).
@@ -171,7 +171,7 @@ export class PrefetchingCheckout extends Checkout {
 		this.loadedView = this.loadedView.assertSynchronousLoadNext(view);
 
 		// Apply the edit: this will start loading a revision that includes edit.
-		this.tree.processLocalEdit(id, edit);
+		this.tree.processLocalEdit(edit);
 	}
 
 	public async waitForPendingUpdates(): Promise<void> {

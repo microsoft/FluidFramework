@@ -6,7 +6,7 @@
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { assert, assertArrayOfOne, assertNotUndefined, compareIterables, fail } from './Common';
-import { Edit } from './PersistedTypes';
+import { Edit, EditWithoutId } from './PersistedTypes';
 import { EditId } from './Identifiers';
 
 /**
@@ -62,7 +62,7 @@ export interface EditLogSummary {
 	/**
 	 * A list of either handles for a chunk of edits or a group of edits that can be chunked.
 	 */
-	readonly editChunks: readonly (IFluidHandle<ArrayBufferLike> | Edit[])[];
+	readonly editChunks: readonly (IFluidHandle<ArrayBufferLike> | EditWithoutId[])[];
 
 	/**
 	 * A list of edits IDs for all sequenced edits.
@@ -82,10 +82,24 @@ interface LocalOrderedEditId {
 
 interface editChunk {
 	handle?: IFluidHandle<ArrayBufferLike>;
-	edits?: Edit[];
+	edits?: EditWithoutId[];
 }
 
 type OrderedEditId = SequencedOrderedEditId | LocalOrderedEditId;
+
+/**
+ * Returns an object that separates an Edit into two fields, id and editWithoutId.
+ * @internal
+ */
+export function separateEditAndId(edit: Edit): { id: EditId; editWithoutId: EditWithoutId } {
+	const editWithoutId = { ...edit, id: undefined };
+	delete editWithoutId.id;
+	return { id: edit.id, editWithoutId };
+}
+
+function joinEditAndId(id: EditId, edit: EditWithoutId): Edit {
+	return { id, ...edit };
+}
 
 /**
  * The number of edits associated with each blob.
@@ -112,8 +126,6 @@ export class EditLog implements OrderedEditSet {
 	private version = 0;
 
 	private readonly editIds: EditId[];
-	private readonly localEditIds: EditId[] = [];
-
 	private readonly editChunks: editChunk[];
 	private readonly localEdits: Edit[] = [];
 
@@ -190,7 +202,7 @@ export class EditLog implements OrderedEditSet {
 		const orderedEdit = this.allEditIds.get(editId) ?? fail('edit not found');
 
 		if (orderedEdit.isLocal) {
-			const firstLocal = assertNotUndefined(this.allEditIds.get(this.localEditIds[0]));
+			const firstLocal = assertNotUndefined(this.allEditIds.get(this.localEdits[0].id));
 			assert(firstLocal.isLocal);
 			return this.numberOfSequencedEdits + orderedEdit.localSequence - firstLocal.localSequence;
 		}
@@ -202,7 +214,7 @@ export class EditLog implements OrderedEditSet {
 	 */
 	public idOf(index: number): EditId {
 		if (this.numberOfSequencedEdits <= index) {
-			return this.localEditIds[index - this.numberOfSequencedEdits];
+			return this.localEdits[index - this.numberOfSequencedEdits].id;
 		}
 
 		return this.editIds[index];
@@ -220,16 +232,16 @@ export class EditLog implements OrderedEditSet {
 
 			if (edits === undefined) {
 				assert(handle !== undefined, 'An edit chunk should include at least a handle or edits.');
-				const edits = JSON.parse(IsoBuffer.from(await handle.get()).toString()).edits as Edit[];
+				const edits = JSON.parse(IsoBuffer.from(await handle.get()).toString()).edits as EditWithoutId[];
 				assert(edits.length === editsPerChunk, 'The chunk does not contain the correct number of edits.');
 				editChunk.edits = edits;
 
 				this.addIndexToCache(editChunkIndex);
 
-				return edits[index % editsPerChunk];
+				return joinEditAndId(this.idOf(index), edits[index % editsPerChunk]);
 			}
 
-			return edits[index % editsPerChunk];
+			return joinEditAndId(this.idOf(index), edits[index % editsPerChunk]);
 		}
 
 		return this.localEdits[index - this.numberOfSequencedEdits];
@@ -248,7 +260,10 @@ export class EditLog implements OrderedEditSet {
 			const editChunkIndex = Math.floor(index / editsPerChunk);
 			const { edits } = this.editChunks[editChunkIndex];
 
-			return assertNotUndefined(edits, 'Edits should not have been evicted.')[index % editsPerChunk];
+			return joinEditAndId(
+				this.idOf(index),
+				assertNotUndefined(edits, 'Edits should not have been evicted.')[index % editsPerChunk]
+			);
 		}
 
 		return this.localEdits[index - this.numberOfSequencedEdits];
@@ -279,26 +294,25 @@ export class EditLog implements OrderedEditSet {
 	 * Sequences all local edits.
 	 */
 	public sequenceLocalEdits(): void {
-		assert(this.localEdits.length === this.localEditIds.length, 'Local edits and edit IDs must match up.');
-		this.localEdits.slice().forEach((edit) => this.addSequencedEdit(this.localEditIds[0], edit));
+		this.localEdits.slice().forEach((edit) => this.addSequencedEdit(edit));
 	}
 
 	/**
 	 * Adds a sequenced (non-local) edit to the edit log.
 	 * If the id of the supplied edit matches a local edit already present in the log, the local edit will be replaced.
 	 */
-	public addSequencedEdit(id: EditId, edit: Edit): void {
+	public addSequencedEdit(edit: Edit): void {
 		this.version++;
-
+		const { id, editWithoutId } = separateEditAndId(edit);
 		if (this.editChunks.length === 0) {
-			this.editChunks.push({ edits: [edit] });
+			this.editChunks.push({ edits: [editWithoutId] });
 		} else {
 			// Add to the last edit chunk if it has room, otherwise create a new chunk.
 			const { edits: lastEditChunk } = this.editChunks[this.editChunks.length - 1];
 			if (lastEditChunk !== undefined && lastEditChunk.length < editsPerChunk) {
-				lastEditChunk.push(edit);
+				lastEditChunk.push(editWithoutId);
 			} else {
-				this.editChunks.push({ edits: [edit] });
+				this.editChunks.push({ edits: [editWithoutId] });
 			}
 		}
 
@@ -308,8 +322,7 @@ export class EditLog implements OrderedEditSet {
 			// New edit already exits: it must have been a local edit.
 			assert(encounteredEditId.isLocal, 'Duplicate acked edit.');
 			// Remove it from localEdits. Due to ordering requirements, it must be first.
-			assertArrayOfOne(this.localEdits.splice(0, 1));
-			const oldLocalEditId = assertArrayOfOne(this.localEditIds.splice(0, 1));
+			const oldLocalEditId = assertArrayOfOne(this.localEdits.splice(0, 1)).id;
 			assert(oldLocalEditId === id, 'Causal ordering should be upheld');
 		}
 
@@ -322,12 +335,11 @@ export class EditLog implements OrderedEditSet {
 	 * Adds a non-sequenced (local) edit to the edit log.
 	 * Duplicate edits are ignored.
 	 */
-	public addLocalEdit(id: EditId, edit: Edit): void {
+	public addLocalEdit(edit: Edit): void {
 		this.version++;
 		this.localEdits.push(edit);
-		this.localEditIds.push(id);
 		const localEditId: LocalOrderedEditId = { localSequence: this.localEditSequence++, isLocal: true };
-		this.allEditIds.set(id, localEditId);
+		this.allEditIds.set(edit.id, localEditId);
 	}
 
 	/**
@@ -353,7 +365,7 @@ export class EditLog implements OrderedEditSet {
 		// TODO #45414: We should also be deep comparing the list of changes in the edit. This is not straightforward.
 		// We can use our edit validation code when we write it since it will need to do deep walks of the changes.
 		yield* this.editIds;
-		yield* this.localEditIds;
+		yield* this.localEdits.map(({ id }) => id);
 	}
 
 	private addIndexToCache(newIndex: number): void {

@@ -24,11 +24,11 @@ export class BasicCheckout extends Checkout {
 		super(tree, tree.currentView, () => this.emitChange());
 	}
 
-	protected handleNewEdit(id: EditId, edit: Edit, view: Snapshot): void {
+	protected handleNewEdit(edit: Edit, view: Snapshot): void {
 		// Since external edits could have been applied while currentEdit was pending,
 		// do not use the produced view: just go to the newest revision
 		// (which processLocalEdit will do, including invalidation).
-		this.tree.processLocalEdit(id, edit);
+		this.tree.processLocalEdit(edit);
 	}
 
 	protected get latestCommittedView(): Snapshot {

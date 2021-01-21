@@ -23,7 +23,7 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 export class BasicCheckout extends Checkout {
     constructor(tree: SharedTree);
     // (undocumented)
-    protected handleNewEdit(id: EditId, edit: Edit, view: Snapshot): void;
+    protected handleNewEdit(edit: Edit, view: Snapshot): void;
     // (undocumented)
     protected get latestCommittedView(): Snapshot;
     // (undocumented)
@@ -85,7 +85,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
     protected emitChange(): void;
     // (undocumented)
     getEditStatus(): EditResult;
-    protected abstract handleNewEdit(id: EditId, edit: Edit, view: Snapshot): void;
+    protected abstract handleNewEdit(edit: Edit, view: Snapshot): void;
     // @internal (undocumented)
     hasOpenEdit(): boolean;
     protected abstract readonly latestCommittedView: Snapshot;
@@ -152,9 +152,11 @@ export type DetachedSequenceId = number & {
     readonly DetachedSequenceId: 'f7d7903a-194e-45e7-8e82-c9ef4333577d';
 };
 
+// Warning: (ae-forgotten-export) The symbol "EditBase" needs to be exported by the entry point index.d.ts
+//
 // @public
-export interface Edit {
-    readonly changes: readonly Change[];
+export interface Edit extends EditBase {
+    readonly id: EditId;
 }
 
 // @public
@@ -169,8 +171,8 @@ export class EditLog implements OrderedEditSet {
     // (undocumented)
     [Symbol.iterator](): IterableIterator<EditId>;
     constructor(options?: EditLogSummary);
-    addLocalEdit(id: EditId, edit: Edit): void;
-    addSequencedEdit(id: EditId, edit: Edit): void;
+    addLocalEdit(edit: Edit): void;
+    addSequencedEdit(edit: Edit): void;
     // (undocumented)
     equals(other: EditLog): boolean;
     // (undocumented)
@@ -202,7 +204,7 @@ export class EditLog implements OrderedEditSet {
 //
 // @internal
 export interface EditLogSummary {
-    readonly editChunks: readonly (IFluidHandle<ArrayBufferLike> | Edit[])[];
+    readonly editChunks: readonly (IFluidHandle<ArrayBufferLike> | EditWithoutId[])[];
     readonly editIds: readonly EditId[];
 }
 
@@ -232,6 +234,11 @@ export enum EditValidationResult {
     Malformed = 0,
     // (undocumented)
     Valid = 2
+}
+
+// @public
+export interface EditWithoutId extends EditBase {
+    readonly id?: never;
 }
 
 // @public
@@ -323,7 +330,7 @@ export type PlaceIndex = number & {
 // @public @sealed
 export class PrefetchingCheckout extends Checkout {
     // (undocumented)
-    protected handleNewEdit(id: EditId, edit: Edit, view: Snapshot): void;
+    protected handleNewEdit(edit: Edit, view: Snapshot): void;
     // (undocumented)
     protected get latestCommittedView(): Snapshot;
     // (undocumented)
@@ -334,6 +341,14 @@ export class PrefetchingCheckout extends Checkout {
 
 // @public
 export function revert(edit: Edit, view: Snapshot): Change[];
+
+// Warning: (ae-internal-missing-underscore) The name "separateEditAndId" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export function separateEditAndId(edit: Edit): {
+    id: EditId;
+    editWithoutId: EditWithoutId;
+};
 
 // @public
 export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<EditNode>): readonly Change[];
@@ -379,7 +394,7 @@ export class SharedTree extends SharedObject {
     // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean): void;
     // @internal
-    processLocalEdit(id: EditId, edit: Edit): void;
+    processLocalEdit(edit: Edit): void;
     // (undocumented)
     protected registerCore(): void;
     // @internal
@@ -437,10 +452,7 @@ export interface SharedTreeSummary {
     // Warning: (ae-forgotten-export) The symbol "SerializedEditLogSummary" needs to be exported by the entry point index.d.ts
     readonly editHistory?: SerializedEditLogSummary;
     // (undocumented)
-    readonly sequencedEdits?: readonly {
-        id: EditId;
-        changes: readonly Change[];
-    }[];
+    readonly sequencedEdits?: readonly Edit[];
     readonly version: string;
 }
 

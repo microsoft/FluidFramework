@@ -100,9 +100,9 @@ export function setUpTestSharedTree(
 
 /** Sets testTrait to contain `node`. */
 export function setTestTree(tree: SharedTree, node: ChangeNode, overrideId?: EditId): EditId {
-	const [id, edit] = newEdit(setTrait(testTrait, [node]));
-	tree.processLocalEdit(overrideId || id, edit);
-	return id;
+	const edit = newEdit(setTrait(testTrait, [node]));
+	tree.processLocalEdit({ ...edit, id: overrideId || edit.id });
+	return overrideId || edit.id;
 }
 
 /** Creates an empty node for testing purposes. */

@@ -4,17 +4,20 @@
  */
 
 import { expect } from 'chai';
-import { EditLog } from '../EditLog';
+import { EditLog, separateEditAndId } from '../EditLog';
 import { Edit } from '../PersistedTypes';
 import { newEdit } from '../EditUtilities';
 import { EditId } from '../Identifiers';
+import { assertNotUndefined } from '../Common';
 
 describe('EditLog', () => {
-	const [id0, edit0]: [EditId, Edit] = newEdit([]);
-	const [id1, edit1]: [EditId, Edit] = newEdit([]);
+	const edit0 = newEdit([]);
+	const edit1 = newEdit([]);
+	const { id: id0, editWithoutId: editWithoutId0 } = separateEditAndId(edit0);
+	const { id: id1, editWithoutId: editWithoutId1 } = separateEditAndId(edit1);
 
 	it('can be constructed from sequenced edits', () => {
-		const editChunks = [[edit0, edit1]];
+		const editChunks = [[editWithoutId0, editWithoutId1]];
 		const editIds = [id0, id1];
 
 		const log = new EditLog({ editChunks, editIds });
@@ -33,7 +36,7 @@ describe('EditLog', () => {
 	});
 
 	it('can get the index from an edit id of sequenced edits', () => {
-		const editChunks = [[edit0, edit1]];
+		const editChunks = [[editWithoutId0, editWithoutId1]];
 		const editIds = [id0, id1];
 
 		const log = new EditLog({ editChunks, editIds });
@@ -43,41 +46,46 @@ describe('EditLog', () => {
 	});
 
 	it('can get the index from an edit id of a local edit', () => {
-		const editChunks = [[edit0]];
+		const editChunks = [[editWithoutId0]];
 		const editIds = [id0];
 
 		const log = new EditLog({ editChunks, editIds });
-		log.addLocalEdit(id1, edit1);
+		log.addLocalEdit(edit1);
 
 		expect(log.indexOf(id0)).to.equal(0);
 		expect(log.indexOf(id1)).to.equal(1);
 	});
 
 	it('can get an edit from an index', async () => {
-		const editChunks = [[edit0, edit1]];
+		const editChunks = [[editWithoutId0, editWithoutId1]];
 		const editIds = [id0, id1];
 
 		const log = new EditLog({ editChunks, editIds });
 
-		expect(await log.getAtIndex(0)).to.equal(edit0);
-		expect(await log.getAtIndex(1)).to.equal(edit1);
+		expect((await log.getAtIndex(0)).id).to.equal(id0);
+		expect((await log.getAtIndex(1)).id).to.equal(id1);
 	});
 
 	it('can get an edit from an edit id', async () => {
-		const editChunks = [[edit0, edit1]];
+		const editChunks = [[editWithoutId0, editWithoutId1]];
 		const editIds = [id0, id1];
 
 		const log = new EditLog({ editChunks, editIds });
 
-		expect(await log.tryGetEdit(id0)).to.equal(edit0);
-		expect(await log.tryGetEdit(id1)).to.equal(edit1);
+		const editFromId0 = await log.tryGetEdit(id0);
+		const editFromId1 = await log.tryGetEdit(id1);
+
+		expect(editFromId0).to.not.be.undefined;
+		expect(editFromId1).to.not.be.undefined;
+		expect(assertNotUndefined(editFromId0).id).to.equal(edit0.id);
+		expect(assertNotUndefined(editFromId1).id).to.equal(edit1.id);
 	});
 
 	it('can be iterated', () => {
 		const log = new EditLog();
 
-		log.addLocalEdit(id1, edit1);
-		log.addSequencedEdit(id0, edit0);
+		log.addLocalEdit(edit1);
+		log.addSequencedEdit(edit0);
 
 		// Sequenced edits should be iterated before local edits
 		const expectedEditIdStack = [id1, id0];
@@ -92,11 +100,11 @@ describe('EditLog', () => {
 	it('can add sequenced edits', () => {
 		const log = new EditLog();
 
-		log.addSequencedEdit(id0, edit0);
+		log.addSequencedEdit(edit0);
 		expect(log.numberOfSequencedEdits).to.equal(1);
 		expect(log.numberOfLocalEdits).to.equal(0, 'Log should have only sequenced edits.');
 
-		log.addSequencedEdit(id1, edit1);
+		log.addSequencedEdit(edit1);
 		expect(log.numberOfSequencedEdits).to.equal(2);
 		expect(log.numberOfLocalEdits).to.equal(0, 'Log should have only sequenced edits.');
 		expect(log.length).to.equal(2);
@@ -105,11 +113,11 @@ describe('EditLog', () => {
 	it('can add local edits', () => {
 		const log = new EditLog();
 
-		log.addLocalEdit(id0, edit0);
+		log.addLocalEdit(edit0);
 		expect(log.numberOfLocalEdits).to.equal(1);
 		expect(log.numberOfSequencedEdits).to.equal(0, 'Log should have only local edits.');
 
-		log.addLocalEdit(id1, edit1);
+		log.addLocalEdit(edit1);
 		expect(log.numberOfLocalEdits).to.equal(2);
 		expect(log.numberOfSequencedEdits).to.equal(0, 'Log should have only local edits.');
 		expect(log.length).to.equal(2);
@@ -118,23 +126,27 @@ describe('EditLog', () => {
 	it('detects causal ordering violations', () => {
 		const log = new EditLog();
 
-		log.addLocalEdit(id0, edit0);
-		log.addLocalEdit(id1, edit1);
-		expect(() => log.addSequencedEdit(id1, edit1)).throws('ordering');
+		log.addLocalEdit(edit0);
+		log.addLocalEdit(edit1);
+		expect(() => log.addSequencedEdit(edit1)).throws('ordering');
 	});
 
 	it('can sequence a local edit', async () => {
 		const log = new EditLog();
 
-		log.addLocalEdit(id0, edit0);
+		log.addLocalEdit(edit0);
 		expect(log.numberOfLocalEdits).to.equal(1);
-		expect(await log.tryGetEdit(id0)).equals(edit0, 'Log should contain local edit.');
+		let editFromId0 = await log.tryGetEdit(id0);
+		expect(editFromId0).to.not.be.undefined;
+		expect(assertNotUndefined(editFromId0).id).equals(edit0.id, 'Log should contain local edit.');
 
-		log.addSequencedEdit(id0, edit0);
+		log.addSequencedEdit(edit0);
 		expect(log.length).to.equal(1);
 		expect(log.numberOfSequencedEdits).to.equal(1);
 		expect(log.numberOfLocalEdits).to.equal(0, 'Log should have only sequenced edits.');
-		expect(await log.tryGetEdit(id0)).equals(edit0, 'Log should contain sequenced edit.');
+		editFromId0 = await log.tryGetEdit(id0);
+		expect(editFromId0).to.not.be.undefined;
+		expect(assertNotUndefined(editFromId0).id).equals(edit0.id, 'Log should contain sequenced edit.');
 	});
 
 	it('can sequence multiple local edits', async () => {
@@ -143,10 +155,10 @@ describe('EditLog', () => {
 
 		const numEdits = 10;
 		for (let i = 0; i < numEdits; i++) {
-			const [id, edit] = newEdit([]);
-			log.addLocalEdit(id, edit);
-			ids.push(id);
-			expect(log.indexOf(id)).equals(i, 'Local edits should be appended to the end of the log.');
+			const edit = newEdit([]);
+			log.addLocalEdit(edit);
+			ids.push(edit.id);
+			expect(log.indexOf(edit.id)).equals(i, 'Local edits should be appended to the end of the log.');
 		}
 		expect(log.length).equals(log.numberOfLocalEdits).and.equals(numEdits, 'Only local edits should be present.');
 
@@ -162,9 +174,11 @@ describe('EditLog', () => {
 	it('can correctly compare equality to other edit logs', () => {
 		const edit0Copy: Edit = { ...edit0 };
 		const edit1Copy: Edit = { ...edit1 };
+		const { editWithoutId: editWithoutId0Copy } = separateEditAndId(edit0Copy);
+		const { editWithoutId: editWithoutId1Copy } = separateEditAndId(edit1Copy);
 
-		const editChunks = [[edit0, edit1]];
-		const editChunksCopy = [[edit0Copy, edit1Copy]];
+		const editChunks = [[editWithoutId0, editWithoutId1]];
+		const editChunksCopy = [[editWithoutId0Copy, editWithoutId1Copy]];
 		const editIds = [id0, id1];
 
 		const log0 = new EditLog({ editChunks, editIds });
@@ -172,12 +186,12 @@ describe('EditLog', () => {
 
 		expect(log0.equals(log1)).to.be.true;
 
-		const log2 = new EditLog({ editChunks: [[edit0Copy]], editIds: [id0] });
-		log2.addLocalEdit(id1, edit1Copy);
+		const log2 = new EditLog({ editChunks: [[editWithoutId0]], editIds: [id0] });
+		log2.addLocalEdit(edit1Copy);
 
 		expect(log0.equals(log2)).to.be.true;
 
-		const differentLog = new EditLog({ editChunks: [[edit0Copy]], editIds: [id0] });
+		const differentLog = new EditLog({ editChunks: [[editWithoutId0]], editIds: [id0] });
 
 		expect(log0.equals(differentLog)).to.be.false;
 	});

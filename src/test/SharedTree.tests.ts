@@ -170,7 +170,7 @@ describe('SharedTree', () => {
 			// Trying to insert next to the deleted node should drop, confirm that it doesn't
 			// change the snapshot
 			assertNoDelta(tree, () => {
-				tree.processLocalEdit(...newEdit(Insert.create([secondNode], StablePlace.after(firstNode))));
+				tree.processLocalEdit(newEdit(Insert.create([secondNode], StablePlace.after(firstNode))));
 			});
 
 			const leftTrait = tree.currentView.getTrait(leftTraitLocation);
@@ -190,7 +190,7 @@ describe('SharedTree', () => {
 			assertNoDelta(tree, () => {
 				// Trying to delete from before firstNode to after secondNode should drop
 				tree.processLocalEdit(
-					...newEdit([
+					newEdit([
 						Delete.create(
 							StableRange.from(StablePlace.before(firstNode)).to(StablePlace.after(secondNode))
 						),
@@ -199,7 +199,7 @@ describe('SharedTree', () => {
 
 				// Trying to delete from after thirdNode to before firstNode should drop
 				tree.processLocalEdit(
-					...newEdit([
+					newEdit([
 						Delete.create(StableRange.from(StablePlace.after(thirdNode)).to(StablePlace.before(firstNode))),
 					])
 				);
@@ -214,7 +214,7 @@ describe('SharedTree', () => {
 			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
 
 			assertNoDelta(tree, () => {
-				tree.processLocalEdit(...newEdit([Change.build([], 0 as DetachedSequenceId)]));
+				tree.processLocalEdit(newEdit([Change.build([], 0 as DetachedSequenceId)]));
 			});
 		});
 
@@ -396,19 +396,17 @@ describe('SharedTree', () => {
 
 			containerRuntimeFactory.processAllMessages();
 
-			let id;
 			let edit;
 
 			assertNoDelta(tree, () => {
 				const build = Change.build([], 0 as DetachedSequenceId);
-				[id, edit] = newEdit([build]);
-				secondTree.processLocalEdit(id, edit);
+				edit = newEdit([build]);
+				secondTree.processLocalEdit(edit);
 				containerRuntimeFactory.processAllMessages();
 			});
 
-			const editIds = Array.from(tree.edits);
 			// Edit 0 creates initial tree
-			expect(editIds[1]).to.equal(id);
+			expect(tree.edits.idOf(1)).to.equal(edit.id);
 		});
 
 		runSharedTreeUndoRedoTestSuite({ localMode: false });

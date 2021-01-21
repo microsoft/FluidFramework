@@ -105,6 +105,6 @@ export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<EditNode>
 /**
  * Generates a new edit object from the supplied changes.
  */
-export function newEdit(changes: readonly Change[]): [EditId, Edit] {
-	return [uuidv4() as EditId, { changes }];
+export function newEdit(changes: readonly Change[]): Edit {
+	return { id: uuidv4() as EditId, changes };
 }

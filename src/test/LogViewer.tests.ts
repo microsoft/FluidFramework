@@ -28,22 +28,16 @@ const initialSimpleTree = { ...simpleTestTree, traits: {} };
 
 function getSimpleLog(): EditLog {
 	const log = new EditLog();
-	log.addSequencedEdit(...newEdit(Insert.create([left], StablePlace.atStartOf(leftTraitLocation))));
-	log.addSequencedEdit(...newEdit(Insert.create([right], StablePlace.atStartOf(rightTraitLocation))));
+	log.addSequencedEdit(newEdit(Insert.create([left], StablePlace.atStartOf(leftTraitLocation))));
+	log.addSequencedEdit(newEdit(Insert.create([right], StablePlace.atStartOf(rightTraitLocation))));
 	return log;
 }
 
 function getSimpleLogWithLocalEdits(): EditLog {
 	const logWithLocalEdits = getSimpleLog();
-	logWithLocalEdits.addLocalEdit(
-		...newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(leftTraitLocation)))
-	);
-	logWithLocalEdits.addLocalEdit(
-		...newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation)))
-	);
-	logWithLocalEdits.addLocalEdit(
-		...newEdit(Insert.create([makeEmptyNode()], StablePlace.atStartOf(leftTraitLocation)))
-	);
+	logWithLocalEdits.addLocalEdit(newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(leftTraitLocation))));
+	logWithLocalEdits.addLocalEdit(newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation))));
+	logWithLocalEdits.addLocalEdit(newEdit(Insert.create([makeEmptyNode()], StablePlace.atStartOf(leftTraitLocation))));
 	return logWithLocalEdits;
 }
 
@@ -109,9 +103,8 @@ function runLogViewerCorrectnessTests(viewerCreator: (log: EditLog, baseTree?: C
 				}
 				// Revisions are from [0, simpleLog.length], edits are at indices [0, simpleLog.length)
 				if (i < simpleLog.length) {
-					const id = simpleLog.idOf(i);
 					const edit = simpleLog.getAtIndexSynchronous(i);
-					mutableLog.addSequencedEdit(id, edit);
+					mutableLog.addSequencedEdit(edit);
 				}
 			}
 		});
@@ -140,14 +133,13 @@ function runLogViewerCorrectnessTests(viewerCreator: (log: EditLog, baseTree?: C
 
 			// Add a remote sequenced edit
 			logWithLocalEdits.addSequencedEdit(
-				...newEdit(Insert.create([makeEmptyNode()], StablePlace.atStartOf(rightTraitLocation)))
+				newEdit(Insert.create([makeEmptyNode()], StablePlace.atStartOf(rightTraitLocation)))
 			);
 			expectSnapshotsAreEqual(logWithLocalEdits, viewer);
 
 			// Sequence the existing local edits and ensure viewer generates the correct snapshots
 			while (logWithLocalEdits.numberOfLocalEdits > 0) {
 				logWithLocalEdits.addSequencedEdit(
-					logWithLocalEdits.idOf(logWithLocalEdits.numberOfSequencedEdits),
 					logWithLocalEdits.getAtIndexSynchronous(logWithLocalEdits.numberOfSequencedEdits)
 				);
 				expectSnapshotsAreEqual(logWithLocalEdits, viewer);

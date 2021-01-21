@@ -266,9 +266,9 @@ export class SharedTree extends SharedObject {
 	 * @internal
 	 */
 	public applyEdit(...changes: Change[]): EditId {
-		const [id, edit] = newEdit(changes);
-		this.processLocalEdit(id, edit);
-		return id;
+		const edit = newEdit(changes);
+		this.processLocalEdit(edit);
+		return edit.id;
 	}
 
 	/**
@@ -437,7 +437,7 @@ export class SharedTree extends SharedObject {
 			this.editLog.processEditChunkHandle(this.deserializeHandle(operation.editHandle), operation.chunkIndex);
 		} else {
 			const { id, edit } = message.contents;
-			this.processSequencedEdit(id, edit);
+			this.processSequencedEdit(edit);
 		}
 	}
 
@@ -455,11 +455,11 @@ export class SharedTree extends SharedObject {
 		// Do nothing
 	}
 
-	private processSequencedEdit(id: EditId, edit: Edit): void {
-		const wasLocalEdit = this.editLog.isLocalEdit(id);
-		this.editLog.addSequencedEdit(id, edit);
+	private processSequencedEdit(edit: Edit): void {
+		const wasLocalEdit = this.editLog.isLocalEdit(edit.id);
+		this.editLog.addSequencedEdit(edit);
 		if (!wasLocalEdit) {
-			this.emit(SharedTreeEvent.EditCommitted, id);
+			this.emit(SharedTreeEvent.EditCommitted, edit.id);
 		}
 	}
 
@@ -469,10 +469,10 @@ export class SharedTree extends SharedObject {
 	 * This is exposed as it is useful for testing, particularly with invalid and malformed Edits.
 	 * @internal
 	 */
-	public processLocalEdit(id: EditId, edit: Edit): void {
+	public processLocalEdit(edit: Edit): void {
 		// TODO:44711: what should be passed in when unattached?
-		this.submitLocalMessage({ edit, id, type: 'edit' });
-		this.editLog.addLocalEdit(id, edit);
-		this.emit(SharedTreeEvent.EditCommitted, id);
+		this.submitLocalMessage({ edit, type: 'edit' });
+		this.editLog.addLocalEdit(edit);
+		this.emit(SharedTreeEvent.EditCommitted, edit.id);
 	}
 }

@@ -11,18 +11,18 @@ import {
 	simpleTestTreeConsistent,
 } from './utilities/TestUtilities';
 
-describe.only('Summary back compatibility', () => {
+describe('Summary back compatibility', () => {
 	const setupEditId = '9406d301-7449-48a5-b2ea-9be637b0c6e4' as EditId;
 	const { tree: expectedTree, containerRuntimeFactory } = setUpTestSharedTree({
 		initialTree: simpleTestTreeConsistent,
 		localMode: false,
 		setupEditId,
 	});
-	const [, edit] = newEdit([
+	const edit = newEdit([
 		Change.build([makeEmptyNode('ae6b24eb-6fa8-42cc-abd2-48f250b7798f' as NodeId)], 0 as DetachedSequenceId),
 		Change.insert(0 as DetachedSequenceId, StablePlace.before(leftConsistent)),
 	]);
-	expectedTree.processLocalEdit('48e38bb4-6953-4dbc-9811-9c69512f29c2' as EditId, edit);
+	expectedTree.processLocalEdit({ ...edit, id: '48e38bb4-6953-4dbc-9811-9c69512f29c2' as EditId });
 	containerRuntimeFactory.processAllMessages();
 
 	const testedVersions = ['0.0.2'];
