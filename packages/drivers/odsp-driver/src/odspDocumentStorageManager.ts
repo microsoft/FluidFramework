@@ -14,6 +14,7 @@ import {
     IsoBuffer,
     Uint8ArrayToString,
     performance,
+    unreachableCase,
 } from "@fluidframework/common-utils";
 import {
     PerformanceEvent,
@@ -1009,10 +1010,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         blobsShaToPathCacheLatest: Map<string, string>,
         depth: number = 0,
         path: string = "",
-    ) {
+    ): Promise<{ snapshotTree: ISnapshotTree, blobs: number, reusedBlobs: number }> {
         const snapshotTree: ISnapshotTree = {
-            entries: [],
-        }!;
+            type: "tree",
+            entries: [] as SnapshotTreeEntry[],
+        };
 
         let reusedBlobs = 0;
         let blobs = 0;
@@ -1044,9 +1046,19 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     break;
                 }
                 case api.SummaryType.Blob: {
-                    value = typeof summaryObject.content === "string"
-                        ? { content: summaryObject.content, encoding: "utf-8" }
-                        : { content: Uint8ArrayToString(summaryObject.content, "base64"), encoding: "base64" };
+                    if (typeof summaryObject.content === "string") {
+                        value = {
+                            type: "blob",
+                            content: summaryObject.content,
+                            encoding: "utf-8",
+                        };
+                    } else {
+                        value = {
+                            type: "blob",
+                            content: Uint8ArrayToString(summaryObject.content, "base64"),
+                            encoding: "base64",
+                        };
+                    }
 
                     // Promises for pending hashes in blobsCachePendingHashes should all have resolved and removed themselves
                     assert(this.blobsCachePendingHashes.size === 0);
@@ -1075,36 +1087,30 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     }
                     id = `${parentHandle}/.app${handlePath}`;
 
-                    // TODO: SPO will deprecate this soon
-                    if (summaryObject.handleType === api.SummaryType.Commit) {
-                        value = {
-                            content: id,
-                        };
-                    }
-
                     break;
                 }
                 case api.SummaryType.Attachment: {
                     id = summaryObject.id;
                     break;
                 }
+
                 default: {
-                    throw new Error(`Unknown tree type ${summaryObject.type}`);
+                    unreachableCase(summaryObject, `Unknown type: ${(summaryObject as any).type}`);
                 }
             }
 
             const baseEntry: ISnapshotTreeBaseEntry = {
                 path: encodeURIComponent(key),
-                type: getGitType(summaryObject) === "attachment" ? "blob" : getGitType(summaryObject),
+                type: getGitType(summaryObject),
             };
 
             let entry: SnapshotTreeEntry;
 
             if (value) {
+                assert(id === undefined);
                 entry = {
-                    ...baseEntry,
-                    id,
                     value,
+                    ...baseEntry,
                     unreferenced,
                 };
             } else if (id) {
