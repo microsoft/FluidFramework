@@ -246,7 +246,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
         const rawContent = bufferToString(blob, "utf8");
 
         const content = rawContent !== undefined
-        ? JSON.parse(rawContent) as ICellValue
+            ? JSON.parse(rawContent) as ICellValue
             : { type: ValueType[ValueType.Plain], value: undefined };
 
         this.data = this.fromSerializable(content);
