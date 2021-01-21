@@ -11,6 +11,7 @@
     "examples/**",
     "server/historian/",
     "server/routerlicious/",
+    "server/tinylicious/",
     "common/"
   ],
   "scripts": {
@@ -117,7 +118,7 @@
     "concurrently": "^5.2.0",
     "copyfiles": "^2.1.0",
     "forever": "^3.0.4",
-    "lage": "0.26.2",
+    "lage": "0.27.0",
     "lerna": "^3.14.1",
     "markdown-magic": "^1.0.0",
     "nyc": "^15.0.0",
