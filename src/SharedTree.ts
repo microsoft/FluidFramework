@@ -9,9 +9,9 @@ import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from '@fluidfra
 import { IFluidDataStoreRuntime, IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
-import { assert, assertNotUndefined, fail } from './Common';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger } from '@fluidframework/telemetry-utils';
+import { assert, assertNotUndefined, fail } from './Common';
 import { EditLog, OrderedEditSet } from './EditLog';
 import {
 	Edit,
@@ -444,11 +444,12 @@ export class SharedTree extends SharedObject {
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
 	 */
 	protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
-		const operation = message.contents;
-		if (operation.type === 'handle') {
-			this.editLog.processEditChunkHandle(this.deserializeHandle(operation.editHandle), operation.chunkIndex);
+		const { type } = message.contents;
+		if (type === 'handle') {
+			const { editHandle, chunkIndex } = message.contents;
+			this.editLog.processEditChunkHandle(this.deserializeHandle(editHandle), chunkIndex);
 		} else {
-			const { id, edit } = message.contents;
+			const { edit } = message.contents;
 			this.processSequencedEdit(edit);
 		}
 	}

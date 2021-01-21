@@ -1,6 +1,6 @@
 import { editsPerChunk } from './EditLog';
 import { EditId } from './Identifiers';
-import { Edit, EditWithoutId } from './PersistedTypes';
+import { EditWithoutId } from './PersistedTypes';
 import { ErrorString, SharedTreeSummary } from './Summary';
 
 const readFormatVersion = '0.1.0';

@@ -4,7 +4,7 @@
  */
 
 import { assert, fail } from './Common';
-import { Definition, EditId, NodeId } from './Identifiers';
+import { Definition, NodeId } from './Identifiers';
 import { Edit, Payload } from './PersistedTypes';
 import { SnapshotNode, Snapshot } from './Snapshot';
 import { BlobId, SharedTree } from './SharedTree';

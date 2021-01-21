@@ -268,26 +268,26 @@ describe('CachingLogViewer', () => {
 			return edit;
 		}
 
-		it('is logged for invalid locally generated edits when those edits are sequenced', () => {
+		it('is logged for invalid locally generated edits when those edits are sequenced', async () => {
 			const { log, events, viewer } = getViewer();
 			const edit = addInvalidEdit(log);
-			viewer.getSnapshot(Number.POSITIVE_INFINITY);
+			await viewer.getSnapshot(Number.POSITIVE_INFINITY);
 			expect(events.length).equals(0, 'Invalid local edit should not log telemetry');
 			log.addSequencedEdit(edit);
-			viewer.getSnapshot(Number.POSITIVE_INFINITY);
+			await viewer.getSnapshot(Number.POSITIVE_INFINITY);
 			expect(events.length).equals(1);
 		});
 
-		it('is only logged once upon first application for invalid locally generated edits', () => {
+		it('is only logged once upon first application for invalid locally generated edits', async () => {
 			const { log, events, viewer } = getViewer();
 			const numEdits = 10;
 			const localEdits = [...Array(numEdits).keys()].map(() => addInvalidEdit(log));
-			viewer.getSnapshot(Number.POSITIVE_INFINITY);
+			await viewer.getSnapshot(Number.POSITIVE_INFINITY);
 			expect(events.length).equals(0);
 			for (let i = 0; i < numEdits; i++) {
 				const localEdit = localEdits[i];
 				log.addSequencedEdit(localEdit);
-				viewer.getSnapshot(Number.POSITIVE_INFINITY);
+				await viewer.getSnapshot(Number.POSITIVE_INFINITY);
 				expect(events.length).equals(i + 1);
 				const currentEvent = events[i];
 				expect(currentEvent.category).equals('generic');

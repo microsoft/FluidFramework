@@ -7,7 +7,6 @@ import { Edit } from './PersistedTypes';
 import { Snapshot } from './Snapshot';
 import { SharedTree } from './SharedTree';
 import { Checkout } from './Checkout';
-import { EditId } from './Identifiers';
 
 /**
  * Basic Session that stays up to date with the SharedTree.
