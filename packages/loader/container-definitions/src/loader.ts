@@ -209,6 +209,31 @@ export type ILoaderOptions = {
      * Defaults to false.
      */
     hotSwapContext?: boolean;
+
+    /**
+     * Set caching behavior for the loader.  If true, we will load a container from cache if one
+     * with the same id/version exists or create a new container and cache it if it does not. If
+     * false, always load a new container and don't cache it. If the container has already been
+     * closed, it will not be cached.  A cache option in the LoaderHeader for an individual
+     * request will override the Loader's value.
+     * Defaults to true.
+     */
+    cache?: boolean;
+
+    /**
+     * Start the container in a paused, unconnected state.  A cache option in the LoaderHeader
+     * for an individual request will override the Loader's value.
+     * Defaults to false.
+     */
+    pause?: boolean,
+    reconnect?: boolean,
+
+    /**
+     * If true, set forceReadonly on containers when created.  Cached containers created as readonly
+     * but that later call forceReadonly(false) will not have readonly reset to true.
+     * Defaults to false.
+     */
+    readonly?: boolean,
 };
 
 /**
@@ -216,10 +241,7 @@ export type ILoaderOptions = {
  */
 export enum LoaderHeader {
     /**
-     * Use cache for this container. If true, we will load a container from cache if one with the same id/version exists
-     * or create a new container and cache it if it does not. If false, always load a new container and don't cache it.
-     * Currently only used to opt-out of caching, as it will default to true but will be false (even if specified as
-     * true) if the reconnect header is false or the pause header is true, since these containers should not be cached.
+     * Override the Loader's default caching behavior for this container.
      */
     cache = "fluid-cache",
 
@@ -227,7 +249,7 @@ export enum LoaderHeader {
     executionContext = "execution-context",
 
     /**
-     * Start the container in a paused, unconnected state. Defaults to false
+     * Override the Loader's default behavior around starting the container in a paused, unconnected state
      */
     pause = "pause",
     reconnect = "fluid-reconnect",

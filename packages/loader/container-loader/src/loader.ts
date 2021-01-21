@@ -9,6 +9,7 @@ import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-d
 import {
     IFluidObject,
     IRequest,
+    IRequestHeader,
     IResponse,
     IFluidRouter,
     IFluidCodeDetails,
@@ -44,11 +45,7 @@ function canUseCache(request: IRequest): boolean {
         return true;
     }
 
-    const noCache =
-        request.headers[LoaderHeader.cache] === false ||
-        request.headers[LoaderHeader.reconnect] === false;
-
-    return !noCache;
+    return request.headers[LoaderHeader.cache] !== false;
 }
 
 export class RelativeLoader extends EventEmitter implements ILoader {
@@ -364,25 +361,35 @@ export class Loader extends EventEmitter implements ILoader {
             return Promise.reject(new Error(`Invalid URL ${resolvedAsFluid.url}`));
         }
 
-        request.headers = request.headers ?? {};
+        request.headers = this.mergeHeaderOptions(request.headers ?? {});
         const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
 
         debug(`${canCache} ${request.headers[LoaderHeader.pause]} ${request.headers[LoaderHeader.version]}`);
 
         let container: Container;
+        let newlyLoaded = true;
         if (canCache) {
             const key = this.getKeyForContainerCache(request, parsed);
             const maybeContainer = await this.containers.get(key);
             if (maybeContainer !== undefined) {
                 container = maybeContainer;
+                newlyLoaded = false;
             } else {
                 const containerP =
                     this.loadContainer(
                         parsed.id,
                         request,
                         resolvedAsFluid);
-                this.containers.set(key, containerP);
                 container = await containerP;
+
+                if (!container.closed) {
+                    // Don't cache already closed containers because won't know when to evict
+                    this.containers.set(key, containerP);
+                    container.on("closed", () => {
+                        // Container clears its own listeners so we don't need to
+                        this.containers.delete(key);
+                    });
+                }
             }
         } else {
             container =
@@ -390,6 +397,11 @@ export class Loader extends EventEmitter implements ILoader {
                     parsed.id,
                     request,
                     resolvedAsFluid);
+        }
+
+        if (newlyLoaded && this.services.options.readonly === true) {
+            // Don't re-force readonly when returning an existing container
+            container.forceReadonly(true);
         }
 
         if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
@@ -408,17 +420,21 @@ export class Loader extends EventEmitter implements ILoader {
         return { container, parsed };
     }
 
+    private mergeHeaderOptions(headers: IRequestHeader): IRequestHeader {
+        const loaderDefaults = {
+            [LoaderHeader.cache]: this.services.options.cache,
+            [LoaderHeader.pause]: this.services.options.pause,
+            [LoaderHeader.reconnect]: this.services.options.reconnect,
+        };
+        return { ...loaderDefaults, ...headers };
+    }
+
     private canUseCache(request: IRequest): boolean {
         if (request.headers === undefined) {
             return true;
         }
 
-        const noCache =
-            request.headers[LoaderHeader.cache] === false ||
-            request.headers[LoaderHeader.reconnect] === false ||
-            request.headers[LoaderHeader.pause] === true;
-
-        return !noCache;
+        return request.headers[LoaderHeader.cache] !== false;
     }
 
     private parseHeader(parsed: IParsedUrl, request: IRequest) {
