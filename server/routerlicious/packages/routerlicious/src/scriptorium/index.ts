@@ -10,6 +10,7 @@ import { Provider } from "nconf";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
     const mongoUrl = config.get("mongo:endpoint") as string;
+    const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
     const mongoFactory = new services.MongoDbFactory(mongoUrl);
     const mongoManager = new MongoManager(mongoFactory, false);
@@ -24,6 +25,15 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
             "tenantId": 1,
         },
         true);
+
+    if (mongoExpireAfterSeconds > 0) {
+        await opCollection.createTTLIndex(
+            {
+                mongoTimestamp: 1,
+            },
+            mongoExpireAfterSeconds,
+        );
+    }
 
     return new ScriptoriumLambdaFactory(mongoManager, opCollection);
 }

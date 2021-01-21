@@ -39,7 +39,7 @@ import { BlobCacheStorageService, buildSnapshotTree, readAndParseFromBlobs } fro
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
-import { GCDataBuilder } from "@fluidframework/garbage-collector";
+import { GCDataBuilder, getChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
 import { ContainerRuntime } from "./containerRuntime";
 import {
@@ -185,7 +185,6 @@ export class DataStores implements IDisposable {
                     type: CreateSummarizerNodeSource.FromAttach,
                     sequenceNumber: message.sequenceNumber,
                     snapshot: attachMessage.snapshot ?? {
-                        id: null,
                         entries: [createAttributesBlob(pkg, true /* isRootDataStore */)],
                     },
                 }),
@@ -439,6 +438,14 @@ export class DataStores implements IDisposable {
         return builder.getSummaryTree();
     }
 
+    /**
+     * Generates data used for garbage collection. It does the following:
+     * 1. Calls into each child data store context to get its GC data.
+     * 2. Prefixs the child context's id to the GC nodes in the child's GC data. This makes sure that the node can be
+     *    idenfied as belonging to the child.
+     * 3. Adds a GC node for this channel to the nodes received from the children. All these nodes together represent
+     *    the GC data of this channel.
+     */
     public async getGCData(): Promise<IGarbageCollectionData> {
         const builder = new GCDataBuilder();
         // Iterate over each store and get their GC data.
@@ -449,8 +456,8 @@ export class DataStores implements IDisposable {
                 return context.attachState === AttachState.Attached;
             }).map(async ([contextId, context]) => {
                 const contextGCData = await context.getGCData();
-                // Prefix the child's id to the ids of GC nodes returned by it. This gradually builds the id of
-                // each node to be a path from the root.
+                // Prefix the child's id to the ids of its GC nodes so they can be identified as belonging to the child.
+                // This also gradually builds the id of each node to be a path from the root.
                 builder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
             }));
 
@@ -464,26 +471,17 @@ export class DataStores implements IDisposable {
      * @param usedRoutes - The routes that are used in all data stores in this Container.
      */
     public updateUsedRoutes(usedRoutes: string[]) {
-        // Build a map of data store ids to routes used in it.
-        const usedRoutesMap: Map<string, string[]> = new Map();
-        for (const route of usedRoutes) {
-            assert(route.startsWith("/"), "Used route should always be an absolute route");
+        // Get a map of data store ids to routes used in it.
+        const usedDataStoreRoutes = getChildNodesUsedRoutes(usedRoutes);
 
-            const dataStoreId = route.split("/")[1];
-            assert(this.contexts.has(dataStoreId), "Used route does not belong to any known data store");
-
-            const dataStoreRoute = route.slice(dataStoreId.length + 1);
-            const routes = usedRoutesMap.get(dataStoreId);
-            if (routes !== undefined) {
-                routes.push(dataStoreRoute);
-            } else {
-                usedRoutesMap.set(dataStoreId, [dataStoreRoute]);
-            }
+        // Verify that the used routes are correct.
+        for (const [id] of usedDataStoreRoutes) {
+            assert(this.contexts.has(id), "Used route does not belong to any known data store");
         }
 
         // Update the used routes in each data store. Used routes is empty for unused data stores.
         for (const [contextId, context] of this.contexts) {
-            context.updateUsedRoutes(usedRoutesMap.get(contextId) ?? []);
+            context.updateUsedRoutes(usedDataStoreRoutes.get(contextId) ?? []);
         }
     }
 

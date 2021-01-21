@@ -29,7 +29,6 @@ import {
     ReplayFileDeltaConnection,
 } from "@fluidframework/file-driver";
 import {
-    IBlob,
     ISequencedDocumentMessage,
     ITree,
     TreeEntry,
@@ -54,10 +53,10 @@ function expandTreeForReadability(tree: ITree): ITree {
     for (const node of tree.entries) {
         const newNode = { ...node };
         if (node.type === TreeEntry.Tree) {
-            newNode.value = expandTreeForReadability(node.value as ITree);
+            newNode.value = expandTreeForReadability(node.value);
         }
         if (node.type === TreeEntry.Blob) {
-            const blob = node.value as IBlob;
+            const blob = node.value;
             try {
                 newNode.value = {
                     contents: JSON.parse(blob.contents) as string,

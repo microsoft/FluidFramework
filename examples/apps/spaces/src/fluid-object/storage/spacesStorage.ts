@@ -87,7 +87,8 @@ export class SpacesStorage extends DataObject implements ISpacesStorage<ISpacesI
     }
 
     public updateLayout(key: string, newLayout: Layout): void {
-        const currentEntry = this.root.get<ISpacesStoredItem<ISpacesItem>>(key);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const currentEntry = this.root.get<ISpacesStoredItem<ISpacesItem>>(key)!;
         const model = {
             serializableItemData: currentEntry.serializableItemData,
             layout: { x: newLayout.x, y: newLayout.y, w: newLayout.w, h: newLayout.h },

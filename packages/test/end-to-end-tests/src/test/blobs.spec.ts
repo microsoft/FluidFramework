@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import { strict as assert } from "assert";
 import { IsoBuffer } from "@fluidframework/common-utils";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { v4 as uuid } from "uuid";
@@ -15,11 +14,15 @@ import { ReferenceType } from "@fluidframework/merge-tree";
 import { generateLocalNonCompatTest, ITestObjectProvider, ITestContainerConfig, TestDataObject } from "./compatUtils";
 
 const testContainerConfig: ITestContainerConfig = {
-    runtimeOptions: { initialSummarizerDelayMs: 20 },
+    runtimeOptions: { initialSummarizerDelayMs: 20, summaryConfigOverrides: { maxOps: 1 } },
     registry: [["sharedString", SharedString.getFactory()]],
 };
 
-const tests = (args: ITestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    beforeEach(()=>{
+        args = argsFactory();
+    });
     it("attach sends an op", async function() {
         const container = await args.makeTestContainer(testContainerConfig);
 
@@ -52,6 +55,7 @@ const tests = (args: ITestObjectProvider) => {
         const dataStore2 = await requestFluidObject<TestDataObject>(container2, "default");
 
         const blobHandle = await dataStore2._root.wait<IFluidHandle<ArrayBufferLike>>(testKey);
+        assert(blobHandle);
         assert.strictEqual(IsoBuffer.from(await blobHandle.get()).toString("utf-8"), testString);
     });
 
@@ -126,8 +130,8 @@ const tests = (args: ITestObjectProvider) => {
         // validate on remote container, local container, and container loaded from summary
         for (const container of [container1, container2, await args.loadTestContainer(testContainerConfig)]) {
             const dataStore2 = await requestFluidObject<TestDataObject>(container, "default");
-            const handle: IFluidHandle<SharedString> =
-                await dataStore2._root.wait("sharedString");
+            const handle = await dataStore2._root.wait<IFluidHandle<SharedString>>("sharedString");
+            assert(handle);
             const sharedString2 = await handle.get();
 
             const props = sharedString2.getPropertiesAtPosition(0);
@@ -139,8 +143,5 @@ const tests = (args: ITestObjectProvider) => {
 
 describe("blobs", () => {
     // TODO: add back compat test once N-2 is 0.28
-    generateLocalNonCompatTest(tests, {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        serviceConfiguration: { summary: { maxOps: 1 } as ISummaryConfiguration },
-    });
+    generateLocalNonCompatTest(tests);
 });

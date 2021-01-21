@@ -7,11 +7,12 @@ import {
     ICodeLoader,
     IContainer,
     ILoader,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 
@@ -24,6 +25,7 @@ export function createLocalLoader(
     packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
     deltaConnectionServer: ILocalDeltaConnectionServer,
     urlResolver: IUrlResolver,
+    options?: ILoaderOptions,
 ): ILoader {
     const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
     const codeLoader: ICodeLoader = new LocalCodeLoader(packageEntries);
@@ -32,26 +34,24 @@ export function createLocalLoader(
         urlResolver,
         documentServiceFactory,
         codeLoader,
+        options,
     });
 }
 
 /**
  * Creates a detached Container and attaches it.
- * @param documentId - The documentId for the container.
  * @param source - The code details used to create the Container.
  * @param loader - The loader to use to initialize the container.
- * @param urlresolver - The url resolver to get the create new request from.
+ * @param attachRequest - The request to create new from.
  */
 
 export async function createAndAttachContainer(
-    documentId: string,
     source: IFluidCodeDetails,
     loader: ILoader,
-    urlResolver: IUrlResolver,
+    attachRequest: IRequest,
 ): Promise<IContainer> {
     const container = await loader.createDetachedContainer(source);
-    const attachUrl = (urlResolver as LocalResolver).createCreateNewRequest(documentId);
-    await container.attach(attachUrl);
+    await container.attach(attachRequest);
 
     return container;
 }

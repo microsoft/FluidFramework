@@ -210,15 +210,4 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
      * Returns all the items in the queue as an array. Does not remove them from the queue.
      */
     toArray(): T[];
-
-    /**
-     * System level pause
-     * @returns A promise which resolves when processing has been paused.
-     */
-    systemPause(): Promise<void>;
-
-    /**
-     * System level resume
-     */
-    systemResume(): void;
 }

@@ -201,8 +201,6 @@ export class ConsensusOrderedCollection<T = any>
                     },
                 },
             ],
-            // eslint-disable-next-line no-null/no-null
-            id: null,
         };
 
         tree.entries.push({

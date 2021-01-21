@@ -5,10 +5,11 @@
  */
 
 import { getSessionStorageContainer } from "@fluidframework/get-session-storage-container";
-import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
+import { getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
 
+import { DiceRollerController } from "../src/controller";
+import { KeyValueContainerRuntimeFactory, KeyValueDataObject, KeyValueInstantiationFactory } from "../src/kvpair-dataobject";
 import { renderDiceRoller } from "../src/view";
-import { KeyValueContainerRuntimeFactory, KeyValueDataObject } from "../src/kvpair-dataobject";
 
 // Since this is a single page Fluid application we are generating a new document id
 // if one was not provided
@@ -29,10 +30,16 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     const container = await getSessionStorageContainer(documentId, KeyValueContainerRuntimeFactory, createNewFlag);
 
     // Get the Default Object from the Container
-    const defaultObject = await getDefaultObjectFromContainer<KeyValueDataObject>(container);
+    const dataObjectId = "dice";
+    if (createNewFlag) {
+        await container.request({ url: `/create/${KeyValueInstantiationFactory.type}/${dataObjectId}` });
+    }
+    const kvPairDataObject = await getObjectWithIdFromContainer<KeyValueDataObject>(dataObjectId, container);
+    const diceRollerController = new DiceRollerController(kvPairDataObject);
+    await diceRollerController.initialize(createNewFlag);
 
     // Given an IDiceRoller, we can render its data using the view we've created in our app.
-    renderDiceRoller(defaultObject, element);
+    renderDiceRoller(diceRollerController, element);
 
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line dot-notation

@@ -426,7 +426,6 @@ export class SharedMatrix<T extends Serializable = Serializable>
                     ],
                     serializer),
             ],
-            id: null,   // eslint-disable-line no-null/no-null
         };
 
         return tree;

@@ -12,13 +12,13 @@ import {
     fromUtf8ToBase64,
     IsoBuffer,
     performance,
+    unreachableCase,
 } from "@fluidframework/common-utils";
 import {
     PerformanceEvent,
     TelemetryLogger,
 } from "@fluidframework/telemetry-utils";
-import * as resources from "@fluidframework/gitresources";
-import { buildHierarchy } from "@fluidframework/protocol-base";
+import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import {
     ISummaryContext,
@@ -49,29 +49,47 @@ import {
 import { getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
 import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
-import { getQueryString } from "./getQueryString";
 import { EpochTracker, FetchType } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 
 /* eslint-disable max-len */
 
-function convertOdspTree(tree: ITree) {
-    const gitTree: resources.ITree = {
-        sha: tree.id,
-        url: "",
-        tree: [],
-    };
-    for (const entry of tree.entries) {
-        gitTree.tree.push({
-            path: entry.path,
-            mode: "",
-            type: entry.type,
-            size: 0,
-            sha: entry.id,
-            url: "",
-        });
+/**
+ * Build a tree hierarchy base on a flat tree
+ *
+ * @param flatTree - a flat tree
+ * @param blobsShaToPathCache - Map with blobs sha as keys and values as path of the blob.
+ * @returns the hierarchical tree
+ */
+function buildHierarchy(
+    flatTree: ITree,
+    blobsShaToPathCache: Map<string, string> = new Map<string, string>()): api.ISnapshotTree {
+    const lookup: { [path: string]: api.ISnapshotTree } = {};
+    const root: api.ISnapshotTree = { blobs: {}, commits: {}, trees: {} };
+    lookup[""] = root;
+
+    for (const entry of flatTree.entries) {
+        const lastIndex = entry.path.lastIndexOf("/");
+        const entryPathDir = entry.path.slice(0, Math.max(0, lastIndex));
+        const entryPathBase = entry.path.slice(lastIndex + 1);
+
+        // ODSP snapshots are created breadth-first so we can assume we see tree nodes prior to their contents
+        const node = lookup[entryPathDir];
+
+        // Add in either the blob or tree
+        if (entry.type === "tree") {
+            const newTree = { id: entry.id, blobs: {}, commits: {}, trees: {} };
+            node.trees[decodeURIComponent(entryPathBase)] = newTree;
+            lookup[entry.path] = newTree;
+        } else if (entry.type === "blob") {
+            node.blobs[decodeURIComponent(entryPathBase)] = entry.id;
+            blobsShaToPathCache.set(entry.id, `/${entry.path}`);
+        } else if (entry.type === "commit") {
+            node.commits[decodeURIComponent(entryPathBase)] = entry.id;
+        }
     }
-    return gitTree;
+
+    return root;
 }
 
 // An implementation of Promise.race that gives you the winner of the promise race
@@ -173,15 +191,19 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     eventName: "createBlob",
                     size: file.length,
                 },
-                async () => this.epochTracker.fetchAndParseAsJSON<api.ICreateBlobResponse>(
-                    url,
-                    {
-                        body: file,
-                        headers,
-                        method: "POST",
-                    },
-                    FetchType.createBlob,
-                ),
+                async (event) => {
+                    const res = await this.epochTracker.fetchAndParseAsJSON<api.ICreateBlobResponse>(
+                        url,
+                        {
+                            body: file,
+                            headers,
+                            method: "POST",
+                        },
+                        FetchType.createBlob,
+                    );
+                    event.end({ blobId: res.content.id });
+                    return res;
+                },
             );
         });
 
@@ -205,6 +227,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     this.logger,
                     {
                         eventName: "readDataBlob",
+                        blobId,
                         headers: Object.keys(headers).length !== 0 ? true : undefined,
                         waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
                     },
@@ -261,13 +284,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return this.readWithEncodingOutput(blobId, "base64");
     }
 
-    /**
-     * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
-     */
-    public async readString(blobId: string): Promise<string> {
-        return this.readWithEncodingOutput(blobId, "string");
-    }
-
     private async readWithEncodingOutput(blobId: string, outputFormat: "base64" | "string"): Promise<string> {
         const blob = await this.readBlobCore(blobId);
 
@@ -304,7 +320,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             return null;
         }
 
-        const hierarchicalTree = buildHierarchy(convertOdspTree(tree));
+        const hierarchicalTree = buildHierarchy(tree);
 
         // Decode commit paths
         const commits = {};
@@ -336,7 +352,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             // So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
             const appTree = hierarchicalTree.trees[".app"];
             const protocolTree = hierarchicalTree.trees[".protocol"];
-            finalTree = this.combineProtocolAndAppSnapshotTree(tree.id, appTree, protocolTree);
+            finalTree = this.combineProtocolAndAppSnapshotTree(appTree, protocolTree);
         }
 
         if (this.hostPolicy.summarizerClient) {
@@ -379,10 +395,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                 const hostSnapshotOptions = this.hostPolicy.snapshotOptions;
                 let cachedSnapshot: IOdspSnapshot | undefined;
-                const usePost = !!this.hostPolicy.usePostForTreesLatest;
                 // No need to ask cache twice - if first request was unsuccessful, cache unlikely to have data on second turn.
                 if (tokenFetchOptions.refresh) {
-                    cachedSnapshot = await this.fetchSnapshot(hostSnapshotOptions, undefined, tokenFetchOptions, usePost);
+                    cachedSnapshot = await this.fetchSnapshot(hostSnapshotOptions, undefined, tokenFetchOptions);
                 } else {
                     cachedSnapshot = await PerformanceEvent.timedExecAsync(
                         this.logger,
@@ -400,7 +415,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                             let method: string;
                             if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
-                                const snapshotP = this.fetchSnapshot(hostSnapshotOptions, undefined, tokenFetchOptions, usePost);
+                                const snapshotP = this.fetchSnapshot(hostSnapshotOptions, undefined, tokenFetchOptions);
 
                                 const promiseRaceWinner = await promiseRaceWithWinner([cachedSnapshotP, snapshotP]);
                                 cachedSnapshot = promiseRaceWinner.value;
@@ -419,7 +434,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                 method = cachedSnapshot !== undefined ? "cache" : "network";
 
                                 if (cachedSnapshot === undefined) {
-                                    cachedSnapshot = await this.fetchSnapshot(hostSnapshotOptions, undefined, tokenFetchOptions, usePost);
+                                    cachedSnapshot = await this.fetchSnapshot(hostSnapshotOptions, undefined, tokenFetchOptions);
                                 }
                             }
                             event.end({ method });
@@ -499,7 +514,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         hostSnapshotOptions: ISnapshotOptions | undefined,
         driverSnapshotOptions: ISnapshotOptions | undefined,
         tokenFetchOptions: TokenFetchOptions,
-        usePost: boolean,
     ): Promise<IOdspSnapshot> {
         const snapshotOptions: ISnapshotOptions = driverSnapshotOptions ?? {
             deltas: 1,
@@ -526,12 +540,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             );
         }
 
-        // If usePost is false, then make get call for TreesLatest.
-        // If usePost is true, make a post call. In case of failure other than the reason for which getWithRetryForTokenRefresh
-        // will retry, fallback to get call. In case of error for which getWithRetryForTokenRefresh will retry, let it retry
-        // only if it is first failure, otherwise fallback to get call.
         try {
-            const odspSnapshot = await this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, usePost, abortController);
+            const odspSnapshot = await this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, abortController);
             return odspSnapshot;
         } catch (error) {
             const errorType = error.errorType;
@@ -542,12 +552,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             // If the first snapshot request was with blobs and we either timed out or the size was too big, then try to fetch without blobs.
             if ((errorType === OdspErrorType.snapshotTooBig || errorType === OdspErrorType.fetchTimeout) && snapshotOptions.blobs) {
                 const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: 0, mds: undefined };
-                return this.fetchSnapshotCore(snapshotOptionsWithoutBlobs, tokenFetchOptions, usePost);
-            }
-            // If we used the post request first time and got a 400 error from server, then try with a GET request.
-            if (usePost && error.statusCode === 400) {
-                this.logger.sendErrorEvent({ eventName: "TreeLatest_FallBackToGetRequest" }, error);
-                return this.fetchSnapshot(hostSnapshotOptions, snapshotOptions, tokenFetchOptions, false);
+                return this.fetchSnapshotCore(snapshotOptionsWithoutBlobs, tokenFetchOptions);
             }
             throw error;
         }
@@ -556,63 +561,42 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private async fetchSnapshotCore(
         snapshotOptions: ISnapshotOptions,
         tokenFetchOptions: TokenFetchOptions,
-        usePost: boolean,
         controller?: AbortController,
     ): Promise<IOdspSnapshot> {
         const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
-        let url: string;
-        let headers: {[index: string]: any};
-        let postBody: string;
-        if (usePost) {
-            url = `${this.snapshotUrl}/trees/latest?ump=1`;
-            const formBoundary = uuid();
-            postBody = `--${formBoundary}\r\n`;
-            postBody += `Authorization: Bearer ${storageToken}\r\n`;
-            postBody += `X-HTTP-Method-Override: GET\r\n`;
-            Object.entries(snapshotOptions).forEach(([key, value]) => {
-                if (value !== undefined) {
-                    postBody += `${key}: ${value}\r\n`;
-                }
-            });
-            if (this.redeemSharingLink) {
-                postBody += `sl: ${this.redeemSharingLink}\r\n`;
+        const url = `${this.snapshotUrl}/trees/latest?ump=1`;
+        const formBoundary = uuid();
+        let postBody = `--${formBoundary}\r\n`;
+        postBody += `Authorization: Bearer ${storageToken}\r\n`;
+        postBody += `X-HTTP-Method-Override: GET\r\n`;
+        Object.entries(snapshotOptions).forEach(([key, value]) => {
+            if (value !== undefined) {
+                postBody += `${key}: ${value}\r\n`;
             }
-            postBody += `_post: 1\r\n`;
-            postBody += `\r\n--${formBoundary}--`;
-            headers = {
-                "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
-            };
-        } else {
-            const queryString = getQueryString(snapshotOptions);
-            const result = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${queryString}`, storageToken);
-            url = result.url;
-            headers = result.headers;
+        });
+        if (this.redeemSharingLink) {
+            postBody += `sl: ${this.redeemSharingLink}\r\n`;
         }
-
-        let isOptionsCall = false;
-
-        if (Object.keys(headers).length && !usePost) {
-            isOptionsCall = true;
-        }
+        postBody += `_post: 1\r\n`;
+        postBody += `\r\n--${formBoundary}--`;
+        const headers: {[index: string]: any} = {
+            "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
+        };
 
         // This event measures only successful cases of getLatest call (no tokens, no retries).
         const { snapshot, canCache } = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest", fetchTimeout: snapshotOptions.timeout, maxSnapshotSize: snapshotOptions.mds }, async (event) => {
             const startTime = performance.now();
-            let response: IOdspResponse<IOdspSnapshot>;
-            if (usePost) {
-                response = await this.epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(
-                    url,
-                    {
-                        body: postBody,
-                        headers,
-                        signal: controller?.signal,
-                        method: "POST",
-                    },
-                    FetchType.treesLatest,
-                    true);
-            } else {
-                response = await this.epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(url, { headers, signal: controller?.signal }, FetchType.treesLatest);
-            }
+            const response: IOdspResponse<IOdspSnapshot> = await this.epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(
+                url,
+                {
+                    body: postBody,
+                    headers,
+                    signal: controller?.signal,
+                    method: "POST",
+                },
+                FetchType.treesLatest,
+                true,
+            );
             const endTime = performance.now();
             const overallTime = endTime - startTime;
             const content = response.content;
@@ -660,7 +644,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 headers: Object.keys(headers).length !== 0 ? true : undefined,
                 sprequestguid: response.headers.get("sprequestguid"),
                 sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
-                isoptionscall: isOptionsCall,
                 redirecttime: redirectTime,
                 dnsLookuptime: dnstime,
                 responsenetworkTime: responseTime,
@@ -850,7 +833,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
             appTree = trees[1];
 
-            hierarchicalProtocolTree = buildHierarchy(convertOdspTree(protocolTree));
+            hierarchicalProtocolTree = buildHierarchy(protocolTree);
         } else {
             appTree = await this.readTree(appTreeId);
 
@@ -861,7 +844,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             throw new Error("Invalid app tree");
         }
 
-        const hierarchicalAppTree = buildHierarchy(convertOdspTree(appTree));
+        const hierarchicalAppTree = buildHierarchy(appTree);
 
         if (hierarchicalProtocolTree.blobs) {
             const attributesBlob = hierarchicalProtocolTree.blobs.attributes;
@@ -869,11 +852,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.attributesBlobHandles.add(attributesBlob);
             }
         }
-        return this.combineProtocolAndAppSnapshotTree(snapshotTreeId, hierarchicalAppTree, hierarchicalProtocolTree);
+        return this.combineProtocolAndAppSnapshotTree(hierarchicalAppTree, hierarchicalProtocolTree);
     }
 
     private combineProtocolAndAppSnapshotTree(
-        snapshotTreeId: string,
         hierarchicalAppTree: api.ISnapshotTree,
         hierarchicalProtocolTree: api.ISnapshotTree,
     ) {
@@ -884,7 +866,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             commits: {
                 ...hierarchicalAppTree.commits,
             },
-            id: snapshotTreeId,
             trees: {
                 ".protocol": hierarchicalProtocolTree,
                 ...hierarchicalAppTree.trees,

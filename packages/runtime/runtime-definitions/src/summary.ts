@@ -63,6 +63,14 @@ export interface ISummarizerNodeConfig {
     readonly throwOnFailure?: true,
 }
 
+export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
+    /**
+     * True if GC is disabled. If so, don't track GC related state for a summary.
+     * This is propagated to all child nodes.
+     */
+    readonly gcDisabled?: boolean;
+}
+
 export enum CreateSummarizerNodeSource {
     FromSummary,
     FromAttach,
@@ -133,16 +141,19 @@ export interface ISummarizerNode {
 
 /**
  * Extends the functionality of ISummarizerNode to support garbage collection. It adds / udpates the following APIs:
+ * - usedRoutes - The routes in this node that are currently in use.
  * - getGCData - A new API that can be used to get the garbage collection data for this node.
  * - summarize - Added a trackState flag which indicates whether the summarizer node should track the state of the
  *   summary or not.
  * - createChild - Added the following params:
  *   - getGCDataFn - This gets the GC data from the caller. This must be provided in order for getGCData to work.
  *   - getInitialGCDetailsFn - This gets the initial GC details from the caller.
+ * - isReferenced - This tells whether this node is referenced in the document or not.
+ * - updateUsedRoutes - Used to notify this node of routes that are currently in use in it.
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
-    // This tells whether this node is in use or not. Unused node can be garbage collected and reclaimed.
-    usedRoutes: string[];
+    /** The routes in this node that are currently in use. */
+    readonly usedRoutes: string[];
 
     summarize(fullTree: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
     createChild(
@@ -158,17 +169,28 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
          */
         createParam: CreateChildSummarizerNodeParam,
         /** Optional configuration affecting summarize behavior */
-        config?: ISummarizerNodeConfig,
+        config?: ISummarizerNodeConfigWithGC,
         getGCDataFn?: () => Promise<IGarbageCollectionData>,
         getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
-        // The initial used routes of this node. This is needed for children that are created while a summary is in
-        // progress so that their work-in-progress state can be updated.
-        usedRoutes?: string[],
     ): ISummarizerNodeWithGC;
 
     getChild(id: string): ISummarizerNodeWithGC | undefined;
+
+    /**
+     * Returns this node's data that is used for garbage collection. This includes a list of GC nodes that represent
+     * this node. Each node has a set of outbound routes to other GC nodes in the document.
+     */
     getGCData(): Promise<IGarbageCollectionData>;
+
+    /** Tells whether this node is being referenced in this document or not. Unreferenced node will get GC'd */
     isReferenced(): boolean;
+
+    /**
+     * After GC has run, called to notify this node of routes that are used in it. These are used for the following:
+     * 1. To identify if this node is being referenced in the document or not.
+     * 2. To identify if this node or any of its children's used routes changed since last summary.
+     */
+    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 export const channelsTreeName = ".channels";

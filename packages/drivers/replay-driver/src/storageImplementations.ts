@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { assert, stringToBuffer } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -92,12 +92,12 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
         throw new Error(`Unknown blob ID: ${blobId}`);
     }
 
-    /**
-     * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
-     */
-    public async readString(blobId: string): Promise<string> {
-        const base64Result = await this.read(blobId);
-        return fromBase64ToUtf8(base64Result);
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
+        const blob = this.blobs.get(blobId);
+        if (blob !== undefined) {
+            return stringToBuffer(blob, "base64");
+        }
+        throw new Error(`Unknown blob ID: ${blobId}`);
     }
 }
 
@@ -131,11 +131,8 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
         return this.storage.read(blobId);
     }
 
-    /**
-     * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
-     */
-    public async readString(blobId: string): Promise<string> {
-        return this.storage.readString(blobId);
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
+        return this.storage.readBlob(blobId);
     }
 }
 
@@ -152,7 +149,7 @@ export class OpStorage extends ReadDocumentStorageServiceBase {
         throw new Error(`Unknown blob ID: ${blobId}`);
     }
 
-    public async readString(blobId: string): Promise<string> {
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
         throw new Error(`Unknown blob ID: ${blobId}`);
     }
 }

@@ -23,7 +23,7 @@
             ]
         },
         {
-            "label": "fluid-build $cwd",
+            "label": "fluid-build $cwd --nolint",
             "type": "process",
             "command": "node",
             "args": [
@@ -31,6 +31,7 @@
                 "--root",
                 "${workspaceRoot}",
                 "--vscode",
+                "--nolint",
                 "${fileDirname}"
             ],
             "group": "build",
