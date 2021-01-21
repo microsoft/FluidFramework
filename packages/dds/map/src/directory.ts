@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, fromBase64ToUtf8, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
@@ -658,16 +658,21 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService) {
-        const blob = await storage.readBlob(snapshotFileName);
-        const header = bufferToString(blob, "utf8");
-        const data = JSON.parse(header);
+        const header = await storage.read(snapshotFileName);
+        const data = JSON.parse(fromBase64ToUtf8(header));
+        // const blob = await storage.readBlob(snapshotFileName);
+        // const header = bufferToString(blob, "utf8");
+        // const data = JSON.parse(header);
         const newFormat = data as IDirectoryNewStorageFormat;
         if (Array.isArray(newFormat.blobs)) {
             // New storage format
             this.populate(newFormat.content);
-            await Promise.all(newFormat.blobs.map(async (value) => {
-                const newBlob = await storage.readBlob(value);
-                const dataExtra = JSON.parse(bufferToString(newBlob, "utf8"));
+            await Promise.all(newFormat.blobs.map(async (blob) => {
+                const blobContent = await storage.read(blob);
+                const dataExtra = JSON.parse(fromBase64ToUtf8(blobContent));
+            // await Promise.all(newFormat.blobs.map(async (value) => {
+            //     const newBlob = await storage.readBlob(value);
+            //     const dataExtra = JSON.parse(bufferToString(newBlob, "utf8"));
                 this.populate(dataExtra as IDirectoryDataObject);
             }));
         } else {
