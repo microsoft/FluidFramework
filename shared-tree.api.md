@@ -153,8 +153,6 @@ export type DetachedSequenceId = number & {
     readonly DetachedSequenceId: 'f7d7903a-194e-45e7-8e82-c9ef4333577d';
 };
 
-// Warning: (ae-forgotten-export) The symbol "EditBase" needs to be exported by the entry point index.d.ts
-//
 // @public
 export interface Edit extends EditBase {
     readonly id: EditId;
@@ -164,6 +162,11 @@ export interface Edit extends EditBase {
 //
 // @internal
 export type EditAddedHandler = (edit: Edit, isLocal: boolean) => void;
+
+// @public
+export interface EditBase {
+    readonly changes: readonly Change[];
+}
 
 // @public
 export type EditId = UuidString & {
@@ -242,7 +245,9 @@ export enum EditValidationResult {
     Valid = 2
 }
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "EditWithoutId" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export interface EditWithoutId extends EditBase {
     readonly id?: never;
 }
@@ -308,9 +313,7 @@ export interface OrderedEditSet {
     getAtIndex(index: number): Promise<Edit>;
     // (undocumented)
     getAtIndexSynchronous(index: number): Edit;
-    // Warning: (ae-incompatible-release-tags) The symbol "getEditLogSummary" is marked as @public, but its signature references "EditLogSummary" which is marked as @internal
-    //
-    // (undocumented)
+    // @internal (undocumented)
     getEditLogSummary(): EditLogSummary;
     // (undocumented)
     idOf(index: number): EditId;
@@ -355,6 +358,19 @@ export function separateEditAndId(edit: Edit): {
     id: EditId;
     editWithoutId: EditWithoutId;
 };
+
+// @public
+export interface SerializationHelpers {
+    // (undocumented)
+    serializeHandle: (handle: IFluidHandle<ArrayBufferLike>) => ISerializedHandle;
+}
+
+// @public
+export interface SerializedEditLogSummary {
+    // Warning: (ae-incompatible-release-tags) The symbol "editChunks" is marked as @public, but its signature references "EditWithoutId" which is marked as @internal
+    readonly editChunks?: readonly (ISerializedHandle | EditWithoutId[])[];
+    readonly editIds: readonly EditId[];
+}
 
 // @public
 export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<EditNode>): readonly Change[];
@@ -448,8 +464,6 @@ export class SharedTreeFactory implements IChannelFactory {
     get type(): string;
 }
 
-// Warning: (ae-forgotten-export) The symbol "SerializationHelpers" needs to be exported by the entry point index.d.ts
-//
 // @public
 export type SharedTreeSummarizer = (editLog: OrderedEditSet, currentView: Snapshot, serializationHelpers: SerializationHelpers) => SharedTreeSummary;
 
@@ -457,7 +471,6 @@ export type SharedTreeSummarizer = (editLog: OrderedEditSet, currentView: Snapsh
 export interface SharedTreeSummary {
     // (undocumented)
     readonly currentTree: ChangeNode;
-    // Warning: (ae-forgotten-export) The symbol "SerializedEditLogSummary" needs to be exported by the entry point index.d.ts
     readonly editHistory?: SerializedEditLogSummary;
     // (undocumented)
     readonly sequencedEdits?: readonly Edit[];

@@ -48,6 +48,7 @@ export interface OrderedEditSet {
 
 	/**
 	 * @returns the list of edits that do not have associated blob handles.
+	 * @internal
 	 */
 	getEditLogSummary(): EditLogSummary;
 
@@ -365,6 +366,7 @@ export class EditLog implements OrderedEditSet {
 
 	/**
 	 * Returns information about the edit log.
+	 * @internal
 	 */
 	public getEditLogSummary(): EditLogSummary {
 		// TODO:#49901: When writing format version 0.1.0, change to prefer sending the handle when not undefined.

@@ -60,6 +60,7 @@ export interface SharedTreeSummary {
 
 /**
  * A serialized version of an edit log summary.
+ * @public
  */
 export interface SerializedEditLogSummary {
 	/**
@@ -73,6 +74,10 @@ export interface SerializedEditLogSummary {
 	readonly editIds: readonly EditId[];
 }
 
+/**
+ * Helpers used to serialize summary fields.
+ * @public
+ */
 export interface SerializationHelpers {
 	serializeHandle: (handle: IFluidHandle<ArrayBufferLike>) => ISerializedHandle;
 }
