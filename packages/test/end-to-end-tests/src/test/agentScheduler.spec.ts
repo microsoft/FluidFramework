@@ -10,7 +10,7 @@ import { taskSchedulerId } from "@fluidframework/container-runtime";
 import { IAgentScheduler } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { generateTest, ITestObjectProvider, TestDataObject } from "./compatUtils";
-import * as old from "./oldVersion";
+import * as oldTypes from "./oldVersionTypes";
 
 const tests = (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
@@ -90,8 +90,8 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     });
 
     describe("Multiple clients", () => {
-        let container1: IContainer | old.IContainer;
-        let container2: IContainer | old.IContainer;
+        let container1: IContainer | oldTypes.IContainer;
+        let container2: IContainer | oldTypes.IContainer;
         let scheduler1: IAgentScheduler;
         let scheduler2: IAgentScheduler;
 
