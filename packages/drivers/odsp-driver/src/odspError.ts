@@ -9,6 +9,17 @@ import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
 
 const nullToUndefined = (a: string | null) => a ?? undefined;
 
+function numberFromHeader(header: string | null): number | undefined {
+    if (header === null) {
+        return undefined;
+    }
+    const n = Number(header);
+    if (Number.isNaN(n)) {
+        return undefined;
+    }
+    return n;
+}
+
 /**
  * Throws network error - an object with a bunch of network related properties
  */
@@ -22,7 +33,7 @@ export function throwOdspNetworkError(
     const networkError = createOdspNetworkError(
         response ? `${errorMessage} (${response.statusText})` : errorMessage,
         statusCode,
-        undefined /* retryAfterSeconds */,
+        response ? numberFromHeader(response.headers.get("retry-after")) : undefined, // seconds
         claims);
 
     const errorAsAny = networkError as any;
