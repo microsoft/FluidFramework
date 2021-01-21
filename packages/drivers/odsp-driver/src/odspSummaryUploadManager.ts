@@ -370,12 +370,13 @@ export class OdspSummaryUploadManager {
                             currentPath,
                             true);
                         value = result.snapshotTree;
+                        unreferenced = summaryTreeToExpand.unreferenced;
                         reusedBlobs += result.reusedBlobs;
                         blobs += result.blobs;
                     } else {
                         // Ideally we should not come here as we should have found it in cache. But in order to successfully upload the summary
                         // we are just logging the event. Once we make sure that we don't have any telemetry for this, we would remove this.
-                        this.logger.sendTelemetryEvent({ eventName: "SummaryTreeHandleCacheMiss", parentHandle, handlePath: pathKey });
+                        this.logger.sendErrorEvent({ eventName: "SummaryTreeHandleCacheMiss", parentHandle, handlePath: pathKey });
                         id = `${parentHandle}/${pathKey}`;
                     }
                     break;
@@ -391,16 +392,17 @@ export class OdspSummaryUploadManager {
 
             const baseEntry: ISnapshotTreeBaseEntry = {
                 path: encodeURIComponent(key),
-                type: getGitType(summaryObject) === "attachment" ? "blob" : getGitType(summaryObject),
+                type: getGitType(summaryObject),
             };
 
             let entry: SnapshotTreeEntry;
 
             if (value) {
+                assert(id === undefined);
                 entry = {
-                    ...baseEntry,
-                    id,
                     value,
+                    ...baseEntry,
+                    unreferenced,
                 };
             } else if (id) {
                 entry = {
