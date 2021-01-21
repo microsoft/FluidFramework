@@ -115,6 +115,14 @@ export const editsPerChunk = 100;
 const loadedChunkCacheSize = Number.POSITIVE_INFINITY;
 
 /**
+ * Event fired when an edit is added to an `EditLog`.
+ * @param edit - The edit that was added to the log
+ * @param isLocal - true iff this edit was generated locally
+ * @internal
+ */
+export type EditAddedHandler = (edit: Edit, isLocal: boolean) => void;
+
+/**
  * The edit history log for SharedTree.
  * Contains only completed edits (no in-progress edits).
  * Ordered first by locality (acked or local), then by time of insertion.
@@ -123,7 +131,6 @@ const loadedChunkCacheSize = Number.POSITIVE_INFINITY;
  */
 export class EditLog implements OrderedEditSet {
 	private localEditSequence = 0;
-	private version = 0;
 
 	private readonly editIds: EditId[];
 	private readonly editChunks: editChunk[];
@@ -133,6 +140,7 @@ export class EditLog implements OrderedEditSet {
 	private readonly maximumEvictedIndex: number;
 
 	private readonly allEditIds: Map<EditId, OrderedEditId> = new Map();
+	private readonly editAddedHandlers: EditAddedHandler[] = [];
 
 	/**
 	 * Construct an `EditLog` using the given options.
@@ -156,10 +164,10 @@ export class EditLog implements OrderedEditSet {
 	}
 
 	/**
-	 * Get a value which can be compared with === to determine if a log has not changed.
+	 * Registers a handler for when an edit is added to this `EditLog`.
 	 */
-	public versionIdentifier(): unknown {
-		return this.version;
+	public registerEditAddedHandler(handler: EditAddedHandler): void {
+		this.editAddedHandlers.push(handler);
 	}
 
 	/**
@@ -302,7 +310,6 @@ export class EditLog implements OrderedEditSet {
 	 * If the id of the supplied edit matches a local edit already present in the log, the local edit will be replaced.
 	 */
 	public addSequencedEdit(edit: Edit): void {
-		this.version++;
 		const { id, editWithoutId } = separateEditAndId(edit);
 		if (this.editChunks.length === 0) {
 			this.editChunks.push({ edits: [editWithoutId] });
@@ -329,6 +336,7 @@ export class EditLog implements OrderedEditSet {
 		this.editIds.push(id);
 		const sequencedEditId: SequencedOrderedEditId = { index: this.numberOfSequencedEdits - 1, isLocal: false };
 		this.allEditIds.set(id, sequencedEditId);
+		this.emitAdd(edit, false);
 	}
 
 	/**
@@ -336,10 +344,16 @@ export class EditLog implements OrderedEditSet {
 	 * Duplicate edits are ignored.
 	 */
 	public addLocalEdit(edit: Edit): void {
-		this.version++;
 		this.localEdits.push(edit);
 		const localEditId: LocalOrderedEditId = { localSequence: this.localEditSequence++, isLocal: true };
 		this.allEditIds.set(edit.id, localEditId);
+		this.emitAdd(edit, true);
+	}
+
+	private emitAdd(editAdded: Edit, isLocal: boolean): void {
+		for (const handler of this.editAddedHandlers) {
+			handler(editAdded, isLocal);
+		}
 	}
 
 	/**

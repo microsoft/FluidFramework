@@ -16,6 +16,7 @@ import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISerializedHandle } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
@@ -159,6 +160,11 @@ export interface Edit extends EditBase {
     readonly id: EditId;
 }
 
+// Warning: (ae-internal-missing-underscore) The name "EditAddedHandler" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export type EditAddedHandler = (edit: Edit, isLocal: boolean) => void;
+
 // @public
 export type EditId = UuidString & {
     readonly EditId: '56897beb-53e4-4e66-85da-4bf5cd5d0d49';
@@ -194,10 +200,10 @@ export class EditLog implements OrderedEditSet {
     get numberOfSequencedEdits(): number;
     // (undocumented)
     processEditChunkHandle(chunkHandle: IFluidHandle<ArrayBufferLike>, chunkIndex: number): void;
+    registerEditAddedHandler(handler: EditAddedHandler): void;
     sequenceLocalEdits(): void;
     // (undocumented)
     tryGetEdit(editId: EditId): Promise<Edit | undefined>;
-    versionIdentifier(): unknown;
 }
 
 // Warning: (ae-internal-missing-underscore) The name "EditLogSummary" should be prefixed with an underscore because the declaration is marked as @internal
@@ -383,6 +389,8 @@ export class SharedTree extends SharedObject {
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // @internal
     loadSummary(summary: SharedTreeSummary): void;
+    // (undocumented)
+    protected readonly logger: ITelemetryLogger;
     // @internal
     logViewer: LogViewer;
     // (undocumented)
