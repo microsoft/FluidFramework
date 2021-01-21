@@ -12,13 +12,11 @@ import {
     fromUtf8ToBase64,
     IsoBuffer,
     performance,
-    unreachableCase,
 } from "@fluidframework/common-utils";
 import {
     PerformanceEvent,
     TelemetryLogger,
 } from "@fluidframework/telemetry-utils";
-import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import {
     ISummaryContext,
