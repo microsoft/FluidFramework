@@ -232,7 +232,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
             "Component blob should be deduped");
     });
 
-    it("Should dedup correct blobs(with handle expansion)", async () => {
+    it("Should dedup correct blobs(with handle expansion)(1 time)", async () => {
         const rootBlob: api.ISummaryBlob = {
             type: api.SummaryType.Blob,
             content: JSON.stringify("root"),
@@ -298,11 +298,88 @@ describe("Odsp Summary Upload Manager Tests", () => {
             true,
         );
         const serializedTree = JSON.stringify(snapshotTree);
-        assert.strictEqual(reusedBlobs, 3, "2 reused blobs should be there");
+        assert.strictEqual(reusedBlobs, 3, "3 reused blobs should be there");
         assert.strictEqual(blobs, 1, "1 blob(.app/default2/header) is not deduped as content does not match");
         assert(serializedTree.includes("\"id\":\"ackHandle/.app/default/header/root\""),
             "Root blob should be deduped");
         assert(serializedTree.includes("\"id\":\"ackHandle/.app/default/header/component\""),
+            "Component blob should be deduped");
+    });
+
+    it("Should dedup correct blobs(with handle expansion)(Multiple times)", async () => {
+        const rootBlob: api.ISummaryBlob = {
+            type: api.SummaryType.Blob,
+            content: JSON.stringify("root"),
+        };
+        const componentBlob: api.ISummaryBlob = {
+            type: api.SummaryType.Blob,
+            content: JSON.stringify("component"),
+        };
+
+        const appSummary: api.ISummaryTree = {
+            type: api.SummaryType.Tree,
+            tree: {
+                default: {
+                    type: api.SummaryType.Tree,
+                    tree: {
+                        header: {
+                            type: api.SummaryType.Tree,
+                            tree: {
+                                component: componentBlob,
+                                root: rootBlob,
+                            },
+                        },
+                    },
+                },
+            },
+        };
+
+        const blobTreeDedupCaches: IDedupCaches = {
+            blobShaToPath: new Map(),
+            pathToBlobSha: new Map(),
+            treesPathToTree: new Map(),
+        };
+        await odspSummaryUploadManager["convertSummaryToSnapshotTree"](
+            undefined,
+            cloneDeep(appSummary),
+            blobTreeDedupCaches,
+            ".app",
+            true,
+        );
+
+        appSummary.tree.default = {
+            type: api.SummaryType.Handle,
+            handle: "default",
+            handleType: api.SummaryType.Tree,
+        };
+
+        odspSummaryUploadManager["blobTreeDedupCaches"] = blobTreeDedupCaches;
+        const result1 = await odspSummaryUploadManager["convertSummaryToSnapshotTree"](
+            "ackHandle",
+            appSummary,
+            blobTreeDedupCaches,
+            ".app",
+            true,
+        );
+
+        const result2 = await odspSummaryUploadManager["convertSummaryToSnapshotTree"](
+            "ackHandle2",
+            appSummary,
+            blobTreeDedupCaches,
+            ".app",
+            true,
+        );
+
+        const serializedTree = JSON.stringify(result2.snapshotTree);
+        assert.strictEqual(result1.reusedBlobs, result2.reusedBlobs,
+            "Reused blobs should be same as same tree was expanded!!");
+        assert.strictEqual(result2.reusedBlobs, 2, "2 reused blobs should be there");
+        assert.strictEqual(result1.blobs, result2.blobs, "Blobs should be same as same tree was expanded!!");
+        assert.strictEqual(result1.blobs, 0, "No new blobs should be there");
+
+        assert(serializedTree.includes("\"id\":\"ackHandle2/.app/default/header/root\""),
+            "Root blob should be deduped");
+        assert(serializedTree.includes("\"id\":\"ackHandle2/.app/default/header/component\""),
             "Component blob should be deduped");
     });
 });
