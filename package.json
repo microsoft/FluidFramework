@@ -34,30 +34,30 @@
 	"dependencies": {
 		"@fluidframework/common-definitions": "^0.19.1",
 		"@fluidframework/common-utils": "^0.26.0",
-		"@fluidframework/container-definitions": "^0.32.1",
-		"@fluidframework/datastore-definitions": "^0.32.1",
+		"@fluidframework/container-definitions": "^0.32.2",
+		"@fluidframework/datastore-definitions": "^0.32.2",
 		"@fluidframework/protocol-definitions": "^0.1017.1",
-		"@fluidframework/shared-object-base": "^0.32.1",
-		"@fluidframework/telemetry-utils": "^0.32.1",
-		"buffer": "^6.0.2",
+		"@fluidframework/shared-object-base": "^0.32.2",
+		"@fluidframework/telemetry-utils": "^0.32.2",
+		"buffer": "^6.0.3",
 		"immutable": "^4.0.0-rc.12",
 		"sorted-btree": "^1.4.0",
-		"uuid": "^8.3.1"
+		"uuid": "^8.3.2"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^0.19.2",
 		"@fluidframework/eslint-config-fluid": "^0.21.0",
-		"@fluidframework/test-runtime-utils": "^0.32.1",
-		"@microsoft/api-extractor": "^7.12.1",
-		"@typescript-eslint/parser": "^4.7.0",
+		"@fluidframework/test-runtime-utils": "^0.32.2",
+		"@microsoft/api-extractor": "^7.13.0",
+		"@typescript-eslint/parser": "^4.14.0",
 		"chai": "^4.2.0",
-		"concurrently": "^5.2.0",
+		"concurrently": "^5.3.0",
 		"easy-table": "^1.1.1",
 		"env-cmd": "^10.1.0",
 		"mocha": "^8.2.1",
 		"nyc": "^15.1.0",
 		"prettier": "^2.2.1",
-		"rimraf": "^2.6.2"
+		"rimraf": "^2.7.1"
 	},
 	"publishConfig": {
 		"registry": "https://pkgs.dev.azure.com/intentional/_packaging/intentional-npm/npm/registry/"
