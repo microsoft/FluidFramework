@@ -105,9 +105,12 @@ export class OdspSummaryUploadManager {
                     IsoBuffer.from(blobValue) :
                         IsoBuffer.from(blobValue.content, blobValue.encoding ?? "utf-8"),
             );
-            // We are setting the content as empty because we won't use it anywhere.
+            // We are setting the content as undefined because we won't use it anywhere.
             // Instead we will use the hash of the blob from pathToBlobSha cache.
-            summaryTree.tree[key].type = api.SummaryType.Blob;
+            summaryTree.tree[key] = {
+                type: api.SummaryType.Blob,
+                content: "",
+            };
             (summaryTree.tree[key] as any).content = undefined;
 
             // fullBlobPath does not start with "/"

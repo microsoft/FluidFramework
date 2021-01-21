@@ -49,7 +49,6 @@ describe("Odsp Summary Upload Manager Tests", () => {
                 blob1: "blob1",
             },
             commits: {},
-            id: "id1",
             trees: {},
         };
 
@@ -58,12 +57,10 @@ describe("Odsp Summary Upload Manager Tests", () => {
                 blob2: "blob2",
             },
             commits: {},
-            id: "id2",
             trees: {
                 tree1: {
                     blobs: { blob3: "blob2" },
                     commits: {},
-                    id: "id3",
                     trees: {},
                 },
             },
@@ -74,7 +71,6 @@ describe("Odsp Summary Upload Manager Tests", () => {
                 blob5: "blob5",
             },
             commits: {},
-            id: "id4",
             trees: {
                 ".protocol": protocolTree,
                 "default": defaultTree,
