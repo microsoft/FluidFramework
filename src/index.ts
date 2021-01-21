@@ -18,7 +18,7 @@
 // API Exports
 
 export { initialTree } from './InitialTree';
-export { SharedTree, SharedTreeEvent, SharedTreeEditor } from './SharedTree';
+export { BlobId, SharedTree, SharedTreeEvent, SharedTreeEditor } from './SharedTree';
 export { Delta } from './Forest';
 export { SharedTreeSummary, SharedTreeSummarizer } from './Summary';
 export { sharedTreeAssertionErrorType } from './Common';
