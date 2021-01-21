@@ -14,7 +14,7 @@ import {
     SummaryType,
     SummaryObject,
 } from "@fluidframework/protocol-definitions";
-
+import { unreachableCase } from "@fluidframework/common-utils";
 /**
  * Take a summary object and returns its git mode.
  *
@@ -25,13 +25,12 @@ export function getGitMode(value: SummaryObject): string {
     const type = value.type === SummaryType.Handle ? value.handleType : value.type;
     switch (type) {
         case SummaryType.Blob:
+        case SummaryType.Attachment:
             return FileMode.File;
-        case SummaryType.Commit:
-            return FileMode.Commit;
         case SummaryType.Tree:
             return FileMode.Directory;
         default:
-            throw new Error();
+            unreachableCase(type, `Unknown type: ${type}`);
     }
 }
 
@@ -41,20 +40,17 @@ export function getGitMode(value: SummaryObject): string {
  * @param value - summary object
  * @returns the type of summary object
  */
-export function getGitType(value: SummaryObject): string {
+export function getGitType(value: SummaryObject): "blob" | "tree" {
     const type = value.type === SummaryType.Handle ? value.handleType : value.type;
 
     switch (type) {
         case SummaryType.Blob:
+        case SummaryType.Attachment:
             return "blob";
-        case SummaryType.Commit:
-            return "commit";
         case SummaryType.Tree:
             return "tree";
-        case SummaryType.Attachment:
-            return "attachment";
         default:
-            throw new Error();
+            unreachableCase(type, `Unknown type: ${type}`);
     }
 }
 

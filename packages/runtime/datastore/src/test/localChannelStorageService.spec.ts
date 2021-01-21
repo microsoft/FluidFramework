@@ -5,14 +5,12 @@
 
 import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluidframework/common-utils";
-import { ITree, FileMode } from "@fluidframework/protocol-definitions";
+import { ITree, FileMode, TreeEntry } from "@fluidframework/protocol-definitions";
 import { LocalChannelStorageService } from "../localChannelStorageService";
 
 describe("LocalChannelStorageService", () => {
     it("Empty Tree", async () => {
         const tree: ITree = {
-            // eslint-disable-next-line no-null/no-null
-            id: null,
             entries: [],
         };
 
@@ -29,13 +27,11 @@ describe("LocalChannelStorageService", () => {
 
     it("Top Level Blob", async () => {
         const tree: ITree = {
-            // eslint-disable-next-line no-null/no-null
-            id: null,
             entries: [
                 {
                     mode: FileMode.File,
                     path: "foo",
-                    type: "Blob",
+                    type: TreeEntry.Blob,
                     value: {
                         encoding: "utf8",
                         contents: "bar",
@@ -54,21 +50,17 @@ describe("LocalChannelStorageService", () => {
 
     it("Nested Blob", async () => {
         const tree: ITree = {
-            // eslint-disable-next-line no-null/no-null
-            id: null,
             entries: [
                 {
                     mode: FileMode.File,
                     path: "nested",
-                    type: "Tree",
+                    type: TreeEntry.Tree,
                     value: {
-                        // eslint-disable-next-line no-null/no-null
-                        id: null,
                         entries: [
                             {
                                 mode: FileMode.File,
                                 path: "foo",
-                                type: "Blob",
+                                type: TreeEntry.Blob,
                                 value: {
                                     encoding: "utf8",
                                     contents: "bar",

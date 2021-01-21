@@ -24,12 +24,12 @@ export class MockStorage implements IChannelStorageService {
                     if (entry.type === "Blob") {
                         // eslint-disable-next-line prefer-rest-params
                         assert(paths.length === 1, JSON.stringify({ ...arguments }));
-                        const blob = entry.value as IBlob;
+                        const blob = entry.value;
                         return IsoBuffer.from(blob.contents, blob.encoding)
                             .toString("base64");
                     }
                     if (entry.type === "Tree") {
-                        return MockStorage.readCore(entry.value as ITree, paths.slice(1));
+                        return MockStorage.readCore(entry.value, paths.slice(1));
                     }
                     return undefined;
                 }
@@ -45,10 +45,10 @@ export class MockStorage implements IChannelStorageService {
                     if (entry.type === "Blob") {
                         // eslint-disable-next-line prefer-rest-params
                         assert(paths.length === 1, JSON.stringify({ ...arguments }));
-                        return entry.value as IBlob;
+                        return entry.value;
                     }
                     if (entry.type === "Tree") {
-                        return MockStorage.readBlobCore(entry.value as ITree, paths.slice(1));
+                        return MockStorage.readBlobCore(entry.value, paths.slice(1));
                     }
                     return undefined;
                 }
