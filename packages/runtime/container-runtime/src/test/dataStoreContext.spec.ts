@@ -301,19 +301,6 @@ describe("Data Store Context Tests", () => {
                 0);
             summarizerNode.startSummary(0, new TelemetryNullLogger());
 
-            createSummarizerNodeFn = (
-                summarizeInternal: SummarizeInternalFn,
-                getGCDataFn: () => Promise<IGarbageCollectionData>,
-                getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
-            ) => summarizerNode.createChild(
-                summarizeInternal,
-                dataStoreId,
-                { type: CreateSummarizerNodeSource.FromSummary },
-                undefined,
-                getGCDataFn,
-                getInitialGCSummaryDetailsFn,
-            );
-
             const factory: { [key: string]: any } = {};
             factory.IFluidDataStoreFactory = factory;
             factory.instantiateDataStore =
@@ -331,6 +318,22 @@ describe("Data Store Context Tests", () => {
         });
 
         describe("Initialization", () => {
+            beforeEach(() => {
+                createSummarizerNodeFn = (
+                    summarizeInternal: SummarizeInternalFn,
+                    getGCDataFn: () => Promise<IGarbageCollectionData>,
+                    getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
+                ) => summarizerNode.createChild(
+                    summarizeInternal,
+                    dataStoreId,
+                    { type: CreateSummarizerNodeSource.FromSummary },
+                    // Disable GC for initialization tests.
+                    { gcDisabled: true },
+                    getGCDataFn,
+                    getInitialGCSummaryDetailsFn,
+                );
+            });
+
             it("can correctly initialize and generate attributes", async () => {
                 dataStoreAttributes = {
                     pkg: JSON.stringify(["TestDataStore1"]),
@@ -340,7 +343,6 @@ describe("Data Store Context Tests", () => {
                 const buffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
                 const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
                 const snapshotTree: ISnapshotTree = {
-                    id: "dummy",
                     blobs: { [dataStoreAttributesBlobName]: "fluidDataStoreAttributes" },
                     commits: {},
                     trees: {},
@@ -357,6 +359,8 @@ describe("Data Store Context Tests", () => {
 
                 const isRootNode = await remotedDataStoreContext.isRoot();
                 assert.strictEqual(isRootNode, true, "The data store should be root.");
+
+                remotedDataStoreContext.updateUsedRoutes([""]);
 
                 const summarizeResult = await remotedDataStoreContext.summarize(true /* fullTree */);
                 assert(summarizeResult.summary.type === SummaryType.Tree,
@@ -383,7 +387,6 @@ describe("Data Store Context Tests", () => {
                 const buffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
                 const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
                 const snapshotTree: ISnapshotTree = {
-                    id: "dummy",
                     blobs: { [dataStoreAttributesBlobName]: "fluidDataStoreAttributes" },
                     commits: {},
                     trees: {},
@@ -421,6 +424,21 @@ describe("Data Store Context Tests", () => {
         });
 
         describe("Garbage Collection", () => {
+            beforeEach(() => {
+                createSummarizerNodeFn = (
+                    summarizeInternal: SummarizeInternalFn,
+                    getGCDataFn: () => Promise<IGarbageCollectionData>,
+                    getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
+                ) => summarizerNode.createChild(
+                    summarizeInternal,
+                    dataStoreId,
+                    { type: CreateSummarizerNodeSource.FromSummary },
+                    undefined,
+                    getGCDataFn,
+                    getInitialGCSummaryDetailsFn,
+                );
+            });
+
             it("can generate GC data without GC details in initial summary", async () => {
                 dataStoreAttributes = {
                     pkg: "TestDataStore1",
@@ -431,7 +449,6 @@ describe("Data Store Context Tests", () => {
                     ["fluidDataStoreAttributes", attributesBuffer.toString("base64")],
                 ]);
                 const snapshotTree: ISnapshotTree = {
-                    id: "dummy",
                     blobs: {
                         [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
                     },
@@ -450,6 +467,9 @@ describe("Data Store Context Tests", () => {
 
                 const gcData = await remotedDataStoreContext.getGCData();
                 assert.deepStrictEqual(gcData, emptyGCData, "GC data from getGCData should be empty.");
+
+                // Update used routes before calling summarize. This is a requirement for GC.
+                remotedDataStoreContext.updateUsedRoutes([""]);
 
                 const summarizeResult = await remotedDataStoreContext.summarize(true /* fullTree */);
                 assert(summarizeResult.summary.type === SummaryType.Tree,
@@ -476,7 +496,6 @@ describe("Data Store Context Tests", () => {
                     ["gcDetails", gcDetailsBuffer.toString("base64")],
                 ]);
                 const snapshotTree: ISnapshotTree = {
-                    id: "dummy",
                     blobs: {
                         [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
                         [gcBlobKey]: "gcDetails",
@@ -496,6 +515,9 @@ describe("Data Store Context Tests", () => {
 
                 const gcData = await remotedDataStoreContext.getGCData();
                 assert.deepStrictEqual(gcData, gcDetails.gcData, "GC data from getGCData is incorrect.");
+
+                // Update used routes before calling summarize. This is a requirement for GC.
+                remotedDataStoreContext.updateUsedRoutes([""]);
 
                 const summarizeResult = await remotedDataStoreContext.summarize(true /* fullTree */);
                 assert(summarizeResult.summary.type === SummaryType.Tree,
@@ -529,7 +551,6 @@ describe("Data Store Context Tests", () => {
                     ["gcDetails", gcDetailsBuffer.toString("base64")],
                 ]);
                 const snapshotTree: ISnapshotTree = {
-                    id: "dummy",
                     blobs: {
                         [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
                         [gcBlobKey]: "gcDetails",
@@ -583,6 +604,9 @@ describe("Data Store Context Tests", () => {
                     scope,
                     createSummarizerNodeFn,
                 );
+
+                // Update used routes before calling summarize. This is a requirement for GC.
+                remotedDataStoreContext.updateUsedRoutes([""]);
 
                 // The data in the store has not changed since last summary and the reference used routes (from initial
                 // used routes) and current used routes (default) are both empty. So, summarize should return a handle.

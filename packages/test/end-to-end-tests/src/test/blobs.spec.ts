@@ -18,7 +18,11 @@ const testContainerConfig: ITestContainerConfig = {
     registry: [["sharedString", SharedString.getFactory()]],
 };
 
-const tests = (args: ITestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    beforeEach(()=>{
+        args = argsFactory();
+    });
     it("attach sends an op", async function() {
         const container = await args.makeTestContainer(testContainerConfig);
 

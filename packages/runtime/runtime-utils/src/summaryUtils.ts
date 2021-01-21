@@ -16,10 +16,8 @@ import {
     SummaryType,
     ISummaryTree,
     SummaryObject,
-    IBlob,
     ISummaryBlob,
     TreeEntry,
-    IAttachment,
     ITreeEntry,
     ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
@@ -170,7 +168,7 @@ export function convertToSummaryTreeWithStats(
     for (const entry of snapshot.entries) {
         switch (entry.type) {
             case TreeEntry.Blob: {
-                const blob = entry.value as IBlob;
+                const blob = entry.value;
                 let content: string | Uint8Array;
                 if (blob.encoding === "base64") {
                     content = IsoBuffer.from(blob.contents, "base64");
@@ -183,7 +181,7 @@ export function convertToSummaryTreeWithStats(
 
             case TreeEntry.Tree: {
                 const subtree = convertToSummaryTree(
-                    entry.value as ITree,
+                    entry.value,
                     fullTree);
                 builder.addWithStats(entry.path, subtree);
 
@@ -191,7 +189,7 @@ export function convertToSummaryTreeWithStats(
             }
 
             case TreeEntry.Attachment: {
-                const id = (entry.value as IAttachment).id;
+                const id = entry.value.id;
                 builder.addAttachment(id);
 
                 break;
@@ -332,7 +330,5 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
     }
     return {
         entries,
-        // eslint-disable-next-line no-null/no-null
-        id: null,
     };
 }

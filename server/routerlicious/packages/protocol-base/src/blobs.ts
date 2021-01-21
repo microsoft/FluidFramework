@@ -8,9 +8,8 @@ import {
     FileMode,
     IBlob,
     IAttachment,
-    ISnapshotTree,
+    ISnapshotTreeEx,
     ITree,
-    ITreeEntry,
     TreeEntry,
     SummaryType,
     SummaryObject,
@@ -64,9 +63,9 @@ export function getGitType(value: SummaryObject): "blob" | "tree" {
  */
 export function buildHierarchy(
     flatTree: git.ITree,
-    blobsShaToPathCache: Map<string, string> = new Map<string, string>()): ISnapshotTree {
-    const lookup: { [path: string]: ISnapshotTree } = {};
-    const root: ISnapshotTree = { id: flatTree.sha, blobs: {}, commits: {}, trees: {} };
+    blobsShaToPathCache: Map<string, string> = new Map<string, string>()): ISnapshotTreeEx {
+    const lookup: { [path: string]: ISnapshotTreeEx } = {};
+    const root: ISnapshotTreeEx = { id: flatTree.sha, blobs: {}, commits: {}, trees: {} };
     lookup[""] = root;
 
     for (const entry of flatTree.tree) {
@@ -96,7 +95,7 @@ export function buildHierarchy(
 /**
  * Basic implementation of a blob ITreeEntry
  */
-export class BlobTreeEntry implements ITreeEntry {
+export class BlobTreeEntry {
     public readonly mode = FileMode.File;
     public readonly type = TreeEntry.Blob;
     public readonly value: IBlob;
@@ -115,7 +114,7 @@ export class BlobTreeEntry implements ITreeEntry {
 /**
  * Basic implementation of a commit ITreeEntry
  */
-export class CommitTreeEntry implements ITreeEntry {
+export class CommitTreeEntry {
     public readonly mode = FileMode.Commit;
     public readonly type = TreeEntry.Commit;
 
@@ -130,7 +129,7 @@ export class CommitTreeEntry implements ITreeEntry {
 /**
  * Basic implementation of a tree ITreeEntry
  */
-export class TreeTreeEntry implements ITreeEntry {
+export class TreeTreeEntry {
     public readonly mode = FileMode.Directory;
     public readonly type = TreeEntry.Tree;
 
@@ -145,7 +144,7 @@ export class TreeTreeEntry implements ITreeEntry {
 /**
  * Basic implementation of an attachment ITreeEntry
  */
-export class AttachmentTreeEntry implements ITreeEntry {
+export class AttachmentTreeEntry {
     public readonly mode = FileMode.File;
     public readonly type = TreeEntry.Attachment;
     public readonly value: IAttachment;

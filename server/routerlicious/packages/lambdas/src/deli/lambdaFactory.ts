@@ -222,7 +222,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
         const [serviceProtocolTree, lastSummaryTree] = await Promise.all([
             // eslint-disable-next-line no-null/no-null
-            gitManager.createTree({ entries: serviceProtocolEntries, id: null }),
+            gitManager.createTree({ entries: serviceProtocolEntries }),
             gitManager.getTree(lastCommit.tree.sha, false),
         ]);
 

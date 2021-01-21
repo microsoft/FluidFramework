@@ -217,8 +217,8 @@ export interface IContainerRuntimeOptions {
     // Delay before first attempt to spawn summarizing container
     initialSummarizerDelayMs?: number;
 
-    // Flag that enables running garbage collection to delete unused Fluid objects.
-    runGC?: boolean;
+    // Flag that will disable garbage collection if set to true.
+    disableGC?: boolean;
 
     // Override summary configurations
     summaryConfigOverrides?: Partial<ISummaryConfiguration>;
@@ -666,7 +666,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private readonly runtimeOptions: IContainerRuntimeOptions = {
             generateSummaries: true,
             enableWorker: false,
-            runGC: true,
         },
         private readonly containerScope: IFluidObject,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
@@ -706,10 +705,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // Must set to true to throw on any data stores failure that was too severe to be handled.
                 // We also are not decoding the base summaries at the root.
                 throwOnFailure: true,
+                // If GC is disabled, let the summarizer node know so that it does not track GC state.
+                gcDisabled: this.runtimeOptions.disableGC,
             },
         );
-        // Add self route (empty string) to used routes in the summarizer node as the runtime is always considered used.
-        this.summarizerNode.updateUsedRoutes([""]);
 
         this.dataStores = new DataStores(
             getSnapshotForDataStores(context.baseSnapshot, metadata.snapshotFormatVersion),
@@ -930,7 +929,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @deprecated - Use summarize to get summary of the container runtime.
      */
     public async snapshot(): Promise<ITree> {
-        const root: ITree = { entries: await this.dataStores.snapshot(), id: null };
+        const root: ITree = { entries: await this.dataStores.snapshot() };
 
         if (this.chunkMap.size > 0) {
             root.entries.push(new BlobTreeEntry(chunksBlobName, JSON.stringify([...this.chunkMap])));
@@ -1372,10 +1371,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { ...attemptData, reason: "disconnected" };
             }
 
-            if (this.runtimeOptions.runGC) {
+            if (!this.runtimeOptions.disableGC) {
                 // Get the container's GC data and run GC on the reference graph in it.
                 const gcData = await this.dataStores.getGCData();
                 const { referencedNodeIds } = runGarbageCollection(gcData.gcNodes, [ "/" ], this.logger);
+
+                // Update our summarizer node's used routes. Updating used routes in summarizer node before summarizing
+                // is required and asserted by the the summarizer node. We are the root and are always referenced, so
+                // the used routes is only self-route (empty string).
+                this.summarizerNode.updateUsedRoutes([""]);
 
                 // Remove this node's route ("/") and notify data stores of routes that are used in it.
                 const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });

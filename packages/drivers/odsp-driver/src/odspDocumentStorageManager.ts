@@ -20,8 +20,7 @@ import {
     PerformanceEvent,
     TelemetryLogger,
 } from "@fluidframework/telemetry-utils";
-import * as resources from "@fluidframework/gitresources";
-import { buildHierarchy, getGitType } from "@fluidframework/protocol-base";
+import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import {
     ISummaryContext,
@@ -63,23 +62,42 @@ import { EpochTracker, FetchType } from "./epochTracker";
 
 /* eslint-disable max-len */
 
-function convertOdspTree(tree: ITree) {
-    const gitTree: resources.ITree = {
-        sha: tree.id,
-        url: "",
-        tree: [],
-    };
-    for (const entry of tree.entries) {
-        gitTree.tree.push({
-            path: entry.path,
-            mode: "",
-            type: entry.type,
-            size: 0,
-            sha: entry.id,
-            url: "",
-        });
+/**
+ * Build a tree hierarchy base on a flat tree
+ *
+ * @param flatTree - a flat tree
+ * @param blobsShaToPathCache - Map with blobs sha as keys and values as path of the blob.
+ * @returns the hierarchical tree
+ */
+function buildHierarchy(
+    flatTree: ITree,
+    blobsShaToPathCache: Map<string, string> = new Map<string, string>()): api.ISnapshotTree {
+    const lookup: { [path: string]: api.ISnapshotTree } = {};
+    const root: api.ISnapshotTree = { blobs: {}, commits: {}, trees: {} };
+    lookup[""] = root;
+
+    for (const entry of flatTree.entries) {
+        const lastIndex = entry.path.lastIndexOf("/");
+        const entryPathDir = entry.path.slice(0, Math.max(0, lastIndex));
+        const entryPathBase = entry.path.slice(lastIndex + 1);
+
+        // ODSP snapshots are created breadth-first so we can assume we see tree nodes prior to their contents
+        const node = lookup[entryPathDir];
+
+        // Add in either the blob or tree
+        if (entry.type === "tree") {
+            const newTree = { id: entry.id, blobs: {}, commits: {}, trees: {} };
+            node.trees[decodeURIComponent(entryPathBase)] = newTree;
+            lookup[entry.path] = newTree;
+        } else if (entry.type === "blob") {
+            node.blobs[decodeURIComponent(entryPathBase)] = entry.id;
+            blobsShaToPathCache.set(entry.id, `/${entry.path}`);
+        } else if (entry.type === "commit") {
+            node.commits[decodeURIComponent(entryPathBase)] = entry.id;
+        }
     }
-    return gitTree;
+
+    return root;
 }
 
 // An implementation of Promise.race that gives you the winner of the promise race
@@ -315,7 +333,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             return null;
         }
 
-        const hierarchicalTree = buildHierarchy(convertOdspTree(tree));
+        const hierarchicalTree = buildHierarchy(tree);
 
         // Decode commit paths
         const commits = {};
@@ -890,7 +908,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
             appTree = trees[1];
 
-            hierarchicalProtocolTree = buildHierarchy(convertOdspTree(protocolTree));
+            hierarchicalProtocolTree = buildHierarchy(protocolTree);
         } else {
             appTree = await this.readTree(appTreeId);
 
@@ -901,7 +919,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             throw new Error("Invalid app tree");
         }
 
-        const hierarchicalAppTree = buildHierarchy(convertOdspTree(appTree));
+        const hierarchicalAppTree = buildHierarchy(appTree);
 
         if (hierarchicalProtocolTree.blobs) {
             const attributesBlob = hierarchicalProtocolTree.blobs.attributes;
@@ -925,7 +943,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             commits: {
                 ...hierarchicalAppTree.commits,
             },
-            id: snapshotTreeId,
             trees: {
                 ".protocol": hierarchicalProtocolTree,
                 ...hierarchicalAppTree.trees,
@@ -1009,6 +1026,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             let id: string | undefined;
             let value: SnapshotTreeValue | undefined;
 
+            // Tracks if an entry is unreferenced. Currently, only tree entries can be marked as unreferenced. If the
+            // property is not present, the tree entry is considered referenced. If the property is present and is
+            // true (which is the only value it can have), the tree entry is considered unreferenced.
+            let unreferenced: true | undefined;
+
             switch (summaryObject.type) {
                 case api.SummaryType.Tree: {
                     const result = await this.convertSummaryToSnapshotTree(
@@ -1018,6 +1040,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         depth + 1,
                         `${path}/${key}`);
                     value = result.snapshotTree;
+                    unreferenced = summaryObject.unreferenced;
                     reusedBlobs += result.reusedBlobs;
                     blobs += result.blobs;
                     break;
@@ -1092,6 +1115,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 entry = {
                     value,
                     ...baseEntry,
+                    unreferenced,
                 };
             } else if (id) {
                 entry = {

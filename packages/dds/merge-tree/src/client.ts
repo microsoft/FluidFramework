@@ -852,7 +852,7 @@ export class Client {
     public resolveRemoteClientPosition(
         remoteClientPosition: number,
         remoteClientRefSeq: number,
-        remoteClientId: string): number {
+        remoteClientId: string): number | undefined {
         const shortRemoteClientId = this.getOrAddShortClientId(remoteClientId);
         return this.mergeTree.resolveRemoteClientPosition(
             remoteClientPosition,

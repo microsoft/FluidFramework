@@ -30,8 +30,8 @@ import {
     OpProcessingController,
     TestObjectProvider,
 } from "@fluidframework/test-utils";
-import { LocalServerTestDriver, TinyliciousTestDriver } from "@fluidframework/test-drivers";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import { LocalServerTestDriver, TinyliciousTestDriver } from "@fluidframework/test-drivers";
 import * as old from "./oldVersion";
 
 /* eslint-enable import/no-extraneous-dependencies */
@@ -185,124 +185,99 @@ function getOldDataStoreFactory(containerOptions?: ITestContainerConfig) {
 }
 
 export const generateLocalNonCompatTest = (
-    tests: (compatArgs: ITestObjectProvider) => void,
+    tests: (compatArgsFactory: () => ITestObjectProvider) => void,
     options: ITestOptions = {},
 ) => {
     describe("non-compat", () => {
-        // Run with all current versions
-        const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+        tests(() => {
+            // Run with all current versions
+            const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
             createRuntimeFactory(
                 TestDataObject.type,
                 getDataStoreFactory(containerOptions),
                 containerOptions?.runtimeOptions,
             );
+            const localDriver = LocalServerTestDriver.createWithOptions(options);
 
-        const localDriver = LocalServerTestDriver.createWithOptions(options);
-        const testObjectProvider = new TestObjectProvider(
-            localDriver,
-            runtimeFactory,
-        );
-
-        tests(testObjectProvider);
-
-        afterEach(async () => {
-            localDriver.reset(options);
-            testObjectProvider.reset();
+            return new TestObjectProvider(
+                localDriver,
+                runtimeFactory,
+            );
         });
     });
 };
 
 export const generateLocalCompatTest = (
-    tests: (compatArgs: ITestObjectProvider) => void,
+    tests: (compatArgsFactory: () => ITestObjectProvider) => void,
     options: ITestOptions = {},
 ) => {
     describe("compat - old loader, new runtime", function() {
-        const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+        tests(()=>{
+            const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
             createRuntimeFactory(
                 TestDataObject.type,
                 getDataStoreFactory(containerOptions),
                 containerOptions?.runtimeOptions,
             ) as any as old.IRuntimeFactory;
 
-        const testObjectProvider = new old.LocalTestObjectProvider(
-            runtimeFactory,
-            options.serviceConfiguration,
-        );
-
-        tests(testObjectProvider);
-
-        afterEach(async function() {
-            await testObjectProvider.reset();
+            return new old.LocalTestObjectProvider(
+                runtimeFactory,
+                options.serviceConfiguration,
+            );
         });
     });
 
     describe("compat - new loader, old runtime", function() {
-        const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+        tests(()=>{
+            const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
             createOldRuntimeFactory(
                 OldTestDataObject.type,
                 getOldDataStoreFactory(containerOptions),
                 containerOptions?.runtimeOptions,
             ) as any as IRuntimeFactory;
-
-        const driver = LocalServerTestDriver.createWithOptions(options);
-        const testObjectProvider = new TestObjectProvider<ITestContainerConfig>(
-            driver,
-            runtimeFactory,
-        );
-
-        tests(testObjectProvider);
-
-        afterEach(async function() {
-            driver.reset(options);
-            testObjectProvider.reset();
+            const driver = LocalServerTestDriver.createWithOptions(options);
+            return new TestObjectProvider(
+                driver,
+                runtimeFactory,
+            );
         });
     });
 
     describe("compat - new ContainerRuntime, old DataStoreRuntime", function() {
-        const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+        tests(()=>{
+            const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
             createRuntimeFactory(
                 OldTestDataObject.type,
                 getOldDataStoreFactory(containerOptions),
                 containerOptions?.runtimeOptions,
             );
-        const driver = LocalServerTestDriver.createWithOptions(options);
-        driver.reset(options);
-        const testObjectProvider = new TestObjectProvider(
-            driver,
-            runtimeFactory,
-        );
-
-        tests(testObjectProvider);
-
-        afterEach(async function() {
-            driver.reset(options);
-            testObjectProvider.reset();
+            const driver = LocalServerTestDriver.createWithOptions(options);
+            return new TestObjectProvider(
+                driver,
+                runtimeFactory,
+            );
         });
     });
 
     describe("compat - old ContainerRuntime, new DataStoreRuntime", function() {
-        const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+        tests(()=>{
+            const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
             createOldRuntimeFactory(
                 TestDataObject.type,
                 getDataStoreFactory(containerOptions),
                 containerOptions?.runtimeOptions,
             );
 
-        const testObjectProvider = new old.LocalTestObjectProvider(
-            runtimeFactory,
-            options.serviceConfiguration,
-        );
-
-        tests(testObjectProvider);
-
-        afterEach(async function() {
-            await testObjectProvider.reset();
+            return new old.LocalTestObjectProvider(
+                runtimeFactory,
+                options.serviceConfiguration,
+            );
         });
     });
 };
 
 export const generateLocalTest = (
-    tests: (compatArgs: ITestObjectProvider) => void,
+    tests: (compatArgsFactory: () => ITestObjectProvider) => void,
     options: ITestOptions = {},
 ) => {
     describe("local server", () => {
@@ -312,35 +287,30 @@ export const generateLocalTest = (
 };
 
 const generateTinyliciousTest = (
-    tests: (compatArgs: ITestObjectProvider) => void,
+    tests: (compatArgsFactory: () => ITestObjectProvider) => void,
     options: ITestOptions,
 ) => {
     if (options.tinylicious) {
         describe("tinylicious", () => {
-            // Run with all current versions
-            const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+            tests(()=>{
+                // Run with all current versions
+                const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
                 createRuntimeFactory(
                     TestDataObject.type,
                     getDataStoreFactory(containerOptions),
                     containerOptions?.runtimeOptions,
                 );
 
-            const testObjectProvider = new TestObjectProvider(
-                new TinyliciousTestDriver(),
-                runtimeFactory,
-            );
-
-            tests(testObjectProvider);
-
-            afterEach(async () => {
-                testObjectProvider.reset();
+                return new TestObjectProvider(
+                    new TinyliciousTestDriver(),
+                    runtimeFactory);
             });
         });
     }
 };
 
 export const generateTest = (
-    tests: (compatArgs: ITestObjectProvider) => void,
+    tests: (compatArgsFactory: () => ITestObjectProvider) => void,
     options: ITestOptions = {},
 ) => {
     generateLocalTest(tests, options);
