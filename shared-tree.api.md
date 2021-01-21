@@ -29,6 +29,11 @@ export class BasicCheckout extends Checkout {
     waitForPendingUpdates(): Promise<void>;
 }
 
+// Warning: (ae-internal-missing-underscore) The name "BlobId" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export type BlobId = string;
+
 // @public
 export interface Build {
     // (undocumented)
@@ -345,8 +350,6 @@ export class SharedTree extends SharedObject {
     logViewer: LogViewer;
     // (undocumented)
     protected onDisconnect(): void;
-    // Warning: (ae-forgotten-export) The symbol "BlobId" needs to be exported by the entry point index.d.ts
-    //
     // @internal
     payloadCache: Map<BlobId, Payload>;
     // (undocumented)
