@@ -153,6 +153,7 @@
                     "@fluidframework/agent-scheduler"
                 ],
                 "dirs": [
+                    "experimental/dds/",
                     "packages/dds/",
                     "packages/runtime/"
                 ],
