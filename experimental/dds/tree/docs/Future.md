@@ -24,7 +24,7 @@ Rather than drop edits which cause a conflict, SharedTree could expose this, giv
 # Editing History
 
 The history is a sequence of Edits, but it is append only.
-Thus a logical edit of the history is actually done by creating a new Edit which modifies the current version of the document to be that which would have been produced by the alternative history.
+Thus, a logical edit of the history is done by creating a new Edit which modifies the current version of the document to be that which would have been produced by the alternative history.
 
 This functionality will be provided by a library (yet to be written) which uses SharedTree's history inspection and Editing APIs to create history modifying Edits, including metadata necessary to properly inspect and merge them with future history modifying Edits.
 This approach does not require extra functionality in SharedTree's core.
