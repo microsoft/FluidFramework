@@ -6,7 +6,7 @@
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, hashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { assert, hashFile, IsoBuffer, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
@@ -269,8 +269,9 @@ export class OdspSummaryUploadManager {
         expanded: boolean = false,
     ) {
         const snapshotTree: ISnapshotTree = {
-            entries: [],
-        }!;
+            type: "tree",
+            entries: [] as SnapshotTreeEntry[],
+        };
 
         let reusedBlobs = 0;
         let blobs = 0;
@@ -281,6 +282,11 @@ export class OdspSummaryUploadManager {
 
             let id: string | undefined;
             let value: SnapshotTreeValue | undefined;
+
+            // Tracks if an entry is unreferenced. Currently, only tree entries can be marked as unreferenced. If the
+            // property is not present, the tree entry is considered referenced. If the property is present and is
+            // true (which is the only value it can have), the tree entry is considered unreferenced.
+            let unreferenced: true | undefined;
             const currentPath = path === "" ? `${rootNodeName}/${key}` : `${path}/${key}`;
             switch (summaryObject.type) {
                 case api.SummaryType.Tree: {
@@ -294,6 +300,7 @@ export class OdspSummaryUploadManager {
                         currentPath,
                         expanded);
                     value = result.snapshotTree;
+                    unreferenced = summaryObject.unreferenced;
                     reusedBlobs += result.reusedBlobs;
                     blobs += result.blobs;
                     break;
@@ -309,13 +316,23 @@ export class OdspSummaryUploadManager {
                         cachedPath = this.blobTreeDedupCaches.blobShaToPath.get(hash);
                         assert(cachedPath !== undefined, "path should be defined as path->sha mapping exists");
                     } else {
-                        value = typeof summaryObject.content === "string"
-                        ? { content: summaryObject.content, encoding: "utf-8" }
-                        : { content: Uint8ArrayToString(summaryObject.content, "base64"), encoding: "base64" };
+                        if (typeof summaryObject.content === "string") {
+                            value = {
+                                type: "blob",
+                                content: summaryObject.content,
+                                encoding: "utf-8",
+                            };
+                        } else {
+                            value = {
+                                type: "blob",
+                                content: Uint8ArrayToString(summaryObject.content, "base64"),
+                                encoding: "base64",
+                            };
+                        }
                         hash = await hashFile(IsoBuffer.from(value.content, value.encoding));
                         cachedPath = this.blobTreeDedupCaches.blobShaToPath.get(hash);
                     }
-                    (summaryObject as any).content = "";
+                    (summaryObject as any).content = undefined;
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that
                     // cached path for the given blob. Also update the caches for future use.
                     if (cachedPath === undefined || parentHandle === undefined) {
@@ -360,12 +377,6 @@ export class OdspSummaryUploadManager {
                         // we are just logging the event. Once we make sure that we don't have any telemetry for this, we would remove this.
                         this.logger.sendTelemetryEvent({ eventName: "SummaryTreeHandleCacheMiss", parentHandle, handlePath: pathKey });
                         id = `${parentHandle}/${pathKey}`;
-                        // TODO: SPO will deprecate this soon
-                        if (summaryObject.handleType === api.SummaryType.Commit) {
-                            value = {
-                                content: id,
-                            };
-                        }
                     }
                     break;
                 }
@@ -374,7 +385,7 @@ export class OdspSummaryUploadManager {
                     break;
                 }
                 default: {
-                    throw new Error(`Unknown tree type ${summaryObject.type}`);
+                    unreachableCase(summaryObject, `Unknown type: ${(summaryObject as any).type}`);
                 }
             }
 
