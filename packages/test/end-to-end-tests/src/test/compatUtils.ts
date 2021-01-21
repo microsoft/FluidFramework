@@ -112,115 +112,91 @@ export function getDataStoreFactory(containerOptions?: ITestContainerConfig) {
 }
 
 export const generateLocalNonCompatTest = (
-    tests: (compatArgs: ITestObjectProvider) => void,
+    tests: (compatArgsFactory: () => ITestObjectProvider) => void,
     options: ITestOptions = {},
 ) => {
     describe("non-compat", () => {
-        // Run with all current versions
-        const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+        tests(() => {
+            // Run with all current versions
+            const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
             createRuntimeFactory(
                 TestDataObject.type,
                 getDataStoreFactory(containerOptions),
                 containerOptions?.runtimeOptions,
             );
+            const localDriver = LocalServerTestDriver.createWithOptions(options);
 
-        const localDriver = LocalServerTestDriver.createWithOptions(options);
-        const testObjectProvider = new TestObjectProvider(
-            localDriver,
-            runtimeFactory,
-        );
-
-        tests(testObjectProvider);
-
-        afterEach(async () => {
-            localDriver.reset(options);
-            testObjectProvider.reset();
+            return new TestObjectProvider(
+                localDriver,
+                runtimeFactory,
+            );
         });
     });
 };
 
 export const generateLocalCompatTest = (
-    tests: (compatArgs: ITestObjectProvider, oldApi: oldTypes.OldApi) => void,
+    tests: (compatArgsFactory: () => ITestObjectProvider, oldApi: oldTypes.OldApi) => void,
     options: ITestOptions = {},
 ) => {
     // Run against all currently supported versions by default
     const oldApis = options.oldApis ?? [old, old2];
     oldApis.forEach((oldApi: oldTypes.OldApi) => {
         describe("compat - old loader, new runtime", function() {
-            const testObjectProvider = oldApi.createTestObjectProvider(
-                true, /* oldLoader */
-                false, /* oldContainerRuntime */
-                false, /* oldDataStoreRuntime */
-                TestDataObject.type,
-                options.serviceConfiguration,
-            );
-
-            tests(testObjectProvider, oldApi);
-
-            afterEach(async function() {
-                await testObjectProvider.reset();
-            });
+            tests(() => {
+                return oldApi.createTestObjectProvider(
+                    true, /* oldLoader */
+                    false, /* oldContainerRuntime */
+                    false, /* oldDataStoreRuntime */
+                    TestDataObject.type,
+                    options.serviceConfiguration,
+                );
+            }, oldApi);
         });
 
         describe("compat - new loader, old runtime", function() {
-            const driver = LocalServerTestDriver.createWithOptions(options);
-            const testObjectProvider = oldApi.createTestObjectProvider(
-                false, /* oldLoader */
-                true, /* oldContainerRuntime */
-                true, /* oldDataStoreRuntime */
-                TestDataObject.type,
-                options.serviceConfiguration,
-                driver,
-            );
-
-            tests(testObjectProvider, oldApi);
-
-            afterEach(async function() {
-                driver.reset(options);
-                await testObjectProvider.reset();
-            });
+            tests(() => {
+                const driver = LocalServerTestDriver.createWithOptions(options);
+                return oldApi.createTestObjectProvider(
+                    false, /* oldLoader */
+                    true, /* oldContainerRuntime */
+                    true, /* oldDataStoreRuntime */
+                    TestDataObject.type,
+                    options.serviceConfiguration,
+                    driver,
+                );
+            }, oldApi);
         });
 
         describe("compat - new ContainerRuntime, old DataStoreRuntime", function() {
-            const driver = LocalServerTestDriver.createWithOptions(options);
-            driver.reset(options);
-            const testObjectProvider = oldApi.createTestObjectProvider(
-                false, /* oldLoader */
-                false, /* oldContainerRuntime */
-                true, /* oldDataStoreRuntime */
-                TestDataObject.type,
-                options.serviceConfiguration,
-                driver,
-            );
-
-            tests(testObjectProvider, oldApi);
-
-            afterEach(async function() {
-                driver.reset(options);
-                await testObjectProvider.reset();
-            });
+            tests(() => {
+                const driver = LocalServerTestDriver.createWithOptions(options);
+                return oldApi.createTestObjectProvider(
+                    false, /* oldLoader */
+                    false, /* oldContainerRuntime */
+                    true, /* oldDataStoreRuntime */
+                    TestDataObject.type,
+                    options.serviceConfiguration,
+                    driver,
+                );
+            }, oldApi);
         });
 
         describe("compat - old ContainerRuntime, new DataStoreRuntime", function() {
-            const testObjectProvider = oldApi.createTestObjectProvider(
-                true, /* oldLoader */
-                true, /* oldContainerRuntime */
-                false, /* oldDataStoreRuntime */
-                TestDataObject.type,
-                options.serviceConfiguration,
-            );
-
-            tests(testObjectProvider, oldApi);
-
-            afterEach(async function() {
-                await testObjectProvider.reset();
-            });
+            tests(() => {
+                return oldApi.createTestObjectProvider(
+                    true, /* oldLoader */
+                    true, /* oldContainerRuntime */
+                    false, /* oldDataStoreRuntime */
+                    TestDataObject.type,
+                    options.serviceConfiguration,
+                );
+            }, oldApi);
         });
     });
 };
 
 export const generateLocalTest = (
-    tests: (compatArgs: ITestObjectProvider) => void,
+    tests: (compatArgsFactory: () => ITestObjectProvider) => void,
     options: ITestOptions = {},
 ) => {
     describe("local server", () => {
@@ -230,35 +206,30 @@ export const generateLocalTest = (
 };
 
 const generateTinyliciousTest = (
-    tests: (compatArgs: ITestObjectProvider) => void,
+    tests: (compatArgsFactory: () => ITestObjectProvider) => void,
     options: ITestOptions,
 ) => {
     if (options.tinylicious) {
         describe("tinylicious", () => {
-            // Run with all current versions
-            const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+            tests(() => {
+                // Run with all current versions
+                const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
                 createRuntimeFactory(
                     TestDataObject.type,
                     getDataStoreFactory(containerOptions),
                     containerOptions?.runtimeOptions,
                 );
 
-            const testObjectProvider = new TestObjectProvider(
-                new TinyliciousTestDriver(),
-                runtimeFactory,
-            );
-
-            tests(testObjectProvider);
-
-            afterEach(async () => {
-                testObjectProvider.reset();
+                return new TestObjectProvider(
+                    new TinyliciousTestDriver(),
+                    runtimeFactory);
             });
         });
     }
 };
 
 export const generateTest = (
-    tests: (compatArgs: ITestObjectProvider) => void,
+    tests: (compatArgsFactory: () => ITestObjectProvider) => void,
     options: ITestOptions = {},
 ) => {
     generateLocalTest(tests, options);

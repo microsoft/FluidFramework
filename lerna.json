@@ -1,6 +1,7 @@
 {
   "packages": [
     "examples/**",
+    "experimental/**",
     "packages/**"
   ],
   "version": "0.33.0"

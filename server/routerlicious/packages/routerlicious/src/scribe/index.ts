@@ -13,7 +13,6 @@ import {
     ISequencedOperationMessage,
     MongoManager,
 } from "@fluidframework/server-services-core";
-import * as bytes from "bytes";
 import { Provider } from "nconf";
 
 export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFactory> {
@@ -23,7 +22,9 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     const messagesCollectionName = config.get("mongo:collectionNames:scribeDeltas");
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
     const kafkaLibrary = config.get("kafka:lib:name");
-    const maxMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
+    const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
+    const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
+    const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
     const sendTopic = config.get("lambdas:deli:topic");
     const kafkaClientId = config.get("scribe:kafkaClientId");
 
@@ -56,7 +57,10 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
         kafkaEndpoint,
         kafkaClientId,
         sendTopic,
-        maxMessageSize);
+        false,
+        kafkaProducerPollIntervalMs,
+        kafkaNumberOfPartitions,
+        kafkaReplicationFactor);
 
     return new ScribeLambdaFactory(
         mongoManager,
