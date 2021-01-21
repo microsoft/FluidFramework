@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert, gitHashFile, IsoBuffer, stringToBuffer, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
+import {
+    assert,
+    gitHashFile,
+    IsoBuffer,
+    stringToBuffer,
+    Uint8ArrayToString,
+    unreachableCase,
+} from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import * as resources from "@fluidframework/gitresources";
 import { buildHierarchy, getGitType, getGitMode } from "@fluidframework/protocol-base";
@@ -152,10 +159,6 @@ export class DocumentStorageService implements IDocumentStorageService {
             case SummaryType.Attachment: {
                 return object.id;
             }
-
-            // Remove this case when upgrading next version of server packages
-            case SummaryType.Commit:
-                throw new Error("remove");
 
             default:
                 unreachableCase(object, `Unknown type: ${(object as any).type}`);

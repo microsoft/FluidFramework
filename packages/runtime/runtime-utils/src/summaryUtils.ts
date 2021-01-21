@@ -320,10 +320,6 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
                 throw new Error("Should not have Handle type in summary tree");
             }
 
-            // Remove this case when upgrading next version of server packages
-            case SummaryType.Commit:
-                throw new Error("remove");
-
             default:
                 unreachableCase(value, "Unexpected summary tree type");
         }

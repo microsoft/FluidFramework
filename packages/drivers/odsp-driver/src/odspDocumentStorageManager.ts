@@ -1094,10 +1094,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     break;
                 }
 
-                // Remove this case when upgrading next version of server packages
-                case api.SummaryType.Commit:
-                    throw new Error("remove");
-
                 default: {
                     unreachableCase(summaryObject, `Unknown type: ${(summaryObject as any).type}`);
                 }
