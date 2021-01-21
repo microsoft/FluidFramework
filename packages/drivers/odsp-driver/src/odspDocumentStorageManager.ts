@@ -229,7 +229,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     async (event) => {
                         const res = await this.epochTracker.fetchResponse(url, { headers }, FetchType.blob);
                         const blobContent = await res.arrayBuffer();
-                        event.end({ size: blobContent.byteLength });
+                        event.end({
+                            size: blobContent.byteLength,
+                            waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
+                        });
                         return blobContent;
                     },
                 );
@@ -831,6 +834,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
      * Schedule a timer for clearing the blob cache or defer the current one.
      */
     private scheduleClearBlobsCache() {
+        /*
         if (this.blobCacheTimeout !== undefined) {
             // If we already have an outstanding timer, just signal that we should defer the clear
             this.deferBlobCacheClear = true;
@@ -849,6 +853,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const blobCacheTimeoutDuration = 10000;
             this.blobCacheTimeout = setTimeout(clearCacheOrDefer, blobCacheTimeoutDuration);
         }
+        */
     }
 
     private checkSnapshotUrl() {
