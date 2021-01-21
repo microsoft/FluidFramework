@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/ordered-collection",
-  "version": "0.32.2",
+  "version": "0.32.3",
   "description": "Consensus Collection",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -55,19 +55,19 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.26.0",
-    "@fluidframework/core-interfaces": "^0.32.2",
-    "@fluidframework/datastore-definitions": "^0.32.2",
+    "@fluidframework/core-interfaces": "^0.32.3",
+    "@fluidframework/datastore-definitions": "^0.32.3",
     "@fluidframework/protocol-definitions": "^0.1017.1",
-    "@fluidframework/shared-object-base": "^0.32.2",
+    "@fluidframework/shared-object-base": "^0.32.3",
     "assert": "^2.0.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluid-internal/test-dds-utils": "^0.32.2",
+    "@fluid-internal/test-dds-utils": "^0.32.3",
     "@fluidframework/build-common": "^0.19.2",
     "@fluidframework/eslint-config-fluid": "^0.21.0",
-    "@fluidframework/mocha-test-setup": "^0.32.2",
-    "@fluidframework/test-runtime-utils": "^0.32.2",
+    "@fluidframework/mocha-test-setup": "^0.32.3",
+    "@fluidframework/test-runtime-utils": "^0.32.3",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/assert": "^1.5.1",
     "@types/mocha": "^5.2.5",
