@@ -217,6 +217,9 @@ export enum EditValidationResult {
 }
 
 // @public
+export function fullHistorySummarizer(sequencedEdits: OrderedEditSet, currentView: Snapshot): SharedTreeSummary;
+
+// @public
 export const initialTree: ChangeNode;
 
 // @public
@@ -267,6 +270,9 @@ export interface NodeInTrait {
     // (undocumented)
     readonly trait: TraitLocation;
 }
+
+// @public
+export function noHistorySummarizer(_: OrderedEditSet, currentView: Snapshot): SharedTreeSummary;
 
 // @public @sealed
 export interface OrderedEditSet {
