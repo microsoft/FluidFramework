@@ -661,8 +661,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         const blob = await storage.readBlob(snapshotFileName);
         const header = bufferToString(blob, "utf8");
         const data = JSON.parse(header);
-        // const header = await storage.read(snapshotFileName);
-        // const data = JSON.parse(fromBase64ToUtf8(header));
         const newFormat = data as IDirectoryNewStorageFormat;
         if (Array.isArray(newFormat.blobs)) {
             // New storage format

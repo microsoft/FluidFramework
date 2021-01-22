@@ -24,8 +24,6 @@ export const serializeBlob = (
     });
 
 export async function deserializeBlob(storage: IChannelStorageService, path: string, serializer: IFluidSerializer) {
-    // const handleTableChunk = await storage.read(path);
-    // const utf8 = fromBase64ToUtf8(handleTableChunk);
     const blob = await storage.readBlob(path);
     const utf8 = bufferToString(blob, "utf8");
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
