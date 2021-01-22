@@ -87,6 +87,10 @@ examples/**:
 - skylerjokiel
 - ChumpChief
 
+# experimental
+experimental/dds/tree/**:
+- DLehenbauer
+
 # docs
 docs/**:
 - tylerbutler
