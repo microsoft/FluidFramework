@@ -44,7 +44,10 @@ export type ErrorString = string;
 export interface SharedTreeSummary {
 	readonly currentTree: ChangeNode;
 
-	// TODO:#49901: Remove when writing version 0.1.0
+	/**
+	 * A list of edits used on legacy format version 0.0.2.
+	 * TODO:#49901: Remove when writing version 0.1.0
+	 */
 	readonly sequencedEdits?: readonly Edit[];
 
 	/**
