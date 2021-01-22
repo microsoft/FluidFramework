@@ -158,11 +158,6 @@ export interface Edit extends EditBase {
     readonly id: EditId;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "EditAddedHandler" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export type EditAddedHandler = (edit: Edit, isLocal: boolean) => void;
-
 // @public
 export interface EditBase {
     readonly changes: readonly Change[];
@@ -172,42 +167,6 @@ export interface EditBase {
 export type EditId = UuidString & {
     readonly EditId: '56897beb-53e4-4e66-85da-4bf5cd5d0d49';
 };
-
-// Warning: (ae-internal-missing-underscore) The name "EditLog" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @sealed
-export class EditLog implements OrderedEditSet {
-    // (undocumented)
-    [Symbol.iterator](): IterableIterator<EditId>;
-    constructor(options?: EditLogSummary);
-    addLocalEdit(edit: Edit): void;
-    addSequencedEdit(edit: Edit): void;
-    // (undocumented)
-    equals(other: EditLog): boolean;
-    // (undocumented)
-    getAtIndex(index: number): Promise<Edit>;
-    // (undocumented)
-    getAtIndexSynchronous(index: number): Edit;
-    // (undocumented)
-    getEditIds(): readonly EditId[];
-    getEditLogSummary(): EditLogSummary;
-    // (undocumented)
-    idOf(index: number): EditId;
-    // (undocumented)
-    indexOf(editId: EditId): number;
-    // (undocumented)
-    isLocalEdit(editId: EditId): boolean;
-    // (undocumented)
-    get length(): number;
-    get numberOfLocalEdits(): number;
-    get numberOfSequencedEdits(): number;
-    // (undocumented)
-    processEditChunkHandle(chunkHandle: IFluidHandle<ArrayBufferLike>, chunkIndex: number): void;
-    registerEditAddedHandler(handler: EditAddedHandler): void;
-    sequenceLocalEdits(): void;
-    // (undocumented)
-    tryGetEdit(editId: EditId): Promise<Edit | undefined>;
-}
 
 // Warning: (ae-internal-missing-underscore) The name "EditLogSummary" should be prefixed with an underscore because the declaration is marked as @internal
 //
@@ -230,11 +189,6 @@ export enum EditResult {
     Malformed = 0
 }
 
-// Warning: (ae-internal-missing-underscore) The name "editsPerChunk" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export const editsPerChunk = 100;
-
 // @public
 export enum EditValidationResult {
     // (undocumented)
@@ -245,9 +199,7 @@ export enum EditValidationResult {
     Valid = 2
 }
 
-// Warning: (ae-internal-missing-underscore) The name "EditWithoutId" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
+// @public
 export interface EditWithoutId extends EditBase {
     readonly id?: never;
 }
@@ -351,14 +303,6 @@ export class PrefetchingCheckout extends Checkout {
 // @public
 export function revert(edit: Edit, view: Snapshot): Change[];
 
-// Warning: (ae-internal-missing-underscore) The name "separateEditAndId" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export function separateEditAndId(edit: Edit): {
-    id: EditId;
-    editWithoutId: EditWithoutId;
-};
-
 // @public
 export interface SerializationHelpers {
     // (undocumented)
@@ -367,7 +311,6 @@ export interface SerializationHelpers {
 
 // @public
 export interface SerializedEditLogSummary {
-    // Warning: (ae-incompatible-release-tags) The symbol "editChunks" is marked as @public, but its signature references "EditWithoutId" which is marked as @internal
     readonly editChunks?: readonly (ISerializedHandle | EditWithoutId[])[];
     readonly editIds: readonly EditId[];
 }

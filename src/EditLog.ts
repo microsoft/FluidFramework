@@ -90,7 +90,6 @@ type OrderedEditId = SequencedOrderedEditId | LocalOrderedEditId;
 
 /**
  * Returns an object that separates an Edit into two fields, id and editWithoutId.
- * @internal
  */
 export function separateEditAndId(edit: Edit): { id: EditId; editWithoutId: EditWithoutId } {
 	const editWithoutId = { ...edit, id: undefined };
@@ -104,7 +103,6 @@ function joinEditAndId(id: EditId, edit: EditWithoutId): Edit {
 
 /**
  * The number of edits associated with each blob.
- * @internal
  */
 export const editsPerChunk = 100;
 
@@ -119,7 +117,6 @@ const loadedChunkCacheSize = Number.POSITIVE_INFINITY;
  * Event fired when an edit is added to an `EditLog`.
  * @param edit - The edit that was added to the log
  * @param isLocal - true iff this edit was generated locally
- * @internal
  */
 export type EditAddedHandler = (edit: Edit, isLocal: boolean) => void;
 
@@ -128,7 +125,7 @@ export type EditAddedHandler = (edit: Edit, isLocal: boolean) => void;
  * Contains only completed edits (no in-progress edits).
  * Ordered first by locality (acked or local), then by time of insertion.
  * May not contain more than one edit with the same ID.
- * @internal @sealed
+ * @sealed
  */
 export class EditLog implements OrderedEditSet {
 	private localEditSequence = 0;
@@ -369,7 +366,6 @@ export class EditLog implements OrderedEditSet {
 
 	/**
 	 * Returns information about the edit log.
-	 * @internal
 	 */
 	public getEditLogSummary(): EditLogSummary {
 		// TODO:#49901: When writing format version 0.1.0, change to prefer sending the handle when not undefined.

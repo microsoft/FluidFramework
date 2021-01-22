@@ -26,7 +26,7 @@ export * from './PersistedTypes';
 export * from './Factory';
 export * from './HistoryEditFactory';
 export * from './Identifiers';
-export * from './EditLog';
+export { OrderedEditSet, EditLogSummary } from './EditLog';
 export {
 	EditValidationResult,
 	NodeInTrait,

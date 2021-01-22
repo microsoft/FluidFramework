@@ -54,7 +54,7 @@ export interface Edit extends EditBase {
 /**
  * A collection of changes to the tree that are applied atomically. If any individual change fails to apply,
  * the entire Edit will fail to apply.
- * @internal
+ * @public
  */
 export interface EditWithoutId extends EditBase {
 	/**
@@ -65,6 +65,7 @@ export interface EditWithoutId extends EditBase {
 
 /**
  * The information included in an edit.
+ * @public
  */
 export interface EditBase {
 	/**
