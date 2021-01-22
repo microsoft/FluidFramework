@@ -34,7 +34,7 @@ export function convertSummaryToReadFormat(summary: SharedTreeSummary): SharedTr
 			const editChunks: EditWithoutId[][] = [];
 			const editIds: EditId[] = [];
 
-			sequencedEdits?.map(({ changes, id }) => {
+			sequencedEdits.forEach(({ changes, id }) => {
 				editIds.push(id);
 				const lastEditChunk = editChunks[editChunks.length - 1];
 				if (lastEditChunk !== undefined && lastEditChunk.length < editsPerChunk) {
