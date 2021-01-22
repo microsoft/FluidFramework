@@ -90,6 +90,9 @@ examples/**:
 # experimental
 experimental/dds/tree/**:
 - DLehenbauer
+- taylorsw04
+- CraigMacomber
+- Abe27342
 
 # docs
 docs/**:
