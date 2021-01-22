@@ -55,7 +55,17 @@ export class ChannelStorageService implements IChannelStorageService {
             ? this.extraBlobs.get(id)
             : undefined;
 
-        return blob !== undefined ? stringToBuffer(blob,"base64") : this.storage.readBlob(id);
+        if (blob !== undefined) {
+            return stringToBuffer(blob, "base64");
+        }
+
+        const res = await this.storage.read(id);
+        // const res2 = await this.storage.read(id);
+        // setTimeout(async function(): Promise<ArrayBufferLike> {
+        //     console.log("hey");
+        // return stringToBuffer(res2,"base64");
+        // }, 3000);
+        return stringToBuffer(res, "base64");
     }
 
     public async list(path: string): Promise<string[]> {
