@@ -149,7 +149,11 @@ export class FluidPackageCheck {
         const testJestScript = pkg.getScript("test:jest");
         const expectedTestScripts: string[] = [];
         if (testMochaScript) {
-            expectedTestScripts.push("npm run test:mocha");
+            if (pkg.getScript("start:tinylicious:test") !== undefined) {
+                expectedTestScripts.push("start-server-and-test start:tinylicious:test 3000 test:mocha")
+            } else {
+                expectedTestScripts.push("npm run test:mocha");
+            }
         }
         if (testJestScript) {
             expectedTestScripts.push("npm run test:jest");
