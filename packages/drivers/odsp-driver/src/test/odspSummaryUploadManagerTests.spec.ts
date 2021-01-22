@@ -13,6 +13,7 @@ import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { EpochTracker } from "../epochTracker";
 import { LocalPersistentCache, LocalPersistentCacheAdapter } from "../odspCache";
 import { IDedupCaches, OdspSummaryUploadManager } from "../odspSummaryUploadManager";
+import { IBlob } from "../contracts";
 import { TokenFetchOptions } from "../tokenFetch";
 import { mockFetch } from "./mockFetch";
 
@@ -33,16 +34,13 @@ describe("Odsp Summary Upload Manager Tests", () => {
     });
 
     it("Should populate caches properly", async () => {
-        odspSummaryUploadManager["blobCache"].set("blob1",
-            { content: "blob1", id: "blob1", size: 5, byteLength: 1, encoding: undefined });
-        odspSummaryUploadManager["blobCache"].set("blob2",
-            { content: "blob2", id: "blob2", size: 5, byteLength: 1, encoding: undefined });
-        odspSummaryUploadManager["blobCache"].set("blob3",
-            { content: "blob2", id: "blob2", size: 5, byteLength: 1, encoding: undefined });
-        odspSummaryUploadManager["blobCache"].set("blob4",
-            { content: "blob4", id: "blob4", size: 5, byteLength: 1, encoding: undefined });
-        odspSummaryUploadManager["blobCache"].set("blob5",
-            { content: "blob5", id: "blob5", size: 5, byteLength: 1, encoding: undefined });
+        const blobCache = new Map<string, IBlob>();
+
+        blobCache.set("blob1", { content: "blob1", id: "blob1", size: 5, encoding: undefined });
+        blobCache.set("blob2", { content: "blob2", id: "blob2", size: 5, encoding: undefined });
+        blobCache.set("blob3", { content: "blob2", id: "blob2", size: 5, encoding: undefined });
+        blobCache.set("blob4", { content: "blob4", id: "blob4", size: 5, encoding: undefined });
+        blobCache.set("blob5", { content: "blob5", id: "blob5", size: 5, encoding: undefined });
         const protocolTree: api.ISnapshotTree = {
             blobs: {
                 blob1: "blob1",
@@ -76,7 +74,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
             },
         };
 
-        await odspSummaryUploadManager.buildCachesForDedup(snapshotTree, new Map());
+        await odspSummaryUploadManager.buildCachesForDedup(snapshotTree, blobCache);
 
         assert.strictEqual(odspSummaryUploadManager["blobTreeDedupCaches"].blobShaToPath.size, 4,
             "4 blobs should be in cache as 4 blobs with different content");
