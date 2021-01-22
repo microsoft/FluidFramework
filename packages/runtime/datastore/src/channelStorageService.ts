@@ -59,12 +59,8 @@ export class ChannelStorageService implements IChannelStorageService {
             return stringToBuffer(blob, "base64");
         }
 
+        // for back compat. will be replaced with readBlob after version 0.35
         const res = await this.storage.read(id);
-        // const res2 = await this.storage.read(id);
-        // setTimeout(async function(): Promise<ArrayBufferLike> {
-        //     console.log("hey");
-        // return stringToBuffer(res2,"base64");
-        // }, 3000);
         return stringToBuffer(res, "base64");
     }
 
