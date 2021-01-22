@@ -203,6 +203,7 @@ export class EpochTracker {
             // If it was categorised as epoch error but the epoch returned in response matches with the client epoch
             // then it was coherency 409, so rethrow it as throttling error so that it can retried. Default throttling
             // time is 1s.
+            this.logger.sendTelemetryEvent({ eventName: "Coherency409" });
             throw new ThrottlingError(error.errorMessage, 1000, 429);
         }
     }
