@@ -5,22 +5,32 @@
 
 import { v4 as uuid } from "uuid";
 import { CreateContainerError } from "@fluidframework/container-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { canRetryOnError, DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
-import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
+import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import { canRetryOnError } from "@fluidframework/driver-utils";
+import {
+    ICreateBlobResponse,
+    ISnapshotTree,
+    ISummaryHandle,
+    ISummaryTree,
+    ITree,
+    IVersion,
+} from "@fluidframework/protocol-definitions";
 import { DeltaManager, getRetryDelayFromError } from "./deltaManager";
 
-export class RetriableDocumentStorageService extends DocumentStorageServiceProxy {
+export class RetriableDocumentStorageService implements IDocumentStorageService {
     private disposed = false;
     constructor(
-        internalStorageService: IDocumentStorageService,
+        private readonly internalStorageService: IDocumentStorageService,
         private readonly deltaManager: Pick<DeltaManager, "emitDelayInfo" | "refreshDelayInfo">,
     ) {
-        super(internalStorageService);
     }
 
     public dispose() {
         this.disposed = true;
+    }
+
+    public get repositoryUrl(): string {
+        return this.internalStorageService.repositoryUrl;
     }
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
@@ -33,6 +43,26 @@ export class RetriableDocumentStorageService extends DocumentStorageServiceProxy
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {
         return this.readWithRetry(async () => this.internalStorageService.readBlob(id));
+    }
+
+    public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
+        return this.readWithRetry(async () => this.internalStorageService.getVersions(versionId, count));
+    }
+
+    public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
+        return this.readWithRetry(async () => this.internalStorageService.write(tree, parents, message, ref));
+    }
+
+    public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
+        return this.readWithRetry(async () => this.internalStorageService.uploadSummaryWithContext(summary, context));
+    }
+
+    public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
+        return this.readWithRetry(async () => this.internalStorageService.downloadSummary(handle));
+    }
+
+    public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
+        return this.readWithRetry(async () => this.internalStorageService.createBlob(file));
     }
 
     private async delay(timeMs: number): Promise<void> {
