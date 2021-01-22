@@ -8,7 +8,7 @@ import {
     IFluidHandle,
     IFluidSerializer,
 } from "@fluidframework/core-interfaces";
-import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { assert, bufferToString } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
     FileMode,
@@ -258,9 +258,9 @@ export class SnapshotV1 {
         options: Properties.PropertySet | undefined,
         serializer?: IFluidSerializer,
     ): Promise<MergeTreeChunkV1> {
-        const chunkAsString: string = await storage.read(path);
-        // const blob = await storage.readBlob(path);
-        // const chunkAsString = bufferToString(blob, "utf8");
+        // const chunkAsString: string = await storage.read(path);
+        const blob = await storage.readBlob(path);
+        const chunkAsString = bufferToString(blob, "utf8");
         return SnapshotV1.processChunk(path, chunkAsString, logger, options, serializer);
     }
 
@@ -271,9 +271,9 @@ export class SnapshotV1 {
         options: Properties.PropertySet | undefined,
         serializer?: IFluidSerializer,
     ): MergeTreeChunkV1 {
-        const utf8 = fromBase64ToUtf8(chunk);
-        const chunkObj = serializer ? serializer.parse(utf8) : JSON.parse(utf8);
-        // const chunkObj = serializer ? serializer.parse(chunk) : JSON.parse(chunk);
+        // const utf8 = fromBase64ToUtf8(chunk);
+        // const chunkObj = serializer ? serializer.parse(utf8) : JSON.parse(utf8);
+        const chunkObj = serializer ? serializer.parse(chunk) : JSON.parse(chunk);
         return toLatestVersion(path, chunkObj, logger, options);
     }
 }

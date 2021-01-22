@@ -332,8 +332,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     protected async loadCore(storage: IChannelStorageService) {
         const blob = await storage.readBlob(snapshotFileName);
         const data = bufferToString(blob, "utf8");
-        // const header = await storage.read(snapshotFileName);
-        // const data = fromBase64ToUtf8(header);
+
         // eslint-disable-next-line @typescript-eslint/ban-types
         const json = JSON.parse(data) as object;
         const newFormat = json as IMapSerializationFormat;
