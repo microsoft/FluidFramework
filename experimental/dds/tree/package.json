@@ -25,7 +25,8 @@
 		"prettier": "prettier --check \"**/*.{js,json,jsx,md,ts,tsx,yml,yaml}\"",
 		"prettier:fix": "prettier --write \"**/*.{js,json,jsx,md,ts,tsx,yml,yaml}\"",
 		"test": "npm run test:mocha",
-		"test:mocha": "nyc --report-dir='./coverage' mocha \"dist/**/*.tests.js\"",
+		"test:mocha": "nyc --report-dir='./coverage' mocha \"dist/**/*.tests.js\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc"
 	},
 	"dependencies": {
@@ -46,11 +47,13 @@
 		"@fluidframework/build-common": "^0.19.2",
 		"@fluidframework/eslint-config-fluid": "^0.21.0",
 		"@fluidframework/test-runtime-utils": "^0.34.0",
+		"@fluidframework/mocha-test-setup": "^0.33.0",
 		"@microsoft/api-extractor": "^7.7.2",
 		"@typescript-eslint/eslint-plugin": "~4.2.0",
 		"@typescript-eslint/parser": "~4.2.0",
 		"chai": "^4.2.0",
 		"concurrently": "^5.2.0",
+		"cross-env": "^7.0.2",
 		"easy-table": "^1.1.1",
 		"env-cmd": "^10.1.0",
 		"eslint": "~7.9.0",
