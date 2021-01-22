@@ -310,12 +310,6 @@ export interface SerializationHelpers {
 }
 
 // @public
-export interface SerializedEditLogSummary {
-    readonly editChunks?: readonly (ISerializedHandle | EditWithoutId[])[];
-    readonly editIds: readonly EditId[];
-}
-
-// @public
 export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<EditNode>): readonly Change[];
 
 // @public
@@ -347,7 +341,7 @@ export class SharedTree extends SharedObject {
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // @internal
-    loadSummary(summary: SharedTreeSummary): void;
+    loadSummary(summary: SharedTreeSummaryBase): void;
     // (undocumented)
     protected readonly logger: ITelemetryLogger;
     // @internal
@@ -365,7 +359,7 @@ export class SharedTree extends SharedObject {
     // (undocumented)
     protected registerCore(): void;
     // @internal
-    saveSummary(): SharedTreeSummary;
+    saveSummary(): SharedTreeSummaryBase;
     // (undocumented)
     snapshotCore(_serializer: IFluidSerializer): ITree;
     summarizer: SharedTreeSummarizer;
@@ -408,15 +402,12 @@ export class SharedTreeFactory implements IChannelFactory {
 }
 
 // @public
-export type SharedTreeSummarizer = (editLog: OrderedEditSet, currentView: Snapshot, serializationHelpers: SerializationHelpers) => SharedTreeSummary;
+export type SharedTreeSummarizer = (editLog: OrderedEditSet, currentView: Snapshot, serializationHelpers: SerializationHelpers) => SharedTreeSummaryBase;
 
 // @public
-export interface SharedTreeSummary {
+export interface SharedTreeSummaryBase {
     // (undocumented)
     readonly currentTree: ChangeNode;
-    readonly editHistory?: SerializedEditLogSummary;
-    // (undocumented)
-    readonly sequencedEdits?: readonly Edit[];
     readonly version: string;
 }
 

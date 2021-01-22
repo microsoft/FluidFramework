@@ -11,12 +11,12 @@ import { newEdit, setTrait } from './EditUtilities';
 import { ChangeNode, Edit, Change, EditWithoutId } from './PersistedTypes';
 import { Snapshot } from './Snapshot';
 import { initialTree } from './InitialTree';
+import { SharedTreeSummary_0_0_2 } from './SummaryBackCompatibility';
 
 /**
- * Format version for summaries which is supported.
- * Currently no effort is made to support older/newer documents, and any mismatch is an error.
+ * Format version for summaries that are written.
  */
-export const formatVersion = '0.0.2';
+const formatVersion = '0.0.2';
 
 /**
  * Handler for summarizing the tree state.
@@ -29,7 +29,7 @@ export type SharedTreeSummarizer = (
 	editLog: OrderedEditSet,
 	currentView: Snapshot,
 	serializationHelpers: SerializationHelpers
-) => SharedTreeSummary;
+) => SharedTreeSummaryBase;
 
 /**
  * A developer facing (non-localized) error message.
@@ -38,27 +38,26 @@ export type SharedTreeSummarizer = (
 export type ErrorString = string;
 
 /**
- * The contents of a SharedTree summary: the current tree, and the edits needed to get from `initialTree` to the current tree.
- * @public
+ * The minimal information on a SharedTree summary. Contains the current tree and summary format version.
  */
-export interface SharedTreeSummary {
+export interface SharedTreeSummaryBase {
 	readonly currentTree: ChangeNode;
-
-	/**
-	 * A list of edits used on legacy format version 0.0.2.
-	 * TODO:#49901: Remove when writing version 0.1.0
-	 */
-	readonly sequencedEdits?: readonly Edit[];
-
-	/**
-	 * Information that can populate an edit log.
-	 */
-	readonly editHistory?: SerializedEditLogSummary;
 
 	/**
 	 * Field on summary under which version is stored.
 	 */
 	readonly version: string;
+}
+
+/**
+ * The contents of a SharedTree summary: the current tree, and the edits needed to get from `initialTree` to the current tree.
+ * @public
+ */
+export interface SharedTreeSummary extends SharedTreeSummaryBase {
+	/**
+	 * Information that can populate an edit log.
+	 */
+	readonly editHistory?: SerializedEditLogSummary;
 }
 
 /**
@@ -69,7 +68,7 @@ export interface SerializedEditLogSummary {
 	/**
 	 * A list of either handles corresponding to a chunk of edits or the edit chunk.
 	 */
-	readonly editChunks?: readonly (ISerializedHandle | EditWithoutId[])[];
+	readonly editChunks: readonly (ISerializedHandle | EditWithoutId[])[];
 
 	/**
 	 * A list of edits IDs for all sequenced edits.
@@ -93,31 +92,6 @@ export function serialize(summary: SharedTreeSummary): string {
 }
 
 /**
- * Deserializes a JSON object produced by `serialize()` and uses it to initialize the tree with the encoded state.
- * @returns SharedTreeSummary that can be used to initialize a SharedTree, or an ErrorString if the summary could not be interpreted.
- * */
-export function deserialize(jsonSummary: string): SharedTreeSummary | ErrorString {
-	let summary: Partial<SharedTreeSummary>;
-	try {
-		summary = JSON.parse(jsonSummary);
-	} catch {
-		return 'Json syntax error in Summary';
-	}
-
-	if (typeof summary !== 'object') {
-		return 'Summary is not an object';
-	}
-
-	const { version, currentTree } = summary;
-
-	if (version !== undefined && currentTree !== undefined) {
-		return { version, currentTree, ...summary };
-	}
-
-	return 'Missing fields on summary';
-}
-
-/**
  * Preserves the full history in the generated summary.
  * @public
  */
@@ -125,7 +99,7 @@ export function fullHistorySummarizer(
 	editLog: OrderedEditSet,
 	currentView: Snapshot,
 	_serializationHelpers: SerializationHelpers
-): SharedTreeSummary {
+): SharedTreeSummary_0_0_2 {
 	const { editChunks, editIds } = editLog.getEditLogSummary();
 
 	const sequencedEdits: Edit[] = [];
@@ -162,7 +136,7 @@ export function noHistorySummarizer(
 	_editLog: OrderedEditSet,
 	currentView: Snapshot,
 	_serializationHelpers: SerializationHelpers
-): SharedTreeSummary {
+): SharedTreeSummary_0_0_2 {
 	const currentTree = currentView.getChangeNodeTree();
 	const rootId = currentTree.identifier;
 	const changes: Change[] = [];

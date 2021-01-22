@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import { assert, expect } from 'chai';
 import { Change, StablePlace } from '../PersistedTypes';
-import { deserialize, SharedTreeSummary } from '../Summary';
 import { DetachedSequenceId, EditId, NodeId } from '../Identifiers';
 import { newEdit } from '../EditUtilities';
 import {
@@ -10,6 +9,8 @@ import {
 	setUpTestSharedTree,
 	simpleTestTreeConsistent,
 } from './utilities/TestUtilities';
+import { deserialize } from '../SummaryBackCompatibility';
+import { SharedTreeSummaryBase } from '../Summary';
 
 describe('Summary back compatibility', () => {
 	const setupEditId = '9406d301-7449-48a5-b2ea-9be637b0c6e4' as EditId;
@@ -36,7 +37,7 @@ describe('Summary back compatibility', () => {
 
 			const summary = deserialize(serializeSummary);
 			assert.typeOf(summary, 'object');
-			tree.loadSummary(summary as SharedTreeSummary);
+			tree.loadSummary(summary as SharedTreeSummaryBase);
 
 			expect(tree.equals(expectedTree)).to.be.true;
 		});

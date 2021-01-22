@@ -31,16 +31,15 @@ import { SharedTreeFactory } from './Factory';
 import { Snapshot } from './Snapshot';
 import {
 	SharedTreeSummarizer,
-	formatVersion,
 	serialize,
 	SharedTreeSummary,
 	fullHistorySummarizer,
-	deserialize,
+	SharedTreeSummaryBase,
 } from './Summary';
 import * as HistoryEditFactory from './HistoryEditFactory';
 import { initialTree } from './InitialTree';
 import { CachingLogViewer, LogViewer } from './LogViewer';
-import { convertSummaryToReadFormat } from './SummaryBackCompatibility';
+import { convertSummaryToReadFormat, deserialize, readFormatVersion } from './SummaryBackCompatibility';
 
 /**
  * Filename where the snapshot is stored.
@@ -54,9 +53,12 @@ const snapshotFileName = 'header';
 export type ErrorString = string;
 
 const initialSummary: SharedTreeSummary = {
-	version: formatVersion,
+	version: readFormatVersion,
 	currentTree: initialTree,
-	sequencedEdits: [],
+	editHistory: {
+		editChunks: [],
+		editIds: [],
+	},
 };
 
 /**
@@ -342,11 +344,7 @@ export class SharedTree extends SharedObject {
 	 * Saves this SharedTree into a summary.
 	 * @internal
 	 */
-	public saveSummary(): SharedTreeSummary {
-		if (this.editLog.length === 0) {
-			return initialSummary;
-		}
-
+	public saveSummary(): SharedTreeSummaryBase {
 		// If local changes exist, emulate the sequencing of those changes.
 		// Doing so is necessary so edits created during DataObject.initializingFirstTime are included.
 		// Doing so is safe because it is guaranteed that the DDS has not yet been attached. This is because summary creation is only
@@ -367,14 +365,14 @@ export class SharedTree extends SharedObject {
 	 * Initialize shared tree with a summary.
 	 * @internal
 	 */
-	public loadSummary(summary: SharedTreeSummary): void {
+	public loadSummary(summary: SharedTreeSummaryBase): void {
 		const { editLog, logViewer } = this.createEditLogFromSummary(summary, this.expensiveValidation, this.logger);
 		this.editLog = editLog;
 		this.logViewer = logViewer;
 	}
 
 	private createEditLogFromSummary(
-		summary: SharedTreeSummary,
+		summary: SharedTreeSummaryBase,
 		expensiveValidation: boolean,
 		logger: ITelemetryLogger
 	): { editLog: EditLog; logViewer: LogViewer } {

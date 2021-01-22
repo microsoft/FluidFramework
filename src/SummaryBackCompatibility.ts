@@ -1,20 +1,56 @@
 import { editsPerChunk } from './EditLog';
 import { EditId } from './Identifiers';
-import { EditWithoutId } from './PersistedTypes';
-import { ErrorString, SharedTreeSummary } from './Summary';
+import { Edit, EditWithoutId } from './PersistedTypes';
+import { ErrorString, SharedTreeSummary, SharedTreeSummaryBase } from './Summary';
 
 /** The summary format version that is read by SharedTree. */
-const readFormatVersion = '0.1.0';
+export const readFormatVersion = '0.1.0';
+
+/**
+ * Legacy summary format currently still used for writing.
+ * TODO:#49901: Remove export when this format is no longer written.
+ */
+export interface SharedTreeSummary_0_0_2 extends SharedTreeSummaryBase {
+	/**
+	 * A list of edits.
+	 */
+	readonly sequencedEdits: readonly Edit[];
+}
+
+/**
+ * Deserializes a JSON object produced by `serialize()` and uses it to initialize the tree with the encoded state.
+ * @returns A SharedTree summary or an ErrorString if the summary could not be interpreted.
+ * */
+export function deserialize(jsonSummary: string): SharedTreeSummaryBase | ErrorString {
+	let summary: Partial<SharedTreeSummaryBase>;
+	try {
+		summary = JSON.parse(jsonSummary);
+	} catch {
+		return 'Json syntax error in Summary';
+	}
+
+	if (typeof summary !== 'object') {
+		return 'Summary is not an object';
+	}
+
+	const { version, currentTree } = summary;
+
+	if (version !== undefined && currentTree !== undefined) {
+		return { version, currentTree, ...summary };
+	}
+
+	return 'Missing fields on summary';
+}
 
 /**
  * @returns SharedTreeSummary that can be used to initialize a SharedTree, or an ErrorString if the summary could not be converted.
  *
  */
-export function convertSummaryToReadFormat(summary: SharedTreeSummary): SharedTreeSummary | ErrorString {
+export function convertSummaryToReadFormat(summary: SharedTreeSummaryBase): SharedTreeSummary | ErrorString {
 	const { currentTree, version } = summary;
 
 	if (version === readFormatVersion) {
-		const { editHistory } = summary;
+		const { editHistory } = summary as SharedTreeSummary;
 
 		if (editHistory !== undefined) {
 			if (typeof editHistory !== 'object') {
@@ -29,7 +65,7 @@ export function convertSummaryToReadFormat(summary: SharedTreeSummary): SharedTr
 			}
 		}
 	} else if (version === '0.0.2') {
-		const { sequencedEdits } = summary;
+		const { sequencedEdits } = summary as SharedTreeSummary_0_0_2;
 
 		if (sequencedEdits !== undefined) {
 			const editChunks: EditWithoutId[][] = [];

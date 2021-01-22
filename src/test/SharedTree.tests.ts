@@ -10,7 +10,7 @@ import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../Identifie
 import { SharedTreeEvent } from '../SharedTree';
 import { Change, ChangeType, EditNode, Delete, Insert, ChangeNode, StablePlace, StableRange } from '../PersistedTypes';
 import { deepCompareNodes, newEdit } from '../EditUtilities';
-import { deserialize, noHistorySummarizer, serialize, SharedTreeSummary } from '../Summary';
+import { noHistorySummarizer, serialize } from '../Summary';
 import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
 import {
@@ -26,6 +26,7 @@ import {
 	assertNoDelta,
 } from './utilities/TestUtilities';
 import { runSharedTreeUndoRedoTestSuite } from './utilities/UndoRedoTests';
+import { deserialize, SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 
 describe('SharedTree', () => {
 	describe('SharedTree before initialization', () => {
@@ -427,7 +428,7 @@ describe('SharedTree', () => {
 
 			// Serialize the state of one uninitialized tree into a second tree
 			const serialized = serialize(uninitializedTree.saveSummary());
-			const parsedTree = deserialize(serialized) as SharedTreeSummary;
+			const parsedTree = deserialize(serialized) as SharedTreeSummary_0_0_2;
 			expect(parsedTree.sequencedEdits).deep.equal([]);
 			expect(deepCompareNodes(parsedTree.currentTree, initialTree)).to.be.true;
 		});
@@ -447,7 +448,7 @@ describe('SharedTree', () => {
 
 				const serialized = serialize(tree.saveSummary());
 				const treeContent = JSON.parse(serialized);
-				const parsedTree = treeContent as SharedTreeSummary;
+				const parsedTree = treeContent as SharedTreeSummary_0_0_2;
 
 				expect(parsedTree.currentTree).to.not.be.undefined;
 				const testRoot = assertArrayOfOne(parsedTree.currentTree.traits[testTrait.label]);

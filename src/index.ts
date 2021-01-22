@@ -20,7 +20,7 @@
 export { initialTree } from './InitialTree';
 export { SharedTree, SharedTreeEvent, SharedTreeEditor } from './SharedTree';
 export { Delta } from './Forest';
-export { SharedTreeSummary, SerializedEditLogSummary, SharedTreeSummarizer, SerializationHelpers } from './Summary';
+export { SharedTreeSummaryBase, SharedTreeSummarizer, SerializationHelpers } from './Summary';
 export { sharedTreeAssertionErrorType } from './Common';
 export * from './PersistedTypes';
 export * from './Factory';
