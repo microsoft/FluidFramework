@@ -128,7 +128,11 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
         }, key, content);
     }
 
-    public addHandle(key: string, handleType: SummaryType, handle: string): void {
+    public addHandle(
+        key: string,
+        handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment,
+        handle: string): void
+    {
         this.summaryTree[key] = {
             type: SummaryType.Handle,
             handleType,
@@ -310,10 +314,6 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
             case SummaryType.Attachment: {
                 entries.push(new AttachmentTreeEntry(key, value.id));
                 break;
-            }
-
-            case SummaryType.Commit: {
-                throw new Error("Should not have Commit type in summary tree");
             }
 
             case SummaryType.Handle: {
