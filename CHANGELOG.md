@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.22.2
+
+* build: revert update to react 17, and include non-breaking updates since branch
+
 ## 0.22.1
 
 * build: update and audit deps
