@@ -106,7 +106,8 @@ export class LocalReference implements ReferencePosition {
     }
 
     public getOffset() {
-        if (this.segment.removedSeq) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        if (this.segment!.removedSeq) {
             return 0;
         }
         return this.offset;
@@ -216,7 +217,8 @@ export class LocalReferenceCollection {
                 at: [lref],
             };
         } else {
-            refsAtOffset.at.push(lref);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            refsAtOffset.at!.push(lref);
         }
 
         if (lref.hasRangeLabels() || lref.hasTileLabels()) {
