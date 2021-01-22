@@ -158,7 +158,10 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
     public async makeTestContainer(testContainerConfig?: TestContainerConfigType) {
         const loader = this.makeTestLoader(testContainerConfig);
         const container =
-            await createAndAttachContainer(defaultDocumentId, defaultCodeDetails, loader, this.urlResolver);
+            await createAndAttachContainer(defaultCodeDetails, loader, {
+                url: `http://localhost:3000/${defaultDocumentId}`,
+                headers: { createNew: true },
+            });
 
         // TODO: the old version delta manager on the container doesn't do pause/resume count
         // We can't use it to do pause/resume, or it will conflict with the call from the runtime's
@@ -300,7 +303,10 @@ export async function createOldContainer(
     codeDetails,
 ): Promise<IContainer> {
     const loader = createLocalLoader(packageEntries, server, urlResolver, { hotSwapContext: true });
-    return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+    return createAndAttachContainer(codeDetails, loader, {
+        url: `http://localhost:3000/${documentId}`,
+        headers: { createNew: true },
+    });
 }
 
 export function createTestObjectProvider(
