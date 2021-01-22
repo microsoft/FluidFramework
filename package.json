@@ -1,6 +1,6 @@
 {
 	"name": "@intentional/shared-tree",
-	"version": "0.22.1",
+	"version": "0.22.2",
 	"description": "Microsoft Whiteboard collaboration libraries",
 	"bugs": {
 		"url": "https://dev.azure.com/intentional/intent/_workitems"
@@ -34,11 +34,11 @@
 	"dependencies": {
 		"@fluidframework/common-definitions": "^0.19.1",
 		"@fluidframework/common-utils": "^0.26.0",
-		"@fluidframework/container-definitions": "^0.32.2",
-		"@fluidframework/datastore-definitions": "^0.32.2",
+		"@fluidframework/container-definitions": "^0.32.3",
+		"@fluidframework/datastore-definitions": "^0.32.3",
 		"@fluidframework/protocol-definitions": "^0.1017.1",
-		"@fluidframework/shared-object-base": "^0.32.2",
-		"@fluidframework/telemetry-utils": "^0.32.2",
+		"@fluidframework/shared-object-base": "^0.32.3",
+		"@fluidframework/telemetry-utils": "^0.32.3",
 		"buffer": "^6.0.3",
 		"immutable": "^4.0.0-rc.12",
 		"sorted-btree": "^1.4.0",
@@ -47,7 +47,7 @@
 	"devDependencies": {
 		"@fluidframework/build-common": "^0.19.2",
 		"@fluidframework/eslint-config-fluid": "^0.21.0",
-		"@fluidframework/test-runtime-utils": "^0.32.2",
+		"@fluidframework/test-runtime-utils": "^0.32.3",
 		"@microsoft/api-extractor": "^7.13.0",
 		"@typescript-eslint/parser": "^4.14.0",
 		"chai": "^4.2.0",
