@@ -7,7 +7,14 @@ import { v4 as uuid } from "uuid";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { canRetryOnError } from "@fluidframework/driver-utils";
-import { ICreateBlobResponse, ISnapshotTree, ISummaryHandle, ISummaryTree, ITree, IVersion } from "@fluidframework/protocol-definitions";
+import {
+    ICreateBlobResponse,
+    ISnapshotTree,
+    ISummaryHandle,
+    ISummaryTree,
+    ITree,
+    IVersion,
+} from "@fluidframework/protocol-definitions";
 import { DeltaManager, getRetryDelayFromError } from "./deltaManager";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService {
