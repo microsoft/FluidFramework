@@ -333,7 +333,7 @@ export class EditLog implements OrderedEditSet {
 			// New edit already exits: it must have been a local edit.
 			assert(encounteredEditId.isLocal, 'Duplicate acked edit.');
 			// Remove it from localEdits. Due to ordering requirements, it must be first.
-			const oldLocalEditId = assertArrayOfOne(this.localEdits.splice(0, 1)).id;
+			const oldLocalEditId = assertNotUndefined(this.localEdits.shift(), 'Local edit should exist').id;
 			assert(oldLocalEditId === id, 'Causal ordering should be upheld');
 		}
 
