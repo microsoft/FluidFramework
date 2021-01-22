@@ -533,7 +533,7 @@ export interface TraitLocation {
 }
 
 // @public
-export interface TraitMap<TChild = ChangeNode> {
+export interface TraitMap<TChild> {
     // (undocumented)
     readonly [key: string]: TreeNodeSequence<TChild>;
 }
@@ -550,7 +550,22 @@ export interface TreeNode<TChild> extends NodeData {
 }
 
 // @public
-export type TreeNodeSequence<TChild = ChangeNode> = readonly TChild[];
+export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
+    constructor(snapshot: Snapshot, nodeId: NodeId);
+    // (undocumented)
+    get definition(): Definition;
+    // (undocumented)
+    get identifier(): NodeId;
+    // (undocumented)
+    get node(): TreeNode<TreeNodeHandle>;
+    // (undocumented)
+    get payload(): Payload | undefined;
+    // (undocumented)
+    get traits(): TraitMap<TreeNodeHandle>;
+}
+
+// @public
+export type TreeNodeSequence<TChild> = readonly TChild[];
 
 // @public
 export type UuidString = string & {
