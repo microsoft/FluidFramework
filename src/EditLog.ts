@@ -81,7 +81,7 @@ interface LocalOrderedEditId {
 	readonly localSequence: number;
 }
 
-interface editChunk {
+interface EditChunk {
 	handle?: IFluidHandle<ArrayBufferLike>;
 	edits?: EditWithoutId[];
 }
@@ -134,7 +134,7 @@ export class EditLog implements OrderedEditSet {
 	private localEditSequence = 0;
 
 	private readonly editIds: EditId[];
-	private readonly editChunks: editChunk[];
+	private readonly editChunks: EditChunk[];
 	private readonly localEdits: Edit[] = [];
 
 	private readonly loadedChunkMruCache: number[] = [];
