@@ -150,13 +150,16 @@ export class EditLog implements OrderedEditSet {
 		const editLogSummary = options || { editIds: [], editChunks: [] };
 		const { editChunks, editIds } = editLogSummary;
 
-		this.editChunks = editChunks.map((chunk) => {
-			if (Array.isArray(chunk)) {
-				return { edits: chunk };
-			}
+		this.editChunks =
+			editChunks === undefined
+				? []
+				: editChunks.map((chunk) => {
+						if (Array.isArray(chunk)) {
+							return { edits: chunk };
+						}
 
-			return { handle: chunk };
-		});
+						return { handle: chunk };
+				  });
 
 		this.editIds = editIds.slice();
 		this.maximumEvictedIndex = (this.editChunks.length - 1) * editsPerChunk - 1;

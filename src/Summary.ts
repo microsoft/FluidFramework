@@ -123,12 +123,10 @@ export function fullHistorySummarizer(
 	currentView: Snapshot,
 	_serializationHelpers: SerializationHelpers
 ): SharedTreeSummary {
-	const editLogSummary = editLog.getEditLogSummary();
-	const editChunks = assertNotUndefined(editLogSummary.editChunks);
-	const editIds = assertNotUndefined(editLogSummary.editIds);
+	const { editChunks, editIds } = editLog.getEditLogSummary();
 
 	const sequencedEdits: Edit[] = [];
-	assertNotUndefined(editChunks).forEach((chunk, chunkIndex) => {
+	editChunks.forEach((chunk, chunkIndex) => {
 		assert(
 			Array.isArray(chunk),
 			'Handles should not be included in the summary until format version 0.1.0 is being written.'
