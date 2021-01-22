@@ -219,21 +219,6 @@ export type ILoaderOptions = {
      * Defaults to true.
      */
     cache?: boolean;
-
-    /**
-     * Start the container in a paused, unconnected state.  A cache option in the LoaderHeader
-     * for an individual request will override the Loader's value.
-     * Defaults to false.
-     */
-    pause?: boolean,
-    reconnect?: boolean,
-
-    /**
-     * If true, set forceReadonly on containers when created.  Cached containers created as readonly
-     * but that later call forceReadonly(false) will not have readonly reset to true.
-     * Defaults to false.
-     */
-    readonly?: boolean,
 };
 
 /**
@@ -249,7 +234,7 @@ export enum LoaderHeader {
     executionContext = "execution-context",
 
     /**
-     * Override the Loader's default behavior around starting the container in a paused, unconnected state
+     * Start the container in a paused, unconnected state. Defaults to false
      */
     pause = "pause",
     reconnect = "fluid-reconnect",

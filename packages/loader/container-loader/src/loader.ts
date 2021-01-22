@@ -361,19 +361,14 @@ export class Loader extends EventEmitter implements ILoader {
             return Promise.reject(new Error(`Invalid URL ${resolvedAsFluid.url}`));
         }
 
-        request.headers = this.mergeHeaderOptions(request.headers ?? {});
         const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
 
-        debug(`${canCache} ${request.headers[LoaderHeader.pause]} ${request.headers[LoaderHeader.version]}`);
-
         let container: Container;
-        let newlyLoaded = true;
         if (canCache) {
             const key = this.getKeyForContainerCache(request, parsed);
             const maybeContainer = await this.containers.get(key);
             if (maybeContainer !== undefined) {
                 container = maybeContainer;
-                newlyLoaded = false;
             } else {
                 const containerP =
                     this.loadContainer(
@@ -399,11 +394,6 @@ export class Loader extends EventEmitter implements ILoader {
                     resolvedAsFluid);
         }
 
-        if (newlyLoaded && this.services.options.readonly === true) {
-            // Don't re-force readonly when returning an existing container
-            container.forceReadonly(true);
-        }
-
         if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
             await new Promise<void>((resolve, reject) => {
                 function opHandler(message: ISequencedDocumentMessage) {
@@ -420,21 +410,8 @@ export class Loader extends EventEmitter implements ILoader {
         return { container, parsed };
     }
 
-    private mergeHeaderOptions(headers: IRequestHeader): IRequestHeader {
-        const loaderDefaults = {
-            [LoaderHeader.cache]: this.services.options.cache,
-            [LoaderHeader.pause]: this.services.options.pause,
-            [LoaderHeader.reconnect]: this.services.options.reconnect,
-        };
-        return { ...loaderDefaults, ...headers };
-    }
-
-    private canUseCache(request: IRequest): boolean {
-        if (request.headers === undefined) {
-            return true;
-        }
-
-        return request.headers[LoaderHeader.cache] !== false;
+    private canUseCache(headers: IRequestHeader): boolean {
+        return this.services.options.cache !== false && headers[LoaderHeader.cache] !== false;
     }
 
     private parseHeader(parsed: IParsedUrl, request: IRequest) {
@@ -454,8 +431,12 @@ export class Loader extends EventEmitter implements ILoader {
         if (request.headers[LoaderHeader.version] === "null") {
             request.headers[LoaderHeader.version] = null;
         }
+
+        const canCache = this.canUseCache(request.headers);
+        debug(`${canCache} ${request.headers[LoaderHeader.version]}`);
+
         return {
-            canCache: this.canUseCache(request),
+            canCache,
             fromSequenceNumber,
         };
     }
