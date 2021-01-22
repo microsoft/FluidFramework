@@ -75,11 +75,6 @@ export enum SharedTreeEvent {
 	 * Passed the EditId of the committed edit.
 	 */
 	EditCommitted = 'committedEdit',
-
-	/**
-	 * A chunk of edits has been uploaded using the `uploadBlob` API.
-	 */
-	EditsBlobbed = 'blobbedEdits',
 }
 
 /**
@@ -443,11 +438,11 @@ export class SharedTree extends SharedObject {
 	 */
 	protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
 		const { type } = message.contents;
-		if (type === 'handle') {
-			const { editHandle, chunkIndex } = message.contents;
+		if (type === SharedTreeOpType.Handle) {
+			const { editHandle, chunkIndex } = message.contents as SharedTreeHandleOp;
 			this.editLog.processEditChunkHandle(this.deserializeHandle(editHandle), chunkIndex);
-		} else {
-			const { edit } = message.contents;
+		} else if (type === SharedTreeOpType.Edit) {
+			const { edit } = message.contents as SharedTreeEditOp;
 			this.processSequencedEdit(edit);
 		}
 	}
@@ -481,9 +476,33 @@ export class SharedTree extends SharedObject {
 	 * @internal
 	 */
 	public processLocalEdit(edit: Edit): void {
+		const editOp: SharedTreeEditOp = {
+			type: SharedTreeOpType.Edit,
+			edit,
+		};
 		// TODO:44711: what should be passed in when unattached?
-		this.submitLocalMessage({ edit, type: 'edit' });
+		this.submitLocalMessage(editOp);
 		this.editLog.addLocalEdit(edit);
 		this.emit(SharedTreeEvent.EditCommitted, edit.id);
 	}
+}
+
+enum SharedTreeOpType {
+	Edit,
+	Handle,
+}
+
+interface SharedTreeOp {
+	type: SharedTreeOpType;
+}
+
+interface SharedTreeEditOp extends SharedTreeOp {
+	edit: Edit;
+}
+
+interface SharedTreeHandleOp extends SharedTreeOp {
+	/** The handled to an uploaded edit chunk. */
+	editHandle: ISerializedHandle;
+	/** The index of the chunk that corresponds to the handle. */
+	chunkIndex: number;
 }

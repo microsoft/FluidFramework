@@ -382,8 +382,7 @@ export class SharedTreeEditor {
 
 // @public
 export enum SharedTreeEvent {
-    EditCommitted = "committedEdit",
-    EditsBlobbed = "blobbedEdits"
+    EditCommitted = "committedEdit"
 }
 
 // @public @sealed
