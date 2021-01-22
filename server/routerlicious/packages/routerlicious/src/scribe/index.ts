@@ -26,6 +26,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     const maxMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
     const sendTopic = config.get("lambdas:deli:topic");
     const kafkaClientId = config.get("scribe:kafkaClientId");
+    const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
 
     // Generate tenant manager which abstracts access to the underlying storage provider
     const authEndpoint = config.get("auth:endpoint");
@@ -41,15 +42,22 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
         client.collection<ISequencedOperationMessage>(messagesCollectionName),
     ]);
 
-    await Promise.all([
-        scribeDeltas.createIndex(
+    await scribeDeltas.createIndex(
+        {
+            "documentId": 1,
+            "operation.sequenceNumber": 1,
+            "tenantId": 1,
+        },
+        true);
+
+        if (mongoExpireAfterSeconds > 0) {
+            await scribeDeltas.createTTLIndex(
             {
-                "documentId": 1,
-                "operation.sequenceNumber": 1,
-                "tenantId": 1,
+                mongoTimestamp: 1,
             },
-            true),
-    ]);
+            mongoExpireAfterSeconds,
+            );
+        }
 
     const producer = createProducer(
         kafkaLibrary,
