@@ -101,11 +101,11 @@ async function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{ index
 
 class BlobCache {
     // Save the timeout so we can cancel and reschedule it as needed
-    // private blobCacheTimeout: ReturnType<typeof setTimeout> | undefined;
+    private blobCacheTimeout: ReturnType<typeof setTimeout> | undefined;
     // If the defer flag is set when the timeout fires, we'll reschedule rather than clear immediately
     // This deferral approach is used (rather than clearing/resetting the timer) as current calling patterns trigger
     // too many calls to setTimeout/clearTimeout.
-    // private deferBlobCacheClear: boolean = false;
+    private deferBlobCacheClear: boolean = false;
 
     private _blobCache: Map<string, IBlob | ArrayBuffer> = new Map();
 
