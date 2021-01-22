@@ -3,6 +3,7 @@ import { EditId } from './Identifiers';
 import { EditWithoutId } from './PersistedTypes';
 import { ErrorString, SharedTreeSummary } from './Summary';
 
+/** The summary format version that is read by SharedTree. */
 const readFormatVersion = '0.1.0';
 
 /**
