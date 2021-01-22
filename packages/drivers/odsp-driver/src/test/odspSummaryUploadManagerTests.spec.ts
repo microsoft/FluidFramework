@@ -29,7 +29,6 @@ describe("Odsp Summary Upload Manager Tests", () => {
             async (options: TokenFetchOptions, name?: string) => "token",
             logger,
             epochTracker,
-            new Map(),
         );
     });
 
@@ -77,7 +76,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
             },
         };
 
-        await odspSummaryUploadManager.buildCachesForDedup(snapshotTree);
+        await odspSummaryUploadManager.buildCachesForDedup(snapshotTree, new Map());
 
         assert.strictEqual(odspSummaryUploadManager["blobTreeDedupCaches"].blobShaToPath.size, 4,
             "4 blobs should be in cache as 4 blobs with different content");

@@ -71,7 +71,6 @@ export class OdspSummaryUploadManager {
         private readonly getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
         private readonly logger: ITelemetryLogger,
         private readonly epochTracker: EpochTracker,
-        private readonly blobCache: Map<string, IBlob | ArrayBuffer> = new Map(),
     ) {
     }
 
@@ -79,9 +78,9 @@ export class OdspSummaryUploadManager {
      * Builts the caches which will be used for blob deduping.
      * @param snapshotTree - snapshot tree from which the dedup caches are built.
      */
-    public async buildCachesForDedup(snapshotTree: api.ISnapshotTree) {
+    public async buildCachesForDedup(snapshotTree: api.ISnapshotTree, blobCache: Map<string, IBlob | ArrayBuffer>) {
         const prefixedSnapshotTree = this.addAppPrefixToSnapshotTree(snapshotTree);
-        await this.buildCachesForDedupCore(prefixedSnapshotTree);
+        await this.buildCachesForDedupCore(prefixedSnapshotTree, blobCache);
         this.previousBlobTreeDedupCaches = { ...this.blobTreeDedupCaches };
     }
 
@@ -90,7 +89,11 @@ export class OdspSummaryUploadManager {
      * @param snapshotTree - snapshot tree from which the dedup caches are built.
      * @param path - path of the current node evaluated.
      */
-    private async buildCachesForDedupCore(snapshotTree: api.ISnapshotTree, path: string = ""): Promise<api.ISummaryTree> {
+    private async buildCachesForDedupCore(
+        snapshotTree: api.ISnapshotTree,
+        blobCache: Map<string, IBlob | ArrayBuffer>,
+        path: string = ""): Promise<api.ISummaryTree>
+    {
         assert(Object.keys(snapshotTree.commits).length === 0, "There should not be commit tree entries in snapshot");
 
         const summaryTree: api.ISummaryTree = {
@@ -98,7 +101,7 @@ export class OdspSummaryUploadManager {
             tree: {},
         };
         for (const [key, value] of Object.entries(snapshotTree.blobs)) {
-            const blobValue = this.blobCache.get(value);
+            const blobValue = blobCache.get(value);
             assert(blobValue !== undefined, "Blob should exists");
             const hash = await hashFile(
                 blobValue instanceof ArrayBuffer ?
@@ -122,7 +125,7 @@ export class OdspSummaryUploadManager {
         for (const [key, tree] of Object.entries(snapshotTree.trees)) {
             // fullTreePath does not start with "/"
             const fullTreePath = path === "" ? key : `${path}/${key}`;
-            const subtree = await this.buildCachesForDedupCore(tree, fullTreePath);
+            const subtree = await this.buildCachesForDedupCore(tree, blobCache, fullTreePath);
             this.blobTreeDedupCaches.treesPathToTree.set(fullTreePath, subtree);
             summaryTree.tree[key] = subtree;
         }
