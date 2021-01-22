@@ -290,6 +290,9 @@ export class EditLog implements OrderedEditSet {
 		}
 	}
 
+	/**
+	 * Assigns provided handles to edit chunks based on chunk index specified.
+	 */
 	public processEditChunkHandle(chunkHandle: IFluidHandle<ArrayBufferLike>, chunkIndex: number): void {
 		assert(
 			chunkIndex < this.editChunks.length,
