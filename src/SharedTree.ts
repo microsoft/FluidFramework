@@ -40,7 +40,7 @@ import {
 import * as HistoryEditFactory from './HistoryEditFactory';
 import { initialTree } from './InitialTree';
 import { CachingLogViewer, LogViewer } from './LogViewer';
-import { transpileSummaryToReadFormat } from './SummaryBackCompatibility';
+import { convertSummaryToReadFormat } from './SummaryBackCompatibility';
 
 /**
  * Filename where the snapshot is stored.
@@ -378,11 +378,11 @@ export class SharedTree extends SharedObject {
 		expensiveValidation: boolean,
 		logger: ITelemetryLogger
 	): { editLog: EditLog; logViewer: LogViewer } {
-		const transpiledSummary = transpileSummaryToReadFormat(summary);
-		if (typeof transpiledSummary === 'string') {
-			fail(transpiledSummary); // TODO: Where does this error propagate?
+		const convertedSummary = convertSummaryToReadFormat(summary);
+		if (typeof convertedSummary === 'string') {
+			fail(convertedSummary); // TODO: Where does this error propagate?
 		}
-		const { editHistory, currentTree } = transpiledSummary;
+		const { editHistory, currentTree } = convertedSummary;
 		const { editChunks, editIds } = assertNotUndefined(
 			editHistory,
 			'Transpiling should result in editChunks being populated.'

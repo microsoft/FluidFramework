@@ -6,10 +6,10 @@ import { ErrorString, SharedTreeSummary } from './Summary';
 const readFormatVersion = '0.1.0';
 
 /**
- * @returns SharedTreeSummary that can be used to initialize a SharedTree, or an ErrorString if the summary could not be transpiled.
+ * @returns SharedTreeSummary that can be used to initialize a SharedTree, or an ErrorString if the summary could not be converted.
  *
  */
-export function transpileSummaryToReadFormat(summary: SharedTreeSummary): SharedTreeSummary | ErrorString {
+export function convertSummaryToReadFormat(summary: SharedTreeSummary): SharedTreeSummary | ErrorString {
 	const { currentTree, version } = summary;
 
 	if (version === readFormatVersion) {
