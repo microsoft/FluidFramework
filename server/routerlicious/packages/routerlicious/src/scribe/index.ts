@@ -50,14 +50,13 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
         },
         true);
 
-        if (mongoExpireAfterSeconds > 0) {
-            await scribeDeltas.createTTLIndex(
+    if (mongoExpireAfterSeconds > 0) {
+        await scribeDeltas.createTTLIndex(
             {
                 mongoTimestamp: 1,
             },
-            mongoExpireAfterSeconds,
-            );
-        }
+            mongoExpireAfterSeconds);
+    }
 
     const producer = createProducer(
         kafkaLibrary,
