@@ -12,7 +12,7 @@ export class ReplayArgs {
     public from: number = 0;
     public to: number = Number.MAX_SAFE_INTEGER;
     public snapFreq: number | undefined;
-    public version?: string;
+    public fromVersion?: string;
     public verbose = true;
     public overlappingContainers = 1;
     public validateStorageSnapshots = false;
@@ -22,6 +22,7 @@ export class ReplayArgs {
     public compare = false;
     public write = false;
     public expandFiles = true;
+    public testSummaries = false;
 
     public checkArgs() {
         if (this.from > this.to) {
