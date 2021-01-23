@@ -25,11 +25,7 @@ const formatVersion = '0.0.2';
  * @returns a summary of the supplied state.
  * @public
  */
-export type SharedTreeSummarizer = (
-	editLog: OrderedEditSet,
-	currentView: Snapshot,
-	serializationHelpers: SerializationHelpers
-) => SharedTreeSummaryBase;
+export type SharedTreeSummarizer = (editLog: OrderedEditSet, currentView: Snapshot) => SharedTreeSummaryBase;
 
 /**
  * A developer facing (non-localized) error message.
@@ -95,11 +91,7 @@ export function serialize(summary: SharedTreeSummary): string {
  * Preserves the full history in the generated summary.
  * @public
  */
-export function fullHistorySummarizer(
-	editLog: OrderedEditSet,
-	currentView: Snapshot,
-	_serializationHelpers: SerializationHelpers
-): SharedTreeSummary_0_0_2 {
+export function fullHistorySummarizer(editLog: OrderedEditSet, currentView: Snapshot): SharedTreeSummary_0_0_2 {
 	const { editChunks, editIds } = editLog.getEditLogSummary();
 
 	const sequencedEdits: Edit[] = [];

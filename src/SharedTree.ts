@@ -332,7 +332,7 @@ export class SharedTree extends SharedObject {
 			this.editLog.sequenceLocalEdits();
 		}
 
-		return this.summarizer(this.editLog, this.currentView, { serializeHandle: this.toSerializable.bind(this) });
+		return this.summarizer(this.editLog, this.currentView);
 	}
 
 	/**
