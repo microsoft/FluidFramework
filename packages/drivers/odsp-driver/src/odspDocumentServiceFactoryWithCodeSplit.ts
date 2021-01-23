@@ -8,6 +8,7 @@ import { IPersistedCache } from "./odspCache";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
 import { HostStoragePolicy } from "./contracts";
 import { StorageTokenFetcher, PushTokenFetcher } from "./tokenFetch";
+import io from "./getSocketIo";
 
 export class OdspDocumentServiceFactoryWithCodeSplit
     extends OdspDocumentServiceFactoryCore
@@ -21,7 +22,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit
         super(
             getStorageToken,
             getWebsocketToken,
-            async () => import("./getSocketIo").then((m) => m.getSocketIo()),
+            async () => Promise.resolve(io.getSocketIo()),
             persistedCache,
             hostPolicy,
         );
