@@ -61,7 +61,7 @@
   },
   "dependencies": {
     "@fluidframework/base-host": "^0.28.0",
-    "@fluidframework/common-utils": "^0.26.0-0",
+    "@fluidframework/common-utils": "^0.26.0",
     "@fluidframework/container-definitions": "^0.28.0",
     "@fluidframework/container-loader": "^0.28.0",
     "@fluidframework/core-interfaces": "^0.28.0",

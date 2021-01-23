@@ -1,6 +1,10 @@
 ## 0.33 Breaking changes
+- [Normalizing enum ContainerErrorType](#normalizing-enum-containererrortype)
 - [Map and Directory typing changes from enabling strictNullCheck](#map-and-directory-typing-changes-from-enabling-strictNullCheck)
 - [MergeTree's ReferencePosition.getTileLabels and ReferencePosition.getRangeLabels() return undefined if it doesn't exist](#mergetree-referenceposition-gettilelabels-getrangelabels-changes)
+
+## Normalizing enum ContainerErrorType
+In an effort to clarify error categorization, a name and value in this enumeration were changed.
 
 ## Map and Directory typing changes from enabling strictNullCheck
 Typescript compile options `strictNullCheck` is enabled for the `@fluidframework/map` package. Some of the API signature is updated to include possibility of `undefined` and `null`, which can cause new typescript compile error when upgrading.  Existing code may need to update to handle the possiblity of `undefined` or `null.

@@ -14,6 +14,7 @@ import { EsLintTask, TsFormatTask, TsLintTask } from "./leaf/lintTasks";
 import { ApiExtractorTask } from "./leaf/apiExtractorTask";
 import { WebpackTask } from "./leaf/webpackTask";
 import { LesscTask, CopyfilesTask, EchoTask, GenVerTask } from "./leaf/miscTasks";
+import { PrettierTask } from "./leaf/prettierTask";
 
 // Map of executable name to LeafTasks
 const executableToLeafTask: { [key: string]: new (node: BuildPackage, command: string) => LeafTask } = {
@@ -26,6 +27,7 @@ const executableToLeafTask: { [key: string]: new (node: BuildPackage, command: s
     lessc: LesscTask,
     copyfiles: CopyfilesTask,
     echo: EchoTask,
+    prettier: PrettierTask,
     "gen-version": GenVerTask,
     "api-extractor": ApiExtractorTask,
 };

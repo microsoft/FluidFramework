@@ -104,11 +104,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private readonly treesCache: Map<string, ITree> = new Map();
 
     // Save the timeout so we can cancel and reschedule it as needed
-    private blobCacheTimeout: ReturnType<typeof setTimeout> | undefined;
+    // private blobCacheTimeout: ReturnType<typeof setTimeout> | undefined;
     // If the defer flag is set when the timeout fires, we'll reschedule rather than clear immediately
     // This deferral approach is used (rather than clearing/resetting the timer) as current calling patterns trigger
     // too many calls to setTimeout/clearTimeout.
-    private deferBlobCacheClear: boolean = false;
+    // private deferBlobCacheClear: boolean = false;
 
     private readonly attributesBlobHandles: Set<string> = new Set();
 
@@ -232,7 +232,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     async (event) => {
                         const res = await this.epochTracker.fetchResponse(url, { headers }, FetchType.blob);
                         const blobContent = await res.arrayBuffer();
-                        event.end({ size: blobContent.byteLength });
+                        event.end({
+                            size: blobContent.byteLength,
+                            waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
+                        });
                         return blobContent;
                     },
                 );
@@ -732,6 +735,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
      * Schedule a timer for clearing the blob cache or defer the current one.
      */
     private scheduleClearBlobsCache() {
+        /*
         if (this.blobCacheTimeout !== undefined) {
             // If we already have an outstanding timer, just signal that we should defer the clear
             this.deferBlobCacheClear = true;
@@ -750,6 +754,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const blobCacheTimeoutDuration = 10000;
             this.blobCacheTimeout = setTimeout(clearCacheOrDefer, blobCacheTimeoutDuration);
         }
+        */
     }
 
     private checkSnapshotUrl() {
