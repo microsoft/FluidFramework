@@ -11,7 +11,6 @@ import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISerializedHandle } from '@fluidframework/core-interfaces';
@@ -172,7 +171,7 @@ export type EditId = UuidString & {
 //
 // @internal
 export interface EditLogSummary {
-    readonly editChunks: readonly (IFluidHandle<ArrayBufferLike> | EditWithoutId[])[];
+    readonly editChunks: readonly (ISerializedHandle | EditWithoutId[])[];
     readonly editIds: readonly EditId[];
 }
 
@@ -304,12 +303,6 @@ export class PrefetchingCheckout extends Checkout {
 export function revert(edit: Edit, view: Snapshot): Change[];
 
 // @public
-export interface SerializationHelpers {
-    // (undocumented)
-    serializeHandle: (handle: IFluidHandle<ArrayBufferLike>) => ISerializedHandle;
-}
-
-// @public
 export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<EditNode>): readonly Change[];
 
 // @public
@@ -397,7 +390,7 @@ export class SharedTreeFactory implements IChannelFactory {
 }
 
 // @public
-export type SharedTreeSummarizer = (editLog: OrderedEditSet, currentView: Snapshot, serializationHelpers: SerializationHelpers) => SharedTreeSummaryBase;
+export type SharedTreeSummarizer = (editLog: OrderedEditSet, currentView: Snapshot) => SharedTreeSummaryBase;
 
 // @public
 export interface SharedTreeSummaryBase {

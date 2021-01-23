@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, ISerializedHandle } from '@fluidframework/core-interfaces';
-import { EditId, TraitLabel } from './Identifiers';
+import { TraitLabel } from './Identifiers';
 import { assert, assertNotUndefined } from './Common';
-import { editsPerChunk, OrderedEditSet } from './EditLog';
+import { EditLogSummary, editsPerChunk, OrderedEditSet } from './EditLog';
 import { newEdit, setTrait } from './EditUtilities';
 import { ChangeNode, Edit, Change, EditWithoutId } from './PersistedTypes';
 import { Snapshot } from './Snapshot';
@@ -53,31 +52,7 @@ export interface SharedTreeSummary extends SharedTreeSummaryBase {
 	/**
 	 * Information that can populate an edit log.
 	 */
-	readonly editHistory?: SerializedEditLogSummary;
-}
-
-/**
- * A serialized version of an edit log summary.
- * @public
- */
-export interface SerializedEditLogSummary {
-	/**
-	 * A list of either handles corresponding to a chunk of edits or the edit chunk.
-	 */
-	readonly editChunks: readonly (ISerializedHandle | EditWithoutId[])[];
-
-	/**
-	 * A list of edits IDs for all sequenced edits.
-	 */
-	readonly editIds: readonly EditId[];
-}
-
-/**
- * Helpers used to serialize summary fields.
- * @public
- */
-export interface SerializationHelpers {
-	serializeHandle: (handle: IFluidHandle<ArrayBufferLike>) => ISerializedHandle;
+	readonly editHistory?: EditLogSummary;
 }
 
 /**
@@ -124,11 +99,7 @@ export function fullHistorySummarizer(editLog: OrderedEditSet, currentView: Snap
  * Instead, the history returned in the summary will contain a single change that creates a revision identical to the supplied view.
  * @public
  */
-export function noHistorySummarizer(
-	_editLog: OrderedEditSet,
-	currentView: Snapshot,
-	_serializationHelpers: SerializationHelpers
-): SharedTreeSummary_0_0_2 {
+export function noHistorySummarizer(_editLog: OrderedEditSet, currentView: Snapshot): SharedTreeSummary_0_0_2 {
 	const currentTree = currentView.getChangeNodeTree();
 	const rootId = currentTree.identifier;
 	const changes: Change[] = [];

@@ -355,23 +355,14 @@ export class SharedTree extends SharedObject {
 			fail(convertedSummary); // TODO: Where does this error propagate?
 		}
 		const { editHistory, currentTree } = convertedSummary;
-		const { editChunks, editIds } = assertNotUndefined(
-			editHistory,
-			'Transpiling should result in editChunks being populated.'
-		);
 		const currentView = Snapshot.fromTree(currentTree);
 
-		const editLogOptions = {
-			editChunks: assertNotUndefined(editChunks).map((chunk) => {
-				if (Array.isArray(chunk)) {
-					return chunk;
-				}
-
-				return this.deserializeHandle(chunk);
-			}),
-			editIds,
+		const serializationHelpers = {
+			serializeHandle: this.toSerializable.bind(this),
+			deserializeHandle: this.deserializeHandle.bind(this),
 		};
-		const editLog = new EditLog(editLogOptions);
+
+		const editLog = new EditLog(editHistory, serializationHelpers);
 		const logViewer = new CachingLogViewer(editLog, initialTree, expensiveValidation, undefined, logger);
 
 		// TODO:#47830: Store the associated revision on the snapshot.

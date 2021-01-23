@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IFluidHandle, ISerializedHandle } from '@fluidframework/core-interfaces';
 import { IsoBuffer } from '@fluidframework/common-utils';
-import { assert, assertArrayOfOne, assertNotUndefined, compareIterables, fail } from './Common';
+import { assert, assertNotUndefined, compareIterables, fail } from './Common';
 import { Edit, EditWithoutId } from './PersistedTypes';
 import { EditId } from './Identifiers';
 
@@ -61,14 +61,25 @@ export interface OrderedEditSet {
  */
 export interface EditLogSummary {
 	/**
-	 * A list of either handles for a chunk of edits or a group of edits that can be chunked.
+	 * A list of either handles corresponding to a chunk of edits or the edit chunk.
 	 */
-	readonly editChunks: readonly (IFluidHandle<ArrayBufferLike> | EditWithoutId[])[];
+	readonly editChunks: readonly (ISerializedHandle | EditWithoutId[])[];
 
 	/**
 	 * A list of edits IDs for all sequenced edits.
 	 */
 	readonly editIds: readonly EditId[];
+}
+
+/**
+ * Helpers used to serialize and deserialize fields on EditLogSummary.
+ */
+interface SerializationHelpers {
+	/** JSON serializes a handle that corresponds to an uploaded edit chunk. */
+	serializeHandle: (handle: IFluidHandle<ArrayBufferLike>) => ISerializedHandle;
+
+	/** Deserializes a JSON serialized handle into a fluid handle that can be used to retrieve uploaded blobs.  */
+	deserializeHandle: (serializedHandle: ISerializedHandle) => IFluidHandle<ArrayBufferLike>;
 }
 
 interface SequencedOrderedEditId {
@@ -140,12 +151,16 @@ export class EditLog implements OrderedEditSet {
 	private readonly allEditIds: Map<EditId, OrderedEditId> = new Map();
 	private readonly editAddedHandlers: EditAddedHandler[] = [];
 
+	private readonly serializationHelpers?: SerializationHelpers;
+
 	/**
 	 * Construct an `EditLog` using the given options.
 	 */
-	public constructor(options?: EditLogSummary) {
+	public constructor(options?: EditLogSummary, serializationHelpers?: SerializationHelpers) {
 		const editLogSummary = options || { editIds: [], editChunks: [] };
 		const { editChunks, editIds } = editLogSummary;
+
+		this.serializationHelpers = serializationHelpers;
 
 		this.editChunks =
 			editChunks === undefined
@@ -155,7 +170,12 @@ export class EditLog implements OrderedEditSet {
 							return { edits: chunk };
 						}
 
-						return { handle: chunk };
+						return {
+							handle: assertNotUndefined(
+								this.serializationHelpers,
+								'Edit logs that store handles should have serialization helpers.'
+							).deserializeHandle(chunk),
+						};
 				  });
 
 		this.editIds = editIds.slice();
