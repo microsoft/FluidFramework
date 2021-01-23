@@ -588,6 +588,7 @@ export class DeltaManager
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                     if (!canRetryOnError(origError)) {
                         this.close(error);
+                        // eslint-disable-next-line @typescript-eslint/no-throw-literal
                         throw error;
                     }
 

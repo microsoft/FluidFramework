@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/consistent-type-assertions, eqeqeq, max-len, no-bitwise, no-shadow */
+/* eslint-disable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-shadow, eqeqeq, max-len, no-bitwise */
 
 import { strict as assert } from "assert";
 import fs from "fs";

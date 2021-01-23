@@ -3133,7 +3133,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
         // HACK: Expose "insertText" via window to Shared Browser Extension
         //       for 2018/Oct demo.
-        // eslint-disable-next-line dot-notation
+        // eslint-disable-next-line @typescript-eslint/dot-notation
         window["insertText"] = (text: string) => {
             this.sharedString.insertText(this.cursor.pos, text);
         };

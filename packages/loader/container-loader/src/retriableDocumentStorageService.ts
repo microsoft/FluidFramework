@@ -83,6 +83,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
                 success = true;
             } catch (err) {
                 if (this.disposed) {
+                    // eslint-disable-next-line @typescript-eslint/no-throw-literal
                     throw CreateContainerError("Storage service disposed!!");
                 }
                 // If it is not retriable, then just throw the error.
