@@ -43,7 +43,7 @@
     "assert": "^2.0.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.19.2",
+    "@fluidframework/build-common": "^0.20.0-0",
     "@fluidframework/eslint-config-fluid": "^0.21.0",
     "@types/assert": "^1.5.1",
     "@types/node": "^10.17.24",

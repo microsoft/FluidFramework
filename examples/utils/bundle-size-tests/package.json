@@ -30,7 +30,7 @@
     "@fluidframework/sequence": "^0.34.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.19.2",
+    "@fluidframework/build-common": "^0.20.0-0",
     "@fluidframework/bundle-size-tools": "^0.0.8505",
     "@fluidframework/eslint-config-fluid": "^0.21.0",
     "@mixer/webpack-bundle-compare": "^0.1.0",
