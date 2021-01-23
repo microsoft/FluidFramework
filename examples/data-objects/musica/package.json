@@ -44,7 +44,7 @@
   "devDependencies": {
     "@babel/plugin-proposal-class-properties": "^7.4.4",
     "@fluidframework/build-common": "^0.20.0-0",
-    "@fluidframework/eslint-config-fluid": "^0.21.0",
+    "@fluidframework/eslint-config-fluid": "^0.22.1-0",
     "@fluidframework/webpack-fluid-loader": "^0.34.0",
     "@types/node": "^10.17.24",
     "@types/react": "^16.9.15",
