@@ -89,7 +89,7 @@ export async function initialize(
     };
 
     // Provide access to all loader services from command line for easier testing as we bring more up
-    // eslint-disable-next-line @typescript-eslint/dot-notation
+    // eslint-disable-next-line dot-notation
     window["allServices"] = services;
 
     const baseHost = new BaseHost(hostConfig, seedFromScriptIds(pkg, scriptIds));
