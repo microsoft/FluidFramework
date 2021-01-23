@@ -45,7 +45,7 @@
     "debug": "^4.1.1"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.19.2",
+    "@fluidframework/build-common": "^0.20.0-0",
     "@fluidframework/eslint-config-fluid": "^0.21.0",
     "@fluidframework/webpack-fluid-loader": "^0.34.0",
     "@types/node": "^10.17.24",

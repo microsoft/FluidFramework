@@ -58,7 +58,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.19.2",
+    "@fluidframework/build-common": "^0.20.0-0",
     "@fluidframework/eslint-config-fluid": "^0.21.0",
     "@fluidframework/mocha-test-setup": "^0.34.0",
     "@types/benchmark": "^1.0.31",

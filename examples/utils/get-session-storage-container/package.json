@@ -31,7 +31,7 @@
     "@fluidframework/server-local-server": "^0.1018.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.19.2",
+    "@fluidframework/build-common": "^0.20.0-0",
     "@fluidframework/eslint-config-fluid": "^0.21.0",
     "@fluidframework/test-tools": "^0.2.3074",
     "@types/node": "^10.17.24",

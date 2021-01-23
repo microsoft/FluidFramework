@@ -46,7 +46,7 @@
     "ws": "^6.1.2"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.19.2",
+    "@fluidframework/build-common": "^0.20.0-0",
     "@fluidframework/eslint-config-fluid": "^0.21.0",
     "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "~4.2.0",
