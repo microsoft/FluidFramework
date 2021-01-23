@@ -157,7 +157,7 @@
     "old-test-utils2": "npm:@fluidframework/test-utils@^0.32.0",
     "rimraf": "^2.6.2",
     "start-server-and-test": "^1.11.7",
-    "tinylicious": "^0.4.11798",
+    "tinylicious": "^0.4.13835",
     "ts-loader": "^6.1.2",
     "typescript": "~3.7.4",
     "typescript-formatter": "7.1.0",
