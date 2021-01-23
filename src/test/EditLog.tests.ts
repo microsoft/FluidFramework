@@ -164,7 +164,8 @@ describe('EditLog', () => {
 
 		log.sequenceLocalEdits();
 
-		expect(log.getEditIds()).to.deep.equal(ids, 'Sequencing a local edit should not change its index.');
+		const editIds = Array.from(log);
+		expect(editIds).to.deep.equal(ids, 'Sequencing a local edit should not change its index.');
 
 		expect(log.length)
 			.equals(log.numberOfSequencedEdits)

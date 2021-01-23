@@ -141,7 +141,7 @@ export type EditAddedHandler = (edit: Edit, isLocal: boolean) => void;
 export class EditLog implements OrderedEditSet {
 	private localEditSequence = 0;
 
-	private readonly editIds: EditId[];
+	private readonly sequencedEditIds: EditId[];
 	private readonly editChunks: EditChunk[];
 	private readonly localEdits: Edit[] = [];
 
@@ -178,10 +178,10 @@ export class EditLog implements OrderedEditSet {
 						};
 				  });
 
-		this.editIds = editIds.slice();
+		this.sequencedEditIds = editIds.slice();
 		this.maximumEvictedIndex = (this.editChunks.length - 1) * editsPerChunk - 1;
 
-		this.editIds.forEach((id, index) => this.allEditIds.set(id, { isLocal: false, index }));
+		this.sequencedEditIds.forEach((id, index) => this.allEditIds.set(id, { isLocal: false, index }));
 	}
 
 	/**
@@ -202,7 +202,7 @@ export class EditLog implements OrderedEditSet {
 	 * The number of sequenced (acked) edits in the log.
 	 */
 	public get numberOfSequencedEdits(): number {
-		return this.editIds.length;
+		return this.sequencedEditIds.length;
 	}
 
 	/**
@@ -210,10 +210,6 @@ export class EditLog implements OrderedEditSet {
 	 */
 	public get numberOfLocalEdits(): number {
 		return this.localEdits.length;
-	}
-
-	public getEditIds(): readonly EditId[] {
-		return this.editIds;
 	}
 
 	/**
@@ -246,7 +242,7 @@ export class EditLog implements OrderedEditSet {
 			return this.localEdits[index - this.numberOfSequencedEdits].id;
 		}
 
-		return this.editIds[index];
+		return this.sequencedEditIds[index];
 	}
 
 	/**
@@ -357,7 +353,7 @@ export class EditLog implements OrderedEditSet {
 			assert(oldLocalEditId === id, 'Causal ordering should be upheld');
 		}
 
-		this.editIds.push(id);
+		this.sequencedEditIds.push(id);
 		const sequencedEditId: SequencedOrderedEditId = { index: this.numberOfSequencedEdits - 1, isLocal: false };
 		this.allEditIds.set(id, sequencedEditId);
 		this.emitAdd(edit, false);
@@ -395,14 +391,14 @@ export class EditLog implements OrderedEditSet {
 		// For now, no chunks are evicted so edits are sent as is to be aggregated during summary write.
 		return {
 			editChunks: this.editChunks.map(({ edits }) => assertNotUndefined(edits)),
-			editIds: this.editIds,
+			editIds: this.sequencedEditIds,
 		};
 	}
 
 	public *[Symbol.iterator](): IterableIterator<EditId> {
 		// TODO #45414: We should also be deep comparing the list of changes in the edit. This is not straightforward.
 		// We can use our edit validation code when we write it since it will need to do deep walks of the changes.
-		yield* this.editIds;
+		yield* this.sequencedEditIds;
 		yield* this.localEdits.map(({ id }) => id);
 	}
 
