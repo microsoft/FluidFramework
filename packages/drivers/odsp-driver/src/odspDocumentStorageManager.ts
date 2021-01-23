@@ -107,7 +107,7 @@ class BlobCache {
     // too many calls to setTimeout/clearTimeout.
     private deferBlobCacheClear: boolean = false;
 
-    private _blobCache: Map<string, IBlob | ArrayBuffer> = new Map();
+    private readonly _blobCache: Map<string, IBlob | ArrayBuffer> = new Map();
 
     // Tracks all blob IDs evicted from cache
     private readonly blobsEvicted: Set<string> = new Set();
@@ -123,9 +123,11 @@ class BlobCache {
         return this._blobCache;
     }
 
-    public set value(value: Map<string, IBlob | ArrayBuffer>) {
-        assert(this._blobCache.size === 0);
-        this._blobCache = value;
+    public addBlobs(blobs: IBlob[]) {
+        blobs.forEach((blob) => {
+            assert(blob.encoding === "base64" || blob.encoding === undefined);
+            this._blobCache.set(blob.id, blob);
+        });
         this.scheduleClearBlobsCache();
     }
 
@@ -297,7 +299,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return response.content;
     }
 
-    public async readBlobCore(blobId: string): Promise<IBlob | ArrayBuffer> {
+    private async readBlobCore(blobId: string): Promise<IBlob | ArrayBuffer> {
         const { blobContent, evicted } = this.blobCache.getBlob(blobId);
         let blob = blobContent;
 
@@ -809,12 +811,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     private initBlobsCache(blobs: IBlob[]) {
-        const map = new Map<string, IBlob>();
-        blobs.forEach((blob) => {
-            assert(blob.encoding === "base64" || blob.encoding === undefined);
-            map.set(blob.id, blob);
-        });
-        this.blobCache.value = map;
+        this.blobCache.addBlobs(blobs);
     }
 
     private checkSnapshotUrl() {
