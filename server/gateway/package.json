@@ -156,7 +156,7 @@
     "concurrently": "^5.2.0",
     "css-loader": "^1.0.0",
     "duplicate-package-checker-webpack-plugin": "^3.0.0",
-    "eslint": "~7.9.0",
+    "eslint": "~7.18.0",
     "eslint-plugin-eslint-comments": "~3.2.0",
     "eslint-plugin-import": "~2.22.1",
     "eslint-plugin-no-null": "~1.0.2",
