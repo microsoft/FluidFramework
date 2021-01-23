@@ -261,7 +261,7 @@ export class FluidPackageCheck {
             }
 
             // build:test should be in build:commonjs if it exists, otherwise, it should be in build:compile
-            if (pkg.getScript("build:test")) {
+            if (pkg.getScript("build:test") || this.splitTestBuild(pkg)) {
                 if (pkg.getScript("build:commonjs")) {
                     buildCommonJs.push("build:test");
                 } else {
@@ -411,7 +411,10 @@ export class FluidPackageCheck {
         const expected = [
             "nyc",
             "*.log",
-            "**/*.tsbuildinfo"
+            "**/*.tsbuildinfo",
+            "src/test",
+            "dist/test",
+            "**/_api-extractor-temp/**",
         ];
         if (!existsSync(filename)) {
             this.logWarn(pkg, `.npmignore not exist`, fix);
