@@ -110,7 +110,7 @@ class SocketReference {
             // Treat all errors as recoverable, and rely on joinSession / reconnection flow to
             // filter out retryable vs. non-retryable cases.
             const error = errorObjectFromSocketError(socketError);
-            error.canRetry = true;
+            error.canRetry = error.canRetry ?? true;
 
             // see comment in disconnected() getter
             // Setting it here to ensure socket reuse does not happen if new request to connect

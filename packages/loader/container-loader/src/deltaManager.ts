@@ -75,7 +75,7 @@ function createReconnectError(prefix: string, err: any) {
     const error = CreateContainerError(err);
     const error2 = Object.create(error);
     error2.message = `${prefix}: ${error.message}`;
-    error2.canRetry = true;
+    error2.canRetry = error2.canRetry ?? true;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return error2;
 }
