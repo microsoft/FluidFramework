@@ -44,7 +44,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 	};
 
 	return describe('Revert', () => {
-		it('works for Insert', async () => {
+		it('works for Insert', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			const secondTree = localMode
 				? undefined
@@ -61,7 +61,11 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const undoId: EditId = await undoTree.editor.revert(insertId);
+			const insertIndex = tree.edits.indexOf(insertId);
+			const undoId: EditId = undoTree.editor.revert(
+				tree.edits.getAtIndexSynchronous(insertIndex),
+				tree.logViewer.getSnapshotSynchronous(insertIndex)
+			);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -77,7 +81,11 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(leftTraitAfterUndo.length).to.equal(1);
 
 			// Redo testing
-			await undoTree.editor.revert(undoId);
+			const undoIndex = tree.edits.indexOf(undoId);
+			undoTree.editor.revert(
+				tree.edits.getAtIndexSynchronous(undoIndex),
+				tree.logViewer.getSnapshotSynchronous(undoIndex)
+			);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -93,7 +101,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(leftTraitAfterRedo.length).to.equal(2);
 		});
 
-		it('works for Detach', async () => {
+		it('works for Detach', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			const secondTree = localMode
 				? undefined
@@ -111,7 +119,11 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const undoId: EditId = await undoTree.editor.revert(deleteId);
+			const deleteIndex = tree.edits.indexOf(deleteId);
+			const undoId: EditId = undoTree.editor.revert(
+				tree.edits.getAtIndexSynchronous(deleteIndex),
+				tree.logViewer.getSnapshotSynchronous(deleteIndex)
+			);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -126,7 +138,11 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(leftTraitAfterUndo.length).to.equal(2);
 
 			// Redo testing
-			await undoTree.editor.revert(undoId);
+			const undoIndex = tree.edits.indexOf(undoId);
+			undoTree.editor.revert(
+				tree.edits.getAtIndexSynchronous(undoIndex),
+				tree.logViewer.getSnapshotSynchronous(undoIndex)
+			);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -142,7 +158,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 		});
 
 		// TODO:#46649: Enable tests once SetValue support is added
-		it.skip('works for SetValue', async () => {
+		it.skip('works for SetValue', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			const secondTree = localMode
 				? undefined
@@ -160,7 +176,11 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const undoId: EditId = await undoTree.editor.revert(setValueId);
+			const setValueIndex = tree.edits.indexOf(setValueId);
+			const undoId: EditId = undoTree.editor.revert(
+				tree.edits.getAtIndexSynchronous(setValueIndex),
+				tree.logViewer.getSnapshotSynchronous(setValueIndex)
+			);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -177,7 +197,11 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(nodeAfterUndo.payload).to.be.undefined;
 
 			// Redo testing
-			await undoTree.editor.revert(undoId);
+			const undoIndex = tree.edits.indexOf(undoId);
+			undoTree.editor.revert(
+				tree.edits.getAtIndexSynchronous(undoIndex),
+				tree.logViewer.getSnapshotSynchronous(undoIndex)
+			);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -194,7 +218,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(nodeAfterRedo.payload?.base64).to.equal('test');
 		});
 
-		it('works for out-of-order Insert', async () => {
+		it('works for out-of-order Insert', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			const secondTree = localMode
 				? undefined
@@ -213,7 +237,11 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const undoId: EditId = await undoTree.editor.revert(firstInsertId);
+			const firstInsertIndex = tree.edits.indexOf(firstInsertId);
+			const undoId: EditId = undoTree.editor.revert(
+				tree.edits.getAtIndexSynchronous(firstInsertIndex),
+				tree.logViewer.getSnapshotSynchronous(firstInsertIndex)
+			);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -233,7 +261,11 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(nodeAfterUndo.identifier).to.equal(secondNode.identifier);
 
 			// Redo testing
-			await undoTree.editor.revert(undoId);
+			const undoIndex = tree.edits.indexOf(undoId);
+			undoTree.editor.revert(
+				tree.edits.getAtIndexSynchronous(undoIndex),
+				tree.logViewer.getSnapshotSynchronous(undoIndex)
+			);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -248,7 +280,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(leftTraitAfterRedo.length).to.equal(3);
 		});
 
-		it('works for out-of-order Detach', async () => {
+		it('works for out-of-order Detach', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			const secondTree = localMode
 				? undefined
@@ -268,7 +300,11 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const undoId: EditId = await undoTree.editor.revert(deleteId);
+			const deleteIndex = tree.edits.indexOf(deleteId);
+			const undoId: EditId = undoTree.editor.revert(
+				tree.edits.getAtIndexSynchronous(deleteIndex),
+				tree.logViewer.getSnapshotSynchronous(deleteIndex)
+			);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -287,7 +323,11 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(nodeAfterUndo.identifier).to.equal(firstNode.identifier);
 
 			// Redo testing
-			await undoTree.editor.revert(undoId);
+			const undoIndex = tree.edits.indexOf(undoId);
+			undoTree.editor.revert(
+				tree.edits.getAtIndexSynchronous(undoIndex),
+				tree.logViewer.getSnapshotSynchronous(undoIndex)
+			);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -303,7 +343,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 		});
 
 		// TODO:#46649: Enable tests once SetValue support is added
-		it.skip('works for out-of-order SetValue', async () => {
+		it.skip('works for out-of-order SetValue', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			const secondTree = localMode
 				? undefined
@@ -321,7 +361,11 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const undoId: EditId = await undoTree.editor.revert(setValueId);
+			const setValueIndex = tree.edits.indexOf(setValueId);
+			const undoId: EditId = undoTree.editor.revert(
+				tree.edits.getAtIndexSynchronous(setValueIndex),
+				tree.logViewer.getSnapshotSynchronous(setValueIndex)
+			);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -338,7 +382,11 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(nodeAfterUndo.payload).to.be.undefined;
 
 			// Redo testing
-			await undoTree.editor.revert(undoId);
+			const undoIndex = tree.edits.indexOf(undoId);
+			undoTree.editor.revert(
+				tree.edits.getAtIndexSynchronous(undoIndex),
+				tree.logViewer.getSnapshotSynchronous(undoIndex)
+			);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();

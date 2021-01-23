@@ -156,10 +156,11 @@ export class SharedTreeEditor {
 
 	/**
 	 * Reverts a previous edit.
-	 * @param edit - ID of the edit to revert
+	 * @param edit - the edit to revert
+	 * @param view - the revision to which the edit is applied (not the output of applying edit: it's the one just before that)
 	 */
-	public async revert(edit: EditId): Promise<EditId> {
-		return this.tree.applyEdit(...(await this.tree.createRevert(edit)));
+	public revert(edit: Edit, view: Snapshot): EditId {
+		return this.tree.applyEdit(...HistoryEditFactory.revert(edit, view));
 	}
 
 	private isNode(source: ChangeNode | StableRange): source is ChangeNode {
@@ -277,28 +278,6 @@ export class SharedTree extends SharedObject {
 		const edit = newEdit(changes);
 		this.processLocalEdit(edit);
 		return edit.id;
-	}
-
-	/**
-	 * @returns Changes reverting the specified edit.
-	 */
-	public async createRevert(editId: EditId): Promise<Change[]> {
-		const edit = (await this.editLog.tryGetEdit(editId)) ?? fail('Edit must exist in the edit log to be reverted.');
-		// Get the revision to which edit is applied (This is not the output of applying edit: it's the one just before that).
-		const revision = await this.logViewer.getSnapshot(this.editLog.indexOf(editId));
-		return HistoryEditFactory.revert(edit, revision);
-	}
-
-	/**
-	 * @returns Changes reverting the specified edit. Must only be used to revert an edit added during the current session.
-	 */
-	public createRevertSynchronous(editId: EditId): Change[] {
-		const edit =
-			this.editLog.getAtIndexSynchronous(this.editLog.indexOf(editId)) ??
-			fail('Edit must exist in the edit log to be reverted.');
-		// Get the revision to which edit is applied (This is not the output of applying edit: it's the one just before that).
-		const revision = this.logViewer.getSnapshotSynchronous(this.editLog.indexOf(editId));
-		return HistoryEditFactory.revert(edit, revision);
 	}
 
 	private deserializeHandle(serializedHandle: ISerializedHandle): IFluidHandle<ArrayBufferLike> {

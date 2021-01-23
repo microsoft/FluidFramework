@@ -328,10 +328,6 @@ export class SharedTree extends SharedObject {
     applyEdit(...changes: Change[]): EditId;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedTree;
     // (undocumented)
-    createRevert(editId: EditId): Promise<Change[]>;
-    // (undocumented)
-    createRevertSynchronous(editId: EditId): Change[];
-    // (undocumented)
     get currentView(): Snapshot;
     get editor(): SharedTreeEditor;
     // (undocumented)
@@ -377,7 +373,7 @@ export class SharedTreeEditor {
     insert(nodes: EditNode[], destination: StablePlace): EditId;
     move(source: ChangeNode, destination: StablePlace): EditId;
     move(source: StableRange, destination: StablePlace): EditId;
-    revert(edit: EditId): Promise<EditId>;
+    revert(edit: Edit, view: Snapshot): EditId;
     }
 
 // @public
