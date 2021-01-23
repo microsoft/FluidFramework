@@ -27,7 +27,8 @@
     "@fluidframework/map": "^0.34.0",
     "@fluidframework/matrix": "^0.34.0",
     "@fluidframework/odsp-driver": "^0.34.0",
-    "@fluidframework/sequence": "^0.34.0"
+    "@fluidframework/sequence": "^0.34.0",
+    "source-map-loader": "^0.2.4"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0-0",
