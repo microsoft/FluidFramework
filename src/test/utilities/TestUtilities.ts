@@ -157,16 +157,10 @@ export async function asyncFunctionThrowsCorrectly(
 }
 
 /** Left node of 'simpleTestTree' */
-export const left: ChangeNode = makeEmptyNode();
+export const left: ChangeNode = makeEmptyNode('a083857d-a8e1-447a-ba7c-92fd0be9db2b' as NodeId);
 
 /** Right node of 'simpleTestTree' */
-export const right: ChangeNode = makeEmptyNode();
-
-/** Left node of 'simpleTestTree' */
-export const leftConsistent: ChangeNode = makeEmptyNode('a083857d-a8e1-447a-ba7c-92fd0be9db2b' as NodeId);
-
-/** Right node of 'simpleTestTree' */
-export const rightConsistent: ChangeNode = makeEmptyNode('78849e85-cb7f-4b93-9fdc-18439c60fe30' as NodeId);
+export const right: ChangeNode = makeEmptyNode('78849e85-cb7f-4b93-9fdc-18439c60fe30' as NodeId);
 
 /** Label for the 'left' trait in 'simpleTestTree' */
 export const leftTraitLabel = 'left' as TraitLabel;
@@ -176,14 +170,8 @@ export const rightTraitLabel = 'right' as TraitLabel;
 
 /** A simple, three node tree useful for testing. Contains one node under a 'left' trait and one under a 'right' trait. */
 export const simpleTestTree: ChangeNode = {
-	...makeEmptyNode(),
-	traits: { [leftTraitLabel]: [left], [rightTraitLabel]: [right] },
-};
-
-/** A simple, three node tree useful for testing. Contains one node under a 'left' trait and one under a 'right' trait. */
-export const simpleTestTreeConsistent: ChangeNode = {
 	...makeEmptyNode('25de3875-9537-47ec-8699-8a85e772a509' as NodeId),
-	traits: { [leftTraitLabel]: [leftConsistent], [rightTraitLabel]: [rightConsistent] },
+	traits: { [leftTraitLabel]: [left], [rightTraitLabel]: [right] },
 };
 
 /** Convenient pre-made TraitLocation for the left trait of 'simpleTestTree'. */
