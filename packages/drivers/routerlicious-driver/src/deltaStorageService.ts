@@ -6,7 +6,7 @@
 import { OutgoingHttpHeaders } from "http";
 import querystring from "querystring";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import { IDeltaStorageService, IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
+import { IDeltaStorageService, IDocumentDeltaStorageService, IOpResult } from "@fluidframework/driver-definitions";
 import Axios from "axios";
 import * as uuid from "uuid";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -28,17 +28,17 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 
     private logtailSha: string | undefined = this.documentStorageService.logTailSha;
 
-    public async get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]> {
+    public async get(from?: number, to?: number): Promise<IOpResult> {
         const opsFromLogTail = this.logtailSha ? await readAndParse<ISequencedDocumentMessage[]>
             (this.documentStorageService, this.logtailSha) : [];
 
         this.logtailSha = undefined;
         if (opsFromLogTail.length > 0 && from !== undefined) {
-            return opsFromLogTail.filter((op) =>
+            const messages = opsFromLogTail.filter((op) =>
                 op.sequenceNumber > from,
             );
+            return { messages, end: false };
         }
-
         return this.storageService.get(this.tenantId, this.id, from, to);
     }
 }
@@ -57,7 +57,7 @@ export class DeltaStorageService implements IDeltaStorageService {
         tenantId: string,
         id: string,
         from?: number,
-        to?: number): Promise<ISequencedDocumentMessage[]> {
+        to?: number): Promise<IOpResult> {
         const query = querystring.stringify({ from, to });
 
         const headers: OutgoingHttpHeaders = {
@@ -83,6 +83,6 @@ export class DeltaStorageService implements IDeltaStorageService {
             });
         }
 
-        return ops.data;
+        return {messages: ops.data, end: true };
     }
 }

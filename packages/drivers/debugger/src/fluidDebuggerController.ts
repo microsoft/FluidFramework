@@ -349,11 +349,11 @@ async function* generateSequencedMessagesFromDeltaStorage(deltaStorage: IDocumen
     let lastSeq = 0;
     const batch = 2000;
     while (true) {
-        const messages = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
-        if (messages.length === 0) {
+        const { messages, end } = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
+        yield messages;
+        if (end) {
             break;
         }
-        yield messages;
         lastSeq = messages[messages.length - 1].sequenceNumber;
     }
 }

@@ -28,11 +28,12 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
     public async get(
         from?: number,
         to?: number,
-    ): Promise<ISequencedDocumentMessage[]> {
+    ): Promise<api.IOpResult> {
         const ops = this.ops;
         this.ops = undefined;
         if (ops !== undefined && from !== undefined) {
-            return ops.filter((op) => op.sequenceNumber > from).map((op) => op.op);
+            const messages = ops.filter((op) => op.sequenceNumber > from).map((op) => op.op);
+            return { messages, end: false };
         }
         this.ops = undefined;
 
@@ -56,12 +57,14 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
                     sprequestduration: response.headers.get("sprequestduration"),
                 });
             }
-            const operations: ISequencedDocumentMessage[] | ISequencedDeltaOpMessage[] = deltaStorageResponse.value;
-            if (operations.length > 0 && "op" in operations[0]) {
-                return (operations as ISequencedDeltaOpMessage[]).map((operation) => operation.op);
+            let messages: ISequencedDocumentMessage[];
+            if (deltaStorageResponse.value.length > 0 && "op" in deltaStorageResponse.value[0]) {
+                messages = (deltaStorageResponse.value as ISequencedDeltaOpMessage[]).map((operation) => operation.op);
+            } else {
+                messages = deltaStorageResponse.value as ISequencedDocumentMessage[];
             }
 
-            return operations as ISequencedDocumentMessage[];
+            return { messages, end: true };
         });
     }
 

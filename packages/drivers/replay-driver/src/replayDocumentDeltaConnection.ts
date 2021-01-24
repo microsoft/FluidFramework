@@ -318,9 +318,9 @@ export class ReplayDocumentDeltaConnection
         do {
             const fetchTo = controller.fetchTo(currentOp);
 
-            const fetchedOps = await documentStorageService.get(currentOp, fetchTo);
+            const { messages } = await documentStorageService.get(currentOp, fetchTo);
 
-            if (fetchedOps.length === 0) {
+            if (messages.length === 0) {
                 // No more ops. But, they can show up later, either because document was just created,
                 // or because another client keeps submitting new ops.
                 if (controller.isDoneFetch(currentOp, undefined)) {
@@ -331,10 +331,10 @@ export class ReplayDocumentDeltaConnection
             }
 
             replayPromiseChain = replayPromiseChain.then(
-                async () => controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), fetchedOps));
+                async () => controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), messages));
 
-            currentOp += fetchedOps.length;
-            done = controller.isDoneFetch(currentOp, fetchedOps[fetchedOps.length - 1].timestamp);
+            currentOp += messages.length;
+            done = controller.isDoneFetch(currentOp, messages[messages.length - 1].timestamp);
         } while (!done);
 
         return replayPromiseChain;

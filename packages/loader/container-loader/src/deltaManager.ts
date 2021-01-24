@@ -782,7 +782,8 @@ export class DeltaManager
                 }
 
                 // Now wait for request to come back
-                deltas = await deltasP;
+                const { messages, end } = await deltasP;
+                deltas = messages;
 
                 // Note that server (or driver code) can push here something unexpected, like undefined
                 // Exception thrown as result of it will result in us retrying
@@ -790,7 +791,7 @@ export class DeltaManager
                 deltasRetrievedTotal += deltasRetrievedLast;
                 const lastFetch = deltasRetrievedLast > 0 ? deltas[deltasRetrievedLast - 1].sequenceNumber : from;
 
-                // If we have no upper bound and fetched less than the max deltas - meaning we got as many as exit -
+                // If we have no upper bound and fetched less than the max deltas - meaning we got as many as exist -
                 // then we can resolve the promise. We also resolve if we fetched up to the expected to. Otherwise
                 // we will look to try again
                 // Note #1: we can get more ops than what we asked for - need to account for that!
@@ -798,7 +799,7 @@ export class DeltaManager
                 // 1) to === undefined case: if last op  is below what we expect, then storage does not have
                 //    any more, thus it's time to leave
                 // 2) else case: if we got what we asked (to - 1) or more, then time to leave.
-                if (to === undefined ? lastFetch < maxFetchTo - 1 : to - 1 <= lastFetch) {
+                if (to === undefined ? end : to - 1 <= lastFetch) {
                     callback(deltas);
                     telemetryEvent.end({ lastFetch, deltasRetrievedTotal, requests });
                     return;
