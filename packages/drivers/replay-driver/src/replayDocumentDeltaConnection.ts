@@ -21,7 +21,7 @@ import {
     IVersion,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { debug } from "./debug";
 import { ReplayController } from "./replayController";
 
@@ -318,11 +318,12 @@ export class ReplayDocumentDeltaConnection
         do {
             const fetchTo = controller.fetchTo(currentOp);
 
-            const { messages } = await documentStorageService.get(currentOp, fetchTo);
+            const { messages, partialResult } = await documentStorageService.get(currentOp, fetchTo);
 
             if (messages.length === 0) {
                 // No more ops. But, they can show up later, either because document was just created,
                 // or because another client keeps submitting new ops.
+                assert(!partialResult);
                 if (controller.isDoneFetch(currentOp, undefined)) {
                     break;
                 }

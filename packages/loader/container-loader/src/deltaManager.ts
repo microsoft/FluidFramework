@@ -789,9 +789,10 @@ export class DeltaManager
                 deltasRetrievedTotal += deltasRetrievedLast;
                 const lastFetch = deltasRetrievedLast > 0 ? deltas[deltasRetrievedLast - 1].sequenceNumber : from;
 
-                // If we have no upper bound, then rely on end flag. Different caching layers will return whatever ops
-                // they have and we need to keep asking until we get to the end. Consecutive calls will read further and
-                // further layers until we hit real storage and eventually fetch all the ops.
+                // If we have no upper bound, then need to check partialResult flag. Different caching layers will
+                // return whatever ops they have and we need to keep asking until we get to the end.
+                // Only when partialResult = false, we know we got everything caching/storage layers have to offer,
+                // and if it's less than what we asked for, we know we reached the end.
                 // But if we know upper bound, then we have to get all these ops, even of storage says it does not
                 // have them. That could happen if offering service did not flush them yet to storage, or is in process
                 // of doing it, and we know we have a gap on our knowledge and can't proceed further without these ops.

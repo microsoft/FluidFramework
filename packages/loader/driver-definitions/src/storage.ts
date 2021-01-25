@@ -25,10 +25,17 @@ import {
 import { IResolvedUrl } from "./urlResolver";
 
 export interface IDeltasFetchResult {
+    /**
+     * Sequential set of messages starting from 'from' sequence number.
+     * May be partial result, i.e. not fulfill original request in full.
+     */
     messages: ISequencedDocumentMessage[];
-    // If true, storage only partially fulfilled request, but has more ops
-    // If false, the request was fulfilled. If less ops were returned then
-    // requested, then storage does not have more ops in this range.
+
+    /**
+     * If true, storage only partially fulfilled request, but has more ops
+     * If false, the request was fulfilled. If less ops were returned then
+     * requested, then storage does not have more ops in this range.
+     */
     partialResult: boolean;
 }
 
