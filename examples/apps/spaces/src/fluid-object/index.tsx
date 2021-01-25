@@ -116,7 +116,11 @@ export class Spaces extends DataObject implements IFluidHTMLView {
                     setBaseUrl(await this.context.getAbsoluteUrl(this.handle.absolutePath));
                 };
 
-                void getBaseUrl();
+                try {
+                    getBaseUrl()
+                } catch (error) {
+                    console.error(error)
+                };
             });
             return (
                 <SpacesView
