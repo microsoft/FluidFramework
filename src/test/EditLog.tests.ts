@@ -17,17 +17,17 @@ describe('EditLog', () => {
 	const { id: id1, editWithoutId: editWithoutId1 } = separateEditAndId(edit1);
 
 	it('can be constructed from sequenced edits', () => {
-		const editChunks = [[editWithoutId0, editWithoutId1]];
+		const editChunks = [{ key: 0, chunk: [editWithoutId0, editWithoutId1] }];
 		const editIds = [id0, id1];
 
 		const log = new EditLog({ editChunks, editIds });
 		expect(log.numberOfLocalEdits).to.equal(0, 'Newly initialized log should not have local edits.');
 		expect(log.numberOfSequencedEdits).to.equal(
-			editChunks[0].length,
+			editChunks[0].chunk.length,
 			'Log should have as many sequenced edits as it was initialized with.'
 		);
 		expect(log.length).to.equal(
-			editChunks[0].length,
+			editChunks[0].chunk.length,
 			"Log's total length should match its sequenced edits on construction"
 		);
 
@@ -36,7 +36,7 @@ describe('EditLog', () => {
 	});
 
 	it('can get the index from an edit id of sequenced edits', () => {
-		const editChunks = [[editWithoutId0, editWithoutId1]];
+		const editChunks = [{ key: 0, chunk: [editWithoutId0, editWithoutId1] }];
 		const editIds = [id0, id1];
 
 		const log = new EditLog({ editChunks, editIds });
@@ -46,7 +46,7 @@ describe('EditLog', () => {
 	});
 
 	it('can get the index from an edit id of a local edit', () => {
-		const editChunks = [[editWithoutId0]];
+		const editChunks = [{ key: 0, chunk: [editWithoutId0] }];
 		const editIds = [id0];
 
 		const log = new EditLog({ editChunks, editIds });
@@ -57,7 +57,7 @@ describe('EditLog', () => {
 	});
 
 	it('can get an edit from an index', async () => {
-		const editChunks = [[editWithoutId0, editWithoutId1]];
+		const editChunks = [{ key: 0, chunk: [editWithoutId0, editWithoutId1] }];
 		const editIds = [id0, id1];
 
 		const log = new EditLog({ editChunks, editIds });
@@ -67,7 +67,7 @@ describe('EditLog', () => {
 	});
 
 	it('can get an edit from an edit id', async () => {
-		const editChunks = [[editWithoutId0, editWithoutId1]];
+		const editChunks = [{ key: 0, chunk: [editWithoutId0, editWithoutId1] }];
 		const editIds = [id0, id1];
 
 		const log = new EditLog({ editChunks, editIds });
@@ -178,8 +178,8 @@ describe('EditLog', () => {
 		const { editWithoutId: editWithoutId0Copy } = separateEditAndId(edit0Copy);
 		const { editWithoutId: editWithoutId1Copy } = separateEditAndId(edit1Copy);
 
-		const editChunks = [[editWithoutId0, editWithoutId1]];
-		const editChunksCopy = [[editWithoutId0Copy, editWithoutId1Copy]];
+		const editChunks = [{ key: 0, chunk: [editWithoutId0, editWithoutId1] }];
+		const editChunksCopy = [{ key: 0, chunk: [editWithoutId0Copy, editWithoutId1Copy] }];
 		const editIds = [id0, id1];
 
 		const log0 = new EditLog({ editChunks, editIds });
@@ -187,12 +187,12 @@ describe('EditLog', () => {
 
 		expect(log0.equals(log1)).to.be.true;
 
-		const log2 = new EditLog({ editChunks: [[editWithoutId0]], editIds: [id0] });
+		const log2 = new EditLog({ editChunks: [{ key: 0, chunk: [editWithoutId0] }], editIds: [id0] });
 		log2.addLocalEdit(edit1Copy);
 
 		expect(log0.equals(log2)).to.be.true;
 
-		const differentLog = new EditLog({ editChunks: [[editWithoutId0]], editIds: [id0] });
+		const differentLog = new EditLog({ editChunks: [{ key: 0, chunk: [editWithoutId0] }], editIds: [id0] });
 
 		expect(log0.equals(differentLog)).to.be.false;
 	});

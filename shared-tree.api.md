@@ -171,7 +171,10 @@ export type EditId = UuidString & {
 //
 // @internal
 export interface EditLogSummary {
-    readonly editChunks: readonly (ISerializedHandle | EditWithoutId[])[];
+    readonly editChunks: readonly {
+        key: number;
+        chunk: SerializedChunk;
+    }[];
     readonly editIds: readonly EditId[];
 }
 
@@ -538,5 +541,9 @@ export type UuidString = string & {
     readonly UuidString: '9d40d0ae-90d9-44b1-9482-9f55d59d5465';
 };
 
+
+// Warnings were encountered during analysis:
+//
+// src/EditLog.ts:67:47 - (ae-forgotten-export) The symbol "SerializedChunk" needs to be exported by the entry point index.d.ts
 
 ```

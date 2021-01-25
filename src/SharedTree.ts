@@ -367,7 +367,7 @@ export class SharedTree extends SharedObject {
 
 		// TODO:#47830: Store the associated revision on the snapshot.
 		// The current view should only be stored in the cache if the revision it's associated with is known.
-		void logViewer.setKnownRevision(editLog.length, currentView);
+		void logViewer.setKnownRevisionSynchronous(editLog.length, currentView);
 		return { editLog, logViewer };
 	}
 

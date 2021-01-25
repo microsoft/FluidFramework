@@ -68,16 +68,18 @@ export function convertSummaryToReadFormat(summary: SharedTreeSummaryBase): Shar
 		const { sequencedEdits } = summary as SharedTreeSummary_0_0_2;
 
 		if (sequencedEdits !== undefined) {
-			const editChunks: EditWithoutId[][] = [];
+			const editChunks: { key: number; chunk: EditWithoutId[] }[] = [];
 			const editIds: EditId[] = [];
 
+			let key = 0;
 			sequencedEdits.forEach(({ changes, id }) => {
 				editIds.push(id);
 				const lastEditChunk = editChunks[editChunks.length - 1];
-				if (lastEditChunk !== undefined && lastEditChunk.length < editsPerChunk) {
-					lastEditChunk.push({ changes });
+				if (lastEditChunk !== undefined && lastEditChunk.chunk.length < editsPerChunk) {
+					lastEditChunk.chunk.push({ changes });
 				} else {
-					editChunks.push([{ changes }]);
+					editChunks.push({ key, chunk: [{ changes }] });
+					key = key + editsPerChunk;
 				}
 			});
 

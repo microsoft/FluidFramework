@@ -158,7 +158,7 @@ export class CachingLogViewer implements LogViewer {
 			this.processEditResult(editingResult.result, this.log.idOf(i));
 		}
 
-		if (revision === Number.POSITIVE_INFINITY) {
+		if (revision >= this.log.length) {
 			this.lastHeadSnapshot = currentSnapshot;
 		}
 
@@ -204,6 +204,13 @@ export class CachingLogViewer implements LogViewer {
 			const computed = await this.getSnapshot(revision);
 			assert(computed.equals(snapshot), 'setKnownRevision passed invalid snapshot');
 		}
+		this.sequencedSnapshotCache.set(revision, snapshot);
+	}
+
+	/**
+	 * Version of setKnownRevision that does not support expensive validation.
+	 */
+	public setKnownRevisionSynchronous(revision: number, snapshot: Snapshot): void {
 		this.sequencedSnapshotCache.set(revision, snapshot);
 	}
 

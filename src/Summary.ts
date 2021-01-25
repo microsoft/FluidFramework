@@ -5,7 +5,7 @@
 
 import { TraitLabel } from './Identifiers';
 import { assert, assertNotUndefined } from './Common';
-import { EditLogSummary, editsPerChunk, OrderedEditSet } from './EditLog';
+import { EditLogSummary, OrderedEditSet } from './EditLog';
 import { newEdit, setTrait } from './EditUtilities';
 import { ChangeNode, Edit, Change, EditWithoutId } from './PersistedTypes';
 import { Snapshot } from './Snapshot';
@@ -70,19 +70,17 @@ export function fullHistorySummarizer(editLog: OrderedEditSet, currentView: Snap
 	const { editChunks, editIds } = editLog.getEditLogSummary();
 
 	const sequencedEdits: Edit[] = [];
-	editChunks.forEach((chunk, chunkIndex) => {
+	let idIndex = 0;
+	editChunks.forEach(({ chunk }) => {
 		assert(
 			Array.isArray(chunk),
 			'Handles should not be included in the summary until format version 0.1.0 is being written.'
 		);
 
-		chunk.forEach(({ changes }, editIndex) => {
+		chunk.forEach(({ changes }) => {
 			sequencedEdits.push({
 				changes,
-				id: assertNotUndefined(
-					editIds[chunkIndex * editsPerChunk + editIndex],
-					'Number of edits should match number of edit IDs.'
-				),
+				id: assertNotUndefined(editIds[idIndex++], 'Number of edits should match number of edit IDs.'),
 			});
 		});
 	});

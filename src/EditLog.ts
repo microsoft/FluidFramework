@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import BTree from 'sorted-btree';
 import { IFluidHandle, ISerializedHandle } from '@fluidframework/core-interfaces';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { assert, assertNotUndefined, compareIterables, fail } from './Common';
@@ -61,9 +62,9 @@ export interface OrderedEditSet {
  */
 export interface EditLogSummary {
 	/**
-	 * A list of either handles corresponding to a chunk of edits or the edit chunk.
+	 * A of list of serialized chunks and their corresponding keys.
 	 */
-	readonly editChunks: readonly (ISerializedHandle | EditWithoutId[])[];
+	readonly editChunks: readonly { key: number; chunk: SerializedChunk }[];
 
 	/**
 	 * A list of edits IDs for all sequenced edits.
@@ -96,6 +97,11 @@ interface EditChunk {
 	handle?: IFluidHandle<ArrayBufferLike>;
 	edits?: EditWithoutId[];
 }
+
+/**
+ * Either a chunk of edits or a serialized handle that can be used to load that chunk.
+ */
+type SerializedChunk = ISerializedHandle | EditWithoutId[];
 
 type OrderedEditId = SequencedOrderedEditId | LocalOrderedEditId;
 
@@ -142,7 +148,7 @@ export class EditLog implements OrderedEditSet {
 	private localEditSequence = 0;
 
 	private readonly sequencedEditIds: EditId[];
-	private readonly editChunks: EditChunk[];
+	private readonly editChunks: BTree<number, EditChunk>;
 	private readonly localEdits: Edit[] = [];
 
 	private readonly loadedChunkMruCache: number[] = [];
@@ -162,24 +168,25 @@ export class EditLog implements OrderedEditSet {
 
 		this.serializationHelpers = serializationHelpers;
 
-		this.editChunks =
-			editChunks === undefined
-				? []
-				: editChunks.map((chunk) => {
-						if (Array.isArray(chunk)) {
-							return { edits: chunk };
-						}
+		this.editChunks = new BTree<number, EditChunk>();
 
-						return {
-							handle: assertNotUndefined(
-								this.serializationHelpers,
-								'Edit logs that store handles should have serialization helpers.'
-							).deserializeHandle(chunk),
-						};
-				  });
+		editChunks.forEach((serializedChunk) => {
+			const { key, chunk } = serializedChunk;
+
+			if (Array.isArray(chunk)) {
+				this.editChunks.set(key, { edits: chunk });
+			} else {
+				this.editChunks.set(key, {
+					handle: assertNotUndefined(
+						this.serializationHelpers,
+						'Edit logs that store handles should have serialization helpers.'
+					).deserializeHandle(chunk),
+				});
+			}
+		});
 
 		this.sequencedEditIds = editIds.slice();
-		this.maximumEvictedIndex = (this.editChunks.length - 1) * editsPerChunk - 1;
+		this.maximumEvictedIndex = this.numberOfSequencedEdits - 1;
 
 		this.sequencedEditIds.forEach((id, index) => this.allEditIds.set(id, { isLocal: false, index }));
 	}
@@ -250,23 +257,27 @@ export class EditLog implements OrderedEditSet {
 	 */
 	public async getAtIndex(index: number): Promise<Edit> {
 		if (index < this.numberOfSequencedEdits) {
-			const editChunkIndex = Math.floor(index / editsPerChunk);
-
-			const editChunk = this.editChunks[editChunkIndex];
+			const [key, editChunk] = assertNotUndefined(this.editChunks.nextLowerPair(index + 1));
 			const { handle, edits } = editChunk;
 
 			if (edits === undefined) {
 				assert(handle !== undefined, 'An edit chunk should include at least a handle or edits.');
 				const edits = JSON.parse(IsoBuffer.from(await handle.get()).toString()).edits as EditWithoutId[];
-				assert(edits.length === editsPerChunk, 'The chunk does not contain the correct number of edits.');
+
+				// Make sure the loaded edit chunk is the correct size. If a higher key is set, the length is the difference of both.
+				// Otherwise, it means that there are no sequenced edits in memory so the length is the difference of the number of
+				// sequenced edits and the key.
+				const nextKey = this.editChunks.nextHigherKey(index);
+				const expectedEditLength = (nextKey === undefined ? this.numberOfSequencedEdits : nextKey) - key;
+				assert(edits.length === expectedEditLength, 'The chunk does not contain the correct number of edits.');
+
 				editChunk.edits = edits;
+				this.addIndexToCache(key);
 
-				this.addIndexToCache(editChunkIndex);
-
-				return joinEditAndId(this.idOf(index), edits[index % editsPerChunk]);
+				return joinEditAndId(this.idOf(index), edits[index - key]);
 			}
 
-			return joinEditAndId(this.idOf(index), edits[index % editsPerChunk]);
+			return joinEditAndId(this.idOf(index), edits[index - key]);
 		}
 
 		return this.localEdits[index - this.numberOfSequencedEdits];
@@ -282,12 +293,12 @@ export class EditLog implements OrderedEditSet {
 		);
 
 		if (index < this.numberOfSequencedEdits) {
-			const editChunkIndex = Math.floor(index / editsPerChunk);
-			const { edits } = this.editChunks[editChunkIndex];
+			const [key, editChunk] = assertNotUndefined(this.editChunks.nextLowerPair(index + 1));
+			const { edits } = editChunk;
 
 			return joinEditAndId(
 				this.idOf(index),
-				assertNotUndefined(edits, 'Edits should not have been evicted.')[index % editsPerChunk]
+				assertNotUndefined(edits, 'Edits should not have been evicted.')[index - key]
 			);
 		}
 
@@ -331,15 +342,16 @@ export class EditLog implements OrderedEditSet {
 	 */
 	public addSequencedEdit(edit: Edit): void {
 		const { id, editWithoutId } = separateEditAndId(edit);
-		if (this.editChunks.length === 0) {
-			this.editChunks.push({ edits: [editWithoutId] });
+		const maxChunkKey = this.editChunks.maxKey();
+		if (maxChunkKey === undefined) {
+			this.editChunks.set(0, { edits: [editWithoutId] });
 		} else {
 			// Add to the last edit chunk if it has room, otherwise create a new chunk.
-			const { edits: lastEditChunk } = this.editChunks[this.editChunks.length - 1];
+			const { edits: lastEditChunk } = assertNotUndefined(this.editChunks.get(maxChunkKey));
 			if (lastEditChunk !== undefined && lastEditChunk.length < editsPerChunk) {
 				lastEditChunk.push(editWithoutId);
 			} else {
-				this.editChunks.push({ edits: [editWithoutId] });
+				this.editChunks.set(this.numberOfSequencedEdits, { edits: [editWithoutId] });
 			}
 		}
 
@@ -390,7 +402,9 @@ export class EditLog implements OrderedEditSet {
 		// TODO:#49901: When writing format version 0.1.0, change to prefer sending the handle when not undefined.
 		// For now, no chunks are evicted so edits are sent as is to be aggregated during summary write.
 		return {
-			editChunks: this.editChunks.map(({ edits }) => assertNotUndefined(edits)),
+			editChunks: this.editChunks.toArray().map(([key, { edits }]) => {
+				return { key, chunk: assertNotUndefined(edits) };
+			}),
 			editIds: this.sequencedEditIds,
 		};
 	}
