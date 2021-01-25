@@ -14,16 +14,14 @@
 
 import path from "path";
 import { Trace } from "@fluidframework/common-utils";
-// eslint-disable-next-line import/no-duplicates
 import * as MergeTree from "@fluidframework/merge-tree";
-// eslint-disable-next-line no-duplicate-imports
+// eslint-disable-next-line @typescript-eslint/no-duplicate-imports
 import {
     TextSegment,
     createGroupOp,
     PropertySet,
     MergeTreeTextHelper,
     IMergeTreeDeltaOp,
-    // eslint-disable-next-line import/no-duplicates
 } from "@fluidframework/merge-tree";
 import {
     LocalClientId,

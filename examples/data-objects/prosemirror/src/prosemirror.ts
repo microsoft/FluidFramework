@@ -152,7 +152,7 @@ export class ProseMirror extends EventEmitter
         this.collabManager = new FluidCollabManager(this.text, this.runtime.loader);
 
         // Access for debugging
-        // eslint-disable-next-line dot-notation
+        // eslint-disable-next-line @typescript-eslint/dot-notation
         window["easyComponent"] = this;
     }
 
