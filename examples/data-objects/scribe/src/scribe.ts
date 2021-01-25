@@ -421,7 +421,7 @@ export class Scribe
                 this.context,
                 this.runtime,
                 this.root,
-                "https://www.wu2.prague.office-int.com/public/literature/resume.txt",
+                "https://www.r11s-wu2-ppe.prague.office-int.com/public/literature/resume.txt",
                 50,
                 1,
                 "");
