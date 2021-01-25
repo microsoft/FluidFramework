@@ -38,7 +38,7 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
         to?: number,
     ): Promise<IDeltasFetchResult> {
         // Do not allow container move forward
-        return { messages: [], end: true };
+        return { messages: [], partialResult: false };
     }
 
     public get ops(): readonly Readonly<api.ISequencedDocumentMessage>[] {

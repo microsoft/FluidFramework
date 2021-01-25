@@ -33,7 +33,9 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
         this.ops = undefined;
         if (ops !== undefined) {
             const messages = ops.filter((op) => op.sequenceNumber > from).map((op) => op.op);
-            return { messages, end: false };
+            if (messages.length > 0) {
+                return { messages, partialResult: true };
+            }
         }
         this.ops = undefined;
 
@@ -66,7 +68,7 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
 
             // It is assumed that server always returns all the ops that it has in the range that was requested.
             // This may change in the future, if so, we need to adjust and receive "end" value from server in such case.
-            return { messages, end: true };
+            return { messages, partialResult: false };
         });
     }
 

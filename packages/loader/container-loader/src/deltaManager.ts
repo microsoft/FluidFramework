@@ -476,7 +476,6 @@ export class DeltaManager
         if (this.pending.length > 0) {
             this.processPendingOps("DocumentOpen");
         } else if (this.connection !== undefined || this.connectionP !== undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.fetchMissingDeltas("DocumentOpen", this.lastQueuedSequenceNumber);
         }
     }
@@ -556,7 +555,6 @@ export class DeltaManager
         // See comment at the end of setupNewSuccessfulConnection()
         this.logger.debugAssert(this.handler !== undefined || fetchOpsFromStorage); // on boot, always fetch ops!
         if (fetchOpsFromStorage && this.handler !== undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.fetchMissingDeltas(args.reason ?? "DocumentOpen", this.lastQueuedSequenceNumber);
         }
 
@@ -782,7 +780,7 @@ export class DeltaManager
                 }
 
                 // Now wait for request to come back
-                const { messages, end } = await deltasP;
+                const { messages, partialResult } = await deltasP;
                 deltas = messages;
 
                 // Note that server (or driver code) can push here something unexpected, like undefined
@@ -799,9 +797,11 @@ export class DeltaManager
                 // of doing it, and we know we have a gap on our knowledge and can't proceed further without these ops.
                 // Note #1: we can get more ops than what we asked for - need to account for that!
                 // Note #2: from & to are exclusive! I.e. we actually expect [from + 1, to - 1] range of ops back!
-                if (to === undefined ? end : to - 1 <= lastFetch) {
+                if (to === undefined ? (!partialResult && lastFetch < maxFetchTo - 1) : to - 1 <= lastFetch) {
                     callback(deltas);
                     telemetryEvent.end({ lastFetch, deltasRetrievedTotal, requests });
+                    // If we got full range we have asked, it should not be partial result
+                    assert(!partialResult, "partialResult");
                     return;
                 }
 
@@ -1126,7 +1126,6 @@ export class DeltaManager
         // can detect it has a gap and fetch missing ops. However if we are connecting as view-only, then there
         // is no good signal to realize if client is behind. Thus we have to hit storage to see if any ops are there.
         if (this.handler !== undefined && connection.mode !== "write" && initialMessages.length === 0) {
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.fetchMissingDeltas("Reconnect", this.lastQueuedSequenceNumber);
         }
 
@@ -1290,7 +1289,6 @@ export class DeltaManager
                 }
             } else if (message.sequenceNumber !== this.lastQueuedSequenceNumber + 1) {
                 this.pending.push(message);
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.fetchMissingDeltas(telemetryEventSuffix, this.lastQueuedSequenceNumber, message.sequenceNumber);
             } else {
                 this.lastQueuedSequenceNumber = message.sequenceNumber;
@@ -1395,7 +1393,7 @@ export class DeltaManager
     /**
      * Retrieves the missing deltas between the given sequence numbers
      */
-    private async fetchMissingDeltas(telemetryEventSuffix: string, from: number, to?: number): Promise<void> {
+    private fetchMissingDeltas(telemetryEventSuffix: string, from: number, to?: number) {
         // Exit out early if we're already fetching deltas
         if (this.fetching) {
             return;
@@ -1408,14 +1406,15 @@ export class DeltaManager
 
         this.fetching = true;
 
-        await this.getDeltas(telemetryEventSuffix, from, to, (messages) => {
+        this.getDeltas(telemetryEventSuffix, from, to, (messages) => {
             this.refreshDelayInfo(this.deltaStorageDelayId);
             this.enqueueMessages(messages, telemetryEventSuffix);
+        }).finally(() => {
+            this.refreshDelayInfo(this.deltaStorageDelayId);
+            this.fetching = false;
+        }).catch ((error) => {
+            this.logger.sendErrorEvent({eventName: "GetDeltas_Exception"}, error);
         });
-
-        this.refreshDelayInfo(this.deltaStorageDelayId);
-
-        this.fetching = false;
     }
 
     private catchUp(messages: ISequencedDocumentMessage[], telemetryEventSuffix: string): void {

@@ -13,6 +13,6 @@ export class EmptyDeltaStorageService implements IDocumentDeltaStorageService {
      * @returns Array of ops requested by the user.
      */
     public async get(from: number, to: number): Promise<IDeltasFetchResult> {
-        return { messages: [], end: true };
+        return { messages: [], partialResult: false };
     }
 }

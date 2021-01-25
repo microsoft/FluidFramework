@@ -26,7 +26,10 @@ import { IResolvedUrl } from "./urlResolver";
 
 export interface IDeltasFetchResult {
     messages: ISequencedDocumentMessage[];
-    end: boolean;
+    // If true, storage only partially fulfilled request, but has more ops
+    // If false, the request was fulfilled. If less ops were returned then
+    // requested, then storage does not have more ops in this range.
+    partialResult: boolean;
 }
 
 /**

@@ -22,6 +22,6 @@ export class LocalDeltaStorageService implements api.IDocumentDeltaStorageServic
         const allDeltas = await this.databaseManager.getDeltaCollection(this.tenantId, this.id);
         const dbDeltas = await allDeltas.find(query, { "operation.sequenceNumber": 1 });
         const messages = dbDeltas.map((delta) => delta.operation);
-        return { messages, end: true };
+        return { messages, partialResult: false };
     }
 }

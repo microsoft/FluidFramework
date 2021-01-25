@@ -26,6 +26,6 @@ export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageSer
             messages.push(this.messages[index]);
         }
 
-        return { messages, end: true };
+        return { messages, partialResult: false };
     }
 }

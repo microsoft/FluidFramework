@@ -75,10 +75,10 @@ describe("DeltaStorageService", () => {
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
-            const { messages, end } = await mockFetch(expectedDeltaFeedResponse, async () => {
+            const { messages, partialResult } = await mockFetch(expectedDeltaFeedResponse, async () => {
                 return deltaStorageService.get(2, 8);
             });
-            assert(end, "end === true");
+            assert(!partialResult, "partialResult === false");
             assert.equal(messages.length, 2, "Deserialized feed response is not of expected length");
             assert.equal(messages[0].sequenceNumber, 1,
                 "First element of feed response has invalid sequence number");
@@ -129,10 +129,10 @@ describe("DeltaStorageService", () => {
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
-            const { messages, end } = await mockFetch(expectedDeltaFeedResponse, async () => {
+            const { messages, partialResult } = await mockFetch(expectedDeltaFeedResponse, async () => {
                 return deltaStorageService.get(2, 8);
             });
-            assert(end, "end === true");
+            assert(!partialResult, "partialResult === false");
             assert.equal(messages.length, 2, "Deserialized feed response is not of expected length");
             assert.equal(messages[0].sequenceNumber, 1,
                 "First element of feed response has invalid sequence number");
