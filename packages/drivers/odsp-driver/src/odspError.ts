@@ -53,8 +53,8 @@ export function throwOdspNetworkError(
 /**
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
-export function errorObjectFromSocketError(socketError: IOdspSocketError, handler?: string) {
-    const message = `socket.io: ${handler}: socketError.message`;
+export function errorObjectFromSocketError(socketError: IOdspSocketError, handler: string) {
+    const message = `socket.io: ${handler}: ${socketError.message}`;
     return createOdspNetworkError(
         message,
         socketError.code,
