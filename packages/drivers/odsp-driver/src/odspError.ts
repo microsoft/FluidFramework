@@ -53,9 +53,10 @@ export function throwOdspNetworkError(
 /**
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
-export function errorObjectFromSocketError(socketError: IOdspSocketError) {
+export function errorObjectFromSocketError(socketError: IOdspSocketError, handler?: string) {
+    const message = `socket.io: ${handler}: socketError.message`;
     return createOdspNetworkError(
-        socketError.message,
+        message,
         socketError.code,
         socketError.retryAfter,
         // TODO: When long lived token is supported for websocket then IOdspSocketError need to support
