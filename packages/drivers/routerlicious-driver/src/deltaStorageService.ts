@@ -6,7 +6,11 @@
 import { OutgoingHttpHeaders } from "http";
 import querystring from "querystring";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import { IDeltaStorageService, IDocumentDeltaStorageService, IOpResult } from "@fluidframework/driver-definitions";
+import {
+    IDeltaStorageService,
+    IDocumentDeltaStorageService,
+    IDeltasFetchResult,
+} from "@fluidframework/driver-definitions";
 import Axios from "axios";
 import * as uuid from "uuid";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -28,12 +32,12 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 
     private logtailSha: string | undefined = this.documentStorageService.logTailSha;
 
-    public async get(from?: number, to?: number): Promise<IOpResult> {
+    public async get(from: number, to: number): Promise<IDeltasFetchResult> {
         const opsFromLogTail = this.logtailSha ? await readAndParse<ISequencedDocumentMessage[]>
             (this.documentStorageService, this.logtailSha) : [];
 
         this.logtailSha = undefined;
-        if (opsFromLogTail.length > 0 && from !== undefined) {
+        if (opsFromLogTail.length > 0) {
             const messages = opsFromLogTail.filter((op) =>
                 op.sequenceNumber > from,
             );
@@ -56,8 +60,8 @@ export class DeltaStorageService implements IDeltaStorageService {
     public async get(
         tenantId: string,
         id: string,
-        from?: number,
-        to?: number): Promise<IOpResult> {
+        from: number,
+        to: number): Promise<IDeltasFetchResult> {
         const query = querystring.stringify({ from, to });
 
         const headers: OutgoingHttpHeaders = {
@@ -83,6 +87,8 @@ export class DeltaStorageService implements IDeltaStorageService {
             });
         }
 
+        // It is assumed that server always returns all the ops that it has in the range that was requested.
+        // This may change in the future, if so, we need to adjust and receive "end" value from server in such case.
         return {messages: ops.data, end: true };
     }
 }

@@ -222,7 +222,7 @@ export class OdspDocumentService implements IDocumentService {
         );
 
         return {
-            get: async (from?: number, to?: number) => {
+            get: async (from: number, to: number) => {
                 const { messages, end } = await service.get(from, to);
                 this.opsReceived(messages);
                 return { messages, end };

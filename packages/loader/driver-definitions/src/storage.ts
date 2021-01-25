@@ -24,7 +24,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "./urlResolver";
 
-export interface IOpResult {
+export interface IDeltasFetchResult {
     messages: ISequencedDocumentMessage[];
     end: boolean;
 }
@@ -39,8 +39,8 @@ export interface IDeltaStorageService {
     get(
         tenantId: string,
         id: string,
-        from?: number,
-        to?: number): Promise<IOpResult>;
+        from: number,
+        to: number): Promise<IDeltasFetchResult>;
 }
 
 /**
@@ -50,7 +50,7 @@ export interface IDocumentDeltaStorageService {
     /**
      * Retrieves all the delta operations within the exclusive sequence number range
      */
-    get(from?: number, to?: number): Promise<IOpResult>;
+    get(from: number, to: number): Promise<IDeltasFetchResult>;
 }
 
 /**

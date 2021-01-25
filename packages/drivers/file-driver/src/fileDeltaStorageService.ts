@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import { assert } from "@fluidframework/common-utils";
-import { IDocumentDeltaStorageService, IOpResult } from "@fluidframework/driver-definitions";
+import { IDocumentDeltaStorageService, IDeltasFetchResult } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 
 /**
@@ -36,7 +36,7 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
     public async get(
         from?: number,
         to?: number,
-    ): Promise<IOpResult> {
+    ): Promise<IDeltasFetchResult> {
         // Do not allow container move forward
         return { messages: [], end: true };
     }

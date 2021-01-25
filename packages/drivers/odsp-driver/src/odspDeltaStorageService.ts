@@ -26,12 +26,12 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
     }
 
     public async get(
-        from?: number,
-        to?: number,
-    ): Promise<api.IOpResult> {
+        from: number,
+        to: number,
+    ): Promise<api.IDeltasFetchResult> {
         const ops = this.ops;
         this.ops = undefined;
-        if (ops !== undefined && from !== undefined) {
+        if (ops !== undefined) {
             const messages = ops.filter((op) => op.sequenceNumber > from).map((op) => op.op);
             return { messages, end: false };
         }
@@ -64,13 +64,15 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
                 messages = deltaStorageResponse.value as ISequencedDocumentMessage[];
             }
 
+            // It is assumed that server always returns all the ops that it has in the range that was requested.
+            // This may change in the future, if so, we need to adjust and receive "end" value from server in such case.
             return { messages, end: true };
         });
     }
 
-    public async buildUrl(from: number | undefined, to: number | undefined) {
-        const fromInclusive = from === undefined ? undefined : from + 1;
-        const toInclusive = to === undefined ? undefined : to - 1;
+    public async buildUrl(from: number, to: number) {
+        const fromInclusive = from + 1;
+        const toInclusive = to - 1;
 
         const filter = encodeURIComponent(`sequenceNumber ge ${fromInclusive} and sequenceNumber le ${toInclusive}`);
         const queryString = `?filter=${filter}`;
