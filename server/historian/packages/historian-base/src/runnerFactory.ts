@@ -5,6 +5,7 @@
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
+import { AsyncLocalStorage } from "async_hooks";
 import { Provider } from "nconf";
 import * as redis from "redis";
 import winston from "winston";
@@ -20,7 +21,8 @@ export class HistorianResources implements utils.IResources {
         public readonly port: string | number,
         public readonly riddler: historianServices.ITenantService,
         public readonly cache: historianServices.RedisCache,
-        public readonly throttler: core.IThrottler) {
+        public readonly throttler: core.IThrottler,
+        public readonly asyncLocalStorage: AsyncLocalStorage<string>) {
         this.webServerFactory = new services.BasicWebServerFactory();
     }
 
@@ -47,7 +49,8 @@ export class HistorianResourcesFactory implements utils.IResourcesFactory<Histor
         const tenantCache = new historianServices.RedisTenantCache(redisClient);
         // Create services
         const riddlerEndpoint = config.get("riddler");
-        const riddler = new historianServices.RiddlerService(riddlerEndpoint, tenantCache);
+        const asyncLocalStorage = config.get("asyncLocalStorageInstance");
+        const riddler = new historianServices.RiddlerService(riddlerEndpoint, tenantCache, asyncLocalStorage);
 
         // Redis connection for throttling.
         const redisConfigForThrottling = config.get("redisForThrottling");
@@ -76,7 +79,7 @@ export class HistorianResourcesFactory implements utils.IResourcesFactory<Histor
 
         const port = normalizePort(process.env.PORT || "3000");
 
-        return new HistorianResources(config, port, riddler, gitCache, throttler);
+        return new HistorianResources(config, port, riddler, gitCache, throttler, asyncLocalStorage);
     }
 }
 
@@ -88,6 +91,7 @@ export class HistorianRunnerFactory implements utils.IRunnerFactory<HistorianRes
             resources.port,
             resources.riddler,
             resources.cache,
-            resources.throttler);
+            resources.throttler,
+            resources.asyncLocalStorage);
     }
 }

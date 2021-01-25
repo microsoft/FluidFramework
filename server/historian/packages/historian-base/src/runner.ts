@@ -6,6 +6,7 @@
 import { Deferred } from "@fluidframework/common-utils";
 import { IThrottler, IWebServer, IWebServerFactory } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
+import { AsyncLocalStorage } from "async_hooks";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { ICache, ITenantService } from "./services";
@@ -22,7 +23,8 @@ export class HistorianRunner implements utils.IRunner {
         private readonly port: string | number,
         private readonly riddler: ITenantService,
         private readonly cache: ICache,
-        private readonly throttler: IThrottler) {
+        private readonly throttler: IThrottler,
+        private readonly asyncLocalStorage: AsyncLocalStorage<string>) {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -30,7 +32,7 @@ export class HistorianRunner implements utils.IRunner {
         this.runningDeferred = new Deferred<void>();
         configureLogging(this.config.get("logger"));
         // Create the historian app
-        const historian = app.create(this.config, this.riddler, this.cache, this.throttler);
+        const historian = app.create(this.config, this.riddler, this.cache, this.throttler, this.asyncLocalStorage);
         historian.set("port", this.port);
 
         this.server = this.serverFactory.create(historian);
