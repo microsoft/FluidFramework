@@ -144,13 +144,16 @@ export class CollaborativeTextArea
                 onKeyDown={this.updateSelection}
                 onClick={this.updateSelection}
                 onContextMenu={this.updateSelection}
-                onInput={this.handleChange}
+                // onChange is recommended over onInput for React controls
+                // https://medium.com/capital-one-tech/how-to-work-with-forms-inputs-and-events-in-react-c337171b923b
+                onChange={this.handleChange}
                 value={this.state.text} />
         );
     }
 
     private handleChange(ev: React.FormEvent<HTMLTextAreaElement>) {
         // We need to set the value here to keep the input responsive to the user
+        console.log(ev);
         const newText = ev.currentTarget.value;
         const charactersModifiedCount = this.state.text.length - newText.length;
         this.setState({ text: newText });
