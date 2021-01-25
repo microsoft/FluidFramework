@@ -79,17 +79,17 @@ export class Canvas extends DataObject implements IFluidHTMLView {
 
         const colorButton = document.createElement("button");
         colorButton.classList.add("ink-toolbar-button", "fluid-icon-pencil");
-        colorButton.setAttribute('title', 'Change Color')
+        colorButton.setAttribute("title", "Change Color");
         colorButton.addEventListener("click", this.toggleColorPicker.bind(this));
 
         const replayButton = document.createElement("button");
         replayButton.classList.add("ink-toolbar-button", "fluid-icon-replay");
-        replayButton.setAttribute('title', 'Replay')
+        replayButton.setAttribute("title", "Replay");
         replayButton.addEventListener("click", this.inkCanvas.replay.bind(this.inkCanvas));
 
         const clearButton = document.createElement("button");
         clearButton.classList.add("ink-toolbar-button", "fluid-icon-cross");
-        clearButton.setAttribute('title', 'Clear')
+        clearButton.setAttribute("title", "Clear");
         clearButton.addEventListener("click", this.inkCanvas.clear.bind(this.inkCanvas));
 
         inkToolbar.appendChild(colorButton);
