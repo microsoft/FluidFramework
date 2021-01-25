@@ -153,7 +153,6 @@ export class CollaborativeTextArea
 
     private handleChange(ev: React.FormEvent<HTMLTextAreaElement>) {
         // We need to set the value here to keep the input responsive to the user
-        console.log(ev);
         const newText = ev.currentTarget.value;
         const charactersModifiedCount = this.state.text.length - newText.length;
         this.setState({ text: newText });
