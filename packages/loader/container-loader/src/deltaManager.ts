@@ -321,7 +321,7 @@ export class DeltaManager
             storageService = new PrefetchDocumentStorageService(storageService);
         }
 
-        this.storageService = new RetriableDocumentStorageService(storageService, this);
+        this.storageService = new RetriableDocumentStorageService(storageService, this, this.logger);
         return this.storageService;
     }
 
