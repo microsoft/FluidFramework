@@ -113,8 +113,9 @@ describe("UpgradeManager (hot-swap)", () => {
         dataObjects.map((dataObject) => {
             dataObject._root.set("tempKey", "tempValue");
         });
-
-        await opProcessingController.process();
+        while (containers.filter((c)=>!c.deltaManager.active).length !== 0) {
+            await opProcessingController.process();
+        }
 
         // upgrade all containers at once
         const resultsP = upgradeManagers.map(async (u) => u.upgrade(codeDetails, true));
@@ -147,7 +148,9 @@ describe("UpgradeManager (hot-swap)", () => {
         // nack'd and it reconnects.
         // We should wait for this to happen before we send a new code proposal so that it doesn't get nack'd.
         dataObject._root.set("tempKey", "tempValue");
-        await opProcessingController.process();
+        while (!container.deltaManager.active) {
+            await opProcessingController.process();
+        }
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         upgradeManager.upgrade(codeDetails);
@@ -183,8 +186,9 @@ describe("UpgradeManager (hot-swap)", () => {
         // first op it sends will get nack'd and it reconnects.
         // We should wait for this to happen before we send a new code proposal so that it doesn't get nack'd.
         dataObject._root.set("tempKey", "tempValue");
-        await opProcessingController.process();
-
+        while (!container1.deltaManager.active || !container2.deltaManager.active) {
+            await opProcessingController.process();
+        }
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         upgradeManager.upgrade(codeDetails);
 
