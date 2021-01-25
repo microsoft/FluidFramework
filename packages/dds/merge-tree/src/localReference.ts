@@ -10,9 +10,7 @@ import {
     refGetRangeLabels,
     refGetTileLabels,
     refHasRangeLabel,
-    refHasRangeLabels,
     refHasTileLabel,
-    refHasTileLabels,
 } from "./mergeTree";
 import { ICombiningOp, ReferenceType } from "./ops";
 import { addProperties, PropertySet } from "./properties";
@@ -72,13 +70,11 @@ export class LocalReference implements ReferencePosition {
     }
 
     public hasTileLabels() {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return refHasTileLabels(this);
+        return !!this.getTileLabels();
     }
 
     public hasRangeLabels() {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return refHasRangeLabels(this);
+        return !!this.getRangeLabels();
     }
 
     public hasTileLabel(label: string) {
@@ -143,7 +139,7 @@ export class LocalReferenceCollection {
 
     constructor(
         private readonly segment: ISegment,
-        initialRefsByfOffset = new Array<IRefsAtOffest>(segment.cachedLength)) {
+        initialRefsByfOffset = new Array<IRefsAtOffest | undefined>(segment.cachedLength)) {
         // Since javascript arrays are sparse the above won't populate any of the
         // indicies, but it will ensure the length property of the array matches
         // the length of the segment.

@@ -53,14 +53,16 @@ export class Client {
     public maxWindowTime = 0;
     public longClientId: string | undefined;
 
-    get mergeTreeDeltaCallback(): MergeTreeDeltaCallback { return this.mergeTree.mergeTreeDeltaCallback; }
-    set mergeTreeDeltaCallback(callback: MergeTreeDeltaCallback) { this.mergeTree.mergeTreeDeltaCallback = callback; }
+    get mergeTreeDeltaCallback(): MergeTreeDeltaCallback | undefined { return this.mergeTree.mergeTreeDeltaCallback; }
+    set mergeTreeDeltaCallback(callback: MergeTreeDeltaCallback | undefined) {
+        this.mergeTree.mergeTreeDeltaCallback = callback;
+    }
 
-    get mergeTreeMaintenanceCallback(): MergeTreeMaintenanceCallback {
+    get mergeTreeMaintenanceCallback(): MergeTreeMaintenanceCallback | undefined {
         return this.mergeTree.mergeTreeMaintenanceCallback;
     }
 
-    set mergeTreeMaintenanceCallback(callback: MergeTreeMaintenanceCallback) {
+    set mergeTreeMaintenanceCallback(callback: MergeTreeMaintenanceCallback | undefined) {
         this.mergeTree.mergeTreeMaintenanceCallback = callback;
     }
 
@@ -850,7 +852,7 @@ export class Client {
     public resolveRemoteClientPosition(
         remoteClientPosition: number,
         remoteClientRefSeq: number,
-        remoteClientId: string): number {
+        remoteClientId: string): number | undefined {
         const shortRemoteClientId = this.getOrAddShortClientId(remoteClientId);
         return this.mergeTree.resolveRemoteClientPosition(
             remoteClientPosition,

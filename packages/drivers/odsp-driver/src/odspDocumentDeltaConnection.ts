@@ -245,6 +245,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                     if (socketError.code === 400 || socketError.code === 404) {
                         error.canRetry = true;
                     }
+                    // eslint-disable-next-line @typescript-eslint/no-throw-literal
                     throw error;
                 }
             }

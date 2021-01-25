@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/consistent-type-assertions, max-len, no-bitwise, no-param-reassign, no-shadow */
+/* eslint-disable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-shadow, max-len, no-bitwise, no-param-reassign */
 
 import { assert, Trace } from "@fluidframework/common-utils";
 import * as Base from "./base";
@@ -38,18 +38,18 @@ export interface ReferencePosition {
     getSegment(): ISegment | undefined;
     getOffset(): number;
     addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp);
-    hasTileLabels();
-    hasRangeLabels();
-    hasTileLabel(label: string);
-    hasRangeLabel(label: string);
-    getTileLabels();
-    getRangeLabels();
+    hasTileLabels(): boolean;
+    hasRangeLabels(): boolean;
+    hasTileLabel(label: string): boolean;
+    hasRangeLabel(label: string): boolean;
+    getTileLabels(): string[] | undefined;
+    getRangeLabels(): string[] | undefined;
 }
 
 export type RangeStackMap = Properties.MapLike<Collections.Stack<ReferencePosition>>;
 
 export interface IMergeNodeCommon {
-    parent: IMergeBlock;
+    parent?: IMergeBlock;
     cachedLength: number;
     index: number;
     ordinal: string;
@@ -145,7 +145,7 @@ export interface BlockAction<TClientData> {
 export interface NodeAction<TClientData> {
     // eslint-disable-next-line @typescript-eslint/prefer-function-type
     (node: IMergeNode, pos: number, refSeq: number, clientId: number, start: number, end: number,
-        clientData?: TClientData): boolean;
+        clientData: TClientData): boolean;
 }
 
 export interface IncrementalSegmentAction<TContext> {
@@ -208,7 +208,7 @@ export interface SegmentGroup {
 export class MergeNode implements IMergeNodeCommon {
     index: number;
     ordinal: string;
-    parent: IMergeBlock;
+    parent?: IMergeBlock;
     cachedLength: number;
     isLeaf() {
         return false;
@@ -217,16 +217,22 @@ export class MergeNode implements IMergeNodeCommon {
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 function addTile(tile: ReferencePosition, tiles: object) {
-    for (const tileLabel of tile.getTileLabels()) {
-        tiles[tileLabel] = tile;
+    const tileLabels = tile.getTileLabels();
+    if (tileLabels) {
+        for (const tileLabel of tileLabels) {
+            tiles[tileLabel] = tile;
+        }
     }
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 function addTileIfNotPresent(tile: ReferencePosition, tiles: object) {
-    for (const tileLabel of tile.getTileLabels()) {
-        if (tiles[tileLabel] === undefined) {
-            tiles[tileLabel] = tile;
+    const tileLabels = tile.getTileLabels();
+    if (tileLabels) {
+        for (const tileLabel of tileLabels) {
+            if (tiles[tileLabel] === undefined) {
+                tiles[tileLabel] = tile;
+            }
         }
     }
 }
@@ -292,8 +298,11 @@ function addNodeReferences(
                     addTileIfNotPresent(segment, leftmostTiles);
                 }
                 if (segment.refType & (ops.ReferenceType.NestBegin | ops.ReferenceType.NestEnd)) {
-                    for (const label of segment.getRangeLabels()) {
-                        updateRangeInfo(label, segment);
+                    const rangeLabels = segment.getRangeLabels();
+                    if (rangeLabels) {
+                        for (const label of segment.getRangeLabels()) {
+                            updateRangeInfo(label, segment);
+                        }
                     }
                 }
             } else {
@@ -582,17 +591,16 @@ export const reservedRangeLabelsKey = "referenceRangeLabels";
 export const reservedMarkerIdKey = "markerId";
 export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-export const refHasTileLabels = (refPos: ReferencePosition) => (refPos.refType & ops.ReferenceType.Tile) &&
-    refPos.properties && refPos.properties[reservedTileLabelsKey];
+export const refGetTileLabels = (refPos: ReferencePosition) => (refPos.refType & ops.ReferenceType.Tile) &&
+    refPos.properties ? refPos.properties[reservedTileLabelsKey] as string[] : undefined;
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-export const refHasRangeLabels = (refPos: ReferencePosition) => (refPos.refType & (ops.ReferenceType.NestBegin | ops.ReferenceType.NestEnd)) &&
-    refPos.properties && refPos.properties[reservedRangeLabelsKey];
+export const refGetRangeLabels = (refPos: ReferencePosition) => (refPos.refType & (ops.ReferenceType.NestBegin | ops.ReferenceType.NestEnd)) &&
+    refPos.properties ? refPos.properties[reservedRangeLabelsKey] as string[] : undefined;
 
 export function refHasTileLabel(refPos: ReferencePosition, label: string) {
-    if (refPos.hasTileLabels()) {
-        for (const refLabel of refPos.properties[reservedTileLabelsKey]) {
+    const tileLabels = refPos.getTileLabels();
+    if (tileLabels) {
+        for (const refLabel of tileLabels) {
             if (label === refLabel) {
                 return true;
             }
@@ -602,30 +610,15 @@ export function refHasTileLabel(refPos: ReferencePosition, label: string) {
 }
 
 export function refHasRangeLabel(refPos: ReferencePosition, label: string) {
-    if (refPos.hasRangeLabels()) {
-        for (const refLabel of refPos.properties[reservedRangeLabelsKey]) {
+    const rangeLabels = refPos.getRangeLabels();
+    if (rangeLabels) {
+        for (const refLabel of rangeLabels) {
             if (label === refLabel) {
                 return true;
             }
         }
     }
     return false;
-}
-
-export function refGetTileLabels(refPos: ReferencePosition) {
-    if (refPos.hasTileLabels()) {
-        return refPos.properties[reservedTileLabelsKey] as string[];
-    } else {
-        return [];
-    }
-}
-
-export function refGetRangeLabels(refPos: ReferencePosition) {
-    if (refPos.hasRangeLabels()) {
-        return refPos.properties[reservedRangeLabelsKey] as string[];
-    } else {
-        return [];
-    }
 }
 
 export interface IJSONMarkerSegment extends ops.IJSONSegment {
@@ -693,26 +686,23 @@ export class Marker extends BaseSegment implements ReferencePosition {
 
     getId(): string | undefined {
         if (this.properties && this.properties[reservedMarkerIdKey]) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return this.properties[reservedMarkerIdKey];
+            return this.properties[reservedMarkerIdKey] as string;
         }
     }
 
     hasTileLabels() {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return refHasTileLabels(this);
+        return !!this.getTileLabels();
     }
 
     hasRangeLabels() {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return refHasRangeLabels(this);
+        return !!this.getRangeLabels();
     }
 
-    hasTileLabel(label: string) {
+    hasTileLabel(label: string): boolean {
         return refHasTileLabel(this, label);
     }
 
-    hasRangeLabel(label: string) {
+    hasRangeLabel(label: string): boolean {
         return refHasRangeLabel(this, label);
     }
 
@@ -746,27 +736,28 @@ export class Marker extends BaseSegment implements ReferencePosition {
         if (id) {
             bbuf += ` (${id}) `;
         }
-        if (this.hasTileLabels()) {
+        const tileLabels = this.getTileLabels();
+        if (tileLabels) {
             lbuf += "tile -- ";
-            const labels = this.properties[reservedTileLabelsKey];
-            for (let i = 0, len = labels.length; i < len; i++) {
-                const tileLabel = labels[i];
+            for (let i = 0, len = tileLabels.length; i < len; i++) {
+                const tileLabel = tileLabels[i];
                 if (i > 0) {
                     lbuf += "; ";
                 }
                 lbuf += tileLabel;
             }
         }
-        if (this.hasRangeLabels()) {
+        const rangeLabels = this.getRangeLabels();
+        if (rangeLabels) {
             let rangeKind = "begin";
             if (this.refType & ops.ReferenceType.NestEnd) {
                 rangeKind = "end";
             }
-            if (this.hasTileLabels()) {
+            if (tileLabels) {
                 lbuf += " ";
             }
             lbuf += `range ${rangeKind} -- `;
-            const labels = this.properties[reservedRangeLabelsKey];
+            const labels = rangeLabels;
             for (let i = 0, len = labels.length; i < len; i++) {
                 const rangeLabel = labels[i];
                 if (i > 0) {
@@ -871,12 +862,14 @@ export interface ClientIds {
 }
 
 export class RegisterCollection {
-    clientCollections: Properties.MapLike<Properties.MapLike<ISegment[]>> = Properties.createMap();
+    clientCollections: Properties.MapLike<Properties.MapLike<ISegment[]> | undefined> = Properties.createMap();
     set(clientId: string, id: string, segments: ISegment[]) {
-        if (!this.clientCollections[clientId]) {
-            this.clientCollections[clientId] = Properties.createMap();
+        let clientCollection = this.clientCollections[clientId];
+        if (!clientCollection) {
+            clientCollection = Properties.createMap();
+            this.clientCollections[clientId] = clientCollection;
         }
-        this.clientCollections[clientId][id] = segments;
+        clientCollection[id] = segments;
     }
 
     get(clientId: string, id: string) {
@@ -1040,11 +1033,11 @@ function tileShift(
 
 export interface MinListener {
     minRequired: number;
-    onMinGE?(minSeq: number);
+    onMinGE(minSeq: number);
 }
 
 const minListenerComparer: Collections.Comparer<MinListener> = {
-    min: { minRequired: Number.MIN_VALUE },
+    min: { minRequired: Number.MIN_VALUE, onMinGE: () => { assert(false); } },
     compare: (a, b) => a.minRequired - b.minRequired,
 };
 
@@ -1102,12 +1095,11 @@ export class MergeTree {
     idToSegment = Properties.createMap<ISegment>();
     clientIdToBranchId: number[] = [];
     localBranchId = 0;
-    minSeqListeners: Collections.Heap<MinListener>;
-    minSeqPending = false;
+    minSeqListeners: Collections.Heap<MinListener> | undefined;
     // For diagnostics
-    getLongClientId: (id: number) => string;
-    mergeTreeDeltaCallback: MergeTreeDeltaCallback;
-    mergeTreeMaintenanceCallback: MergeTreeMaintenanceCallback;
+    getLongClientId?: (id: number) => string;
+    mergeTreeDeltaCallback?: MergeTreeDeltaCallback;
+    mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
 
     // TODO: make and use interface describing options
     constructor(public options?: Properties.PropertySet) {
@@ -1237,7 +1229,7 @@ export class MergeTree {
                 : buildMergeBlock(blocks);      // ...otherwise recursively build the next layer above blocks.
         };
 
-        let clockStart: Trace;
+        let clockStart: Trace | undefined;
         if (measureReloadTime) {
             clockStart = clock();
         }
@@ -1249,7 +1241,7 @@ export class MergeTree {
             this.root.cachedLength = 0;
         }
         this.root.index = 0;
-        if (measureReloadTime) {
+        if (clockStart) {
             console.log(`reload time ${elapsedMicroseconds(clockStart)}`);
         }
     }
@@ -1264,12 +1256,12 @@ export class MergeTree {
         this.segmentsToScour = new Collections.Heap<LRUSegment>([], LRUSegmentComparer);
         this.pendingSegments = Collections.ListMakeHead<SegmentGroup>();
         const measureFullCollab = false;
-        let clockStart: Trace;
+        let clockStart: Trace | undefined;
         if (measureFullCollab) {
             clockStart = clock();
         }
         this.nodeUpdateLengthNewStructure(this.root, true);
-        if (measureFullCollab) {
+        if (clockStart) {
             console.log(`update partial lengths at start ${elapsedMicroseconds(clockStart)}`);
         }
     }
@@ -1306,7 +1298,7 @@ export class MergeTree {
                             holdNodes.push(segment);
                         } else {
                             if (MergeTree.traceZRemove) {
-                                // eslint-disable-next-line dot-notation
+                                // eslint-disable-next-line @typescript-eslint/dot-notation
                                 console.log(`${this.getLongClientId(this.collabWindow.clientId)}: Zremove ${segment["text"]}; cli ${this.getLongClientId(segment.clientId)}`);
                             }
 
@@ -1332,7 +1324,7 @@ export class MergeTree {
 
                             if (canAppend) {
                                 if (MergeTree.traceAppend) {
-                                    // eslint-disable-next-line dot-notation
+                                    // eslint-disable-next-line @typescript-eslint/dot-notation
                                     console.log(`${this.getLongClientId(this.collabWindow.clientId)}: append ${prevSegment["text"]} + ${segment["text"]}; cli ${this.getLongClientId(prevSegment.clientId)} + cli ${this.getLongClientId(segment.clientId)}`);
                                 }
                                 prevSegment.append(segment);
@@ -1369,8 +1361,7 @@ export class MergeTree {
     }
 
     // Interior node with all node children
-    private pack(block: IMergeBlock) {
-        const parent = block.parent;
+    private packParent(parent: IMergeBlock) {
         const children = parent.children;
         let childIndex: number;
         let childBlock: IMergeBlock;
@@ -1416,7 +1407,7 @@ export class MergeTree {
         }
         parent.childCount = childCount;
         if (this.underflow(parent) && (parent.parent)) {
-            this.pack(parent);
+            this.packParent(parent.parent);
         } else {
             this.nodeUpdateOrdinals(parent);
             this.blockUpdatePathLengths(parent, UnassignedSequenceNumber, -1, true);
@@ -1463,7 +1454,7 @@ export class MergeTree {
                         if (MergeTree.options.measureWindowTime) {
                             packClockStart = clock();
                         }
-                        this.pack(block);
+                        this.packParent(block.parent);
 
                         if (MergeTree.options.measureWindowTime) {
                             this.packTime += elapsedMicroseconds(packClockStart);
@@ -1590,7 +1581,7 @@ export class MergeTree {
     getPosition(node: MergeNode, refSeq: number, clientId: number) {
         let totalOffset = 0;
         let parent = node.parent;
-        let prevParent: IMergeBlock;
+        let prevParent: IMergeBlock | undefined;
         while (parent) {
             const children = parent.children;
             for (let childIndex = 0; childIndex < parent.childCount; childIndex++) {
@@ -1710,12 +1701,14 @@ export class MergeTree {
         this.minSeqListeners.add({ minRequired, onMinGE });
     }
 
-    notifyMinSeqListeners() {
-        this.minSeqPending = false;
-        while ((this.minSeqListeners.count() > 0) &&
-            (this.minSeqListeners.peek().minRequired <= this.collabWindow.minSeq)) {
-            const minListener = this.minSeqListeners.get();
-            minListener.onMinGE(this.collabWindow.minSeq);
+    private notifyMinSeqListeners() {
+        if (this.minSeqListeners) {
+            while ((this.minSeqListeners.count() > 0) &&
+                (this.minSeqListeners.peek().minRequired <= this.collabWindow.minSeq)) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const minListener = this.minSeqListeners.get()!;
+                minListener.onMinGE(this.collabWindow.minSeq);
+            }
         }
     }
 
@@ -1730,12 +1723,7 @@ export class MergeTree {
             if (MergeTree.options.zamboniSegments) {
                 this.zamboniSegments();
             }
-            if (this.minSeqListeners && this.minSeqListeners.count()) {
-                this.minSeqPending = true;
-            }
-            if (this.minSeqPending) {
-                this.notifyMinSeqListeners();
-            }
+            this.notifyMinSeqListeners();
         }
     }
 
@@ -2123,7 +2111,7 @@ export class MergeTree {
     public resolveRemoteClientPosition(
         remoteClientPosition: number,
         remoteClientRefSeq: number,
-        remoteClientId: number): number {
+        remoteClientId: number): number | undefined {
         const segmentInfo = this.getContainingSegment(
             remoteClientPosition,
             remoteClientRefSeq,
@@ -2364,7 +2352,7 @@ export class MergeTree {
         let childIndex: number;
         let child: IMergeNode;
         let newNode: IMergeNode | undefined;
-        let fromSplit: IMergeBlock;
+        let fromSplit: IMergeBlock | undefined;
         let found = false;
         for (childIndex = 0; childIndex < block.childCount; childIndex++) {
             child = children[childIndex];
@@ -2685,7 +2673,7 @@ export class MergeTree {
         this.mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
         if (savedLocalRefs.length > 0) {
             const length = this.getLength(refSeq, clientId);
-            let refSegment: ISegment;
+            let refSegment: ISegment | undefined;
             if (start < length) {
                 const afterSegOff = this.getContainingSegment(start, refSeq, clientId);
                 refSegment = afterSegOff.segment;
@@ -2752,10 +2740,12 @@ export class MergeTree {
 
     addLocalReference(lref: LocalReference) {
         const segment = lref.segment;
-        if (!segment.localRefs) {
-            segment.localRefs = new LocalReferenceCollection(segment);
+        let localRefs = segment.localRefs;
+        if (!localRefs) {
+            localRefs = new LocalReferenceCollection(segment);
+            segment.localRefs = localRefs;
         }
-        segment.localRefs.addLocalRef(lref);
+        localRefs.addLocalRef(lref);
         this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
             LocalClientId);
     }
@@ -2885,7 +2875,7 @@ export class MergeTree {
                 const len = this.nodeLength(child, state.refSeq, state.clientId);
                 if (MergeTree.traceIncrTraversal) {
                     if (child.isLeaf()) {
-                        // eslint-disable-next-line dot-notation
+                        // eslint-disable-next-line @typescript-eslint/dot-notation
                         console.log(`considering (r ${state.refSeq} c ${glc(this, state.clientId)}) seg with text ${child["text"]} len ${len} seq ${child.seq} rseq ${child.removedSeq} cli ${glc(this, child.clientId)}`);
                     }
                 }
@@ -2896,7 +2886,7 @@ export class MergeTree {
                         stateStack.push(childState);
                     } else {
                         if (MergeTree.traceIncrTraversal) {
-                            // eslint-disable-next-line dot-notation
+                            // eslint-disable-next-line @typescript-eslint/dot-notation
                             console.log(`action on seg with text ${child["text"]}`);
                         }
                         state.actions.leaf(child, state);

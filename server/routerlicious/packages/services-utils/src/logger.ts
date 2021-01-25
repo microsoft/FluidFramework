@@ -55,8 +55,7 @@ export function configureLogging(config: IWinstonConfig) {
     // Forward all debug library logs through winston
     (debug as any).log = (msg, ...args) => winston.info(msg, ...args);
     // Override the default log format to not include the timestamp since winston will do this for us
-    // eslint-disable-next-line space-before-function-paren
-    (debug as any).formatArgs = function (args) {
+    (debug as any).formatArgs = function(args) {
         const name = this.namespace;
         args[0] = `${name} ${args[0]}`;
     };
