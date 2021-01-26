@@ -21,6 +21,7 @@ import {
     LocalCodeLoader,
     OpProcessingController,
 } from "@fluidframework/test-utils";
+import { Loader } from "@fluidframework/container-loader";
 import { V1, V2 } from "./compatUtils";
 import * as oldTypes from "./oldVersionTypes";
 import * as old from "./oldVersion";
@@ -33,9 +34,6 @@ abstract class TestDataStore extends DataObject {
     public abstract readonly version: string;
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
-    public set(key: string, value: any) {
-        this._root.set(key, value);
-    }
 }
 
 class TestDataStoreV1 extends TestDataStore {
@@ -55,8 +53,10 @@ class TestDataStoreV2 extends TestDataStore {
 const oldApis = [old, old2];
 
 describe("context reload (hot-swap)", function() {
-    const documentId = "contextReloadTest";
-    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
+    let container: IContainer;
+    let containerError = false;
+    let dataStoreV1: TestDataStoreV1;
+    let opProcessingController: OpProcessingController;
     const codeDetails = (version: string): oldTypes.IFluidCodeDetails => {
         return {
             package: { name: TestDataStore.type, version } as unknown as oldTypes.IFluidPackage,
@@ -126,14 +126,13 @@ describe("context reload (hot-swap)", function() {
             // get nack'd and it reconnects.
             // We should wait for this to happen before we send a new code proposal so that it doesn't get nack'd.
             const test = ["fluid", "is great!"];
-            dataStoreV1.set(test[0], test[1]);
+            dataStoreV1._root.set(test[0], test[1]);
 
             await opProcessingController.process();
 
             await container.getQuorum().propose("code", codeDetails(V2));
 
             // wait for summary ack/nack (non-immediate summary will result in test timeout)
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             await new Promise<void>((resolve, reject) => container.on("op", (op) => {
                 if (op.type === "summaryAck") {
                     resolve();
@@ -148,7 +147,7 @@ describe("context reload (hot-swap)", function() {
             // get nack'd and it reconnects.
             // We should wait for this to happen before we send a new code proposal so that it doesn't get nack'd.
             const test = ["fluid", "is great!"];
-            dataStoreV1.set(test[0], test[1]);
+            dataStoreV1._root.set(test[0], test[1]);
 
             await opProcessingController.process();
 
@@ -166,7 +165,7 @@ describe("context reload (hot-swap)", function() {
             // get nack'd and it reconnects.
             // We should wait for this to happen before we send a new code proposal so that it doesn't get nack'd.
             const test = ["fluid", "is great!"];
-            dataStoreV1.set(test[0], test[1]);
+            dataStoreV1._root.set(test[0], test[1]);
 
             await opProcessingController.process();
 
@@ -190,7 +189,7 @@ describe("context reload (hot-swap)", function() {
                     [codeDetails(V2), createRuntimeFactory(TestDataStoreV2)],
                 ],
                 docId);
-            dataStoreV1 = await requestFluidObject<TestDataStore>(container, "default");
+            dataStoreV1 = await requestFluidObject<TestDataStoreV1>(container, "default");
             assert.strictEqual(dataStoreV1.version, TestDataStoreV1.version);
 
             opProcessingController = new OpProcessingController();
@@ -255,9 +254,8 @@ describe("context reload (hot-swap)", function() {
         describe("compat", () => {
             describe("old loader, new runtime", () => {
                 beforeEach(async function() {
-                    this.deltaConnectionServer = LocalDeltaConnectionServer.create();
-                    this.urlResolver = new LocalResolver();
-                    this.container = await oldApi.createOldContainer(
+                    const documentId = Date.now().toString();
+                    container = await oldApi.createOldContainer(
                         documentId,
                         [
                             [codeDetails(V1), oldApi.createOldRuntimeFactory(oldApi.OldTestDataObjectV1)],
@@ -266,7 +264,7 @@ describe("context reload (hot-swap)", function() {
                         this.deltaConnectionServer,
                         this.urlResolver,
                         defaultCodeDetails);
-                    this.dataStoreV1 = await requestFluidObject<oldTypes.OldTestDataObject>(this.container, "default");
+                    dataStoreV1 = await requestFluidObject<TestDataStoreV1>(this.container, "default");
                     assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
 
                     this.opProcessingController = new oldApi.OpProcessingController(this.deltaConnectionServer);
@@ -281,15 +279,12 @@ describe("context reload (hot-swap)", function() {
             });
             describe("new loader, old runtime", () => {
                 beforeEach(async function() {
-                    this.deltaConnectionServer = LocalDeltaConnectionServer.create();
-                    this.urlResolver = new LocalResolver();
-                    this.container = await createContainer([
+                    container = await createContainer([
                         [codeDetails(V1), createRuntimeFactory(TestDataStoreV1)],
                         [codeDetails(V2), oldApi.createOldRuntimeFactory(oldApi.OldTestDataObjectV2)],
                     ],
-                    this.deltaConnectionServer,
-                    this.urlResolver);
-                    this.dataStoreV1 = await requestFluidObject<TestDataStore>(this.container, "default");
+                    Date.now().toString());
+                    dataStoreV1 = await requestFluidObject<TestDataStoreV1>(this.container, "default");
                     assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
 
                     this.opProcessingController = new OpProcessingController();

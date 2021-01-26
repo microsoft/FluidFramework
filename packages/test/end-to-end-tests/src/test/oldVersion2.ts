@@ -134,6 +134,10 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
         return this._opProcessingController;
     }
 
+    get documentId() {
+        return defaultDocumentId;
+    }
+
     private createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>) {
         const codeLoader = new LocalCodeLoader(packageEntries);
         return new Loader({
