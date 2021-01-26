@@ -9,20 +9,20 @@ import { Request, Response, NextFunction } from "express";
 
 const asyncLocalStorage = new AsyncLocalStorage<string>();
 
-export function getCorrelationId(als?: AsyncLocalStorage<string>): string | undefined {
-    if (als) {
-        return als.getStore();
+export function getCorrelationId(fallbackAsyncLocalStorage?: AsyncLocalStorage<string>): string | undefined {
+    if (fallbackAsyncLocalStorage) {
+        return fallbackAsyncLocalStorage.getStore();
     } else {
         return asyncLocalStorage.getStore();
     }
 }
 
-export const bindCorrelationId = (als?: AsyncLocalStorage<string>, headerName: string = "x-correlation-id") =>
+export const bindCorrelationId = (fallbackAsyncLocalStorage?: AsyncLocalStorage<string>, headerName: string = "x-correlation-id") =>
     ((req: Request, res: Response, next: NextFunction): void => {
         const id: string = req.header(headerName) || uuid.v4();
         res.setHeader(headerName, id);
-        if (als) {
-            als.run(id, () => next());
+        if (fallbackAsyncLocalStorage) {
+            fallbackAsyncLocalStorage.run(id, () => next());
         } else {
             asyncLocalStorage.run(id, () => next());
         }
