@@ -31,8 +31,8 @@ describe('EditLog', () => {
 			"Log's total length should match its sequenced edits on construction"
 		);
 
-		expect(log.idOf(0)).to.equal(id0, 'Log should have edits in order of construction.');
-		expect(log.idOf(1)).to.equal(id1, 'Log should have edits in order of construction.');
+		expect(log.getIdAtIndex(0)).to.equal(id0, 'Log should have edits in order of construction.');
+		expect(log.getIdAtIndex(1)).to.equal(id1, 'Log should have edits in order of construction.');
 	});
 
 	it('can get the index from an edit id of sequenced edits', () => {
@@ -41,8 +41,8 @@ describe('EditLog', () => {
 
 		const log = new EditLog({ editChunks, editIds });
 
-		expect(log.indexOf(id0)).to.equal(0);
-		expect(log.indexOf(id1)).to.equal(1);
+		expect(log.getIndexOfId(id0)).to.equal(0);
+		expect(log.getIndexOfId(id1)).to.equal(1);
 	});
 
 	it('can get the index from an edit id of a local edit', () => {
@@ -52,8 +52,8 @@ describe('EditLog', () => {
 		const log = new EditLog({ editChunks, editIds });
 		log.addLocalEdit(edit1);
 
-		expect(log.indexOf(id0)).to.equal(0);
-		expect(log.indexOf(id1)).to.equal(1);
+		expect(log.getIndexOfId(id0)).to.equal(0);
+		expect(log.getIndexOfId(id1)).to.equal(1);
 	});
 
 	it('can get an edit from an index', async () => {
@@ -158,7 +158,7 @@ describe('EditLog', () => {
 			const edit = newEdit([]);
 			log.addLocalEdit(edit);
 			ids.push(edit.id);
-			expect(log.indexOf(edit.id)).equals(i, 'Local edits should be appended to the end of the log.');
+			expect(log.getIndexOfId(edit.id)).equals(i, 'Local edits should be appended to the end of the log.');
 		}
 		expect(log.length).equals(log.numberOfLocalEdits).and.equals(numEdits, 'Only local edits should be present.');
 

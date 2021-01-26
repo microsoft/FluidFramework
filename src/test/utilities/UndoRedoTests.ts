@@ -61,7 +61,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const insertIndex = tree.edits.indexOf(insertId);
+			const insertIndex = tree.edits.getIndexOfId(insertId);
 			const undoId: EditId = undoTree.editor.revert(
 				tree.edits.getAtIndexSynchronous(insertIndex),
 				tree.logViewer.getSnapshotSynchronous(insertIndex)
@@ -81,7 +81,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(leftTraitAfterUndo.length).to.equal(1);
 
 			// Redo testing
-			const undoIndex = tree.edits.indexOf(undoId);
+			const undoIndex = tree.edits.getIndexOfId(undoId);
 			undoTree.editor.revert(
 				tree.edits.getAtIndexSynchronous(undoIndex),
 				tree.logViewer.getSnapshotSynchronous(undoIndex)
@@ -119,7 +119,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const deleteIndex = tree.edits.indexOf(deleteId);
+			const deleteIndex = tree.edits.getIndexOfId(deleteId);
 			const undoId: EditId = undoTree.editor.revert(
 				tree.edits.getAtIndexSynchronous(deleteIndex),
 				tree.logViewer.getSnapshotSynchronous(deleteIndex)
@@ -138,7 +138,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(leftTraitAfterUndo.length).to.equal(2);
 
 			// Redo testing
-			const undoIndex = tree.edits.indexOf(undoId);
+			const undoIndex = tree.edits.getIndexOfId(undoId);
 			undoTree.editor.revert(
 				tree.edits.getAtIndexSynchronous(undoIndex),
 				tree.logViewer.getSnapshotSynchronous(undoIndex)
@@ -176,7 +176,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const setValueIndex = tree.edits.indexOf(setValueId);
+			const setValueIndex = tree.edits.getIndexOfId(setValueId);
 			const undoId: EditId = undoTree.editor.revert(
 				tree.edits.getAtIndexSynchronous(setValueIndex),
 				tree.logViewer.getSnapshotSynchronous(setValueIndex)
@@ -197,7 +197,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(nodeAfterUndo.payload).to.be.undefined;
 
 			// Redo testing
-			const undoIndex = tree.edits.indexOf(undoId);
+			const undoIndex = tree.edits.getIndexOfId(undoId);
 			undoTree.editor.revert(
 				tree.edits.getAtIndexSynchronous(undoIndex),
 				tree.logViewer.getSnapshotSynchronous(undoIndex)
@@ -237,7 +237,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const firstInsertIndex = tree.edits.indexOf(firstInsertId);
+			const firstInsertIndex = tree.edits.getIndexOfId(firstInsertId);
 			const undoId: EditId = undoTree.editor.revert(
 				tree.edits.getAtIndexSynchronous(firstInsertIndex),
 				tree.logViewer.getSnapshotSynchronous(firstInsertIndex)
@@ -261,7 +261,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(nodeAfterUndo.identifier).to.equal(secondNode.identifier);
 
 			// Redo testing
-			const undoIndex = tree.edits.indexOf(undoId);
+			const undoIndex = tree.edits.getIndexOfId(undoId);
 			undoTree.editor.revert(
 				tree.edits.getAtIndexSynchronous(undoIndex),
 				tree.logViewer.getSnapshotSynchronous(undoIndex)
@@ -300,7 +300,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const deleteIndex = tree.edits.indexOf(deleteId);
+			const deleteIndex = tree.edits.getIndexOfId(deleteId);
 			const undoId: EditId = undoTree.editor.revert(
 				tree.edits.getAtIndexSynchronous(deleteIndex),
 				tree.logViewer.getSnapshotSynchronous(deleteIndex)
@@ -323,7 +323,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(nodeAfterUndo.identifier).to.equal(firstNode.identifier);
 
 			// Redo testing
-			const undoIndex = tree.edits.indexOf(undoId);
+			const undoIndex = tree.edits.getIndexOfId(undoId);
 			undoTree.editor.revert(
 				tree.edits.getAtIndexSynchronous(undoIndex),
 				tree.logViewer.getSnapshotSynchronous(undoIndex)
@@ -361,7 +361,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const setValueIndex = tree.edits.indexOf(setValueId);
+			const setValueIndex = tree.edits.getIndexOfId(setValueId);
 			const undoId: EditId = undoTree.editor.revert(
 				tree.edits.getAtIndexSynchronous(setValueIndex),
 				tree.logViewer.getSnapshotSynchronous(setValueIndex)
@@ -382,7 +382,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(nodeAfterUndo.payload).to.be.undefined;
 
 			// Redo testing
-			const undoIndex = tree.edits.indexOf(undoId);
+			const undoIndex = tree.edits.getIndexOfId(undoId);
 			undoTree.editor.revert(
 				tree.edits.getAtIndexSynchronous(undoIndex),
 				tree.logViewer.getSnapshotSynchronous(undoIndex)

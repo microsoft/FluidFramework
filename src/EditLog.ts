@@ -6,7 +6,7 @@
 import BTree from 'sorted-btree';
 import { IFluidHandle, ISerializedHandle } from '@fluidframework/core-interfaces';
 import { IsoBuffer } from '@fluidframework/common-utils';
-import { assert, assertNotUndefined, compareIterables, fail } from './Common';
+import { assert, assertNotUndefined, compareArrays, fail } from './Common';
 import { Edit, EditWithoutId } from './PersistedTypes';
 import { EditId } from './Identifiers';
 
@@ -25,12 +25,12 @@ export interface OrderedEditSet {
 	/**
 	 * @returns the index of the edit with the given editId within this `OrderedEditSet`.
 	 */
-	indexOf(editId: EditId): number;
+	getIndexOfId(editId: EditId): number;
 
 	/**
 	 * @returns the id of the edit at the given index within this 'OrderedEditSet'.
 	 */
-	idOf(index: number): EditId;
+	getIdAtIndex(index: number): EditId;
 
 	/**
 	 * @returns the edit at the given index within this `OrderedEditSet`.
@@ -52,8 +52,6 @@ export interface OrderedEditSet {
 	 * @internal
 	 */
 	getEditLogSummary(): EditLogSummary;
-
-	[Symbol.iterator](): IterableIterator<EditId>;
 }
 
 /**
@@ -151,7 +149,7 @@ export class EditLog implements OrderedEditSet {
 	private readonly editChunks: BTree<number, EditChunk>;
 	private readonly localEdits: Edit[] = [];
 
-	private readonly loadedChunkMruCache: number[] = [];
+	private readonly loadedChunkCache: number[] = [];
 	private readonly maximumEvictedIndex: number;
 
 	private readonly allEditIds: Map<EditId, OrderedEditId> = new Map();
@@ -220,6 +218,13 @@ export class EditLog implements OrderedEditSet {
 	}
 
 	/**
+	 * Returns all edit IDs in the log (sequenced and local).
+	 */
+	public get editIds(): EditId[] {
+		return this.sequencedEditIds.concat(this.localEdits.map(({ id }) => id));
+	}
+
+	/**
 	 * @returns true iff the edit is contained in this 'EditLog' and it is a local edit (not sequenced).
 	 */
 	public isLocalEdit(editId: EditId): boolean {
@@ -230,7 +235,7 @@ export class EditLog implements OrderedEditSet {
 	/**
 	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.indexOf}
 	 */
-	public indexOf(editId: EditId): number {
+	public getIndexOfId(editId: EditId): number {
 		const orderedEdit = this.allEditIds.get(editId) ?? fail('edit not found');
 
 		if (orderedEdit.isLocal) {
@@ -244,7 +249,7 @@ export class EditLog implements OrderedEditSet {
 	/**
 	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.idOf}
 	 */
-	public idOf(index: number): EditId {
+	public getIdAtIndex(index: number): EditId {
 		if (this.numberOfSequencedEdits <= index) {
 			return this.localEdits[index - this.numberOfSequencedEdits].id;
 		}
@@ -272,12 +277,12 @@ export class EditLog implements OrderedEditSet {
 				assert(edits.length === expectedEditLength, 'The chunk does not contain the correct number of edits.');
 
 				editChunk.edits = edits;
-				this.addIndexToCache(key);
 
-				return joinEditAndId(this.idOf(index), edits[index - key]);
+				this.addKeyToCache(key);
+				return joinEditAndId(this.getIdAtIndex(index), edits[index - key]);
 			}
 
-			return joinEditAndId(this.idOf(index), edits[index - key]);
+			return joinEditAndId(this.getIdAtIndex(index), edits[index - key]);
 		}
 
 		return this.localEdits[index - this.numberOfSequencedEdits];
@@ -297,7 +302,7 @@ export class EditLog implements OrderedEditSet {
 			const { edits } = editChunk;
 
 			return joinEditAndId(
-				this.idOf(index),
+				this.getIdAtIndex(index),
 				assertNotUndefined(edits, 'Edits should not have been evicted.')[index - key]
 			);
 		}
@@ -310,7 +315,7 @@ export class EditLog implements OrderedEditSet {
 	 */
 	public async tryGetEdit(editId: EditId): Promise<Edit | undefined> {
 		try {
-			const index = this.indexOf(editId);
+			const index = this.getIndexOfId(editId);
 			return await this.getAtIndex(index);
 		} catch {
 			return undefined;
@@ -320,13 +325,13 @@ export class EditLog implements OrderedEditSet {
 	/**
 	 * Assigns provided handles to edit chunks based on chunk index specified.
 	 */
-	public processEditChunkHandle(chunkHandle: IFluidHandle<ArrayBufferLike>, chunkIndex: number): void {
-		assert(
-			chunkIndex < this.editChunks.length,
+	public processEditChunkHandle(chunkHandle: IFluidHandle<ArrayBufferLike>, chunkKey: number): void {
+		const chunk = assertNotUndefined(
+			this.editChunks.get(chunkKey),
 			'A chunk handle op should not be received before the edit ops it corresponds to.'
 		);
-		this.editChunks[chunkIndex].handle = chunkHandle;
-		this.addIndexToCache(chunkIndex);
+		chunk.handle = chunkHandle;
+		this.addKeyToCache(chunkKey);
 	}
 
 	/**
@@ -392,7 +397,9 @@ export class EditLog implements OrderedEditSet {
 	 * @returns true iff this `EditLog` and `other` are equivalent, regardless of locality.
 	 */
 	public equals(other: EditLog): boolean {
-		return compareIterables(this, other);
+		// TODO #45414: We should also be deep comparing the list of changes in the edit. This is not straightforward.
+		// We can use our edit validation code when we write it since it will need to do deep walks of the changes.
+		return compareArrays(this.editIds, other.editIds);
 	}
 
 	/**
@@ -409,18 +416,25 @@ export class EditLog implements OrderedEditSet {
 		};
 	}
 
-	public *[Symbol.iterator](): IterableIterator<EditId> {
-		// TODO #45414: We should also be deep comparing the list of changes in the edit. This is not straightforward.
-		// We can use our edit validation code when we write it since it will need to do deep walks of the changes.
-		yield* this.sequencedEditIds;
-		yield* this.localEdits.map(({ id }) => id);
-	}
+	private addKeyToCache(newKey: number): void {
+		// Indices are only added to the cache if they are not higher than the maximum evicted index.
+		if (newKey <= this.maximumEvictedIndex) {
+			// If the new index is already in the cache, remove it first to update its last usage.
+			if (newKey in this.loadedChunkCache) {
+				this.loadedChunkCache.splice(this.loadedChunkCache.indexOf(newKey), 1);
+			}
 
-	private addIndexToCache(newIndex: number): void {
-		if (newIndex <= this.maximumEvictedIndex && this.loadedChunkMruCache.length >= loadedChunkCacheSize) {
-			const indexToEvict = assertNotUndefined(this.loadedChunkMruCache.shift());
-			this.editChunks[indexToEvict].edits = [];
-			this.loadedChunkMruCache.push(newIndex);
+			this.loadedChunkCache.push(newKey);
+
+			// If the cache is out of space, evict the oldest index in the cache.
+			if (this.loadedChunkCache.length > loadedChunkCacheSize) {
+				const indexToEvict = assertNotUndefined(this.loadedChunkCache.shift());
+				const chunkToEvict = assertNotUndefined(
+					this.editChunks.get(indexToEvict),
+					'Chunk key added to cache should exist in the edit log.'
+				);
+				chunkToEvict.edits = undefined;
+			}
 		}
 	}
 }

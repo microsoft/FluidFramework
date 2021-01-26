@@ -147,7 +147,7 @@ export class CachingLogViewer implements LogViewer {
 
 			// Revision is the result of the edit being applied.
 			this.cacheRevision(i + 1, currentSnapshot, edit, editingResult);
-			this.processEditResult(editingResult.result, this.log.idOf(i));
+			this.processEditResult(editingResult.result, this.log.getIdAtIndex(i));
 		}
 
 		if (revision >= this.log.length) {
@@ -176,7 +176,7 @@ export class CachingLogViewer implements LogViewer {
 
 			// Revision is the result of the edit being applied.
 			this.cacheRevision(i + 1, currentSnapshot, edit, editingResult);
-			this.processEditResult(editingResult.result, this.log.idOf(i));
+			this.processEditResult(editingResult.result, this.log.getIdAtIndex(i));
 		}
 
 		if (revision >= this.log.length) {

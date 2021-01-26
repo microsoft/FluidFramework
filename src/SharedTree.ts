@@ -409,8 +409,8 @@ export class SharedTree extends SharedObject {
 	protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
 		const { type } = message.contents;
 		if (type === SharedTreeOpType.Handle) {
-			const { editHandle, chunkIndex } = message.contents as SharedTreeHandleOp;
-			this.editLog.processEditChunkHandle(this.deserializeHandle(editHandle), chunkIndex);
+			const { editHandle, chunkKey } = message.contents as SharedTreeHandleOp;
+			this.editLog.processEditChunkHandle(this.deserializeHandle(editHandle), chunkKey);
 		} else if (type === SharedTreeOpType.Edit) {
 			const { edit } = message.contents as SharedTreeEditOp;
 			this.processSequencedEdit(edit);
@@ -473,6 +473,6 @@ interface SharedTreeEditOp extends SharedTreeOp {
 interface SharedTreeHandleOp extends SharedTreeOp {
 	/** The handled to an uploaded edit chunk. */
 	editHandle: ISerializedHandle;
-	/** The index of the chunk that corresponds to the handle. */
-	chunkIndex: number;
+	/** The index of the first edit in the chunk that corresponds to the handle. */
+	chunkKey: number;
 }

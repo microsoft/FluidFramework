@@ -407,7 +407,7 @@ describe('SharedTree', () => {
 			});
 
 			// Edit 0 creates initial tree
-			expect(tree.edits.idOf(1)).to.equal(edit.id);
+			expect(tree.edits.getIdAtIndex(1)).to.equal(edit.id);
 		});
 
 		runSharedTreeUndoRedoTestSuite({ localMode: false });
