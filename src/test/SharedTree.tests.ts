@@ -13,6 +13,7 @@ import { deepCompareNodes, newEdit } from '../EditUtilities';
 import { noHistorySummarizer, serialize } from '../Summary';
 import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
+import { TreeNodeHandle } from '../TreeNodeHandle';
 import {
 	makeEmptyNode,
 	setUpTestSharedTree,
@@ -23,6 +24,8 @@ import {
 	leftTraitLocation,
 	rightTraitLocation,
 	simpleTestTree,
+	areNodesEquivalent,
+	rightTraitLabel,
 	assertNoDelta,
 } from './utilities/TestUtilities';
 import { runSharedTreeUndoRedoTestSuite } from './utilities/UndoRedoTests';
@@ -656,6 +659,37 @@ describe('SharedTree', () => {
 			expect(delta.changed).deep.equals([simpleTestTree.identifier]);
 			expect(delta.removed).deep.equals([]);
 			expect(delta.added).deep.equals([]);
+		});
+	});
+
+	describe('handles', () => {
+		it('can reference a node', () => {
+			// Test that a handle can wrap a node and retrieve that node's properties
+			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+			const leftHandle = new TreeNodeHandle(tree.currentView, left.identifier);
+			expect(areNodesEquivalent(left, leftHandle)).to.be.true;
+			expect(areNodesEquivalent(right, leftHandle)).to.be.false;
+		});
+
+		it('can create handles from children', () => {
+			// Test that when retrieving children via the "traits" property of a handle, the
+			// children are also wrapped in handles
+			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+			const rootHandle = new TreeNodeHandle(tree.currentView, simpleTestTree.identifier);
+			expect(areNodesEquivalent(simpleTestTree, rootHandle)).to.be.true;
+			const leftHandle = rootHandle.traits.left[0];
+			expect(areNodesEquivalent(left, leftHandle));
+			expect(leftHandle instanceof TreeNodeHandle).to.be.true;
+		});
+
+		it('do not update when the current view of the tree changes', () => {
+			// Unlike CurrentTreeNodeHandles, SnapshotTreeNodeHandles should never change
+			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+			const leftHandle = new TreeNodeHandle(tree.currentView, left.identifier);
+			expect(leftHandle.traits.right).to.be.undefined;
+			// Move "right" under "left"
+			tree.editor.move(right, StablePlace.atStartOf({ parent: left.identifier, label: rightTraitLabel }));
+			expect(leftHandle.traits.right).to.be.undefined;
 		});
 	});
 });

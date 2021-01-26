@@ -18,9 +18,10 @@
 // API Exports
 
 export { initialTree } from './InitialTree';
-export { SharedTree, SharedTreeEvent, SharedTreeEditor } from './SharedTree';
+export { BlobId, SharedTree, SharedTreeEvent, SharedTreeEditor } from './SharedTree';
+export { TreeNodeHandle } from './TreeNodeHandle';
 export { Delta } from './Forest';
-export { SharedTreeSummaryBase, SharedTreeSummarizer } from './Summary';
+export { SharedTreeSummaryBase, SharedTreeSummarizer, fullHistorySummarizer, noHistorySummarizer } from './Summary';
 export { sharedTreeAssertionErrorType } from './Common';
 export * from './PersistedTypes';
 export * from './Factory';

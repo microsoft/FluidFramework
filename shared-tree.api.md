@@ -30,6 +30,11 @@ export class BasicCheckout extends Checkout {
     waitForPendingUpdates(): Promise<void>;
 }
 
+// Warning: (ae-internal-missing-underscore) The name "BlobId" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export type BlobId = string;
+
 // @public
 export interface Build {
     // (undocumented)
@@ -206,6 +211,11 @@ export interface EditWithoutId extends EditBase {
     readonly id?: never;
 }
 
+// Warning: (ae-incompatible-release-tags) The symbol "fullHistorySummarizer" is marked as @public, but its signature references "SharedTreeSummary_0_0_2" which is marked as @internal
+//
+// @public
+export function fullHistorySummarizer(editLog: OrderedEditSet, currentView: Snapshot): SharedTreeSummary_0_0_2;
+
 // @public
 export const initialTree: ChangeNode;
 
@@ -258,6 +268,11 @@ export interface NodeInTrait {
     // (undocumented)
     readonly trait: TraitLocation;
 }
+
+// Warning: (ae-incompatible-release-tags) The symbol "noHistorySummarizer" is marked as @public, but its signature references "SharedTreeSummary_0_0_2" which is marked as @internal
+//
+// @public
+export function noHistorySummarizer(_editLog: OrderedEditSet, currentView: Snapshot): SharedTreeSummary_0_0_2;
 
 // @public @sealed
 export interface OrderedEditSet {
@@ -340,8 +355,6 @@ export class SharedTree extends SharedObject {
     logViewer: LogViewer;
     // (undocumented)
     protected onDisconnect(): void;
-    // Warning: (ae-forgotten-export) The symbol "BlobId" needs to be exported by the entry point index.d.ts
-    //
     // @internal
     payloadCache: Map<BlobId, Payload>;
     // (undocumented)
@@ -394,6 +407,15 @@ export class SharedTreeFactory implements IChannelFactory {
 
 // @public
 export type SharedTreeSummarizer = (editLog: OrderedEditSet, currentView: Snapshot) => SharedTreeSummaryBase;
+
+// Warning: (ae-internal-missing-underscore) The name "SharedTreeSummary_0_0_2" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export interface SharedTreeSummary_0_0_2 extends SharedTreeSummaryBase {
+    // (undocumented)
+    readonly currentTree: ChangeNode;
+    readonly sequencedEdits: readonly Edit[];
+}
 
 // @public
 export interface SharedTreeSummaryBase {
@@ -515,7 +537,7 @@ export interface TraitLocation {
 }
 
 // @public
-export interface TraitMap<TChild = ChangeNode> {
+export interface TraitMap<TChild> {
     // (undocumented)
     readonly [key: string]: TreeNodeSequence<TChild>;
 }
@@ -532,7 +554,22 @@ export interface TreeNode<TChild> extends NodeData {
 }
 
 // @public
-export type TreeNodeSequence<TChild = ChangeNode> = readonly TChild[];
+export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
+    constructor(snapshot: Snapshot, nodeId: NodeId);
+    // (undocumented)
+    get definition(): Definition;
+    // (undocumented)
+    get identifier(): NodeId;
+    // (undocumented)
+    get node(): TreeNode<TreeNodeHandle>;
+    // (undocumented)
+    get payload(): Payload | undefined;
+    // (undocumented)
+    get traits(): TraitMap<TreeNodeHandle>;
+}
+
+// @public
+export type TreeNodeSequence<TChild> = readonly TChild[];
 
 // @public
 export type UuidString = string & {

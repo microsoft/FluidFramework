@@ -1,5 +1,20 @@
 # Change Log
 
+## 0.22.2
+
+* build: revert update to react 17, and include non-breaking updates since branch
+
+## 0.22.1
+
+* build: update and audit deps
+  * Associated pull request: !27395
+* feat: Add telemetry for invalid/malformed edits to SharedTree
+  * Associated pull request: !27318
+* build: Fixed cross-package incremental build for `fluid-document-store`
+  * Associated pull request: !27285
+* feat: "replace" affordance on FluidDocumentStore
+  * Associated pull request: !27213
+
 ## 0.19.2
 
 * chore: Add dispose functionality to FluidDocumentStore, Checkout and SharedTree

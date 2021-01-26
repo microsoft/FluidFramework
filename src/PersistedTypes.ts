@@ -242,7 +242,7 @@ export enum ConstraintEffect {
  * Values are the content of the trait specified by the key.
  * @public
  */
-export interface TraitMap<TChild = ChangeNode> {
+export interface TraitMap<TChild> {
 	readonly [key: string]: TreeNodeSequence<TChild>;
 }
 
@@ -250,7 +250,7 @@ export interface TraitMap<TChild = ChangeNode> {
  * A sequence of Nodes that make up a trait under a Node
  * @public
  */
-export type TreeNodeSequence<TChild = ChangeNode> = readonly TChild[];
+export type TreeNodeSequence<TChild> = readonly TChild[];
 
 /**
  * Valid if (transitively) all DetachedSequenceId are used according to their rules (use here counts as a destination),
