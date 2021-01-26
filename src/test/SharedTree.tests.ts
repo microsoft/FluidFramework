@@ -14,6 +14,7 @@ import { noHistorySummarizer, serialize } from '../Summary';
 import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
 import { TreeNodeHandle } from '../TreeNodeHandle';
+import { deserialize, SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 import {
 	makeEmptyNode,
 	setUpTestSharedTree,
@@ -29,7 +30,6 @@ import {
 	assertNoDelta,
 } from './utilities/TestUtilities';
 import { runSharedTreeUndoRedoTestSuite } from './utilities/UndoRedoTests';
-import { deserialize, SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 
 describe('SharedTree', () => {
 	describe('SharedTree before initialization', () => {

@@ -11,7 +11,7 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger } from '@fluidframework/telemetry-utils';
-import { assert, assertNotUndefined, fail } from './Common';
+import { assert, fail } from './Common';
 import { EditLog, OrderedEditSet } from './EditLog';
 import {
 	Edit,

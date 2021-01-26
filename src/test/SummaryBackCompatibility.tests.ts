@@ -3,9 +3,9 @@ import { assert, expect } from 'chai';
 import { Change, StablePlace } from '../PersistedTypes';
 import { DetachedSequenceId, EditId, NodeId } from '../Identifiers';
 import { newEdit } from '../EditUtilities';
-import { left, makeEmptyNode, setUpTestSharedTree, simpleTestTree } from './utilities/TestUtilities';
 import { deserialize } from '../SummaryBackCompatibility';
 import { SharedTreeSummaryBase } from '../Summary';
+import { left, makeEmptyNode, setUpTestSharedTree, simpleTestTree } from './utilities/TestUtilities';
 
 describe('Summary back compatibility', () => {
 	const setupEditId = '9406d301-7449-48a5-b2ea-9be637b0c6e4' as EditId;
