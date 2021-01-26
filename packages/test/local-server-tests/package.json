@@ -25,9 +25,9 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "test": "npm run test:mocha",
-    "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "test:coverage": "cross-env FLUID_TEST_COVERAGE=1 npm run test:mocha",
     "test:mocha": "mocha dist/test",
+    "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
