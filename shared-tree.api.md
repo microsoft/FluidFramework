@@ -262,7 +262,7 @@ export interface NodeInTrait {
 // @public @sealed
 export interface OrderedEditSet {
     // (undocumented)
-    [Symbol.iterator](): IterableIterator<EditId>;
+    editIds: EditId[];
     // (undocumented)
     getAtIndex(index: number): Promise<Edit>;
     // (undocumented)
@@ -270,9 +270,9 @@ export interface OrderedEditSet {
     // @internal (undocumented)
     getEditLogSummary(): EditLogSummary;
     // (undocumented)
-    idOf(index: number): EditId;
+    getIdAtIndex(index: number): EditId;
     // (undocumented)
-    indexOf(editId: EditId): number;
+    getIndexOfId(editId: EditId): number;
     // (undocumented)
     length: number;
     // (undocumented)
@@ -397,8 +397,6 @@ export type SharedTreeSummarizer = (editLog: OrderedEditSet, currentView: Snapsh
 
 // @public
 export interface SharedTreeSummaryBase {
-    // (undocumented)
-    readonly currentTree: ChangeNode;
     readonly version: string;
 }
 
@@ -544,6 +542,6 @@ export type UuidString = string & {
 
 // Warnings were encountered during analysis:
 //
-// src/EditLog.ts:67:47 - (ae-forgotten-export) The symbol "SerializedChunk" needs to be exported by the entry point index.d.ts
+// src/EditLog.ts:70:47 - (ae-forgotten-export) The symbol "SerializedChunk" needs to be exported by the entry point index.d.ts
 
 ```

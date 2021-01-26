@@ -90,9 +90,9 @@ describe('EditLog', () => {
 		// Sequenced edits should be iterated before local edits
 		const expectedEditIdStack = [id1, id0];
 
-		for (const editId of log) {
+		log.editIds.forEach((editId) => {
 			expect(editId).to.equal(expectedEditIdStack.pop());
-		}
+		});
 
 		expect(expectedEditIdStack.length).to.equal(0);
 	});
@@ -164,8 +164,7 @@ describe('EditLog', () => {
 
 		log.sequenceLocalEdits();
 
-		const editIds = Array.from(log);
-		expect(editIds).to.deep.equal(ids, 'Sequencing a local edit should not change its index.');
+		expect(log.editIds).to.deep.equal(ids, 'Sequencing a local edit should not change its index.');
 
 		expect(log.length)
 			.equals(log.numberOfSequencedEdits)

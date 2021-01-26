@@ -1,6 +1,5 @@
-import { EditLog, editsPerChunk } from './EditLog';
-import { EditId } from './Identifiers';
-import { Edit, EditWithoutId } from './PersistedTypes';
+import { EditLog } from './EditLog';
+import { ChangeNode, Edit } from './PersistedTypes';
 import { ErrorString, SharedTreeSummary, SharedTreeSummaryBase } from './Summary';
 
 /** The summary format version that is read by SharedTree. */
@@ -11,6 +10,8 @@ export const readFormatVersion = '0.1.0';
  * TODO:#49901: Remove export when this format is no longer written.
  */
 export interface SharedTreeSummary_0_0_2 extends SharedTreeSummaryBase {
+	readonly currentTree: ChangeNode;
+
 	/**
 	 * A list of edits.
 	 */
@@ -33,10 +34,10 @@ export function deserialize(jsonSummary: string): SharedTreeSummaryBase | ErrorS
 		return 'Summary is not an object';
 	}
 
-	const { version, currentTree } = summary;
+	const { version } = summary;
 
-	if (version !== undefined && currentTree !== undefined) {
-		return { version, currentTree, ...summary };
+	if (version !== undefined) {
+		return { version, ...summary };
 	}
 
 	return 'Missing fields on summary';
@@ -47,10 +48,10 @@ export function deserialize(jsonSummary: string): SharedTreeSummaryBase | ErrorS
  *
  */
 export function convertSummaryToReadFormat(summary: SharedTreeSummaryBase): SharedTreeSummary | ErrorString {
-	const { currentTree, version } = summary;
+	const { version } = summary;
 
 	if (version === readFormatVersion) {
-		const { editHistory } = summary as SharedTreeSummary;
+		const { currentTree, editHistory } = summary as SharedTreeSummary;
 
 		if (editHistory !== undefined) {
 			if (typeof editHistory !== 'object') {
@@ -65,7 +66,7 @@ export function convertSummaryToReadFormat(summary: SharedTreeSummaryBase): Shar
 			}
 		}
 	} else if (version === '0.0.2') {
-		const { sequencedEdits } = summary as SharedTreeSummary_0_0_2;
+		const { currentTree, sequencedEdits } = summary as SharedTreeSummary_0_0_2;
 
 		if (sequencedEdits !== undefined) {
 			const temporaryLog = new EditLog();

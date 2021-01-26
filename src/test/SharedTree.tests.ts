@@ -340,7 +340,7 @@ describe('SharedTree', () => {
 			const leftTrait = secondTree.currentView.getTrait(leftTraitLocation);
 			expect(leftTrait.length).to.equal(1);
 
-			const editIds = Array.from(tree.edits);
+			const editIds = tree.edits.editIds;
 
 			// Edit 0 creates initial tree
 			expect(editIds[1]).is.equal(firstEditId);
@@ -381,7 +381,7 @@ describe('SharedTree', () => {
 			const leftTrait = tree.currentView.getTrait(leftTraitLocation);
 			expect(leftTrait.length).to.equal(3);
 
-			const editIds = Array.from(tree.edits);
+			const editIds = tree.edits.editIds;
 			// Edit 0 creates initial tree
 			expect(editIds[1]).to.equal(firstEditId);
 			expect(editIds[2]).to.equal(secondEditId);

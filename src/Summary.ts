@@ -33,11 +33,9 @@ export type SharedTreeSummarizer = (editLog: OrderedEditSet, currentView: Snapsh
 export type ErrorString = string;
 
 /**
- * The minimal information on a SharedTree summary. Contains the current tree and summary format version.
+ * The minimal information on a SharedTree summary. Contains the summary format version.
  */
 export interface SharedTreeSummaryBase {
-	readonly currentTree: ChangeNode;
-
 	/**
 	 * Field on summary under which version is stored.
 	 */
@@ -49,6 +47,8 @@ export interface SharedTreeSummaryBase {
  * @public
  */
 export interface SharedTreeSummary extends SharedTreeSummaryBase {
+	readonly currentTree: ChangeNode;
+
 	/**
 	 * Information that can populate an edit log.
 	 */
@@ -58,13 +58,12 @@ export interface SharedTreeSummary extends SharedTreeSummaryBase {
 /**
  * Serializes a SharedTree summary into a JSON string. This may later be used to initialize a SharedTree's state via `deserialize()`
  */
-export function serialize(summary: SharedTreeSummary): string {
+export function serialize(summary: SharedTreeSummaryBase): string {
 	return JSON.stringify(summary);
 }
 
 /**
  * Preserves the full history in the generated summary.
- * @public
  */
 export function fullHistorySummarizer(editLog: OrderedEditSet, currentView: Snapshot): SharedTreeSummary_0_0_2 {
 	const { editChunks, editIds } = editLog.getEditLogSummary();
@@ -95,7 +94,6 @@ export function fullHistorySummarizer(editLog: OrderedEditSet, currentView: Snap
 /**
  * Does not preserve (persist) history at all.
  * Instead, the history returned in the summary will contain a single change that creates a revision identical to the supplied view.
- * @public
  */
 export function noHistorySummarizer(_editLog: OrderedEditSet, currentView: Snapshot): SharedTreeSummary_0_0_2 {
 	const currentTree = currentView.getChangeNodeTree();

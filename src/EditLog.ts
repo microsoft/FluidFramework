@@ -23,6 +23,11 @@ export interface OrderedEditSet {
 	length: number;
 
 	/**
+	 * @returns the edit IDs of all edits in the log.
+	 */
+	editIds: EditId[];
+
+	/**
 	 * @returns the index of the edit with the given editId within this `OrderedEditSet`.
 	 */
 	getIndexOfId(editId: EditId): number;
