@@ -1,4 +1,4 @@
-import { editsPerChunk } from './EditLog';
+import { EditLog, editsPerChunk } from './EditLog';
 import { EditId } from './Identifiers';
 import { Edit, EditWithoutId } from './PersistedTypes';
 import { ErrorString, SharedTreeSummary, SharedTreeSummaryBase } from './Summary';
@@ -68,27 +68,15 @@ export function convertSummaryToReadFormat(summary: SharedTreeSummaryBase): Shar
 		const { sequencedEdits } = summary as SharedTreeSummary_0_0_2;
 
 		if (sequencedEdits !== undefined) {
-			const editChunks: { key: number; chunk: EditWithoutId[] }[] = [];
-			const editIds: EditId[] = [];
+			const temporaryLog = new EditLog();
 
-			let key = 0;
-			sequencedEdits.forEach(({ changes, id }) => {
-				editIds.push(id);
-				const lastEditChunk = editChunks[editChunks.length - 1];
-				if (lastEditChunk !== undefined && lastEditChunk.chunk.length < editsPerChunk) {
-					lastEditChunk.chunk.push({ changes });
-				} else {
-					editChunks.push({ key, chunk: [{ changes }] });
-					key = key + editsPerChunk;
-				}
+			sequencedEdits.forEach((edit) => {
+				temporaryLog.addSequencedEdit(edit);
 			});
 
 			return {
 				currentTree,
-				editHistory: {
-					editChunks,
-					editIds,
-				},
+				editHistory: temporaryLog.getEditLogSummary(),
 				version: readFormatVersion,
 			};
 		}
