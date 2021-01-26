@@ -110,7 +110,9 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				// a rebalance occurred while we were committing
 				// we can resubmit the commit if we still own the partition
 				shouldRetryCommit =
-					this.consumerOptions.optimizedRebalance && err.code === kafka.CODES.ERRORS.ERR_ILLEGAL_GENERATION;
+					this.consumerOptions.optimizedRebalance &&
+					(err.code === kafka.CODES.ERRORS.ERR_REBALANCE_IN_PROGRESS ||
+						err.code === kafka.CODES.ERRORS.ERR_ILLEGAL_GENERATION);
 			}
 
 			for (const offset of offsets) {
