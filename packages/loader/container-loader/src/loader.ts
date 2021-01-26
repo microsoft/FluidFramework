@@ -380,7 +380,7 @@ export class Loader extends EventEmitter implements ILoader {
                 if (!container.closed) {
                     // Don't cache already closed containers because won't know when to evict
                     this.containers.set(key, containerP);
-                    container.on("closed", () => {
+                    container.once("closed", () => {
                         // Container clears its own listeners so we don't need to
                         this.containers.delete(key);
                     });
