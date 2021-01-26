@@ -41,8 +41,6 @@ export interface LogViewer {
 
 	/**
 	 * {@inheritDoc @intentional/shared-tree#LogViewer.getSnapshot}
-	 *
-	 * Works only for revisions added during the current session.
 	 */
 	getSnapshotSynchronous(revision: number): Snapshot;
 
