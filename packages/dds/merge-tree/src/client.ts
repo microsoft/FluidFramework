@@ -731,7 +731,7 @@ export class Client {
         resetOp: ops.IMergeTreeDeltaOp,
         segmentGroup: SegmentGroup): ops.IMergeTreeDeltaOp[] {
         assert(!!segmentGroup, "Segment group undefined");
-        const NACKedSegmentGroup = this.mergeTree.pendingSegments!.dequeue();
+        const NACKedSegmentGroup = this.mergeTree.pendingSegments?.dequeue();
         assert(segmentGroup === NACKedSegmentGroup, "Segment group not at head of merge tree pending queue");
 
         const opList: ops.IMergeTreeDeltaOp[] = [];
