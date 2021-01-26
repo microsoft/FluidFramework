@@ -213,7 +213,7 @@ export class OdspDocumentService implements IDocumentService {
             return websocketEndpoint.deltaStorageUrl;
         };
 
-        const res = new OdspDeltaStorageService(
+        const service = new OdspDeltaStorageService(
             urlProvider,
             this.storageManager?.ops,
             this.getStorageToken,
@@ -222,10 +222,10 @@ export class OdspDocumentService implements IDocumentService {
         );
 
         return {
-            get: async (from?: number, to?: number) => {
-                const ops = await res.get(from, to);
-                this.opsReceived(ops);
-                return ops;
+            get: async (from: number, to: number) => {
+                const { messages, partialResult } = await service.get(from, to);
+                this.opsReceived(messages);
+                return { messages, partialResult };
             },
         };
     }
