@@ -38,60 +38,60 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
         return this.readWithRetry(
             async () => this.internalStorageService.getSnapshotTree(version),
-            FetchCallName.getSnapshotTree,
+            "getSnapshotTree",
         );
     }
 
     public async read(blobId: string): Promise<string> {
-        return this.readWithRetry(async () => this.internalStorageService.read(blobId), FetchCallName.read);
+        return this.readWithRetry(async () => this.internalStorageService.read(blobId), "read");
     }
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {
-        return this.readWithRetry(async () => this.internalStorageService.readBlob(id), FetchCallName.readBlob);
+        return this.readWithRetry(async () => this.internalStorageService.readBlob(id), "readBlob");
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
         return this.readWithRetry(
             async () => this.internalStorageService.getVersions(versionId, count),
-            FetchCallName.getVersions,
+            "getVersions",
         );
     }
 
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         return this.readWithRetry(
             async () => this.internalStorageService.write(tree, parents, message, ref),
-            FetchCallName.write,
+            "write",
         );
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
         return this.readWithRetry(
             async () => this.internalStorageService.uploadSummaryWithContext(summary, context),
-            FetchCallName.uploadSummaryWithContext,
+            "uploadSummaryWithContext",
         );
     }
 
     public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
         return this.readWithRetry(
             async () => this.internalStorageService.downloadSummary(handle),
-            FetchCallName.downloadSummary,
+            "downloadSummary",
         );
     }
 
     public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
-        return this.readWithRetry(async () => this.internalStorageService.createBlob(file), FetchCallName.createBlob);
+        return this.readWithRetry(async () => this.internalStorageService.createBlob(file), "createBlob");
     }
 
     private async delay(timeMs: number): Promise<void> {
         return new Promise((resolve) => setTimeout(() => resolve(), timeMs));
     }
 
-    private async readWithRetry<T>(api: () => Promise<T>, fetchCallName: FetchCallName): Promise<T> {
+    private async readWithRetry<T>(api: () => Promise<T>, fetchCallName: string): Promise<T> {
         let result: T | undefined;
         let success = false;
         let retryAfter = 0;
         let numRetries = 0;
-        let totalWaitTime = 0;
+        const startTime = Date.now();
         let lastError: any;
         let id: string | undefined;
         do {
@@ -107,14 +107,18 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
                 }
                 // If it is not retriable, then just throw the error.
                 if (!canRetryOnError(err)) {
+                    this.logger.sendErrorEvent({
+                        eventName: "StorageCallsNonRetriable",
+                        numRetries,
+                        totalTime: Date.now() - startTime,
+                    }, err);
                     throw err;
                 }
-                numRetries += 1;
+                numRetries++;
                 lastError = err;
                 // If the error is throttling error, then wait for the specified time before retrying.
                 // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
                 retryAfter = getRetryDelayFromError(err) ?? Math.min(retryAfter * 2, 8000);
-                totalWaitTime += retryAfter;
                 if (id === undefined) {
                     id = uuid();
                 }
@@ -124,25 +128,13 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
         } while (!success);
         if (numRetries > 0) {
             this.logger.sendTelemetryEvent({
-                eventName: "StorageCallsRetried",
+                eventName: `StorageCallsRetried_${fetchCallName}`,
                 numRetries,
-                fetchCallName,
-                totalWaitTime,
+                totalTime: Date.now() - startTime,
             },
             lastError);
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return result!;
     }
-}
-
-enum FetchCallName {
-    getSnapshotTree = "getSnapshotTree",
-    read = "read",
-    readBlob = "readBlob",
-    getVersions = "getVersions",
-    write = "write",
-    uploadSummaryWithContext = "uploadSummaryWithContext",
-    downloadSummary = "downloadSummary",
-    createBlob = "createBlob",
 }
