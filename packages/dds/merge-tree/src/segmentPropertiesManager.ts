@@ -27,7 +27,7 @@ export class SegmentPropertiesManager {
             if (this.pendingKeyUpdateCount?.[key] !== undefined) {
                 assert(this.pendingKeyUpdateCount![key] > 0);
                 this.pendingKeyUpdateCount![key]--;
-                if (this.pendingKeyUpdateCount![key] === 0) {
+                if (this.pendingKeyUpdateCount?.[key] === 0) {
                     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                     delete this.pendingKeyUpdateCount![key];
                 }
