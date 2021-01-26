@@ -7,6 +7,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
+import { stringToBuffer } from "@fluidframework/common-utils";
 
 export class ChannelStorageService implements IChannelStorageService {
     private static flattenTree(base: string, tree: ISnapshotTree, results: { [path: string]: string }) {
@@ -25,7 +26,7 @@ export class ChannelStorageService implements IChannelStorageService {
 
     constructor(
         private readonly tree: ISnapshotTree | undefined,
-        private readonly storage: Pick<IDocumentStorageService, "read">,
+        private readonly storage: Pick<IDocumentStorageService, "read" | "readBlob">,
         private readonly extraBlobs?: Map<string, string>,
     ) {
         this.flattenedTree = {};
@@ -46,6 +47,15 @@ export class ChannelStorageService implements IChannelStorageService {
             : undefined;
 
         return blob ?? this.storage.read(id);
+    }
+
+    public async readBlob(path: string): Promise<ArrayBufferLike> {
+        const id = await this.getIdForPath(path);
+        const blob = this.extraBlobs !== undefined
+            ? this.extraBlobs.get(id)
+            : undefined;
+
+        return blob !== undefined ? stringToBuffer(blob,"base64") : this.storage.readBlob(id);
     }
 
     public async list(path: string): Promise<string[]> {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/consistent-type-assertions, max-len, no-bitwise, no-param-reassign, no-shadow */
+/* eslint-disable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-shadow, max-len, no-bitwise, no-param-reassign */
 
 import { assert, Trace } from "@fluidframework/common-utils";
 import * as Base from "./base";
@@ -1298,7 +1298,7 @@ export class MergeTree {
                             holdNodes.push(segment);
                         } else {
                             if (MergeTree.traceZRemove) {
-                                // eslint-disable-next-line dot-notation
+                                // eslint-disable-next-line @typescript-eslint/dot-notation
                                 console.log(`${this.getLongClientId(this.collabWindow.clientId)}: Zremove ${segment["text"]}; cli ${this.getLongClientId(segment.clientId)}`);
                             }
 
@@ -1324,7 +1324,7 @@ export class MergeTree {
 
                             if (canAppend) {
                                 if (MergeTree.traceAppend) {
-                                    // eslint-disable-next-line dot-notation
+                                    // eslint-disable-next-line @typescript-eslint/dot-notation
                                     console.log(`${this.getLongClientId(this.collabWindow.clientId)}: append ${prevSegment["text"]} + ${segment["text"]}; cli ${this.getLongClientId(prevSegment.clientId)} + cli ${this.getLongClientId(segment.clientId)}`);
                                 }
                                 prevSegment.append(segment);
@@ -1361,8 +1361,7 @@ export class MergeTree {
     }
 
     // Interior node with all node children
-    private pack(block: IMergeBlock) {
-        const parent = block.parent;
+    private packParent(parent: IMergeBlock) {
         const children = parent.children;
         let childIndex: number;
         let childBlock: IMergeBlock;
@@ -1408,7 +1407,7 @@ export class MergeTree {
         }
         parent.childCount = childCount;
         if (this.underflow(parent) && (parent.parent)) {
-            this.pack(parent);
+            this.packParent(parent.parent);
         } else {
             this.nodeUpdateOrdinals(parent);
             this.blockUpdatePathLengths(parent, UnassignedSequenceNumber, -1, true);
@@ -1455,7 +1454,7 @@ export class MergeTree {
                         if (MergeTree.options.measureWindowTime) {
                             packClockStart = clock();
                         }
-                        this.pack(block);
+                        this.packParent(block.parent);
 
                         if (MergeTree.options.measureWindowTime) {
                             this.packTime += elapsedMicroseconds(packClockStart);
@@ -2112,7 +2111,7 @@ export class MergeTree {
     public resolveRemoteClientPosition(
         remoteClientPosition: number,
         remoteClientRefSeq: number,
-        remoteClientId: number): number {
+        remoteClientId: number): number | undefined {
         const segmentInfo = this.getContainingSegment(
             remoteClientPosition,
             remoteClientRefSeq,
@@ -2353,7 +2352,7 @@ export class MergeTree {
         let childIndex: number;
         let child: IMergeNode;
         let newNode: IMergeNode | undefined;
-        let fromSplit: IMergeBlock;
+        let fromSplit: IMergeBlock | undefined;
         let found = false;
         for (childIndex = 0; childIndex < block.childCount; childIndex++) {
             child = children[childIndex];
@@ -2876,7 +2875,7 @@ export class MergeTree {
                 const len = this.nodeLength(child, state.refSeq, state.clientId);
                 if (MergeTree.traceIncrTraversal) {
                     if (child.isLeaf()) {
-                        // eslint-disable-next-line dot-notation
+                        // eslint-disable-next-line @typescript-eslint/dot-notation
                         console.log(`considering (r ${state.refSeq} c ${glc(this, state.clientId)}) seg with text ${child["text"]} len ${len} seq ${child.seq} rseq ${child.removedSeq} cli ${glc(this, child.clientId)}`);
                     }
                 }
@@ -2887,7 +2886,7 @@ export class MergeTree {
                         stateStack.push(childState);
                     } else {
                         if (MergeTree.traceIncrTraversal) {
-                            // eslint-disable-next-line dot-notation
+                            // eslint-disable-next-line @typescript-eslint/dot-notation
                             console.log(`action on seg with text ${child["text"]}`);
                         }
                         state.actions.leaf(child, state);

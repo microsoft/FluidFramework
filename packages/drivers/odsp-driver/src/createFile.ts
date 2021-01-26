@@ -17,6 +17,7 @@ import {
     SnapshotTreeEntry,
     SnapshotType,
     ICreateFileResponse,
+    ISnapshotRequest,
 } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
@@ -116,7 +117,7 @@ function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
         },
     };
     const snapshotTree = convertSummaryToSnapshotTreeForCreateNew(convertedCreateNewSummary);
-    const snapshot = {
+    const snapshot: ISnapshotRequest = {
         entries: snapshotTree.entries ?? [],
         message: "app",
         sequenceNumber: documentAttributes.sequenceNumber,
@@ -130,8 +131,9 @@ function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
  */
 export function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): ISnapshotTree {
     const snapshotTree: ISnapshotTree = {
+        type: "tree",
         entries: [],
-    }!;
+    };
 
     const keys = Object.keys(summary.tree);
     for (const key of keys) {
@@ -150,6 +152,7 @@ export function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree):
                 const encoding = typeof summaryObject.content === "string" ? "utf-8" : "base64";
 
                 value = {
+                    type: "blob",
                     content,
                     encoding,
                 };

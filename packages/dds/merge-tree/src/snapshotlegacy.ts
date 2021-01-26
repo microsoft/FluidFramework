@@ -126,7 +126,6 @@ export class SnapshotLegacy {
                     },
                 },
             ],
-            id: null,
         };
 
         if (chunk1.chunkSegmentCount < chunk1.totalSegmentCount) {

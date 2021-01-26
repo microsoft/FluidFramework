@@ -21,7 +21,7 @@ export class HandleCache implements IVectorConsumer<Handle> {
     private handles: Handle[] = [];
     private start = 0;
 
-    constructor (public readonly vector: PermutationVector) { }
+    constructor(public readonly vector: PermutationVector) { }
 
     /**
      * Returns the index of the given position in the 'handles' array as a Uint32.

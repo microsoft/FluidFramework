@@ -7,6 +7,7 @@ import * as path from "path";
 import { Package, Packages } from "./npmPackage";
 import { MonoRepo, MonoRepoKind } from "./monoRepo";
 import { getPackageManifest } from "./fluidUtils";
+import { ExecAsyncResult } from "./utils";
 
 export interface IPackageManifest {
     repoPackages: {
@@ -72,7 +73,7 @@ export class FluidRepo {
 
     public static async ensureInstalled(packages: Package[], check: boolean = true) {
         const installedMonoRepo = new Set<MonoRepo>();
-        const installPromises: Promise<any>[] = [];
+        const installPromises: Promise<ExecAsyncResult>[] = [];
         for (const pkg of packages) {
             if (!check || !await pkg.checkInstall(false)) {
                 if (pkg.monoRepo) {

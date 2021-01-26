@@ -16,11 +16,12 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { TestClient } from "@fluidframework/merge-tree/dist/test/testClient";
 import {
-    IBlob,
+    FileMode,
     ISequencedDocumentMessage,
     ITree,
     ITreeEntry,
     MessageType,
+    TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import { IAttachMessage } from "@fluidframework/runtime-definitions";
 import {
@@ -32,9 +33,9 @@ import {
 import { ContainerMessageType, IChunkedOp } from "@fluidframework/container-runtime";
 import { ReplayArgs } from "./replayArgs";
 
-interface IFullPathTreeEntry extends ITreeEntry {
+type IFullPathTreeEntry = ITreeEntry & {
     fullPath?: string;
-}
+};
 
 interface IFullPathSequencedDocumentMessage extends ISequencedDocumentMessage {
     fullPath?: string;
@@ -281,7 +282,7 @@ export class ClientReplayTool {
             if (ddsTrees.has(mergeTreeType.type)) {
                 const trees = ddsTrees.get(mergeTreeType.type);
                 for (const ssTree of trees) {
-                    const tree = (ssTree.value as ITree);
+                    const tree = ssTree.value as ITree;
                     let contentTree: ITreeEntry;
                     while (tree.entries.length > 0) {
                         contentTree = tree.entries.shift();
@@ -307,10 +308,10 @@ export class ClientReplayTool {
         if (attachMessage.snapshot) {
             const snapshotTreeEntry: IFullPathTreeEntry = {
                 value: attachMessage.snapshot,
-                type: attachMessage.type,
+                type: TreeEntry.Tree,
                 fullPath: attachMessage.id,
-                path: undefined,
-                mode: undefined,
+                path: "Some path",
+                mode: FileMode.Directory,
             };
             ddsTrees.set(attachMessage.type, [snapshotTreeEntry]);
             const trees: IFullPathTreeEntry[] = [snapshotTreeEntry];
@@ -327,7 +328,7 @@ export class ClientReplayTool {
                                 break;
                             case "Blob":
                                 if (entry.path === ".attributes") {
-                                    const blob = entry.value as IBlob;
+                                    const blob = entry.value;
                                     const contents = JSON.parse(blob.contents) as { type: string };
                                     if (contents && contents.type) {
                                         if (!ddsTrees.has(contents.type)) {

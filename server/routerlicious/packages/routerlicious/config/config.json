@@ -25,9 +25,10 @@
         "lib": {
             "name": "kafka-node",
             "endpoint": "kafka:9092",
-            "producerPollIntervalMs": 10
-        },
-        "maxMessageSize": "1MB"
+            "producerPollIntervalMs": 10,
+            "numberOfPartitions": 32,
+            "replicationFactor": 3
+        }
     },
     "zookeeper": {
         "endpoint": "zookeeper:2181"
