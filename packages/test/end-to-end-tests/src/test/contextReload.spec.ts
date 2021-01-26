@@ -59,7 +59,7 @@ describe("context reload (hot-swap)", function() {
     let opProcessingController: OpProcessingController;
     const codeDetails = (version: string): oldTypes.IFluidCodeDetails => {
         return {
-            package: { name: TestDataStore.type, version } as unknown as oldTypes.IFluidPackage,
+            package: { name: TestDataStore.type, version, fluid:{}},
             config: {},
         };
     };
@@ -76,7 +76,7 @@ describe("context reload (hot-swap)", function() {
                     typeof code.package === "object" && code.package.version === version ? resolve() : reject()))));
     };
 
-    async function createContainer(packageEntries, documentId): Promise<IContainer> {
+    async function createContainer(packageEntries, documentId: string): Promise<IContainer> {
         const loader: ILoader = new Loader({
             codeLoader: new LocalCodeLoader(packageEntries),
             options:{ hotSwapContext: true },
@@ -255,11 +255,11 @@ describe("context reload (hot-swap)", function() {
                 beforeEach(async function() {
                     const documentId = Date.now().toString();
                     container = await createContainer(
-                        documentId,
                         [
                             [codeDetails(V1), oldApi.createOldRuntimeFactory(oldApi.OldTestDataObjectV1)],
                             [codeDetails(V2), createRuntimeFactory(TestDataStoreV2)],
-                        ]);
+                        ],
+                        documentId);
                     dataStoreV1 = await requestFluidObject<TestDataStoreV1>(container, "default");
                     assert.strictEqual(dataStoreV1.version, TestDataStoreV1.version);
 
