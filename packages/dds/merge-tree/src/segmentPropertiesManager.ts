@@ -83,7 +83,7 @@ export class SegmentPropertiesManager {
         for (const key of Object.keys(newProps)) {
             if (collaborating) {
                 if (seq === UnassignedSequenceNumber) {
-                    if (this.pendingKeyUpdateCount![key] === undefined) {
+                    if (this.pendingKeyUpdateCount.?[key] === undefined) {
                         this.pendingKeyUpdateCount![key] = 0;
                     }
                     this.pendingKeyUpdateCount![key]++;
