@@ -108,7 +108,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
                 // If it is not retriable, then just throw the error.
                 if (!canRetryOnError(err)) {
                     this.logger.sendErrorEvent({
-                        eventName: "StorageCallsNonRetriable",
+                        eventName: `StorageCallsNonRetriable_${fetchCallName}`,
                         numRetries,
                         totalTime: Date.now() - startTime,
                     }, err);
