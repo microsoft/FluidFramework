@@ -24,7 +24,7 @@ export class SegmentPropertiesManager {
             this.pendingRewriteCount--;
         }
         for (const key of Object.keys(annotateOp.props)) {
-            if (this.pendingKeyUpdateCount![key] !== undefined) {
+            if (this.pendingKeyUpdateCount?.[key] !== undefined) {
                 assert(this.pendingKeyUpdateCount![key] > 0);
                 this.pendingKeyUpdateCount![key]--;
                 if (this.pendingKeyUpdateCount![key] === 0) {
