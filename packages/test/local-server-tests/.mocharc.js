@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 'use strict';
 
@@ -8,8 +12,12 @@
 module.exports = {
   "exit": true,
   "recursive": true,
-  "requires": ["node_modules/@fluidframework/mocha-test-setup"],
-  "reporter": process.env.FLUID_TEST_COVERAGE === "1" ? "mocha-junit-reporter" : undefined,
-  "reporter-options":[`mochaFile=nyc/junit-report.xml`],
+  "require": [
+    "node_modules/@fluidframework/mocha-test-setup",
+  ],
+  "reporter": process.env.FLUID_TEST_COVERAGE === "1" ?  "mocha-junit-reporter" : undefined,
+  "reporter-options":[
+    `mochaFile=nyc/junit-report.xml`
+  ],
   "unhandled-rejections": "strict"
 };
