@@ -25,11 +25,11 @@ export class SegmentPropertiesManager {
         }
         for (const key of Object.keys(annotateOp.props)) {
             if (this.pendingKeyUpdateCount?.[key] !== undefined) {
-                assert(this.pendingKeyUpdateCount![key] > 0);
-                this.pendingKeyUpdateCount![key]--;
+                assert(this.pendingKeyUpdateCount[key] > 0);
+                this.pendingKeyUpdateCount[key]--;
                 if (this.pendingKeyUpdateCount?.[key] === 0) {
                     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-                    delete this.pendingKeyUpdateCount![key];
+                    delete this.pendingKeyUpdateCount[key];
                 }
             }
         }
@@ -83,7 +83,7 @@ export class SegmentPropertiesManager {
         for (const key of Object.keys(newProps)) {
             if (collaborating) {
                 if (seq === UnassignedSequenceNumber) {
-                    if (this.pendingKeyUpdateCount.?[key] === undefined) {
+                    if (this.pendingKeyUpdateCount?.[key] === undefined) {
                         this.pendingKeyUpdateCount![key] = 0;
                     }
                     this.pendingKeyUpdateCount![key]++;

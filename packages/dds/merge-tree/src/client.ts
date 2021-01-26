@@ -247,7 +247,7 @@ export class Client {
         this.completeAndLogOp(
             opArgs,
             this.getClientSequenceArgs(opArgs),
-            { start: op.pos1!, end: -1 },
+            { start: op.pos1 },
             traceStart);
 
         return op;
@@ -471,7 +471,7 @@ export class Client {
     private completeAndLogOp(
         opArgs: IMergeTreeDeltaOpArgs,
         clientArgs: IMergeTreeClientSequenceArgs,
-        range: IIntegerRange,
+        range: Partial<IIntegerRange>,
         traceStart?: Trace) {
         if (!opArgs.sequencedMessage) {
             if (traceStart) {
