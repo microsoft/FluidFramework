@@ -192,7 +192,7 @@ export class DataStores implements IDisposable {
             pkg);
 
         // Resolve pending gets and store off any new ones
-       this.contexts.addBoundOrRemoted(remotedFluidDataStoreContext);
+        this.contexts.addBoundOrRemoted(remotedFluidDataStoreContext);
 
         // Equivalent of nextTick() - Prefetch once all current ops have completed
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -277,6 +277,12 @@ export class DataStores implements IDisposable {
         const context = this.contexts.get(envelope.address);
         assert(!!context, "There should be a store context for the op");
         return context.rebaseOp(envelope.contents, localOpMetadata);
+    }
+
+    public async rebaseAttachOp(content: any) {
+        this.pendingAttach.set((content as unknown as IAttachMessage).id, content);
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        this.processAttachMessage({ contents: content } as ISequencedDocumentMessage, false);
     }
 
     public processFluidDataStoreOp(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown) {

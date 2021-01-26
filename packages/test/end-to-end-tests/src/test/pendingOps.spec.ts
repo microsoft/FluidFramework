@@ -5,8 +5,10 @@
 
 import assert from "assert";
 import { IContainer, ILoader } from "@fluidframework/container-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { SharedObject } from "@fluidframework/shared-object-base";
 import { ChannelFactoryRegistry, createAndAttachContainer, ITestFluidObject } from "@fluidframework/test-utils";
 import {
     DataObjectFactoryType,
@@ -27,7 +29,7 @@ const testKey = "test key";
 const testKey2 = "another test key";
 const testValue = "test value";
 
-type MapCallback = (container: IContainer, dataStore: ITestFluidObject, map: SharedMap) => void;
+type MapCallback = (container: IContainer, dataStore: ITestFluidObject, map: SharedMap) => void | Promise<void>;
 
 // load container, pause, create (local) ops from callback, then optionally send ops before closing container
 const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback) => {
@@ -37,7 +39,7 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
     const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
     assert(dataStore.runtime.deltaManager.outbound.paused);
     const map = await dataStore.getSharedObject<SharedMap>(mapId);
-    cb(container, dataStore, map);
+    await cb(container, dataStore, map);
     const pendingOps = container.getPendingLocalState();
     if (send) {
         await args.opProcessingController.process();
@@ -55,10 +57,9 @@ const tests = (args: ITestObjectProvider) => {
     beforeEach(async () => {
         loader = args.makeTestLoader(testContainerConfig) as ILoader;
         container1 = await createAndAttachContainer(
-            "defaultDocumentId",
             args.defaultCodeDetails,
             loader,
-            args.urlResolver);
+            (args.urlResolver as any).createCreateNewRequest("defaultDocumentId"));
         args.opProcessingController.addDeltaManagers((container1 as any).deltaManager);
         const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
@@ -281,6 +282,59 @@ const tests = (args: ITestObjectProvider) => {
             async (i) => assert.strictEqual(await map1.get(i.toString()), testValue)));
         await Promise.all([...Array(lots).keys()].map(
             async (i) => assert.strictEqual(await map3.get(i.toString()), testValue)));
+    });
+
+    it("resends attach op", async function() {
+        const newMapId = "newMap";
+        let id;
+        const pendingOps = await getPendingOps(args, false, async (container, d, m) => {
+            const runtime = (container as any).context.runtime as IContainerRuntime;
+
+            const router = await runtime.createDataStore(["default"]);
+            const dataStore = await requestFluidObject<ITestFluidObject>(router, "/");
+            id = dataStore.context.id;
+
+            const channel = dataStore.runtime.createChannel(newMapId, "https://graph.microsoft.com/types/map");
+            assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+
+            (await channel.handle.get() as SharedObject).bindToContext();
+            dataStore.channel.bindToContext();
+            (channel as SharedMap).set(testKey, testValue);
+        });
+
+        const container3 = await loader.resolve(
+            { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
+            pendingOps,
+        );
+        await new Promise((res) => container3.on("connected", res));
+
+        // get new datastore from first container
+        const dataStore3 = await requestFluidObject<ITestFluidObject>(container1, id);
+        const map3 = await requestFluidObject<SharedMap>(dataStore3.runtime, newMapId);
+        assert.strictEqual(await map3.wait(testKey), testValue);
+    });
+
+    it("doesn't resend successful attach op", async function() {
+        const newMapId = "newMap";
+        const pendingOps = await getPendingOps(args, true, async (container, d, m) => {
+            const runtime = (container as any).context.runtime as IContainerRuntime;
+
+            const router = await runtime.createDataStore(["default"]);
+            const dataStore = await requestFluidObject<ITestFluidObject>(router, "/");
+
+            const channel = dataStore.runtime.createChannel(newMapId, "https://graph.microsoft.com/types/map");
+            assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+
+            (await channel.handle.get() as SharedObject).bindToContext();
+            dataStore.channel.bindToContext();
+            (channel as SharedMap).set(testKey, testValue);
+        });
+
+        const container3 = await loader.resolve(
+            { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
+            pendingOps,
+        );
+        await new Promise((res) => container3.on("connected", res));
     });
 };
 

@@ -640,6 +640,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public async rebaseOp(contents: any, localOpMetadata: unknown) {
+        if (!this.channel) {
+            await this.channelDeferred?.promise;
+        }
         assert(!!this.channel, "Channel must exist when rebasing ops");
         const innerContents = contents as FluidDataStoreMessage;
         return this.channel.rebaseOp(innerContents.content, localOpMetadata);

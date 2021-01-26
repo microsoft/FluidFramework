@@ -106,7 +106,7 @@ export class PendingStateManager {
 
     constructor(
         private readonly containerRuntime: ContainerRuntime,
-        private readonly rebaseOp: (content, localOpMetadata) => Promise<void>,
+        private readonly rebaseOp: (type, content, localOpMetadata) => Promise<void>,
         initialState: IPendingLocalState | undefined,
     ) {
         this.initialStates = new Deque<IPendingState>(initialState?.pendingStates ?? []);
@@ -222,7 +222,7 @@ export class PendingStateManager {
                 }
 
                 // rebaseOp will cause the DDS to behave as if it has sent the op but not actually send it
-                await this.rebaseOp(nextState.content, nextState.localOpMetadata);
+                await this.rebaseOp(nextState.messageType, nextState.content, nextState.localOpMetadata);
             }
 
             // then we push onto pendingStates which will cause PendingStateManager to resubmit when we connect

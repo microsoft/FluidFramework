@@ -748,7 +748,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.pendingStateManager = new PendingStateManager(
             this,
-            async (content, localOpMetadata) => this.dataStores.rebaseOp(content, localOpMetadata),
+            async (type, content, localOpMetadata) => this.rebaseOp(type, content, localOpMetadata),
             context.pendingLocalState as IPendingLocalState);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
@@ -1012,6 +1012,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
     };
 
+    private async rebaseOp(type: ContainerMessageType, op: ISequencedDocumentMessage, localOpMetadata: unknown) {
+        switch (type) {
+            case ContainerMessageType.FluidDataStoreOp:
+                return this.dataStores.rebaseOp(op, localOpMetadata);
+            case ContainerMessageType.Attach:
+                return this.dataStores.rebaseAttachOp(op);
+            case ContainerMessageType.BlobAttach:
+                return;
+            default:
+                throw new Error(`Unable to rebase ${type}`);
+        }
+    }
+
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
@@ -1076,7 +1089,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             switch (message.type) {
                 case ContainerMessageType.Attach:
-                    this.dataStores.processAttachMessage(message, local);
+                    this.dataStores.processAttachMessage(message, local || localAck);
                     break;
                 case ContainerMessageType.FluidDataStoreOp:
                     // if localAck === true, treat this as a local op because it's one we sent on a previous container
