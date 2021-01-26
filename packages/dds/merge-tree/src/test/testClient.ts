@@ -52,7 +52,8 @@ export class TestClient extends Client {
     public static async createFromClientSnapshot(client1: TestClient, newLongClientId: string): Promise<TestClient> {
         const snapshot = new SnapshotLegacy(client1.mergeTree, DebugLogger.create("fluid:snapshot"));
         snapshot.extractSync();
-        const snapshotTree = snapshot.emit([], TestClient.serializer);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const snapshotTree = snapshot.emit([], TestClient.serializer, undefined!);
         return TestClient.createFromSnapshot(snapshotTree, newLongClientId, client1.specToSegment);
     }
 
