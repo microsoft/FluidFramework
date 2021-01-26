@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from '@fluidframework/common-utils';
+import { fromBase64ToUtf8, IsoBuffer } from '@fluidframework/common-utils';
 import { IFluidHandle, IFluidSerializer, ISerializedHandle } from '@fluidframework/core-interfaces';
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from '@fluidframework/protocol-definitions';
 import { IFluidDataStoreRuntime, IChannelStorageService } from '@fluidframework/datastore-definitions';
@@ -12,7 +12,7 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger } from '@fluidframework/telemetry-utils';
 import { assert, assertNotUndefined, fail } from './Common';
-import { EditLog, OrderedEditSet } from './EditLog';
+import { EditLog, editsPerChunk, OrderedEditSet } from './EditLog';
 import {
 	Edit,
 	Delete,
@@ -24,6 +24,7 @@ import {
 	StableRange,
 	StablePlace,
 	Payload,
+	EditWithoutId,
 } from './PersistedTypes';
 import { newEdit } from './EditUtilities';
 import { EditId } from './Identifiers';
@@ -295,6 +296,26 @@ export class SharedTree extends SharedObject {
 		// Stringify to convert to the serialized handle values - and then parse
 		const stringified = this.serializer.stringify(value, this.handle);
 		return JSON.parse(stringified) as ISerializedHandle;
+	}
+
+	/** Uploads the edit chunk and sends the chunk key along with the resulting handle as an op. */
+	private async uploadEditChunk(edits: EditWithoutId[], chunkKey: number): Promise<void> {
+		const editHandle = await this.runtime.uploadBlob(IsoBuffer.from(JSON.stringify({ edits })));
+		this.submitLocalMessage({
+			editHandle: this.toSerializable(editHandle),
+			chunkKey,
+			type: 'handle',
+		});
+	}
+
+	private initiateEditChunkUpload(): void {
+		// Initiate upload of any edit chunks not yet uploaded.
+		const editChunks = this.editLog.getEditLogSummary().editChunks;
+		editChunks.forEach(({ key, chunk }) => {
+			if (Array.isArray(chunk) && chunk.length === editsPerChunk) {
+				this.uploadEditChunk(chunk, key);
+			}
+		});
 	}
 
 	/**
