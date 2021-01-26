@@ -5,5 +5,4 @@
 
 export * from "./interfaces";
 export * from "./localServerTestDriver";
-// eslint-disable-next-line import/export
 export * from "./types";
