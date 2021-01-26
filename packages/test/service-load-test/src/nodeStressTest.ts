@@ -56,7 +56,7 @@ function createLoader(loginInfo: IOdspTestLoginInfo) {
             );
             return tokens.accessToken;
         },
-        async (refresh: boolean, _claims?: string) => {
+        async (_siteUrl: string, refresh: boolean, _claims?: string) => {
             const tokens = await odspTokenManager.getPushTokens(
                 loginInfo.server,
                 getMicrosoftConfiguration(),

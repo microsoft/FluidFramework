@@ -46,9 +46,7 @@ export type OdspTokenConfig = {
     redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>;
 };
 
-export interface IPushCacheKey { isPush: true }
-export interface IOdspCacheKey { isPush: false; server: string }
-export type OdspTokenManagerCacheKey = IPushCacheKey | IOdspCacheKey;
+export interface OdspTokenManagerCacheKey { isPush: boolean; server: string; }
 
 export class OdspTokenManager {
     constructor(
@@ -112,7 +110,7 @@ export class OdspTokenManager {
         if (this.tokenCache) {
             if (!forceReauth && !forceRefresh) {
                 // check and return if it exists without lock
-                const cacheKey: OdspTokenManagerCacheKey = isPush ? { isPush } : { isPush, server };
+                const cacheKey: OdspTokenManagerCacheKey = { isPush, server };
                 const tokensFromCache = await this.tokenCache.get(cacheKey);
                 if (tokensFromCache) {
                     await this.onTokenRetrievalFromCache(tokenConfig, tokensFromCache);
@@ -134,7 +132,7 @@ export class OdspTokenManager {
         forceReauth,
     ): Promise<IOdspTokens> {
         const scope = isPush ? pushScope : getOdspScope(server);
-        const cacheKey: OdspTokenManagerCacheKey = isPush ? { isPush } : { isPush, server };
+        const cacheKey: OdspTokenManagerCacheKey = { isPush, server };
         if (!forceReauth && this.tokenCache) {
             const tokensFromCache = await this.tokenCache.get(cacheKey);
             if (tokensFromCache) {
@@ -168,7 +166,7 @@ export class OdspTokenManager {
                 break;
             case "browserLogin":
                 tokens = await this.acquireTokensViaBrowserLogin(
-                    getLoginPageUrl(isPush, server, clientConfig, scope, odspAuthRedirectUri),
+                    getLoginPageUrl(server, clientConfig, scope, odspAuthRedirectUri),
                     server,
                     clientConfig,
                     scope,

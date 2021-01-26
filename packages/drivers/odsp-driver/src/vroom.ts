@@ -19,7 +19,7 @@ import { EpochTracker } from "./epochTracker";
  * @param path - The API path that is relevant to this request
  * @param method - The type of request, such as GET or POST
  * @param logger - A logger to use for this request
- * @param getVroomToken - A function that is able to provide the vroom token for this request
+ * @param getStorageToken - A function that is able to provide the access token for this request
  */
 export async function fetchJoinSession(
     driveId: string,

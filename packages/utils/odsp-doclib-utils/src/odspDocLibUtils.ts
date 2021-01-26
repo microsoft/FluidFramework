@@ -13,11 +13,12 @@ export function isSharepointURL(server: string) {
 }
 
 export function getSharepointTenant(server: string) {
-    let tenant = server.substr(0, server.indexOf("."));
-    if (tenant.endsWith("-my")) {
-        tenant = tenant.substr(0, tenant.length - 3);
+    let tenantName = server.substr(0, server.indexOf(".")).toLowerCase();
+    const restOfServerName = server.substr(tenantName.length).toLowerCase();
+    if (tenantName.endsWith("-my")) {
+        tenantName = tenantName.substr(0, tenantName.length - 3);
     }
-    return tenant === "microsoft" ? "organizations" : `${tenant}.onmicrosoft.com`;
+    return tenantName === "microsoft" ? "organizations" : `${tenantName}${restOfServerName}`;
 }
 
 export function getServer(tenantId: string): string {

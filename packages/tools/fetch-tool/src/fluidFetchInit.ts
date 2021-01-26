@@ -54,7 +54,7 @@ async function initializeODSPCore(
   item:   ${itemId}
   docId:  ${docId}`);
 
-    const getStorageTokenStub = async (siteUrl: string, refresh: boolean, _claims?: string) => {
+    const getStorageTokenStub = async (_siteUrl: string, refresh: boolean, _claims?: string) => {
         return resolveWrapper(
             async (authRequestInfo: IOdspAuthRequestInfo) => {
                 if ((refresh || !authRequestInfo.accessToken) && authRequestInfo.refreshTokenFn) {
@@ -69,7 +69,7 @@ async function initializeODSPCore(
         );
     };
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    const getWebsocketTokenStub = (_refresh: boolean, _claims?: string) => Promise.resolve("");
+    const getWebsocketTokenStub = (_siteUrl: string, _refresh: boolean, _claims?: string) => Promise.resolve("");
     const odspDocumentServiceFactory = new odsp.OdspDocumentServiceFactory(
         getStorageTokenStub,
         getWebsocketTokenStub);

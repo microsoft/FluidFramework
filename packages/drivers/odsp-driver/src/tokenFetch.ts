@@ -42,13 +42,15 @@ export type StorageTokenFetcher = (siteUrl: string, refresh: boolean, claims?: s
 
 /**
  * Method signature for callback method used to fetch Push token
+ * @param siteUrl - Storage site url that Push has to be able to work against
  * @param refresh - Flag indicating whether token fetch must bypass local cache
  * @param claims - Optional string indicating claims that will be passed to token authority
  * @returns If successful, TokenResponse object representing token value along with flag indicating
  * whether token came from cache. Legacy implementation may return a string for token value;
  * in this case it should be assumes that fromCache signal is undefined. Null is returned in case of failure.
  */
-export type PushTokenFetcher = (refresh: boolean, claims?: string) => Promise<string | TokenResponse | null>;
+// eslint-disable-next-line max-len
+export type PushTokenFetcher = (siteUrl: string, refresh: boolean, claims?: string) => Promise<string | TokenResponse | null>;
 
 /**
  * Method signature for callback method used to fetch Sharing link token

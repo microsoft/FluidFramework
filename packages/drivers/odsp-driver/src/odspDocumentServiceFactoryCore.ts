@@ -126,7 +126,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         return OdspDocumentService.create(
             resolvedUrl,
             this.toInstrumentedStorageTokenFetcher(odspLogger, resolvedUrl as IOdspResolvedUrl, this.getStorageToken),
-            this.toInstrumentedPushTokenFetcher(odspLogger, this.getWebsocketToken),
+            this.toInstrumentedPushTokenFetcher(odspLogger, resolvedUrl as IOdspResolvedUrl, this.getWebsocketToken),
             odspLogger,
             this.getSocketIOClient,
             cache,
@@ -168,13 +168,15 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 
     private toInstrumentedPushTokenFetcher(
         logger: ITelemetryLogger,
+        resolvedUrl: IOdspResolvedUrl,
         tokenFetcher: PushTokenFetcher,
     ): (options: TokenFetchOptions) => Promise<string | null> {
         return async (options: TokenFetchOptions) => {
             return PerformanceEvent.timedExecAsync(
                 logger,
                 { eventName: "GetWebsocketToken" },
-                async (event) => tokenFetcher(options.refresh, options.claims).then((tokenResponse) => {
+                async (event) => tokenFetcher(resolvedUrl.siteUrl, options.refresh, options.claims)
+                .then((tokenResponse) => {
                     event.end({ fromCache: isTokenFromCache(tokenResponse) });
                     return tokenFromResponse(tokenResponse);
                 }));

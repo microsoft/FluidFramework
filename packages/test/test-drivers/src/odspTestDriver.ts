@@ -75,7 +75,7 @@ export class OdspTestDriver implements ITestDriver {
                 );
                 return tokens.accessToken;
             },
-            async (refresh: boolean, _claims?: string) => {
+            async (_siteUrl: string, refresh: boolean, _claims?: string) => {
                 const tokens = await this.odspTokenManager.getPushTokens(
                     this.config.server,
                     this.config,
