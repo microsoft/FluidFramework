@@ -8,6 +8,7 @@ export const readFormatVersion = '0.1.0';
 /**
  * Legacy summary format currently still used for writing.
  * TODO:#49901: Remove export when this format is no longer written.
+ * @internal
  */
 export interface SharedTreeSummary_0_0_2 extends SharedTreeSummaryBase {
 	readonly currentTree: ChangeNode;

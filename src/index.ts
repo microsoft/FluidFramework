@@ -22,6 +22,7 @@ export { BlobId, SharedTree, SharedTreeEvent, SharedTreeEditor } from './SharedT
 export { TreeNodeHandle } from './TreeNodeHandle';
 export { Delta } from './Forest';
 export { SharedTreeSummaryBase, SharedTreeSummarizer, fullHistorySummarizer, noHistorySummarizer } from './Summary';
+export { SharedTreeSummary_0_0_2 } from './SummaryBackCompatibility';
 export { sharedTreeAssertionErrorType } from './Common';
 export * from './PersistedTypes';
 export * from './Factory';
