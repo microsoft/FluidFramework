@@ -18,7 +18,8 @@ export function sharedStringWithSequentialIdMixin(Base: typeof SharedString = Sh
             this.sortedMarkers = new Lazy<SortedSegmentSet>(() => {
                 const set = new SortedSegmentSet();
                 this.walkSegments((segment) => {
-                    if (segment.type === Marker.type) {
+                    if (Marker.is(segment) && segment.getId() !== undefined) {
+                        // If it has an id then we have acked it
                         set.addOrUpdate(segment);
                     }
                     return true;
