@@ -629,7 +629,7 @@ export class Client {
 
             if (this.verboseOps) {
                 console.log(`@cli ${this.getLongClientId(this.getCollabWindow().clientId)} ` +
-                    `ack seq # ${deltaOpArgs.sequencedMessage!.sequenceNumber}`);
+                    `ack seq # ${deltaOpArgs.sequencedMessage?.sequenceNumber}`);
             }
         };
 
