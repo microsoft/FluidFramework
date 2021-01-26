@@ -57,7 +57,7 @@ export class SegmentPropertiesManager {
 
         const shouldModifyKey = (key: string): boolean => {
             if (seq === UnassignedSequenceNumber
-                || this.pendingKeyUpdateCount![key] === undefined
+                || this.pendingKeyUpdateCount?.[key] === undefined
                 || combiningOp) {
                 return true;
             }
