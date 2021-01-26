@@ -42,14 +42,16 @@ export function combine(combiningInfo: ops.ICombiningOp, currentValue: any, newV
             if (currentValue === undefined) {
                 const cv: IConsensusValue = {
                     value: newValue,
-                    seq,
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    seq: seq!,
                 };
 
                 currentValue = cv;
             } else {
                 const cv = currentValue as IConsensusValue;
                 if (cv.seq === -1) {
-                    cv.seq = seq;
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    cv.seq = seq!;
                 }
             }
             break;
