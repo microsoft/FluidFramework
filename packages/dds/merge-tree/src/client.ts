@@ -829,7 +829,7 @@ export class Client {
                 op: msg.contents as ops.IMergeTreeOp,
                 sequencedMessage: msg,
             };
-            if (opArgs.sequencedMessage!.clientId === this.longClientId) {
+            if (opArgs.sequencedMessage?.clientId === this.longClientId) {
                 this.ackPendingSegment(opArgs);
             }
             else {
