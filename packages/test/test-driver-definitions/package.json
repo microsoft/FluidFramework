@@ -1,5 +1,5 @@
 {
-  "name": "@fluidframework/test-drivers",
+  "name": "@fluidframework/test-driver-definitions",
   "version": "0.34.0",
   "description": "A driver abstraction and implementations for testing against server",
   "homepage": "https://fluidframework.com",
@@ -51,17 +51,8 @@
   "dependencies": {
     "@fluidframework/core-interfaces": "^0.34.0",
     "@fluidframework/driver-definitions": "^0.34.0",
-    "@fluidframework/local-driver": "^0.34.0",
-    "@fluidframework/odsp-doclib-utils": "^0.34.0",
-    "@fluidframework/odsp-driver": "^0.34.0",
-    "@fluidframework/odsp-urlresolver": "^0.34.0",
     "@fluidframework/protocol-definitions": "^0.1018.0",
-    "@fluidframework/routerlicious-driver": "^0.34.0",
     "@fluidframework/server-local-server": "^0.1018.0",
-    "@fluidframework/test-driver-definitions": "^0.34.0",
-    "@fluidframework/test-runtime-utils": "^0.34.0",
-    "@fluidframework/tinylicious-driver": "^0.34.0",
-    "@fluidframework/tool-utils": "^0.34.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
