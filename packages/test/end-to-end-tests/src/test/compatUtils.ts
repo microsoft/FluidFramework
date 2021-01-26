@@ -47,7 +47,6 @@ export interface ITestObjectProvider {
 
 export interface ITestOptions {
     serviceConfiguration?: Partial<IClientConfiguration>,
-    tinylicious?: boolean,
 
     // The old apis to use if running against an older version
     oldApis?: oldTypes.OldApi[],
