@@ -55,7 +55,7 @@ export function throwOdspNetworkError(
 export function errorObjectFromSocketError(socketError: IOdspSocketError) {
     return createOdspNetworkError(
         socketError.message,
-        socketError.message === "FileExternallyModified" ? 409 : socketError.code,
+        socketError.code,
         socketError.retryAfter,
         // TODO: When long lived token is supported for websocket then IOdspSocketError need to support
         // passing "claims" value that is used to fetch new token

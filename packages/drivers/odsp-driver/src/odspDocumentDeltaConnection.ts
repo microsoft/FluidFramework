@@ -110,7 +110,7 @@ class SocketReference {
             // Treat all errors as recoverable, and rely on joinSession / reconnection flow to
             // filter out retryable vs. non-retryable cases.
             const error = errorObjectFromSocketError(socketError);
-            error.canRetry = error.canRetry ?? true;
+            error.canRetry = true;
 
             // see comment in disconnected() getter
             // Setting it here to ensure socket reuse does not happen if new request to connect
@@ -189,7 +189,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         client: IClient,
         url: string,
         telemetryLogger: ITelemetryLogger,
-        timeoutMs: number): Promise<IDocumentDeltaConnection>
+        timeoutMs: number,
+        epoch?: string): Promise<IDocumentDeltaConnection>
     {
         // enable multiplexing when the websocket url does not include the tenant/document id
         const parsedUrl = new URL(url);
@@ -213,6 +214,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             versions: protocolVersions,
             nonce: uuid(),
         };
+        (connectMessage as any).epoch = epoch;
 
         const deltaConnection = new OdspDocumentDeltaConnection(
             socket,
