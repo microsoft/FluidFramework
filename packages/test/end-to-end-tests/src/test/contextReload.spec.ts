@@ -182,7 +182,6 @@ describe("context reload (hot-swap)", function() {
     describe("single container", () => {
         beforeEach(async function() {
             const docId = Date.now().toString();
-            this.urlResolver = getFluidTestDriver().createUrlResolver();
             container = await createContainer(
                 [
                     [codeDetails(V1), createRuntimeFactory(TestDataStoreV1)],
@@ -255,27 +254,20 @@ describe("context reload (hot-swap)", function() {
             describe("old loader, new runtime", () => {
                 beforeEach(async function() {
                     const documentId = Date.now().toString();
-                    container = await oldApi.createOldContainer(
+                    container = await createContainer(
                         documentId,
                         [
                             [codeDetails(V1), oldApi.createOldRuntimeFactory(oldApi.OldTestDataObjectV1)],
                             [codeDetails(V2), createRuntimeFactory(TestDataStoreV2)],
-                        ],
-                        this.deltaConnectionServer,
-                        this.urlResolver,
-                        defaultCodeDetails);
-                    dataStoreV1 = await requestFluidObject<TestDataStoreV1>(this.container, "default");
-                    assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
+                        ]);
+                    dataStoreV1 = await requestFluidObject<TestDataStoreV1>(container, "default");
+                    assert.strictEqual(dataStoreV1.version, TestDataStoreV1.version);
 
-                    this.opProcessingController = new oldApi.OpProcessingController(this.deltaConnectionServer);
-                    this.opProcessingController.addDeltaManagers(this.container.deltaManager);
+                    opProcessingController = new OpProcessingController();
+                    opProcessingController.addDeltaManagers(container.deltaManager);
                 });
 
                 tests();
-
-                afterEach(async function() {
-                    await this.deltaConnectionServer.webSocketServer.close();
-                });
             });
             describe("new loader, old runtime", () => {
                 beforeEach(async function() {
@@ -284,18 +276,14 @@ describe("context reload (hot-swap)", function() {
                         [codeDetails(V2), oldApi.createOldRuntimeFactory(oldApi.OldTestDataObjectV2)],
                     ],
                     Date.now().toString());
-                    dataStoreV1 = await requestFluidObject<TestDataStoreV1>(this.container, "default");
-                    assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
+                    dataStoreV1 = await requestFluidObject<TestDataStoreV1>(container, "default");
+                    assert.strictEqual(dataStoreV1.version, TestDataStoreV1.version);
 
-                    this.opProcessingController = new OpProcessingController();
-                    this.opProcessingController.addDeltaManagers(this.container.deltaManager);
+                    opProcessingController = new OpProcessingController();
+                    opProcessingController.addDeltaManagers(container.deltaManager);
                 });
 
                 tests();
-
-                afterEach(async function() {
-                    await this.deltaConnectionServer.webSocketServer.close();
-                });
             });
         });
     });
