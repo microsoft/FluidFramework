@@ -59,7 +59,7 @@ export function combine(combiningInfo: ops.ICombiningOp, currentValue: any, newV
     return currentValue;
 }
 
-export function matchProperties(a: PropertySet, b: PropertySet) {
+export function matchProperties(a: PropertySet | undefined, b: PropertySet | undefined) {
     if (a) {
         if (!b) {
             return false;
@@ -92,7 +92,12 @@ export function matchProperties(a: PropertySet, b: PropertySet) {
     return true;
 }
 
-export function extend<T>(base: MapLike<T>, extension: MapLike<T>, combiningOp?: ops.ICombiningOp, seq?: number) {
+export function extend<T>(
+    base: MapLike<T>,
+    extension: MapLike<T> | undefined,
+    combiningOp?: ops.ICombiningOp,
+    seq?: number,
+) {
     if (extension !== undefined) {
         if ((typeof extension !== "object")) {
             console.log(`oh my ${extension}`);
@@ -115,7 +120,7 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T>, combiningOp?:
     return base;
 }
 
-export function clone<T>(extension: MapLike<T>) {
+export function clone<T>(extension: MapLike<T> | undefined) {
     if (extension === undefined) {
         return undefined;
     }
@@ -130,7 +135,12 @@ export function clone<T>(extension: MapLike<T>) {
     return cloneMap;
 }
 
-export function addProperties(oldProps: PropertySet, newProps: PropertySet, op?: ops.ICombiningOp, seq?: number) {
+export function addProperties(
+    oldProps: PropertySet | undefined,
+    newProps: PropertySet,
+    op?: ops.ICombiningOp,
+    seq?: number,
+) {
     if ((!oldProps) || (op && (op.name === "rewrite"))) {
         oldProps = createMap<any>();
     }
@@ -138,7 +148,7 @@ export function addProperties(oldProps: PropertySet, newProps: PropertySet, op?:
     return oldProps;
 }
 
-export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T>) {
+export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined) {
     if (extension !== undefined) {
         if ((typeof extension !== "object")) {
             console.log(`oh my ${extension}`);
@@ -160,9 +170,9 @@ export function createMap<T>(): MapLike<T> {
     // Using 'delete' on an object causes V8 to put the object in dictionary mode.
     // This disables creation of hidden classes, which are expensive when an object is
     // constantly changing shape.
-    // eslint-disable-next-line dot-notation
+    // eslint-disable-next-line @typescript-eslint/dot-notation
     map["__"] = undefined;
-    // eslint-disable-next-line dot-notation, @typescript-eslint/no-dynamic-delete
+    // eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-dynamic-delete
     delete map["__"];
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return

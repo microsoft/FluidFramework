@@ -16,6 +16,7 @@ const optionsArray = [
     ["--compare", "Compares snapshots to snapshots previously saved on disk. Used in testing"],
     "Processing:",
     ["--snapfreq <N>", "A snapshot will be taken after every <N>th op"],
+    ["--summaries", "Test summaries - run summarizer at every point in file where summary was generated."],
     ["--stressTest", "Run stress tests. Adds --quiet --snapfreq 50",
         "Runs 4 overlapping containers to detect summary consistency issues",
         "Writes out only snapshots with consistency issues"],
@@ -63,10 +64,10 @@ class ReplayProcessArgs extends ReplayArgs {
                     const paramNumber = parseInt(from, 10);
                     const paramNumber2 = Number(from);
 
-                    this.version = undefined;
+                    this.fromVersion = undefined;
                     this.from = 0;
                     if (isNaN(paramNumber2)) {
-                        this.version = from;
+                        this.fromVersion = from;
                     } else if (paramNumber < 0 || paramNumber !== paramNumber2) {
                         console.error(`Warning: ignoring --from argument - does not look like right number: ${from}`);
                     } else {
@@ -81,7 +82,10 @@ class ReplayProcessArgs extends ReplayArgs {
                     i += 1;
                     this.snapFreq = this.parseIntArg(i);
                     break;
-                case "--outdir":
+                case "--summaries":
+                    this.testSummaries = true;
+                break;
+                    case "--outdir":
                     i += 1;
                     this.outDirName = this.parseStrArg(i);
                     break;

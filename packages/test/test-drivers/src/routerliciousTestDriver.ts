@@ -9,6 +9,7 @@ import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@flui
 import { InsecureTokenProvider, InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ITestDriver } from "./interfaces";
+import { pkgVersion } from "./packageVersion";
 
 export class RouterliciousTestDriver implements ITestDriver {
     public static createFromEnv() {
@@ -31,6 +32,7 @@ export class RouterliciousTestDriver implements ITestDriver {
     }
 
     public readonly type = "routerlicious";
+    public readonly version = pkgVersion;
     private readonly testIdPrefix: string;
     constructor(
         private readonly bearerSecret: string,

@@ -7,9 +7,7 @@ import { assert, IsoBuffer } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import {
     FileMode,
-    IBlob,
     ISnapshotTree,
-    ITree,
     ITreeEntry,
     TreeEntry,
 } from "@fluidframework/protocol-definitions";
@@ -26,7 +24,7 @@ function flattenCore(
         const subPath = `${path}${treeEntry.path}`;
 
         if (treeEntry.type === TreeEntry.Blob) {
-            const blob = treeEntry.value as IBlob;
+            const blob = treeEntry.value;
             const buffer = IsoBuffer.from(blob.contents, blob.encoding);
             const id = uuid();
             blobMap.set(id, buffer.toString("base64"));
@@ -44,7 +42,7 @@ function flattenCore(
             const entry: git.ITreeEntry = {
                 mode: FileMode[treeEntry.mode],
                 path: subPath,
-                sha: treeEntry.value as string,
+                sha: treeEntry.value,
                 size: -1,
                 type: "commit",
                 url: "",
@@ -52,7 +50,7 @@ function flattenCore(
             entries.push(entry);
         } else {
             assert(treeEntry.type === TreeEntry.Tree);
-            const t = treeEntry.value as ITree;
+            const t = treeEntry.value;
             const entry: git.ITreeEntry = {
                 mode: FileMode[treeEntry.mode],
                 path: subPath,

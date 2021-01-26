@@ -97,6 +97,6 @@ export class BlobManager {
 
     public snapshot(): ITree {
         const entries = [...this.blobIds].map((id) => new AttachmentTreeEntry(id, id));
-        return { entries, id: null };
+        return { entries };
     }
 }

@@ -12,19 +12,16 @@
 /* eslint-disable @typescript-eslint/no-for-in-array */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
-import fs from "fs";
 import path from "path";
 import { Trace } from "@fluidframework/common-utils";
-// eslint-disable-next-line import/no-duplicates
 import * as MergeTree from "@fluidframework/merge-tree";
-// eslint-disable-next-line no-duplicate-imports
+// eslint-disable-next-line @typescript-eslint/no-duplicate-imports
 import {
     TextSegment,
     createGroupOp,
     PropertySet,
     MergeTreeTextHelper,
     IMergeTreeDeltaOp,
-    // eslint-disable-next-line import/no-duplicates
 } from "@fluidframework/merge-tree";
 import {
     LocalClientId,
@@ -34,13 +31,10 @@ import {
     // eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/merge-tree/dist/constants";
 // eslint-disable-next-line import/no-internal-modules
-import { insertOverlayNode, onodeTypeKey, OverlayNodePosition } from "@fluidframework/merge-tree/dist/overlayTree";
-// eslint-disable-next-line import/no-internal-modules
 import { loadTextFromFile, TestClient, TestServer } from "@fluidframework/merge-tree/dist/test/";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import JsDiff from "diff";
 import random from "random-js";
-import * as Xmldoc from "xmldoc";
 import * as SharedString from "../intervalCollection";
 
 const clock = () => Trace.start();
@@ -1558,90 +1552,6 @@ export class DocumentTree {
     }
 }
 
-function insertElm(treeLabel: string, elm: Xmldoc.XmlElement, client: TestClient, parentId?: string) {
-    const elmProps = MergeTree.createMap<any>();
-    if (elm.attr) {
-        elmProps.XMLattributes = elm.attr;
-    }
-    let nodePos = OverlayNodePosition.Append;
-    if (!parentId) {
-        nodePos = OverlayNodePosition.Root;
-    }
-    const elmId = insertOverlayNode(treeLabel, client, elm.name, nodePos,
-        elmProps, parentId);
-    if (elm.children) {
-        for (let child of elm.children) {
-            child = child as Xmldoc.XmlElement;
-            if (child.name) {
-                insertElm(treeLabel, child, client, elmId);
-            }
-        }
-    }
-    if (elm.val && /\S/.test(elm.val)) {
-        const pos = client.posFromRelativePos({ id: elmId });
-        client.insertTextLocal(pos, elm.val);
-    }
-    return elmId;
-}
-
-function printOverlayTree(client: TestClient) {
-    let indentAmt = 0;
-    const indentDelta = 4;
-    let strbuf = "";
-    function attrString(attrs: MergeTree.PropertySet) {
-        let attrStrbuf = "";
-        if (attrs) {
-            for (const attr in attrs) {
-                attrStrbuf += ` ${attr}='${attrs[attr]}'`;
-            }
-        }
-        return attrStrbuf;
-    }
-    function leaf(segment: MergeTree.ISegment) {
-        if (MergeTree.TextSegment.is(segment)) {
-            strbuf += MergeTree.internedSpaces(indentAmt);
-            strbuf += segment.text;
-            strbuf += "\n";
-        } else {
-            const marker = segment as MergeTree.Marker;
-            if (marker.refType & MergeTree.ReferenceType.NestBegin) {
-                strbuf += MergeTree.internedSpaces(indentAmt);
-                const nodeType = marker.properties[onodeTypeKey];
-                strbuf += `<${nodeType}`;
-                const attrs = marker.properties.XMLattributes;
-                if (attrs) {
-                    strbuf += attrString(attrs);
-                }
-                strbuf += ">\n";
-                indentAmt += indentDelta;
-            } else if (marker.refType & MergeTree.ReferenceType.NestEnd) {
-                indentAmt -= indentDelta;
-                strbuf += MergeTree.internedSpaces(indentAmt);
-                const nodeType = marker.properties[onodeTypeKey];
-                strbuf += `</${nodeType}>\n`;
-            }
-        }
-        return true;
-    }
-    client.mergeTree.map({ leaf }, UniversalSequenceNumber,
-        client.getClientId());
-    console.log(strbuf);
-}
-
-function testOverlayTree() {
-    const booksFilename = path.join(__dirname, "../../public/literature", "book.xml");
-    const plantsFilename = path.join(__dirname, "../../public/literature", "plants.xml");
-    const books = fs.readFileSync(booksFilename, "utf8");
-    const booksDoc = new Xmldoc.XmlDocument(books);
-    const client = new TestClient({ blockUpdateMarkers: true });
-    const plants = fs.readFileSync(plantsFilename, "utf8");
-    const plantsDoc = new Xmldoc.XmlDocument(plants);
-    insertElm("booksDoc", booksDoc, client);
-    insertElm("plantsDoc", plantsDoc, client);
-
-    printOverlayTree(client);
-}
-
 const docRanges = <MergeTree.IIntegerRange[]>[
     { start: 0, end: 20 },
     { start: 8, end: 12 },
@@ -1772,7 +1682,6 @@ export function tstSimpleCmd() {
 
 const rangeTreeTest = false;
 const testPropCopy = false;
-const overlayTree = false;
 const docTree = false;
 const chktst = false;
 const clientServerTest = true;
@@ -1803,10 +1712,6 @@ if (chktst) {
 
 if (testPropCopy) {
     propertyCopy();
-}
-
-if (overlayTree) {
-    testOverlayTree();
 }
 
 if (docTree) {

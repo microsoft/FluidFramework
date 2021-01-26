@@ -81,20 +81,24 @@ export class ImageGalleryObject extends DataObject implements IFluidHTMLView {
 
         this.reactRender(div);
         if (this.imageGallery !== undefined) {
-            this.imageGallery.slideToIndex(this.root.get("position"));
+            this.imageGallery.slideToIndex(this.getPosition());
         }
 
         this.root.on("valueChanged", (_, local) => {
             if (local) {
                 return;
             }
-            const position = this.root.get<number>("position");
+
             if (this.imageGallery !== undefined) {
                 // This is a result of a remote slide, don't trigger onSlide for this slide
                 this.reactRender(div, () => this.reactRender(div));
-                this.imageGallery.slideToIndex(position);
+                this.imageGallery.slideToIndex(this.getPosition());
             }
         });
+    }
+
+    private getPosition() {
+        return this.root.get<number>("position") ?? 0;
     }
 }
 

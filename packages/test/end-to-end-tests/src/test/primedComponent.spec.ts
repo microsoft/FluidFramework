@@ -23,7 +23,11 @@ class TestDataObject extends DataObject {
     }
 }
 
-const tests = (args: ITestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    beforeEach(()=>{
+        args = argsFactory();
+    });
     let dataObject: TestDataObject;
 
     beforeEach(async () => {
@@ -37,12 +41,14 @@ const tests = (args: ITestObjectProvider) => {
         dataObject.root.set("key", handle);
 
         const handle2 = dataObject.root.get<IFluidHandle<string>>("key");
+        assert(handle2, "blob Handle not found");
         const value2 = await handle2.get();
         assert(value2 === "aaaa", "Could not get blob from shared object in the dataObject");
 
         const container2 = await args.loadTestContainer() as Container;
         const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
         const blobHandle = await dataObject2.root.wait<IFluidHandle<string>>("key");
+        assert(blobHandle, "blob Handle not found");
         const value = await blobHandle.get();
         assert(value === "aaaa", "Blob value not synced across containers");
     });

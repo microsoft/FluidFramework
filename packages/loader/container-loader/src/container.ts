@@ -426,7 +426,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private get serviceFactory() {return this.loader.services.documentServiceFactory;}
     private get urlResolver() {return this.loader.services.urlResolver;}
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     public get options() { return this.loader.services.options;}
     private get scope() { return this.loader.services.scope;}
     private get codeLoader() { return this.loader.services.codeLoader;}
@@ -655,13 +654,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Stop inbound message processing while we complete the snapshot
         try {
-            await this.deltaManager.inbound.systemPause();
+            await this.deltaManager.inbound.pause();
             await this.snapshotCore(tagMessage, fullTree);
         } catch (ex) {
             this.logger.logException({ eventName: "SnapshotExceptionError" }, ex);
             throw ex;
         } finally {
-            this.deltaManager.inbound.systemResume();
+            this.deltaManager.inbound.resume();
         }
     }
 
@@ -807,12 +806,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const codeDetails = this.getCodeDetailsFromQuorum();
 
         await Promise.all([
-            this.deltaManager.inbound.systemPause(),
-            this.deltaManager.inboundSignal.systemPause()]);
+            this.deltaManager.inbound.pause(),
+            this.deltaManager.inboundSignal.pause()]);
 
         if (await this.context.satisfies(codeDetails) === true) {
-            this.deltaManager.inbound.systemResume();
-            this.deltaManager.inboundSignal.systemResume();
+            this.deltaManager.inbound.resume();
+            this.deltaManager.inboundSignal.resume();
             return;
         }
 
@@ -882,8 +881,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         await this.loadContext(codeDetails, attributes, snapshot, state.prevState);
 
-        this.deltaManager.inbound.systemResume();
-        this.deltaManager.inboundSignal.systemResume();
+        this.deltaManager.inbound.resume();
+        this.deltaManager.inboundSignal.resume();
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
@@ -962,7 +961,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Output the tree
         const root: ITree = {
             entries,
-            id: null,
         };
 
         return root;
@@ -1029,10 +1027,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._attachState = AttachState.Attached;
 
         // Fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
-        const maybeSnapshotTree = specifiedVersion === null ? undefined
-            : await this.fetchSnapshotTree(specifiedVersion);
+        const { snapshot, versionId } = await this.fetchSnapshotTree(specifiedVersion);
 
-        const attributes = await this.getDocumentAttributes(this.storageService, maybeSnapshotTree);
+        const attributes = await this.getDocumentAttributes(this.storageService, snapshot);
 
         // Attach op handlers to start processing ops
         this.attachDeltaManagerOpHandler(attributes);
@@ -1040,13 +1037,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // ...load in the existing quorum
         // Initialize the protocol handler
         const protocolHandlerP =
-            this.loadAndInitializeProtocolState(attributes, this.storageService, maybeSnapshotTree);
+            this.loadAndInitializeProtocolState(attributes, this.storageService, snapshot);
 
         let loadDetailsP: Promise<void>;
 
         // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
         // the initial details
-        if (maybeSnapshotTree !== undefined) {
+        if (snapshot !== undefined) {
             this._existing = true;
             loadDetailsP = Promise.resolve();
         } else {
@@ -1064,7 +1061,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         [this._protocolHandler] = await Promise.all([protocolHandlerP, loadDetailsP]);
 
         const codeDetails = this.getCodeDetailsFromQuorum();
-        await this.loadContext(codeDetails, attributes, maybeSnapshotTree);
+        await this.loadContext(codeDetails, attributes, snapshot);
 
         // Propagate current connection state through the system.
         this.propagateConnectionState();
@@ -1079,7 +1076,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return {
             existing: this._existing,
             sequenceNumber: attributes.sequenceNumber,
-            version: maybeSnapshotTree?.id ?? undefined,
+            version: versionId,
         };
     }
 
@@ -1648,20 +1645,27 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     /**
      * Get the most recent snapshot, or a specific version.
      * @param specifiedVersion - The specific version of the snapshot to retrieve
-     * @returns The snapshot requested, or the latest snapshot if no version was specified
+     * @returns The snapshot requested, or the latest snapshot if no version was specified, plus version ID
      */
-    private async fetchSnapshotTree(specifiedVersion?: string): Promise<ISnapshotTree | undefined> {
+    private async fetchSnapshotTree(specifiedVersion: string | undefined | null):
+        Promise<{snapshot?: ISnapshotTree; versionId?: string}>
+    {
+        if (specifiedVersion === null) {
+            return {};
+        }
         const version = await this.getVersion(specifiedVersion ?? this.id);
 
-        if (version !== undefined) {
-            this._loadedFromVersion = version;
-            return await this.storageService.getSnapshotTree(version) ?? undefined;
-        } else if (specifiedVersion !== undefined) {
+        if (version === undefined && specifiedVersion !== undefined) {
             // We should have a defined version to load from if specified version requested
-            this.logger.sendErrorEvent({ eventName: "NoVersionFoundWhenSpecified", specifiedVersion });
+            this.logger.sendErrorEvent({ eventName: "NoVersionFoundWhenSpecified", id: specifiedVersion });
         }
+        this._loadedFromVersion = version;
+        const snapshot = await this.storageService.getSnapshotTree(version) ?? undefined;
 
-        return undefined;
+        if (snapshot === undefined && version !== undefined) {
+            this.logger.sendErrorEvent({ eventName: "getSnapshotTreeFailed", id: version.id });
+        }
+        return { snapshot, versionId: version?.id };
     }
 
     private async loadContext(

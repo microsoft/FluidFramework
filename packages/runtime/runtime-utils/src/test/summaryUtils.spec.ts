@@ -1,4 +1,3 @@
-/* eslint-disable no-null/no-null */
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
@@ -51,10 +50,8 @@ describe("Summary Utils", () => {
             const base64Content = IsoBuffer.from("test-b64").toString("base64");
             bufferLength = IsoBuffer.from(base64Content, "base64").byteLength;
             inputTree = {
-                id: null,
                 entries: [
                     new TreeTreeEntry("t", {
-                        id: null,
                         entries: [
                             new BlobTreeEntry("bu8", "test-u8"),
                             new BlobTreeEntry("b64", base64Content, "base64"),
