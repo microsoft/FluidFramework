@@ -43,33 +43,33 @@ describe("SharedStringWithSequential Id", () => {
         assert(segmentJson.props !== undefined && segmentJson.props[reservedMarkerIdKey] === id);
     }
 
-    // it("should have a marker id after marker insertion", async ()=> {
-    //     sharedStringWithSequentialId.insertMarker(0, ReferenceType.Tile);
-    //     const segment = sharedStringWithSequentialId.getContainingSegment(0).segment;
-    //     // Process the message.
-    //     containerRuntimeFactory.processAllMessages();
+    it("should have a marker id after marker insertion", async ()=> {
+        sharedStringWithSequentialId.insertMarker(0, ReferenceType.Tile);
+        const segment = sharedStringWithSequentialId.getContainingSegment(0).segment;
+        // Process the message.
+        containerRuntimeFactory.processAllMessages();
 
-    //     assert(Marker.is(segment), "Make sure we found our marker");
-    //     validateMarker(segment);
-    // });
+        assert(Marker.is(segment), "Make sure we found our marker");
+        validateMarker(segment);
+    });
 
-    // it("should have a marker id after marker insertion after existing marker", async ()=> {
-    //     sharedStringWithSequentialId.insertMarker(0, ReferenceType.Tile);
-    //     sharedStringWithSequentialId.insertMarker(1, ReferenceType.Tile);
+    it("should have a marker id after marker insertion after existing marker", async ()=> {
+        sharedStringWithSequentialId.insertMarker(0, ReferenceType.Tile);
+        sharedStringWithSequentialId.insertMarker(1, ReferenceType.Tile);
 
-    //     // Process all messages.
-    //     containerRuntimeFactory.processAllMessages();
+        // Process all messages.
+        containerRuntimeFactory.processAllMessages();
 
-    //     const segmentAt0 = sharedStringWithSequentialId.getContainingSegment(0).segment;
-    //     const segmentAt1 = sharedStringWithSequentialId.getContainingSegment(1).segment;
+        const segmentAt0 = sharedStringWithSequentialId.getContainingSegment(0).segment;
+        const segmentAt1 = sharedStringWithSequentialId.getContainingSegment(1).segment;
 
-    //     assert(Marker.is(segmentAt0) && Marker.is(segmentAt1), "Make sure we found markers");
-    //     validateMarker(segmentAt0);
-    //     validateMarker(segmentAt1);
-    //     const id0 = segmentAt0.getId();
-    //     const id1 = segmentAt1.getId();
-    //     assert(id0 < id1, "Id at 0 should be smaller than id at 1");
-    // });
+        assert(Marker.is(segmentAt0) && Marker.is(segmentAt1), "Make sure we found markers");
+        validateMarker(segmentAt0);
+        validateMarker(segmentAt1);
+        const id0 = segmentAt0.getId();
+        const id1 = segmentAt1.getId();
+        assert(id0 < id1, "Id at 0 should be smaller than id at 1");
+    });
 
     it("should have a marker id after marker insertion before existing marker", async ()=> {
         sharedStringWithSequentialId.insertMarker(0, ReferenceType.Tile, { insert1: true });
