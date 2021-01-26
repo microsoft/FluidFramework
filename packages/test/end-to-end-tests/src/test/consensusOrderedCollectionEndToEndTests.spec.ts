@@ -43,7 +43,11 @@ const testContainerConfig: ITestContainerConfig = {
 function generate(
     name: string, ctor: ISharedObjectConstructor<IConsensusOrderedCollection>,
     input: any[], output: any[]) {
-    const tests = (args: ITestObjectProvider) => {
+    const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    beforeEach(()=>{
+        args = argsFactory();
+    });
         let container1;
         let container2;
         let dataStore1: ITestFluidObject;

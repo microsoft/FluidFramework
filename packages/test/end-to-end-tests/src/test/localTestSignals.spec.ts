@@ -21,7 +21,11 @@ const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
 };
 
-const tests = (args: ITestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    beforeEach(()=>{
+        args = argsFactory();
+    });
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;
 

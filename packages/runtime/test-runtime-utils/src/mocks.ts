@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import {
     assert,
     fromUtf8ToBase64,
+    stringToBuffer,
 } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
@@ -590,6 +591,10 @@ export class MockObjectStorageService implements IChannelStorageService {
         // Do we have such blob?
         assert(content !== undefined);
         return fromUtf8ToBase64(content);
+    }
+
+    public async readBlob(path: string): Promise<ArrayBufferLike> {
+        return stringToBuffer(this.contents[path], "utf8");
     }
 
     public async contains(path: string): Promise<boolean> {

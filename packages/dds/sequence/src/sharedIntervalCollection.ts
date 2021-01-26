@@ -161,8 +161,6 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
                     },
                 },
             ],
-            // eslint-disable-next-line no-null/no-null
-            id: null,
         };
 
         return tree;

@@ -117,8 +117,6 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
                     },
                 },
             ],
-            // eslint-disable-next-line no-null/no-null
-            id: null,
         };
 
         return tree;

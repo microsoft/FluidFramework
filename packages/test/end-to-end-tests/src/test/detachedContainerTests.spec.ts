@@ -25,12 +25,13 @@ import { MessageType, ISequencedDocumentMessage } from "@fluidframework/protocol
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { convertContainerToDriverSerializedFormat, requestFluidObject } from "@fluidframework/runtime-utils";
+import { createLocalResolverCreateNewRequest } from "@fluidframework/local-driver";
 import {
-    ILocalTestObjectProvider,
     generateLocalTest,
     generateLocalNonCompatTest,
     ITestContainerConfig,
     DataObjectFactoryType,
+    ITestObjectProvider,
 } from "./compatUtils";
 
 const detachedContainerRefSeqNumber = 0;
@@ -64,10 +65,10 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (args: ILocalTestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
     let request: IRequest;
     let loader: Loader;
-    const pkg = args.defaultCodeDetails;
 
     const createFluidObject = (async (
         dataStoreContext: IFluidDataStoreContext,
@@ -79,19 +80,20 @@ const tests = (args: ILocalTestObjectProvider) => {
     });
 
     beforeEach(async () => {
-        request = args.urlResolver.createCreateNewRequest(documentId);
+        args = argsFactory();
+        request = createLocalResolverCreateNewRequest(documentId);
         loader = args.makeTestLoader(testContainerConfig) as Loader;
     });
 
     it("Create detached container", async () => {
-        const container = await loader.createDetachedContainer(pkg);
+        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         assert.strictEqual(container.attachState, AttachState.Detached, "Container should be detached");
         assert.strictEqual(container.closed, false, "Container should be open");
         assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
         assert.strictEqual(container.getQuorum().getMembers().size, 0, "Quorum should not contain any members");
         assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
             "Container should be in disconnected state!!");
-        assert.strictEqual(container.chaincodePackage?.package, pkg.package,
+        assert.strictEqual(container.chaincodePackage?.package, args.defaultCodeDetails.package,
             "Package should be same as provided");
         assert.strictEqual(container.id, "", "Detached container's id should be empty string");
         assert.strictEqual(container.clientDetails.capabilities.interactive, true,
@@ -99,7 +101,7 @@ const tests = (args: ILocalTestObjectProvider) => {
     });
 
     it("Attach detached container", async () => {
-        const container = await loader.createDetachedContainer(pkg);
+        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         await container.attach(request);
         assert.strictEqual(container.attachState, AttachState.Attached, "Container should be attached");
         assert.strictEqual(container.closed, false, "Container should be open");
@@ -108,7 +110,7 @@ const tests = (args: ILocalTestObjectProvider) => {
     });
 
     it("DataStores in detached container", async () => {
-        const container = await loader.createDetachedContainer(pkg);
+        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
         if (response.mimeType !== "fluid/object" && response.status !== 200) {
@@ -128,7 +130,7 @@ const tests = (args: ILocalTestObjectProvider) => {
     });
 
     it("DataStores in attached container", async () => {
-        const container = await loader.createDetachedContainer(pkg);
+        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
         const dataStore = response.value as ITestFluidObject;
@@ -151,7 +153,7 @@ const tests = (args: ILocalTestObjectProvider) => {
     });
 
     it("Load attached container and check for dataStores", async () => {
-        const container = await loader.createDetachedContainer(pkg);
+        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
         const dataStore = response.value as ITestFluidObject;
@@ -196,7 +198,7 @@ const tests = (args: ILocalTestObjectProvider) => {
     });
 
     it("ReAttach detached container on failed attach", async () => {
-        const container = await loader.createDetachedContainer(pkg);
+        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         const oldFunc = args.documentServiceFactory.createContainer;
         args.documentServiceFactory.createContainer = (a, b, c) => { throw new Error("Test Error"); };
         let failedOnce = false;
@@ -243,7 +245,7 @@ const tests = (args: ILocalTestObjectProvider) => {
     });
 
     it("Directly attach container through service factory, should resolve to same container", async () => {
-        const container = await loader.createDetachedContainer(pkg);
+        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
         const dataStore = response.value as ITestFluidObject;
@@ -255,6 +257,7 @@ const tests = (args: ILocalTestObjectProvider) => {
         const snapshotTree = container.serialize();
         const summaryForAttach = convertContainerToDriverSerializedFormat(snapshotTree);
         const resolvedUrl = await args.urlResolver.resolve(request);
+        assert(resolvedUrl);
         const service = await args.documentServiceFactory.createContainer(summaryForAttach as any, resolvedUrl);
         const absoluteUrl = await args.urlResolver.getAbsoluteUrl(service.resolvedUrl, "/");
 
@@ -269,7 +272,7 @@ const tests = (args: ILocalTestObjectProvider) => {
     it("Fire ops during container attach for shared string", async () => {
         const ops = { pos1: 0, seg: "b", type: 0 };
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(pkg);
+        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.equal(type, MessageType.Operation);
             assert.equal(contents.type, ContainerMessageType.FluidDataStoreOp);
@@ -303,7 +306,7 @@ const tests = (args: ILocalTestObjectProvider) => {
     it("Fire ops during container attach for shared map", async () => {
         const ops = { key: "1", type: "set", value: { type: "Plain", value: "b" } };
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(pkg);
+        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 sharedMapId, "Address should be shared map");
@@ -332,7 +335,7 @@ const tests = (args: ILocalTestObjectProvider) => {
     it("Fire channel attach ops during container attach", async () => {
         const testChannelId = "testChannel1";
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(pkg);
+        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.id,
                 testChannelId, "Channel id should match");
@@ -360,7 +363,7 @@ const tests = (args: ILocalTestObjectProvider) => {
     it("Fire dataStore attach ops during container attach", async () => {
         const testDataStoreType = "default";
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(pkg);
+        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
 
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
@@ -396,7 +399,7 @@ const tests = (args: ILocalTestObjectProvider) => {
             refSeq: detachedContainerRefSeqNumber,
         };
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(pkg);
+        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 crcId, "Address should be consensus register collection");
@@ -430,7 +433,7 @@ const tests = (args: ILocalTestObjectProvider) => {
             value: { type: "Plain", value: "b" },
         };
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(pkg);
+        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 sharedDirectoryId, "Address should be shared directory");
@@ -458,7 +461,7 @@ const tests = (args: ILocalTestObjectProvider) => {
     it("Fire ops during container attach for shared cell", async () => {
         const op = { type: "setCell", value: { type: "Plain", value: "b" } };
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(pkg);
+        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 sharedCellId, "Address should be shared directory");
@@ -485,7 +488,7 @@ const tests = (args: ILocalTestObjectProvider) => {
 
     it("Fire ops during container attach for shared ink", async () => {
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(pkg);
+        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 sharedInkId, "Address should be ink");
@@ -518,7 +521,7 @@ const tests = (args: ILocalTestObjectProvider) => {
     it("Fire ops during container attach for consensus ordered collection", async () => {
         const op = { opName: "add", value: JSON.stringify("s") };
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(pkg);
+        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 cocId, "Address should be consensus queue");
@@ -548,7 +551,7 @@ const tests = (args: ILocalTestObjectProvider) => {
     it("Fire ops during container attach for sparse matrix", async () => {
         const seg = { items: ["s"] };
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(pkg);
+        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 sparseMatrixId, "Address should be sparse matrix");
@@ -583,7 +586,7 @@ const tests = (args: ILocalTestObjectProvider) => {
     it.skip("Fire ops during container attach for shared matrix", async () => {
         const op = { pos1: 0, seg: 9, type: 0, target: "rows" };
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(pkg);
+        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 sharedMatrixId, "Address should be shared matrix");
@@ -615,18 +618,19 @@ describe("Detached Container", () => {
     generateLocalTest(tests);
 
     // non compat test
-    generateLocalNonCompatTest((args: ILocalTestObjectProvider) => {
+    generateLocalNonCompatTest((argsFactory: () => ITestObjectProvider) => {
+        let args: ITestObjectProvider;
         let request: IRequest;
         let loader: Loader;
-        const pkg = args.defaultCodeDetails;
 
         beforeEach(async () => {
-            request = args.urlResolver.createCreateNewRequest(documentId);
+            args = argsFactory();
+            request = createLocalResolverCreateNewRequest(documentId);
             loader = args.makeTestLoader(testContainerConfig) as Loader;
         });
 
         it("Load attached container from cache and check if they are same", async () => {
-            const container = await loader.createDetachedContainer(pkg);
+            const container = await loader.createDetachedContainer(args.defaultCodeDetails);
 
             // Now attach the container and get the sub dataStore.
             await container.attach(request);

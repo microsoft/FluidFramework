@@ -10,10 +10,10 @@ import {
 } from "@fluidframework/local-driver";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { ITestDriver } from "./interfaces";
+import { ILocalServerTestDriver } from "@fluidframework/test-driver-definitions";
 import { pkgVersion } from "./packageVersion";
 
-export class LocalServerTestDriver implements ITestDriver {
+export class LocalServerTestDriver implements ILocalServerTestDriver {
     /**
      * @deprecated - We only need this for some back-compat cases. Once we have a release with
      * all the test driver changes, this will be removed in 0.33

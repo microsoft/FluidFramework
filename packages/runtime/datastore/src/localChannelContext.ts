@@ -168,6 +168,7 @@ export class LocalChannelContext implements IChannelContext {
                 // record sequence number for easier debugging
                 const error = CreateContainerError(err);
                 error.sequenceNumber = message.sequenceNumber;
+                // eslint-disable-next-line @typescript-eslint/no-throw-literal
                 throw error;
             }
         }

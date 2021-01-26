@@ -257,7 +257,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 
         const tree: ITree = {
             entries: [],
-            id: null,
         };
 
         const data = this.kernel.getSerializedStorage(serializer);

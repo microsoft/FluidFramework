@@ -10,9 +10,7 @@ import {
     refGetRangeLabels,
     refGetTileLabels,
     refHasRangeLabel,
-    refHasRangeLabels,
     refHasTileLabel,
-    refHasTileLabels,
 } from "./mergeTree";
 import { ICombiningOp, ReferenceType } from "./ops";
 import { addProperties, PropertySet } from "./properties";
@@ -20,14 +18,17 @@ import { addProperties, PropertySet } from "./properties";
 export class LocalReference implements ReferencePosition {
     public static readonly DetachedPosition: number = -1;
 
-    public properties: PropertySet;
+    public properties: PropertySet | undefined;
     public pairedRef?: LocalReference;
+    public segment: ISegment | undefined;
 
     constructor(
         private readonly client: Client,
-        public segment: ISegment,
+        initSegment: ISegment,
         public offset = 0,
-        public refType = ReferenceType.Simple) {
+        public refType = ReferenceType.Simple,
+    ) {
+        this.segment = initSegment;
     }
 
     public min(b: LocalReference) {
@@ -69,13 +70,11 @@ export class LocalReference implements ReferencePosition {
     }
 
     public hasTileLabels() {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return refHasTileLabels(this);
+        return !!this.getTileLabels();
     }
 
     public hasRangeLabels() {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return refHasRangeLabels(this);
+        return !!this.getRangeLabels();
     }
 
     public hasTileLabel(label: string) {
@@ -135,12 +134,12 @@ export class LocalReferenceCollection {
     }
 
     public hierRefCount: number = 0;
-    private readonly refsByOffset: IRefsAtOffest[];
+    private readonly refsByOffset: (IRefsAtOffest | undefined)[];
     private refCount: number = 0;
 
     constructor(
         private readonly segment: ISegment,
-        initialRefsByfOffset = new Array<IRefsAtOffest>(segment.cachedLength)) {
+        initialRefsByfOffset = new Array<IRefsAtOffest | undefined>(segment.cachedLength)) {
         // Since javascript arrays are sparse the above won't populate any of the
         // indicies, but it will ensure the length property of the array matches
         // the length of the segment.
@@ -186,7 +185,7 @@ export class LocalReferenceCollection {
     public clear() {
         this.refCount = 0;
         this.hierRefCount = 0;
-        const detachSegments = (refs: LocalReference[]) => {
+        const detachSegments = (refs: LocalReference[] | undefined) => {
             if (refs) {
                 refs.forEach((r) => {
                     if (r.segment === this.segment) {
@@ -196,10 +195,11 @@ export class LocalReferenceCollection {
             }
         };
         for (let i = 0; i < this.refsByOffset.length; i++) {
-            if (this.refsByOffset[i]) {
-                detachSegments(this.refsByOffset[i].before);
-                detachSegments(this.refsByOffset[i].at);
-                detachSegments(this.refsByOffset[i].before);
+            const refsAtOffset = this.refsByOffset[i];
+            if (refsAtOffset) {
+                detachSegments(refsAtOffset.before);
+                detachSegments(refsAtOffset.at);
+                detachSegments(refsAtOffset.before);
                 this.refsByOffset[i] = undefined;
             }
         }
@@ -210,12 +210,13 @@ export class LocalReferenceCollection {
     }
 
     public addLocalRef(lref: LocalReference) {
-        if (this.refsByOffset[lref.offset] === undefined) {
+        const refsAtOffset = this.refsByOffset[lref.offset];
+        if (refsAtOffset === undefined) {
             this.refsByOffset[lref.offset] = {
                 at: [lref],
             };
         } else {
-            this.refsByOffset[lref.offset].at.push(lref);
+            refsAtOffset.at.push(lref);
         }
 
         if (lref.hasRangeLabels() || lref.hasTileLabels()) {
@@ -225,7 +226,7 @@ export class LocalReferenceCollection {
     }
 
     public removeLocalRef(lref: LocalReference) {
-        const tryRemoveRef = (refs: LocalReference[]) => {
+        const tryRemoveRef = (refs: LocalReference[] | undefined) => {
             if (refs) {
                 const index = refs.indexOf(lref);
                 if (index >= 0) {
@@ -282,26 +283,27 @@ export class LocalReferenceCollection {
 
     public split(offset: number, splitSeg: ISegment) {
         if (!this.empty) {
-            splitSeg.localRefs =
+            const localRefs =
                 new LocalReferenceCollection(
                     splitSeg,
                     this.refsByOffset.splice(offset, this.refsByOffset.length - offset));
 
-            for (const lref of splitSeg.localRefs) {
+            splitSeg.localRefs = localRefs;
+            for (const lref of localRefs) {
                 lref.segment = splitSeg;
                 lref.offset -= offset;
                 if (lref.hasRangeLabels() || lref.hasTileLabels()) {
                     this.hierRefCount--;
-                    splitSeg.localRefs.hierRefCount++;
+                    localRefs.hierRefCount++;
                 }
                 this.refCount--;
-                splitSeg.localRefs.refCount++;
+                localRefs.refCount++;
             }
         }
     }
 
     public addBeforeTombstones(...refs: Iterable<LocalReference>[]) {
-        const beforeRefs = [];
+        const beforeRefs: LocalReference[] = [];
 
         for (const iterable of refs) {
             for (const lref of iterable) {
@@ -331,7 +333,7 @@ export class LocalReferenceCollection {
     }
 
     public addAfterTombstones(...refs: Iterable<LocalReference>[]) {
-        const afterRefs = [];
+        const afterRefs: LocalReference[] = [];
 
         for (const iterable of refs) {
             for (const lref of iterable) {
@@ -350,12 +352,13 @@ export class LocalReferenceCollection {
             }
         }
         if (afterRefs.length > 0) {
-            if (this.refsByOffset[this.segment.cachedLength - 1] === undefined) {
+            const refsAtOffset = this.refsByOffset[this.segment.cachedLength - 1];
+            if (refsAtOffset === undefined) {
                 this.refsByOffset[this.segment.cachedLength - 1] = { after: afterRefs };
-            } else if (this.refsByOffset[this.segment.cachedLength - 1].after === undefined) {
-                this.refsByOffset[this.segment.cachedLength - 1].after = afterRefs;
+            } else if (refsAtOffset.after === undefined) {
+                refsAtOffset.after = afterRefs;
             } else {
-                this.refsByOffset[this.segment.cachedLength - 1].after.push(...afterRefs);
+                refsAtOffset.after.push(...afterRefs);
             }
         }
     }

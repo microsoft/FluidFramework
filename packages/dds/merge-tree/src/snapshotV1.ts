@@ -157,7 +157,6 @@ export class SnapshotV1 {
                 },
                 ...entries,
             ],
-            id: null,
         };
 
         return tree;

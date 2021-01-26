@@ -9,7 +9,7 @@ import fs from "fs";
 import { assert, Lazy } from "@fluidframework/common-utils";
 import * as API from "@fluid-internal/client-api";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest, IFluidHandle } from "@fluidframework/core-interfaces";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -29,17 +29,30 @@ import {
     ReplayFileDeltaConnection,
 } from "@fluidframework/file-driver";
 import {
-    IBlob,
     ISequencedDocumentMessage,
     ITree,
     TreeEntry,
     MessageType,
+    SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
     FileSnapshotReader,
     IFileSnapshot,
 } from "@fluidframework/replay-driver";
 import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
+import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
+import {
+    IFluidDataStoreContext,
+    IGarbageCollectionData,
+    IChannelSummarizeResult,
+} from "@fluidframework/runtime-definitions";
+import {
+    IFluidDataStoreRuntime,
+    IChannelFactory,
+    IChannelAttributes,
+    IChannelServices,
+    IChannel,
+} from "@fluidframework/datastore-definitions";
 
 // "worker_threads" does not resolve without --experimental-worker flag on command line
 let threads = { isMainThread: true };
@@ -54,10 +67,10 @@ function expandTreeForReadability(tree: ITree): ITree {
     for (const node of tree.entries) {
         const newNode = { ...node };
         if (node.type === TreeEntry.Tree) {
-            newNode.value = expandTreeForReadability(node.value as ITree);
+            newNode.value = expandTreeForReadability(node.value);
         }
         if (node.type === TreeEntry.Blob) {
-            const blob = node.value as IBlob;
+            const blob = node.value;
             try {
                 newNode.value = {
                     contents: JSON.parse(blob.contents) as string,
@@ -83,6 +96,107 @@ function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapshot {
         normalizedSnapshot.commits[commit] = getNormalizedSnapshot(snapshot.commits[commit]);
     }
     return normalizedSnapshot;
+}
+
+class UnknownChannel implements IChannel {
+    constructor(
+        public readonly id: string,
+        public readonly attributes: IChannelAttributes,
+        services: IChannelServices)
+    {
+        services.deltaConnection.attach({
+            process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => {
+            },
+            setConnectionState: (connected: boolean) => {
+            },
+            reSubmit: (content: any, localOpMetadata: unknown) => {
+            },
+            rebaseOp: (content: any, localOpMetadata: unknown) => {
+            },
+        });
+    }
+
+    get IFluidLoadable() { return this; }
+    get handle(): IFluidHandle {
+        throw new Error("not implemented");
+    }
+
+    public summarize(fullTree?: boolean, trackState?: boolean): IChannelSummarizeResult {
+        return {
+            gcData: { gcNodes: {} },
+            stats: {
+                treeNodeCount: 0,
+                blobNodeCount: 0,
+                handleNodeCount: 0,
+                totalBlobSize: 0,
+            },
+            summary: {
+                type: SummaryType.Tree,
+                tree: { },
+            },
+        };
+    }
+
+    public isAttached() { return true; }
+
+    public connect(services: IChannelServices): void {}
+
+    public getGCData(): IGarbageCollectionData {
+        return { gcNodes: {} };
+    }
+}
+
+class UnknownChannelFactory implements IChannelFactory {
+    readonly type = "Unknown DDS";
+    readonly attributes: IChannelAttributes = {
+        type: "Unknown DDS",
+        snapshotFormatVersion: "1.0",
+        packageVersion: "1.0",
+    };
+
+    async load(
+        runtime: IFluidDataStoreRuntime,
+        id: string,
+        services: IChannelServices,
+        channelAttributes: Readonly<IChannelAttributes>,
+    ): Promise<IChannel> {
+        return new UnknownChannel(id, channelAttributes, services);
+    }
+
+    create(runtime: IFluidDataStoreRuntime, id: string): IChannel {
+        throw new Error("Not implemented");
+    }
+}
+
+class ObjectRegistryWithUnknownChannels implements ISharedObjectRegistry {
+    private static readonly types = new Set<string>();
+
+    constructor(private readonly base: ISharedObjectRegistry) {}
+    public get(name: string): IChannelFactory | undefined {
+        const res = this.base.get(name);
+        if (res) {
+            return res;
+        }
+        if (!ObjectRegistryWithUnknownChannels.types.has(name)) {
+            ObjectRegistryWithUnknownChannels.types.add(name);
+            console.error(`DDS of type ${name} can't be created`);
+        }
+        return new UnknownChannelFactory();
+    }
+}
+
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+function mixinDataStoreWithAnyChannel(
+    Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime)
+{
+    return class RuntimeWithRequestHandler extends Base {
+        constructor(
+            dataStoreContext: IFluidDataStoreContext,
+            sharedObjectRegistry: ISharedObjectRegistry,
+        ) {
+            super(dataStoreContext, new ObjectRegistryWithUnknownChannels(sharedObjectRegistry));
+        }
+    } as typeof FluidDataStoreRuntime;
 }
 
 /**
@@ -314,9 +428,9 @@ class Document {
 
         const urlResolver = new ContainerUrlResolver(
             new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
-        const chaincode = new API.Chaincode(() => {
-            throw new Error("Can't close Document");
-        });
+        const chaincode = new API.Chaincode(
+            () => { throw new Error("Can't close Document"); },
+            mixinDataStoreWithAnyChannel());
         const codeLoader = new API.CodeLoader({ generateSummaries: false },
             [
                 ["@ms/atmentions", Promise.resolve(chaincode)],
@@ -338,6 +452,11 @@ class Document {
                 ["LastEditedComponent", Promise.resolve(chaincode)],
                 ["OfficeRootComponent", Promise.resolve(chaincode)],
             ]);
+
+        // Make sure any package (string[]) is resolved as well.
+        (chaincode as any).IFluidDataStoreRegistry = chaincode;
+        (chaincode as any).get = async () => Promise.resolve(chaincode);
+
         const options = {};
 
         // Load the Fluid document
@@ -464,8 +583,35 @@ export class ReplayTool {
 
         this.deltaStorageService = new FileDeltaStorageService(this.args.inDirName);
 
-        this.storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
-        let description = this.args.version ? this.args.version : "main container";
+        // Can't load files from ops any more, due to detached container creation
+        // If there are snapshots present (from fetch tool), find latest snapshot and load from it.
+        if (this.args.fromVersion === undefined) {
+            for (const name of fs.readdirSync(this.args.inDirName)) {
+                if (name.indexOf("9-") === 0) {
+                    // It can be any file, even created not detached and downloaded by fetch-tool
+                    // Do quick and ugly test to see if it's for sequenceNumber <= 1.
+                    // Note we rely here on a fact that .attributes are always downloaded by fetch tool first
+                    // and places as 0-... file. That may change in the future - better test would be to read
+                    // a tree.json and find actual .attributes blob
+                    const dir = `${this.args.inDirName}/${name}/decoded`;
+                    for (const file of fs.readdirSync(dir)) {
+                        try {
+                            if (file.indexOf("0-") === 0 &&
+                                JSON.parse(fs.readFileSync(`${dir}/${file}`).toString("utf-8")).sequenceNumber <= 1) {
+                                this.args.fromVersion = name;
+                            }
+                        } catch (err) {}
+                    }
+                    if (this.args.fromVersion === undefined) {
+                        // eslint-disable-next-line max-len
+                        console.error(`Failed to parse ${name} snapshot to fine .attributes blob and check sequence number. This may result in failure to process file. In such case, please point to any snapshot via --from argument.`);
+                    }
+                }
+            }
+        }
+
+        this.storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.fromVersion);
+        let description = this.args.fromVersion ? this.args.fromVersion : "main container";
         this.mainDocument = new Document(this.args, this.storage, description);
         await this.loadDoc(this.mainDocument);
         this.documents.push(this.mainDocument);
@@ -473,8 +619,8 @@ export class ReplayTool {
             this.args.from = this.mainDocument.fromOp;
         }
 
-        if (this.args.version !== undefined) {
-            console.log(`Starting from ${this.args.version}, seq# = ${this.mainDocument.currentOp}`);
+        if (this.args.fromVersion !== undefined) {
+            console.log(`Starting from ${this.args.fromVersion}, seq# = ${this.mainDocument.currentOp}`);
             if (this.mainDocument.currentOp > this.args.to) {
                 return Promise.reject(new Error("--to argument is below snapshot starting op. Nothing to do!"));
             }
@@ -485,7 +631,7 @@ export class ReplayTool {
                 let storage;
                 if (node.isDirectory()) {
                     // Did we load it already as main doc?
-                    if (node.name === this.args.version) {
+                    if (node.name === this.args.fromVersion) {
                         continue;
                     }
 
@@ -528,8 +674,8 @@ export class ReplayTool {
         // This does not seem to provide much value, we can disable it for per reasons
         // It adds about 10% to the duration of the test.
         if (this.args.snapFreq !== undefined || this.args.validateStorageSnapshots) {
-            const storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
-            description = this.args.version ? this.args.version : "secondary container";
+            const storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.fromVersion);
+            description = this.args.fromVersion ? this.args.fromVersion : "secondary container";
             this.documentNeverSnapshot = new Document(this.args, storage, description);
             await this.loadDoc(
                 this.documentNeverSnapshot);
@@ -544,7 +690,7 @@ export class ReplayTool {
                     continue;
                 }
                 // Did we load it already as main doc?
-                if (node.name === this.args.version) {
+                if (node.name === this.args.fromVersion) {
                     continue;
                 }
 
@@ -576,7 +722,7 @@ export class ReplayTool {
 
     private async mainCycle() {
         const originalSummaries =
-            this.args.snapFreq === undefined ? [...this.mainDocument.originalSummarySequenceNumbers] : [];
+            this.args.testSummaries ? [...this.mainDocument.originalSummarySequenceNumbers] : [];
         let nextSnapPoint;
         do {
             nextSnapPoint = originalSummaries.shift() ?? this.args.from;

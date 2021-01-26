@@ -130,6 +130,15 @@ export class FluidPackageCheck {
         return fixed;
     }
 
+    private static checkChildrenScripts(pkg: Package, name: string, expected: string[] | undefined, concurrent: boolean, fix: boolean) {
+        const expectedScript = expected ?
+            concurrent ?
+                `concurrently ${expected.map((value) => `npm:${value}`).join(" ")}` :
+                expected.map((value) => `npm run ${value}`).join(" && ")
+            : undefined;
+        return this.checkScript(pkg, name, expectedScript, fix);
+    }
+
     /**
      * mocha tests in packages/ should be in a "test:mocha" script so they can be run separately from jest tests
      */
@@ -140,7 +149,11 @@ export class FluidPackageCheck {
         const testJestScript = pkg.getScript("test:jest");
         const expectedTestScripts: string[] = [];
         if (testMochaScript) {
-            expectedTestScripts.push("npm run test:mocha");
+            if (pkg.getScript("start:tinylicious:test") !== undefined) {
+                expectedTestScripts.push("start-server-and-test start:tinylicious:test 3000 test:mocha")
+            } else {
+                expectedTestScripts.push("npm run test:mocha");
+            }
         }
         if (testJestScript) {
             expectedTestScripts.push("npm run test:jest");
@@ -248,7 +261,7 @@ export class FluidPackageCheck {
             }
 
             // build:test should be in build:commonjs if it exists, otherwise, it should be in build:compile
-            if (pkg.getScript("build:test")) {
+            if (pkg.getScript("build:test") || this.splitTestBuild(pkg)) {
                 if (pkg.getScript("build:commonjs")) {
                     buildCommonJs.push("build:test");
                 } else {
@@ -365,16 +378,21 @@ export class FluidPackageCheck {
     private static checkLintScripts(pkg: Package, fix: boolean) {
         let fixed = false;
         if (pkg.getScript("build")) {
-            if (this.checkScript(pkg, "lint", "npm run eslint", fix)) {
+            const hasPrettier = pkg.getScript("prettier");
+            const lintChildren = hasPrettier ? ["prettier", "eslint"] : ["eslint"];
+            if (this.checkChildrenScripts(pkg, "lint", lintChildren, false, fix)) {
                 fixed = true;
             }
-            if (this.checkScript(pkg, "lint:fix", "npm run eslint:fix", fix)) {
+            if (this.checkChildrenScripts(pkg, "lint:fix", lintChildren.map((value) => `${value}:fix`), false, fix)) {
                 fixed = true;
             }
             // TODO: for now, some jest test at the root isn't linted yet
-            const lintOnlySrc = pkg.getScript("eslint") === `eslint --format stylish src`;
+            const eslintScript = pkg.getScript("eslint");
+            const hasFormatStylish = eslintScript && eslintScript.search("--format stylish") >= 0;
+            const command = hasFormatStylish? "eslint --format stylish" : "eslint";
+            const lintOnlySrc = eslintScript === `${command} src`;
             const dirs = !lintOnlySrc && existsSync(path.join(pkg.directory, "tests")) ? "src tests" : "src";
-            const expectedEslintScript = `eslint --format stylish ${dirs}`;
+            const expectedEslintScript = `${command} ${dirs}`;
             if (this.checkScript(pkg, "eslint", expectedEslintScript, fix)) {
                 fixed = true;
             }
@@ -393,7 +411,10 @@ export class FluidPackageCheck {
         const expected = [
             "nyc",
             "*.log",
-            "**/*.tsbuildinfo"
+            "**/*.tsbuildinfo",
+            "src/test",
+            "dist/test",
+            "**/_api-extractor-temp/**",
         ];
         if (!existsSync(filename)) {
             this.logWarn(pkg, `.npmignore not exist`, fix);

@@ -110,6 +110,7 @@ export interface IChannelStorageService {
      */
     read(path: string): Promise<string>;
 
+    readBlob(path: string): Promise<ArrayBufferLike>;
     /**
      * Determines if there is an object contained at the given path.
      */

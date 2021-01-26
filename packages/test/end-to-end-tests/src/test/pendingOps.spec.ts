@@ -49,7 +49,13 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
     return pendingOps;
 };
 
-const tests = (args: ITestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    let documentId;
+    beforeEach(()=>{
+        args = argsFactory();
+        documentId = (args as any).documentId;
+    });
     let loader: ILoader;
     let container1: IContainer;
     let map1: SharedMap;
@@ -59,7 +65,7 @@ const tests = (args: ITestObjectProvider) => {
         container1 = await createAndAttachContainer(
             args.defaultCodeDetails,
             loader,
-            (args.urlResolver as any).createCreateNewRequest("defaultDocumentId"));
+            (args.urlResolver as any).createCreateNewRequest(documentId));
         args.opProcessingController.addDeltaManagers((container1 as any).deltaManager);
         const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
@@ -72,7 +78,7 @@ const tests = (args: ITestObjectProvider) => {
 
         // load container with pending ops, which should resend the op not sent by previous container
         const container3 = await loader.resolve(
-            { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
+            { url: `http://localhost:3000/${documentId}`, headers: { "fluid-cache": false } },
             pendingOps,
         );
         args.opProcessingController.addDeltaManagers(container3.deltaManager as any);
@@ -92,7 +98,7 @@ const tests = (args: ITestObjectProvider) => {
 
         // load with pending ops, which it should not resend because they were already sent successfully
         const container3 = await loader.resolve(
-            { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
+            { url: `http://localhost:3000/${documentId}`, headers: { "fluid-cache": false } },
             pendingOps,
         );
         args.opProcessingController.addDeltaManagers(container3.deltaManager as any);
@@ -112,7 +118,7 @@ const tests = (args: ITestObjectProvider) => {
 
         // load container with pending ops, which should resend the ops not sent by previous container
         const container3 = await loader.resolve(
-            { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
+            { url: `http://localhost:3000/${documentId}`, headers: { "fluid-cache": false } },
             pendingOps,
         );
         args.opProcessingController.addDeltaManagers(container3.deltaManager as any);
@@ -135,7 +141,7 @@ const tests = (args: ITestObjectProvider) => {
 
         // load container with pending ops, which should not resend the ops sent by previous container
         const container3 = await loader.resolve(
-            { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
+            { url: `http://localhost:3000/${documentId}`, headers: { "fluid-cache": false } },
             pendingOps,
         );
         args.opProcessingController.addDeltaManagers(container3.deltaManager as any);
@@ -157,7 +163,7 @@ const tests = (args: ITestObjectProvider) => {
 
         // load container with pending ops, which should resend the ops not sent by previous container
         const container3 = await loader.resolve(
-            { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
+            { url: `http://localhost:3000/${documentId}`, headers: { "fluid-cache": false } },
             pendingOps,
         );
         args.opProcessingController.addDeltaManagers(container3.deltaManager as any);
@@ -181,7 +187,7 @@ const tests = (args: ITestObjectProvider) => {
 
         // load container with pending ops, which should not resend the ops sent by previous container
         const container3 = await loader.resolve(
-            { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
+            { url: `http://localhost:3000/${documentId}`, headers: { "fluid-cache": false } },
             pendingOps,
         );
         args.opProcessingController.addDeltaManagers(container3.deltaManager as any);
@@ -203,7 +209,7 @@ const tests = (args: ITestObjectProvider) => {
 
         // load container with pending ops, which should resend the ops not sent by previous container
         const container3 = await loader.resolve(
-            { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
+            { url: `http://localhost:3000/${documentId}`, headers: { "fluid-cache": false } },
             pendingOps,
         );
         args.opProcessingController.addDeltaManagers(container3.deltaManager as any);
@@ -227,7 +233,7 @@ const tests = (args: ITestObjectProvider) => {
 
         // load container with pending ops, which should resend the ops not sent by previous container
         const container3 = await loader.resolve(
-            { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
+            { url: `http://localhost:3000/${documentId}`, headers: { "fluid-cache": false } },
             pendingOps,
         );
         args.opProcessingController.addDeltaManagers(container3.deltaManager as any);
@@ -249,7 +255,7 @@ const tests = (args: ITestObjectProvider) => {
         });
 
         const container3 = await loader.resolve(
-            { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
+            { url: `http://localhost:3000/${documentId}`, headers: { "fluid-cache": false } },
             pendingOps,
         );
         args.opProcessingController.addDeltaManagers(container3.deltaManager as any);
@@ -271,7 +277,7 @@ const tests = (args: ITestObjectProvider) => {
         await args.opProcessingController.process();
 
         const container3 = await loader.resolve(
-            { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
+            { url: `http://localhost:3000/${documentId}`, headers: { "fluid-cache": false } },
             pendingOps,
         );
         args.opProcessingController.addDeltaManagers(container3.deltaManager as any);
@@ -303,7 +309,7 @@ const tests = (args: ITestObjectProvider) => {
         });
 
         const container3 = await loader.resolve(
-            { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
+            { url: `http://localhost:3000/${documentId}`, headers: { "fluid-cache": false } },
             pendingOps,
         );
         await new Promise((res) => container3.on("connected", res));
@@ -331,7 +337,7 @@ const tests = (args: ITestObjectProvider) => {
         });
 
         const container3 = await loader.resolve(
-            { url: "http://localhost:3000/defaultDocumentId", headers: { "fluid-cache": false } },
+            { url: `http://localhost:3000/${documentId}`, headers: { "fluid-cache": false } },
             pendingOps,
         );
         await new Promise((res) => container3.on("connected", res));

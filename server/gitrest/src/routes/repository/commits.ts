@@ -4,6 +4,7 @@
  */
 
 import * as resources from "@fluidframework/gitresources";
+import { IGetRefParamsExternal } from "@fluidframework/server-services-client";
 import { Router } from "express";
 import * as nconf from "nconf";
 import git from "nodegit";
@@ -17,6 +18,7 @@ export async function getCommits(
     repo: string,
     ref: string,
     count: number,
+    readParams: IGetRefParamsExternal | undefined,
     externalStorageManager: IExternalStorageManager): Promise<resources.ICommitDetails[]> {
     const repository = await repoManager.open(owner, repo);
     try {
@@ -52,17 +54,20 @@ export async function getCommits(
         return Promise.all(detailedCommits);
     } catch (err) {
         winston.info(`getCommits error: ${err}`);
-        try {
-            const result = await externalStorageManager.read(repo, ref);
-            if (!result) {
+        if (readParams?.config?.enabled) {
+            try {
+                const result = await externalStorageManager.read(repo, ref);
+                if (!result) {
+                    return Promise.reject(err);
+                }
+                return getCommits(repoManager, owner, repo, ref, count, readParams, externalStorageManager);
+            } catch (bridgeError) {
+                // If file does not exist or error trying to look up commit, return the original error.
+                winston.error(`BridgeError: ${bridgeError}`);
                 return Promise.reject(err);
             }
-            return getCommits(repoManager, owner, repo, ref, count, externalStorageManager);
-        } catch (bridgeError) {
-            // If file does not exist or error trying to look up commit, return the original error.
-            winston.error(`BridgeError: ${bridgeError}`);
-            return Promise.reject(err);
         }
+        return Promise.reject(err);
     }
 }
 
@@ -84,6 +89,7 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
             request.params.repo,
             request.query.sha as string,
             Number(request.query.count as string),
+            utils.getReadParams(request.query?.config),
             externalStorageManager);
         return resultP.then(
             (result) => {
