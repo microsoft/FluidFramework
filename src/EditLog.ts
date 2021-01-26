@@ -13,6 +13,8 @@ import { EditId } from './Identifiers';
 /**
  * An ordered set of Edits associated with a SharedTree.
  * Supports fast lookup of edits by ID and enforces idempotence.
+ * Edits are virtualized, however, edits added during the current session are guaranteed to be available
+ * synchronously.
  * @public
  * @sealed
  */
