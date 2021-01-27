@@ -46,7 +46,7 @@ export interface ISocketIoRedisOptions {
         onHealthCheck?(callerId: string, startTime: number, error?: any): void;
     };
 
-    // called when recieving a message. useful for telemetry purposes
+    // called when receiving a message. useful for telemetry purposes
     onReceive?(channel: string, startTime: number, packet: any, error?: any): void;
 }
 
@@ -67,6 +67,7 @@ export interface ISocketIoRedisOptions {
  */
 export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapter {
     private static options: ISocketIoRedisOptions;
+    private static shouldDisableDefaultNamespace: boolean;
 
     // required for socketio.Adapter typing - however these are not used within socketio
     public rooms: any = undefined;
@@ -96,8 +97,9 @@ export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapt
     /**
      * Set the Redis connections to use
      */
-    public static async setup(options: ISocketIoRedisOptions) {
+    public static setup(options: ISocketIoRedisOptions, shouldDisableDefaultNamespace?: boolean) {
         this.options = options;
+        this.shouldDisableDefaultNamespace = shouldDisableDefaultNamespace ?? false;
     }
 
     constructor(public readonly nsp: socketio.Namespace) {
@@ -110,7 +112,7 @@ export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapt
 
         this.channel = `socket.io#${nsp.name}#`;
 
-        if (this.isDefaultNamespace) {
+        if (this.isDefaultNamespaceAndDisable) {
             // the default namespace
             // don't setup stuff for the default namespace. we only use /fluid. this will save memory
             // related to https://github.com/socketio/socket.io/issues/3089
@@ -121,8 +123,8 @@ export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapt
     /**
      * Check if this instance is connected to the default socket io namespace
      */
-    public get isDefaultNamespace() {
-        return this.nsp.name === "/";
+    public get isDefaultNamespaceAndDisable() {
+        return RedisSocketIoAdapter.shouldDisableDefaultNamespace && this.nsp.name === "/";
     }
 
     /**
@@ -146,7 +148,7 @@ export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapt
         socketId: string,
         roomIds: string[],
         callback?: ((err?: any) => void) | undefined): Promise<void> {
-        if (!this.isDefaultNamespace) {
+        if (!this.isDefaultNamespaceAndDisable) {
             const newRooms: string[] = [];
 
             for (const roomId of roomIds) {
@@ -189,7 +191,7 @@ export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapt
      * Removes a socket from a room
      */
     public del(socketId: string, roomId: string, callback?: ((err?: any) => void) | undefined): void {
-        if (!this.isDefaultNamespace) {
+        if (!this.isDefaultNamespaceAndDisable) {
             this.socketIdToRooms.get(socketId)?.delete(roomId);
 
             const shouldUnsubscribe = this.removeFromRoom(socketId, roomId);
@@ -209,7 +211,7 @@ export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapt
      * Removes a socket
      */
     public delAll(socketId: string, callback?: () => void): void {
-        if (!this.isDefaultNamespace) {
+        if (!this.isDefaultNamespaceAndDisable) {
             const rooms = this.socketIdToRooms.get(socketId);
             if (rooms) {
                 const unsubscribeRooms = [];
@@ -247,7 +249,7 @@ export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapt
             flags?: { [flag: string]: boolean; } | undefined;
         },
         remote?: boolean): void {
-        if (this.isDefaultNamespace) {
+        if (this.isDefaultNamespaceAndDisable) {
             return;
         }
 
