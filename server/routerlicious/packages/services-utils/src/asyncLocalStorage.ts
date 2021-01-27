@@ -7,23 +7,24 @@ import { AsyncLocalStorage } from "async_hooks";
 import * as uuid from "uuid";
 import { Request, Response, NextFunction } from "express";
 
-const asyncLocalStorage = new AsyncLocalStorage<string>();
+const defaultAsyncLocalStorage = new AsyncLocalStorage<string>();
 
-export function getCorrelationId(fallbackAsyncLocalStorage?: AsyncLocalStorage<string>): string | undefined {
-    if (fallbackAsyncLocalStorage) {
-        return fallbackAsyncLocalStorage.getStore();
+export function getCorrelationId(altAsyncLocalStorage?: AsyncLocalStorage<string>): string | undefined {
+    if (altAsyncLocalStorage) {
+        return altAsyncLocalStorage.getStore();
     } else {
-        return asyncLocalStorage.getStore();
+        return defaultAsyncLocalStorage.getStore();
     }
 }
 
-export const bindCorrelationId = (fallbackAsyncLocalStorage?: AsyncLocalStorage<string>, headerName: string = "x-correlation-id") =>
-    ((req: Request, res: Response, next: NextFunction): void => {
-        const id: string = req.header(headerName) || uuid.v4();
-        res.setHeader(headerName, id);
-        if (fallbackAsyncLocalStorage) {
-            fallbackAsyncLocalStorage.run(id, () => next());
-        } else {
-            asyncLocalStorage.run(id, () => next());
-        }
-    });
+export const bindCorrelationId = 
+    (altAsyncLocalStorage?: AsyncLocalStorage<string>, headerName: string = "x-correlation-id") =>
+        ((req: Request, res: Response, next: NextFunction): void => {
+            const id: string = req.header(headerName) || uuid.v4();
+            res.setHeader(headerName, id);
+            if (altAsyncLocalStorage) {
+                altAsyncLocalStorage.run(id, () => next());
+            } else {
+                defaultAsyncLocalStorage.run(id, () => next());
+            }
+        });
