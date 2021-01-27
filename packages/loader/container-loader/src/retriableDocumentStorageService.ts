@@ -17,7 +17,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
-import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { DeltaManager, getRetryDelayFromError } from "./deltaManager";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService {
@@ -110,9 +109,9 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
                 // If it is not retriable, then just throw the error.
                 if (!canRetryOnError(err)) {
                     this.logger.sendErrorEvent({
-                        eventName: `StorageCallsNonRetriable_${fetchCallName}`,
-                        numRetries,
-                        totalTime: TelemetryLogger.formatTick(performance.now() - startTime),
+                        eventName: `Storage_${fetchCallName}`,
+                        retry: numRetries,
+                        duration: performance.now() - startTime,
                     }, err);
                     throw err;
                 }
@@ -130,9 +129,9 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
         } while (!success);
         if (numRetries > 0) {
             this.logger.sendTelemetryEvent({
-                eventName: `StorageCallsRetried_${fetchCallName}`,
-                numRetries,
-                totalTime: TelemetryLogger.formatTick(performance.now() - startTime),
+                eventName: `Storage_${fetchCallName}`,
+                retry: numRetries,
+                duration: performance.now() - startTime,
             },
             lastError);
         }
