@@ -699,7 +699,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public resume() {
-        this.resumeInternal();
+        if (!this.closed) {
+            this.resumeInternal();
+        }
     }
 
     protected resumeInternal(args: IConnectionArgs = {}) {
@@ -1068,7 +1070,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Propagate current connection state through the system.
         this.propagateConnectionState();
 
-        if (!(pause || this.closed)) {
+        if (!pause) {
             this.resume();
         }
 
