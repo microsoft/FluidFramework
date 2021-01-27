@@ -29,8 +29,13 @@ interface ITestConfigs {
 interface IConfig {
     server: string;
     driveId: string;
-    username: string;
     profiles: ITestConfigs;
+}
+
+interface IOdspTestLoginInfo {
+    server: string;
+    username: string;
+    password: string;
 }
 
 const codeDetails: IFluidCodeDetails = {
@@ -48,22 +53,22 @@ const passwordTokenConfig = (username, password): OdspTokenConfig => ({
     password,
 });
 
-function createLoader(config: IConfig, password: string) {
+function createLoader(loginInfo: IOdspTestLoginInfo) {
     const documentServiceFactory = new OdspDocumentServiceFactory(
         async (_siteUrl: string, refresh: boolean, _claims?: string) => {
             const tokens = await odspTokenManager.getOdspTokens(
-                config.server,
+                loginInfo.server,
                 getMicrosoftConfiguration(),
-                passwordTokenConfig(config.username, password),
+                passwordTokenConfig(loginInfo.username, loginInfo.password),
                 refresh,
             );
             return tokens.accessToken;
         },
         async (refresh: boolean, _claims?: string) => {
             const tokens = await odspTokenManager.getPushTokens(
-                config.server,
+                loginInfo.server,
                 getMicrosoftConfiguration(),
-                passwordTokenConfig(config.username, password),
+                passwordTokenConfig(loginInfo.username, loginInfo.password),
                 refresh,
             );
             return tokens.accessToken;
@@ -79,8 +84,8 @@ function createLoader(config: IConfig, password: string) {
     return loader;
 }
 
-async function initialize(config: IConfig, password: string) {
-    const loader = createLoader(config, password);
+async function initialize(config: IConfig, loginInfo: IOdspTestLoginInfo) {
+    const loader = createLoader(loginInfo);
     const container = await loader.createDetachedContainer(codeDetails);
     container.on("error", (error) => {
         console.log(error);
@@ -96,26 +101,41 @@ async function initialize(config: IConfig, password: string) {
     return dataStoreUrl;
 }
 
-async function load(config: IConfig, url: string, password: string) {
-    const loader = createLoader(config, password);
+async function load(loginInfo: IOdspTestLoginInfo, url: string) {
+    const loader = createLoader(loginInfo);
     const respond = await loader.request({ url });
     // TODO: Error checking
     return respond.value as ILoadTest;
 }
 
+/**
+ * Parse a user/password out of login__odsp__test__accounts for the given server
+ * May throw if the env variable is missing or formatted incorrectly.
+ */
+function parseOdspTestLoginInfo(server: string): IOdspTestLoginInfo {
+    // expected format is { "serverA": [["user0", "pwd0"], ["user1", "pwd1"]] }
+    const loginInfo: { [server: string]: [string, string][] } =
+        JSON.parse(process.env.login__odsp__test__accounts);
+
+    // Just use the first user for the given server
+    const [username, password] = loginInfo[server][0];
+    return { server, username, password };
+}
+
 async function main() {
     let config: IConfig;
+    let loginInfo: IOdspTestLoginInfo;
     try {
         config = JSON.parse(fs.readFileSync("./testConfig.json", "utf-8"));
+        loginInfo = parseOdspTestLoginInfo(config.server);
     } catch (e) {
-        console.error("Failed to read testConfig.json");
+        console.error("Failed to parse testConfig.json or login__odsp__test__accounts env variable");
         console.error(e);
         process.exit(-1);
     }
 
     commander
         .version("0.0.1")
-        .requiredOption("-w, --password <password>", "Password for username provided in testconfig.json")
         .requiredOption("-p, --profile <profile>", "Which test profile to use from testConfig.json", "full")
         .option("-u, --url <url>", "Load an existing data store rather than creating new")
         .option("-r, --runId <runId>", "run a child process with the given id. Requires --url option.")
@@ -123,7 +143,6 @@ async function main() {
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .parse(process.argv);
 
-    const password: string = commander.password;
     const profile: string = commander.profile;
     let url: string | undefined = commander.url;
     const runId: number | undefined = commander.runId === undefined ? undefined : parseInt(commander.runId, 10);
@@ -150,7 +169,7 @@ async function main() {
                 runId,
                 testConfig: config.profiles[profile],
             };
-            const stressTest = await load(config, url, password);
+            const stressTest = await load(loginInfo, url);
             await stressTest.run(runConfig);
             console.log(`${runId.toString().padStart(3)}> exit`);
             process.exit(0);
@@ -167,28 +186,27 @@ async function main() {
     await odspTokenManager.getOdspTokens(
         config.server,
         getMicrosoftConfiguration(),
-        passwordTokenConfig(config.username, password),
+        passwordTokenConfig(loginInfo.username, loginInfo.password),
         undefined /* forceRefresh */,
         true /* forceReauth */,
     );
     await odspTokenManager.getPushTokens(
         config.server,
         getMicrosoftConfiguration(),
-        passwordTokenConfig(config.username, password),
+        passwordTokenConfig(loginInfo.username, loginInfo.password),
         undefined /* forceRefresh */,
         true /* forceReauth */,
     );
 
     if (url === undefined) {
         // Create a new file
-        url = await initialize(config, password);
+        url = await initialize(config, loginInfo);
     }
 
     const p: Promise<void>[] = [];
     for (let i = 0; i < config.profiles[profile].numClients; i++) {
         const args = [
             "./dist/nodeStressTest.js",
-            "--password", password,
             "--profile", profile,
             "--runId", i.toString(),
             "--url", url];
