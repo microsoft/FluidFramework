@@ -21,7 +21,7 @@ export function seedFromScriptIds(
                         const script = document.getElementById(id);
                         // eslint-disable-next-line no-null/no-null
                         if (script === null) {
-                            reject(`No script with id: ${id}`);
+                            reject(new Error(`No script with id: ${id}`));
                             return;
                         }
                         script.onload = () => {
