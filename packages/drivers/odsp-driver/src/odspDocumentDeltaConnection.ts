@@ -109,7 +109,7 @@ class SocketReference {
         socket.on("server_disconnect", (socketError: IOdspSocketError) => {
             // Treat all errors as recoverable, and rely on joinSession / reconnection flow to
             // filter out retryable vs. non-retryable cases.
-            const error = errorObjectFromSocketError(socketError);
+            const error = errorObjectFromSocketError(socketError, "server_disconnect");
             error.canRetry = true;
 
             // see comment in disconnected() getter
@@ -224,29 +224,20 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         try {
             await deltaConnection.initialize(connectMessage, timeoutMs);
         } catch (errorObject) {
-            // Test if it's NetworkError with IOdspSocketError. Note that there might be no IOdspSocketError on it in
-            // case we hit socket.io protocol errors! So we test canRetry property first - if it false, that means
-            // protocol is broken and reconnecting will not help.
-            if (errorObject !== null && typeof errorObject === "object" && errorObject.canRetry) {
-                const socketError: IOdspSocketError = errorObject.socketError;
-                if (typeof socketError === "object" && socketError !== null) {
-                    // We have to special-case error types here in terms of what is retriable.
-                    // These errors have to re retried, we just need new joinSession result to connect to right server:
-                    //    400: Invalid tenant or document id. The WebSocket is connected to a different document
-                    //         Document is full (with retryAfter)
-                    //    404: Invalid document. The document \"local/w1-...\" does not exist
-                    // But this has to stay not-retryable:
-                    //    406: Unsupported client protocol. This path is the only gatekeeper, have to fail!
-                    // This one is fine either way
-                    //    401/403: Code will retry once with new token either way, then it becomes fatal - on this path
-                    //         and on join Session path.
-                    //    501: (Fluid not enabled): this is fine either way, as joinSession is gatekeeper
-                    const error = errorObjectFromSocketError(socketError);
-                    if (socketError.code === 400 || socketError.code === 404) {
-                        error.canRetry = true;
-                    }
-                    // eslint-disable-next-line @typescript-eslint/no-throw-literal
-                    throw error;
+            if (errorObject !== null && typeof errorObject === "object") {
+                // We have to special-case error types here in terms of what is re-triable.
+                // These errors have to re-retried, we just need new joinSession result to connect to right server:
+                //    400: Invalid tenant or document id. The WebSocket is connected to a different document
+                //         Document is full (with retryAfter)
+                //    404: Invalid document. The document \"local/w1-...\" does not exist
+                // But this has to stay not-retriable:
+                //    406: Unsupported client protocol. This path is the only gatekeeper, have to fail!
+                // This one is fine either way
+                //    401/403: Code will retry once with new token either way, then it becomes fatal - on this path
+                //         and on join Session path.
+                //    501: (Fluid not enabled): this is fine either way, as joinSession is gatekeeper
+                if (errorObject.code === 400 || errorObject.code === 404) {
+                    errorObject.canRetry = true;
                 }
             }
             throw errorObject;
@@ -256,6 +247,21 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
     }
 
     private socketReference: SocketReference | undefined;
+
+    /**
+     * Error raising for socket.io issues
+     */
+    protected createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
+        // Note: we suspect the incoming error object is either:
+        // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
+        // - a socketError: add it to the OdspError object for driver to be able to parse it and reason
+        //   over it.
+        if (canRetry && typeof error === "object" && error !== null) {
+            return errorObjectFromSocketError(error, handler) as DriverError;
+        } else {
+            return super.createErrorObject(handler, error, canRetry);
+        }
+    }
 
     /**
      * Gets or create a socket io connection for the given key
