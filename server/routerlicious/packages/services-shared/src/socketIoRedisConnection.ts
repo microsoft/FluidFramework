@@ -25,7 +25,6 @@ export class SocketIORedisConnection implements ISocketIoRedisConnection {
 export class SocketIoRedisSubscriptionConnection
         extends SocketIORedisConnection
         implements ISocketIoRedisSubscriptionConnection {
-
     /**
      * Map of pubsub callbacks
      */
