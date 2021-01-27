@@ -249,7 +249,7 @@ export class SharedTree extends SharedObject {
 	 * @returns the current view of the tree.
 	 */
 	public get currentView(): Snapshot {
-		return this.logViewer.getSnapshotSynchronous(Number.POSITIVE_INFINITY);
+		return this.logViewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
 	}
 
 	/**

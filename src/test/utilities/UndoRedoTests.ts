@@ -63,8 +63,8 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			// Undo testing
 			const insertIndex = tree.edits.getIndexOfId(insertId);
 			const undoId: EditId = undoTree.editor.revert(
-				tree.edits.getAtIndexSynchronous(insertIndex),
-				tree.logViewer.getSnapshotSynchronous(insertIndex)
+				tree.edits.getEditInSessionAtIndex(insertIndex),
+				tree.logViewer.getSnapshotInSession(insertIndex)
 			);
 
 			if (!localMode) {
@@ -83,8 +83,8 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			// Redo testing
 			const undoIndex = tree.edits.getIndexOfId(undoId);
 			undoTree.editor.revert(
-				tree.edits.getAtIndexSynchronous(undoIndex),
-				tree.logViewer.getSnapshotSynchronous(undoIndex)
+				tree.edits.getEditInSessionAtIndex(undoIndex),
+				tree.logViewer.getSnapshotInSession(undoIndex)
 			);
 
 			if (!localMode) {
@@ -121,8 +121,8 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			// Undo testing
 			const deleteIndex = tree.edits.getIndexOfId(deleteId);
 			const undoId: EditId = undoTree.editor.revert(
-				tree.edits.getAtIndexSynchronous(deleteIndex),
-				tree.logViewer.getSnapshotSynchronous(deleteIndex)
+				tree.edits.getEditInSessionAtIndex(deleteIndex),
+				tree.logViewer.getSnapshotInSession(deleteIndex)
 			);
 
 			if (!localMode) {
@@ -140,8 +140,8 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			// Redo testing
 			const undoIndex = tree.edits.getIndexOfId(undoId);
 			undoTree.editor.revert(
-				tree.edits.getAtIndexSynchronous(undoIndex),
-				tree.logViewer.getSnapshotSynchronous(undoIndex)
+				tree.edits.getEditInSessionAtIndex(undoIndex),
+				tree.logViewer.getSnapshotInSession(undoIndex)
 			);
 
 			if (!localMode) {
@@ -178,8 +178,8 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			// Undo testing
 			const setValueIndex = tree.edits.getIndexOfId(setValueId);
 			const undoId: EditId = undoTree.editor.revert(
-				tree.edits.getAtIndexSynchronous(setValueIndex),
-				tree.logViewer.getSnapshotSynchronous(setValueIndex)
+				tree.edits.getEditInSessionAtIndex(setValueIndex),
+				tree.logViewer.getSnapshotInSession(setValueIndex)
 			);
 
 			if (!localMode) {
@@ -199,8 +199,8 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			// Redo testing
 			const undoIndex = tree.edits.getIndexOfId(undoId);
 			undoTree.editor.revert(
-				tree.edits.getAtIndexSynchronous(undoIndex),
-				tree.logViewer.getSnapshotSynchronous(undoIndex)
+				tree.edits.getEditInSessionAtIndex(undoIndex),
+				tree.logViewer.getSnapshotInSession(undoIndex)
 			);
 
 			if (!localMode) {
@@ -239,8 +239,8 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			// Undo testing
 			const firstInsertIndex = tree.edits.getIndexOfId(firstInsertId);
 			const undoId: EditId = undoTree.editor.revert(
-				tree.edits.getAtIndexSynchronous(firstInsertIndex),
-				tree.logViewer.getSnapshotSynchronous(firstInsertIndex)
+				tree.edits.getEditInSessionAtIndex(firstInsertIndex),
+				tree.logViewer.getSnapshotInSession(firstInsertIndex)
 			);
 
 			if (!localMode) {
@@ -263,8 +263,8 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			// Redo testing
 			const undoIndex = tree.edits.getIndexOfId(undoId);
 			undoTree.editor.revert(
-				tree.edits.getAtIndexSynchronous(undoIndex),
-				tree.logViewer.getSnapshotSynchronous(undoIndex)
+				tree.edits.getEditInSessionAtIndex(undoIndex),
+				tree.logViewer.getSnapshotInSession(undoIndex)
 			);
 
 			if (!localMode) {
@@ -302,8 +302,8 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			// Undo testing
 			const deleteIndex = tree.edits.getIndexOfId(deleteId);
 			const undoId: EditId = undoTree.editor.revert(
-				tree.edits.getAtIndexSynchronous(deleteIndex),
-				tree.logViewer.getSnapshotSynchronous(deleteIndex)
+				tree.edits.getEditInSessionAtIndex(deleteIndex),
+				tree.logViewer.getSnapshotInSession(deleteIndex)
 			);
 
 			if (!localMode) {
@@ -325,8 +325,8 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			// Redo testing
 			const undoIndex = tree.edits.getIndexOfId(undoId);
 			undoTree.editor.revert(
-				tree.edits.getAtIndexSynchronous(undoIndex),
-				tree.logViewer.getSnapshotSynchronous(undoIndex)
+				tree.edits.getEditInSessionAtIndex(undoIndex),
+				tree.logViewer.getSnapshotInSession(undoIndex)
 			);
 
 			if (!localMode) {
@@ -363,8 +363,8 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			// Undo testing
 			const setValueIndex = tree.edits.getIndexOfId(setValueId);
 			const undoId: EditId = undoTree.editor.revert(
-				tree.edits.getAtIndexSynchronous(setValueIndex),
-				tree.logViewer.getSnapshotSynchronous(setValueIndex)
+				tree.edits.getEditInSessionAtIndex(setValueIndex),
+				tree.logViewer.getSnapshotInSession(setValueIndex)
 			);
 
 			if (!localMode) {
@@ -384,8 +384,8 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			// Redo testing
 			const undoIndex = tree.edits.getIndexOfId(undoId);
 			undoTree.editor.revert(
-				tree.edits.getAtIndexSynchronous(undoIndex),
-				tree.logViewer.getSnapshotSynchronous(undoIndex)
+				tree.edits.getEditInSessionAtIndex(undoIndex),
+				tree.logViewer.getSnapshotInSession(undoIndex)
 			);
 
 			if (!localMode) {

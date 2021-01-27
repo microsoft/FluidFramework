@@ -239,7 +239,7 @@ export const Insert: {
 // @internal
 export interface LogViewer {
     getSnapshot(revision: number): Promise<Snapshot>;
-    getSnapshotSynchronous(revision: number): Snapshot;
+    getSnapshotInSession(revision: number): Snapshot;
     setKnownRevision(revision: number, view: Snapshot): void;
 }
 
@@ -279,9 +279,9 @@ export interface OrderedEditSet {
     // (undocumented)
     editIds: EditId[];
     // (undocumented)
-    getAtIndex(index: number): Promise<Edit>;
+    getEditAtIndex(index: number): Promise<Edit>;
     // (undocumented)
-    getAtIndexSynchronous(index: number): Edit;
+    getEditInSessionAtIndex(index: number): Edit;
     // @internal (undocumented)
     getEditLogSummary(): EditLogSummary;
     // (undocumented)
@@ -579,6 +579,6 @@ export type UuidString = string & {
 
 // Warnings were encountered during analysis:
 //
-// src/EditLog.ts:70:47 - (ae-forgotten-export) The symbol "SerializedChunk" needs to be exported by the entry point index.d.ts
+// src/EditLog.ts:72:47 - (ae-forgotten-export) The symbol "SerializedChunk" needs to be exported by the entry point index.d.ts
 
 ```
