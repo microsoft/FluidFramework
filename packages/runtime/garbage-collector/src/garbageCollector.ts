@@ -40,10 +40,13 @@ export function runGarbageCollection(
         } else {
             // Log a telemetry event if there is a node missing for a referenced id. This should not happen but for now
             // we don't assert. We can monitor telemetry for a while to figure out next steps.
-            logger.sendTelemetryEvent({
-                eventName: "MissingGCNode",
-                missingNodeId: id,
-            });
+
+            // This telemetry is currently too noisy. Start sending it GC is enabled end-to-end. See here for details -
+            // https://github.com/microsoft/FluidFramework/issues/4939
+            // logger.sendTelemetryEvent({
+            //     eventName: "MissingGCNode",
+            //     missingNodeId: id,
+            // });
         }
     }
 
