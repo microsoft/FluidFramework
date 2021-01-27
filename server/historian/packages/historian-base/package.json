@@ -84,6 +84,6 @@
     "sinon": "^9.2.3",
     "supertest": "^3.3.0",
     "tslint": "^5.12.0",
-    "typescript": "~3.8.2"
+    "typescript": "~4.1.3"
   }
 }

@@ -39,7 +39,7 @@ class YouTubeAPI {
     }
 
     private static async Create(): Promise<YouTubeAPI> {
-        const playerApiReadyP = new Promise((resolve) => {
+        const playerApiReadyP = new Promise<void>((resolve) => {
             window.onYouTubeIframeAPIReady = resolve;
         });
 
