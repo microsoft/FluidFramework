@@ -46,6 +46,11 @@ export interface IConnect {
      * An optional nonce used during connection to identify connection attempts
      */
     nonce?: string;
+
+    /**
+     * Represents the version of document on server, client wants to connect to.
+     */
+    epoch?: string;
 }
 
 /**
