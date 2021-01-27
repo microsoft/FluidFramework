@@ -70,8 +70,7 @@ export class FluidSerializer implements IFluidSerializer {
                 const absolutePath = value.url.startsWith("/")
                     ? value.url
                     : generateHandleContextPath(value.url, this.context);
-                const handle = new RemoteFluidObjectHandle(absolutePath, this.root);
-                return handle;
+                return new RemoteFluidObjectHandle(absolutePath, this.root);
             });
     }
 
