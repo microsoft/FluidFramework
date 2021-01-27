@@ -8,7 +8,7 @@
  */
 export class Deferred<T> {
     private readonly p: Promise<T>;
-    private res: ((value?: T | PromiseLike<T>) => void) | undefined;
+    private res: ((value: T | PromiseLike<T>) => void) | undefined;
     private rej: ((reason?: any) => void) | undefined;
     private completed: boolean = false;
 
@@ -39,7 +39,7 @@ export class Deferred<T> {
      *
      * @param value - the value to resolve the promise with
      */
-    public resolve(value?: T | PromiseLike<T>) {
+    public resolve(value: T | PromiseLike<T>) {
         if (this.res !== undefined) {
             this.completed = true;
             this.res(value);
