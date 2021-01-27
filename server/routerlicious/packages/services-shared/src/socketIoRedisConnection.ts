@@ -29,21 +29,21 @@ export class SocketIoRedisSubscriptionConnection
     /**
      * Map of pubsub callbacks
      */
-	private readonly subscriptions: Map<string, (channel: string, messageBuffer: Buffer) => void> = new Map();
+    private readonly subscriptions: Map<string, (channel: string, messageBuffer: Buffer) => void> = new Map();
 
     constructor(client: redis.RedisClient) {
         super(client);
 
         client.on("messageBuffer", (channelBuffer: Buffer, messageBuffer: Buffer) => {
-			const channel = channelBuffer.toString();
+            const channel = channelBuffer.toString();
 
-			const callback = this.subscriptions.get(channel);
-			if (!callback) {
-				return;
-			}
+            const callback = this.subscriptions.get(channel);
+            if (!callback) {
+                return;
+            }
 
-			callback(channel, messageBuffer);
-		});
+            callback(channel, messageBuffer);
+        });
     }
 
     public async subscribe(
@@ -51,14 +51,14 @@ export class SocketIoRedisSubscriptionConnection
         callback: (channel: string, messageBuffer: Buffer) => void,
         forceSubscribe?: boolean) {
         let channelsArray = Array.isArray(channels) ? channels : [channels];
-		const subscriptionsMap = this.subscriptions;
+        const subscriptionsMap = this.subscriptions;
 
-		if (!forceSubscribe) {
-			channelsArray = channelsArray.filter((channel) => !subscriptionsMap.has(channel));
-			if (channelsArray.length === 0) {
-				return;
-			}
-		}
+        if (!forceSubscribe) {
+            channelsArray = channelsArray.filter((channel) => !subscriptionsMap.has(channel));
+            if (channelsArray.length === 0) {
+                return;
+            }
+        }
 
         this.client.subscribe(...channelsArray);
 
@@ -69,11 +69,11 @@ export class SocketIoRedisSubscriptionConnection
 
     public async unsubscribe(channels: string | string[]) {
         let channelsArray = Array.isArray(channels) ? channels : [channels];
-		const subscriptionsMap = this.subscriptions;
+        const subscriptionsMap = this.subscriptions;
 
-		channelsArray = channelsArray.filter((channel) => subscriptionsMap.has(channel));
-		if (channelsArray.length === 0) {
-			return;
+        channelsArray = channelsArray.filter((channel) => subscriptionsMap.has(channel));
+        if (channelsArray.length === 0) {
+            return;
         }
 
         this.client.unsubscribe(channelsArray);
