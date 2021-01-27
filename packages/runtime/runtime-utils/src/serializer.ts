@@ -9,6 +9,7 @@ import {
     IFluidSerializer,
 } from "@fluidframework/core-interfaces";
 import { RemoteFluidObjectHandle } from "./remoteFluidObjectHandle";
+import { generateHandleContextPath } from "./dataStoreHandleContextUtils";
 import { isSerializedHandle } from "./utils";
 
 /**
@@ -64,12 +65,12 @@ export class FluidSerializer implements IFluidSerializer {
                     return value;
                 }
 
-                // 0.21 back-compat
-                // 0.22 onwards, we always use the routeContext of the root to create the RemoteFluidObjectHandle.
-                // We won't need to check for the if condition below once we remove the back-compat code.
-                const absoluteUrl = value.url.startsWith("/");
-                const handle = new RemoteFluidObjectHandle(value.url, absoluteUrl ? this.root : this.context);
-
+                // Old documents may have handles with relative path in their summaries. Convert these to absolute
+                // paths. This will ensure that future summaries will have absolute paths for these handles.
+                const absolutePath = value.url.startsWith("/")
+                    ? value.url
+                    : generateHandleContextPath(value.url, this.context);
+                const handle = new RemoteFluidObjectHandle(absolutePath, this.root);
                 return handle;
             });
     }
