@@ -11,7 +11,7 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger } from '@fluidframework/telemetry-utils';
-import { assert, fail } from './Common';
+import { assert, fail, SharedTreeTelemetryProperties } from './Common';
 import { EditLog, OrderedEditSet } from './EditLog';
 import {
 	Edit,
@@ -173,6 +173,8 @@ export class SharedTreeEditor {
 	}
 }
 
+const sharedTreeTelemetryProperties: SharedTreeTelemetryProperties = { isSharedTreeEvent: true };
+
 /**
  * A distributed tree.
  * @public
@@ -234,7 +236,7 @@ export class SharedTree extends SharedObject {
 		super(id, runtime, SharedTreeFactory.Attributes);
 		this.expensiveValidation = expensiveValidation;
 
-		this.logger = ChildLogger.create(super.logger, 'SharedTree');
+		this.logger = ChildLogger.create(runtime.logger, 'SharedTree', sharedTreeTelemetryProperties);
 		const { editLog, logViewer } = this.createEditLogFromSummary(
 			initialSummary,
 			this.expensiveValidation,
