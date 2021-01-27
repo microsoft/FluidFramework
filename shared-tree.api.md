@@ -14,6 +14,7 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import type { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
@@ -241,6 +242,9 @@ export interface Insert {
 export const Insert: {
     create: (nodes: EditNode[], destination: StablePlace) => Change[];
 };
+
+// @public
+export function isSharedTreeEvent(event: ITelemetryBaseEvent): boolean;
 
 // Warning: (ae-internal-missing-underscore) The name "LogViewer" should be prefixed with an underscore because the declaration is marked as @internal
 //
