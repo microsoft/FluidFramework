@@ -22,7 +22,8 @@ export interface SharedTreeSummary_0_0_2 extends SharedTreeSummaryBase {
 /**
  * Deserializes a JSON object produced by `serialize()` and uses it to initialize the tree with the encoded state.
  * @returns A SharedTree summary or an ErrorString if the summary could not be interpreted.
- * */
+ *
+ */
 export function deserialize(jsonSummary: string): SharedTreeSummaryBase | ErrorString {
 	let summary: Partial<SharedTreeSummaryBase>;
 	try {
