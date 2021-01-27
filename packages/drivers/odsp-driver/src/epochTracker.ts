@@ -46,8 +46,8 @@ export class EpochTracker {
     }
 
     public async validateEpochFromPush(details: IConnected) {
-        const epoch = (details as any).epoch;
-        assert(epoch, "Connection details should contain epoch");
+        const epoch = details.epoch;
+        assert(epoch !== undefined, "Connection details should contain epoch");
         try {
             this.validateEpochFromResponse(epoch, "push");
         } catch (error) {
