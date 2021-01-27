@@ -30,7 +30,7 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.19.1",
     "@fluidframework/core-interfaces": "^0.34.0",
-    "@fluidframework/protocol-definitions": "^0.1018.0"
+    "@fluidframework/protocol-definitions": "^0.1019.0-0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0-0",
