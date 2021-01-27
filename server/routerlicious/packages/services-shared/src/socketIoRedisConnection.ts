@@ -6,6 +6,10 @@
 import * as redis from "redis";
 import { ISocketIoRedisConnection, ISocketIoRedisSubscriptionConnection } from "./redisSocketIoAdapter";
 
+/**
+ * Simple implementation of ISocketIoRedisConnection, which wraps a node-redis client
+ * and only provides Pub functionality
+ */
 export class SocketIORedisConnection implements ISocketIoRedisConnection {
     constructor(protected readonly client: redis.RedisClient) {}
 
@@ -14,12 +18,17 @@ export class SocketIORedisConnection implements ISocketIoRedisConnection {
     }
 }
 
+/**
+ * Simple implementation of ISocketIoRedisSubscriptionConnection, which wraps a node-redis client
+ * and provides both pub and sub functionality
+ */
 export class SocketIoRedisSubscriptionConnection
         extends SocketIORedisConnection
         implements ISocketIoRedisSubscriptionConnection {
+
     /**
-	 * Map of pubsub callbacks
-	 */
+     * Map of pubsub callbacks
+     */
 	private readonly subscriptions: Map<string, (channel: string, messageBuffer: Buffer) => void> = new Map();
 
     constructor(client: redis.RedisClient) {

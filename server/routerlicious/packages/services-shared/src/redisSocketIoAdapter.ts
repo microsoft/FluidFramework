@@ -56,7 +56,7 @@ export interface ISocketIoRedisOptions {
  * - Creates per room subscriptions which significantly reduces Redis server load for
  * Fluid scenarios when running a large amount of Fluid frontend servers.
  * - Contains a health checker that verifies each room is works *
- * - Disables rooms for the default "/" namespace to reduce memory usage
+ * - Optionally disables rooms for the default "/" namespace to reduce memory usage
  * (https://github.com/socketio/socket.io/issues/3089)
  * - Callbacks for telemetry logging
  * The Redis pubsub channels are compatible with socket.io-redis
