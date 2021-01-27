@@ -16,6 +16,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
 import { IOdspSocketError } from "./contracts";
+import { EpochTracker } from "./epochTracker";
 import { errorObjectFromSocketError } from "./odspError";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
@@ -190,7 +191,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         url: string,
         telemetryLogger: ITelemetryLogger,
         timeoutMs: number,
-        epoch?: string): Promise<IDocumentDeltaConnection>
+        epochTracker: EpochTracker): Promise<IDocumentDeltaConnection>
     {
         // enable multiplexing when the websocket url does not include the tenant/document id
         const parsedUrl = new URL(url);
@@ -213,7 +214,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             token,  // Token is going to indicate tenant level information, etc...
             versions: protocolVersions,
             nonce: uuid(),
-            epoch,
+            epoch: epochTracker.fluidEpoch,
         };
 
         const deltaConnection = new OdspDocumentDeltaConnection(
@@ -225,6 +226,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
         try {
             await deltaConnection.initialize(connectMessage, timeoutMs);
+            await epochTracker.validateEpochFromPush(deltaConnection.details);
         } catch (errorObject) {
             if (errorObject !== null && typeof errorObject === "object") {
                 // We have to special-case error types here in terms of what is re-triable.

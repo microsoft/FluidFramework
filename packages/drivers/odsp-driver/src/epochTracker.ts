@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { fluidEpochMismatchError, OdspErrorType } from "@fluidframework/odsp-doclib-utils";
 import { ThrottlingError } from "@fluidframework/driver-utils";
+import { IConnected } from "@fluidframework/protocol-definitions";
 import { fetchAndParseAsJSONHelper, fetchHelper, IOdspResponse } from "./odspUtils";
 import { ICacheEntry, IFileEntry, LocalPersistentCacheAdapter } from "./odspCache";
 import { RateLimiter } from "./rateLimiter";
@@ -42,6 +43,17 @@ export class EpochTracker {
 
     public get fluidEpoch() {
         return this._fluidEpoch;
+    }
+
+    public async validateEpochFromPush(details: IConnected) {
+        const epoch = (details as any).epoch;
+        assert(epoch, "Connection details should contain epoch");
+        try {
+            this.validateEpochFromResponse(epoch, FetchType.push);
+        } catch (error) {
+            await this.checkForEpochError(error, epoch, FetchType.push);
+            throw error;
+        }
     }
 
     public async fetchFromCache<T>(
@@ -227,4 +239,5 @@ export enum FetchType {
     snaphsotTree = "snapshotTree",
     treesLatest = "treesLatest",
     uploadSummary = "uploadSummary",
+    push = "push",
 }

@@ -76,7 +76,7 @@ export class DocumentDeltaConnection
      */
     protected closed: boolean = false;
 
-    private get details(): IConnected {
+    public get details(): IConnected {
         if (!this._details) {
             throw new Error("Internal error: calling method before _details is initialized!");
         }

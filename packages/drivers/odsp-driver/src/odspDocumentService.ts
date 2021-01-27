@@ -338,7 +338,7 @@ export class OdspDocumentService implements IDocumentService {
                     nonAfdUrl,
                     this.logger,
                     60000,
-                    this.epochTracker.fluidEpoch,
+                    this.epochTracker,
                 );
                 const endTime = performance.now();
                 this.logger.sendPerformanceEvent({
@@ -378,7 +378,7 @@ export class OdspDocumentService implements IDocumentService {
                     afdUrl,
                     this.logger,
                     60000,
-                    this.epochTracker.fluidEpoch,
+                    this.epochTracker,
                 );
                 const endTime = performance.now();
                 // Set the successful connection attempt in the cache so we can skip the non-AFD failure the next time
