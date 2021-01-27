@@ -2,6 +2,7 @@
 - [Normalizing enum ContainerErrorType](#normalizing-enum-containererrortype)
 - [Map and Directory typing changes from enabling strictNullCheck](#map-and-directory-typing-changes-from-enabling-strictNullCheck)
 - [MergeTree's ReferencePosition.getTileLabels and ReferencePosition.getRangeLabels() return undefined if it doesn't exist](#mergetree-referenceposition-gettilelabels-getrangelabels-changes)
+- [Containers from Loader.request() are now cached by default](#Containers-from-Loader.request()-are-now-cached-by-default)
 
 ## Normalizing enum ContainerErrorType
 In an effort to clarify error categorization, a name and value in this enumeration were changed.
@@ -11,6 +12,9 @@ Typescript compile options `strictNullCheck` is enabled for the `@fluidframework
 
 ## MergeTree ReferencePosition getTileLabels getRangeLabels changes
 This includes LocalReference and Marker.  getTileLabels and getRangeLabels methods will return undefined instead of creating an empty if the properties for tile labels and range labels is not set.
+
+## Containers from Loader.request() are now cached by default
+Some loader request header options that previously prevented caching (`pause: true` and `reconnect: false`) no longer do.  Callers must now explicitly spcify `cache: false` in the request header to prevent caching of the returned container.  Containers are evicted from the cache in their `closed` event, and closed containers that are requested are not cached.
 
 ## 0.32 Breaking changes
 - [Node version 12.17 required](#Node-version-update)
