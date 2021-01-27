@@ -35,7 +35,7 @@
     "@sentry/node": "^5.6.2",
     "debug": "^4.1.1",
     "jsonwebtoken": "^8.5.1",
-    "nconf": "^0.10.0",
+    "nconf": "^0.11.0",
     "uuid": "^8.3.1",
     "winston": "3.2.1"
   },

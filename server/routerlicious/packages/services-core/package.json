@@ -31,7 +31,7 @@
     "@types/nconf": "^0.0.37",
     "@types/node": "^12.19.0",
     "debug": "^4.1.1",
-    "nconf": "^0.10.0"
+    "nconf": "^0.11.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0-0",
