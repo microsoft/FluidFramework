@@ -17,7 +17,7 @@ export function getCorrelationId(altAsyncLocalStorage?: AsyncLocalStorage<string
     }
 }
 
-export const bindCorrelationId = 
+export const bindCorrelationId =
     (altAsyncLocalStorage?: AsyncLocalStorage<string>, headerName: string = "x-correlation-id") =>
         ((req: Request, res: Response, next: NextFunction): void => {
             const id: string = req.header(headerName) || uuid.v4();
