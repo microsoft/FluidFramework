@@ -138,11 +138,11 @@ describe("Loader.request", () => {
 
     it("loaded container is paused using loader pause flags", async () => {
         // load the container paused
-        const container2 = await loader.resolve({
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            url: (await container.getAbsoluteUrl("/"))!,
-            headers: { [LoaderHeader.pause]: true },
-         });
+        const headers = {
+            [LoaderHeader.cache]: false,
+            [LoaderHeader.pause]: true,
+        };
+        const container2 = await loader.resolve({ url: documentLoadUrl, headers });
         opProcessingController.addDeltaManagers(container2.deltaManager);
 
         // create a new data store using the original container
@@ -150,7 +150,7 @@ describe("Loader.request", () => {
         // this binds newDataStore to dataStore1
         dataStore1._root.set("key", newDataStore.handle);
 
-        // the dataStore3 shouldn't exist in container2 yet.
+        // the dataStore3 shouldn't exist in container2 yet (because the loader isn't caching the container)
         try {
             await requestFluidObject(container2, {
                 url: newDataStore.id,
@@ -172,5 +172,35 @@ describe("Loader.request", () => {
             headers: { wait: false },   // data store load default wait to true currently
         });
         assert(newDataStore2 instanceof TestSharedDataObject2, "requestFromLoader returns the wrong type for object2");
+    });
+
+    it("caches the loaded container across multiple requests as expected", async () => {
+        // load the containers paused
+        const container1 = await loader.resolve({ url: documentLoadUrl, headers: { [LoaderHeader.pause]: true } });
+        opProcessingController.addDeltaManagers(container1.deltaManager);
+        const container2 = await loader.resolve({ url: documentLoadUrl, headers: { [LoaderHeader.pause]: true } });
+
+        assert.strictEqual(container1, container2, "container not cached across multiple loader requests");
+
+        // create a new data store using the original container
+        const newDataStore = await testSharedDataObjectFactory2.createInstance(dataStore1._context.containerRuntime);
+        // this binds newDataStore to dataStore1
+        dataStore1._root.set("key", newDataStore.handle);
+
+        (container1 as Container).resume();
+
+        // Flush all the ops
+        await opProcessingController.process();
+
+        const sameDataStore1 = await requestFluidObject(container1, {
+            url: newDataStore.id,
+            headers: { wait: false },   // data store load default wait to true currently
+        });
+        const sameDataStore2 = await requestFluidObject(container2, {
+            url: newDataStore.id,
+            headers: { wait: false },   // data store load default wait to true currently
+        });
+        assert.strictEqual(sameDataStore1, sameDataStore2,
+            "same containers do not return same data store for same request");
     });
 });

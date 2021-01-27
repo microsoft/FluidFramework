@@ -32,7 +32,7 @@
     "express": "^4.16.4",
     "json-stringify-safe": "^5.0.1",
     "morgan": "^1.9.1",
-    "nconf": "^0.10.0",
+    "nconf": "^0.11.0",
     "nodegit": "^0.26.1",
     "split": "^1.0.0",
     "uuid": "^3.3.2",

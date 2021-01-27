@@ -264,11 +264,16 @@ export class FluidPackageCheck {
             if (pkg.getScript("build:test") || this.splitTestBuild(pkg)) {
                 if (pkg.getScript("build:commonjs")) {
                     buildCommonJs.push("build:test");
+                    // build common js si not concurrent by default
                 } else {
                     buildCompile.push("build:test");
                     // test is depended on tsc, so we can't do it concurrently for build:compile
-                    concurrentBuildCompile = false;
+                    concurrentBuildCompile = !this.splitTestBuild(pkg);
                 }
+            }
+
+            if (pkg.getScript("build:realsvctest")) {
+                buildCompile.push("build:realsvctest");
             }
 
             // build:commonjs build:es5 and build:esnext should be in build:compile if they exist
@@ -601,6 +606,7 @@ export class FluidPackageCheck {
     }
 
     public static splitTestBuild(pkg: Package) {
-        return existsSync(path.join(this.getTestDir(pkg), "tsconfig.json"));
+        return existsSync(path.join(pkg.directory, "tsconfig.json"))
+            && existsSync(path.join(this.getTestDir(pkg), "tsconfig.json"));
     }
 };
