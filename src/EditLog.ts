@@ -58,7 +58,7 @@ export interface OrderedEditSet {
 	 * @returns the list of edits that do not have associated blob handles.
 	 * @internal
 	 */
-	getEditLogSummary(): EditLogSummary;
+	getEditLogSummary(virtualized?: boolean): EditLogSummary;
 }
 
 /**
@@ -412,7 +412,25 @@ export class EditLog implements OrderedEditSet {
 	/**
 	 * Returns information about the edit log.
 	 */
-	public getEditLogSummary(): EditLogSummary {
+	public getEditLogSummary(virtualized?: boolean): EditLogSummary {
+		if (virtualized) {
+			return {
+				editChunks: this.editChunks.toArray().map(([key, { handle, edits }]) => {
+					if (handle !== undefined) {
+						return {
+							key,
+							chunk: assertNotUndefined(
+								this.serializationHelpers,
+								'Edit logs that store handles should include serialization helpers.'
+							).serializeHandle(handle),
+						};
+					}
+					return { key, chunk: assertNotUndefined(edits) };
+				}),
+				editIds: this.sequencedEditIds,
+			};
+		}
+
 		// TODO:#49901: When writing format version 0.1.0, change to prefer sending the handle when not undefined.
 		// For now, no chunks are evicted so edits are sent as is to be aggregated during summary write.
 		return {

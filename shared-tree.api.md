@@ -283,7 +283,7 @@ export interface OrderedEditSet {
     // (undocumented)
     getAtIndexSynchronous(index: number): Edit;
     // @internal (undocumented)
-    getEditLogSummary(): EditLogSummary;
+    getEditLogSummary(virtualized?: boolean): EditLogSummary;
     // (undocumented)
     getIdAtIndex(index: number): EditId;
     // (undocumented)
@@ -345,6 +345,7 @@ export class SharedTree extends SharedObject {
     get edits(): OrderedEditSet;
     equals(sharedTree: SharedTree): boolean;
     static getFactory(): SharedTreeFactory;
+    initiateEditChunkUpload(): Promise<void>;
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // @internal
@@ -579,6 +580,6 @@ export type UuidString = string & {
 
 // Warnings were encountered during analysis:
 //
-// src/EditLog.ts:70:47 - (ae-forgotten-export) The symbol "SerializedChunk" needs to be exported by the entry point index.d.ts
+// src/EditLog.ts:72:47 - (ae-forgotten-export) The symbol "SerializedChunk" needs to be exported by the entry point index.d.ts
 
 ```

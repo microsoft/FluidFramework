@@ -16,13 +16,11 @@ import {
 // import { expect } from 'chai';
 import { editsPerChunk } from '../EditLog';
 import { newEdit, setTrait } from '../EditUtilities';
-import { EditId } from '../Identifiers';
 import { Edit } from '../PersistedTypes';
 import { SharedTree } from '../SharedTree';
 import { makeTestNode, testTrait } from './utilities/TestUtilities';
 import { expect } from 'chai';
-import { ISerializedHandle } from '@fluidframework/core-interfaces';
-import { assertNotUndefined } from '../Common';
+import { fullHistorySummarizer_0_1_0 } from '../Summary';
 
 export class TestDataObject extends DataObject {
 	public static readonly type = '@fluid-example/test-dataStore';
@@ -57,7 +55,7 @@ const createTestFluidDataStoreFactory = (registry: ChannelFactoryRegistry = []):
 	return new TestFluidObjectFactory(registry);
 };
 
-describe.skip('SharedTree history virtualization', () => {
+describe('SharedTree history virtualization', () => {
 	const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
 		new TestContainerRuntimeFactory(
 			TestDataObject.type,
@@ -75,48 +73,43 @@ describe.skip('SharedTree history virtualization', () => {
 	};
 
 	let sharedTree1: SharedTree;
-	let sharedTree2: SharedTree;
 
 	beforeEach(async () => {
 		const container1 = (await localTestObjectProvider.makeTestContainer(testContainerConfig)) as Container;
 		const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, 'default');
 		sharedTree1 = await dataObject1.getSharedObject<SharedTree>(treeId);
+		sharedTree1.summarizer = fullHistorySummarizer_0_1_0;
 	});
 
-	// TODO:#49901: Enable test when format version 0.1.0 is written.
-	it('test', async () => {
+	it('can upload edit chunks and load chunks from handles', async () => {
 		const expectedEdits: Edit[] = [];
-		const expectedEditIds: EditId[] = [];
 
-		// Add enough edits to make up one chunk
+		// Add some edits to create a chunk with.
 		while (expectedEdits.length < editsPerChunk) {
-			const [id, edit] = newEdit(setTrait(testTrait, [makeTestNode()]));
-			expectedEditIds.push(id);
+			const edit = newEdit(setTrait(testTrait, [makeTestNode()]));
 			expectedEdits.push(edit);
-			sharedTree1.processLocalEdit(id, edit);
+			sharedTree1.processLocalEdit(edit);
 		}
 
 		// Wait for the ops to to be submitted and processed across the containers.
 		await localTestObjectProvider.opProcessingController.process();
 
-		// Create summaries until the chunk handle is returned
-		let handle: ISerializedHandle | undefined = undefined;
+		// Upload the edits
+		await sharedTree1.initiateEditChunkUpload();
 
-		while (handle === undefined) {
-			const chunk = assertNotUndefined(assertNotUndefined(sharedTree1.saveSummary().editHistory).editChunks)[0];
-			if (Array.isArray(chunk)) {
-				continue;
-			}
+		// Wait for the handle op to be processed.
+		await localTestObjectProvider.opProcessingController.process();
 
-			handle = chunk;
-		}
+		const summary = sharedTree1.saveSummary();
 
-		// Load a second tree
+		// Load a second tree using the summary
 		const container2 = (await localTestObjectProvider.loadTestContainer(testContainerConfig)) as Container;
 		const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, 'default');
-		sharedTree2 = await dataObject2.getSharedObject<SharedTree>(treeId);
+		const sharedTree2 = await dataObject2.getSharedObject<SharedTree>(treeId);
+
+		sharedTree2.loadSummary(summary);
 
 		// Ensure chunked edit can be retrieved
-		expect(sharedTree2.edits.getAtIndex(2)).to.equal(expectedEdits[2]);
+		expect((await sharedTree2.edits.getAtIndex(2)).id).to.equal(expectedEdits[2].id);
 	});
 });
