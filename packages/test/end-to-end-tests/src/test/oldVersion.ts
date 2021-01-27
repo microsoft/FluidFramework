@@ -157,8 +157,11 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
      */
     public async makeTestContainer(testContainerConfig?: TestContainerConfigType) {
         const loader = this.makeTestLoader(testContainerConfig);
-        const container =
-            await createAndAttachContainer(defaultDocumentId, defaultCodeDetails, loader, this.urlResolver);
+        const container = await createAndAttachContainer(
+            defaultCodeDetails,
+            loader,
+            this.urlResolver.createCreateNewRequest(defaultDocumentId),
+        );
 
         // TODO: the old version delta manager on the container doesn't do pause/resume count
         // We can't use it to do pause/resume, or it will conflict with the call from the runtime's
@@ -300,7 +303,7 @@ export async function createOldContainer(
     codeDetails,
 ): Promise<IContainer> {
     const loader = createLocalLoader(packageEntries, server, urlResolver, { hotSwapContext: true });
-    return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+    return createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
 }
 
 export function createTestObjectProvider(
@@ -309,7 +312,7 @@ export function createTestObjectProvider(
     oldDataStoreRuntime: boolean,
     type: string,
     serviceConfiguration?: Partial<newVer.IClientConfiguration>,
-    driver?: newVer.ITestDriver,
+    driver?: newVer.TestDriver,
 ): ITestObjectProvider {
     const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
         const dataStoreFactory = oldDataStoreRuntime

@@ -19,7 +19,7 @@ import {
     getMicrosoftConfiguration,
 } from "@fluidframework/tool-utils";
 import { IClientConfig } from "@fluidframework/odsp-doclib-utils";
-import { ITestDriver } from "./interfaces";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { pkgVersion } from "./packageVersion";
 
 const passwordTokenConfig = (username, password): OdspTokenConfig => ({

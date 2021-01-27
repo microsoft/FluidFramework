@@ -299,7 +299,7 @@ export async function createOldContainer(
     urlResolver,
     codeDetails,
 ): Promise<IContainer> {
-    const loader = createLocalLoader(packageEntries, server, urlResolver);
+    const loader = createLocalLoader(packageEntries, server, urlResolver, { hotSwapContext: true });
     return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
 }
 
@@ -309,7 +309,7 @@ export function createTestObjectProvider(
     oldDataStoreRuntime: boolean,
     type: string,
     serviceConfiguration?: Partial<newVer.IClientConfiguration>,
-    driver?: newVer.ITestDriver,
+    driver?: newVer.TestDriver,
 ): ITestObjectProvider {
     const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
         const dataStoreFactory = oldDataStoreRuntime

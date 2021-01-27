@@ -349,8 +349,9 @@ async function* generateSequencedMessagesFromDeltaStorage(deltaStorage: IDocumen
     let lastSeq = 0;
     const batch = 2000;
     while (true) {
-        const messages = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
+        const { messages, partialResult } = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
         if (messages.length === 0) {
+            assert(!partialResult);
             break;
         }
         yield messages;

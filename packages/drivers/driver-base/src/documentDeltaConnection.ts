@@ -12,7 +12,6 @@ import {
 import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
-    IClient,
     IClientConfiguration,
     IConnect,
     IConnected,
@@ -24,29 +23,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { debug } from "./debug";
-
-const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
-
-/**
- * Error raising for socket.io issues
- */
-function createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
-    // Note: we suspect the incoming error object is either:
-    // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
-    // - a socketError: add it to the OdspError object for driver to be able to parse it and reason
-    //   over it.
-    let message = `socket.io: ${handler}`;
-    if (error !== undefined) {
-        message = `${message}: ${error}`;
-    }
-    const errorObj = createGenericNetworkError(
-        message,
-        canRetry,
-    );
-
-    (errorObj as any).socketError = error;
-    return errorObj;
-}
 
 interface IEventListener {
     event: string;
@@ -60,54 +36,6 @@ export class DocumentDeltaConnection
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
     implements IDocumentDeltaConnection {
     static readonly eventsToForward = ["nack", "disconnect", "op", "signal", "pong", "error"];
-
-    /**
-     * Create a DocumentDeltaConnection
-     *
-     * @param tenantId - the ID of the tenant
-     * @param id - document ID
-     * @param token - authorization token for storage service
-     * @param io - websocket library
-     * @param client - information about the client
-     * @param mode - connection mode
-     * @param url - websocket URL
-     * @param timeoutMs - timeout for socket connection attempt in milliseconds (default: 20000)
-     */
-    public static async create(
-        tenantId: string,
-        id: string,
-        token: string | null,
-        io: SocketIOClientStatic,
-        client: IClient,
-        url: string,
-        logger: ITelemetryLogger,
-        timeoutMs: number = 20000): Promise<IDocumentDeltaConnection> {
-        const socket = io(
-            url,
-            {
-                query: {
-                    documentId: id,
-                    tenantId,
-                },
-                reconnection: false,
-                transports: ["websocket"],
-                timeout: timeoutMs,
-            });
-
-        const connectMessage: IConnect = {
-            client,
-            id,
-            mode: client.mode,
-            tenantId,
-            token,  // Token is going to indicate tenant level information, etc...
-            versions: protocolVersions,
-        };
-
-        const deltaConnection = new DocumentDeltaConnection(socket, id, logger);
-
-        await deltaConnection.initialize(connectMessage, timeoutMs);
-        return deltaConnection;
-    }
 
     /**
      * Last known sequence number to ordering service at the time of connection
@@ -385,18 +313,18 @@ export class DocumentDeltaConnection
 
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
-                fail(true, createErrorObject("connect_error", error));
+                fail(true, this.createErrorObject("connect_error", error));
             });
 
             // Listen for timeouts
             this.addConnectionListener("connect_timeout", () => {
-                fail(true, createErrorObject("connect_timeout"));
+                fail(true, this.createErrorObject("connect_timeout"));
             });
 
             // Socket can be disconnected while waiting for Fluid protocol messages
             // (connect_document_error / connect_document_success)
             this.addConnectionListener("disconnect", (reason) => {
-                fail(true, createErrorObject("disconnect", reason));
+                fail(true, this.createErrorObject("disconnect", reason));
             });
 
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
@@ -420,7 +348,7 @@ export class DocumentDeltaConnection
             this.addTrackedListener("error", ((error) => {
                 // First, raise an error event, to give clients a chance to observe error contents
                 // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
-                const err = createErrorObject("error", error, error !== "Invalid namespace");
+                const err = this.createErrorObject("error", error, error !== "Invalid namespace");
                 this.emit("error", err);
                 // Disconnect socket - required if happened before initial handshake
                 fail(true, err);
@@ -436,14 +364,14 @@ export class DocumentDeltaConnection
 
                 // This is not an socket.io error - it's Fluid protocol error.
                 // In this case fail connection and indicate that we were unable to create connection
-                fail(false, createErrorObject("connect_document_error", error));
+                fail(false, this.createErrorObject("connect_document_error", error));
             }));
 
             this.socket.emit("connect_document", connectMessage);
 
             // Give extra 2 seconds for handshake on top of socket connection timeout
             this.socketConnectionTimeout = setTimeout(() => {
-                fail(false, createErrorObject("Timeout waiting for handshake from ordering service"));
+                fail(false, this.createErrorObject("Timeout waiting for handshake from ordering service"));
             }, timeout + 2000);
         });
     }
@@ -497,5 +425,25 @@ export class DocumentDeltaConnection
             this.socket.off(event, listener);
         }
         this.connectionListeners = [];
+    }
+
+    /**
+     * Error raising for socket.io issues
+     */
+    protected createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
+        // Note: we suspect the incoming error object is either:
+        // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
+        // - a socketError: add it to the OdspError object for driver to be able to parse it and reason
+        //   over it.
+        let message = `socket.io: ${handler}`;
+        if (typeof error === "string") {
+            message = `${message}: ${error}`;
+        }
+        const errorObj = createGenericNetworkError(
+            message,
+            canRetry,
+        );
+
+        return errorObj;
     }
 }

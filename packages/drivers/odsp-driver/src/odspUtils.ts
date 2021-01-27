@@ -71,11 +71,11 @@ export async function fetchHelper(
         const response = fetchResponse as any as Response;
         // Let's assume we can retry.
         if (!response) {
-            throwOdspNetworkError(`No response from the server`, fetchIncorrectResponse, response);
+            throwOdspNetworkError(`No response from the server`, fetchIncorrectResponse);
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwOdspNetworkError(
-                `Error ${response.status}`, response.status, response);
+                `Error ${response.status}`, response.status, response, await response.text());
         }
         return response;
     }, (error) => {

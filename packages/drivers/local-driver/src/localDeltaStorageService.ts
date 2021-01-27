@@ -4,7 +4,6 @@
  */
 
 import * as api from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDatabaseManager } from "@fluidframework/server-services-core";
 
 export class LocalDeltaStorageService implements api.IDocumentDeltaStorageService {
@@ -14,22 +13,15 @@ export class LocalDeltaStorageService implements api.IDocumentDeltaStorageServic
         private readonly databaseManager: IDatabaseManager) {
     }
 
-    public async get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]> {
+    public async get(from: number, to: number): Promise<api.IDeltasFetchResult> {
         const query = { documentId: this.id, tenantId: this.tenantId };
-        if (from !== undefined || to !== undefined) {
-            query["operation.sequenceNumber"] = {};
-
-            if (from !== undefined) {
-                query["operation.sequenceNumber"].$gt = from;
-            }
-
-            if (to !== undefined) {
-                query["operation.sequenceNumber"].$lt = to;
-            }
-        }
+        query["operation.sequenceNumber"] = {};
+        query["operation.sequenceNumber"].$gt = from;
+        query["operation.sequenceNumber"].$lt = to;
 
         const allDeltas = await this.databaseManager.getDeltaCollection(this.tenantId, this.id);
         const dbDeltas = await allDeltas.find(query, { "operation.sequenceNumber": 1 });
-        return dbDeltas.map((delta) => delta.operation);
+        const messages = dbDeltas.map((delta) => delta.operation);
+        return { messages, partialResult: false };
     }
 }
