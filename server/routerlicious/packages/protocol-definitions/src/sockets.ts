@@ -48,7 +48,8 @@ export interface IConnect {
     nonce?: string;
 
     /**
-     * Represents the version of document on server, client wants to connect to.
+     * Represents the version of document at client. It should match the version on server
+     * for connection to be successful.
      */
     epoch?: string;
 }
