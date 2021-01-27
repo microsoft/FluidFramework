@@ -7,7 +7,6 @@
         "outDir": "./dist",
         "types": [
             "mocha",
-            "@fluidframework/test-driver-definitions",
         ],
     },
     "include": [
