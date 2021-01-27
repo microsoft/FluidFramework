@@ -38,7 +38,7 @@ describe("Routerlicious", () => {
                 testContext = new testUtils.TestContext();
                 testCollection = new testUtils.TestCollection([{ documentId: testId, tenantId: testTenant }]);
 
-                const checkpointManager = createDeliCheckpointManagerFromCollection(testId, testTenant, testCollection);
+                const checkpointManager = createDeliCheckpointManagerFromCollection(testTenant, testId, testCollection);
                 testCheckpointContext = new CheckpointContext(testTenant, testId, checkpointManager, testContext);
             });
 
