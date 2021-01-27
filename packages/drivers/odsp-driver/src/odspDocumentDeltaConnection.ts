@@ -240,7 +240,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 //    401/403: Code will retry once with new token either way, then it becomes fatal - on this path
                 //         and on join Session path.
                 //    501: (Fluid not enabled): this is fine either way, as joinSession is gatekeeper
-                if (errorObject.code === 400 || errorObject.code === 404) {
+                if (errorObject.statusCode === 400 || errorObject.statusCode === 404) {
                     errorObject.canRetry = true;
                 }
             }
