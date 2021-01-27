@@ -213,8 +213,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             token,  // Token is going to indicate tenant level information, etc...
             versions: protocolVersions,
             nonce: uuid(),
+            epoch,
         };
-        (connectMessage as any).epoch = epoch;
 
         const deltaConnection = new OdspDocumentDeltaConnection(
             socket,
@@ -234,6 +234,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 //    404: Invalid document. The document \"local/w1-...\" does not exist
                 // But this has to stay not-retriable:
                 //    406: Unsupported client protocol. This path is the only gatekeeper, have to fail!
+                //    409: Epoch Version Mismatch. Client epoch and server epoch does not match, so app needs
+                //         to be refreshed.
                 // This one is fine either way
                 //    401/403: Code will retry once with new token either way, then it becomes fatal - on this path
                 //         and on join Session path.
