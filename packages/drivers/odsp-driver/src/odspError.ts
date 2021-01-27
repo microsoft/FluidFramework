@@ -27,17 +27,19 @@ export function throwOdspNetworkError(
     errorMessage: string,
     statusCode: number,
     response?: Response,
+    responseText?: string,
 ): never {
     const claims = statusCode === 401 && response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
 
     const networkError = createOdspNetworkError(
-        response ? `${errorMessage} (${response.statusText})` : errorMessage,
+        response && response.statusText !== "" ? `${errorMessage} (${response.statusText})` : errorMessage,
         statusCode,
         response ? numberFromHeader(response.headers.get("retry-after")) : undefined, // seconds
         claims);
 
     const errorAsAny = networkError as any;
 
+    errorAsAny.response = responseText;
     if (response) {
         errorAsAny.type = response.type;
         if (response.headers) {
