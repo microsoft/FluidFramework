@@ -49,9 +49,9 @@ export class EpochTracker {
         const epoch = (details as any).epoch;
         assert(epoch, "Connection details should contain epoch");
         try {
-            this.validateEpochFromResponse(epoch, FetchType.push);
+            this.validateEpochFromResponse(epoch, "push");
         } catch (error) {
-            await this.checkForEpochError(error, epoch, FetchType.push);
+            await this.checkForEpochError(error, epoch, "push");
             throw error;
         }
     }
@@ -229,15 +229,5 @@ export class EpochTracker {
     }
 }
 
-export enum FetchType {
-    blob = "blob",
-    createBlob = "createBlob",
-    createFile = "createFile",
-    joinSession = "joinSession",
-    ops = "ops",
-    other = "other",
-    snaphsotTree = "snapshotTree",
-    treesLatest = "treesLatest",
-    uploadSummary = "uploadSummary",
-    push = "push",
-}
+export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "other" | "snapshotTree" |
+    "treesLatest" | "uploadSummary" | "push";
