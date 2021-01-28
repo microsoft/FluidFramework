@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { createIdAfterMin, createIdBeforeMax, createIdBetween } from "../generateSequentialId";
+import { createIdBetween } from "../generateSequentialId";
 
 describe("CreateIdBetween SequentialId tests", () => {
   it("Create Id between min and max with same length", () => {
