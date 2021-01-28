@@ -437,7 +437,7 @@ export class Snapshot {
 
 		// TODO:#49100:Perf: make this faster and/or remove use by PrefetchingCheckout.
 
-		const compareSnapshotNodes = (nodeA: SnapshotNode, nodeB: SnapshotNode): boolean => {
+		const equalityComparator = (nodeA: SnapshotNode, nodeB: SnapshotNode): boolean => {
 			if (nodeA.identifier !== nodeB.identifier) {
 				return false;
 			}
@@ -455,7 +455,7 @@ export class Snapshot {
 			return idA === idB;
 		};
 
-		return compareIterables(this, snapshot, compareSnapshotNodes);
+		return compareIterables(this, snapshot, equalityComparator);
 	}
 
 	private *iterateNodeDescendants(nodeId: NodeId): IterableIterator<SnapshotNode> {
