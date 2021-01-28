@@ -237,11 +237,7 @@ export class SharedTree extends SharedObject {
 		this.expensiveValidation = expensiveValidation;
 
 		this.logger = ChildLogger.create(runtime.logger, 'SharedTree', sharedTreeTelemetryProperties);
-		const { editLog, logViewer } = this.createEditLogFromSummary(
-			initialSummary,
-			this.expensiveValidation,
-			this.logger
-		);
+		const { editLog, logViewer } = this.createEditLogFromSummary(initialSummary);
 
 		this.editLog = editLog;
 		this.logViewer = logViewer;
@@ -347,16 +343,12 @@ export class SharedTree extends SharedObject {
 	 * @internal
 	 */
 	public loadSummary(summary: SharedTreeSummaryBase): void {
-		const { editLog, logViewer } = this.createEditLogFromSummary(summary, this.expensiveValidation, this.logger);
+		const { editLog, logViewer } = this.createEditLogFromSummary(summary);
 		this.editLog = editLog;
 		this.logViewer = logViewer;
 	}
 
-	private createEditLogFromSummary(
-		summary: SharedTreeSummaryBase,
-		expensiveValidation: boolean,
-		logger: ITelemetryLogger
-	): { editLog: EditLog; logViewer: LogViewer } {
+	private createEditLogFromSummary(summary: SharedTreeSummaryBase): { editLog: EditLog; logViewer: LogViewer } {
 		const convertedSummary = convertSummaryToReadFormat(summary);
 		if (typeof convertedSummary === 'string') {
 			fail(convertedSummary); // TODO: Where does this error propagate?
@@ -370,7 +362,7 @@ export class SharedTree extends SharedObject {
 		};
 
 		const editLog = new EditLog(editHistory, serializationHelpers);
-		const logViewer = new CachingLogViewer(editLog, initialTree, expensiveValidation, undefined, logger);
+		const logViewer = new CachingLogViewer(editLog, initialTree, this.expensiveValidation, undefined, this.logger);
 
 		// TODO:#47830: Store the associated revision on the snapshot.
 		// The current view should only be stored in the cache if the revision it's associated with is known.
