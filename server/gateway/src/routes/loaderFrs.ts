@@ -157,14 +157,10 @@ export function create(
 
         Promise.all([resolvedP, fullTreeP, pkgP, scriptsP, timingsP])
             .then(([resolved, fullTree, pkg, scripts, timings]) => {
-                // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                resolved!.url += path + (search ?? "");
+                resolved.url += path + (search ?? "");
                 winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
-                // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                timings!.push(Date.now() - start);
+                timings.push(Date.now() - start);
                 const configClientId = config.get("login:microsoft").clientId;
                 response.render(
                     "loader",

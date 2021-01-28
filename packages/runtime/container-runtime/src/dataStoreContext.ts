@@ -205,16 +205,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected _attachState: AttachState;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
 
-    /**
-        @deprecated Dummy summary tracker for back compat
-        Should be remove in 0.31 and #3243 closed
-    */
-    protected readonly summaryTracker = {
-        createOrGetChild: (key: string, sequenceNumber: number)=>({
-            updateLatestSequenceNumber: (latestSequenceNumber: number)=>{},
-        }),
-    };
-
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
         public readonly id: string,

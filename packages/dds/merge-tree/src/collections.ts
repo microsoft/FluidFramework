@@ -6,6 +6,8 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions, eqeqeq, object-shorthand */
 /* eslint-disable no-bitwise, no-param-reassign */
 
+/* Remove once strictNullCheck is enabled */
+
 import { Trace } from "@fluidframework/common-utils";
 import * as Base from "./base";
 import * as MergeTree from "./mergeTree";
@@ -90,24 +92,26 @@ export class List<T> {
 
     walk(fn: (data: T, l: List<T>) => void): void {
         for (let entry = this.next; !(entry.isHead); entry = entry.next) {
-            fn(entry.data, entry);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            fn(entry.data!, entry);
         }
     }
 
     some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T[] {
-        const rtn = [];
+        const rtn: T[] = [];
         const start = rev ? this.prev : this.next;
         for (let entry = start; !(entry.isHead); entry = rev ? entry.prev : entry.next) {
-            if (fn(entry.data, entry)) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const data = entry.data!;
+            if (fn(data, entry)) {
                 if (rev) {
                     // preserve list order when in reverse
-                    rtn.unshift(entry.data);
+                    rtn.unshift(data);
                 } else {
-                    rtn.push(entry.data);
+                    rtn.push(data);
                 }
             }
         }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return rtn;
     }
 
@@ -269,11 +273,15 @@ export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey
         console.log(`size is ${props.length}`);
     }
     function mapRange<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
+        if (props.length !== 0) { return; }
+
         if (start === undefined) {
-            start = min().key;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            start = min()!.key;
         }
         if (end === undefined) {
-            end = max().key;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            end = max()!.key;
         }
         for (let i = 0, len = props.length; i < len; i++) {
             if (compareKeys(start, props[i].key) <= 0) {
@@ -348,7 +356,7 @@ export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey
 
 export const enum RBColor {
     RED,
-    BLACK
+    BLACK,
 }
 
 export interface RBNode<TKey, TData> {
@@ -392,7 +400,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
 
     isRed(node: RBNode<TKey, TData> | undefined) {
-        return node && (node.color == RBColor.RED);
+        return !!node && (node.color == RBColor.RED);
     }
 
     nodeSize(node: RBNode<TKey, TData> | undefined) {
@@ -500,7 +508,8 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
             if (this.isRed(node.right) && (!this.isRed(node.left))) {
                 node = this.rotateLeft(node);
             }
-            if (this.isRed(node.left) && this.isRed(node.left.left)) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            if (this.isRed(node.left) && this.isRed(node.left!.left)) {
                 node = this.rotateRight(node);
             }
             if (this.isRed(node.left) && this.isRed(node.right)) {
@@ -517,23 +526,25 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     updateLocal(node: RBNode<TKey, TData>) {
         if (this.aug) {
             if (this.isRed(node.left)) {
-                this.aug.update(node.left);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                this.aug.update(node.left!);
             }
             if (this.isRed(node.right)) {
-                this.aug.update(node.right);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                this.aug.update(node.right!);
             }
             this.aug.update(node);
         }
     }
 
     removeMin() {
-        if (!this.isEmpty()) {
+        if (this.root) {
             if ((!this.isRed(this.root.left)) && (!this.isRed(this.root.right))) {
                 this.root.color = RBColor.RED;
             }
 
             this.root = this.nodeRemoveMin(this.root);
-            if (!this.isEmpty()) {
+            if (this.root) {
                 this.root.color = RBColor.BLACK;
             }
         }
@@ -545,19 +556,20 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
                 node = this.moveRedLeft(node);
             }
 
-            node.left = this.nodeRemoveMin(node.left);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            node.left = this.nodeRemoveMin(node.left!);
             return this.balance(node);
         }
     }
 
     removeMax() {
-        if (this.isEmpty()) {
+        if (this.root) {
             if ((!this.isRed(this.root.left)) && (!this.isRed(this.root.right))) {
                 this.root.color = RBColor.RED;
             }
 
             this.root = this.nodeRemoveMax(this.root);
-            if (!this.isEmpty()) {
+            if (this.root) {
                 this.root.color = RBColor.BLACK;
             }
         }
@@ -577,7 +589,8 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
             node = this.moveRedRight(node);
         }
 
-        node.right = this.nodeRemoveMax(node.right);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        node.right = this.nodeRemoveMax(node.right!);
 
         return this.balance(node);
     }
@@ -588,21 +601,26 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
                 return;
             }
 
-            if ((!this.isRed(this.root.left)) && (!this.isRed(this.root.right))) {
-                this.root.color = RBColor.RED;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            if ((!this.isRed(this.root!.left)) && (!this.isRed(this.root!.right))) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                this.root!.color = RBColor.RED;
             }
 
-            this.root = this.nodeRemove(this.root, key);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.root = this.nodeRemove(this.root!, key);
         }
         // TODO: error on undefined key
     }
 
     nodeRemove(node: RBNode<TKey, TData>, key: TKey) {
         if (this.compareKeys(key, node.key) < 0) {
-            if ((!this.isRed(node.left)) && (!this.isRed(node.left.left))) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            if ((!this.isRed(node.left)) && (!this.isRed(node.left!.left))) {
                 node = this.moveRedLeft(node);
             }
-            node.left = this.nodeRemove(node.left, key);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            node.left = this.nodeRemove(node.left!, key);
         }
         else {
             if (this.isRed(node.left)) {
@@ -611,26 +629,29 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
             if ((this.compareKeys(key, node.key) == 0) && (!node.right)) {
                 return undefined;
             }
-            if ((!this.isRed(node.right)) && (!this.isRed(node.right.left))) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            if ((!this.isRed(node.right)) && (!this.isRed(node.right!.left))) {
                 node = this.moveRedRight(node);
             }
             if (this.compareKeys(key, node.key) == 0) {
-                const subtreeMin = this.nodeMin(node.right);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const subtreeMin = this.nodeMin(node.right!);
                 node.key = subtreeMin.key;
                 node.data = subtreeMin.data;
-                node.right = this.nodeRemoveMin(node.right);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                node.right = this.nodeRemoveMin(node.right!);
             }
             else {
-                node.right = this.nodeRemove(node.right, key);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                node.right = this.nodeRemove(node.right!, key);
             }
         }
         return this.balance(node);
     }
     height() {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.nodeHeight(this.root);
     }
-    nodeHeight(node: RBNode<TKey, TData> | undefined) {
+    nodeHeight(node: RBNode<TKey, TData> | undefined): number {
         if (node === undefined) {
             return -1;
         }
@@ -694,10 +715,9 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
 
     min() {
-        if (!this.isEmpty()) {
+        if (this.root) {
             return this.nodeMin(this.root);
         }
-        // TODO: error on empty
     }
 
     nodeMin(node: RBNode<TKey, TData>): RBNode<TKey, TData> {
@@ -710,10 +730,9 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
 
     max() {
-        if (!this.isEmpty()) {
+        if (this.root) {
             return this.nodeMax(this.root);
         }
-        // TODO: error on empty
     }
 
     nodeMax(node: RBNode<TKey, TData>): RBNode<TKey, TData> {
@@ -726,7 +745,8 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
 
     rotateRight(node: RBNode<TKey, TData>) {
-        const leftChild = node.left;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const leftChild = node.left!;
         node.left = leftChild.right;
         leftChild.right = node;
         leftChild.color = leftChild.right.color;
@@ -741,7 +761,8 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
 
     rotateLeft(node: RBNode<TKey, TData>) {
-        const rightChild = node.right;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const rightChild = node.right!;
         node.right = rightChild.left;
         rightChild.left = node;
         rightChild.color = rightChild.left.color;
@@ -761,14 +782,18 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
 
     flipColors(node: RBNode<TKey, TData>) {
         node.color = this.oppositeColor(node.color);
-        node.left.color = this.oppositeColor(node.left.color);
-        node.right.color = this.oppositeColor(node.right.color);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        node.left!.color = this.oppositeColor(node.left!.color);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        node.right!.color = this.oppositeColor(node.right!.color);
     }
 
     moveRedLeft(node: RBNode<TKey, TData>) {
         this.flipColors(node);
-        if (this.isRed(node.right.left)) {
-            node.right = this.rotateRight(node.right);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        if (this.isRed(node.right!.left)) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            node.right = this.rotateRight(node.right!);
             node = this.rotateLeft(node);
             this.flipColors(node);
         }
@@ -777,7 +802,8 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
 
     moveRedRight(node: RBNode<TKey, TData>) {
         this.flipColors(node);
-        if (this.isRed(node.left.left)) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        if (this.isRed(node.left!.left)) {
             node = this.rotateRight(node);
             this.flipColors(node);
         }
@@ -789,7 +815,8 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         if (this.isRed(node.right)) {
             node = this.rotateLeft(node);
         }
-        if (this.isRed(node.left) && this.isRed(node.left.left)) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        if (this.isRed(node.left) && this.isRed(node.left!.left)) {
             node = this.rotateRight(node);
         }
         if (this.isRed(node.left) && (this.isRed(node.right))) {
@@ -833,7 +860,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         this.nodeWalk(this.root, actions);
     }
 
-    nodeWalk(node: RBNode<TKey, TData>, actions: RBNodeActions<TKey, TData>) {
+    nodeWalk(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>) {
         let go = true;
         if (node) {
             if (actions.pre) {
@@ -862,7 +889,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
 
     nodeMap<TAccum>(
-        node: RBNode<TKey, TData>,
+        node: RBNode<TKey, TData> | undefined,
         action: Base.PropertyAction<TKey, TData>,
         accum?: TAccum,
         start?: TKey,
@@ -952,7 +979,7 @@ export class IntegerRangeTree implements IRBAugmentation<Base.IIntegerRange, Aug
         return this.nodeToString(this.ranges.root);
     }
 
-    nodeToString(node: IntegerRangeNode) {
+    nodeToString(node: IntegerRangeNode | undefined) {
         let buf = "";
         let indentAmt = 0;
         const actions = {
@@ -985,11 +1012,11 @@ export class IntegerRangeTree implements IRBAugmentation<Base.IIntegerRange, Aug
     }
 
     matchNode(node: IntegerRangeNode | undefined, key: Base.IIntegerRange) {
-        return node && integerRangeOverlaps(node.key, key);
+        return !!node && integerRangeOverlaps(node.key, key);
     }
 
     continueSubtree(node: IntegerRangeNode | undefined, key: Base.IIntegerRange) {
-        const cont = node && integerRangeOverlaps(node.data.minmax, key);
+        const cont = !!node && integerRangeOverlaps(node.data.minmax, key);
         if (this.diag && (!cont)) {
             if (node) {
                 console.log(`skipping subtree of size ${node.size} key ${integerRangeToString(key)}`);
@@ -1079,11 +1106,11 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
     }
 
     matchNode(node: IntervalNode<T> | undefined, key: T) {
-        return node && node.key.overlaps(key);
+        return !!node && node.key.overlaps(key);
     }
 
     continueSubtree(node: IntervalNode<T> | undefined, key: T) {
-        const cont = node && node.data.minmax.overlaps(key);
+        const cont = !!node && node.data.minmax.overlaps(key);
         if (this.diag && (!cont)) {
             if (node) {
                 console.log(`skipping subtree of size ${node.size} key ${key.toString()}`);
@@ -1134,7 +1161,7 @@ export interface ProxString<T> {
 
 export class TST<T> {
     private n = 0;
-    private root: TSTNode<T>;
+    private root: TSTNode<T> | undefined;
 
     constructor() {
 

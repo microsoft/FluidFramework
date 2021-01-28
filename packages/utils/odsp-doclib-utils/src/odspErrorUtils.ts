@@ -157,5 +157,6 @@ export function throwOdspNetworkError(
         statusCode,
         undefined /* retryAfterSeconds */);
 
+    // eslint-disable-next-line @typescript-eslint/no-throw-literal
     throw networkError;
 }

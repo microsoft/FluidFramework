@@ -58,7 +58,7 @@ describe("Ops on Reconnect", () => {
      * Waits for the "connected" event from the given container.
      */
     async function waitForContainerReconnection(container: Container): Promise<void> {
-        await new Promise((resolve) => container.once("connected", () => resolve()));
+        await new Promise<void>((resolve) => container.once("connected", () => resolve()));
     }
 
     async function createLoader(): Promise<ILoader> {

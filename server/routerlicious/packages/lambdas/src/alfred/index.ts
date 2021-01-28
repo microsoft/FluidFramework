@@ -112,10 +112,11 @@ function checkThrottle(
     const messageMetaData = {
         key: throttleId,
         weight: 1,
-        event_type: "throttling",
+        eventName: "throttling",
     };
 
     try {
+        logger?.info(`Incrementing throttle count: ${throttleId}`, { messageMetaData });
         throttler.incrementCount(throttleId);
     } catch (e) {
         if (e instanceof core.ThrottlingError) {
