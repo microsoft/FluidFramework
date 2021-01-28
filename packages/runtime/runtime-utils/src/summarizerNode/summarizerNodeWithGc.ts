@@ -90,7 +90,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         latestSummary?: SummaryNode,
         initialSummary?: IInitialSummary,
         wipSummaryLogger?: ITelemetryLogger,
-        private readonly getGCDataFn?: () => Promise<IGarbageCollectionData>,
+        private readonly getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
         getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
     ) {
         super(
@@ -174,8 +174,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     /**
      * Returns the GC data of this node. If nothing has changed since last summary, it tries to reuse the data from
      * the previous summary. Else, it gets new GC data from the underlying Fluid object.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    public async getGCData(): Promise<IGarbageCollectionData> {
+    public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
         assert(!this.gcDisabled, "Getting GC data should not be called when GC is disabled!");
         assert(this.getGCDataFn !== undefined, "GC data cannot be retrieved without getGCDataFn");
 
@@ -186,11 +187,11 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // If there is no new data since last summary and we have GC data from the previous run, return it. We may not
         // have data from previous GC run for clients with older summary format before GC was added. They won't have
         // GC details in their initial summary.
-        if (!this.hasDataChanged() && this.gcData !== undefined) {
+        if (!fullGC && !this.hasDataChanged() && this.gcData !== undefined) {
             return cloneGCData(this.gcData);
         }
 
-        const gcData = await this.getGCDataFn();
+        const gcData = await this.getGCDataFn(fullGC);
         this.gcData = cloneGCData(gcData);
         return gcData;
     }
@@ -320,7 +321,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
          */
         createParam: CreateChildSummarizerNodeParam,
         config: ISummarizerNodeConfigWithGC = {},
-        getGCDataFn?: () => Promise<IGarbageCollectionData>,
+        getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
         getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
     ): ISummarizerNodeWithGC {
         assert(!this.children.has(id), "Create SummarizerNode child already exists");
@@ -435,7 +436,7 @@ export const createRootSummarizerNodeWithGC = (
     changeSequenceNumber: number,
     referenceSequenceNumber: number | undefined,
     config: ISummarizerNodeConfigWithGC = {},
-    getGCDataFn?: () => Promise<IGarbageCollectionData>,
+    getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
     getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
 ): IRootSummarizerNodeWithGC => new SummarizerNodeWithGC(
     logger,
