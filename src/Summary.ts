@@ -7,7 +7,7 @@ import { TraitLabel } from './Identifiers';
 import { assert, assertNotUndefined } from './Common';
 import { EditLogSummary, OrderedEditSet } from './EditLog';
 import { newEdit, setTrait } from './EditUtilities';
-import { ChangeNode, Edit, Change, EditWithoutId } from './PersistedTypes';
+import { ChangeNode, Edit, Change } from './PersistedTypes';
 import { Snapshot } from './Snapshot';
 import { initialTree } from './InitialTree';
 import { readFormatVersion, SharedTreeSummary_0_0_2 } from './SummaryBackCompatibility';

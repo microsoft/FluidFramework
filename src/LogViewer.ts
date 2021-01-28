@@ -42,7 +42,7 @@ export interface LogViewer {
 	/**
 	 * {@inheritDoc @intentional/shared-tree#LogViewer.getSnapshot}
 	 */
-	getSnapshotSynchronous(revision: number): Snapshot;
+	getSnapshotInSession(revision: number): Snapshot;
 
 	/**
 	 * Specify that a particular revision is known to have the specified snapshot.
@@ -139,7 +139,7 @@ export class CachingLogViewer implements LogViewer {
 
 		let currentSnapshot = startSnapshot;
 		for (let i = startRevision; i < revision && i < this.log.length; i++) {
-			const edit = await this.log.getAtIndex(i);
+			const edit = await this.log.getEditAtIndex(i);
 			const editingResult = new Transaction(currentSnapshot).applyChanges(edit.changes).close();
 			if (editingResult.result === EditResult.Applied) {
 				currentSnapshot = editingResult.snapshot;
@@ -157,7 +157,7 @@ export class CachingLogViewer implements LogViewer {
 		return currentSnapshot;
 	}
 
-	public getSnapshotSynchronous(revision: number): Snapshot {
+	public getSnapshotInSession(revision: number): Snapshot {
 		// Per the documentation for this method, the returned snapshot should be the output of the edit at the largest index <= `revision`.
 		if (revision >= this.log.length && this.lastHeadSnapshot) {
 			return this.lastHeadSnapshot;
@@ -168,7 +168,7 @@ export class CachingLogViewer implements LogViewer {
 
 		let currentSnapshot = startSnapshot;
 		for (let i = startRevision; i < revision && i < this.log.length; i++) {
-			const edit = this.log.getAtIndexSynchronous(i);
+			const edit = this.log.getEditInSessionAtIndex(i);
 			const editingResult = new Transaction(currentSnapshot).applyChanges(edit.changes).close();
 			if (editingResult.result === EditResult.Applied) {
 				currentSnapshot = editingResult.snapshot;

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseEvent, ITelemetryProperties } from '@fluidframework/common-definitions';
+
 const defaultFailMessage = 'Assertion failed';
 
 /**
@@ -15,6 +17,20 @@ const defaultFailMessage = 'Assertion failed';
  * @public
  */
 export const sharedTreeAssertionErrorType = 'SharedTreeAssertion';
+
+/**
+ * Telemetry properties decorated on all SharedTree events.
+ */
+export interface SharedTreeTelemetryProperties extends ITelemetryProperties {
+	isSharedTreeEvent: true;
+}
+
+/**
+ * Returns if the supplied event is a SharedTree telemetry event.
+ */
+export function isSharedTreeEvent(event: ITelemetryBaseEvent): boolean {
+	return ((event as unknown) as SharedTreeTelemetryProperties).isSharedTreeEvent === true;
+}
 
 /**
  * Error object thrown by assertion failures in `SharedTree`.

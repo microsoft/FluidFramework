@@ -11,8 +11,8 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger } from '@fluidframework/telemetry-utils';
-import { assert, assertNotUndefined, fail } from './Common';
 import { EditLog, editsPerChunk, OrderedEditSet } from './EditLog';
+import { assert, fail, SharedTreeTelemetryProperties } from './Common';
 import {
 	Edit,
 	Delete,
@@ -174,6 +174,8 @@ export class SharedTreeEditor {
 	}
 }
 
+const sharedTreeTelemetryProperties: SharedTreeTelemetryProperties = { isSharedTreeEvent: true };
+
 /**
  * A distributed tree.
  * @public
@@ -235,7 +237,7 @@ export class SharedTree extends SharedObject {
 		super(id, runtime, SharedTreeFactory.Attributes);
 		this.expensiveValidation = expensiveValidation;
 
-		this.logger = ChildLogger.create(super.logger, 'SharedTree');
+		this.logger = ChildLogger.create(runtime.logger, 'SharedTree', sharedTreeTelemetryProperties);
 		const { editLog, logViewer } = this.createEditLogFromSummary(
 			initialSummary,
 			this.expensiveValidation,
@@ -250,7 +252,7 @@ export class SharedTree extends SharedObject {
 	 * @returns the current view of the tree.
 	 */
 	public get currentView(): Snapshot {
-		return this.logViewer.getSnapshotSynchronous(Number.POSITIVE_INFINITY);
+		return this.logViewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
 	}
 
 	/**

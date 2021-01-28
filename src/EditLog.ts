@@ -42,12 +42,12 @@ export interface OrderedEditSet {
 	/**
 	 * @returns the edit at the given index within this `OrderedEditSet`.
 	 */
-	getAtIndex(index: number): Promise<Edit>;
+	getEditAtIndex(index: number): Promise<Edit>;
 
 	/**
 	 * @returns the edit at the given index. Must have been added to the log during the current session.
 	 */
-	getAtIndexSynchronous(index: number): Edit;
+	getEditInSessionAtIndex(index: number): Edit;
 
 	/**
 	 * @returns the Edit associated with the EditId or undefined if there is no such edit in the set.
@@ -267,7 +267,7 @@ export class EditLog implements OrderedEditSet {
 	/**
 	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.getAtIndex}
 	 */
-	public async getAtIndex(index: number): Promise<Edit> {
+	public async getEditAtIndex(index: number): Promise<Edit> {
 		if (index < this.numberOfSequencedEdits) {
 			const [key, editChunk] = assertNotUndefined(this.editChunks.nextLowerPair(index + 1));
 			const { handle, edits } = editChunk;
@@ -298,7 +298,7 @@ export class EditLog implements OrderedEditSet {
 	/**
 	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.getAtIndexSynchronous}
 	 */
-	public getAtIndexSynchronous(index: number): Edit {
+	public getEditInSessionAtIndex(index: number): Edit {
 		assert(
 			index > this.maximumEvictedIndex,
 			'Edit to retrieve must have been added to the log during the current session.'
@@ -323,7 +323,7 @@ export class EditLog implements OrderedEditSet {
 	public async tryGetEdit(editId: EditId): Promise<Edit | undefined> {
 		try {
 			const index = this.getIndexOfId(editId);
-			return await this.getAtIndex(index);
+			return await this.getEditAtIndex(index);
 		} catch {
 			return undefined;
 		}

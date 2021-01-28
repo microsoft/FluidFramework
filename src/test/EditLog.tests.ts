@@ -62,8 +62,8 @@ describe('EditLog', () => {
 
 		const log = new EditLog({ editChunks, editIds });
 
-		expect((await log.getAtIndex(0)).id).to.equal(id0);
-		expect((await log.getAtIndex(1)).id).to.equal(id1);
+		expect((await log.getEditAtIndex(0)).id).to.equal(id0);
+		expect((await log.getEditAtIndex(1)).id).to.equal(id1);
 	});
 
 	it('can get an edit from an edit id', async () => {

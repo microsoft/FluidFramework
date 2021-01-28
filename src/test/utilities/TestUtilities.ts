@@ -10,6 +10,7 @@ import {
 	MockStorage,
 } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
+import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
 import { fail } from '../../Common';
 import { ChangeNode, NodeData, TraitLocation } from '../../PersistedTypes';
@@ -57,6 +58,11 @@ export interface SharedTreeTestingOptions {
 	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
 	 */
 	setupEditId?: EditId;
+
+	/**
+	 * Telemetry logger injected into the SharedTree.
+	 */
+	logger?: ITelemetryBaseLogger;
 }
 
 export const testTrait: TraitLocation = {
@@ -69,8 +75,21 @@ export function setUpTestSharedTree(
 	options: SharedTreeTestingOptions = { localMode: true }
 ): SharedTreeTestingComponents {
 	const { id, initialTree, localMode, containerRuntimeFactory, setupEditId } = options;
+	let componentRuntime: MockFluidDataStoreRuntime;
+	if (options.logger) {
+		const proxyHandler: ProxyHandler<MockFluidDataStoreRuntime> = {
+			get: (target, prop, receiver) => {
+				if (prop === 'logger' && options.logger) {
+					return options.logger;
+				}
+				return target[prop as keyof MockFluidDataStoreRuntime];
+			},
+		};
+		componentRuntime = new Proxy(new MockFluidDataStoreRuntime(), proxyHandler);
+	} else {
+		componentRuntime = new MockFluidDataStoreRuntime();
+	}
 
-	const componentRuntime = new MockFluidDataStoreRuntime();
 	// Enable expensiveValidation
 	const tree = new SharedTree(componentRuntime, id || 'testSharedTree', true);
 	tree.summarizer = options.summarizer ?? fullHistorySummarizer;

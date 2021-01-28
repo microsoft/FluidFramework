@@ -15,6 +15,7 @@ import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISerializedHandle } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
@@ -234,12 +235,15 @@ export const Insert: {
     create: (nodes: EditNode[], destination: StablePlace) => Change[];
 };
 
+// @public
+export function isSharedTreeEvent(event: ITelemetryBaseEvent): boolean;
+
 // Warning: (ae-internal-missing-underscore) The name "LogViewer" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal
 export interface LogViewer {
     getSnapshot(revision: number): Promise<Snapshot>;
-    getSnapshotSynchronous(revision: number): Snapshot;
+    getSnapshotInSession(revision: number): Snapshot;
     setKnownRevision(revision: number, view: Snapshot): void;
 }
 
@@ -279,9 +283,9 @@ export interface OrderedEditSet {
     // (undocumented)
     editIds: EditId[];
     // (undocumented)
-    getAtIndex(index: number): Promise<Edit>;
+    getEditAtIndex(index: number): Promise<Edit>;
     // (undocumented)
-    getAtIndexSynchronous(index: number): Edit;
+    getEditInSessionAtIndex(index: number): Edit;
     // @internal (undocumented)
     getEditLogSummary(virtualized?: boolean): EditLogSummary;
     // (undocumented)

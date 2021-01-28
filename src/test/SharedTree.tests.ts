@@ -5,7 +5,8 @@
 
 import { assert, expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
-import { assertArrayOfOne, assertNotUndefined } from '../Common';
+import { assertArrayOfOne, assertNotUndefined, isSharedTreeEvent } from '../Common';
+import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers';
 import { SharedTreeEvent } from '../SharedTree';
 import { Change, ChangeType, EditNode, Delete, Insert, ChangeNode, StablePlace, StableRange } from '../PersistedTypes';
@@ -14,6 +15,7 @@ import { noHistorySummarizer, serialize } from '../Summary';
 import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
 import { TreeNodeHandle } from '../TreeNodeHandle';
+import { deserialize, SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 import {
 	makeEmptyNode,
 	setUpTestSharedTree,
@@ -29,7 +31,6 @@ import {
 	assertNoDelta,
 } from './utilities/TestUtilities';
 import { runSharedTreeUndoRedoTestSuite } from './utilities/UndoRedoTests';
-import { deserialize, SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 
 describe('SharedTree', () => {
 	describe('SharedTree before initialization', () => {
@@ -690,6 +691,26 @@ describe('SharedTree', () => {
 			// Move "right" under "left"
 			tree.editor.move(right, StablePlace.atStartOf({ parent: left.identifier, label: rightTraitLabel }));
 			expect(leftHandle.traits.right).to.be.undefined;
+		});
+	});
+
+	describe('telemetry', () => {
+		it('decorates events with the correct properties', () => {
+			// Test that a handle can wrap a node and retrieve that node's properties
+			const events: ITelemetryBaseEvent[] = [];
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree({
+				initialTree: simpleTestTree,
+				logger: { send: (event) => events.push(event) },
+			});
+			// Invalid edit
+			tree.editor.insert(makeEmptyNode(), StablePlace.after(makeEmptyNode()));
+			containerRuntimeFactory.processAllMessages();
+			// Force demand, which will cause a telemetry event for the invalid edit to be emitted
+			tree.logViewer.getSnapshot(Number.POSITIVE_INFINITY);
+			expect(events.length).is.greaterThan(0);
+			events.forEach((event) => {
+				expect(isSharedTreeEvent(event)).is.true;
+			});
 		});
 	});
 });

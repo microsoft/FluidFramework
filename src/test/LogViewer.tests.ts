@@ -46,7 +46,7 @@ function getSimpleLogWithLocalEdits(): EditLog {
 function getSnapshotsForLog(log: EditLog, baseTree: ChangeNode): Snapshot[] {
 	const snapshots: Snapshot[] = [Snapshot.fromTree(baseTree)];
 	for (let i = 0; i < log.length; i++) {
-		const edit = log.getAtIndexSynchronous(i);
+		const edit = log.getEditInSessionAtIndex(i);
 		snapshots.push(new Transaction(snapshots[i]).applyChanges(edit.changes).view);
 	}
 	return snapshots;
@@ -58,25 +58,25 @@ function runLogViewerCorrectnessTests(viewerCreator: (log: EditLog, baseTree?: C
 
 		it('generates initialTree by default for the 0th revision', () => {
 			const viewer = viewerCreator(new EditLog());
-			const headSnapshot = viewer.getSnapshotSynchronous(0);
+			const headSnapshot = viewer.getSnapshotInSession(0);
 			expect(headSnapshot.equals(Snapshot.fromTree(initialTree))).to.be.true;
 		});
 
 		it('can be constructed from a non-empty EditLog', () => {
 			const viewer = viewerCreator(log, initialSimpleTree);
-			const headSnapshot = viewer.getSnapshotSynchronous(Number.POSITIVE_INFINITY);
+			const headSnapshot = viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
 			expect(headSnapshot.equals(simpleTreeSnapshot)).to.be.true;
 		});
 
 		it('can generate all snapshots for an EditLog', () => {
 			const viewer = viewerCreator(log, initialSimpleTree);
-			const initialSnapshot = viewer.getSnapshotSynchronous(0);
+			const initialSnapshot = viewer.getSnapshotInSession(0);
 			expect(initialSnapshot.equals(Snapshot.fromTree(initialSimpleTree))).to.be.true;
-			const leftOnlySnapshot = viewer.getSnapshotSynchronous(1);
+			const leftOnlySnapshot = viewer.getSnapshotInSession(1);
 			expect(
 				leftOnlySnapshot.equals(Snapshot.fromTree({ ...simpleTestTree, traits: { [leftTraitLabel]: [left] } }))
 			).to.be.true;
-			const fullTreeSnapshot = viewer.getSnapshotSynchronous(2);
+			const fullTreeSnapshot = viewer.getSnapshotInSession(2);
 			expect(fullTreeSnapshot.equals(simpleTreeSnapshot)).to.be.true;
 		});
 
@@ -86,7 +86,7 @@ function runLogViewerCorrectnessTests(viewerCreator: (log: EditLog, baseTree?: C
 			for (let i = log.length; i >= 0; i--) {
 				const snapshot = snapshots[i];
 				viewer.setKnownRevision(i, snapshot);
-				expect(viewer.getSnapshotSynchronous(i).equals(snapshot)).to.be.true;
+				expect(viewer.getSnapshotInSession(i).equals(snapshot)).to.be.true;
 			}
 		});
 
@@ -100,12 +100,12 @@ function runLogViewerCorrectnessTests(viewerCreator: (log: EditLog, baseTree?: C
 			// and assert that none of the snapshots differ from those created via pure Transaction APIs.
 			for (let i = 0; i <= simpleLog.length; i++) {
 				for (let j = 0; j <= mutableLog.length; j++) {
-					const viewerSnapshot = viewer.getSnapshotSynchronous(j);
+					const viewerSnapshot = viewer.getSnapshotInSession(j);
 					expect(viewerSnapshot.equals(snapshotsForLog[j])).to.be.true;
 				}
 				// Revisions are from [0, simpleLog.length], edits are at indices [0, simpleLog.length)
 				if (i < simpleLog.length) {
-					const edit = simpleLog.getAtIndexSynchronous(i);
+					const edit = simpleLog.getEditInSessionAtIndex(i);
 					mutableLog.addSequencedEdit(edit);
 				}
 			}
@@ -115,7 +115,7 @@ function runLogViewerCorrectnessTests(viewerCreator: (log: EditLog, baseTree?: C
 			function getSnapshotsFromViewer(viewer: LogViewer, lastRevision: number): Snapshot[] {
 				const snapshots: Snapshot[] = [];
 				for (let i = 0; i <= lastRevision; i++) {
-					snapshots.push(viewer.getSnapshotSynchronous(i));
+					snapshots.push(viewer.getSnapshotInSession(i));
 				}
 				return snapshots;
 			}
@@ -142,7 +142,7 @@ function runLogViewerCorrectnessTests(viewerCreator: (log: EditLog, baseTree?: C
 			// Sequence the existing local edits and ensure viewer generates the correct snapshots
 			while (logWithLocalEdits.numberOfLocalEdits > 0) {
 				logWithLocalEdits.addSequencedEdit(
-					logWithLocalEdits.getAtIndexSynchronous(logWithLocalEdits.numberOfSequencedEdits)
+					logWithLocalEdits.getEditInSessionAtIndex(logWithLocalEdits.numberOfSequencedEdits)
 				);
 				expectSnapshotsAreEqual(logWithLocalEdits, viewer);
 			}
