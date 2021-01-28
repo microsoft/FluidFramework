@@ -298,7 +298,17 @@ export class SummaryCollection {
         const seq = op.contents.summaryProposal.summarySequenceNumber;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const summary = this.pendingSummaries.get(seq)!;
-        assert(!!summary); // We should never see an ack without an op
+        if (!summary) {
+            // Summary ack without an op should be rare. We could fetch the
+            // reference sequence number from the snapshot, but instead we
+            // will not emit this ack. It should be the case that the summary
+            // op that this ack is for is earlier than this file was loaded
+            // from. i.e. initialSequenceNumber > summarySequenceNumber.
+            // We really don't care about it for now, since it is older than
+            // the one we loaded from.
+            assert(this.initialSequenceNumber > seq, "Missing summary op for ack, but summary op seq > initialSequenceNumber");
+            return;
+        }
         summary.ackNack(op);
         this.pendingSummaries.delete(seq);
 
