@@ -18,12 +18,12 @@ export function getSharepointTenant(server: string) {
         tenantName = tenantName.substr(0, tenantName.length - 3);
     }
 
-    let restOfTenatHostname = server.substr(tenantName.length).toLowerCase();
-    if (restOfTenatHostname.indexOf(".sharepoint.") === 0) {
-        restOfTenatHostname = `.onmicrosoft.&{restOfTenatHostname.substr(12)}`;
+    let restOfTenantHostname = server.substr(tenantName.length).toLowerCase();
+    if (restOfTenantHostname.indexOf(".sharepoint.") === 0) {
+        restOfTenantHostname = `.onmicrosoft.${restOfTenantHostname.substr(12)}`;
     }
 
-    return tenantName === "microsoft" ? "organizations" : `${tenantName}${restOfTenatHostname}`;
+    return tenantName === "microsoft" ? "organizations" : `${tenantName}${restOfTenantHostname}`;
 }
 
 export function getServer(tenantId: string): string {

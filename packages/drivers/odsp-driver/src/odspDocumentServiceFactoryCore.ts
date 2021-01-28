@@ -28,8 +28,7 @@ import { OdspDocumentService } from "./odspDocumentService";
 import { INewFileInfo } from "./odspUtils";
 import { createNewFluidFile } from "./createFile";
 import {
-    StorageTokenFetcher,
-    PushTokenFetcher,
+    ResourceTokenFetcher,
     TokenFetchOptions,
     isTokenFromCache,
     tokenFromResponse,
@@ -104,8 +103,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
    * @param persistedCache - PersistedCache provided by host for use in this session.
    */
     constructor(
-        private readonly getStorageToken: StorageTokenFetcher,
-        private readonly getWebsocketToken: PushTokenFetcher,
+        private readonly getStorageToken: ResourceTokenFetcher,
+        private readonly getWebsocketToken: ResourceTokenFetcher,
         private readonly getSocketIOClient: () => Promise<SocketIOClientStatic>,
         protected persistedCache: IPersistedCache = new LocalPersistentCache(),
         private readonly hostPolicy: HostStoragePolicy = {},
@@ -126,7 +125,10 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         return OdspDocumentService.create(
             resolvedUrl,
             this.toInstrumentedStorageTokenFetcher(odspLogger, resolvedUrl as IOdspResolvedUrl, this.getStorageToken),
-            this.toInstrumentedPushTokenFetcher(odspLogger, resolvedUrl as IOdspResolvedUrl, this.getWebsocketToken),
+            this.toInstrumentedWebsocketTokenFetcher(
+                odspLogger,
+                resolvedUrl as IOdspResolvedUrl,
+                this.getWebsocketToken),
             odspLogger,
             this.getSocketIOClient,
             cache,
@@ -139,7 +141,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     private toInstrumentedStorageTokenFetcher(
         logger: ITelemetryLogger,
         resolvedUrl: IOdspResolvedUrl,
-        tokenFetcher: StorageTokenFetcher,
+        tokenFetcher: ResourceTokenFetcher,
     ): (options: TokenFetchOptions, name?: string) => Promise<string | null> {
         return async (options: TokenFetchOptions, name?: string) => {
             // Telemetry note: if options.refresh is true, there is a potential perf issue:
@@ -154,7 +156,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     refresh: options.refresh,
                     hasClaims: !!options.claims,
                 },
-                async (event) => tokenFetcher(resolvedUrl.siteUrl, options.refresh, options.claims)
+                async (event) => tokenFetcher({ ...options, siteUrl: resolvedUrl.siteUrl })
                 .then((tokenResponse) => {
                     const token = tokenFromResponse(tokenResponse);
                     event.end({ fromCache: isTokenFromCache(tokenResponse), isNull: token === null ? true : false });
@@ -166,16 +168,16 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         };
     }
 
-    private toInstrumentedPushTokenFetcher(
+    private toInstrumentedWebsocketTokenFetcher(
         logger: ITelemetryLogger,
         resolvedUrl: IOdspResolvedUrl,
-        tokenFetcher: PushTokenFetcher,
+        tokenFetcher: ResourceTokenFetcher,
     ): (options: TokenFetchOptions) => Promise<string | null> {
         return async (options: TokenFetchOptions) => {
             return PerformanceEvent.timedExecAsync(
                 logger,
                 { eventName: "GetWebsocketToken" },
-                async (event) => tokenFetcher(resolvedUrl.siteUrl, options.refresh, options.claims)
+                async (event) => tokenFetcher({ ...options, siteUrl: resolvedUrl.siteUrl })
                 .then((tokenResponse) => {
                     event.end({ fromCache: isTokenFromCache(tokenResponse) });
                     return tokenFromResponse(tokenResponse);

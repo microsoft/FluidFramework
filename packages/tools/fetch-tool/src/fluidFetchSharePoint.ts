@@ -18,7 +18,7 @@ import {
     OdspTokenManager,
     odspTokensCache,
     OdspTokenConfig,
-    OdspTokenManagerCacheKey,
+    IOdspTokenManagerCacheKey,
 } from "@fluidframework/tool-utils";
 import { fluidFetchWebNavigator } from "./fluidFetchInit";
 import { getForceTokenReauth } from "./fluidFetchArgs";
@@ -50,7 +50,7 @@ export async function resolveWrapper<T>(
         });
         // If this is used for getting a token, then refresh the cache with new token.
         if (forToken) {
-            const key: OdspTokenManagerCacheKey = { isPush: false, server };
+            const key: IOdspTokenManagerCacheKey = { isPush: false, server };
             await odspTokenManager.updateTokensCache(
                 key, { accessToken: result as any as string, refreshToken: tokens.refreshToken });
             return result;

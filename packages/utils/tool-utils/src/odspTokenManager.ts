@@ -46,14 +46,14 @@ export type OdspTokenConfig = {
     redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>;
 };
 
-export interface OdspTokenManagerCacheKey { isPush: boolean; server: string; }
+export interface IOdspTokenManagerCacheKey { isPush: boolean; server: string; }
 
 export class OdspTokenManager {
     constructor(
-        private readonly tokenCache?: IAsyncCache<OdspTokenManagerCacheKey, IOdspTokens>,
+        private readonly tokenCache?: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens>,
     ) { }
 
-    public async updateTokensCache(key: OdspTokenManagerCacheKey, value: IOdspTokens) {
+    public async updateTokensCache(key: IOdspTokenManagerCacheKey, value: IOdspTokens) {
         await this.tokenCache?.save(key, value);
     }
 
@@ -110,7 +110,7 @@ export class OdspTokenManager {
         if (this.tokenCache) {
             if (!forceReauth && !forceRefresh) {
                 // check and return if it exists without lock
-                const cacheKey: OdspTokenManagerCacheKey = { isPush, server };
+                const cacheKey: IOdspTokenManagerCacheKey = { isPush, server };
                 const tokensFromCache = await this.tokenCache.get(cacheKey);
                 if (tokensFromCache) {
                     await this.onTokenRetrievalFromCache(tokenConfig, tokensFromCache);
@@ -132,7 +132,7 @@ export class OdspTokenManager {
         forceReauth,
     ): Promise<IOdspTokens> {
         const scope = isPush ? pushScope : getOdspScope(server);
-        const cacheKey: OdspTokenManagerCacheKey = { isPush, server };
+        const cacheKey: IOdspTokenManagerCacheKey = { isPush, server };
         if (!forceReauth && this.tokenCache) {
             const tokensFromCache = await this.tokenCache.get(cacheKey);
             if (tokensFromCache) {
@@ -258,8 +258,8 @@ export class OdspTokenManager {
     }
 }
 
-export const odspTokensCache: IAsyncCache<OdspTokenManagerCacheKey, IOdspTokens> = {
-    async get(key: OdspTokenManagerCacheKey): Promise<IOdspTokens | undefined> {
+export const odspTokensCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens> = {
+    async get(key: IOdspTokenManagerCacheKey): Promise<IOdspTokens | undefined> {
         const rc = await loadRC();
         if (key.isPush) {
             return rc.pushTokens;
@@ -267,7 +267,7 @@ export const odspTokensCache: IAsyncCache<OdspTokenManagerCacheKey, IOdspTokens>
             return rc.tokens && rc.tokens[key.server];
         }
     },
-    async save(key: OdspTokenManagerCacheKey, tokens: IOdspTokens): Promise<void> {
+    async save(key: IOdspTokenManagerCacheKey, tokens: IOdspTokens): Promise<void> {
         const rc = await loadRC();
         if (key.isPush) {
             rc.pushTokens = tokens;

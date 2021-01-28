@@ -17,10 +17,8 @@ import { getShareLink } from "./graph";
 import {
     IdentityType,
     isTokenFromCache,
-    SharingLinkScopeFor,
     SharingLinkTokenFetcher,
-    TokenFetchOptions,
-    tokenFromResponse,
+    SharingLinkTokenFetchOptions,
 } from "./tokenFetch";
 
 /**
@@ -31,8 +29,7 @@ import {
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     private readonly logger: ITelemetryLogger;
     private readonly sharingLinkCache = new PromiseCache<string, string>();
-    private readonly getSharingLinkToken:
-        (options: TokenFetchOptions, scopeFor: SharingLinkScopeFor, siteUrl: string) => Promise<string | null>;
+    private readonly getSharingLinkToken: SharingLinkTokenFetcher;
     public constructor(
         tokenFetcher: SharingLinkTokenFetcher,
         private readonly identityType: IdentityType = "Enterprise",
@@ -125,16 +122,14 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     private toInstrumentedSharingLinkTokenFetcher(
         logger: ITelemetryLogger,
         tokenFetcher: SharingLinkTokenFetcher,
-    ): (options: TokenFetchOptions, scopeFor: SharingLinkScopeFor, siteUrl: string) => Promise<string | null> {
-        return async (options: TokenFetchOptions, scopeFor: SharingLinkScopeFor, siteUrl: string) => {
+    ): SharingLinkTokenFetcher {
+        return async (options: SharingLinkTokenFetchOptions) => {
             return PerformanceEvent.timedExecAsync(
                 logger,
                 { eventName: "GetSharingLinkToken" },
-                async (event) =>
-                    tokenFetcher(siteUrl, scopeFor, options.refresh, options.claims)
-                .then((tokenResponse) => {
+                async (event) => tokenFetcher(options).then((tokenResponse) => {
                     event.end({ fromCache: isTokenFromCache(tokenResponse) });
-                    return tokenFromResponse(tokenResponse);
+                    return tokenResponse;
                 }));
         };
     }
