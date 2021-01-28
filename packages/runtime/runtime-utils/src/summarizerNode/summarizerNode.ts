@@ -28,6 +28,7 @@ import {
     ICreateChildDetails,
     IInitialSummary,
     ISummarizerNodeRootContract,
+    parseSummaryForSubtrees,
     ReadAndParseBlob,
     seqFromTree,
     SummaryNode,
@@ -66,11 +67,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
     public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger) {
         assert(this.wipSummaryLogger === undefined, "wipSummaryLogger should not be set yet in startSummary");
-
-        assert(
-            this.wipReferenceSequenceNumber === undefined,
-            "Already tracking a summary",
-        );
+        assert(this.wipReferenceSequenceNumber === undefined, "Already tracking a summary");
 
         this.wipSummaryLogger = summaryLogger;
 
@@ -81,6 +78,7 @@ export class SummarizerNode implements IRootSummarizerNode {
     }
 
     public async summarize(fullTree: boolean): Promise<ISummarizeResult> {
+        assert(this.isTrackingInProgress(), "summarize should not be called when not tracking the summary");
         assert(this.wipSummaryLogger !== undefined, "wipSummaryLogger should have been set in startSummary or ctor");
 
         // Try to reuse the tree if unchanged
@@ -315,6 +313,12 @@ export class SummarizerNode implements IRootSummarizerNode {
             basePath,
             localPath,
         });
+
+        const { childrenTree, childrenPathPart } = parseSummaryForSubtrees(baseSummary);
+        if (childrenPathPart !== undefined) {
+            pathParts.push(childrenPathPart);
+        }
+
         if (pathParts.length > 0) {
             this.latestSummary.additionalPath = EscapedPath.createAndConcat(pathParts);
         }
@@ -325,11 +329,11 @@ export class SummarizerNode implements IRootSummarizerNode {
             .filter(([id]) => {
                 // Assuming subtrees missing from snapshot are newer than the snapshot,
                 // but might be nice to assert this using earliest seq for node.
-                return baseSummary.trees[id] !== undefined;
+                return childrenTree.trees[id] !== undefined;
             }).map(async ([id, child]) => {
                 return child.refreshLatestSummaryFromSnapshot(
                     referenceSequenceNumber,
-                    baseSummary.trees[id],
+                    childrenTree.trees[id],
                     pathForChildren,
                     EscapedPath.create(id),
                     correlatedSummaryLogger,
@@ -361,12 +365,19 @@ export class SummarizerNode implements IRootSummarizerNode {
         const decodedSummary = decodeSummary(snapshot, this.defaultLogger);
         const outstandingOps = await decodedSummary.getOutstandingOps(readAndParseBlob);
 
-        if (outstandingOps.length > 0) {
-            assert(!!this.latestSummary, "Should have latest summary defined if any outstanding ops found");
-            this.latestSummary.additionalPath = EscapedPath.createAndConcat(decodedSummary.pathParts);
+        const { childrenPathPart } = parseSummaryForSubtrees(decodedSummary.baseSummary);
+        if (childrenPathPart !== undefined) {
+            decodedSummary.pathParts.push(childrenPathPart);
+        }
 
-            // Defensive: tracking number should already exceed this number.
-            // This is probably a little excessive; can remove when stable.
+        if (decodedSummary.pathParts.length > 0) {
+            assert(!!this.latestSummary, "Should have latest summary defined during loadBaseSummary");
+            this.latestSummary.additionalPath = EscapedPath.createAndConcat(decodedSummary.pathParts);
+        }
+
+        // Defensive assertion: tracking number should already exceed this number.
+        // This is probably a little excessive; can remove when stable.
+        if (outstandingOps.length > 0) {
             const newOpsLatestSeq = outstandingOps[outstandingOps.length - 1].sequenceNumber;
             assert(
                 newOpsLatestSeq <= this.trackingSequenceNumber,
@@ -460,10 +471,9 @@ export class SummarizerNode implements IRootSummarizerNode {
             this.wipSummaryLogger,
         );
 
-        // If a summary is in progress, update the child's work-in-progress state.
-        if (this.isSummaryInProgress()) {
-            this.updateChildWipState(child);
-        }
+        // There may be additional state that has to be updated in this child. For example, if a summary is being
+        // tracked, the child's summary tracking state needs to be updated too.
+        this.maybeUpdateChildState(child);
 
         this.children.set(id, child);
         return child;
@@ -555,14 +565,22 @@ export class SummarizerNode implements IRootSummarizerNode {
     }
 
     /**
-     * Updates the work-in-progress state of the child if summary is in progress.
-     * @param child - The child node to be updated.
+     * Updates the state of the child if required. For example, if a summary is currently being  tracked, the child's
+     * summary tracking state needs to be updated too.
+     * @param child - The child node whose state is to be updated.
      */
-    protected updateChildWipState(child: SummarizerNode) {
-        child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;
+    protected maybeUpdateChildState(child: SummarizerNode) {
+        // If we are tracking a summary, this child was created after the tracking started. So, we need to update the
+        // child's tracking state as well.
+        if (this.isTrackingInProgress()) {
+            child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;
+        }
     }
 
-    protected isSummaryInProgress(): boolean {
+    /**
+     * Tells whether summary tracking is in progress. True if "startSummary" API is called before summarize.
+     */
+    protected isTrackingInProgress(): boolean {
         return this.wipReferenceSequenceNumber !== undefined;
     }
 }

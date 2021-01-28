@@ -41,7 +41,7 @@ enum TextType {
     Email,
     Name,
     FluidObject,
-    MapKey
+    MapKey,
 }
 
 // Workaround to jsonschema package not supporting "false" as a schema

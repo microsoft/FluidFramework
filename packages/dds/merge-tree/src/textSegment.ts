@@ -111,22 +111,31 @@ export class TextSegment extends BaseSegment {
     }
 }
 
-export interface ITextAccumulator {
+interface ITextAccumulator  {
     textSegment: TextSegment;
     placeholder?: string;
     parallelArrays?: boolean;
-    parallelText?: string[];
-    parallelMarkers?: Marker[];
-    parallelMarkerLabel?: string;
-    tagsInProgress?: string[];
 }
 
+interface ITextAndMarkerAccumulator extends ITextAccumulator {
+    parallelArrays: true;
+    parallelText: string[];
+    parallelMarkers: Marker[];
+    parallelMarkerLabel: string;
+    tagsInProgress: string[];
+}
+
+function isTextAndMarkerAccumulator(accum: ITextAccumulator): accum is ITextAndMarkerAccumulator {
+    return accum.parallelArrays === true;
+}
+
+type ITextAccumulatorType = ITextAccumulator | ITextAndMarkerAccumulator;
 export class MergeTreeTextHelper {
     constructor(private readonly mergeTree: MergeTree) { }
 
     public getTextAndMarkers(refSeq: number, clientId: number, label: string, start?: number, end?: number) {
         const range = this.getValidRange(start, end, refSeq, clientId);
-        const accum: ITextAccumulator = {
+        const accum: ITextAndMarkerAccumulator = {
             parallelArrays: true,
             parallelMarkerLabel: label,
             parallelMarkers: [],
@@ -140,7 +149,7 @@ export class MergeTreeTextHelper {
                 `get text on cli ${glc(this.mergeTree, this.mergeTree.collabWindow.clientId)} ` +
                 `ref cli ${glc(this.mergeTree, clientId)} refSeq ${refSeq}`);
         }
-        this.mergeTree.mapRange<ITextAccumulator>(
+        this.mergeTree.mapRange<ITextAndMarkerAccumulator>(
             { leaf: this.gatherText },
             refSeq,
             clientId,
@@ -171,31 +180,31 @@ export class MergeTreeTextHelper {
         return accum.textSegment.text;
     }
 
-    private getValidRange(start: number, end: number, refSeq: number, clientId: number): IIntegerRange {
+    private getValidRange(
+        start: number | undefined,
+        end: number | undefined,
+        refSeq: number,
+        clientId: number,
+    ): IIntegerRange {
         const range: IIntegerRange = {
-            end,
-            start,
+            end: end ?? this.mergeTree.getLength(refSeq, clientId),
+            start: start ?? 0,
         };
-        if (range.start === undefined) {
-            range.start = 0;
-        }
-        if (range.end === undefined) {
-            range.end = this.mergeTree.getLength(refSeq, clientId);
-        }
         return range;
     }
 
     private readonly gatherText = (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number,
-        end: number, accumText: ITextAccumulator) => {
+        end: number, accumText: ITextAccumulatorType) => {
         if (TextSegment.is(segment)) {
             if (MergeTree.traceGatherText) {
                 console.log(
-                    `@cli ${this.mergeTree.getLongClientId(this.mergeTree.collabWindow.clientId)} ` +
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    `@cli ${this.mergeTree.getLongClientId!(this.mergeTree.collabWindow.clientId)} ` +
                     `gather seg seq ${segment.seq} rseq ${segment.removedSeq} text ${segment.text}`);
             }
             let beginTags = "";
             let endTags = "";
-            if (accumText.parallelArrays) {
+            if (isTextAndMarkerAccumulator(accumText)) {
                 // TODO: let clients pass in function to get tag
                 const tags = [] as string[];
                 const initTags = [] as string[];
@@ -261,7 +270,7 @@ export class MergeTreeTextHelper {
                         accumText.textSegment.text += accumText.placeholder;
                     }
                 }
-            } else if (accumText.parallelArrays) {
+            } else if (isTextAndMarkerAccumulator(accumText)) {
                 const marker = segment as Marker;
                 if (marker.hasTileLabel(accumText.parallelMarkerLabel)) {
                     accumText.parallelMarkers.push(marker);

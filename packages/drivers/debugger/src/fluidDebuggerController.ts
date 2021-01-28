@@ -256,12 +256,9 @@ export class DebugReplayController extends ReplayController implements IDebugger
         throw new Error("Reading blob before storage is setup properly");
     }
 
-    /**
-     * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
-     */
-    public async readString(blobId: string): Promise<string> {
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
         if (this.storage !== undefined) {
-            return this.storage.readString(blobId);
+            return this.storage.readBlob(blobId);
         }
         throw new Error("Reading blob before storage is setup properly");
     }
@@ -357,8 +354,9 @@ async function* generateSequencedMessagesFromDeltaStorage(deltaStorage: IDocumen
     let lastSeq = 0;
     const batch = 2000;
     while (true) {
-        const messages = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
+        const { messages, partialResult } = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
         if (messages.length === 0) {
+            assert(!partialResult);
             break;
         }
         yield messages;

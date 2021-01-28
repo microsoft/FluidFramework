@@ -64,7 +64,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 
     public async run(config: IRunConfig) {
         console.log(`${config.runId.toString().padStart(3)}> waiting`);
-        await new Promise((resolve) => {
+        await new Promise<void>((resolve) => {
             let memberCount = this.context.getQuorum().getMembers().size;
             if (memberCount >= config.testConfig.numClients) { resolve(); }
             this.context.getQuorum().on("addMember", () => {

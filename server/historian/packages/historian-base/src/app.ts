@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IThrottler } from "@fluidframework/server-services-core";
 import * as bodyParser from "body-parser";
 import compression from "compression";
 import cors from "cors";
@@ -12,6 +13,7 @@ import * as nconf from "nconf";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import split = require("split");
 import * as winston from "winston";
+import { bindCorrelationId } from "@fluidframework/server-services-utils";
 import * as routes from "./routes";
 import { ICache, ITenantService } from "./services";
 
@@ -22,7 +24,7 @@ const stream = split().on("data", (message) => {
     winston.info(message);
 });
 
-export function create(config: nconf.Provider, tenantService: ITenantService, cache: ICache) {
+export function create(config: nconf.Provider, tenantService: ITenantService, cache: ICache, throttler: IThrottler) {
     // Express app configuration
     const app: express.Express = express();
 
@@ -35,8 +37,9 @@ export function create(config: nconf.Provider, tenantService: ITenantService, ca
 
     app.use(compression());
     app.use(cors());
+    app.use(bindCorrelationId());
 
-    const apiRoutes = routes.create(config, tenantService, cache);
+    const apiRoutes = routes.create(config, tenantService, cache, throttler);
     app.use(apiRoutes.git.blobs);
     app.use(apiRoutes.git.refs);
     app.use(apiRoutes.git.tags);

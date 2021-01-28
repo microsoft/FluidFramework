@@ -6,6 +6,8 @@
 import { assert } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { fluidEpochMismatchError, OdspErrorType } from "@fluidframework/odsp-doclib-utils";
+import { ThrottlingError } from "@fluidframework/driver-utils";
+import { IConnected } from "@fluidframework/protocol-definitions";
 import { fetchAndParseAsJSONHelper, fetchHelper, IOdspResponse } from "./odspUtils";
 import { ICacheEntry, IFileEntry, LocalPersistentCacheAdapter } from "./odspCache";
 import { RateLimiter } from "./rateLimiter";
@@ -41,6 +43,17 @@ export class EpochTracker {
 
     public get fluidEpoch() {
         return this._fluidEpoch;
+    }
+
+    public async validateEpochFromPush(details: IConnected) {
+        const epoch = details.epoch;
+        assert(epoch !== undefined, "Connection details should contain epoch");
+        try {
+            this.validateEpochFromResponse(epoch, "push");
+        } catch (error) {
+            await this.checkForEpochError(error, epoch, "push");
+            throw error;
+        }
     }
 
     public async fetchFromCache<T>(
@@ -159,12 +172,7 @@ export class EpochTracker {
         fetchType: FetchType,
         fromCache: boolean = false,
     ) {
-        // If epoch is undefined, then don't compare it because initially for createNew or TreesLatest
-        // initializes this value. Sometimes response does not contain epoch as it is still in
-        // implementation phase at server side. In that case also, don't compare it with our epoch value.
-        if (this.fluidEpoch && epochFromResponse && (this.fluidEpoch !== epochFromResponse)) {
-            throwOdspNetworkError("Epoch Mismatch", fluidEpochMismatchError);
-        }
+        this.checkForEpochErrorCore(epochFromResponse);
         if (epochFromResponse) {
             if (this._fluidEpoch === undefined) {
                 this.logger.sendTelemetryEvent(
@@ -187,29 +195,39 @@ export class EpochTracker {
         fromCache: boolean = false,
     ) {
         if (error.errorType === OdspErrorType.epochVersionMismatch) {
-            const err = {
-                ...error,
-                fromCache,
-                clientEpoch: this.fluidEpoch,
-                serverEpoch: epochFromResponse ?? undefined,
-                fetchType,
-            };
-            this.logger.sendErrorEvent({ eventName: "EpochVersionMismatch" }, err);
-            assert(!!this.fileEntry, "File Entry should be set to clear the cached entries!!");
-            // If the epoch mismatches, then clear all entries for such file entry from cache.
-            await this.persistedCache.removeEntries(this.fileEntry);
+            try {
+                // This will only throw if it is an epoch error.
+                this.checkForEpochErrorCore(epochFromResponse, error.errorMessage);
+            } catch (epochError) {
+                const err = {
+                    ...epochError,
+                    fromCache,
+                    clientEpoch: this.fluidEpoch,
+                    fetchType,
+                };
+                this.logger.sendErrorEvent({ eventName: "EpochVersionMismatch" }, err);
+                assert(!!this.fileEntry, "File Entry should be set to clear the cached entries!!");
+                // If the epoch mismatches, then clear all entries for such file entry from cache.
+                await this.persistedCache.removeEntries(this.fileEntry);
+                throw epochError;
+            }
+            // If it was categorised as epoch error but the epoch returned in response matches with the client epoch
+            // then it was coherency 409, so rethrow it as throttling error so that it can retried. Default throttling
+            // time is 1s.
+            this.logger.sendErrorEvent({ eventName: "Coherency409" }, error);
+            throw new ThrottlingError(error.errorMessage, 1000, 429);
+        }
+    }
+
+    private checkForEpochErrorCore(epochFromResponse: string | null | undefined, message?: string) {
+        // If epoch is undefined, then don't compare it because initially for createNew or TreesLatest
+        // initializes this value. Sometimes response does not contain epoch as it is still in
+        // implementation phase at server side. In that case also, don't compare it with our epoch value.
+        if (this.fluidEpoch && epochFromResponse && (this.fluidEpoch !== epochFromResponse)) {
+            throwOdspNetworkError(message ?? "Epoch Mismatch", fluidEpochMismatchError);
         }
     }
 }
 
-export enum FetchType {
-    blob = "blob",
-    createBlob = "createBlob",
-    createFile = "createFile",
-    joinSession = "joinSession",
-    ops = "ops",
-    other = "other",
-    snaphsotTree = "snapshotTree",
-    treesLatest = "treesLatest",
-    uploadSummary = "uploadSummary",
-}
+export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "other" | "snapshotTree" |
+    "treesLatest" | "uploadSummary" | "push";

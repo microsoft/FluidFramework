@@ -13,6 +13,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ITestFluidObject,
     ChannelFactoryRegistry,
+    timeoutPromise,
 } from "@fluidframework/test-utils";
 import {
     generateTest,
@@ -32,7 +33,11 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (args: ITestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    beforeEach(()=>{
+        args = argsFactory();
+    });
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;
     let dataObject1map1: SharedMap;
@@ -66,6 +71,16 @@ const tests = (args: ITestObjectProvider) => {
         assert.equal(batchEndMetadata, false, "Batch end metadata not found");
     }
 
+    // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+    async function waitForCleanContainers(...dataStores: ITestFluidObject[]) {
+        return Promise.all(dataStores.map(async (dataStore)=>{
+            const runtime = dataStore.context.containerRuntime as IContainerRuntime;
+            while (runtime.isDocumentDirty()) {
+                await timeoutPromise((resolve)=>runtime.once("batchEnd", resolve));
+            }
+        }));
+    }
+
     beforeEach(async () => {
         // Create a Container for the first client.
         const container1 = await args.makeTestContainer(testContainerConfig);
@@ -79,6 +94,7 @@ const tests = (args: ITestObjectProvider) => {
         dataObject2map1 = await dataObject2.getSharedObject<SharedMap>(map1Id);
         dataObject2map2 = await dataObject2.getSharedObject<SharedMap>(map2Id);
 
+        await waitForCleanContainers(dataObject1, dataObject2);
         await args.opProcessingController.process();
     });
 

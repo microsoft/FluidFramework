@@ -9,6 +9,7 @@ import { IClient } from "@fluidframework/protocol-definitions";
 import {
     BroadcasterLambda,
     CheckpointManager,
+    createDeliCheckpointManagerFromCollection,
     DeliLambda,
     ForemanLambda,
     ScribeLambda,
@@ -268,12 +269,14 @@ export class LocalOrderer implements IOrderer {
             async (lambdaSetup, context) => {
                 const documentCollection = await lambdaSetup.documentCollectionP();
                 const lastCheckpoint = JSON.parse(this.dbObject.deli);
+                const checkpointManager =
+                    createDeliCheckpointManagerFromCollection(this.tenantId, this.documentId, documentCollection);
                 return new DeliLambda(
                     context,
                     this.tenantId,
                     this.documentId,
                     lastCheckpoint,
-                    documentCollection,
+                    checkpointManager,
                     this.deltasKafka,
                     this.rawDeltasKafka,
                     this.serviceConfiguration);

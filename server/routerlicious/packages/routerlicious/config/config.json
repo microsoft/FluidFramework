@@ -9,6 +9,7 @@
     },
     "mongo": {
         "endpoint": "mongodb://mongodb:27017",
+        "expireAfterSeconds": -1,
         "collectionNames": {
             "deltas": "deltas",
             "rawdeltas": "rawdeltas",
@@ -24,9 +25,10 @@
         "lib": {
             "name": "kafka-node",
             "endpoint": "kafka:9092",
-            "producerPollIntervalMs": 10
-        },
-        "maxMessageSize": "1MB"
+            "producerPollIntervalMs": 10,
+            "numberOfPartitions": 32,
+            "replicationFactor": 3
+        }
     },
     "zookeeper": {
         "endpoint": "zookeeper:2181"
@@ -36,10 +38,24 @@
         "maxMessageSize": "16KB",
         "maxNumberOfClientsPerDocument": 1000000,
         "throttling": {
-            "maxRequestsPerMs": 1000000,
-            "maxRequestBurst": 1000000,
-            "minCooldownIntervalInMs": 1000000,
-            "minThrottleIntervalInMs": 1000000
+            "restCalls": {
+                "maxPerMs": 1000000,
+                "maxBurst": 1000000,
+                "minCooldownIntervalInMs": 1000000,
+                "minThrottleIntervalInMs": 1000000
+            },
+            "socketConnections": {
+                "maxPerMs": 1000000,
+                "maxBurst": 1000000,
+                "minCooldownIntervalInMs": 1000000,
+                "minThrottleIntervalInMs": 1000000
+            },
+            "submitOps": {
+                "maxPerMs": 1000000,
+                "maxBurst": 1000000,
+                "minCooldownIntervalInMs": 1000000,
+                "minThrottleIntervalInMs": 1000000
+            }
         },
         "topic": "rawdeltas",
         "bucket": "snapshots",
@@ -58,7 +74,11 @@
                 "id": "local",
                 "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
             }
-        ]
+        ],
+        "socketIoAdapter" : {
+            "enableCustomSocketIoAdapter": true,
+            "shouldDisableDefaultNamespace": false
+        }
     },
     "client": {
         "type": "browser",
@@ -148,6 +168,11 @@
         "tls": false
     },
     "redis2": {
+        "host": "redis",
+        "port": 6379,
+        "tls": false
+    },
+    "redisForThrottling": {
         "host": "redis",
         "port": 6379,
         "tls": false

@@ -12,6 +12,7 @@ import {
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
+    channelsTreeName,
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
     CreateSummarizerNodeSource,
@@ -38,19 +39,22 @@ import { BlobCacheStorageService, buildSnapshotTree, readAndParseFromBlobs } fro
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
-import { GCDataBuilder } from "@fluidframework/garbage-collector";
+import { GCDataBuilder, getChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
-import { ContainerRuntime, nonDataStorePaths } from "./containerRuntime";
+import { ContainerRuntime } from "./containerRuntime";
 import {
-    attributesBlobKey,
     FluidDataStoreContext,
     RemotedFluidDataStoreContext,
     IFluidDataStoreAttributes,
-    currentSnapshotFormatVersion,
     LocalFluidDataStoreContext,
     createAttributesBlob,
     LocalDetachedFluidDataStoreContext,
- } from "./dataStoreContext";
+} from "./dataStoreContext";
+import {
+    ContainerRuntimeSnapshotFormatVersion,
+    dataStoreAttributesBlobName,
+    nonDataStorePaths,
+} from "./snapshot";
 
  /**
   * This class encapsulates data store handling. Currently it is only used by the container runtime,
@@ -77,15 +81,12 @@ export class DataStores implements IDisposable {
     ) {
         this.logger = ChildLogger.create(baseLogger);
         // Extract stores stored inside the snapshot
-        const fluidDataStores = new Map<string, ISnapshotTree | string>();
+        const fluidDataStores = new Map<string, ISnapshotTree>();
 
-        if (typeof baseSnapshot === "object") {
-            Object.keys(baseSnapshot.trees).forEach((value) => {
-                if (!nonDataStorePaths.includes(value)) {
-                    const tree = baseSnapshot.trees[value];
-                    fluidDataStores.set(value, tree);
-                }
-            });
+        if (baseSnapshot) {
+            for (const [key, value] of Object.entries(baseSnapshot.trees)) {
+                fluidDataStores.set(key, value);
+            }
         }
 
         // Create a context for each of them
@@ -109,12 +110,13 @@ export class DataStores implements IDisposable {
                 // Need to rip through snapshot.
                 const attributes = readAndParseFromBlobs<IFluidDataStoreAttributes>(
                         snapshotTree.blobs,
-                        snapshotTree.blobs[attributesBlobKey]);
+                        snapshotTree.blobs[dataStoreAttributesBlobName]);
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
-                // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
+                // For snapshotFormatVersion = "0.1" or above, pkg is jsonified, otherwise it is just a string.
                 // However the feature of loading a detached container from snapshot, is added when the
-                // snapshotFormatVersion is "0.1", so we don't expect it to be anything else.
-                if (attributes.snapshotFormatVersion === currentSnapshotFormatVersion) {
+                // snapshotFormatVersion is at least "0.1", so we don't expect it to be anything else.
+                if (attributes.snapshotFormatVersion === "0.1"
+                    || attributes.snapshotFormatVersion === 2) {
                     pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
                 } else {
                     throw new Error(`Invalid snapshot format version ${attributes.snapshotFormatVersion}`);
@@ -163,7 +165,7 @@ export class DataStores implements IDisposable {
         }
 
         const flatBlobs = new Map<string, string>();
-        let snapshotTree: ISnapshotTree | null = null;
+        let snapshotTree: ISnapshotTree | undefined;
         if (attachMessage.snapshot) {
             snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
         }
@@ -183,7 +185,6 @@ export class DataStores implements IDisposable {
                     type: CreateSummarizerNodeSource.FromAttach,
                     sequenceNumber: message.sequenceNumber,
                     snapshot: attachMessage.snapshot ?? {
-                        id: null,
                         entries: [createAttributesBlob(pkg, true /* isRootDataStore */)],
                     },
                 }),
@@ -437,6 +438,14 @@ export class DataStores implements IDisposable {
         return builder.getSummaryTree();
     }
 
+    /**
+     * Generates data used for garbage collection. It does the following:
+     * 1. Calls into each child data store context to get its GC data.
+     * 2. Prefixs the child context's id to the GC nodes in the child's GC data. This makes sure that the node can be
+     *    idenfied as belonging to the child.
+     * 3. Adds a GC node for this channel to the nodes received from the children. All these nodes together represent
+     *    the GC data of this channel.
+     */
     public async getGCData(): Promise<IGarbageCollectionData> {
         const builder = new GCDataBuilder();
         // Iterate over each store and get their GC data.
@@ -447,8 +456,8 @@ export class DataStores implements IDisposable {
                 return context.attachState === AttachState.Attached;
             }).map(async ([contextId, context]) => {
                 const contextGCData = await context.getGCData();
-                // Prefix the child's id to the ids of GC nodes returned by it. This gradually builds the id of
-                // each node to be a path from the root.
+                // Prefix the child's id to the ids of its GC nodes so they can be identified as belonging to the child.
+                // This also gradually builds the id of each node to be a path from the root.
                 builder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
             }));
 
@@ -462,26 +471,17 @@ export class DataStores implements IDisposable {
      * @param usedRoutes - The routes that are used in all data stores in this Container.
      */
     public updateUsedRoutes(usedRoutes: string[]) {
-        // Build a map of data store ids to routes used in it.
-        const usedRoutesMap: Map<string, string[]> = new Map();
-        for (const route of usedRoutes) {
-            assert(route.startsWith("/"), "Used route should always be an absolute route");
+        // Get a map of data store ids to routes used in it.
+        const usedDataStoreRoutes = getChildNodesUsedRoutes(usedRoutes);
 
-            const dataStoreId = route.split("/")[1];
-            assert(this.contexts.has(dataStoreId), "Used route does not belong to any known data store");
-
-            const dataStoreRoute = route.slice(dataStoreId.length + 1);
-            const routes = usedRoutesMap.get(dataStoreId);
-            if (routes !== undefined) {
-                routes.push(dataStoreRoute);
-            } else {
-                usedRoutesMap.set(dataStoreId, [dataStoreRoute]);
-            }
+        // Verify that the used routes are correct.
+        for (const [id] of usedDataStoreRoutes) {
+            assert(this.contexts.has(id), "Used route does not belong to any known data store");
         }
 
         // Update the used routes in each data store. Used routes is empty for unused data stores.
         for (const [contextId, context] of this.contexts) {
-            context.updateUsedRoutes(usedRoutesMap.get(contextId) ?? []);
+            context.updateUsedRoutes(usedDataStoreRoutes.get(contextId) ?? []);
         }
     }
 
@@ -498,5 +498,32 @@ export class DataStores implements IDisposable {
             }
         }
         return outboundRoutes;
+    }
+}
+
+export function getSnapshotForDataStores(
+    snapshot: ISnapshotTree | undefined,
+    snapshotFormatVersion: ContainerRuntimeSnapshotFormatVersion,
+): ISnapshotTree | undefined {
+    if (!snapshot) {
+        return undefined;
+    }
+
+    if (snapshotFormatVersion !== undefined) {
+        const dataStoresSnapshot = snapshot.trees[channelsTreeName];
+        assert(!!dataStoresSnapshot, `expected ${channelsTreeName} tree in snapshot`);
+        return dataStoresSnapshot;
+    } else {
+        // back-compat: strip out all non-datastore paths before giving to DataStores object.
+        const dataStoresTrees: ISnapshotTree["trees"] = {};
+        for (const [key, value] of Object.entries(snapshot.trees)) {
+            if (!nonDataStorePaths.includes(key)) {
+                dataStoresTrees[key] = value;
+            }
+        }
+        return {
+            ...snapshot,
+            trees: dataStoresTrees,
+        };
     }
 }

@@ -231,8 +231,6 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
                     },
                 },
             ],
-            // eslint-disable-next-line no-null/no-null
-            id: null,
         };
 
         return tree;

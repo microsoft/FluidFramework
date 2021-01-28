@@ -46,15 +46,15 @@ export async function spoGetResolvedUrl(
 ) {
     const server = getSpoServer(tenantId);
     if (server === undefined) {
-        return Promise.reject(`Invalid SPO tenantId ${tenantId}`);
+        return Promise.reject(new Error(`Invalid SPO tenantId ${tenantId}`));
     }
     const tokens = serverTokens !== undefined ? serverTokens[server] : undefined;
     if (tokens === undefined) {
-        return Promise.reject(`Missing tokens for ${server}`);
+        return Promise.reject(new Error(`Missing tokens for ${server}`));
     }
     const socketTokens = serverTokens !== undefined ? serverTokens[pushSrv] : undefined;
     if (socketTokens === undefined) {
-        return Promise.reject(`Missing tokens for ${pushSrv}`);
+        return Promise.reject(new Error(`Missing tokens for ${pushSrv}`));
     }
     // Only .b items can be fluid
     const encoded = encodeURIComponent(`${id}.fluid`);

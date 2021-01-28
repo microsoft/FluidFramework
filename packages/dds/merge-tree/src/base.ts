@@ -22,7 +22,7 @@ export type ConflictAction<TKey, TData> =
     (key: TKey, currentKey: TKey, data: TData, currentData: TData) => QProperty<TKey, TData>;
 
 export interface Dictionary<TKey, TData> {
-    get(key: TKey): Property<TKey, TData>;
+    get(key: TKey): Property<TKey, TData> | undefined;
     put(key: TKey, data: TData, conflict?: ConflictAction<TKey, TData>);
     remove(key: TKey);
     map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum);
@@ -30,8 +30,8 @@ export interface Dictionary<TKey, TData> {
 }
 
 export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
-    max(): Property<TKey, TData>;
-    min(): Property<TKey, TData>;
+    max(): Property<TKey, TData> | undefined;
+    min(): Property<TKey, TData> | undefined;
     mapRange<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey);
 }
 

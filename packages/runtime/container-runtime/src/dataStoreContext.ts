@@ -17,8 +17,15 @@ import {
     ILoader,
     BindState,
     AttachState,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { assert, Deferred, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
+import {
+    assert,
+    Deferred,
+    LazyPromise,
+    TypedEventEmitter,
+    unreachableCase,
+} from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { BlobTreeEntry } from "@fluidframework/protocol-base";
@@ -29,8 +36,11 @@ import {
     ISnapshotTree,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
+    IContainerRuntime,
+} from "@fluidframework/container-runtime-definitions";
+import {
+    channelsTreeName,
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
     FluidDataStoreRegistryEntry,
@@ -52,23 +62,22 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
-
-// Snapshot Format Version to be used in store attributes.
-export const currentSnapshotFormatVersion = "0.1";
-
-export const attributesBlobKey = ".component";
+import {
+    dataStoreAttributesBlobName,
+    DataStoreSnapshotFormatVersion,
+} from "./snapshot";
 
 function createAttributes(pkg: readonly string[], isRootDataStore: boolean): IFluidDataStoreAttributes {
     const stringifiedPkg = JSON.stringify(pkg);
     return {
         pkg: stringifiedPkg,
-        snapshotFormatVersion: currentSnapshotFormatVersion,
+        snapshotFormatVersion: "0.1",
         isRootDataStore,
     };
 }
 export function createAttributesBlob(pkg: readonly string[], isRootDataStore: boolean): ITreeEntry {
     const attributes = createAttributes(pkg, isRootDataStore);
-    return new BlobTreeEntry(attributesBlobKey, JSON.stringify(attributes));
+    return new BlobTreeEntry(dataStoreAttributesBlobName, JSON.stringify(attributes));
 }
 
 /**
@@ -78,7 +87,7 @@ export function createAttributesBlob(pkg: readonly string[], isRootDataStore: bo
  */
 export interface IFluidDataStoreAttributes {
     pkg: string;
-    readonly snapshotFormatVersion?: string;
+    readonly snapshotFormatVersion: DataStoreSnapshotFormatVersion;
     /**
      * This tells whether a data store is root. Root data stores are never collected.
      * Non-root data stores may be collected if they are not used. If this is not present, default it to
@@ -117,8 +126,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this.pkg;
     }
 
-    public get options(): any {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    public get options(): ILoaderOptions {
         return this._containerRuntime.options;
     }
 
@@ -197,16 +205,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected _attachState: AttachState;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
 
-    /**
-        @deprecated Dummy summary tracker for back compat
-        Should be remove in 0.31 and #3243 closed
-    */
-    protected readonly summaryTracker = {
-        createOrGetChild: (key: string, sequenceNumber: number)=>({
-            updateLatestSequenceNumber: (latestSequenceNumber: number)=>{},
-        }),
-    };
-
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
         public readonly id: string,
@@ -239,13 +237,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         const thisSummarizeInternal =
             async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
 
-        // Add self route (empty string) to used routes in the summarizer node. If GC is enabled, the used routes will
-        // be updated as per the GC data.
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
             async () => this.getGCDataInternal(),
             async () => this.getInitialGCSummaryDetails(),
-            [""] /* usedRoutes */,
         );
     }
 
@@ -406,7 +401,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         // Add data store's attributes to the summary.
         const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
         const attributes: IFluidDataStoreAttributes = createAttributes(pkg, isRootDataStore);
-        addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(attributes));
+        addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // Add GC details to the summary.
         const gcDetails: IGarbageCollectionSummaryDetails = {
@@ -415,13 +410,29 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         };
         addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
 
+        // If we are not referenced, update the summary tree to indicate that.
+        if (!this.summarizerNode.isReferenced()) {
+            summarizeResult.summary.unreferenced = true;
+        }
+
         return { ...summarizeResult, id: this.id };
     }
 
+    /**
+     * Returns the data used for garbage collection. This includes a list of GC nodes that represent this data store
+     * including any of its child channel contexts. Each node has a set of outbound routes to other GC nodes in the
+     * document.
+     * If there is no new data in this data store since the last summary, previous GC data is used.
+     * If there is new data, the GC data is generated again (by calling getGCDataInternal).
+     */
     public async getGCData(): Promise<IGarbageCollectionData> {
         return this.summarizerNode.getGCData();
     }
 
+    /**
+     * Generates data used for garbage collection. This is called when there is new data since last summary. It
+     * realizes the data store and calls into each channel context to get its GC data.
+     */
     private async getGCDataInternal(): Promise<IGarbageCollectionData> {
         await this.realize();
         assert(this.channel !== undefined, "Channel should not be undefined when running GC");
@@ -436,7 +447,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     /**
-     * After GC has run, called to notify this data store of routes that are used in it.
+     * After GC has run, called to notify the data store of routes used in it. These are used for the following:
+     * 1. To identify if this data store is being referenced in the document or not.
+     * 2. To determine if it needs to re-summarize in case used routes changed since last summary.
+     * 3. These are added to the summary generated by the data store.
+     * 4. To notify child contexts of their used routes. This is done immediately if the data store is loaded. Else,
+     *    it is done when realizing the data store.
      * @param usedRoutes - The routes that are used in this data store.
      */
     public updateUsedRoutes(usedRoutes: string[]) {
@@ -444,7 +460,33 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         // also be notified of their used routes. See - https://github.com/microsoft/FluidFramework/issues/4611
 
         // Update the used routes in this data store's summarizer node.
-        this.summarizerNode.usedRoutes = usedRoutes;
+        this.summarizerNode.updateUsedRoutes(usedRoutes);
+
+        // If we are loaded, call the channel so it can update the used routes of the child contexts.
+        // If we are not loaded, we will update this when we are realized.
+        if (this.loaded) {
+            this.updateChannelUsedRoutes();
+        }
+    }
+
+    /**
+     * Updates the used routes of the channel and its child contexts. The channel must be loaded before calling this.
+     * It is called in these two scenarions:
+     * 1. When the used routes of the data store is updated and the data store is loaded.
+     * 2. When the data store is realized. This updates the channel's used routes as per last GC run.
+     */
+    private updateChannelUsedRoutes() {
+        assert(this.loaded, "Channel should be loaded when updating used routes");
+        assert(this.channel !== undefined, "Channel should be present when data store is loaded");
+
+        // back-compat: 0.33 - updateUsedRoutes is added in 0.33. Remove the check here when N >= 0.36.
+        if (this.channel.updateUsedRoutes !== undefined) {
+            // Remove the route to this data store, if it exists.
+            const usedChannelRoutes = this.summarizerNode.usedRoutes.filter(
+                (id: string) => { return id !== "/" && id !== ""; },
+            );
+            this.channel.updateUsedRoutes(usedChannelRoutes);
+        }
     }
 
     /**
@@ -549,6 +591,15 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             // returned in packagePath().
             Object.freeze(this.pkg);
 
+            /**
+             * Update the used routes of the channel. If GC has run before this data store was realized, we will have
+             * the used routes saved. So, this will ensure that all the child contexts have up-to-date used routes as
+             * per the last time GC was run.
+             * Also, this data store may have been realized during summarize. In that case, the child contexts need to
+             * have their used routes updated to determine if its needs to summarize again and to add it to the summary.
+             */
+            this.updateChannelUsedRoutes();
+
             // And notify the pending promise it is now available
             this.channelDeferred.resolve(this.channel);
         } catch (error) {
@@ -589,7 +640,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             summarizeInternal: SummarizeInternalFn,
             getGCDataFn: () => Promise<IGarbageCollectionData>,
             getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
-            usedRoutes: string[],
         ) => this.summarizerNode.createChild(
             summarizeInternal,
             id,
@@ -598,7 +648,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             { throwOnFailure: true },
             getGCDataFn,
             getInitialGCSummaryDetailsFn,
-            usedRoutes,
         );
     }
 
@@ -610,7 +659,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
     constructor(
         id: string,
-        private readonly initSnapshotValue: ISnapshotTree | string | null,
+        private readonly initSnapshotValue: ISnapshotTree | string | undefined,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject,
@@ -634,12 +683,12 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
     }
 
     private readonly initialSnapshotDetailsP =  new LazyPromise<ISnapshotDetails>(async () => {
-        let tree: ISnapshotTree | null;
+        let tree: ISnapshotTree | undefined;
         let isRootDataStore = true;
 
         if (typeof this.initSnapshotValue === "string") {
             const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
-            tree = await this.storage.getSnapshotTree(commit);
+            tree = await this.storage.getSnapshotTree(commit) ?? undefined;
         } else {
             tree = this.initSnapshotValue;
         }
@@ -653,23 +702,36 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             this.pending = loadedSummary.outstandingOps.concat(this.pending!);
         }
 
-        if (tree !== null && tree.blobs[attributesBlobKey] !== undefined) {
+        if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
             // Need to rip through snapshot and use that to populate extraBlobs
-            const attributes = await localReadAndParse<IFluidDataStoreAttributes>(tree.blobs[attributesBlobKey]);
+            const attributes =
+                await localReadAndParse<IFluidDataStoreAttributes>(tree.blobs[dataStoreAttributesBlobName]);
 
             let pkgFromSnapshot: string[];
             // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
-            // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
-            if (attributes.snapshotFormatVersion === undefined) {
-                if (attributes.pkg.startsWith("[\"") && attributes.pkg.endsWith("\"]")) {
-                    pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
-                } else {
-                    pkgFromSnapshot = [attributes.pkg];
+            // For snapshotFormatVersion = "0.1" or above, pkg is jsonified, otherwise it is just a string.
+            switch (attributes.snapshotFormatVersion) {
+                case undefined: {
+                    if (attributes.pkg.startsWith("[\"") && attributes.pkg.endsWith("\"]")) {
+                        pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
+                    } else {
+                        pkgFromSnapshot = [attributes.pkg];
+                    }
+                    break;
                 }
-            } else if (attributes.snapshotFormatVersion === currentSnapshotFormatVersion) {
-                pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
-            } else {
-                throw new Error(`Invalid snapshot format version ${attributes.snapshotFormatVersion}`);
+                case 2: {
+                    tree = tree.trees[channelsTreeName];
+                    // Intentional fallthrough, since package is still JSON
+                }
+                case "0.1": {
+                    pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
+                    break;
+                }
+                default: {
+                    unreachableCase(
+                        attributes.snapshotFormatVersion,
+                        `Invalid snapshot format version ${attributes.snapshotFormatVersion}`);
+                }
             }
             this.pkg = pkgFromSnapshot;
 
@@ -684,14 +746,14 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         return {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             pkg: this.pkg!,
-            snapshot: tree ?? undefined,
+            snapshot: tree,
             isRootDataStore,
         };
     });
 
     private readonly gcDetailsInInitialSummaryP = new LazyPromise<IGarbageCollectionSummaryDetails>(async () => {
-        // If the initial snapshot is null or string, the snapshot is in old format and won't have GC details.
-        if (!(this.initSnapshotValue === null || typeof this.initSnapshotValue === "string")
+        // If the initial snapshot is undefined or string, the snapshot is in old format and won't have GC details.
+        if (!(!this.initSnapshotValue || typeof this.initSnapshotValue === "string")
             && this.initSnapshotValue.blobs[gcBlobKey] !== undefined) {
             return readAndParse<IGarbageCollectionSummaryDetails>(
                 this.storage,
@@ -768,7 +830,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
         // Add data store's attributes to the summary.
         const attributes: IFluidDataStoreAttributes = createAttributes(this.pkg, this.isRootDataStore);
-        addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(attributes));
+        addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // Add GC details to the summary.
         const gcDetails: IGarbageCollectionSummaryDetails = {

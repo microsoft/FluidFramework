@@ -6,16 +6,23 @@
 import type * as kafkaTypes from "node-rdkafka";
 import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@fluidframework/server-services-core";
 
-import { IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
+import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 import { PendingBoxcar, MaxBatchSize } from "./pendingBoxcar";
 import { tryImportNodeRdkafka } from "./tryImport";
 
 const kafka = tryImportNodeRdkafka();
 
+export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
+	enableIdempotence: boolean;
+	pollIntervalMs: number;
+	additionalOptions?: kafkaTypes.ProducerGlobalConfig;
+}
+
 /**
  * Kafka producer using the node-rdkafka library
  */
 export class RdkafkaProducer extends RdkafkaBase implements IProducer {
+	private readonly producerOptions: IKafkaProducerOptions;
 	private readonly messages = new Map<string, IPendingBoxcar[]>();
 	private producer?: kafkaTypes.Producer;
 	private sendPending?: NodeJS.Immediate;
@@ -27,11 +34,14 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		endpoints: IKafkaEndpoints,
 		clientId: string,
 		topic: string,
-		private readonly enableIdempotence: boolean = false,
-		private readonly pollIntervalMs: number = 10,
-		numberOfPartitions?: number,
-		replicationFactor?: number) {
-		super(endpoints, clientId, topic, numberOfPartitions, replicationFactor);
+		options?: Partial<IKafkaProducerOptions>) {
+		super(endpoints, clientId, topic, options);
+
+		this.producerOptions = {
+			enableIdempotence: false,
+			pollIntervalMs: 10,
+			...options,
+		};
 	}
 
 	/**
@@ -45,16 +55,19 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 		this.connecting = true;
 
-		this.producer = new kafka.HighLevelProducer({
+		const options: kafkaTypes.ProducerGlobalConfig = {
 			"metadata.broker.list": this.endpoints.kafka.join(","),
 			"socket.keepalive.enable": true,
 			"socket.nagle.disable": true,
 			"client.id": this.clientId,
-			"enable.idempotence": this.enableIdempotence,
+			"enable.idempotence": this.producerOptions.enableIdempotence,
 			"queue.buffering.max.messages": 100000,
 			"queue.buffering.max.ms": 0.5,
 			"batch.num.messages": 10000,
-		});
+			...this.producerOptions.additionalOptions,
+		};
+
+		this.producer = new kafka.HighLevelProducer(options);
 
 		this.producer.on("ready", () => {
 			this.connected = true;
@@ -88,7 +101,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 		this.producer.connect();
 
-		this.producer.setPollInterval(this.pollIntervalMs);
+		this.producer.setPollInterval(this.producerOptions.pollIntervalMs);
 	}
 
 	public async close(reconnecting: boolean = false): Promise<void> {
@@ -99,7 +112,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 		this.connecting = this.connected = false;
 
-		await new Promise((resolve) => {
+		await new Promise<void>((resolve) => {
 			const producer = this.producer;
 			this.producer = undefined;
 			if (producer && producer.isConnected()) {

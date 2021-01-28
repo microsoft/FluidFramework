@@ -18,6 +18,7 @@ import {
     ContainerWarning,
     ILoader,
     AttachState,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -188,10 +189,15 @@ export interface IFluidDataStoreChannel extends
     summarize(fullTree?: boolean, trackState?: boolean): Promise<IChannelSummarizeResult>;
 
     /**
-     * Returns the GC data for this data store. It contains a list of GC nodes that contains references to
-     * other GC nodes.
+     * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context
+     * including any of its children. Each node has a list of outbound routes to other GC nodes in the document.
      */
     getGCData(): Promise<IGarbageCollectionData>;
+
+    /**
+     * After GC has run, called to notify this channel of routes that are used in it.
+     */
+    updateUsedRoutes(usedRoutes: string[]): void;
 
     /**
      * Notifies this object about changes in the connection state.
@@ -214,7 +220,6 @@ export type CreateChildSummarizerNodeFn = (
     summarizeInternal: SummarizeInternalFn,
     getGCDataFn: () => Promise<IGarbageCollectionData>,
     getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
-    usedRoutes: string[],
 ) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {
@@ -246,7 +251,7 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
      * TODO: should remove after detachedNew is in place
      */
     readonly existing: boolean;
-    readonly options: any;
+    readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
     readonly connected: boolean;
     readonly leader: boolean;

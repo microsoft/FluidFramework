@@ -5,12 +5,8 @@
 
 /* eslint-disable no-null/no-null */
 
-import { ICollection, IContext, IDeliState, IDocument, IQueuedMessage } from "@fluidframework/server-services-core";
-
-export interface ICheckpointParams extends IDeliState {
-    queuedMessage: IQueuedMessage;
-    clear?: boolean;
-}
+import { IContext, IDeliState } from "@fluidframework/server-services-core";
+import { ICheckpointParams, IDeliCheckpointManager } from "./checkpointManager";
 
 export class CheckpointContext {
     private pendingUpdateP: Promise<void>;
@@ -20,7 +16,7 @@ export class CheckpointContext {
     constructor(
         private readonly tenantId: string,
         private readonly id: string,
-        private readonly collection: ICollection<IDocument>,
+        private readonly checkpointManager: IDeliCheckpointManager,
         private readonly context: IContext) {
     }
 
@@ -68,8 +64,16 @@ export class CheckpointContext {
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     private checkpointCore(checkpoint: ICheckpointParams) {
-        let deli = "";
-        if (!checkpoint.clear) {
+        // Exit early if already closed
+        if (this.closed) {
+            return;
+        }
+
+        let updateP: Promise<void>;
+
+        if (checkpoint.clear) {
+            updateP = this.checkpointManager.deleteCheckpoint(checkpoint);
+        } else {
             const deliCheckpoint: IDeliState = {
                 branchMap: checkpoint.branchMap,
                 clients: checkpoint.clients,
@@ -79,17 +83,9 @@ export class CheckpointContext {
                 epoch: checkpoint.epoch,
                 term: checkpoint.term,
             };
-            deli = JSON.stringify(deliCheckpoint);
+
+            updateP = this.checkpointManager.writeCheckpoint(deliCheckpoint);
         }
-        const updateP = this.collection.update(
-            {
-                documentId: this.id,
-                tenantId: this.tenantId,
-            },
-            {
-                deli,
-            },
-            null);
 
         // Retry the checkpoint on error
         // eslint-disable-next-line @typescript-eslint/promise-function-async
