@@ -156,5 +156,17 @@ describe("MockLogger", () => {
                 { eventName: "B", b: 2 },
             ]));
         });
+
+        it("Expert assert failure when errorType empty", () => {
+            expect(() => {
+                mockLogger.sendErrorEvent(
+                    { eventName: "errorTypeTest" },
+                    {
+                        errorType: undefined,
+                        stack: undefined,
+                    }
+                ).toThrow('errorType is null');
+            });
+        });
    });
 });
