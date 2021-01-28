@@ -187,7 +187,7 @@ export async function typeFile(
         pingCounter.reset();
 
         // Wait a second before beginning to allow for quiescing
-        await new Promise((resolve) => setTimeout(() => resolve(), 1000));
+        await new Promise<void>((resolve) => setTimeout(() => resolve(), 1000));
 
         const metric = await typeChunk(
             authors[0], runtime, "p-0", fileText, intervalTime, scribeCallback, scribeCallback);

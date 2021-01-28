@@ -43,7 +43,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@fluidframework/build-tools": "0.2.5638",
+    "@fluidframework/build-tools": "0.2.14220",
     "@fluidframework/eslint-config-fluid": "^0.19.1",
     "@types/compression": "0.0.36",
     "@types/cors": "^2.8.4",
@@ -78,6 +78,6 @@
     "run-script-os": "^1.0.7",
     "supertest": "^3.3.0",
     "tslint": "^5.12.0",
-    "typescript": "~3.8.2"
+    "typescript": "~4.1.3"
   }
 }
