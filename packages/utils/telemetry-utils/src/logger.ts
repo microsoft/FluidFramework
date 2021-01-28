@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "assert";
 import {
     ITelemetryBaseEvent,
     ITelemetryBaseLogger,
@@ -476,6 +477,7 @@ export class LoggingError extends Error {
     ) {
         super(message);
         Object.assign(this, props);
+        assert(this.hasOwnProperty('errorType') && this['errorType']);
     }
 
     // Return all properties
