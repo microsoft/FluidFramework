@@ -46,6 +46,7 @@
 		"uuid": "^8.3.2"
 	},
 	"devDependencies": {
+		"@fluidframework/build-common": "^0.19.2",
 		"@fluidframework/container-definitions": "^0.32.3",
 		"@fluidframework/eslint-config-fluid": "^0.21.0",
 		"@fluidframework/runtime-utils": "^0.32.3",
