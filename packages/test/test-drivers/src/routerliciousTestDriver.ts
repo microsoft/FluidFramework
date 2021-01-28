@@ -8,7 +8,7 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
 import { InsecureTokenProvider, InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
 import { v4 as uuid } from "uuid";
-import { ITestDriver } from "./interfaces";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { pkgVersion } from "./packageVersion";
 
 export class RouterliciousTestDriver implements ITestDriver {

@@ -872,11 +872,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
  * @param Base - base class, inherits from FluidDataStoreRuntime
  * @param requestHandler - request handler to mix in
  */
-export function mixinRequestHandler(
+export const mixinRequestHandler = (
     requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>,
-    Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime)
-{
-    return class RuntimeWithRequestHandler extends Base {
+    Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
+) => class RuntimeWithRequestHandler extends Base {
         public async request(request: IRequest) {
             const response  = await super.request(request);
             if (response.status === 404) {
@@ -885,18 +884,15 @@ export function mixinRequestHandler(
             return response;
         }
     } as typeof FluidDataStoreRuntime;
-}
 
 /**
  * Mixin class that adds await for DataObject to finish initialization before we proceed to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  */
-export function mixinSummaryHandler(
+export const mixinSummaryHandler = (
     handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[], content: string }>,
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
-    )
-{
-    return class RuntimeWithSummarizerHandler extends Base {
+) => class RuntimeWithSummarizerHandler extends Base {
         private addBlob(summary: ISummaryTreeWithStats, path: string[], content: string) {
             const firstName = path.shift();
             if (firstName === undefined) {
@@ -927,4 +923,3 @@ export function mixinSummaryHandler(
             return summary;
         }
     } as typeof FluidDataStoreRuntime;
-}

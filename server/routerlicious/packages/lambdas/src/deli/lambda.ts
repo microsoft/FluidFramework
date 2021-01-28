@@ -24,11 +24,9 @@ import {
     ControlMessageType,
     extractBoxcar,
     IClientSequenceNumber,
-    ICollection,
     IContext,
     IControlMessage,
     IDeliState,
-    IDocument,
     IMessage,
     INackMessage,
     IPartitionLambda,
@@ -42,8 +40,9 @@ import {
     SequencedOperationType,
     IQueuedMessage,
 } from "@fluidframework/server-services-core";
-import { CheckpointContext, ICheckpointParams } from "./checkpointContext";
+import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
+import { IDeliCheckpointManager, ICheckpointParams } from "./checkpointManager";
 
 enum IncomingMessageOrder {
     Duplicate,
@@ -109,7 +108,7 @@ export class DeliLambda implements IPartitionLambda {
         private readonly tenantId: string,
         private readonly documentId: string,
         readonly lastCheckpoint: IDeliState,
-        collection: ICollection<IDocument>,
+        checkpointManager: IDeliCheckpointManager,
         private readonly forwardProducer: IProducer,
         private readonly reverseProducer: IProducer,
         private readonly serviceConfiguration: IServiceConfiguration) {
@@ -136,7 +135,7 @@ export class DeliLambda implements IPartitionLambda {
         this.minimumSequenceNumber = msn === -1 ? this.sequenceNumber : msn;
 
         this.logOffset = lastCheckpoint.logOffset;
-        this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, collection, context);
+        this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, checkpointManager, context);
     }
 
     public handler(rawMessage: IQueuedMessage): void {

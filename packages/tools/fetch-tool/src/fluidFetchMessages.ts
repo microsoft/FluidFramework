@@ -31,7 +31,7 @@ async function loadChunk(from: number, to: number, deltaStorage: IDocumentDeltaS
     console.log(`Loading ops at ${from}`);
     for (let iter = 0; iter < 3; iter++) {
         try {
-            const messages = await deltaStorage.get(from, to);
+            const { messages, partialResult } = await deltaStorage.get(from, to);
             // This parsing of message contents happens in delta manager. But when we analyze messages
             // for message stats, we skip that path. So parsing of json contents needs to happen here.
             for (const message of messages) {
@@ -42,7 +42,7 @@ async function loadChunk(from: number, to: number, deltaStorage: IDocumentDeltaS
                     message.contents = JSON.parse(message.contents);
                 }
             }
-            return messages;
+            return { messages, partialResult };
         } catch (error) {
             console.error("Hit error while downloading ops. Retrying");
             console.error(error);
@@ -91,8 +91,9 @@ async function* loadAllSequencedMessages(
     let opsStorage = 0;
     while (true) {
         requests++;
-        const messages = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
+        const { messages, partialResult } = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
         if (messages.length === 0) {
+            assert(!partialResult);
             break;
         }
         yield messages;
