@@ -27,6 +27,7 @@
   "dependencies": {
     "@fluidframework/aqueduct": "^0.34.0",
     "@fluidframework/core-interfaces": "^0.34.0",
+    "@fluid-experimental/data-objects": "^0.34.0",
     "@fluidframework/datastore-definitions": "^0.34.0",
     "@fluidframework/map": "^0.34.0",
     "@fluidframework/merge-tree": "^0.34.0",
