@@ -6,7 +6,7 @@ import { Lazy } from "@fluidframework/common-utils";
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { Marker, MergeTreeDeltaType, MergeTreeMaintenanceType,
      reservedMarkerIdKey, SortedSegmentSet } from "@fluidframework/merge-tree";
-import { createIdAfterMin } from "./generateSequentialId";
+import { createIdAfterMin, digitLast, digitZero } from "./generateSequentialId";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { SharedString } from "./sharedString";
 
@@ -35,20 +35,17 @@ export function sharedStringWithSequentialIdMixin(Base: typeof SharedString = Sh
                 // Do not apply id for local changes
                 return;
             }
-            
-            if (event.deltaOperation === MergeTreeDeltaType.INSERT) {
-                event.ranges.forEach((range) => {
-                const markerSegment = range.segment;
-                  if (Marker.is(markerSegment)) {
-                    this.applyIdToMarker(markerSegment);
-                  }
-                });
-            } else if (event.deltaOperation === MergeTreeDeltaType.REMOVE) {
-                event.ranges.forEach((range) => {
-                    const markerSegment = range.segment;
-                    this.sortedMarkers.value.remove(markerSegment);
-                });
-            }
+
+            event.ranges.forEach((range) => {
+            const markerSegment = range.segment;
+                if (Marker.is(markerSegment)) {
+                    if (event.deltaOperation === MergeTreeDeltaType.INSERT) {
+                        this.applyIdToMarker(markerSegment);
+                    } else if (event.deltaOperation === MergeTreeDeltaType.REMOVE) {
+                        this.sortedMarkers.value.remove(markerSegment);
+                    }
+                }
+            });
         };
 
         private readonly applyIdToLocalAckedSegment = (event: SequenceMaintenanceEvent): void => {
@@ -76,8 +73,8 @@ export function sharedStringWithSequentialIdMixin(Base: typeof SharedString = Sh
              markerItems[previousMarkerIndex] as Marker : undefined;
             const nextMarker = nextMarkerIndex < markerItems.length ?
              markerItems[nextMarkerIndex] as Marker : undefined;
-            const previousId = previousMarker !== undefined ? previousMarker.getId() : "";
-            const nextId = nextMarker !== undefined ? nextMarker.getId() : "";
+            const previousId = previousMarker !== undefined ? previousMarker.getId() : digitZero;
+            const nextId = nextMarker !== undefined ? nextMarker.getId() : digitLast;
             let newMarkerProps = markerSegment.properties ?? {};
             const id = createIdAfterMin(previousId, nextId);
             newMarkerProps = { ...newMarkerProps, [reservedMarkerIdKey]: id };

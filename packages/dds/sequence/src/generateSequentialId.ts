@@ -5,8 +5,8 @@
 
 import { assert } from "@fluidframework/common-utils";
 
-const digitZero = "A";
-const digitLast = "Z";
+export const digitZero = "A";
+export const digitLast = "Z";
 const digitBeforeZero = "@";
 const digitAfterLast = "[";
 const idBase = 26;
@@ -34,39 +34,38 @@ const previousChar = (char: string) => String.fromCharCode(char.charCodeAt(0) - 
 const getLetterCode = (char: string) => char.charCodeAt(0) - digitZero.charCodeAt(0);
 
 export function createIdBetween(minSeqId: string, maxSeqId: string): string {
-  let delta: number[] = [];
-  if(minSeqId.length !== maxSeqId.length) {
+  const delta: number[] = [];
+  if (minSeqId.length !== maxSeqId.length) {
     // Fill up with zeros to make both ids same length for subtraction
-    if(minSeqId.length < maxSeqId.length){
-      while(minSeqId.length < maxSeqId.length) {
+    if (minSeqId.length < maxSeqId.length) {
+      while (minSeqId.length < maxSeqId.length) {
         minSeqId += digitZero;
       }
       minSeqId += nextChar(digitZero);
-    }else{
-      while(maxSeqId.length < minSeqId.length) {
+    } else {
+      while (maxSeqId.length < minSeqId.length) {
         maxSeqId += digitZero;
       }
       maxSeqId += nextChar(digitZero);
     }
   }
 
-  for(let i = 0; i < maxSeqId.length; i++) {
+  for (let i = 0; i < maxSeqId.length; i++) {
     const maxDigit = maxSeqId.charCodeAt(i);
     const minDigit = minSeqId.charCodeAt(i);
-    const deltaNum = (maxDigit - minDigit)/2;
+    const deltaNum = (maxDigit - minDigit) / 2;
     delta[i] = deltaNum;
   }
-  
+
   let id = "";
-  
   for (let char = 0; char < minSeqId.length; char ++) {
     const minLetterCode = minSeqId.charCodeAt(char);
     id += String.fromCharCode(minLetterCode + delta[char]);
   }
 
   // If the delta between both numbers is minimal, we need to add more digits,
-  // so we will use createIdAfterMin to createId with more digits.
-  if(id === minSeqId) {
+  // so we will use createIdAfterMin to create id with more digits.
+  if (id === minSeqId) {
     return createIdAfterMin(minSeqId, maxSeqId);
   }
 
