@@ -24,7 +24,33 @@ export { Delta } from './Forest';
 export { SharedTreeSummaryBase, SharedTreeSummarizer, fullHistorySummarizer, noHistorySummarizer } from './Summary';
 export { SharedTreeSummary_0_0_2 } from './SummaryBackCompatibility';
 export { sharedTreeAssertionErrorType, isSharedTreeEvent } from './Common';
-export * from './PersistedTypes';
+export {
+	Edit,
+	EditWithoutId,
+	EditBase,
+	ChangeType,
+	Change,
+	Build,
+	Insert,
+	Detach,
+	SetValue,
+	Constraint,
+	ConstraintEffect,
+	TraitMap,
+	TreeNodeSequence,
+	Payload,
+	NodeData,
+	TreeNode,
+	ChangeNode,
+	EditNode,
+	EditResult,
+	StablePlace,
+	StableRange,
+	TraitLocation,
+	Side,
+	Delete,
+	Move,
+} from './PersistedTypes';
 export * from './Factory';
 export * from './HistoryEditFactory';
 export * from './Identifiers';

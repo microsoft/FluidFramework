@@ -24,6 +24,9 @@ import {
 	StableRange,
 	StablePlace,
 	Payload,
+	SharedTreeOpType,
+	SharedTreeEditOp,
+	SharedTreeHandleOp,
 } from './PersistedTypes';
 import { newEdit } from './EditUtilities';
 import { EditId } from './Identifiers';
@@ -454,24 +457,4 @@ export class SharedTree extends SharedObject {
 		this.editLog.addLocalEdit(edit);
 		this.emit(SharedTreeEvent.EditCommitted, edit.id);
 	}
-}
-
-enum SharedTreeOpType {
-	Edit,
-	Handle,
-}
-
-interface SharedTreeOp {
-	type: SharedTreeOpType;
-}
-
-interface SharedTreeEditOp extends SharedTreeOp {
-	edit: Edit;
-}
-
-interface SharedTreeHandleOp extends SharedTreeOp {
-	/** The handled to an uploaded edit chunk. */
-	editHandle: ISerializedHandle;
-	/** The index of the first edit in the chunk that corresponds to the handle. */
-	chunkKey: number;
 }

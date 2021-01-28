@@ -10,6 +10,7 @@
 // persisted types (as documented below) is followed.
 import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel, UuidString } from './Identifiers';
 import { assertNotUndefined, assert } from './Common';
+import { ISerializedHandle } from '@fluidframework/core-interfaces';
 
 /**
  * Types for Edits in Fluid Ops and Fluid summaries.
@@ -572,3 +573,36 @@ export const Move = {
 		return [detach, Change.insert(assertNotUndefined(detach.destination), destination)];
 	},
 };
+
+/**
+ * Types of ops handled by SharedTree.
+ */
+export enum SharedTreeOpType {
+	Edit,
+	Handle,
+}
+
+/**
+ * Requirements for SharedTree ops.
+ */
+export interface SharedTreeOp {
+	type: SharedTreeOpType;
+}
+
+/**
+ * A SharedTree op that includes edit information.
+ */
+export interface SharedTreeEditOp extends SharedTreeOp {
+	edit: Edit;
+}
+
+/**
+ * A SharedTree op that includes edit handle information.
+ * The handle corresponds to an edit chunk in the edit log.
+ */
+export interface SharedTreeHandleOp extends SharedTreeOp {
+	/** The handled to an uploaded edit chunk. */
+	editHandle: ISerializedHandle;
+	/** The index of the first edit in the chunk that corresponds to the handle. */
+	chunkKey: number;
+}
