@@ -1,5 +1,23 @@
 # Change Log
 
+## 0.35.0
+
+* feat: Add telemetry properties for all SharedTree events
+  * Associated pull request: !27538
+* merge: releases/2021.01.4 into master
+  * Associated pull request: !27448
+* feat: Add TreeNodeHandles
+  * Associated pull request: !27070
+* merge: Integrate changes from fluidframework
+  * Associated pull request: !27398
+* merge: releases/2021.01.4 into master
+  * Associated pull request: !27409
+* fix: Export summarizers
+  * Associated pull request: !27410
+* Merge commit '93a143f412116b05963422aa3a04a42e62469602' from fluid into integrations/shared-tree
+* Merge branch 'master' into integrations/shared-tree
+* Split 'packages/shared-tree/' into commit '6227d08860d73c64c8b82fa34a3fca58565298c7'
+
 ## 0.22.2
 
 * build: revert update to react 17, and include non-breaking updates since branch
