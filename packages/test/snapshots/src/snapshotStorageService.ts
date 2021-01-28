@@ -73,7 +73,7 @@ export class SnapshotStorageService extends FileSnapshotReader implements IDocum
 
         // Remove null ids from the tree before calling the callback to notify the new snapshot. This is requried
         // because the saved reference snapshots have the null ids removed.
-        removeNullTreIds(tree);
+        removeNullTreeIds(tree);
 
         const commitName = `commit_${dataStoreName}`;
         if (ref) {
@@ -96,13 +96,14 @@ export class SnapshotStorageService extends FileSnapshotReader implements IDocum
 /**
  * Removed null ids from the snapshot tree for ease of reading and comparison.
  */
-function removeNullTreIds(tree: ITree) {
+function removeNullTreeIds(tree: ITree) {
     for (const node of tree.entries) {
         if (node.type === TreeEntry.Tree) {
-            removeNullTreIds(node.value);
+            removeNullTreeIds(node.value);
         }
     }
     // eslint-disable-next-line no-null/no-null
-    assert(tree.id === undefined || tree.id === null);
-    delete tree.id;
+    if (tree.id === undefined || tree.id === null) {
+        delete tree.id;
+    }
 }
