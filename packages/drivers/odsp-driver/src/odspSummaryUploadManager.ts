@@ -21,7 +21,7 @@ import {
     SnapshotTreeValue,
     SnapshotType,
 } from "./contracts";
-import { EpochTracker, FetchType } from "./epochTracker";
+import { EpochTracker } from "./epochTracker";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { getWithRetryForTokenRefresh } from "./odspUtils";
 import { TokenFetchOptions } from "./tokenFetch";
@@ -229,7 +229,7 @@ export class OdspSummaryUploadManager {
                             headers,
                             method: "POST",
                         },
-                        FetchType.uploadSummary);
+                        "uploadSummary");
                     return { result: response.content, blobTreeDedupCachesLatest };
                 });
         });
