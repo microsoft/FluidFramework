@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as debug from "debug";
+import { debug } from "debug";
 import * as winston from "winston";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import Transport = require("winston-transport");
