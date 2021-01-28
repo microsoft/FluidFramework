@@ -64,7 +64,8 @@ export class RunWhileConnectedCoordinator {
                 // We will not try to reconnect, so we are done running
                 return { started: false, message: "DisconnectedBeforeRun" };
             }
-            const waitConnected = new Promise((resolve) => this.runtime.once("connected", resolve));
+            const waitConnected = new Promise<void>((resolve) =>
+                this.runtime.once("connected", resolve));
             await Promise.race([waitConnected, this.stopDeferred.promise]);
             if (!this.runtime.connected) {
                 // If still not connected, no need to start running

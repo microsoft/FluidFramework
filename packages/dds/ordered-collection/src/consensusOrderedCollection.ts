@@ -177,7 +177,7 @@ export class ConsensusOrderedCollection<T = any>
         do {
             if (this.data.size() === 0) {
                 // Wait for new entry before trying to acquire again
-                await this.newAckBasedPromise((resolve) => {
+                await this.newAckBasedPromise<T>((resolve) => {
                     this.once("add", resolve);
                 });
             }
@@ -338,7 +338,7 @@ export class ConsensusOrderedCollection<T = any>
     ): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
         assert(this.isAttached());
 
-        return this.newAckBasedPromise<IConsensusOrderedCollectionValue<T>>((resolve) => {
+        return this.newAckBasedPromise<IConsensusOrderedCollectionValue<T> | undefined>((resolve) => {
             // Send the resolve function as the localOpMetadata. This will be provided back to us when the
             // op is ack'd.
             this.submitLocalMessage(message, resolve);

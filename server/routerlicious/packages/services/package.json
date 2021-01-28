@@ -98,7 +98,7 @@
     "redis-mock": "^0.54.0",
     "rimraf": "^2.6.2",
     "sinon": "^9.2.1",
-    "typescript": "~3.8.2",
+    "typescript": "~4.1.3",
     "typescript-formatter": "7.1.0"
   }
 }
