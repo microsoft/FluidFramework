@@ -306,7 +306,8 @@ export class SummaryCollection {
             // from. i.e. initialSequenceNumber > summarySequenceNumber.
             // We really don't care about it for now, since it is older than
             // the one we loaded from.
-            assert(this.initialSequenceNumber > seq, "Missing summary op for ack, but summary op seq > initialSequenceNumber");
+            assert(this.initialSequenceNumber > seq,
+                "Missing summary op for ack, but summary op seq > initialSequenceNumber");
             return;
         }
         summary.ackNack(op);
