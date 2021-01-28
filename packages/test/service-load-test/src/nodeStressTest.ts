@@ -16,6 +16,7 @@ import {
     getMicrosoftConfiguration,
     OdspTokenConfig,
 } from "@fluidframework/tool-utils";
+import { getAsync, getLoginPageUrl, getOdspScope } from "@fluidframework/odsp-doclib-utils";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ITestConfig, IRunConfig, fluidExport, ILoadTest } from "./loadTestDataStore";
 
@@ -120,6 +121,7 @@ async function main() {
         .option("-u, --url <url>", "Load an existing data store rather than creating new")
         .option("-r, --runId <runId>", "run a child process with the given id. Requires --url option.")
         .option("-d, --debug", "Debug child processes via --inspect-brk")
+        .option("-di, --driveId", "Users SPO drive id")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .parse(process.argv);
 
@@ -129,6 +131,7 @@ async function main() {
     const runId: number | undefined = commander.runId === undefined ? undefined : parseInt(commander.runId, 10);
     const debug: true | undefined = commander.debug;
     const log: string | undefined = commander.log;
+    const driveId: string | undefined = commander.driveId;
 
     if (log !== undefined) {
         process.env.DEBUG = log;
@@ -137,6 +140,10 @@ async function main() {
     if (config.profiles[profile] === undefined) {
         console.error("Invalid --profile argument not found in testConfig.json profiles");
         process.exit(-1);
+    }
+
+    if (driveId) {
+        config.driveId = driveId;
     }
 
     // When runId is specified, kick off a single test runner and exit when it's finished
@@ -163,21 +170,49 @@ async function main() {
 
     // When runId is not specified, this is the orchestrator process which will spawn child test runners.
 
-    // Ensure fresh tokens here so the test runners have them cached
-    await odspTokenManager.getOdspTokens(
-        config.server,
-        getMicrosoftConfiguration(),
-        passwordTokenConfig(config.username, password),
-        undefined /* forceRefresh */,
-        true /* forceReauth */,
-    );
-    await odspTokenManager.getPushTokens(
-        config.server,
-        getMicrosoftConfiguration(),
-        passwordTokenConfig(config.username, password),
-        undefined /* forceRefresh */,
-        true /* forceReauth */,
-    );
+    try {
+        // Ensure fresh tokens here so the test runners have them cached
+        const odspTokens = await odspTokenManager.getOdspTokens(
+            config.server,
+            getMicrosoftConfiguration(),
+            passwordTokenConfig(config.username, password),
+            undefined /* forceRefresh */,
+            true /* forceReauth */,
+        );
+        await odspTokenManager.getPushTokens(
+            config.server,
+            getMicrosoftConfiguration(),
+            passwordTokenConfig(config.username, password),
+            undefined /* forceRefresh */,
+            true /* forceReauth */,
+        );
+
+        if (!config.driveId) {
+            // automatically determine driveId based on the server & user
+            const driveResponse = await getAsync(
+                `https://${config.server}/_api/v2.1/drive`,
+                { accessToken: odspTokens.accessToken },
+            );
+
+            const driveJson = await driveResponse.json();
+
+            config.driveId = driveJson.id;
+        }
+    } catch (ex) {
+        // Log the login page url in case the caller needs to allow consent for this app
+        const loginPageUrl =
+            getLoginPageUrl(
+                false,
+                config.server,
+                getMicrosoftConfiguration(),
+                getOdspScope(config.server),
+                "http://localhost:3000/auth/callback",
+            );
+
+        console.log(`You may need to allow consent for this app. Go here for the prompt: ${loginPageUrl}`);
+
+        throw ex;
+    }
 
     if (url === undefined) {
         // Create a new file
@@ -189,6 +224,7 @@ async function main() {
         const args = [
             "./dist/nodeStressTest.js",
             "--password", password,
+            "--driveId", config.driveId,
             "--profile", profile,
             "--runId", i.toString(),
             "--url", url];

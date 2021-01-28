@@ -54,6 +54,10 @@ Specifies which test profile to use from [testConfig.json](./testConfig.json). D
 If present, launch in Test Runner mode with the given runId (to distinguish from other concurrent test runners).
 `--url` is required, since the test runner needs to know which data store to connect to.
 
+#### --driveId, -di
+
+If present, the test will use this driveId instead of the one specified in the test config file. This is used internally when in orchestrator mode.
+
 #### --debug, -d
 
 Launches each test runner with `--inspect-brk` and a unique Node debugging port. (Not compatible with `--runId`)
