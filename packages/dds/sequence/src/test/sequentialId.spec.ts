@@ -4,7 +4,49 @@
  */
 
 import { strict as assert } from "assert";
-import { createIdAfterMin, createIdBeforeMax } from "../generateSequentialId";
+import { createIdAfterMin, createIdBeforeMax, createIdBetween } from "../generateSequentialId";
+
+describe("CreateIdBetween SequentialId tests", () => {
+  // it("Create Id between min and max with same length", () => {
+  //   const min = "ABC";
+  //   const max = "XYZ";
+  //   const expectedResult = "LMN";
+  //   const result = createIdBetween(min, max);
+  //   assert.equal(result, expectedResult);
+  // });
+
+  // it("Create Id between min and max with same length but very close in delta", () => {
+  //   const min = "ABC";
+  //   const max = "ABD";
+  //   const expectedResult = "ABCAAZ";
+  //   const result = createIdBetween(min, max);
+  //   assert.equal(result, expectedResult);
+  // });
+
+  // it("Create Id between min and max with bigger max length", () => {
+  //   const min = "ABC";
+  //   const max = "ABDDDD";
+  //   const expectedResult = "ABCBBB";
+  //   const result = createIdBetween(min, max);
+  //   assert.equal(result, expectedResult);
+  // });
+
+  // it("Create Id between min and max with bigger min length", () => {
+  //   const min = "ABCCCC";
+  //   const max = "ABD";
+  //   const expectedResult = "ABCBBB";
+  //   const result = createIdBetween(min, max);
+  //   assert.equal(result, expectedResult);
+  // });
+
+  it("Create Id between min and max with bigger min length", () => {
+    const min = "ABBBBB";
+    const max = "ABD";
+    const expectedResult = "ABCBBB";
+    const result = createIdBetween(min, max);
+    assert.equal(result, expectedResult);
+  });
+});
 
 describe("CreateIdAfterMin SequentialId tests", () => {
   it("Create Id after min for emtpy ids as param", () => {

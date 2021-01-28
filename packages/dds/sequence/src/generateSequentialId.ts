@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
+
 const digitZero = "A";
 const digitLast = "Z";
 const digitBeforeZero = "@";
@@ -31,26 +33,45 @@ const previousChar = (char: string) => String.fromCharCode(char.charCodeAt(0) - 
 // Returns value for UpperCase letter from 0 - 25;
 const getLetterCode = (char: string) => char.charCodeAt(0) - digitZero.charCodeAt(0);
 
-export function getDistance(seqId1: string, seqId2: string): number | undefined {
-  let numberSeqId1 = 0;
-  let numberSeqId2 = 0;
-
-  if (!isValidSeqId(seqId1)) {
-    throw new Error("seqId1 is not valid");
+export function createIdBetween(minSeqId: string, maxSeqId: string): string {
+  let delta: number[] = [];
+  if(minSeqId.length !== maxSeqId.length) {
+    // Fill up with zeros to make both ids same length for subtraction
+    if(minSeqId.length < maxSeqId.length){
+      while(minSeqId.length < maxSeqId.length) {
+        minSeqId += digitZero;
+      }
+      minSeqId += nextChar(digitZero);
+    }else{
+      while(maxSeqId.length < minSeqId.length) {
+        maxSeqId += digitZero;
+      }
+      maxSeqId += nextChar(digitZero);
+    }
   }
 
-  if (!isValidSeqId(seqId2)) {
-    throw new Error("seqId2 is not valid");
+  for(let i = 0; i < maxSeqId.length; i++) {
+    const maxDigit = maxSeqId.charCodeAt(i);
+    const minDigit = minSeqId.charCodeAt(i);
+    const deltaNum = (maxDigit - minDigit)/2;
+    delta[i] = deltaNum;
+  }
+  
+  let id = "";
+  
+  for (let char = 0; char < minSeqId.length; char ++) {
+    const minLetterCode = minSeqId.charCodeAt(char);
+    id += String.fromCharCode(minLetterCode + delta[char]);
   }
 
-  for (let i = 1; i < seqId1.length; i++) {
-    numberSeqId1 += getLetterCode(seqId1[i]) * (1 / Math.pow(idBase, i));
+  // If the delta between both numbers is minimal, we need to add more digits,
+  // so we will use createIdAfterMin to createId with more digits.
+  if(id === minSeqId) {
+    return createIdAfterMin(minSeqId, maxSeqId);
   }
 
-  for (let i = 1; i < seqId2.length; i++) {
-    numberSeqId2 += getLetterCode(seqId2[i]) * (1 / Math.pow(idBase, i));
-  }
-  return numberSeqId1 - numberSeqId2;
+  assert(id > minSeqId && id < maxSeqId, "Created id should be greater than min and smaller than max");
+  return id;
 }
 
 export function createIdAfterMin(min: string, max: string): string {
@@ -88,13 +109,8 @@ export function createIdAfterMin(min: string, max: string): string {
     }
   }
 
-  if (!isValidSeqId(nextValue)) {
-    throw new Error("Generated seqId is not valid");
-  }
-
-  if (nextValue < min || (nextValue > max && max !== "")) {
-    throw new Error("Generated seqId is not inside valid range");
-  }
+  assert(isValidSeqId(nextValue), "Generated id must be a valid sequentialId");
+  assert(nextValue < min || (nextValue > max && max !== ""), "Generated id must be within range");
   return nextValue;
 }
 
@@ -133,12 +149,7 @@ export function createIdBeforeMax(min: string, max: string): string {
     }
   }
 
-  if (!isValidSeqId(nextValue)) {
-    throw new Error("Generated seqId is not valid");
-  }
-
-  if (nextValue < min || (nextValue > max && max !== "")) {
-    throw new Error("Generated seqId is not inside valid range");
-  }
+  assert(isValidSeqId(nextValue), "Generated id must be a valid sequentialId");
+  assert(nextValue < min || (nextValue > max && max !== ""), "Generated id must be within range");
   return nextValue;
 }
