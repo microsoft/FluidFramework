@@ -6,7 +6,7 @@ import { Lazy } from "@fluidframework/common-utils";
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { Marker, MergeTreeDeltaType, MergeTreeMaintenanceType,
      reservedMarkerIdKey, SortedSegmentSet } from "@fluidframework/merge-tree";
-import { createIdAfterMin, digitLast, digitZero } from "./generateSequentialId";
+import { createIdBetween, digitLast, digitZero } from "./generateSequentialId";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { SharedString } from "./sharedString";
 
@@ -76,7 +76,7 @@ export function sharedStringWithSequentialIdMixin(Base: typeof SharedString = Sh
             const previousId = previousMarker !== undefined ? previousMarker.getId() : digitZero;
             const nextId = nextMarker !== undefined ? nextMarker.getId() : digitLast;
             let newMarkerProps = markerSegment.properties ?? {};
-            const id = createIdAfterMin(previousId, nextId);
+            const id = createIdBetween(previousId, nextId);
             newMarkerProps = { ...newMarkerProps, [reservedMarkerIdKey]: id };
             markerSegment.properties = newMarkerProps;
         };
