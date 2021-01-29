@@ -9,9 +9,10 @@ import { Marker, MergeTreeDeltaType, MergeTreeMaintenanceType,
 import { createIdBetween, digitLast, digitZero } from "./generateSequentialId";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { SharedString } from "./sharedString";
+import { SharedStringWithSequentialIdFactory } from "./SharedStringWithSequentialIdFactory";
 
 export function sharedStringWithSequentialIdMixin(Base: typeof SharedString = SharedString): typeof SharedString {
-    return class SequenceWithSequentialId extends Base {
+    return class SharedStringWithSequentialId extends Base {
         private readonly sortedMarkers: Lazy<SortedSegmentSet>;
         constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
             super(document, id, attributes);
@@ -28,6 +29,10 @@ export function sharedStringWithSequentialIdMixin(Base: typeof SharedString = Sh
             });
             this.on("maintenance", this.applyIdToLocalAckedSegment);
             this.on("sequenceDelta", this.applyIdToRemoteAckedSegment);
+        }
+
+        public static getFactory() {
+            return new SharedStringWithSequentialIdFactory();
         }
 
         private readonly applyIdToRemoteAckedSegment = (event: SequenceDeltaEvent): void => {
