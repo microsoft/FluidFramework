@@ -4,8 +4,10 @@
  */
 
 import { expect } from 'chai';
-import { EditLog, separateEditAndId } from '../EditLog';
-import { Edit } from '../PersistedTypes';
+import { ISerializedHandle } from '@fluidframework/core-interfaces';
+import { IsoBuffer } from '@fluidframework/common-utils';
+import { EditHandle, EditLog, editsPerChunk, separateEditAndId } from '../EditLog';
+import { Edit, EditWithoutId } from '../PersistedTypes';
 import { newEdit } from '../EditUtilities';
 import { EditId } from '../Identifiers';
 import { assertNotUndefined } from '../Common';
@@ -194,5 +196,77 @@ describe('EditLog', () => {
 		const differentLog = new EditLog({ editChunks: [{ key: 0, chunk: [editWithoutId0] }], editIds: [id0] });
 
 		expect(log0.equals(differentLog)).to.be.false;
+	});
+
+	it('creates a new edit chunk once the previous one has been filled', () => {
+		const log = new EditLog();
+
+		for (let i = 0; i < editsPerChunk; i++) {
+			const edit = newEdit([]);
+			log.addSequencedEdit(edit);
+			expect(log.getEditLogSummary().editChunks.length).to.be.equal(1);
+		}
+
+		const edit = newEdit([]);
+		log.addSequencedEdit(edit);
+		expect(log.getEditLogSummary().editChunks.length).to.be.equal(2);
+	});
+
+	it('can load edits from a handle', async () => {
+		const handleMap = new Map<string, EditHandle>();
+		const serializationHelpers = {
+			serializeHandle: (handle: EditHandle) => {
+				const mapSize = String(handleMap.size);
+				const serializedHandle: ISerializedHandle = {
+					type: '__fluid_handle__',
+					url: mapSize,
+				};
+				handleMap.set(mapSize, handle);
+				return serializedHandle;
+			},
+			deserializeHandle: (serializedHandle: ISerializedHandle) => {
+				return assertNotUndefined(handleMap.get(serializedHandle.url));
+			},
+		};
+
+		const editIds: EditId[] = [];
+		const editChunk1: EditWithoutId[] = [];
+		const editChunk2: EditWithoutId[] = [];
+
+		for (let i = 0; i < 10; i++) {
+			const { id, editWithoutId } = separateEditAndId(newEdit([]));
+			editIds.push(id);
+			i > 4 ? editChunk1.push(editWithoutId) : editChunk2.push(editWithoutId);
+		}
+
+		const handles: EditHandle[] = [
+			{
+				get: async () => {
+					return IsoBuffer.from(JSON.stringify({ edits: editChunk1 }));
+				},
+			},
+			{
+				get: async () => {
+					return IsoBuffer.from(JSON.stringify({ edits: editChunk2 }));
+				},
+			},
+		];
+
+		let chunkKey = 0;
+		const serializedHandles = handles.map((chunk) => {
+			const serializedHandle = {
+				key: chunkKey,
+				chunk: serializationHelpers.serializeHandle(chunk),
+			};
+			chunkKey = chunkKey + 5;
+			return serializedHandle;
+		});
+
+		const log = new EditLog({ editChunks: serializedHandles, editIds }, serializationHelpers);
+
+		// Check that each edit can be retrieved correctly
+		for (let i = 0; i < 10; i++) {
+			expect((await log.getEditAtIndex(i)).id).to.equal(editIds[i]);
+		}
 	});
 });

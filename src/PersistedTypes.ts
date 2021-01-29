@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ISerializedHandle } from '@fluidframework/core-interfaces';
+
 // All types imported into this file inherit the requirements documented below.
 // These imports are ok because they consist only of type aliases for primitive types,
 // and thus have no impact on serialization as long as the primitive type they are an alias for does not change.
@@ -10,7 +12,6 @@
 // persisted types (as documented below) is followed.
 import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel, UuidString } from './Identifiers';
 import { assertNotUndefined, assert } from './Common';
-import { ISerializedHandle } from '@fluidframework/core-interfaces';
 
 /**
  * Types for Edits in Fluid Ops and Fluid summaries.

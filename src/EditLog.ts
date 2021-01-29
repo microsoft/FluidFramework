@@ -4,7 +4,7 @@
  */
 
 import BTree from 'sorted-btree';
-import { IFluidHandle, ISerializedHandle } from '@fluidframework/core-interfaces';
+import { ISerializedHandle } from '@fluidframework/core-interfaces';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { assert, assertNotUndefined, compareArrays, fail } from './Common';
 import { Edit, EditWithoutId } from './PersistedTypes';
@@ -78,14 +78,22 @@ export interface EditLogSummary {
 }
 
 /**
+ * EditHandles are used to load edit chunks stored outside of the EditLog.
+ * Can be satisfied by IFluidHandle<ArrayBufferLike>.
+ */
+export interface EditHandle {
+	get: () => Promise<ArrayBufferLike>;
+}
+
+/**
  * Helpers used to serialize and deserialize fields on EditLogSummary.
  */
 interface SerializationHelpers {
 	/** JSON serializes a handle that corresponds to an uploaded edit chunk. */
-	serializeHandle: (handle: IFluidHandle<ArrayBufferLike>) => ISerializedHandle;
+	serializeHandle: (handle: EditHandle) => ISerializedHandle;
 
 	/** Deserializes a JSON serialized handle into a fluid handle that can be used to retrieve uploaded blobs.  */
-	deserializeHandle: (serializedHandle: ISerializedHandle) => IFluidHandle<ArrayBufferLike>;
+	deserializeHandle: (serializedHandle: ISerializedHandle) => EditHandle;
 }
 
 interface SequencedOrderedEditId {
@@ -99,7 +107,7 @@ interface LocalOrderedEditId {
 }
 
 interface EditChunk {
-	handle?: IFluidHandle<ArrayBufferLike>;
+	handle?: EditHandle;
 	edits?: EditWithoutId[];
 }
 
@@ -332,7 +340,7 @@ export class EditLog implements OrderedEditSet {
 	/**
 	 * Assigns provided handles to edit chunks based on chunk index specified.
 	 */
-	public processEditChunkHandle(chunkHandle: IFluidHandle<ArrayBufferLike>, chunkKey: number): void {
+	public processEditChunkHandle(chunkHandle: EditHandle, chunkKey: number): void {
 		const chunk = assertNotUndefined(
 			this.editChunks.get(chunkKey),
 			'A chunk handle op should not be received before the edit ops it corresponds to.'

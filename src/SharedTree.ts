@@ -12,7 +12,7 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger } from '@fluidframework/telemetry-utils';
 import { assert, fail, SharedTreeTelemetryProperties } from './Common';
-import { EditLog, OrderedEditSet } from './EditLog';
+import { EditHandle, EditLog, OrderedEditSet } from './EditLog';
 import {
 	Edit,
 	Delete,
@@ -292,7 +292,7 @@ export class SharedTree extends SharedObject {
 		return deserializeHandle as IFluidHandle<ArrayBufferLike>;
 	}
 
-	private toSerializable(value: IFluidHandle<ArrayBufferLike>): ISerializedHandle {
+	private toSerializable(value: EditHandle): ISerializedHandle {
 		// Stringify to convert to the serialized handle values - and then parse
 		const stringified = this.serializer.stringify(value, this.handle);
 		return JSON.parse(stringified) as ISerializedHandle;
