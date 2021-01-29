@@ -40,7 +40,15 @@ export interface LogViewer {
 	getSnapshot(revision: number): Promise<Snapshot>;
 
 	/**
-	 * {@inheritDoc @intentional/shared-tree#LogViewer.getSnapshot}
+	 * Returns the snapshot at a revision. Can only be used to retrieve revisions added during the current sessions.
+	 *
+	 * Revision numbers correspond to indexes in `editLog`.
+	 * Revision X means the revision output by the largest index in `editLog` less than (but not equal to) X.
+	 *
+	 * For example:
+	 *  - revision 0 means the initialSnapshot.
+	 *  - revision 1 means the output of editLog.getAtIndex(0) (or initialSnapshot if there is no edit 0).
+	 *  - revision Number.POSITIVE_INFINITY means the newest revision.
 	 */
 	getSnapshotInSession(revision: number): Snapshot;
 

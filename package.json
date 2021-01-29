@@ -1,6 +1,6 @@
 {
 	"name": "@intentional/shared-tree",
-	"version": "0.22.2",
+	"version": "0.35.0",
 	"description": "Microsoft Whiteboard collaboration libraries",
 	"bugs": {
 		"url": "https://dev.azure.com/intentional/intent/_workitems"

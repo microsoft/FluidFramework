@@ -4,7 +4,7 @@
  */
 
 import BTree from 'sorted-btree';
-import { IFluidHandle, ISerializedHandle } from '@fluidframework/core-interfaces';
+import { ISerializedHandle } from '@fluidframework/core-interfaces';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { assert, assertNotUndefined, compareArrays, fail } from './Common';
 import { Edit, EditWithoutId } from './PersistedTypes';
@@ -78,14 +78,22 @@ export interface EditLogSummary {
 }
 
 /**
+ * EditHandles are used to load edit chunks stored outside of the EditLog.
+ * Can be satisfied by IFluidHandle<ArrayBufferLike>.
+ */
+export interface EditHandle {
+	get: () => Promise<ArrayBufferLike>;
+}
+
+/**
  * Helpers used to serialize and deserialize fields on EditLogSummary.
  */
 interface SerializationHelpers {
 	/** JSON serializes a handle that corresponds to an uploaded edit chunk. */
-	serializeHandle: (handle: IFluidHandle<ArrayBufferLike>) => ISerializedHandle;
+	serializeHandle: (handle: EditHandle) => ISerializedHandle;
 
 	/** Deserializes a JSON serialized handle into a fluid handle that can be used to retrieve uploaded blobs.  */
-	deserializeHandle: (serializedHandle: ISerializedHandle) => IFluidHandle<ArrayBufferLike>;
+	deserializeHandle: (serializedHandle: ISerializedHandle) => EditHandle;
 }
 
 interface SequencedOrderedEditId {
@@ -99,7 +107,7 @@ interface LocalOrderedEditId {
 }
 
 interface EditChunk {
-	handle?: IFluidHandle<ArrayBufferLike>;
+	handle?: EditHandle;
 	edits?: EditWithoutId[];
 }
 
@@ -157,7 +165,7 @@ export class EditLog implements OrderedEditSet {
 	private readonly localEdits: Edit[] = [];
 
 	private readonly loadedChunkCache: number[] = [];
-	private readonly maximumEvictedIndex: number;
+	private readonly maximumEvictableIndex: number;
 
 	private readonly allEditIds: Map<EditId, OrderedEditId> = new Map();
 	private readonly editAddedHandlers: EditAddedHandler[] = [];
@@ -191,7 +199,7 @@ export class EditLog implements OrderedEditSet {
 		});
 
 		this.sequencedEditIds = editIds.slice();
-		this.maximumEvictedIndex = this.numberOfSequencedEdits - 1;
+		this.maximumEvictableIndex = this.numberOfSequencedEdits - 1;
 
 		this.sequencedEditIds.forEach((id, index) => this.allEditIds.set(id, { isLocal: false, index }));
 	}
@@ -300,7 +308,7 @@ export class EditLog implements OrderedEditSet {
 	 */
 	public getEditInSessionAtIndex(index: number): Edit {
 		assert(
-			index > this.maximumEvictedIndex,
+			index > this.maximumEvictableIndex,
 			'Edit to retrieve must have been added to the log during the current session.'
 		);
 
@@ -332,9 +340,13 @@ export class EditLog implements OrderedEditSet {
 	/**
 	 * Assigns provided handles to edit chunks based on chunk index specified.
 	 */
-	public processEditChunkHandle(chunkHandle: IFluidHandle<ArrayBufferLike>, chunkKey: number): void {
+	public processEditChunkHandle(chunkHandle: EditHandle, chunkKey: number): void {
 		const chunk = assertNotUndefined(
 			this.editChunks.get(chunkKey),
+			'A chunk handle op should not be received before the edit ops it corresponds to.'
+		);
+		assertNotUndefined(
+			chunk.edits,
 			'A chunk handle op should not be received before the edit ops it corresponds to.'
 		);
 		chunk.handle = chunkHandle;
@@ -359,6 +371,8 @@ export class EditLog implements OrderedEditSet {
 			this.editChunks.set(0, { edits: [editWithoutId] });
 		} else {
 			// Add to the last edit chunk if it has room, otherwise create a new chunk.
+			// If the chunk is undefined, this means a handle corresponding to a full chunk was received through a summary
+			// and so a new chunk should be created.
 			const { edits: lastEditChunk } = assertNotUndefined(this.editChunks.get(maxChunkKey));
 			if (lastEditChunk !== undefined && lastEditChunk.length < editsPerChunk) {
 				lastEditChunk.push(editWithoutId);
@@ -443,7 +457,7 @@ export class EditLog implements OrderedEditSet {
 
 	private addKeyToCache(newKey: number): void {
 		// Indices are only added to the cache if they are not higher than the maximum evicted index.
-		if (newKey <= this.maximumEvictedIndex) {
+		if (newKey <= this.maximumEvictableIndex) {
 			// If the new index is already in the cache, remove it first to update its last usage.
 			if (newKey in this.loadedChunkCache) {
 				this.loadedChunkCache.splice(this.loadedChunkCache.indexOf(newKey), 1);

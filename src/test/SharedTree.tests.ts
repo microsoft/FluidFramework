@@ -5,8 +5,8 @@
 
 import { assert, expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
-import { assertArrayOfOne, assertNotUndefined, isSharedTreeEvent } from '../Common';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
+import { assertArrayOfOne, assertNotUndefined, isSharedTreeEvent } from '../Common';
 import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers';
 import { SharedTreeEvent } from '../SharedTree';
 import { Change, ChangeType, EditNode, Delete, Insert, ChangeNode, StablePlace, StableRange } from '../PersistedTypes';
@@ -695,7 +695,7 @@ describe('SharedTree', () => {
 	});
 
 	describe('telemetry', () => {
-		it('decorates events with the correct properties', () => {
+		it('decorates events with the correct properties', async () => {
 			// Test that a handle can wrap a node and retrieve that node's properties
 			const events: ITelemetryBaseEvent[] = [];
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree({
@@ -706,7 +706,7 @@ describe('SharedTree', () => {
 			tree.editor.insert(makeEmptyNode(), StablePlace.after(makeEmptyNode()));
 			containerRuntimeFactory.processAllMessages();
 			// Force demand, which will cause a telemetry event for the invalid edit to be emitted
-			tree.logViewer.getSnapshot(Number.POSITIVE_INFINITY);
+			await tree.logViewer.getSnapshot(Number.POSITIVE_INFINITY);
 			expect(events.length).is.greaterThan(0);
 			events.forEach((event) => {
 				expect(isSharedTreeEvent(event)).is.true;

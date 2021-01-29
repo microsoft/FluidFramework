@@ -11,8 +11,8 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger } from '@fluidframework/telemetry-utils';
-import { EditLog, editsPerChunk, OrderedEditSet } from './EditLog';
 import { assert, fail, SharedTreeTelemetryProperties } from './Common';
+import { EditHandle, editsPerChunk, EditLog, OrderedEditSet } from './EditLog';
 import {
 	Edit,
 	Delete,
@@ -24,6 +24,9 @@ import {
 	StableRange,
 	StablePlace,
 	Payload,
+	SharedTreeOpType,
+	SharedTreeEditOp,
+	SharedTreeHandleOp,
 	EditWithoutId,
 } from './PersistedTypes';
 import { newEdit } from './EditUtilities';
@@ -238,11 +241,7 @@ export class SharedTree extends SharedObject {
 		this.expensiveValidation = expensiveValidation;
 
 		this.logger = ChildLogger.create(runtime.logger, 'SharedTree', sharedTreeTelemetryProperties);
-		const { editLog, logViewer } = this.createEditLogFromSummary(
-			initialSummary,
-			this.expensiveValidation,
-			this.logger
-		);
+		const { editLog, logViewer } = this.createEditLogFromSummary(initialSummary);
 
 		this.editLog = editLog;
 		this.logViewer = logViewer;
@@ -294,7 +293,7 @@ export class SharedTree extends SharedObject {
 		return deserializeHandle as IFluidHandle<ArrayBufferLike>;
 	}
 
-	private toSerializable(value: IFluidHandle<ArrayBufferLike>): ISerializedHandle {
+	private toSerializable(value: EditHandle): ISerializedHandle {
 		// Stringify to convert to the serialized handle values - and then parse
 		const stringified = this.serializer.stringify(value, this.handle);
 		return JSON.parse(stringified) as ISerializedHandle;
@@ -375,16 +374,12 @@ export class SharedTree extends SharedObject {
 	 * @internal
 	 */
 	public loadSummary(summary: SharedTreeSummaryBase): void {
-		const { editLog, logViewer } = this.createEditLogFromSummary(summary, this.expensiveValidation, this.logger);
+		const { editLog, logViewer } = this.createEditLogFromSummary(summary);
 		this.editLog = editLog;
 		this.logViewer = logViewer;
 	}
 
-	private createEditLogFromSummary(
-		summary: SharedTreeSummaryBase,
-		expensiveValidation: boolean,
-		logger: ITelemetryLogger
-	): { editLog: EditLog; logViewer: LogViewer } {
+	private createEditLogFromSummary(summary: SharedTreeSummaryBase): { editLog: EditLog; logViewer: LogViewer } {
 		const convertedSummary = convertSummaryToReadFormat(summary);
 		if (typeof convertedSummary === 'string') {
 			fail(convertedSummary); // TODO: Where does this error propagate?
@@ -398,7 +393,7 @@ export class SharedTree extends SharedObject {
 		};
 
 		const editLog = new EditLog(editHistory, serializationHelpers);
-		const logViewer = new CachingLogViewer(editLog, initialTree, expensiveValidation, undefined, logger);
+		const logViewer = new CachingLogViewer(editLog, initialTree, this.expensiveValidation, undefined, this.logger);
 
 		// TODO:#47830: Store the associated revision on the snapshot.
 		// The current view should only be stored in the cache if the revision it's associated with is known.
@@ -490,24 +485,4 @@ export class SharedTree extends SharedObject {
 		this.editLog.addLocalEdit(edit);
 		this.emit(SharedTreeEvent.EditCommitted, edit.id);
 	}
-}
-
-enum SharedTreeOpType {
-	Edit,
-	Handle,
-}
-
-interface SharedTreeOp {
-	type: SharedTreeOpType;
-}
-
-interface SharedTreeEditOp extends SharedTreeOp {
-	edit: Edit;
-}
-
-interface SharedTreeHandleOp extends SharedTreeOp {
-	/** The handled to an uploaded edit chunk. */
-	editHandle: ISerializedHandle;
-	/** The index of the first edit in the chunk that corresponds to the handle. */
-	chunkKey: number;
 }
