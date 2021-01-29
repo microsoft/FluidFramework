@@ -98,7 +98,7 @@
     "@fluidframework/test-driver-definitions": "^0.34.0",
     "@fluidframework/test-runtime-utils": "^0.34.0",
     "@fluidframework/test-utils": "^0.34.0",
-    "@types/assert": "^1.5.1",
+    "@types/assert": "^1.5.2",
     "@types/mocha": "^5.2.5",
     "@types/nock": "^9.3.0",
     "@types/node": "^10.17.24",

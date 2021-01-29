@@ -25,6 +25,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
+    "@fluid-experimental/data-objects": "^0.34.0",
     "@fluidframework/aqueduct": "^0.34.0",
     "@fluidframework/core-interfaces": "^0.34.0",
     "@fluidframework/datastore-definitions": "^0.34.0",

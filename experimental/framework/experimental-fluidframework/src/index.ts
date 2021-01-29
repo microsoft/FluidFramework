@@ -6,6 +6,7 @@
 
 export * from  "./Aqueduct";
 export * from  "./CoreInterfaces";
+export * from  "./DataObjects";
 export * from  "./DatastoreDefinitions";
 export * from  "./Map";
 export * from  "./ProtocolDefinitions";
