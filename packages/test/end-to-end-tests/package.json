@@ -13,10 +13,9 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
-    "build:compile": "concurrently npm:build:test npm:build:realsvctest",
+    "build:compile": "concurrently npm:build:test",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:realsvctest": "tsc --project ./src/real-service-tests/tsconfig.json",
     "build:test": "tsc --project ./src/test/tsconfig.json",
     "ci:test:realsvc": "npm run test:realsvc:mocha:report; exit 0",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
@@ -32,8 +31,8 @@
     "test:mocha:local": "mocha dist/test",
     "test:mocha:tinylicious": "cross-env FLUID_TEST_DRIVER=tinylicious start-server-and-test start:tinylicious:test 3000 test:mocha:local",
     "tsc": "tsc",
-    "test:realsvc:mocha": "mocha --recursive dist/real-service-tests --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-    "test:realsvc:mocha:report": "npm run test:realsvc:mocha -- --timeout 4s --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/mocha-realsvc-junit-report.xml",
+    "test:realsvc:mocha": "cross-env FLUID_TEST_DRIVER=odsp npm run test:mocha:local -- --timeout 4s",
+    "test:realsvc:mocha:report": "cross-env FLUID_TEST_COVERAGE=1 npm run test:realsvc:mocha",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
   },

@@ -4,5 +4,4 @@
  */
 
 export * from "./interfaces";
-export * from "./localServerTestDriver";
 export * from "./types";
