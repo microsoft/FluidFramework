@@ -13,11 +13,11 @@ import {
     MongoManager,
 } from "@fluidframework/server-services-core";
 import { throttle, IThrottleMiddlewareOptions } from "@fluidframework/server-services-utils";
-import {  Router } from "express";
+import { Router } from "express";
 import { Provider } from "nconf";
 import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { getParam, Constants, verifyStorageToken } from "../../../utils";
+import { getParam, Constants } from "../../../utils";
 
 export async function getDeltas(
     mongoManager: MongoManager,
@@ -194,36 +194,26 @@ export function create(
         ["/v1/:tenantId?/:id", "/:tenantId?/:id/v1"],
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
-            const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
-            const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
+            const from = stringToSequenceNumber(request.query.from);
+            const to = stringToSequenceNumber(request.query.to);
+            const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
-            verifyStorageToken(request, tenantManager, maxTokenLifetimeSec, isTokenExpiryEnabled).then(
-                () => {
-                    const from = stringToSequenceNumber(request.query.from);
-                    const to = stringToSequenceNumber(request.query.to);
-                    const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
+            // Query for the deltas and return a filtered version of just the operations field
+            const deltasP = getDeltasFromSummaryAndStorage(
+                tenantManager,
+                mongoManager,
+                deltasCollectionName,
+                tenantId,
+                getParam(request.params, "id"),
+                from,
+                to);
 
-                    // Query for the deltas and return a filtered version of just the operations field
-                    const deltasP = getDeltasFromSummaryAndStorage(
-                        tenantManager,
-                        mongoManager,
-                        deltasCollectionName,
-                        tenantId,
-                        getParam(request.params, "id"),
-                        from,
-                        to);
-
-                    deltasP.then(
-                        (deltas) => {
-                            response.status(200).json(deltas);
-                        },
-                        (error) => {
-                            response.status(500).json(error);
-                        });
+            deltasP.then(
+                (deltas) => {
+                    response.status(200).json(deltas);
                 },
                 (error) => {
-                    winston.error("Invalid access token");
-                    response.status(401).json(error);
+                    response.status(500).json(error);
                 });
         },
     );
@@ -235,31 +225,21 @@ export function create(
         "/raw/:tenantId?/:id",
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
-            const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
-            const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
+            const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
-            verifyStorageToken(request, tenantManager, maxTokenLifetimeSec, isTokenExpiryEnabled).then(
-                () => {
-                    const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
+            // Query for the raw deltas (no from/to since we want all of them)
+            const deltasP = getRawDeltas(
+                mongoManager,
+                rawDeltasCollectionName,
+                tenantId,
+                getParam(request.params, "id"));
 
-                    // Query for the raw deltas (no from/to since we want all of them)
-                    const deltasP = getRawDeltas(
-                        mongoManager,
-                        rawDeltasCollectionName,
-                        tenantId,
-                        getParam(request.params, "id"));
-
-                    deltasP.then(
-                        (deltas) => {
-                            response.status(200).json(deltas);
-                        },
-                        (error) => {
-                            response.status(500).json(error);
-                        });
+            deltasP.then(
+                (deltas) => {
+                    response.status(200).json(deltas);
                 },
                 (error) => {
-                    winston.error("Invalid access token.");
-                    response.status(401).json(error);
+                    response.status(500).json(error);
                 });
         },
     );
@@ -271,35 +251,25 @@ export function create(
         "/:tenantId?/:id",
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
-            const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
-            const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
+            const from = stringToSequenceNumber(request.query.from);
+            const to = stringToSequenceNumber(request.query.to);
+            const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
-            verifyStorageToken(request, tenantManager, maxTokenLifetimeSec, isTokenExpiryEnabled).then(
-                () => {
-                    const from = stringToSequenceNumber(request.query.from);
-                    const to = stringToSequenceNumber(request.query.to);
-                    const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
+            // Query for the deltas and return a filtered version of just the operations field
+            const deltasP = getDeltas(
+                mongoManager,
+                deltasCollectionName,
+                tenantId,
+                getParam(request.params, "id"),
+                from,
+                to);
 
-                    // Query for the deltas and return a filtered version of just the operations field
-                    const deltasP = getDeltas(
-                        mongoManager,
-                        deltasCollectionName,
-                        tenantId,
-                        getParam(request.params, "id"),
-                        from,
-                        to);
-
-                    deltasP.then(
-                        (deltas) => {
-                            response.status(200).json(deltas);
-                        },
-                        (error) => {
-                            response.status(500).json(error);
-                        });
+            deltasP.then(
+                (deltas) => {
+                    response.status(200).json(deltas);
                 },
                 (error) => {
-                    winston.error("Invalid access token.");
-                    response.status(401).json(error);
+                    response.status(500).json(error);
                 });
         },
     );
