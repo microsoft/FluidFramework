@@ -53,7 +53,7 @@ export interface IPartitionLambdaFactory extends EventEmitter {
     /**
      * Constructs a new lambda
      */
-    create(config: nconf.Provider, context: IContext): Promise<IPartitionLambda>;
+    create(config: nconf.Provider, context: IContext, updateActivityTime?: () => void): Promise<IPartitionLambda>;
 
     /**
      * Disposes of the lambda factory
