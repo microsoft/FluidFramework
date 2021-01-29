@@ -61,6 +61,10 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         }
         const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
         const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
+        const token = await this.tokenProvider.fetchOrdererToken(
+            tenantId,
+            id,
+        );
         await Axios.post(
             `${resolvedUrl.endpoints.ordererUrl}/documents/${tenantId}`,
             {
@@ -68,6 +72,11 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 summary: appSummary,
                 sequenceNumber: documentAttributes.sequenceNumber,
                 values: quorumValues,
+            },
+            {
+                headers: {
+                    Authorization: `Basic ${token.jwt}`,
+                },
             });
         return this.createDocumentService(resolvedUrl, logger);
     }

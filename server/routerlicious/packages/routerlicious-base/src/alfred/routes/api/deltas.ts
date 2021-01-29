@@ -12,12 +12,30 @@ import {
     IThrottler,
     MongoManager,
 } from "@fluidframework/server-services-core";
-import { throttle, IThrottleMiddlewareOptions } from "@fluidframework/server-services-utils";
-import { Router } from "express";
+import { validateTokenClaims, throttle, IThrottleMiddlewareOptions } from "@fluidframework/server-services-utils";
+import { Request, Router } from "express";
 import { Provider } from "nconf";
 import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { getParam, Constants } from "../../../utils";
+
+// eslint-disable-next-line max-len
+async function verifyToken(request: Request, tenantManager: ITenantManager, maxTokenLifetimeSec: number, isTokenExpiryEnabled: boolean): Promise<void> {
+    const authorizationHeader = request.header("Authorization");
+    const regex = /Basic (.+)/;
+    const tokenMatch = regex.exec(authorizationHeader);
+    if (!tokenMatch || !tokenMatch[1]) {
+        return Promise.reject(new Error("Missing access token"));
+    }
+    const token = tokenMatch[1];
+    const tenantId = getParam(request.params, "tenantId");
+    const documentId = getParam(request.params, "id");
+    const claims = validateTokenClaims(token, documentId, tenantId, maxTokenLifetimeSec, isTokenExpiryEnabled);
+    if (!claims) {
+        return Promise.reject(new Error("Invalid access token"));
+    }
+    return tenantManager.verifyToken(claims.tenantId, token);
+}
 
 export async function getDeltas(
     mongoManager: MongoManager,
@@ -194,26 +212,36 @@ export function create(
         ["/v1/:tenantId?/:id", "/:tenantId?/:id/v1"],
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
-            const from = stringToSequenceNumber(request.query.from);
-            const to = stringToSequenceNumber(request.query.to);
-            const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
+            const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
+            const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
 
-            // Query for the deltas and return a filtered version of just the operations field
-            const deltasP = getDeltasFromSummaryAndStorage(
-                tenantManager,
-                mongoManager,
-                deltasCollectionName,
-                tenantId,
-                getParam(request.params, "id"),
-                from,
-                to);
+            verifyToken(request, tenantManager, maxTokenLifetimeSec, isTokenExpiryEnabled).then(
+                () => {
+                    const from = stringToSequenceNumber(request.query.from);
+                    const to = stringToSequenceNumber(request.query.to);
+                    const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
-            deltasP.then(
-                (deltas) => {
-                    response.status(200).json(deltas);
+                    // Query for the deltas and return a filtered version of just the operations field
+                    const deltasP = getDeltasFromSummaryAndStorage(
+                        tenantManager,
+                        mongoManager,
+                        deltasCollectionName,
+                        tenantId,
+                        getParam(request.params, "id"),
+                        from,
+                        to);
+
+                    deltasP.then(
+                        (deltas) => {
+                            response.status(200).json(deltas);
+                        },
+                        (error) => {
+                            response.status(500).json(error);
+                        });
                 },
                 (error) => {
-                    response.status(500).json(error);
+                    winston.error("Invalid access token");
+                    response.status(401).json(error);
                 });
         },
     );
@@ -225,21 +253,31 @@ export function create(
         "/raw/:tenantId?/:id",
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
-            const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
+            const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
+            const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
 
-            // Query for the raw deltas (no from/to since we want all of them)
-            const deltasP = getRawDeltas(
-                mongoManager,
-                rawDeltasCollectionName,
-                tenantId,
-                getParam(request.params, "id"));
+            verifyToken(request, tenantManager, maxTokenLifetimeSec, isTokenExpiryEnabled).then(
+                () => {
+                    const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
-            deltasP.then(
-                (deltas) => {
-                    response.status(200).json(deltas);
+                    // Query for the raw deltas (no from/to since we want all of them)
+                    const deltasP = getRawDeltas(
+                        mongoManager,
+                        rawDeltasCollectionName,
+                        tenantId,
+                        getParam(request.params, "id"));
+
+                    deltasP.then(
+                        (deltas) => {
+                            response.status(200).json(deltas);
+                        },
+                        (error) => {
+                            response.status(500).json(error);
+                        });
                 },
                 (error) => {
-                    response.status(500).json(error);
+                    winston.error("Invalid access token.");
+                    response.status(401).json(error);
                 });
         },
     );
@@ -251,25 +289,35 @@ export function create(
         "/:tenantId?/:id",
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
-            const from = stringToSequenceNumber(request.query.from);
-            const to = stringToSequenceNumber(request.query.to);
-            const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
+            const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
+            const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
 
-            // Query for the deltas and return a filtered version of just the operations field
-            const deltasP = getDeltas(
-                mongoManager,
-                deltasCollectionName,
-                tenantId,
-                getParam(request.params, "id"),
-                from,
-                to);
+            verifyToken(request, tenantManager, maxTokenLifetimeSec, isTokenExpiryEnabled).then(
+                () => {
+                    const from = stringToSequenceNumber(request.query.from);
+                    const to = stringToSequenceNumber(request.query.to);
+                    const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
-            deltasP.then(
-                (deltas) => {
-                    response.status(200).json(deltas);
+                    // Query for the deltas and return a filtered version of just the operations field
+                    const deltasP = getDeltas(
+                        mongoManager,
+                        deltasCollectionName,
+                        tenantId,
+                        getParam(request.params, "id"),
+                        from,
+                        to);
+
+                    deltasP.then(
+                        (deltas) => {
+                            response.status(200).json(deltas);
+                        },
+                        (error) => {
+                            response.status(500).json(error);
+                        });
                 },
                 (error) => {
-                    response.status(500).json(error);
+                    winston.error("Invalid access token.");
+                    response.status(401).json(error);
                 });
         },
     );
