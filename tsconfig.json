@@ -2,8 +2,11 @@
 	"extends": "@fluidframework/build-common/ts-common-config.json",
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
-		"rootDir": "./src",
+		"composite": true,
+		"downlevelIteration": true,
+		"noUnusedLocals": false,
 		"outDir": "./dist",
+		"rootDir": "./src",
 		"types": ["mocha"]
 	},
 	"include": ["src/**/*"]

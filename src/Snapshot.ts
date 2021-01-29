@@ -5,8 +5,9 @@
 
 import { assert, assertNotUndefined, compareIterables, fail } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
-import { ChangeNode, TraitMap, TraitLocation, StableRange, Side, StablePlace, NodeData } from './PersistedTypes';
+import { ChangeNode, TraitLocation, StableRange, Side, StablePlace, NodeData } from './PersistedTypes';
 import { compareTraits } from './EditUtilities';
+import { compareSnapshotNodes, getTreeNodeFromSnapshotNode } from './SnapshotUtilities';
 import { createForest, Delta, Forest as GenericForest } from './Forest';
 
 /**
@@ -97,7 +98,7 @@ export class Snapshot {
 					);
 				}
 			}
-			const snapshotNode: SnapshotNode = { identifier, payload, definition, traits };
+			const snapshotNode: SnapshotNode = { identifier, ...(payload ? { payload } : {}), definition, traits };
 			newSnapshotNodes.set(snapshotNode.identifier, snapshotNode);
 			return snapshotNode.identifier;
 		}
@@ -111,32 +112,9 @@ export class Snapshot {
 		this.forest = forest;
 	}
 
-	private getChangeNodeFromSnapshotNode(node: SnapshotNode): ChangeNode {
-		/** Given the traits of a SnapshotNode, return the corresponding traits on a Node */
-		const makeTraits = (traits: ReadonlyMap<TraitLabel, readonly NodeId[]>): TraitMap => {
-			const entries = [...traits.entries()];
-			const traitMap = {};
-			Object.assign(
-				traitMap,
-				...entries.map(([label, trait]) => ({
-					[label]: trait.map((nodeId) => this.getChangeNodeFromSnapshotNode(this.getSnapshotNode(nodeId))),
-				}))
-			);
-
-			return traitMap;
-		};
-
-		return {
-			identifier: node.identifier,
-			payload: node.payload,
-			definition: node.definition,
-			traits: makeTraits(node.traits),
-		};
-	}
-
 	/** Return a tree of JSON-compatible `ChangeNode`s representing the current state of this `Snapshot` */
 	public getChangeNodeTree(): ChangeNode {
-		return this.getChangeNodeFromSnapshotNode(this.forest.get(this.root));
+		return getTreeNodeFromSnapshotNode(this, this.root) as ChangeNode;
 	}
 
 	/**
@@ -157,7 +135,7 @@ export class Snapshot {
 	 * @returns a `ChangeNode` derived from the `SnapshotNode` in this snapshot with the given `NodeId`.
 	 */
 	public getChangeNode(id: NodeId): ChangeNode {
-		return this.getChangeNodeFromSnapshotNode(this.forest.get(id));
+		return getTreeNodeFromSnapshotNode<ChangeNode>(this, id) as ChangeNode;
 	}
 
 	/**
@@ -470,7 +448,7 @@ export class Snapshot {
 	/**
 	 * Calculate the difference between two `Snapshot`s
 	 * @param snapshot - the other snapshot to compare to this one
-	 * @returns A {@link Delta} listing which nodes were changed, added, or removed.
+	 * @returns A {@link Delta} which nodes must be changed, added, and removed to get from `this` to `snapshot`.
 	 * The snapshots must share a root.
 	 */
 	public delta(snapshot: Snapshot): Delta<NodeId> {
@@ -481,48 +459,6 @@ export class Snapshot {
 	public [Symbol.iterator](): IterableIterator<SnapshotNode> {
 		return this.iterateNodeDescendants(this.root);
 	}
-}
-
-function compareSnapshotNodes(nodeA: SnapshotNode, nodeB: SnapshotNode): boolean {
-	if (nodeA === nodeB) {
-		return true;
-	}
-
-	if (nodeA.identifier !== nodeB.identifier) {
-		return false;
-	}
-
-	if (nodeA.definition !== nodeB.definition) {
-		return false;
-	}
-
-	if (nodeA.payload?.base64 !== nodeB.payload?.base64) {
-		return false;
-	}
-
-	if (nodeA.traits.size !== nodeB.traits.size) {
-		return false;
-	}
-
-	for (const traitA of nodeA.traits) {
-		const [traitLabelA, nodeSequenceA] = traitA;
-		const nodeSequenceB = nodeB.traits.get(traitLabelA);
-		if (!nodeSequenceB) {
-			return false;
-		}
-
-		if (nodeSequenceA.length !== nodeSequenceB.length) {
-			return false;
-		}
-
-		for (let i = 0; i < nodeSequenceA.length; i++) {
-			if (nodeSequenceA[i] !== nodeSequenceB[i]) {
-				return false;
-			}
-		}
-	}
-
-	return true;
 }
 
 function getIndex(side: Side, index: TraitNodeIndex): PlaceIndex {

@@ -111,7 +111,7 @@ export interface Forest<ID, T, TParentData> {
 	 * Calculate the difference between two forests
 	 * @param forest - the other forest to compare to this one
 	 * @param comparator - a function which returns true if two objects of type T are equivalent, false otherwise
-	 * @returns A {@link Delta} from `this` to `forest` listing which nodes were changed, added, or removed.
+	 * @returns A {@link Delta} listing which nodes must be changed, added, and removed to get from `this` to `forest`.
 	 */
 	delta(forest: Forest<ID, T, TParentData>, comparator?: (a: T, b: T) => boolean): Delta<ID>;
 }
@@ -195,7 +195,7 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 	public mergeWith(
 		nodes: Iterable<[ID, T]>,
 		merger: (oldVal: T, newVal: T, key: ID) => T
-	): Forest<ID, T, TParentData> {
+	): ForestI<ID, T, TParentData> {
 		let forest = new ForestI({ nodes: this.nodes, parents: this.parents, getChildren: this.getChildren });
 
 		for (const [id, node] of nodes) {
@@ -235,18 +235,11 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 		return this.nodes.get(id);
 	}
 
-	public delete(id: ID, deleteChildren: boolean): Forest<ID, T, TParentData> {
-		const mutableNodes = this.nodes.clone();
-		const mutableParents = this.parents.clone();
-		this.deleteRecursive(mutableNodes, mutableParents, id, deleteChildren);
-		return new ForestI({
-			nodes: mutableNodes,
-			parents: mutableParents,
-			getChildren: this.getChildren,
-		});
+	public delete(id: ID, deleteChildren: boolean): ForestI<ID, T, TParentData> {
+		return this.deleteAll([id], deleteChildren);
 	}
 
-	public deleteAll(ids: Iterable<ID>, deleteChildren: boolean): Forest<ID, T, TParentData> {
+	public deleteAll(ids: Iterable<ID>, deleteChildren: boolean): ForestI<ID, T, TParentData> {
 		const mutableNodes = this.nodes.clone();
 		const mutableParents = this.parents.clone();
 		for (const id of ids) {

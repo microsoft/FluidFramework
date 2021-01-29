@@ -9,10 +9,13 @@ import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import type { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
+import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
@@ -23,10 +26,14 @@ export class BasicCheckout extends Checkout {
     protected handleNewEdit(edit: Edit, view: Snapshot): void;
     // (undocumented)
     protected get latestCommittedView(): Snapshot;
-    readonly tree: SharedTree;
     // (undocumented)
     waitForPendingUpdates(): Promise<void>;
 }
+
+// Warning: (ae-internal-missing-underscore) The name "BlobId" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export type BlobId = string;
 
 // @public
 export interface Build {
@@ -69,14 +76,17 @@ export enum ChangeType {
 }
 
 // @public @sealed
-export abstract class Checkout extends EventEmitterWithErrorHandling {
-    protected constructor(currentView: Snapshot);
+export abstract class Checkout extends EventEmitterWithErrorHandling implements IDisposable {
+    protected constructor(tree: SharedTree, currentView: Snapshot, onEditCommitted: any);
     abortEdit(): void;
     applyChanges(...changes: Change[]): void;
     applyEdit(...changes: Change[]): EditId;
     closeEdit(): EditId;
     // (undocumented)
     get currentView(): Snapshot;
+    dispose(error?: Error): void;
+    // (undocumented)
+    disposed: boolean;
     protected emitChange(): void;
     // (undocumented)
     getEditStatus(): EditResult;
@@ -86,6 +96,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling {
     protected abstract readonly latestCommittedView: Snapshot;
     openEdit(): void;
     rebaseCurrentEdit(): EditValidationResult.Valid | EditValidationResult.Invalid;
+    readonly tree: SharedTree;
     // (undocumented)
     abstract waitForPendingUpdates(): Promise<void>;
 }
@@ -152,6 +163,11 @@ export interface Edit {
     readonly id: EditId;
 }
 
+// Warning: (ae-internal-missing-underscore) The name "EditAddedHandler" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export type EditAddedHandler = (edit: Edit, isLocal: boolean) => void;
+
 // @public
 export type EditId = UuidString & {
     readonly EditId: '56897beb-53e4-4e66-85da-4bf5cd5d0d49';
@@ -178,9 +194,9 @@ export class EditLog implements OrderedEditSet {
     get length(): number;
     get numberOfLocalEdits(): number;
     get numberOfSequencedEdits(): number;
+    registerEditAddedHandler(handler: EditAddedHandler): void;
     // (undocumented)
     tryGetEdit(editId: EditId): Edit | undefined;
-    versionIdentifier(): unknown;
 }
 
 // @public
@@ -207,6 +223,9 @@ export enum EditValidationResult {
 }
 
 // @public
+export function fullHistorySummarizer(sequencedEdits: OrderedEditSet, currentView: Snapshot): SharedTreeSummary;
+
+// @public
 export const initialTree: ChangeNode;
 
 // @public
@@ -223,6 +242,9 @@ export interface Insert {
 export const Insert: {
     create: (nodes: EditNode[], destination: StablePlace) => Change[];
 };
+
+// @public
+export function isSharedTreeEvent(event: ITelemetryBaseEvent): boolean;
 
 // Warning: (ae-internal-missing-underscore) The name "LogViewer" should be prefixed with an underscore because the declaration is marked as @internal
 //
@@ -258,6 +280,9 @@ export interface NodeInTrait {
     readonly trait: TraitLocation;
 }
 
+// @public
+export function noHistorySummarizer(_: OrderedEditSet, currentView: Snapshot): SharedTreeSummary;
+
 // @public @sealed
 export interface OrderedEditSet {
     // (undocumented)
@@ -291,7 +316,6 @@ export class PrefetchingCheckout extends Checkout {
     protected get latestCommittedView(): Snapshot;
     // (undocumented)
     static load(tree: SharedTree, prefetchFilter: (node: Definition) => boolean): Promise<PrefetchingCheckout>;
-    readonly tree: SharedTree;
     // (undocumented)
     waitForPendingUpdates(): Promise<void>;
 }
@@ -330,12 +354,12 @@ export class SharedTree extends SharedObject {
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // @internal
     loadSummary(summary: SharedTreeSummary): void;
+    // (undocumented)
+    protected readonly logger: ITelemetryLogger;
     // @internal
     logViewer: LogViewer;
     // (undocumented)
     protected onDisconnect(): void;
-    // Warning: (ae-forgotten-export) The symbol "BlobId" needs to be exported by the entry point index.d.ts
-    //
     // @internal
     payloadCache: Map<BlobId, Payload>;
     // (undocumented)
@@ -513,7 +537,7 @@ export interface TraitLocation {
 }
 
 // @public
-export interface TraitMap<TChild = ChangeNode> {
+export interface TraitMap<TChild> {
     // (undocumented)
     readonly [key: string]: TreeNodeSequence<TChild>;
 }
@@ -530,7 +554,22 @@ export interface TreeNode<TChild> extends NodeData {
 }
 
 // @public
-export type TreeNodeSequence<TChild = ChangeNode> = readonly TChild[];
+export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
+    constructor(snapshot: Snapshot, nodeId: NodeId);
+    // (undocumented)
+    get definition(): Definition;
+    // (undocumented)
+    get identifier(): NodeId;
+    // (undocumented)
+    get node(): TreeNode<TreeNodeHandle>;
+    // (undocumented)
+    get payload(): Payload | undefined;
+    // (undocumented)
+    get traits(): TraitMap<TreeNodeHandle>;
+}
+
+// @public
+export type TreeNodeSequence<TChild> = readonly TChild[];
 
 // @public
 export type UuidString = string & {

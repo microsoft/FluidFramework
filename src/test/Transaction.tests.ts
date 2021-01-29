@@ -27,6 +27,8 @@ import {
 	initialSnapshot,
 	right,
 	rightTraitLocation,
+	leftTraitLabel,
+	rightTraitLabel,
 } from './utilities/TestUtilities';
 
 describe('Transaction', () => {
@@ -162,7 +164,8 @@ describe('Transaction', () => {
 			const transaction = new Transaction(initialSnapshot);
 			transaction.applyChange(Change.clearPayload(initialTree.identifier));
 			expect(transaction.result).equals(EditResult.Applied);
-			expect(transaction.view.getSnapshotNode(initialTree.identifier).payload).undefined;
+			expect({}.hasOwnProperty.call(transaction.view.getSnapshotNode(initialTree.identifier), 'payload')).false;
+			expect({}.hasOwnProperty.call(transaction.view.getChangeNode(initialTree.identifier), 'payload')).false;
 		});
 
 		it('can clear a set payload', () => {
@@ -177,7 +180,8 @@ describe('Transaction', () => {
 			expect(transaction.view.getSnapshotNode(initialTree.identifier).payload).not.undefined;
 			transaction.applyChange(Change.clearPayload(initialTree.identifier));
 			expect(transaction.result).equals(EditResult.Applied);
-			expect(transaction.view.getSnapshotNode(initialTree.identifier).payload).undefined;
+			expect({}.hasOwnProperty.call(transaction.view.getSnapshotNode(initialTree.identifier), 'payload')).false;
+			expect({}.hasOwnProperty.call(transaction.view.getChangeNode(initialTree.identifier), 'payload')).false;
 		});
 	});
 
@@ -255,10 +259,12 @@ describe('Transaction', () => {
 		it('can build a detached node', () => {
 			const transaction = new Transaction(initialSnapshot);
 			const identifier = uuidv4() as NodeId;
-			transaction.applyChange(Change.build([makeEmptyNode(identifier)], 0 as DetachedSequenceId));
+			const newNode = makeEmptyNode(identifier);
+			transaction.applyChange(Change.build([newNode], 0 as DetachedSequenceId));
 			expect(transaction.result).equals(EditResult.Applied);
 			expect(transaction.view.hasNode(identifier)).is.true;
 			expect(transaction.view.getParentSnapshotNode(identifier)).is.undefined;
+			expect(transaction.view.getChangeNode(identifier)).deep.equals(newNode);
 		});
 		it("is malformed if detached node id doesn't exist", () => {
 			const transaction = new Transaction(initialSnapshot);
@@ -337,6 +343,40 @@ describe('Transaction', () => {
 			expect(leftTrait).deep.equals([wrappingParentId]);
 			const wrappingTrait = transaction.view.getTrait({ parent: wrappingParentId, label: wrappingTraitLabel });
 			expect(wrappingTrait).deep.equals([left.identifier]);
+		});
+		it('can build and insert a tree that contains detached subtrees', () => {
+			const transaction = new Transaction(simpleTreeSnapshot);
+			const leftNodeDetachedId = 0 as DetachedSequenceId;
+			const rightNodeDetachedId = 1 as DetachedSequenceId;
+			const detachedIdSubtree = 2 as DetachedSequenceId;
+			transaction.applyChange(Change.detach(StableRange.only(left), leftNodeDetachedId));
+			transaction.applyChange(Change.detach(StableRange.only(right), rightNodeDetachedId));
+
+			const detachedSubtree = {
+				...makeEmptyNode(),
+				traits: {
+					[leftTraitLabel]: [leftNodeDetachedId],
+					[rightTraitLabel]: [rightNodeDetachedId],
+				},
+			};
+			transaction.applyChange(Change.build([detachedSubtree], detachedIdSubtree));
+			transaction.applyChange(Change.insert(detachedIdSubtree, StablePlace.atStartOf(leftTraitLocation)));
+			expect(transaction.view.getTrait(rightTraitLocation)).deep.equals([]);
+			expect(transaction.view.getTrait(leftTraitLocation)).deep.equals([detachedSubtree.identifier]);
+			const insertedSubtree = transaction.view.getChangeNode(detachedSubtree.identifier);
+			expect(insertedSubtree.traits).deep.equals({
+				[leftTraitLabel]: [left],
+				[rightTraitLabel]: [right],
+			});
+		});
+		it('can build and insert a tree with the same identity as that of a detached subtree', () => {
+			const transaction = new Transaction(simpleTreeSnapshot);
+			transaction.applyChange(Change.detach(StableRange.only(left)));
+			const idOfDetachedNodeToInsert = 1 as DetachedSequenceId;
+			expect(transaction.view.getTrait(leftTraitLocation)).deep.equals([]);
+			transaction.applyChange(Change.build([makeEmptyNode(left.identifier)], idOfDetachedNodeToInsert));
+			transaction.applyChange(Change.insert(idOfDetachedNodeToInsert, StablePlace.atStartOf(leftTraitLocation)));
+			expect(transaction.view.getTrait(leftTraitLocation)).deep.equals([left.identifier]);
 		});
 	});
 });

@@ -5,7 +5,8 @@
 
 import { assert, expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
-import { assertArrayOfOne } from '../Common';
+import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
+import { assertArrayOfOne, isSharedTreeEvent } from '../Common';
 import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers';
 import { SharedTreeEvent } from '../SharedTree';
 import { Change, ChangeType, EditNode, Delete, Insert, ChangeNode, StablePlace, StableRange } from '../PersistedTypes';
@@ -13,6 +14,7 @@ import { deepCompareNodes, newEdit } from '../EditUtilities';
 import { deserialize, noHistorySummarizer, serialize, SharedTreeSummary } from '../Summary';
 import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
+import { TreeNodeHandle } from '../TreeNodeHandle';
 import {
 	makeEmptyNode,
 	setUpTestSharedTree,
@@ -23,6 +25,8 @@ import {
 	leftTraitLocation,
 	rightTraitLocation,
 	simpleTestTree,
+	areNodesEquivalent,
+	rightTraitLabel,
 	assertNoDelta,
 } from './utilities/TestUtilities';
 import { runSharedTreeUndoRedoTestSuite } from './utilities/UndoRedoTests';
@@ -663,6 +667,57 @@ describe('SharedTree', () => {
 			expect(delta.changed).deep.equals([simpleTestTree.identifier]);
 			expect(delta.removed).deep.equals([]);
 			expect(delta.added).deep.equals([]);
+		});
+	});
+
+	describe('handles', () => {
+		it('can reference a node', () => {
+			// Test that a handle can wrap a node and retrieve that node's properties
+			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+			const leftHandle = new TreeNodeHandle(tree.currentView, left.identifier);
+			expect(areNodesEquivalent(left, leftHandle)).to.be.true;
+			expect(areNodesEquivalent(right, leftHandle)).to.be.false;
+		});
+
+		it('can create handles from children', () => {
+			// Test that when retrieving children via the "traits" property of a handle, the
+			// children are also wrapped in handles
+			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+			const rootHandle = new TreeNodeHandle(tree.currentView, simpleTestTree.identifier);
+			expect(areNodesEquivalent(simpleTestTree, rootHandle)).to.be.true;
+			const leftHandle = rootHandle.traits.left[0];
+			expect(areNodesEquivalent(left, leftHandle));
+			expect(leftHandle instanceof TreeNodeHandle).to.be.true;
+		});
+
+		it('do not update when the current view of the tree changes', () => {
+			// Unlike CurrentTreeNodeHandles, SnapshotTreeNodeHandles should never change
+			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+			const leftHandle = new TreeNodeHandle(tree.currentView, left.identifier);
+			expect(leftHandle.traits.right).to.be.undefined;
+			// Move "right" under "left"
+			tree.editor.move(right, StablePlace.atStartOf({ parent: left.identifier, label: rightTraitLabel }));
+			expect(leftHandle.traits.right).to.be.undefined;
+		});
+	});
+
+	describe('telemetry', () => {
+		it('decorates events with the correct properties', () => {
+			// Test that a handle can wrap a node and retrieve that node's properties
+			const events: ITelemetryBaseEvent[] = [];
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree({
+				initialTree: simpleTestTree,
+				logger: { send: (event) => events.push(event) },
+			});
+			// Invalid edit
+			tree.editor.insert(makeEmptyNode(), StablePlace.after(makeEmptyNode()));
+			containerRuntimeFactory.processAllMessages();
+			// Force demand, which will cause a telemetry event for the invalid edit to be emitted
+			tree.logViewer.getSnapshot(Number.POSITIVE_INFINITY);
+			expect(events.length).is.greaterThan(0);
+			events.forEach((event) => {
+				expect(isSharedTreeEvent(event)).is.true;
+			});
 		});
 	});
 });

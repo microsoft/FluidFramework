@@ -10,8 +10,10 @@ import {
 	MockStorage,
 } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
+import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
-import { ChangeNode, TraitLocation } from '../../PersistedTypes';
+import { fail } from '../../Common';
+import { ChangeNode, NodeData, TraitLocation } from '../../PersistedTypes';
 import { SharedTree } from '../../SharedTree';
 import { newEdit, setTrait } from '../../EditUtilities';
 import { fullHistorySummarizer, SharedTreeSummarizer } from '../../Summary';
@@ -52,6 +54,11 @@ export interface SharedTreeTestingOptions {
 	 * If not set, full history will be preserved.
 	 */
 	summarizer?: SharedTreeSummarizer;
+
+	/**
+	 * Telemetry logger injected into the SharedTree.
+	 */
+	logger?: ITelemetryBaseLogger;
 }
 
 export const testTrait: TraitLocation = {
@@ -64,8 +71,21 @@ export function setUpTestSharedTree(
 	options: SharedTreeTestingOptions = { localMode: true }
 ): SharedTreeTestingComponents {
 	const { id, initialTree, localMode, containerRuntimeFactory } = options;
+	let componentRuntime: MockFluidDataStoreRuntime;
+	if (options.logger) {
+		const proxyHandler: ProxyHandler<MockFluidDataStoreRuntime> = {
+			get: (target, prop, receiver) => {
+				if (prop === 'logger' && options.logger) {
+					return options.logger;
+				}
+				return target[prop as keyof MockFluidDataStoreRuntime];
+			},
+		};
+		componentRuntime = new Proxy(new MockFluidDataStoreRuntime(), proxyHandler);
+	} else {
+		componentRuntime = new MockFluidDataStoreRuntime();
+	}
 
-	const componentRuntime = new MockFluidDataStoreRuntime();
 	// Enable expensiveValidation
 	const tree = new SharedTree(componentRuntime, id || 'testSharedTree', true);
 	tree.summarizer = options.summarizer ?? fullHistorySummarizer;
@@ -132,6 +152,29 @@ export function assertNoDelta(tree: SharedTree, editor: () => void) {
 		added: [],
 		removed: [],
 	});
+}
+
+/**
+ * Returns true if two nodes have equivalent data, otherwise false.
+ * Does not compare children or payloads.
+ * @param nodes - two or more nodes to compare
+ */
+export function areNodesEquivalent(...nodes: NodeData[]): boolean {
+	if (nodes.length < 2) {
+		fail('Too few nodes to compare');
+	}
+
+	for (let i = 1; i < nodes.length; i++) {
+		if (nodes[i].definition !== nodes[0].definition) {
+			return false;
+		}
+
+		if (nodes[i].identifier !== nodes[0].identifier) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 /** Left node of 'simpleTestTree' */

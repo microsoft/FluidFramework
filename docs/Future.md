@@ -13,7 +13,7 @@ This document contains high-level overviews of several desired SharedTree featur
 
 1. Provide a way to detect if two edits [commute](https://en.wikipedia.org/wiki/Commutative_property) for a particular version of the document (edits might commute for some documents but not others, so providing the document is required).
    This can be conservative in that it would be allowed to return false if it is unclear it they commute.
-   A basic implementation of this would be a check if the write set of each change does not overlap the read set + write set of the other.
+   A basic implementation of this would be a check if the _write set_ of each change does not overlap the _read set + write set_ of the other.
 
 1. Provide a way to detect if the applying an edit had the _intended_ effect (ex: was it turned into a noop due to conflicts, or has high risk of other kinds of merge issues)
 
@@ -24,7 +24,7 @@ Rather than drop edits which cause a conflict, SharedTree could expose this, giv
 # Editing History
 
 The history is a sequence of Edits, but it is append only.
-Thus a logical edit of the history is actually done by creating a new Edit which modifies the current version of the document to be that which would have been produced by the alternative history.
+Thus, a logical edit of the history is done by creating a new Edit which modifies the current version of the document to be that which would have been produced by the alternative history.
 
 This functionality will be provided by a library (yet to be written) which uses SharedTree's history inspection and Editing APIs to create history modifying Edits, including metadata necessary to properly inspect and merge them with future history modifying Edits.
 This approach does not require extra functionality in SharedTree's core.
@@ -44,9 +44,9 @@ particularly when the initial edit requires Automatic Conflict Resolution, and/o
 
 These costs can be mitigated by encoding optimizations (Ex: allowing edits to refer to trees in snapshots and/or other edits to avoid duplication).
 
-If these mitigation are not enough, directly supporting history editing within SharedTree's Edits could be added without breaking existing documents or legacy support for the old approach
+If necessary, directly supporting history editing within SharedTree's Edits could be added without breaking existing documents or legacy support for the old approach
 (other than optionally reading the metadata when viewing history).
-This will be done if the future only if a cost/benefit analysis suggests it would be a good idea.
+This is not on the roadmap and would only be considered after a formal cost/benefit analysis.
 
 ## Example History Edit
 
@@ -55,29 +55,29 @@ This generalizes to making arbitrary history edits by considering A, B, C, and X
 
 We start with these changes:
 
-:::mermaid
+```mermaid
 graph LR
 A(A) --> B(B) --> C(C)
-:::
+```
 
 And want to end with changes:
 
-:::mermaid
+```mermaid
 graph LR
 A(A) --> X(X) --> C(C)
-:::
+```
 
 Since history is append only, we actually end with:
 
-:::mermaid
+```mermaid
 graph LR
 A(A) --> B(B) --> C(C) --> Merge(Merge)
-:::
+```
 
 ### Low Level Commuting Merge
 
-If B commutes with C in the revision output from A, and X commutes with C in the revision output from A: the history edit is considered non-conflicted, since there is a clear way to construct the Merge edit.
-This is the only case supported by the "Low Level Commuting Merge".
+If B commutes with C in the revision output from A, and X commutes with C in the revision output from A, then the history edit is considered non-conflicted, since there is a clear way to construct the Merge edit.
+This is the only case supported by the "Low Level Commuting Merge."
 
 In this case Merge can be constructed as inverse(B) followed by X.
 Note that computing the inverse depends on the revision.
@@ -87,16 +87,17 @@ Then B is applied, constructing inverse(B) in the process to use as part of the 
 This amounts to moving B past C (allowed because they commute), then adding inverse(B), followed by X.
 Placing X at the end is the same as placing it between A and C since it commutes with C (at revision output by A).
 
-:::mermaid
+```mermaid
 graph LR
 A(A) --> C(C) --> B(B) --> B2("B⁻¹") --> X(X)
-:::
+```
 
 This can then be transformed into its final form, which meets the requirement of only adding to the original:
-:::mermaid
+
+```mermaid
 graph LR
 A(A) --> B(B) --> C(C) --> B2("Merge: B⁻¹ + X")
-:::
+```
 
 Note that if B deletes any nodes, B⁻¹ must restore them with the same identity.
 
@@ -112,22 +113,25 @@ This can continue until there no longer is a conflict due to lack of commuting.
 This is guaranteed to eventually fix the conflict since it can continue until C is empty, and thus commutes with anything.
 
 For initial state:
-:::mermaid
+
+```mermaid
 graph LR
 A(A) --> B(B) --> C("C1 + C2")
-:::
+```
 
 it can be regrouped like:
-:::mermaid
+
+```mermaid
 graph LR
 A(A) --> B("B + C1") --> C(C2)
-:::
+```
 
 Making the desired final state:
-:::mermaid
+
+```mermaid
 graph LR
 A(A) --> X("X + C1") --> C(C2)
-:::
+```
 
 This process can be though of as expanding the portion of the history being replaced to include a segment long enough to contain all the conflicts.
 This modified replacement can then be applied using the Low Level Commuting Merge.

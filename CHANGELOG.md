@@ -1,5 +1,74 @@
 # Change Log
 
+## 0.35.0
+
+* feat: Add telemetry properties for all SharedTree events
+  * Associated pull request: !27538
+* merge: releases/2021.01.4 into master
+  * Associated pull request: !27448
+* feat: Add TreeNodeHandles
+  * Associated pull request: !27070
+* merge: Integrate changes from fluidframework
+  * Associated pull request: !27398
+* merge: releases/2021.01.4 into master
+  * Associated pull request: !27409
+* fix: Export summarizers
+  * Associated pull request: !27410
+* Merge commit '93a143f412116b05963422aa3a04a42e62469602' from fluid into integrations/shared-tree
+* Merge branch 'master' into integrations/shared-tree
+* Split 'packages/shared-tree/' into commit '6227d08860d73c64c8b82fa34a3fca58565298c7'
+
+## 0.22.2
+
+* build: revert update to react 17, and include non-breaking updates since branch
+
+## 0.22.1
+
+* build: update and audit deps
+  * Associated pull request: !27395
+* feat: Add telemetry for invalid/malformed edits to SharedTree
+  * Associated pull request: !27318
+* build: Fixed cross-package incremental build for `fluid-document-store`
+  * Associated pull request: !27285
+* feat: "replace" affordance on FluidDocumentStore
+  * Associated pull request: !27213
+
+## 0.19.2
+
+* chore: Add dispose functionality to FluidDocumentStore, Checkout and SharedTree
+  * Associated pull request: !26952
+* build: update fluid to 0.32.1
+  * Associated pull request: !27217
+* run api extractor
+* fix lint errors
+* move handler to contstructor
+* chore: Cleanup of shared-tree resulting from development tooling
+  * Associated pull request: !27186
+* improvement: ensure payloads do not appear as a property when empty
+  * Associated pull request: !27166
+* chore: Added API documentation generation to the build + misc. tooling cleanup
+  * Associated pull request: !27148
+* code review updates
+* remove dispose from basiccheckout as it has been added to parent abstract class
+* Squashed 'packages/shared-tree/' changes from 13a0d61e6..fa5bc426b
+* test: Add unit tests for LogViewer
+  * Associated pull request: !26985
+* improvment: minor forest related code cleanup and normalize package-lock
+  * Associated pull request: !27083
+* build: Add missing dev dependencies in `fluid-document-store` and `shared-tree`
+  * Associated pull request: !27097
+* docs: Merged changes from wikiMaster
+  * Associated pull request: !27077
+* docs: Fixed mermaid syntax
+* merge: merge releases/2021.01.2 into master
+  * Associated pull request: !27067
+* improvement: invalidate the dependents of all nodes within deleted document subtrees
+  * Associated pull request: !26984
+
+## 0.17.1
+
+_Version update only._
+
 ## 0.16.0
 
 * Merged PR 26944: Factor out NodeData

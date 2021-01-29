@@ -1,6 +1,6 @@
 {
 	"name": "@intentional/shared-tree",
-	"version": "0.16.0",
+	"version": "0.35.0",
 	"description": "Microsoft Whiteboard collaboration libraries",
 	"bugs": {
 		"url": "https://dev.azure.com/intentional/intent/_workitems"
@@ -16,7 +16,7 @@
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile && npm run build:docs",
+		"build": "npm run build:compile && npm run build:docs",
 		"build:compile": "concurrently npm:tsc npm:build:esnext",
 		"build:docs": "api-extractor run --local && copyfiles -u 2 ./_api-extractor-temp/doc-models/* ../../api-metadata/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
@@ -28,30 +28,35 @@
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha \"dist/**/*.tests.js\" --config ../../.mocharc.js",
+		"test:mocha": "nyc --report-dir='./coverage' mocha \"dist/**/*.tests.js\" --config ../../.mocharc.js",
 		"tsc": "tsc --pretty"
 	},
 	"dependencies": {
+		"@fluidframework/common-definitions": "^0.19.1",
 		"@fluidframework/common-utils": "^0.26.0",
-		"@fluidframework/container-definitions": "^0.31.1",
-		"@fluidframework/datastore-definitions": "^0.31.1",
-		"@fluidframework/protocol-definitions": "^0.1016.0",
-		"@fluidframework/shared-object-base": "^0.31.1",
-		"@fluidframework/telemetry-utils": "^0.31.1",
-		"buffer": "^6.0.2",
+		"@fluidframework/container-definitions": "^0.32.3",
+		"@fluidframework/datastore-definitions": "^0.32.3",
+		"@fluidframework/protocol-definitions": "^0.1017.1",
+		"@fluidframework/shared-object-base": "^0.32.3",
+		"@fluidframework/telemetry-utils": "^0.32.3",
+		"buffer": "^6.0.3",
 		"sorted-btree": "^1.4.0",
-		"uuid": "^8.3.1"
+		"uuid": "^8.3.2"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^0.19.2",
 		"@fluidframework/eslint-config-fluid": "^0.21.0",
-		"@fluidframework/test-runtime-utils": "^0.31.1",
-		"@typescript-eslint/parser": "^4.7.0",
+		"@fluidframework/test-runtime-utils": "^0.32.3",
+		"@microsoft/api-extractor": "^7.13.0",
+		"@typescript-eslint/parser": "^4.14.0",
 		"chai": "^4.2.0",
-		"concurrently": "^5.2.0",
+		"concurrently": "^5.3.0",
 		"easy-table": "^1.1.1",
 		"env-cmd": "^10.1.0",
-		"rimraf": "^2.6.2"
+		"mocha": "^8.2.1",
+		"nyc": "^15.1.0",
+		"prettier": "^2.2.1",
+		"rimraf": "^2.7.1"
 	},
 	"publishConfig": {
 		"registry": "https://pkgs.dev.azure.com/intentional/_packaging/intentional-npm/npm/registry/"

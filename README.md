@@ -15,8 +15,8 @@ The initial tree, modified by all edits in order.
 
 The order of the edits is:
 
-1. All acknowledged edits, in the order agreed upon by fluid's consensus.
-2. All local edits (not acknowledged by fluid yet), in the order they were created.
+1. All acknowledged edits, in the order agreed upon by Fluid's consensus.
+2. All local edits (not acknowledged by Fluid yet), in the order they were created.
 
 # Getting Started
 
@@ -68,11 +68,11 @@ const pointDocument: Node = {
 };
 ```
 
-Note that this example isn't meant to be taken verbatim as valid code--it cheats a bit with payload representation for the sake of simplicity. It is, however, truthful to tree structure.
+Note that this example isn't meant to be taken verbatim as valid code -- it cheats a bit with payload representation for the sake of simplicity. It is, however, truthful to tree structure.
 
 ## Creating a SharedTree
 
-SharedTree follows typical [Fluid DDS conventions](https://fluidframework.com/docs/) and can be constructed with a fluid runtime instance:
+SharedTree follows typical [Fluid DDS conventions](https://fluidframework.com/docs/) and can be constructed with a Fluid runtime instance:
 
 ```typescript
 const tree = SharedTree.create(runtime);
@@ -105,7 +105,7 @@ checkout.closeEdit();
 "Move" and "delete" operations have the added complexity of needing to specify locations (`StableRange`s) within the `SharedTree` which should be moved (or deleted, respectively). A `StableRange` consists of a start `StablePlace` and an end `StablePlace`.
 `StablePlace`s are not nodes, but instead places where nodes could be inserted. Each place consists of an "anchor," which is either a trait or another node.
 
-Say we wanted to delete the `fooNode` we inserted above. There are 4 ways we could specify the `StableRange` to delete which are all equivalent in the absence of collaboration:
+Say we wanted to delete the `fooNode` we inserted above. There are 4 ways we could specify the `StableRange` to delete which are all equivalent in the absence of concurrent editing:
 
 ```typescript
 const trait = { parent: initialTree, label: 'foo' };
@@ -115,7 +115,7 @@ const stableRange3 = StableRange.from(StablePlace.before(fooNode)).to(StablePlac
 const stableRange4 = StableRange.from(StablePlace.before(fooNode)).to(StablePlace.after(fooNode));
 ```
 
-Once collaboration is considered, the different ways to anchor this `StableRange` may impact whether or not this edit conflicts with others.
+Once concurrent edits are considered, the different ways to anchor this `StableRange` may impact whether or not this edit conflicts with others.
 
 Also note that there are some more convenient shorthands for several of these specifications. See `StableRange` documentation for more information.
 
@@ -131,30 +131,30 @@ Implementation-wise:
 
 Design wise:
 
--   SharedTree is always created with an uninitialized state. It is up to the application to use the shared tree to initialize the tree to something else if needed.
--   There are still open questions regarding how SharedTree will relate to the rest of the fluid ecosystem.
-    For example, we do not have suggested design patterns for when users of SharedTree should used references to other fluid components versus including the data for children as subtrees.
+-   SharedTree is always created with an uninitialized state. It is up to the application to initialize the tree to something else if needed.
+-   There are still open questions regarding how SharedTree will relate to the rest of the Fluid ecosystem.
+    For example, we do not have suggested design patterns for when users of SharedTree should store references to other Fluid DataObjects versus storing the data for children as subtrees.
 
 # Edits
 
-An `Edit` is the basic unit of transactionality in `SharedTree`. It specifies how to modify a document via a sequence of changes (see [PersistedTypes.ts](.\src\PersistedTypes.ts)). Each edit applied to a version of the document (a Snapshot) produces a new version of the document.
+An `Edit` is the basic unit of transactionality in `SharedTree`. It specifies how to modify a document via a sequence of changes (see [PersistedTypes.ts](.\src\PersistedTypes.ts)). Each edit, when applied to a version of the document (a Snapshot), produces a new version of the document.
 
-Once an edit is acknowledged by fluid (and thus it has a sequence number, and will be included in summaries), the version of the document it applies to is fixed: it will not be applied to any revision other than the one produced by its preceding edit, transitively ack to the initial tree.
+Once an edit is acknowledged by the Fluid service (and thus it has a sequence number, and will be included in summaries), the version of the document it applies to is fixed: it will not be applied to any revision other than the one produced by its preceding edit.
 There may be operations that will create new edits based on existing ones and apply them in a different context, but these are logically considered new edits.
 
 ## Conflicts
 
 Due to the collaborative and distributed nature of SharedTree,
-Changes may be constructed based on a version of the tree that differs from the one they end up getting applied to.
+Edits may be constructed based on a version of the tree that differs from the one they end up getting applied to.
 The Change API is designed to allow capturing a lot of the actual intention of edits in the Change.
 For example, an Insert between A and B can be anchored after A or before B.
 If it is really intended to be between A and B, a Constraint can be included that requires A and B are still next to each-other or the edit will conflict.
 It is also possible to replace the contents between A and B with the inserted content.
 This flexibility allows the majority of edits to be encoded in a way where their intention will be applied correctly when reordered,
 and in the rare cases where this can not be done, they will conflict instead of being applied in a non-intention preserving way:
-SharedTree generally follows this policy that it is better to fail to apply a change than to do a change in a way that violates user expectation or intention.
+SharedTree generally follows this policy that it is better to fail to apply a change than to apply it in a way that violates user expectation or intention.
 
-When a change fails to apply (or a constraint indicates that it applied, but may not have been ideal), it is called conflicted. Currently, if a change fails to apply due to a conflict, it is dropped. Improving this policy is in our [future plans](./docs/Future.md).
+When a change fails to apply, or a constraint indicates that it applied, but may not have been ideal, it is called conflicted. Currently, if a change fails to apply due to a conflict, it is dropped. Improving this policy is in our [future plans](./docs/Future.md).
 
 ### Constraints
 

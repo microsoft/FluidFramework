@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseEvent, ITelemetryProperties } from '@fluidframework/common-definitions';
+
 const defaultFailMessage = 'Assertion failed';
 
 /**
- * Assertion failures in SharedTree will throw an exception containing this value as an `errorType`. The fluid runtime propagates this field
+ * Assertion failures in SharedTree will throw an exception containing this value as an `errorType`. The Fluid runtime propagates this field
  * in its handlings of errors thrown by containers. See
  * https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-utils/src/error.ts
  *
@@ -15,6 +17,20 @@ const defaultFailMessage = 'Assertion failed';
  * @public
  */
 export const sharedTreeAssertionErrorType = 'SharedTreeAssertion';
+
+/**
+ * Telemetry properties decorated on all SharedTree events.
+ */
+export interface SharedTreeTelemetryProperties extends ITelemetryProperties {
+	isSharedTreeEvent: true;
+}
+
+/**
+ * Returns if the supplied event is a SharedTree telemetry event.
+ */
+export function isSharedTreeEvent(event: ITelemetryBaseEvent): boolean {
+	return ((event as unknown) as SharedTreeTelemetryProperties).isSharedTreeEvent === true;
+}
 
 /**
  * Error object thrown by assertion failures in `SharedTree`.
@@ -76,6 +92,32 @@ export function assertNotUndefined<T>(value: T | undefined, message = 'value mus
 export function assertArrayOfOne<T>(array: readonly T[], message = 'array value must contain exactly one item'): T {
 	assert(array.length === 1, message);
 	return array[0];
+}
+
+/**
+ * Redefine a property to have the given value. This is simply a type-safe wrapper around
+ * `Object.defineProperty`, but it is useful for caching getters on first read.
+ * @example
+ * ```
+ * // `randomOnce()` will return a random number, but always the same random number.
+ * {
+ *   get randomOnce(): number {
+ *     return memoizeGetter(this, 'randomOnce', random(100))
+ *   }
+ * }
+ * ```
+ * @param object - the object containing the property
+ * @param propName - the name of the property on the object
+ * @param value - the value of the property
+ */
+export function memoizeGetter<T, K extends keyof T>(object: T, propName: K, value: T[K]): T[K] {
+	Object.defineProperty(object, propName, {
+		value,
+		enumerable: true,
+		configurable: true,
+	});
+
+	return value;
 }
 
 /**
