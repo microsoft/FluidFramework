@@ -133,7 +133,9 @@ describe("context reload (hot-swap)", function() {
             const test = ["fluid", "is great!"];
             dataStoreV1._root.set(test[0], test[1]);
 
-            await opProcessingController.process();
+            while(!dataStoreV1._runtime.deltaManager.active) {
+                await opProcessingController.process();
+            }
 
             await container.getQuorum().propose("code", codeDetails(V2));
 
@@ -154,7 +156,9 @@ describe("context reload (hot-swap)", function() {
             const test = ["fluid", "is great!"];
             dataStoreV1._root.set(test[0], test[1]);
 
-            await opProcessingController.process();
+            while(!dataStoreV1._runtime.deltaManager.active) {
+                await opProcessingController.process();
+            }
 
             await proposeAndWaitForReload(V2, container);
 
@@ -172,7 +176,9 @@ describe("context reload (hot-swap)", function() {
             const test = ["fluid", "is great!"];
             dataStoreV1._root.set(test[0], test[1]);
 
-            await opProcessingController.process();
+            while(!dataStoreV1._runtime.deltaManager.active) {
+                await opProcessingController.process();
+            }
 
             await proposeAndWaitForReload(V2, container);
 
@@ -235,7 +241,9 @@ describe("context reload (hot-swap)", function() {
             const test = ["fluid", "is great!"];
             dataStores[0]._root.set(test[0], test[1]);
 
-            await opProcessingController.process();
+            while(!dataStores[0]._runtime.deltaManager.active) {
+                await opProcessingController.process();
+            }
 
             await proposeAndWaitForReload(V2, ...containers);
 

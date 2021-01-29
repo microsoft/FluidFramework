@@ -200,6 +200,6 @@ export const generateTest = (
 ) => {
     describe("test", () => {
         generateNonCompatTest(tests);
-        generateCompatTest(tests, options);
+        // generateCompatTest(tests, options);
     });
 };

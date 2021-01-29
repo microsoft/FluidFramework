@@ -68,10 +68,6 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     let request: IRequest;
     let loader: Loader;
     let driver: ITestDriver;
-    before(()=>{
-        args = argsFactory();
-        driver = args.driver ?? getFluidTestDriver();
-    });
 
     const createFluidObject = (async (
         dataStoreContext: IFluidDataStoreContext,
@@ -82,8 +78,9 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             "");
     });
 
-
     beforeEach(async () => {
+        args = argsFactory();
+        driver = args.driver ?? getFluidTestDriver();
         request  = driver.createCreateNewRequest(args.documentId);
         loader = args.makeTestLoader(testContainerConfig) as Loader;
     });
