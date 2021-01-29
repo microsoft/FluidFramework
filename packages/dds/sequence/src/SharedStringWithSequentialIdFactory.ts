@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import * as MergeTree from "@fluidframework/merge-tree";
 import { IChannelAttributes, IChannelServices,
     IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
