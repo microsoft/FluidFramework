@@ -530,13 +530,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.removeAllListeners();
     }
 
-    public getPendingLocalState(): string {
+    public closeAndGetPendingLocalState(): string {
+        // runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
+        // container at the same time we get pending state, otherwise this container could reconnect and resubmit with
+        // a new clientId and a future container using stale pending state without the new clientId would resubmit them
+        this._deltaManager.close();
+
         assert(this.attachState === AttachState.Attached);
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid");
         const pendingState: IPendingLocalState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
         };
+
+        this.close();
 
         return JSON.stringify(pendingState);
     }
