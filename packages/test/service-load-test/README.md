@@ -56,7 +56,7 @@ If present, launch in Test Runner mode with the given runId (to distinguish from
 
 #### --driveId, -di
 
-If present, the test will use this driveId instead of the one specified in the test config file. This is used internally when in orchestrator mode.
+If present, the test will use this driveId instead automatically determining it. This is used internally when in orchestrator mode.
 
 #### --debug, -d
 
