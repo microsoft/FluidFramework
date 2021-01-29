@@ -5,8 +5,9 @@
 
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { PromiseCache } from "@fluidframework/common-utils";
+import { fetchFailureStatusCode, offlineFetchFailureStatusCode } from "@fluidframework/odsp-doclib-utils";
 import { authorizedFetchWithRetry } from "./authorizedFetchWithRetry";
-import { RetryPolicy } from "./fetchWithRetry";
+import { allowlist, constantBackoff, RetryFilter, RetryPolicy } from "./fetchWithRetry";
 import { IdentityType, SharingLinkScopeFor, TokenFetchOptions } from "./tokenFetch";
 
 /**
@@ -109,12 +110,19 @@ export async function graphFetch(
             siteUrl,
         );
     const url = graphUrl.startsWith("http") ? graphUrl : `https://graph.microsoft.com/v1.0/${graphUrl}`;
+    const retryFilter: RetryFilter<Response> = allowlist([offlineFetchFailureStatusCode, fetchFailureStatusCode]);
+    const finalRetryPolicy: RetryPolicy<Response> = {
+        backoffFn: constantBackoff(1),
+        ...retryPolicy,
+        maxRetries: retryPolicy !== undefined ? Math.max(3, retryPolicy?.maxRetries) : 3,
+        filter: (response) => retryFilter(response) || !!retryPolicy?.filter(response),
+    };
     return (
         await authorizedFetchWithRetry({
             getToken,
             url,
             requestInit,
-            retryPolicy,
+            retryPolicy: finalRetryPolicy,
             timeoutMs,
             logger,
             nameForLogging,
