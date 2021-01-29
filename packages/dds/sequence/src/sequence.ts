@@ -700,4 +700,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             intervalCollection.attachGraph(this.client, key);
         }
     }
+
+    protected rebaseOpCore() {
+        throw new Error("not implemented");
+    }
 }

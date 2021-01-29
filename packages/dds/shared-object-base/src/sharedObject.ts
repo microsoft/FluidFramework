@@ -501,7 +501,5 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         this.rebaseOpCore(content, localOpMetadata);
     }
 
-    protected rebaseOpCore(content: any, localOpMetadata: unknown) {
-        // do nothing
-    }
+    protected abstract rebaseOpCore(content: any, localOpMetadata: unknown);
 }

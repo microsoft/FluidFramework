@@ -408,6 +408,10 @@ export class SharedTree extends SharedObject {
 		this.editLog.addLocalEdit(edit);
 		this.emit(SharedTreeEvent.EditCommitted, edit.id);
 	}
+
+    protected rebaseOpCore() {
+        throw new Error("not implemented");
+    }
 }
 
 function loadSummary(

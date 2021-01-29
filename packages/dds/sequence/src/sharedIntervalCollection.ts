@@ -205,4 +205,8 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     protected getIntervalCollectionPath(label: string): string {
         return label;
     }
+
+    protected rebaseOpCore() {
+        throw new Error("not implemented");
+    }
 }

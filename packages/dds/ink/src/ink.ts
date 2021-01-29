@@ -290,4 +290,8 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
         }
         return stroke;
     }
+
+    protected rebaseOpCore() {
+        throw new Error("not implemented");
+    }
 }

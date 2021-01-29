@@ -678,4 +678,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
 
         return `${s}\n`;
     }
+
+    protected rebaseOpCore() {
+        throw new Error("not implemented");
+    }
 }

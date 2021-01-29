@@ -347,4 +347,8 @@ export class ConsensusRegisterCollection<T>
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return serializer.parse(content);
     }
+
+    protected rebaseOpCore() {
+        throw new Error("not implemented");
+    }
 }
