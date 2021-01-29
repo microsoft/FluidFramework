@@ -10,6 +10,7 @@ import {
     IPartitionLambda,
     IPartitionLambdaFactory,
     ILogger,
+    LambdaCloseType,
 } from "@fluidframework/server-services-core";
 import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";
@@ -81,7 +82,7 @@ export class Partition extends EventEmitter {
         this.q.push(rawMessage);
     }
 
-    public close(): void {
+    public close(closeType: LambdaCloseType): void {
         // Stop any pending message processing
         this.q.kill();
 
@@ -92,7 +93,7 @@ export class Partition extends EventEmitter {
         // Notify the lambda (should it be resolved) of the close
         this.lambdaP.then(
             (lambda) => {
-                lambda.close();
+                lambda.close(closeType);
             },
             (error) => {
                 // Lambda never existed - no need to close

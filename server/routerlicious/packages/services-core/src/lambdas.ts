@@ -9,6 +9,16 @@ import nconf from "nconf";
 import { BoxcarType, IBoxcarMessage, IMessage } from "./messages";
 import { IQueuedMessage } from "./queue";
 
+/**
+ * Reasons why a lambda is closing
+ */
+export enum LambdaCloseType {
+    Stop,
+    ActivityTimeout,
+    Rebalance,
+    Error,
+}
+
 export interface ILogger {
     info(message: string, metaData?: any): void;
     warn(message: string, metaData?: any): void;
@@ -43,7 +53,7 @@ export interface IPartitionLambda {
      * Closes the lambda. After being called handler will no longer be invoked and the lambda is expected to cancel
      * any deferred work.
      */
-    close(): void;
+    close(closeType: LambdaCloseType): void;
 }
 
 /**

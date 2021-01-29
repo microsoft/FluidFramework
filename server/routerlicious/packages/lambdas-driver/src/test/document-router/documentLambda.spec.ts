@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambda, IPartitionLambdaFactory } from "@fluidframework/server-services-core";
+import { IPartitionLambda, IPartitionLambdaFactory, LambdaCloseType } from "@fluidframework/server-services-core";
 import {
     KafkaMessageFactory,
     MessageFactory,
@@ -39,7 +39,7 @@ describe("document-router", () => {
         });
 
         afterEach(async () => {
-            await lambda.close();
+            await lambda.close(LambdaCloseType.Stop);
             await factory.dispose();
         });
 
