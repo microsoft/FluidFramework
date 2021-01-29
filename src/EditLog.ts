@@ -337,6 +337,10 @@ export class EditLog implements OrderedEditSet {
 			this.editChunks.get(chunkKey),
 			'A chunk handle op should not be received before the edit ops it corresponds to.'
 		);
+		assertNotUndefined(
+			chunk.edits,
+			'A chunk handle op should not be received before the edit ops it corresponds to.'
+		);
 		chunk.handle = chunkHandle;
 		this.addKeyToCache(chunkKey);
 	}
