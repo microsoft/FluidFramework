@@ -20,7 +20,7 @@ import {
     LocalCodeLoader,
     OpProcessingController,
 } from "@fluidframework/test-utils";
-import { TestDriver } from "@fluidframework/test-driver-definitions";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 class TestDataObject extends DataObject {
     public static readonly type = "@fluid-example/test-dataObject";
@@ -42,7 +42,7 @@ describe("UpgradeManager (hot-swap)", () => {
         package: "localLoaderTestPackage",
         config: {},
     };
-    let driver: TestDriver;
+    let driver: ITestDriver;
     let opProcessingController: OpProcessingController;
 
     async function createContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
@@ -67,7 +67,7 @@ describe("UpgradeManager (hot-swap)", () => {
             options: { hotSwapContext: true },
         });
 
-        return loader.resolve({ url: getFluidTestDriver().createContainerUrl(documentId) });
+        return loader.resolve({ url: driver.createContainerUrl(documentId) });
     }
 
     beforeEach(async () => {

@@ -26,6 +26,7 @@ import { V1, V2 } from "./compatUtils";
 import * as oldTypes from "./oldVersionTypes";
 import * as old from "./oldVersion";
 import * as old2 from "./oldVersion2";
+import { ITestDriver } from "./newVersion";
 
 // A simple dataStore with runtime/root exposed for testing purposes. Two
 // different versions (defined below) are used to test context reload.
@@ -80,23 +81,23 @@ describe("context reload (hot-swap)", function() {
         const loader: ILoader = new Loader({
             codeLoader: new LocalCodeLoader(packageEntries),
             options:{ hotSwapContext: true },
-            urlResolver: getFluidTestDriver().createUrlResolver(),
-            documentServiceFactory: getFluidTestDriver().createDocumentServiceFactory(),
+            urlResolver: driver.createUrlResolver(),
+            documentServiceFactory: driver.createDocumentServiceFactory(),
         });
         return createAndAttachContainer(
             defaultCodeDetails,
             loader,
-            getFluidTestDriver().createCreateNewRequest(documentId));
+            driver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(packageEntries, documentId): Promise<IContainer> {
         const loader: ILoader = new Loader({
             codeLoader: new LocalCodeLoader(packageEntries),
             options:{ hotSwapContext: true },
-            urlResolver: getFluidTestDriver().createUrlResolver(),
-            documentServiceFactory: getFluidTestDriver().createDocumentServiceFactory(),
+            urlResolver: driver.createUrlResolver(),
+            documentServiceFactory: driver.createDocumentServiceFactory(),
         });
-        return loader.resolve({ url: getFluidTestDriver().createContainerUrl(documentId) });
+        return loader.resolve({ url: driver.createContainerUrl(documentId) });
     }
 
     const createRuntimeFactory = (dataStore): IRuntimeFactory => {
@@ -107,6 +108,10 @@ describe("context reload (hot-swap)", function() {
             [[type, Promise.resolve(factory)]],
         );
     };
+    let driver: ITestDriver;
+    before(()=>{
+        driver = getFluidTestDriver();
+    });
 
     const tests = function() {
         beforeEach(async function() {

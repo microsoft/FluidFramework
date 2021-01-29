@@ -26,6 +26,7 @@ import {
 import * as oldTypes from "./oldVersionTypes";
 import * as old from "./oldVersion";
 import * as old2 from "./oldVersion2";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 /* eslint-enable import/no-extraneous-dependencies */
 
@@ -43,6 +44,7 @@ export interface ITestObjectProvider {
     opProcessingController: OpProcessingController | oldTypes.OpProcessingController,
     reset(): void | Promise<void>,
     documentId: string,
+    driver?: ITestDriver;
 }
 
 export interface ITestOptions {

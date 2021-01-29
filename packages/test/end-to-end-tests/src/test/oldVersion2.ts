@@ -53,10 +53,9 @@ import {
     V2,
 } from "./compatUtils";
 import * as newVer from "./newVersion";
-/* eslint-enable import/no-extraneous-dependencies */
+import {v4 as uuid} from "uuid";
 
-const defaultDocumentId = "defaultDocumentId";
-const defaultDocumentLoadUrl = `fluid-test://localhost/${defaultDocumentId}`;
+/* eslint-enable import/no-extraneous-dependencies */
 const defaultCodeDetails: IFluidCodeDetails = {
     package: "defaultTestPackage",
     config: {},
@@ -83,6 +82,7 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _defaultUrlResolver: LocalResolver | undefined;
     private _opProcessingController: OpProcessingController | undefined;
+    private _documentId?: string;
 
     /**
      * Create a set of object to
@@ -134,8 +134,11 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
         return this._opProcessingController;
     }
 
-    get documentId() {
-        return defaultDocumentId;
+    get documentId(): string {
+        if(this._documentId == undefined){
+            this._documentId = uuid();
+        }
+        return this._documentId;
     }
 
     private createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>) {
@@ -162,7 +165,7 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
     public async makeTestContainer(testContainerConfig?: TestContainerConfigType) {
         const loader = this.makeTestLoader(testContainerConfig);
         const container =
-            await createAndAttachContainer(defaultDocumentId, defaultCodeDetails, loader, this.urlResolver);
+            await createAndAttachContainer(this.documentId, defaultCodeDetails, loader, this.urlResolver);
 
         // TODO: the old version delta manager on the container doesn't do pause/resume count
         // We can't use it to do pause/resume, or it will conflict with the call from the runtime's
@@ -178,7 +181,7 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
      */
     public async loadTestContainer(testContainerConfig?: TestContainerConfigType) {
         const loader = this.makeTestLoader(testContainerConfig);
-        const container = await loader.resolve({ url: defaultDocumentLoadUrl });
+        const container = await loader.resolve({ url: `http://localhost/${this.documentId}` });
 
         // TODO: the old version delta manager on the container doesn't do pause/resume count
         // We can't use it to do pause/resume, or it will conflict with the call from the runtime's
@@ -313,7 +316,7 @@ export function createTestObjectProvider(
     oldDataStoreRuntime: boolean,
     type: string,
     serviceConfiguration?: Partial<newVer.IClientConfiguration>,
-    driver?: newVer.TestDriver,
+    driver?: newVer.ITestDriver,
 ): ITestObjectProvider {
     const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
         const dataStoreFactory = oldDataStoreRuntime

@@ -25,6 +25,7 @@ import {
 } from "@fluidframework/odsp-doclib-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 describe("Errors Types", () => {
     let urlResolver: IUrlResolver;
@@ -33,15 +34,19 @@ describe("Errors Types", () => {
     let documentServiceFactory: IDocumentServiceFactory;
     let codeLoader: LocalCodeLoader;
     let loader: Loader;
+    let driver: ITestDriver;
+    before(()=>{
+        driver = getFluidTestDriver();
+    });
 
     it("GeneralError Test", async () => {
         const id = Date.now().toString();
         // Setup
-        urlResolver = getFluidTestDriver().createUrlResolver();
-        testRequest = { url:getFluidTestDriver().createContainerUrl(id) };
+        urlResolver = driver.createUrlResolver();
+        testRequest = { url:driver.createContainerUrl(id) };
         testResolved =
             await urlResolver.resolve(testRequest) as IFluidResolvedUrl;
-        documentServiceFactory = getFluidTestDriver().createDocumentServiceFactory();
+        documentServiceFactory = driver.createDocumentServiceFactory();
 
         const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
         mockFactory.createDocumentService = async (resolvedUrl) => {

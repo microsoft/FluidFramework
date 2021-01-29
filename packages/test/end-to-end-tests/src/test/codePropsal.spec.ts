@@ -21,6 +21,7 @@ import {
 } from "@fluidframework/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 interface ICodeProposalTestPackage extends IFluidPackage{
     version: number,
@@ -35,6 +36,11 @@ function isCodeProposalTestPackage(pkg: unknown): pkg is ICodeProposalTestPackag
 }
 
 describe("CodeProposal.EndToEnd", () => {
+    let driver: ITestDriver;
+    before(()=>{
+        driver = getFluidTestDriver();
+    });
+
     const packageV1: ICodeProposalTestPackage = {
         name: "test",
         version: 1,
@@ -80,19 +86,19 @@ describe("CodeProposal.EndToEnd", () => {
                 [{ package: packageV2 },fluidExport],
                 [{ package: packageV1dot5 }, fluidExport],
             ],
-            getFluidTestDriver().createDocumentServiceFactory(),
-            getFluidTestDriver().createUrlResolver(),
+            driver.createDocumentServiceFactory(),
+            driver.createUrlResolver(),
             { hotSwapContext });
     }
 
     async function createContainer(code: IFluidCodeDetails, documentId: string): Promise<IContainer> {
         const loader = createLoader();
-        return createAndAttachContainer(code, loader, getFluidTestDriver().createCreateNewRequest(documentId));
+        return createAndAttachContainer(code, loader, driver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(documentId: string): Promise<IContainer> {
         const loader = createLoader();
-        return loader.resolve({ url: getFluidTestDriver().createContainerUrl(documentId) });
+        return loader.resolve({ url: driver.createContainerUrl(documentId) });
     }
 
     let containers: IContainer[];

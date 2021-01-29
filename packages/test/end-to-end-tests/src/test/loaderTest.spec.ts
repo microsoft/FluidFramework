@@ -14,6 +14,7 @@ import { Container } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { createAndAttachContainer, createLoader, OpProcessingController } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 class TestSharedDataObject1 extends DataObject {
     public get _root() {
@@ -60,6 +61,11 @@ const testSharedDataObjectFactory2 = new DataObjectFactory(
     []);
 
 describe("Loader.request", () => {
+    let driver: ITestDriver;
+    before(()=>{
+        driver = getFluidTestDriver();
+    });
+
     const codeDetails: IFluidCodeDetails = {
         package: "loaderRequestTestPackage",
         config: {},
@@ -81,11 +87,11 @@ describe("Loader.request", () => {
             );
         loader = createLoader(
             [[codeDetails, runtimeFactory]],
-            getFluidTestDriver().createDocumentServiceFactory(),
-            getFluidTestDriver().createUrlResolver(),
+            driver.createDocumentServiceFactory(),
+            driver.createUrlResolver(),
         );
         return createAndAttachContainer(
-            codeDetails, loader, getFluidTestDriver().createCreateNewRequest(documentId));
+            codeDetails, loader, driver.createCreateNewRequest(documentId));
     }
     let container: IContainer;
     beforeEach(async () => {
@@ -142,7 +148,7 @@ describe("Loader.request", () => {
             [LoaderHeader.cache]: false,
             [LoaderHeader.pause]: true,
         };
-        const container2 = await loader.resolve({ url: documentLoadUrl, headers });
+        const container2 = await loader.resolve({ url: (await container.getAbsoluteUrl(""))!, headers });
         opProcessingController.addDeltaManagers(container2.deltaManager);
 
         // create a new data store using the original container
@@ -176,9 +182,9 @@ describe("Loader.request", () => {
 
     it("caches the loaded container across multiple requests as expected", async () => {
         // load the containers paused
-        const container1 = await loader.resolve({ url: documentLoadUrl, headers: { [LoaderHeader.pause]: true } });
+        const container1 = await loader.resolve({ url: (await container.getAbsoluteUrl(""))!, headers: { [LoaderHeader.pause]: true } });
         opProcessingController.addDeltaManagers(container1.deltaManager);
-        const container2 = await loader.resolve({ url: documentLoadUrl, headers: { [LoaderHeader.pause]: true } });
+        const container2 = await loader.resolve({ url: (await container.getAbsoluteUrl(""))!, headers: { [LoaderHeader.pause]: true } });
 
         assert.strictEqual(container1, container2, "container not cached across multiple loader requests");
 

@@ -31,7 +31,7 @@
     "test:mocha:local": "mocha dist/test",
     "test:mocha:tinylicious": "cross-env FLUID_TEST_DRIVER=tinylicious start-server-and-test start:tinylicious:test 3000 test:mocha:local",
     "tsc": "tsc",
-    "test:realsvc:mocha": "cross-env FLUID_TEST_DRIVER=odsp npm run test:mocha:local -- --timeout 4s",
+    "test:realsvc:mocha": "cross-env FLUID_TEST_DRIVER=routerlicious npm run test:mocha:local",
     "test:realsvc:mocha:report": "cross-env FLUID_TEST_COVERAGE=1 npm run test:realsvc:mocha",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"

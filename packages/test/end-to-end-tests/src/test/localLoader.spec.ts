@@ -19,6 +19,7 @@ import {
     TestFluidObjectFactory,
     createLoader,
 } from "@fluidframework/test-utils";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 const counterKey = "count";
 
@@ -85,6 +86,11 @@ const testDataObjectFactory = new DataObjectFactory(
 );
 
 describe("LocalLoader", () => {
+    let driver: ITestDriver;
+    before(()=>{
+        driver = getFluidTestDriver();
+    })
+
     const codeDetails: IFluidCodeDetails = {
         package: "localLoaderTestPackage",
         config: {},
@@ -95,18 +101,18 @@ describe("LocalLoader", () => {
     async function createContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
         const loader: ILoader = createLoader(
             [[codeDetails, factory]],
-            getFluidTestDriver().createDocumentServiceFactory(),
-            getFluidTestDriver().createUrlResolver());
+            driver.createDocumentServiceFactory(),
+            driver.createUrlResolver());
         return createAndAttachContainer(
-            codeDetails, loader, getFluidTestDriver().createCreateNewRequest(documentId));
+            codeDetails, loader, driver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
         const loader: ILoader = createLoader(
             [[codeDetails, factory]],
-            getFluidTestDriver().createDocumentServiceFactory(),
-            getFluidTestDriver().createUrlResolver());
-        return loader.resolve({ url: getFluidTestDriver().createContainerUrl(documentId) });
+            driver.createDocumentServiceFactory(),
+            driver.createUrlResolver());
+        return loader.resolve({ url: driver.createContainerUrl(documentId) });
     }
 
     describe("1 dataObject", () => {

@@ -18,8 +18,15 @@ import { SharedObject } from "@fluidframework/shared-object-base";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 describe(`Attach/Bind Api Tests For Attached Container`, () => {
+
+    let driver: ITestDriver;
+    before(()=>{
+        driver = getFluidTestDriver();
+    });
+
     const codeDetails: IFluidCodeDetails = {
         package: "detachedContainerTestPackage1",
         config: {},
@@ -61,7 +68,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             [mapId2, SharedMap.getFactory()],
         ]);
         const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-        const documentServiceFactory = getFluidTestDriver().createDocumentServiceFactory();
+        const documentServiceFactory = driver.createDocumentServiceFactory();
         return new Loader({
             urlResolver,
             documentServiceFactory,
@@ -71,8 +78,8 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
 
     beforeEach(async () => {
         const documentId = Date.now().toString();
-        const urlResolver = getFluidTestDriver().createUrlResolver();
-        request = getFluidTestDriver().createCreateNewRequest(documentId);
+        const urlResolver = driver.createUrlResolver();
+        request = driver.createCreateNewRequest(documentId);
         loader = createTestLoader(urlResolver);
     });
 

@@ -25,10 +25,16 @@ import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/orde
 import { SharedCounter } from "@fluidframework/counter";
 import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 const detachedContainerRefSeqNumber = 0;
 
 describe(`Dehydrate Rehydrate Container Test`, () => {
+    let driver: ITestDriver;
+    before(()=>{
+        driver = getFluidTestDriver();
+    });
+
     const codeDetails: IFluidCodeDetails = {
         package: "detachedContainerTestPackage1",
         config: {},
@@ -72,9 +78,9 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             [sharedCounterId, SharedCounter.getFactory()],
         ]);
         const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-        const documentServiceFactory = getFluidTestDriver().createDocumentServiceFactory();
+        const documentServiceFactory = driver.createDocumentServiceFactory();
         return new Loader({
-            urlResolver: getFluidTestDriver().createUrlResolver(),
+            urlResolver: driver.createUrlResolver(),
             documentServiceFactory,
             codeLoader,
         });
@@ -94,7 +100,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
 
     beforeEach(async () => {
         const documentId = Date.now().toString();
-        request = getFluidTestDriver().createCreateNewRequest(documentId);
+        request = driver.createCreateNewRequest(documentId);
         loader = createTestLoader();
         opProcessingController = new OpProcessingController();
     });
@@ -345,7 +351,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         await rehydratedContainer.attach(request);
 
         // Now load the container from another loader.
-        const urlResolver2 = getFluidTestDriver().createUrlResolver();
+        const urlResolver2 = driver.createUrlResolver();
         const loader2 = createTestLoader();
         assert(rehydratedContainer.resolvedUrl);
         const requestUrl2 = await urlResolver2.getAbsoluteUrl(rehydratedContainer.resolvedUrl, "");
@@ -390,7 +396,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         await rehydratedContainer.attach(request);
 
         // Now load the container from another loader.
-        const urlResolver2 = getFluidTestDriver().createUrlResolver();
+        const urlResolver2 = driver.createUrlResolver();
         const loader2 = createTestLoader();
         assert(rehydratedContainer.resolvedUrl);
         const requestUrl2 = await urlResolver2.getAbsoluteUrl(rehydratedContainer.resolvedUrl, "");

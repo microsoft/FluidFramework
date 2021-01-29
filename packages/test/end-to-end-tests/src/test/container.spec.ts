@@ -17,14 +17,14 @@ import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
 import { LocalCodeLoader, TestObjectProvider } from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { TestDriver } from "@fluidframework/test-driver-definitions";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { createPrimedDataStoreFactory, createRuntimeFactory, TestDataObject } from "./compatUtils";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
 
 describe("Container", () => {
-    let driver: TestDriver;
+    let driver: ITestDriver;
     beforeEach(()=>{
         driver = getFluidTestDriver();
     });
