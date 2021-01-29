@@ -53,7 +53,7 @@ function getRoomId(room: IRoom) {
 
 const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocketConn`;
 
-const getSubmitOpThrottleId = (clientId: string) => `${clientId}_SubmitOp`;
+const getSubmitOpThrottleId = (tenantId: string, clientId: string) => `${clientId}_${tenantId}_SubmitOp`;
 
 // Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
@@ -109,29 +109,20 @@ function checkThrottle(
         return;
     }
 
-    const messageMetaData = {
-        key: throttleId,
-        weight: 1,
-        eventName: "throttling",
-    };
-
     try {
-        logger?.info(`Incrementing throttle count: ${throttleId}`, { messageMetaData });
         throttler.incrementCount(throttleId);
     } catch (e) {
         if (e instanceof core.ThrottlingError) {
-            logger?.info(`Throttled: ${throttleId}`, {
-                messageMetaData: {
-                    ...messageMetaData,
-                    reason: e.message,
-                    retryAfterInSeconds: e.retryAfter,
-                },
-            });
             return e;
         } else {
             logger?.error(
                 `Throttle increment failed: ${safeStringify(e, undefined, 2)}`,
-                { messageMetaData });
+                {
+                    messageMetaData: {
+                        key: throttleId,
+                        eventName: "throttling",
+                    },
+                });
         }
     }
 }
@@ -378,20 +369,6 @@ export function configureWebSocketServices(
         socket.on(
             "submitOp",
             (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[]) => {
-                const throttleError = checkThrottle(
-                    submitOpThrottler,
-                    getSubmitOpThrottleId(clientId),
-                    logger);
-                if (throttleError) {
-                    const nackMessage = createNackMessage(
-                        throttleError.code,
-                        NackErrorType.ThrottlingError,
-                        throttleError.message,
-                        throttleError.retryAfter);
-                    socket.emit("nack", "", [nackMessage]);
-                    return;
-                }
-
                 // Verify the user has an orderer connection.
                 if (!connectionsMap.has(clientId)) {
                     let nackMessage: INack;
@@ -407,6 +384,20 @@ export function configureWebSocketServices(
                     socket.emit("nack", "", [nackMessage]);
                 } else {
                     const connection = connectionsMap.get(clientId);
+
+                    const throttleError = checkThrottle(
+                        submitOpThrottler,
+                        getSubmitOpThrottleId(connection.tenantId, clientId),
+                        logger);
+                    if (throttleError) {
+                        const nackMessage = createNackMessage(
+                            throttleError.code,
+                            NackErrorType.ThrottlingError,
+                            throttleError.message,
+                            throttleError.retryAfter);
+                        socket.emit("nack", "", [nackMessage]);
+                        return;
+                    }
 
                     messageBatches.forEach((messageBatch) => {
                         const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];
