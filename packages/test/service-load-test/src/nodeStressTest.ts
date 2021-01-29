@@ -120,8 +120,12 @@ function parseOdspTestLoginInfo(server: string): IOdspTestLoginInfo {
     // Just use the first user for the given server
     const [username, password] = loginInfo[server][0];
     return { server, username, password };
+}
 
-async function getDriveId(server: string, odspTokens: IOdspTokens): Promise<string> {
+/**
+ * Query the SharePoint API for the default drive (based on server the user claims in the tokens) and return its ID
+ */
+async function getDefaultDriveId(server: string, odspTokens: IOdspTokens): Promise<string> {
     const driveResponse = await getAsync(
         `https://${server}/_api/v2.1/drive`,
         { accessToken: odspTokens.accessToken },
@@ -213,7 +217,7 @@ async function main() {
 
         if (!driveId) {
             // automatically determine driveId based on the server & user
-            driveId = await getDriveId(config.server, odspTokens);
+            driveId = await getDefaultDriveId(config.server, odspTokens);
         }
     } catch (ex) {
         // Log the login page url in case the caller needs to allow consent for this app
