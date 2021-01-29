@@ -32,7 +32,6 @@ import {
     DataObjectFactoryType,
     ITestObjectProvider,
 } from "./compatUtils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -67,7 +66,6 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     let request: IRequest;
     let loader: Loader;
-    let driver: ITestDriver;
 
     const createFluidObject = (async (
         dataStoreContext: IFluidDataStoreContext,
@@ -80,8 +78,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
     beforeEach(async () => {
         args = argsFactory();
-        driver = args.driver ?? getFluidTestDriver();
-        request  = driver.createCreateNewRequest(args.documentId);
+        request  = args.driver.createCreateNewRequest(args.documentId);
         loader = args.makeTestLoader(testContainerConfig) as Loader;
     });
 

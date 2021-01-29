@@ -44,7 +44,7 @@ export interface ITestObjectProvider {
     opProcessingController: OpProcessingController | oldTypes.OpProcessingController,
     reset(): void | Promise<void>,
     documentId: string,
-    driver?: ITestDriver;
+    driver: ITestDriver;
 }
 
 export interface ITestOptions {
@@ -200,6 +200,6 @@ export const generateTest = (
 ) => {
     describe("test", () => {
         generateNonCompatTest(tests);
-        // generateCompatTest(tests, options);
+        generateCompatTest(tests, options);
     });
 };
