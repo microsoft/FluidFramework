@@ -359,6 +359,8 @@ export class EditLog implements OrderedEditSet {
 			this.editChunks.set(0, { edits: [editWithoutId] });
 		} else {
 			// Add to the last edit chunk if it has room, otherwise create a new chunk.
+			// If the chunk is undefined, this means a handle corresponding to a full chunk was received through a summary
+			// and so a new chunk should be created.
 			const { edits: lastEditChunk } = assertNotUndefined(this.editChunks.get(maxChunkKey));
 			if (lastEditChunk !== undefined && lastEditChunk.length < editsPerChunk) {
 				lastEditChunk.push(editWithoutId);
