@@ -28,7 +28,7 @@
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "test:mocha": "mocha --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup -r source-map-support/register --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-    "tsc": "tsc",
+    "tsc": "tsc && tsc --project ./src/test/tsconfig.json",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
   },
@@ -67,7 +67,7 @@
     "@fluidframework/eslint-config-fluid": "^0.22.1-0",
     "@fluidframework/mocha-test-setup": "^0.34.0",
     "@fluidframework/test-runtime-utils": "^0.34.0",
-    "@types/assert": "^1.5.1",
+    "@types/assert": "^1.5.2",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",
