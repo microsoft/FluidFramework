@@ -165,7 +165,7 @@ export class EditLog implements OrderedEditSet {
 	private readonly localEdits: Edit[] = [];
 
 	private readonly loadedChunkCache: number[] = [];
-	private readonly maximumEvictedIndex: number;
+	private readonly maximumEvictableIndex: number;
 
 	private readonly allEditIds: Map<EditId, OrderedEditId> = new Map();
 	private readonly editAddedHandlers: EditAddedHandler[] = [];
@@ -199,7 +199,7 @@ export class EditLog implements OrderedEditSet {
 		});
 
 		this.sequencedEditIds = editIds.slice();
-		this.maximumEvictedIndex = this.numberOfSequencedEdits - 1;
+		this.maximumEvictableIndex = this.numberOfSequencedEdits - 1;
 
 		this.sequencedEditIds.forEach((id, index) => this.allEditIds.set(id, { isLocal: false, index }));
 	}
@@ -308,7 +308,7 @@ export class EditLog implements OrderedEditSet {
 	 */
 	public getEditInSessionAtIndex(index: number): Edit {
 		assert(
-			index > this.maximumEvictedIndex,
+			index > this.maximumEvictableIndex,
 			'Edit to retrieve must have been added to the log during the current session.'
 		);
 
@@ -439,7 +439,7 @@ export class EditLog implements OrderedEditSet {
 
 	private addKeyToCache(newKey: number): void {
 		// Indices are only added to the cache if they are not higher than the maximum evicted index.
-		if (newKey <= this.maximumEvictedIndex) {
+		if (newKey <= this.maximumEvictableIndex) {
 			// If the new index is already in the cache, remove it first to update its last usage.
 			if (newKey in this.loadedChunkCache) {
 				this.loadedChunkCache.splice(this.loadedChunkCache.indexOf(newKey), 1);
