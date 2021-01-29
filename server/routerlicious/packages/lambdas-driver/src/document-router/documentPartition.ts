@@ -66,7 +66,7 @@ export class DocumentPartition {
         });
 
         // Create the lambda to handle the document messages
-        this.lambdaP = factory.create(documentConfig, context);
+        this.lambdaP = factory.create(documentConfig, context, this.updateActivityTime.bind(this));
         this.lambdaP.then(
             (lambda) => {
                 this.lambda = lambda;
