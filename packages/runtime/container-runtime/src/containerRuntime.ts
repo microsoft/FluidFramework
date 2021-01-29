@@ -93,6 +93,7 @@ import {
     IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
+    IAttachMessage,
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
@@ -816,7 +817,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.replayPendingStates();
         });
 
-        this.deltaManager.on("op", this.onOp);
+        if (context.pendingLocalState !== undefined) {
+            this.deltaManager.on("op", this.onOp);
+        }
 
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
@@ -999,6 +1002,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.updateDocumentDirtyState(newState);
     }
 
+    /**
+     * Used to rebase pending initial ops at their reference sequence number.
+     * Normal op processing is synchronous, but rebasing is async since the
+     * data store may not be loaded yet, so we pause DeltaManager between ops.
+     * It's also important that we see each op so we know all pending ops have
+     * been rebased by "connected" event, but process() doesn't see system ops,
+     * so we listen directly from DeltaManager instead.
+     */
     private readonly onOp = (op: ISequencedDocumentMessage) => {
         assert(!this.paused);
         this.paused = true;
@@ -1016,7 +1027,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             case ContainerMessageType.FluidDataStoreOp:
                 return this.dataStores.rebaseOp(op, localOpMetadata);
             case ContainerMessageType.Attach:
-                return this.dataStores.rebaseAttachOp(op);
+                return this.dataStores.rebaseAttachOp(op as unknown as IAttachMessage);
             case ContainerMessageType.BlobAttach:
                 return;
             default:

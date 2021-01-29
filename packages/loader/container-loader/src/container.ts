@@ -190,7 +190,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         loader: Loader,
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
-        pendingLocalState?,
+        pendingLocalState?: unknown,
     ): Promise<Container> {
         const [, docId] = id.split("/");
         const container = new Container(
@@ -1011,7 +1011,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      *   - otherwise, version sha to load snapshot
      * @param pause - start the container in a paused state
      */
-    private async load(specifiedVersion: string | null | undefined, pause: boolean, pendingLocalState?) {
+    private async load(specifiedVersion: string | null | undefined, pause: boolean, pendingLocalState?: unknown) {
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
         }
@@ -1687,7 +1687,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         attributes: IDocumentAttributes,
         snapshot?: ISnapshotTree,
         previousRuntimeState: IRuntimeState = {},
-        pendingLocalState?,
+        pendingLocalState?: unknown,
     ) {
         assert(this._context?.disposed !== false, "Existing context not disposed");
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags

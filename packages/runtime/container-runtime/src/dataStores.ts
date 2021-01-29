@@ -278,10 +278,10 @@ export class DataStores implements IDisposable {
         return context.rebaseOp(envelope.contents, localOpMetadata);
     }
 
-    public async rebaseAttachOp(content: any) {
-        this.pendingAttach.set((content as unknown as IAttachMessage).id, content);
+    public async rebaseAttachOp(message: IAttachMessage) {
+        this.pendingAttach.set(message.id, message);
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        this.processAttachMessage({ contents: content } as ISequencedDocumentMessage, false);
+        this.processAttachMessage({ contents: message } as ISequencedDocumentMessage, false);
     }
 
     public processFluidDataStoreOp(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown) {

@@ -66,7 +66,7 @@ export class ContainerContext implements IContainerContext {
         closeFn: (error?: ICriticalContainerError) => void,
         version: string,
         previousRuntimeState: IRuntimeState,
-        pendingLocalState?,
+        pendingLocalState?: unknown,
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
             container,
@@ -197,7 +197,7 @@ export class ContainerContext implements IContainerContext {
         public readonly closeFn: (error?: ICriticalContainerError) => void,
         public readonly version: string,
         public readonly previousRuntimeState: IRuntimeState,
-        public readonly pendingLocalState?,
+        public readonly pendingLocalState?: unknown,
     ) {
         this.logger = container.subLogger;
         this.attachListener();
@@ -286,7 +286,7 @@ export class ContainerContext implements IContainerContext {
         return this.container.getAbsoluteUrl(relativeUrl);
     }
 
-    public getPendingLocalState() {
+    public getPendingLocalState(): unknown {
         return this.runtime.getPendingLocalState();
     }
 

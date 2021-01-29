@@ -458,7 +458,7 @@ export class Loader extends EventEmitter implements ILoader {
         id: string,
         request: IRequest,
         resolved: IFluidResolvedUrl,
-        pendingLocalState?,
+        pendingLocalState?: unknown,
     ): Promise<Container> {
         return Container.load(
             id,
