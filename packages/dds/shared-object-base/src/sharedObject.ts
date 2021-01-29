@@ -388,7 +388,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * If runtime is disposed when this call is made, executor is not run and promise is rejected right away.
      */
     protected async newAckBasedPromise<T>(
-        executor: (resolve: (value?: T | PromiseLike<T> | undefined) => void, reject: (reason?: any) => void) => void,
+        executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void,
     ): Promise<T> {
         let rejectBecauseDispose: () => void;
         return new Promise<T>((resolve, reject) => {

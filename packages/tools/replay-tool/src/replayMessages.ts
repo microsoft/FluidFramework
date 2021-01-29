@@ -379,7 +379,7 @@ class Document {
         const fetched = this.replayer.replay(replayTo);
 
         if (fetched > 0 && this.documentSeqNumber !== this.currentOp) {
-            await new Promise((resolve) => {
+            await new Promise<void>((resolve) => {
                 this.resolveC = resolve;
             });
             assert(this.documentSeqNumber === this.currentOp);

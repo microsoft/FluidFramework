@@ -163,7 +163,7 @@ export class SparseArray2D<T> implements IMatrixReader<T | undefined | null>, IM
         });
     }
 
-    /** Clears the all cells contained within the specifed span of rows. */
+    /** Clears the all cells contained within the specified span of rows. */
     public clearRows(rowStart: number, rowCount: number) {
         const rowEnd = rowStart + rowCount;
         for (let row = rowStart; row < rowEnd; row++) {

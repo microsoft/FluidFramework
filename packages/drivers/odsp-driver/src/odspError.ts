@@ -27,17 +27,19 @@ export function throwOdspNetworkError(
     errorMessage: string,
     statusCode: number,
     response?: Response,
+    responseText?: string,
 ): never {
     const claims = statusCode === 401 && response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
 
     const networkError = createOdspNetworkError(
-        response ? `${errorMessage} (${response.statusText})` : errorMessage,
+        response && response.statusText !== "" ? `${errorMessage} (${response.statusText})` : errorMessage,
         statusCode,
         response ? numberFromHeader(response.headers.get("retry-after")) : undefined, // seconds
         claims);
 
     const errorAsAny = networkError as any;
 
+    errorAsAny.response = responseText;
     if (response) {
         errorAsAny.type = response.type;
         if (response.headers) {
@@ -53,9 +55,10 @@ export function throwOdspNetworkError(
 /**
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
-export function errorObjectFromSocketError(socketError: IOdspSocketError) {
+export function errorObjectFromSocketError(socketError: IOdspSocketError, handler: string) {
+    const message = `socket.io: ${handler}: ${socketError.message}`;
     return createOdspNetworkError(
-        socketError.message,
+        message,
         socketError.code,
         socketError.retryAfter,
         // TODO: When long lived token is supported for websocket then IOdspSocketError need to support

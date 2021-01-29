@@ -492,7 +492,7 @@ describe("GitRest", () => {
                     },
                     5);
 
-                const resultP = new Promise((resolve, reject) => {
+                const resultP = new Promise<void>((resolve, reject) => {
                     queue.drain = () => {
                         resolve();
                     };
