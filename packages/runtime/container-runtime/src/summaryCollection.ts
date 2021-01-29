@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Deferred, assert } from "@fluidframework/common-utils";
 import {
     ISequencedDocumentMessage,
@@ -205,7 +205,10 @@ export class SummaryCollection {
 
     public get latestAck() { return this.lastAck; }
 
-    public constructor(public readonly initialSequenceNumber: number) { }
+    public constructor(
+        public readonly initialSequenceNumber: number,
+        private readonly logger: ITelemetryLogger,
+    ) { }
 
     /**
      * Creates and returns a summary watcher for a specific client.
@@ -296,8 +299,7 @@ export class SummaryCollection {
 
     private handleSummaryAck(op: ISummaryAckMessage) {
         const seq = op.contents.summaryProposal.summarySequenceNumber;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const summary = this.pendingSummaries.get(seq)!;
+        const summary = this.pendingSummaries.get(seq);
         if (!summary) {
             // Summary ack without an op should be rare. We could fetch the
             // reference sequence number from the snapshot, but instead we
@@ -306,8 +308,17 @@ export class SummaryCollection {
             // from. i.e. initialSequenceNumber > summarySequenceNumber.
             // We really don't care about it for now, since it is older than
             // the one we loaded from.
-            assert(this.initialSequenceNumber > seq,
-                "Missing summary op for ack, but summary op seq > initialSequenceNumber");
+            if (seq >= this.initialSequenceNumber) {
+                // Potential causes for it to be later than our initialSequenceNumber
+                // are that the summaryOp was nacked then acked, double-acked, or
+                // the summarySequenceNumber is incorrect.
+                this.logger.sendErrorEvent({
+                    eventName: "SummaryAckWithoutOp",
+                    sequenceNumber: op.sequenceNumber, // summary ack seq #
+                    summarySequenceNumber: seq, // missing summary seq #
+                    initialSequenceNumber: this.initialSequenceNumber,
+                });
+            }
             return;
         }
         summary.ackNack(op);
