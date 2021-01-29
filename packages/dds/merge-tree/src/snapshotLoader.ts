@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { assert, bufferToString } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -73,7 +75,7 @@ export class SnapshotLoader {
 
             // TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
-       
+
             return this.loadCatchupOps(services.readBlob(blobs[0]));
         } else if (blobs.length !== headerChunk.headerMetadata!.orderedChunkMetadata.length) {
             throw new Error("Unexpected blobs in snapshot");
