@@ -16,6 +16,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
 import { IOdspSocketError } from "./contracts";
+import { EpochTracker } from "./epochTracker";
 import { errorObjectFromSocketError } from "./odspError";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
@@ -189,7 +190,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         client: IClient,
         url: string,
         telemetryLogger: ITelemetryLogger,
-        timeoutMs: number): Promise<IDocumentDeltaConnection>
+        timeoutMs: number,
+        epochTracker: EpochTracker): Promise<IDocumentDeltaConnection>
     {
         // enable multiplexing when the websocket url does not include the tenant/document id
         const parsedUrl = new URL(url);
@@ -212,6 +214,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             token,  // Token is going to indicate tenant level information, etc...
             versions: protocolVersions,
             nonce: uuid(),
+            epoch: epochTracker.fluidEpoch,
         };
 
         const deltaConnection = new OdspDocumentDeltaConnection(
@@ -223,6 +226,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
         try {
             await deltaConnection.initialize(connectMessage, timeoutMs);
+            await epochTracker.validateEpochFromPush(deltaConnection.details);
         } catch (errorObject) {
             if (errorObject !== null && typeof errorObject === "object") {
                 // We have to special-case error types here in terms of what is re-triable.
@@ -232,11 +236,13 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 //    404: Invalid document. The document \"local/w1-...\" does not exist
                 // But this has to stay not-retriable:
                 //    406: Unsupported client protocol. This path is the only gatekeeper, have to fail!
+                //    409: Epoch Version Mismatch. Client epoch and server epoch does not match, so app needs
+                //         to be refreshed.
                 // This one is fine either way
                 //    401/403: Code will retry once with new token either way, then it becomes fatal - on this path
                 //         and on join Session path.
                 //    501: (Fluid not enabled): this is fine either way, as joinSession is gatekeeper
-                if (errorObject.code === 400 || errorObject.code === 404) {
+                if (errorObject.statusCode === 400 || errorObject.statusCode === 404) {
                     errorObject.canRetry = true;
                 }
             }
