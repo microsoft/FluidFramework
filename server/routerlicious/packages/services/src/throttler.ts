@@ -54,6 +54,7 @@ export class Throttler implements IThrottler {
             this.logger?.info(`Throttling ${id} for ${cachedThrottlerResponse.retryAfterInMs}ms: ${
                 cachedThrottlerResponse.throttleReason
             }`);
+            // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw new ThrottlingError(
                 cachedThrottlerResponse.throttleReason,
                 Math.ceil(cachedThrottlerResponse.retryAfterInMs / 1000),

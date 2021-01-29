@@ -6,7 +6,7 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IOdspSnapshot, ISnapshotOptions } from "./contracts";
-import { EpochTracker, FetchType } from "./epochTracker";
+import { EpochTracker } from "./epochTracker";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspResponse } from "./odspUtils";
@@ -47,6 +47,6 @@ export async function fetchSnapshot(
             eventName: "fetchSnapshot",
             headers: Object.keys(headers).length !== 0 ? true : undefined,
         },
-        async () => epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(url, { headers }, FetchType.snaphsotTree),
+        async () => epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(url, { headers }, "snapshotTree"),
     );
 }

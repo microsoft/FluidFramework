@@ -59,7 +59,7 @@ export class DocumentFactory implements IDocumentFactory {
 
         const quorum = resolved.getQuorum();
         if (quorum.has("code")) {
-            return Promise.reject("Code has already been proposed on document");
+            return Promise.reject(new Error("Code has already been proposed on document"));
         }
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises

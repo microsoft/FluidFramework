@@ -16,6 +16,7 @@ import {
     getMicrosoftConfiguration,
     OdspTokenConfig,
 } from "@fluidframework/tool-utils";
+import { getAsync, getLoginPageUrl, getOdspScope, IOdspTokens } from "@fluidframework/odsp-doclib-utils";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ITestConfig, IRunConfig, fluidExport, ILoadTest } from "./loadTestDataStore";
 
@@ -28,7 +29,6 @@ interface ITestConfigs {
 
 interface IConfig {
     server: string;
-    driveId: string;
     profiles: ITestConfigs;
 }
 
@@ -84,15 +84,15 @@ function createLoader(loginInfo: IOdspTestLoginInfo) {
     return loader;
 }
 
-async function initialize(config: IConfig, loginInfo: IOdspTestLoginInfo) {
+async function initialize(driveId: string, loginInfo: IOdspTestLoginInfo) {
     const loader = createLoader(loginInfo);
     const container = await loader.createDetachedContainer(codeDetails);
     container.on("error", (error) => {
         console.log(error);
         process.exit(-1);
     });
-    const tenant = `https://${config.server}`;
-    const request = urlResolver.createCreateNewRequest(tenant, config.driveId, "/test", "test");
+    const tenant = `https://${loginInfo.server}`;
+    const request = urlResolver.createCreateNewRequest(tenant, driveId, "/test", "test");
     await container.attach(request);
     const dataStoreUrl = await container.getAbsoluteUrl("/");
     console.log(dataStoreUrl);
@@ -120,6 +120,16 @@ function parseOdspTestLoginInfo(server: string): IOdspTestLoginInfo {
     // Just use the first user for the given server
     const [username, password] = loginInfo[server][0];
     return { server, username, password };
+
+async function getDriveId(server: string, odspTokens: IOdspTokens): Promise<string> {
+    const driveResponse = await getAsync(
+        `https://${server}/_api/v2.1/drive`,
+        { accessToken: odspTokens.accessToken },
+    );
+
+    const driveJson = await driveResponse.json();
+
+    return driveJson.id as string;
 }
 
 async function main() {
@@ -140,6 +150,7 @@ async function main() {
         .option("-u, --url <url>", "Load an existing data store rather than creating new")
         .option("-r, --runId <runId>", "run a child process with the given id. Requires --url option.")
         .option("-d, --debug", "Debug child processes via --inspect-brk")
+        .option("-di, --driveId", "Users SPO drive id")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .parse(process.argv);
 
@@ -148,6 +159,7 @@ async function main() {
     const runId: number | undefined = commander.runId === undefined ? undefined : parseInt(commander.runId, 10);
     const debug: true | undefined = commander.debug;
     const log: string | undefined = commander.log;
+    let driveId: string | undefined = commander.driveId;
 
     if (log !== undefined) {
         process.env.DEBUG = log;
@@ -182,31 +194,54 @@ async function main() {
 
     // When runId is not specified, this is the orchestrator process which will spawn child test runners.
 
-    // Ensure fresh tokens here so the test runners have them cached
-    await odspTokenManager.getOdspTokens(
-        config.server,
-        getMicrosoftConfiguration(),
-        passwordTokenConfig(loginInfo.username, loginInfo.password),
-        undefined /* forceRefresh */,
-        true /* forceReauth */,
-    );
-    await odspTokenManager.getPushTokens(
-        config.server,
-        getMicrosoftConfiguration(),
-        passwordTokenConfig(loginInfo.username, loginInfo.password),
-        undefined /* forceRefresh */,
-        true /* forceReauth */,
-    );
+    try {
+                // Ensure fresh tokens here so the test runners have them cached
+        const odspTokens = await odspTokenManager.getOdspTokens(
+            config.server,
+            getMicrosoftConfiguration(),
+            passwordTokenConfig(loginInfo.username, loginInfo.password),
+            undefined /* forceRefresh */,
+            true /* forceReauth */,
+        );
+        await odspTokenManager.getPushTokens(
+            config.server,
+            getMicrosoftConfiguration(),
+            passwordTokenConfig(loginInfo.username, loginInfo.password),
+            undefined /* forceRefresh */,
+            true /* forceReauth */,
+        );
+
+        if (!driveId) {
+            // automatically determine driveId based on the server & user
+            driveId = await getDriveId(config.server, odspTokens);
+        }
+    } catch (ex) {
+        // Log the login page url in case the caller needs to allow consent for this app
+        const loginPageUrl =
+            getLoginPageUrl(
+                false,
+                config.server,
+                getMicrosoftConfiguration(),
+                getOdspScope(config.server),
+                "http://localhost:7000/auth/callback",
+            );
+
+        console.log("You may need to allow consent for this app. Re-run the tool after allowing consent.");
+        console.log(`Go here allow the app: ${loginPageUrl}`);
+
+        throw ex;
+    }
 
     if (url === undefined) {
         // Create a new file
-        url = await initialize(config, loginInfo);
+        url = await initialize(driveId, loginInfo);
     }
 
     const p: Promise<void>[] = [];
     for (let i = 0; i < config.profiles[profile].numClients; i++) {
         const args = [
             "./dist/nodeStressTest.js",
+            "--driveId", driveId,
             "--profile", profile,
             "--runId", i.toString(),
             "--url", url];
