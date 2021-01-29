@@ -268,7 +268,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
             if (fetchType === "treesLatest") {
                 this.treesLatestDeferral.reject(error);
             }
-            if (fetchType !== "joinSession" || error.statusCode !== 404 || !completed) {
+            if (fetchType !== "joinSession" || error.statusCode !== 404 || completed) {
                 throw error;
             }
         }
