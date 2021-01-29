@@ -12,30 +12,12 @@ import {
     IThrottler,
     MongoManager,
 } from "@fluidframework/server-services-core";
-import { validateTokenClaims, throttle, IThrottleMiddlewareOptions } from "@fluidframework/server-services-utils";
-import { Request, Router } from "express";
+import { throttle, IThrottleMiddlewareOptions } from "@fluidframework/server-services-utils";
+import {  Router } from "express";
 import { Provider } from "nconf";
 import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { getParam, Constants } from "../../../utils";
-
-// eslint-disable-next-line max-len
-async function verifyToken(request: Request, tenantManager: ITenantManager, maxTokenLifetimeSec: number, isTokenExpiryEnabled: boolean): Promise<void> {
-    const authorizationHeader = request.header("Authorization");
-    const regex = /Basic (.+)/;
-    const tokenMatch = regex.exec(authorizationHeader);
-    if (!tokenMatch || !tokenMatch[1]) {
-        return Promise.reject(new Error("Missing access token"));
-    }
-    const token = tokenMatch[1];
-    const tenantId = getParam(request.params, "tenantId");
-    const documentId = getParam(request.params, "id");
-    const claims = validateTokenClaims(token, documentId, tenantId, maxTokenLifetimeSec, isTokenExpiryEnabled);
-    if (!claims) {
-        return Promise.reject(new Error("Invalid access token"));
-    }
-    return tenantManager.verifyToken(claims.tenantId, token);
-}
+import { getParam, Constants, verifyStorageToken } from "../../../utils";
 
 export async function getDeltas(
     mongoManager: MongoManager,
@@ -215,7 +197,7 @@ export function create(
             const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
             const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
 
-            verifyToken(request, tenantManager, maxTokenLifetimeSec, isTokenExpiryEnabled).then(
+            verifyStorageToken(request, tenantManager, maxTokenLifetimeSec, isTokenExpiryEnabled).then(
                 () => {
                     const from = stringToSequenceNumber(request.query.from);
                     const to = stringToSequenceNumber(request.query.to);
@@ -256,7 +238,7 @@ export function create(
             const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
             const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
 
-            verifyToken(request, tenantManager, maxTokenLifetimeSec, isTokenExpiryEnabled).then(
+            verifyStorageToken(request, tenantManager, maxTokenLifetimeSec, isTokenExpiryEnabled).then(
                 () => {
                     const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
@@ -292,7 +274,7 @@ export function create(
             const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
             const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
 
-            verifyToken(request, tenantManager, maxTokenLifetimeSec, isTokenExpiryEnabled).then(
+            verifyStorageToken(request, tenantManager, maxTokenLifetimeSec, isTokenExpiryEnabled).then(
                 () => {
                     const from = stringToSequenceNumber(request.query.from);
                     const to = stringToSequenceNumber(request.query.to);

@@ -61,7 +61,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         }
         const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
         const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
-        const token = await this.tokenProvider.fetchOrdererToken(
+        const token = await this.tokenProvider.fetchStorageToken(
             tenantId,
             id,
         );
