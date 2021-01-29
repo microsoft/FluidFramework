@@ -148,8 +148,6 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
                     },
                 },
             ],
-            // eslint-disable-next-line no-null/no-null
-            id: null,
         };
 
         return tree;

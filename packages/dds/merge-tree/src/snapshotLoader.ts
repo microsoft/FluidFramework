@@ -66,15 +66,16 @@ export class SnapshotLoader {
         await this.loadBody(headerChunk, services);
 
         const blobs = await blobsP;
-        if (blobs.length === headerChunk.headerMetadata.orderedChunkMetadata.length + 1) {
-            headerChunk.headerMetadata.orderedChunkMetadata.forEach(
+        if (blobs.length === headerChunk.headerMetadata!.orderedChunkMetadata.length + 1) {
+            headerChunk.headerMetadata!.orderedChunkMetadata.forEach(
                 (md) => blobs.splice(blobs.indexOf(md.id), 1));
             assert(blobs.length === 1, `There should be only one blob with catch up ops: ${blobs.length}`);
 
             // TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
+       
             return this.loadCatchupOps(services.readBlob(blobs[0]));
-        } else if (blobs.length !== headerChunk.headerMetadata.orderedChunkMetadata.length) {
+        } else if (blobs.length !== headerChunk.headerMetadata!.orderedChunkMetadata.length) {
             throw new Error("Unexpected blobs in snapshot");
         }
         return [];
@@ -152,22 +153,22 @@ export class SnapshotLoader {
 
     private async loadBody(chunk1: MergeTreeChunkV1, services: IChannelStorageService): Promise<void> {
         this.runtime.logger.shipAssert(
-            chunk1.length <= chunk1.headerMetadata.totalLength,
+            chunk1.length <= chunk1.headerMetadata!.totalLength,
             { eventName: "Mismatch in totalLength" });
 
         this.runtime.logger.shipAssert(
-            chunk1.segmentCount <= chunk1.headerMetadata.totalSegmentCount,
+            chunk1.segmentCount <= chunk1.headerMetadata!.totalSegmentCount,
             { eventName: "Mismatch in totalSegmentCount" });
 
-        if (chunk1.segmentCount === chunk1.headerMetadata.totalSegmentCount) {
+        if (chunk1.segmentCount === chunk1.headerMetadata!.totalSegmentCount) {
             return;
         }
         const segs: ISegment[] = [];
         let lengthSofar = chunk1.length;
-        for (let chunkIndex = 1; chunkIndex < chunk1.headerMetadata.orderedChunkMetadata.length; chunkIndex++) {
+        for (let chunkIndex = 1; chunkIndex < chunk1.headerMetadata!.orderedChunkMetadata.length; chunkIndex++) {
             const chunk = await SnapshotV1.loadChunk(
                 services,
-                chunk1.headerMetadata.orderedChunkMetadata[chunkIndex].id,
+                chunk1.headerMetadata!.orderedChunkMetadata[chunkIndex].id,
                 this.logger,
                 this.mergeTree.options,
                 this.serializer);
@@ -176,11 +177,11 @@ export class SnapshotLoader {
             segs.push(...chunk.segments.map(this.specToSegment));
         }
         this.runtime.logger.shipAssert(
-            lengthSofar === chunk1.headerMetadata.totalLength,
+            lengthSofar === chunk1.headerMetadata!.totalLength,
             { eventName: "Mismatch in totalLength" });
 
         this.runtime.logger.shipAssert(
-            chunk1.segmentCount + segs.length === chunk1.headerMetadata.totalSegmentCount,
+            chunk1.segmentCount + segs.length === chunk1.headerMetadata!.totalSegmentCount,
             { eventName: "Mismatch in totalSegmentCount" });
 
         // Helper to insert segments at the end of the MergeTree.
@@ -211,7 +212,7 @@ export class SnapshotLoader {
                 batch.push(seg);
             } else {
                 flushBatch();
-                append([seg], cli, seq);
+                append([seg], cli, seq!);
             }
         }
 

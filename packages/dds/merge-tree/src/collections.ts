@@ -7,7 +7,6 @@
 /* eslint-disable no-bitwise, no-param-reassign */
 
 /* Remove once strictNullCheck is enabled */
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 
 import { Trace } from "@fluidframework/common-utils";
 import * as Base from "./base";
@@ -357,7 +356,7 @@ export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey
 
 export const enum RBColor {
     RED,
-    BLACK
+    BLACK,
 }
 
 export interface RBNode<TKey, TData> {

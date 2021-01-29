@@ -4,7 +4,7 @@
  */
 
 import { Serializable, IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { FileMode, TreeEntry } from "@fluidframework/protocol-definitions";
+import { BlobTreeEntry } from "@fluidframework/protocol-base";
 import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
 import { bufferToString } from "@fluidframework/common-utils";
 
@@ -13,15 +13,7 @@ export const serializeBlob = (
     path: string,
     snapshot: Serializable,
     serializer: IFluidSerializer,
-) => ({
-        mode: FileMode.File,
-        path,
-        type: TreeEntry.Blob,
-        value: {
-            contents: serializer.stringify(snapshot, handle),
-            encoding: "utf-8",
-        },
-    });
+) => new BlobTreeEntry(path, serializer.stringify(snapshot, handle));
 
 export async function deserializeBlob(storage: IChannelStorageService, path: string, serializer: IFluidSerializer) {
     const blob = await storage.readBlob(path);

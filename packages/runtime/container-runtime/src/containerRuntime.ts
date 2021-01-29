@@ -929,7 +929,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @deprecated - Use summarize to get summary of the container runtime.
      */
     public async snapshot(): Promise<ITree> {
-        const root: ITree = { entries: await this.dataStores.snapshot(), id: null };
+        const root: ITree = { entries: await this.dataStores.snapshot() };
 
         if (this.chunkMap.size > 0) {
             root.entries.push(new BlobTreeEntry(chunksBlobName, JSON.stringify([...this.chunkMap])));

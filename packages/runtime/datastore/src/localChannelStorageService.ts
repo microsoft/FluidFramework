@@ -49,13 +49,13 @@ export class LocalChannelStorageService implements IChannelStorageService {
             switch (entry.type) {
                 case TreeEntry.Blob:
                     if (path === entry.path) {
-                        return entry.value as IBlob;
+                        return entry.value;
                     }
                     break;
 
                 case TreeEntry.Tree:
                     if (path.startsWith(entry.path)) {
-                        return this.readBlobSyncInternal(path.substr(entry.path.length + 1), entry.value as ITree);
+                        return this.readBlobSyncInternal(path.substr(entry.path.length + 1), entry.value);
                     }
                     break;
 

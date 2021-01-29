@@ -204,8 +204,6 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
                     },
                 },
             ],
-            // eslint-disable-next-line no-null/no-null
-            id: null,
         };
 
         return tree;

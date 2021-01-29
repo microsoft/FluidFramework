@@ -32,3 +32,4 @@ export * from "./graph";
 export * from "./odspFluidFileLink";
 export * from "./checkUrl";
 export * from "./rateLimiter";
+export * from "./odspSummaryUploadManager";

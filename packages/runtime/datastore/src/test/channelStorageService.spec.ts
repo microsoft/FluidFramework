@@ -14,16 +14,14 @@ describe("ChannelStorageService", () => {
         const tree: ISnapshotTree = {
             blobs: {},
             commits: {},
-            // eslint-disable-next-line no-null/no-null
-            id: null,
             trees: {},
         };
         const storage: Pick<IDocumentStorageService, "read" | "readBlob"> = {
             read: async (id: string) => {
-                assert.fail();
+                throw new Error("not implemented");
             },
             readBlob: async (id: string) => {
-                assert.fail();
+                throw new Error("not implemented");
             },
         };
         const ss = new ChannelStorageService(tree, storage);
@@ -38,8 +36,6 @@ describe("ChannelStorageService", () => {
                 foo: "bar",
             },
             commits: {},
-            // eslint-disable-next-line no-null/no-null
-            id: null,
             trees: {},
         };
         const storage: Pick<IDocumentStorageService, "read" | "readBlob"> = {
@@ -62,16 +58,12 @@ describe("ChannelStorageService", () => {
         const tree: ISnapshotTree = {
             blobs: {},
             commits: {},
-            // eslint-disable-next-line no-null/no-null
-            id: null,
             trees: {
                 nested: {
                     blobs: {
                         foo: "bar",
                     },
                     commits: {},
-                    // eslint-disable-next-line no-null/no-null
-                    id: null,
                     trees: {},
                 },
             },

@@ -140,5 +140,5 @@ export interface IControlMessage {
  */
 export enum ControlMessageType {
     // Instruction sent to update Durable sequence number
-    UpdateDSN = "updateDSN"
+    UpdateDSN = "updateDSN",
 }
