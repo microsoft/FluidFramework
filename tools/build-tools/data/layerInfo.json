@@ -169,6 +169,7 @@
                     "@fluid-experimental/experimental-fluidframework"
                 ],
                 "dirs": [
+                    "experimental/framework/",
                     "packages/framework/"
                 ],
                 "deps": [
