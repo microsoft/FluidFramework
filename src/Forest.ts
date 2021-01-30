@@ -168,7 +168,7 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 	}
 
 	public [Symbol.iterator](): IterableIterator<[ID, T]> {
-		return this.nodes[Symbol.iterator]();
+		return this.nodes.entries();
 	}
 
 	public get size(): number {
