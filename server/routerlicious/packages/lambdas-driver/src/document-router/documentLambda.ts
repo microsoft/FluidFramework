@@ -9,6 +9,7 @@ import {
     IQueuedMessage,
     IPartitionLambda,
     IPartitionLambdaFactory,
+    LambdaCloseType,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { DocumentContextManager } from "./contextManager";
@@ -45,7 +46,7 @@ export class DocumentLambda implements IPartitionLambda {
         this.contextManager.setTail(message);
     }
 
-    public close() {
+    public close(closeType: LambdaCloseType) {
         if (this.activityCheckTimer !== undefined) {
             clearInterval(this.activityCheckTimer);
             this.activityCheckTimer = undefined;
@@ -54,7 +55,7 @@ export class DocumentLambda implements IPartitionLambda {
         this.contextManager.close();
 
         for (const [, partition] of this.documents) {
-            partition.close();
+            partition.close(closeType);
         }
 
         this.documents.clear();
@@ -107,7 +108,7 @@ export class DocumentLambda implements IPartitionLambda {
         for (const [routingKey, documentPartition] of documentPartitions) {
             if (documentPartition.isInactive(now)) {
                 // Close and remove the inactive document
-                documentPartition.close();
+                documentPartition.close(LambdaCloseType.ActivityTimeout);
                 this.documents.delete(routingKey);
             }
         }
