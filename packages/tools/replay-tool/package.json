@@ -50,7 +50,7 @@
     "@fluidframework/build-common": "^0.20.0-0",
     "@fluidframework/eslint-config-fluid": "^0.22.1-0",
     "@microsoft/api-extractor": "^7.7.2",
-    "@types/assert": "^1.5.1",
+    "@types/assert": "^1.5.2",
     "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
