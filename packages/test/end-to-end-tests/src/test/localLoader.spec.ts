@@ -90,7 +90,7 @@ describe("LocalLoader", () => {
     let driver: ITestDriver;
     before(()=>{
         driver = getFluidTestDriver();
-    })
+    });
 
     const codeDetails: IFluidCodeDetails = {
         package: "localLoaderTestPackage",
