@@ -249,7 +249,7 @@
             "skipFiles": [
                 "<node_internals>/**/*.js"
             ],
-            "preLaunchTask": "fluid-build $cwd --nolint"
+            "preLaunchTask": "fluid-build $cwd -s tsc"
         }
 
     ]
