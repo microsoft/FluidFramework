@@ -4,9 +4,13 @@
  */
 
 'use strict';
+
+const testDriver = process.env.FLUID_TEST_DRIVER ?? "local";
+
 module.exports = {
   "exit": true,
   "recursive": true,
+  // "parallel": testDriver === "local",
   "require": [
     "node_modules/@fluidframework/mocha-test-setup",
     "node_modules/@fluidframework/test-drivers",
@@ -14,7 +18,7 @@ module.exports = {
   "reporter": process.env.FLUID_TEST_COVERAGE === "1" ?  "mocha-junit-reporter" : undefined,
   "reporter-options":[
     // give the report file a unique name based on driver config
-    `mochaFile=nyc/${process.env.FLUID_TEST_DRIVER ?? "default"}-junit-report.xml`
+    `mochaFile=nyc/${testDriver}-junit-report.xml`
   ],
   "unhandled-rejections": "strict"
 };

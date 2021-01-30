@@ -21,6 +21,7 @@ import {
     createDocumentId,
     LocalCodeLoader,
     OpProcessingController,
+    timeoutPromise,
 } from "@fluidframework/test-utils";
 import { Loader } from "@fluidframework/container-loader";
 import { V1, V2 } from "./compatUtils";
@@ -68,14 +69,16 @@ describe("context reload (hot-swap)", function() {
     const defaultCodeDetails = codeDetails(V1);
 
     const proposeAndWaitForReload = async (version: string, ...containers: IContainer[]) => {
-        // propose
-        await containers[0].getQuorum().propose("code", codeDetails(version));
-        // wait for "contextChanged" events on all containers
-        return Promise.all(containers.map(
-            async (c) => new Promise<void>((resolve, reject) =>
-                c.on("contextChanged", (code: IFluidCodeDetails) =>
-                    // eslint-disable-next-line prefer-promise-reject-errors
-                    typeof code.package === "object" && code.package.version === version ? resolve() : reject()))));
+        const ps = [
+            // propose
+            containers[0].proposeCodeDetails(codeDetails(version)).then(()=>{}),
+            // wait for "contextChanged" events on all containers
+            ...containers.map(
+                async (c) => timeoutPromise((resolve, reject) =>
+                    c.once("contextChanged", (code: IFluidCodeDetails) =>
+                        typeof code.package === "object" && code.package.version === version ? resolve() : reject()))),
+        ];
+        return Promise.all(ps);
     };
 
     async function createContainer(packageEntries, documentId: string): Promise<IContainer> {

@@ -31,7 +31,7 @@
                 "--root",
                 "${workspaceRoot}",
                 "--vscode",
-                "--noLint",
+                "--nolint",
                 "${fileDirname}"
             ],
             "group": "build",
