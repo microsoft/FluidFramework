@@ -15,6 +15,9 @@ export interface IDeliServerConfiguration {
 
     // Timeout for sending consolidated no-ops
     noOpConsolidationTimeout: number;
+
+    // Enables checkpointing kafka if it reprocesses a message
+    checkpointOnReprocess: boolean;
 }
 
 // Scribe lambda configuration
@@ -27,6 +30,9 @@ export interface IScribeServerConfiguration {
 
     // Enables writing a summary nack when an exception occurs during summary creation
     ignoreStorageException: boolean;
+
+    // Enables checkpointing kafka if it reprocesses a message
+    checkpointOnReprocess: boolean;
 }
 
 /**
@@ -64,10 +70,12 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         clientTimeout: 5 * 60 * 1000,
         activityTimeout: 30 * 1000,
         noOpConsolidationTimeout: 250,
+        checkpointOnReprocess: false,
     },
     scribe: {
         generateServiceSummary: true,
         clearCacheAfterServiceSummary: false,
         ignoreStorageException: false,
+        checkpointOnReprocess: false,
     },
 };

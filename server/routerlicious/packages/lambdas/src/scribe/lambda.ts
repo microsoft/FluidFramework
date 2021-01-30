@@ -60,6 +60,9 @@ export class ScribeLambda extends SequencedLambda {
     // Indicates whether cache needs to be cleaned after processing a message
     private clearCache: boolean = false;
 
+    // Indicates if the lambda was closed
+    private closed: boolean = false;
+
     constructor(
         protected readonly context: IContext,
         protected tenantId: string,
@@ -88,6 +91,10 @@ export class ScribeLambda extends SequencedLambda {
         // Skip any log messages we have already processed. Can occur in the case Kafka needed to restart but
         // we had already checkpointed at a given offset.
         if (message.offset <= this.lastOffset) {
+            if (this.serviceConfiguration.scribe.checkpointOnReprocess) {
+                this.context.checkpoint(message);
+            }
+
             return;
         }
 
@@ -282,6 +289,7 @@ export class ScribeLambda extends SequencedLambda {
     }
 
     public close() {
+        this.closed = true;
         this.protocolHandler.close();
     }
 
@@ -329,6 +337,10 @@ export class ScribeLambda extends SequencedLambda {
     }
 
     private checkpointCore(checkpoint: IScribe, queuedMessage: IQueuedMessage, clearCache: boolean) {
+        if (this.closed) {
+            return;
+        }
+
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (this.pendingP) {
             this.pendingCheckpointScribe = checkpoint;
