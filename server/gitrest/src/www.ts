@@ -5,7 +5,7 @@
 
 import * as http from "http";
 import * as path from "path";
-import * as debug from "debug";
+import { debug } from "debug";
 import nconf from "nconf";
 import * as winston from "winston";
 import * as app from "./app";

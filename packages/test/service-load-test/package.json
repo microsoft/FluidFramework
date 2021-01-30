@@ -55,6 +55,7 @@
     "@fluidframework/container-definitions": "^0.34.0",
     "@fluidframework/container-loader": "^0.34.0",
     "@fluidframework/core-interfaces": "^0.34.0",
+    "@fluidframework/odsp-doclib-utils": "^0.34.0",
     "@fluidframework/odsp-driver": "^0.34.0",
     "@fluidframework/test-utils": "^0.34.0",
     "@fluidframework/tool-utils": "^0.34.0",
@@ -80,6 +81,6 @@
     "mocha-junit-reporter": "^1.18.0",
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
-    "typescript": "~3.7.4"
+    "typescript": "~4.1.3"
   }
 }

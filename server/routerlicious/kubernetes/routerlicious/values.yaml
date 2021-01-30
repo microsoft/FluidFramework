@@ -32,6 +32,9 @@ alfred:
         maxBurst: 1000000
         minCooldownIntervalInMs: 1000000
         minThrottleIntervalInMs: 1000000
+  socketIoAdapter:
+    enableCustomSocketIoAdapter: true
+    shouldDisableDefaultNamespace: false
 
 deli:
   name: deli

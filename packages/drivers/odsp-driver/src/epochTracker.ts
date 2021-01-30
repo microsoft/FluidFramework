@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { fluidEpochMismatchError, OdspErrorType } from "@fluidframework/odsp-doclib-utils";
 import { ThrottlingError } from "@fluidframework/driver-utils";
+import { IConnected } from "@fluidframework/protocol-definitions";
 import { fetchAndParseAsJSONHelper, fetchHelper, IOdspResponse } from "./odspUtils";
 import { ICacheEntry, IFileEntry, LocalPersistentCacheAdapter } from "./odspCache";
 import { RateLimiter } from "./rateLimiter";
@@ -42,6 +43,18 @@ export class EpochTracker {
 
     public get fluidEpoch() {
         return this._fluidEpoch;
+    }
+
+    public async validateEpochFromPush(details: IConnected) {
+        const epoch = details.epoch;
+        // [Todo: Issue https://github.com/microsoft/FluidFramework/issues/4989]
+        // assert(epoch !== undefined, "Connection details should contain epoch");
+        try {
+            this.validateEpochFromResponse(epoch, "push");
+        } catch (error) {
+            await this.checkForEpochError(error, epoch, "push");
+            throw error;
+        }
     }
 
     public async fetchFromCache<T>(
@@ -217,14 +230,5 @@ export class EpochTracker {
     }
 }
 
-export enum FetchType {
-    blob = "blob",
-    createBlob = "createBlob",
-    createFile = "createFile",
-    joinSession = "joinSession",
-    ops = "ops",
-    other = "other",
-    snaphsotTree = "snapshotTree",
-    treesLatest = "treesLatest",
-    uploadSummary = "uploadSummary",
-}
+export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "other" | "snapshotTree" |
+    "treesLatest" | "uploadSummary" | "push";

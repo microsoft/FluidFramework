@@ -132,4 +132,9 @@ export interface IConnected {
      * that is likely to be more up-to-date.
      */
     checkpointSequenceNumber?: number;
+
+    /**
+     * Represents the version of document at server.
+     */
+    epoch?: string;
 }

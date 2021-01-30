@@ -29,7 +29,7 @@ import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
-import { EpochTracker, FetchType } from "./epochTracker";
+import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 
 const isInvalidFileName = (fileName: string): boolean => {
@@ -79,7 +79,7 @@ export async function createNewFluidFile(
                         headers,
                         method: "POST",
                     },
-                    FetchType.createFile);
+                    "createFile");
 
                 const content = fetchResponse.content;
                 if (!content || !content.itemId) {
