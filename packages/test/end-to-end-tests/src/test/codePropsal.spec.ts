@@ -13,6 +13,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
     createAndAttachContainer,
+    createDocumentId,
     createLoader as createLoaderUtil,
     ITestFluidObject,
     OpProcessingController,
@@ -104,7 +105,7 @@ describe("CodeProposal.EndToEnd", () => {
     let containers: IContainer[];
     beforeEach(async () => {
         containers = [];
-        const documentId = Date.now().toString();
+        const documentId = createDocumentId();
         const codeDetails: IFluidCodeDetails = { package: packageV1 };
 
         // Create a Container for the first client.
@@ -371,7 +372,7 @@ describe("CodeProposal.EndToEnd", () => {
             if (!container.closed) {
                 const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
                 const map = await dataObject.getSharedObject<ISharedMap>("map");
-                const key = Date.now().toString();
+                const key = createDocumentId();
                 map.set(key, key);
                 keys.push(key);
                 maps.push(map);

@@ -212,6 +212,7 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
         this._deltaConnectionServer = undefined;
         this._documentServiceFactory = undefined;
         this._opProcessingController = undefined;
+        this._documentId = undefined;
     }
 }
 

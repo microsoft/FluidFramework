@@ -17,6 +17,8 @@ const defaultCodeDetails: IFluidCodeDetails = {
     config: {},
 };
 
+export const createDocumentId = (): string=> uuid();
+
 /**
  * Shared base class for test object provider.  Contain code for loader and container creation and loading
  */
@@ -53,7 +55,7 @@ export  class TestObjectProvider<TestContainerConfigType> {
 
     get documentId() {
         if (this._documentId === undefined) {
-            this._documentId = uuid();
+            this._documentId = createDocumentId();
         }
         return this._documentId;
     }

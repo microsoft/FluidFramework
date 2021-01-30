@@ -18,6 +18,7 @@ import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     createAndAttachContainer,
+    createDocumentId,
     LocalCodeLoader,
     OpProcessingController,
 } from "@fluidframework/test-utils";
@@ -192,7 +193,7 @@ describe("context reload (hot-swap)", function() {
 
     describe("single container", () => {
         beforeEach(async function() {
-            const docId = Date.now().toString();
+            const docId = createDocumentId();
             container = await createContainer(
                 [
                     [codeDetails(V1), createRuntimeFactory(TestDataStoreV1)],
@@ -211,7 +212,7 @@ describe("context reload (hot-swap)", function() {
 
     describe("two containers", () => {
         it("loads version 2", async () => {
-            const docId = Date.now().toString();
+            const docId = createDocumentId();
             opProcessingController = new OpProcessingController();
 
             const packageEntries = [
@@ -266,7 +267,7 @@ describe("context reload (hot-swap)", function() {
         describe("compat", () => {
             describe("old loader, new runtime", () => {
                 beforeEach(async function() {
-                    const documentId = Date.now().toString();
+                    const documentId = createDocumentId();
                     container = await createContainer(
                         [
                             [codeDetails(V1), oldApi.createOldRuntimeFactory(oldApi.OldTestDataObjectV1)],
@@ -288,7 +289,7 @@ describe("context reload (hot-swap)", function() {
                         [codeDetails(V1), createRuntimeFactory(TestDataStoreV1)],
                         [codeDetails(V2), oldApi.createOldRuntimeFactory(oldApi.OldTestDataObjectV2)],
                     ],
-                    Date.now().toString());
+                    createDocumentId());
                     dataStoreV1 = await requestFluidObject<TestDataStoreV1>(container, "default");
                     assert.strictEqual(dataStoreV1.version, TestDataStoreV1.version);
 

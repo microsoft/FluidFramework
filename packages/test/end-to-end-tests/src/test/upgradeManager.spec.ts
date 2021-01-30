@@ -17,6 +17,7 @@ import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     createAndAttachContainer,
+    createDocumentId,
     LocalCodeLoader,
     OpProcessingController,
 } from "@fluidframework/test-utils";
@@ -81,7 +82,7 @@ describe("UpgradeManager (hot-swap)", () => {
         const addCounts = Array(clients).fill(0);
         const approveCounts = Array(clients).fill(0);
         const containers: IContainer[] = [];
-        const documentId = Date.now().toString();
+        const documentId = createDocumentId();
 
         // Create the first Container.
         const container1 = await createContainer(documentId, TestDataObject.getFactory());
@@ -132,7 +133,7 @@ describe("UpgradeManager (hot-swap)", () => {
     });
 
     it("1 client low priority is immediate", async () => {
-        const documentId = Date.now().toString();
+        const documentId = createDocumentId();
 
         const container = await createContainer(documentId, TestDataObject.getFactory());
         const dataObject = await requestFluidObject<TestDataObject>(container, "default");
@@ -159,7 +160,7 @@ describe("UpgradeManager (hot-swap)", () => {
     });
 
     it("2 clients low priority is delayed", async () => {
-        const documentId = Date.now().toString();
+        const documentId = createDocumentId();
 
         // Create the first Container.
         const container1 = await createContainer(documentId, TestDataObject.getFactory());

@@ -12,6 +12,7 @@ import {
     ITestFluidObject,
     TestFluidObject,
     OpProcessingController,
+    createDocumentId,
 } from "@fluidframework/test-utils";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
@@ -99,7 +100,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
     };
 
     beforeEach(async () => {
-        const documentId = Date.now().toString();
+        const documentId = createDocumentId();
         request = driver.createCreateNewRequest(documentId);
         loader = createTestLoader();
         opProcessingController = new OpProcessingController();

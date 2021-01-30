@@ -12,7 +12,7 @@ import {
 import { IContainer, ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { createAndAttachContainer, createLoader, OpProcessingController } from "@fluidframework/test-utils";
+import { createAndAttachContainer, createDocumentId, createLoader, OpProcessingController } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
@@ -95,7 +95,7 @@ describe("Loader.request", () => {
     }
     let container: IContainer;
     beforeEach(async () => {
-        const documentId = Date.now().toString();
+        const documentId = createDocumentId();
         container = await createContainer(documentId);
         dataStore1 = await requestFluidObject(container, "default");
 

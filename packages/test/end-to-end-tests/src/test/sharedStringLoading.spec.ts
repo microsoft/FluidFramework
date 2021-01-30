@@ -9,6 +9,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import {
     ChannelFactoryRegistry,
+    createDocumentId,
     ITestFluidObject,
     LocalCodeLoader,
     SupportedExportInterfaces,
@@ -38,7 +39,7 @@ describe("SharedString", () => {
             IFluidDataStoreFactory: new TestFluidObjectFactory(registry),
         };
         const text = "hello world";
-        const documentId = Date.now().toString();
+        const documentId = createDocumentId();
         { // creating client
             const codeDetails = { package: "no-dynamic-pkg" };
             const codeLoader = new LocalCodeLoader([
@@ -137,7 +138,7 @@ describe("SharedString", () => {
             IFluidDataStoreFactory: new TestFluidObjectFactory(registry),
         };
         const text = "hello world";
-        const documentId = Date.now().toString();
+        const documentId = createDocumentId();
         let initialText = "";
         { // creating client
             const codeDetails = { package: "no-dynamic-pkg" };

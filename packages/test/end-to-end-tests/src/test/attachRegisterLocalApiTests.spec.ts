@@ -13,6 +13,7 @@ import {
     ITestFluidObject,
     TestFluidObjectFactory,
     TestFluidObject,
+    createDocumentId,
 } from "@fluidframework/test-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
@@ -77,7 +78,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
     }
 
     beforeEach(async () => {
-        const documentId = Date.now().toString();
+        const documentId = createDocumentId();
         const urlResolver = driver.createUrlResolver();
         request = driver.createCreateNewRequest(documentId);
         loader = createTestLoader(urlResolver);

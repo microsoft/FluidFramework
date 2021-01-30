@@ -24,7 +24,7 @@ import {
     OdspErrorType,
 } from "@fluidframework/odsp-doclib-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
-import { LocalCodeLoader } from "@fluidframework/test-utils";
+import { createDocumentId, LocalCodeLoader } from "@fluidframework/test-utils";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 describe("Errors Types", () => {
@@ -40,7 +40,7 @@ describe("Errors Types", () => {
     });
 
     it("GeneralError Test", async () => {
-        const id = Date.now().toString();
+        const id = createDocumentId();
         // Setup
         urlResolver = driver.createUrlResolver();
         testRequest = { url:driver.createContainerUrl(id) };
