@@ -26,7 +26,6 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
-
 describe("SharedString", () => {
     let driver: ITestDriver;
     before(()=>{

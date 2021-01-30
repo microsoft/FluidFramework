@@ -43,6 +43,7 @@ import {
     TestFluidObjectFactory,
 } from "old-test-utils";
 
+import {v4 as uuid} from "uuid";
 import {
     createRuntimeFactory,
     DataObjectFactoryType,
@@ -53,7 +54,6 @@ import {
     V2,
 } from "./compatUtils";
 import * as newVer from "./newVersion";
-import {v4 as uuid} from "uuid";
 /* eslint-enable import/no-extraneous-dependencies */
 
 const defaultCodeDetails: IFluidCodeDetails = {
@@ -106,10 +106,10 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
         createCreateNewRequest: (testId)=>this.urlResolver.createCreateNewRequest(testId),
         createDocumentServiceFactory: ()=>this.documentServiceFactory as any as newVer.IDocumentServiceFactory,
         createUrlResolver: ()=>this.urlResolver,
-    }
+    };
 
     get documentId(): string {
-        if(this._documentId == undefined){
+        if(this._documentId === undefined) {
             this._documentId = uuid();
         }
         return this._documentId;

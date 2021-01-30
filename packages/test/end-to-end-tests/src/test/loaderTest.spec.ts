@@ -12,7 +12,12 @@ import {
 import { IContainer, ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { createAndAttachContainer, createDocumentId, createLoader, OpProcessingController } from "@fluidframework/test-utils";
+import {
+    createAndAttachContainer,
+    createDocumentId,
+    createLoader,
+    OpProcessingController,
+} from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
@@ -148,7 +153,9 @@ describe("Loader.request", () => {
             [LoaderHeader.cache]: false,
             [LoaderHeader.pause]: true,
         };
-        const container2 = await loader.resolve({ url: (await container.getAbsoluteUrl(""))!, headers });
+        const url = await container.getAbsoluteUrl("");
+        assert(url);
+        const container2 = await loader.resolve({ url, headers });
         opProcessingController.addDeltaManagers(container2.deltaManager);
 
         // create a new data store using the original container
@@ -181,10 +188,12 @@ describe("Loader.request", () => {
     });
 
     it("caches the loaded container across multiple requests as expected", async () => {
+        const url = await container.getAbsoluteUrl("");
+        assert(url);
         // load the containers paused
-        const container1 = await loader.resolve({ url: (await container.getAbsoluteUrl(""))!, headers: { [LoaderHeader.pause]: true } });
+        const container1 = await loader.resolve({ url, headers: { [LoaderHeader.pause]: true } });
         opProcessingController.addDeltaManagers(container1.deltaManager);
-        const container2 = await loader.resolve({ url: (await container.getAbsoluteUrl(""))!, headers: { [LoaderHeader.pause]: true } });
+        const container2 = await loader.resolve({ url, headers: { [LoaderHeader.pause]: true } });
 
         assert.strictEqual(container1, container2, "container not cached across multiple loader requests");
 
