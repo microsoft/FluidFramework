@@ -89,7 +89,8 @@ export class AlfredResources implements utils.IResources {
         public port: any,
         public documentsCollectionName: string,
         public metricClientConfig: any) {
-        this.webServerFactory = new services.SocketIoWebServerFactory(this.redisConfig);
+        const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
+        this.webServerFactory = new services.SocketIoWebServerFactory(this.redisConfig, socketIoAdapterConfig);
     }
 
     public async dispose(): Promise<void> {

@@ -33,8 +33,9 @@ export interface IDedupCaches {
     blobShaToPath: Map<string, string>,
     // Cache which contains mapping from blob path to blob sha in summary. Path starts from ".app" or ".protocol".
     // It is reverse mapping of "blobShaToPath" cache but the number entries in it are always >= number of entries in
-    // "blobShaToPath" cache as hash of multiple blobs can be same but not the path.
-    pathToBlobSha: Map<string, string>,
+    // "blobShaToPath" cache as hash of multiple blobs can be same but not the path. In case the blob contents were not
+    // returned during snapshot fetch we will put the value as undefined.
+    pathToBlobSha: Map<string, string | undefined>,
     // Cache which contains mapping from trees path to summary tree in the summary. Path starts from ".app" or ".protocol".
     // The stored trees are fully expanded trees. However the blobs content are empty as we don't need them because their
     // hashes are stored in the "pathToBlobSha" cache for a given path.
@@ -98,13 +99,18 @@ export class OdspSummaryUploadManager {
             tree: {},
         };
         for (const [key, value] of Object.entries(snapshotTree.blobs)) {
+            // fullBlobPath does not start with "/"
+            const fullBlobPath = path === "" ? key : `${path}/${key}`;
+            let hash: string | undefined;
             const blobValue = this.blobCache.get(value);
-            assert(blobValue !== undefined, "Blob should exists");
-            const hash = await hashFile(
-                blobValue instanceof ArrayBuffer ?
-                    IsoBuffer.from(blobValue) :
-                        IsoBuffer.from(blobValue.content, blobValue.encoding ?? "utf-8"),
-            );
+            if (blobValue !== undefined) {
+                hash = await hashFile(
+                    blobValue instanceof ArrayBuffer ?
+                        IsoBuffer.from(blobValue) :
+                            IsoBuffer.from(blobValue.content, blobValue.encoding ?? "utf-8"),
+                );
+                this.blobTreeDedupCaches.blobShaToPath.set(hash, fullBlobPath);
+            }
             // We are setting the content as undefined because we won't use it anywhere.
             // Instead we will use the hash of the blob from pathToBlobSha cache.
             summaryTree.tree[key] = {
@@ -112,10 +118,6 @@ export class OdspSummaryUploadManager {
                 content: "",
             };
             (summaryTree.tree[key] as any).content = undefined;
-
-            // fullBlobPath does not start with "/"
-            const fullBlobPath = path === "" ? key : `${path}/${key}`;
-            this.blobTreeDedupCaches.blobShaToPath.set(hash, fullBlobPath);
             this.blobTreeDedupCaches.pathToBlobSha.set(fullBlobPath, hash);
         }
 
@@ -315,9 +317,15 @@ export class OdspSummaryUploadManager {
                     // hash from the cache.
                     if (expanded) {
                         hash = this.blobTreeDedupCaches.pathToBlobSha.get(currentPath);
-                        assert(hash !== undefined, "hash should be set here");
-                        cachedPath = this.blobTreeDedupCaches.blobShaToPath.get(hash);
-                        assert(cachedPath !== undefined, "path should be defined as path->sha mapping exists");
+                        if (hash !== undefined) {
+                            cachedPath = this.blobTreeDedupCaches.blobShaToPath.get(hash);
+                            assert(cachedPath !== undefined, "path should be defined as path->sha mapping exists");
+                        } else {
+                            // We may not have the blob hash in case its contents were not returned during snapshot fetch.
+                            // In that case just put the current path as cached path as its contents should not have changed
+                            // in expansion flow.
+                            cachedPath = currentPath;
+                        }
                     } else {
                         if (typeof summaryObject.content === "string") {
                             value = {
@@ -345,7 +353,9 @@ export class OdspSummaryUploadManager {
                         id = `${parentHandle}/${cachedPath}`;
                         value = undefined;
                     }
-                    blobTreeDedupCachesLatest.blobShaToPath.set(hash, currentPath);
+                    if (hash !== undefined) {
+                        blobTreeDedupCachesLatest.blobShaToPath.set(hash, currentPath);
+                    }
                     blobTreeDedupCachesLatest.pathToBlobSha.set(currentPath, hash);
                     break;
                 }
