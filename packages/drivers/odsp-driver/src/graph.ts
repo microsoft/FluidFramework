@@ -112,7 +112,7 @@ export async function graphFetch(
     const url = graphUrl.startsWith("http") ? graphUrl : `https://graph.microsoft.com/v1.0/${graphUrl}`;
     const retryFilter: RetryFilter<Response> = allowlist([offlineFetchFailureStatusCode, fetchFailureStatusCode]);
     const finalRetryPolicy: RetryPolicy<Response> = {
-        backoffFn: constantBackoff(1),
+        backoffFn: constantBackoff(1000),
         ...retryPolicy,
         maxRetries: retryPolicy !== undefined ? Math.max(3, retryPolicy?.maxRetries) : 3,
         filter: (response) => retryFilter(response) || !!retryPolicy?.filter(response),
