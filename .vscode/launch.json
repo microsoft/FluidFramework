@@ -236,8 +236,7 @@
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "stopOnEntry": false,
             "env": {
-
-                "FLUID_TEST_DRIVER": "tinylicious",
+                // "FLUID_TEST_DRIVER": "tinylicious",
                 "TS_NODE_PROJECT": "${fileDirname}/tsconfig.json",
             },
             "args": [
