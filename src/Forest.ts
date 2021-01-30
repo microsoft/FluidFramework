@@ -144,6 +144,7 @@ interface ForestState<ID, T, TParentData> {
 class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 	/**
 	 * Contains the nodes in the forest.
+	 * Used as an immutable data-structure: must not be modified.
 	 */
 	private readonly nodes: BTree<ID, T>;
 
@@ -155,6 +156,10 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 
 	private readonly getChildren: (_: T) => Iterable<[ID, TParentData]>;
 
+	/**
+	 * Caller must ensure provided BTrees are not modified.
+	 * Will not modify the BTrees.
+	 */
 	public constructor(data: ForestState<ID, T, TParentData> | ((_: T) => Iterable<[ID, TParentData]>)) {
 		if (typeof data === 'object') {
 			this.nodes = data.nodes;
