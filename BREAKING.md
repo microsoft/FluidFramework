@@ -1,3 +1,10 @@
+## 0.34 Breaking changes
+[Aqueduct writeBlob() and BlobHandle implementation removed](#Aqueduct-writeBlob-and-BlobHandle-implementation-removed)
+
+## Aqueduct writeBlob() and BlobHandle implementation removed
+`writeBlob()` and `BlobHandle` have been removed from aqueduct. Please use `FluidDataStoreRuntime.uploadBlob()` or `ContainerRuntime.uploadBlob()` instead.
+
+
 ## 0.33 Breaking changes
 - [Normalizing enum ContainerErrorType](#normalizing-enum-containererrortype)
 - [Map and Directory typing changes from enabling strictNullCheck](#map-and-directory-typing-changes-from-enabling-strictNullCheck)
