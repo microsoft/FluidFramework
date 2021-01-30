@@ -16,7 +16,7 @@ export interface IDeliServerConfiguration {
     // Timeout for sending consolidated no-ops
     noOpConsolidationTimeout: number;
 
-    // Enables checkpointing kafka if it reprocesses a message
+    // Enables checkpointing kafka when it reprocesses a message
     checkpointOnReprocess: boolean;
 }
 
@@ -31,7 +31,7 @@ export interface IScribeServerConfiguration {
     // Enables writing a summary nack when an exception occurs during summary creation
     ignoreStorageException: boolean;
 
-    // Enables checkpointing kafka if it reprocesses a message
+    // Enables checkpointing kafka when it reprocesses a message
     checkpointOnReprocess: boolean;
 }
 
