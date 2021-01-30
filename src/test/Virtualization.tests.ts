@@ -1,6 +1,5 @@
 // Copyright (C) Microsoft Corporation. All rights reserved.
 
-// import { IsoBuffer } from '@fluidframework/common-utils';
 import { DataObject } from '@fluidframework/aqueduct';
 import { IContainerRuntimeOptions } from '@fluidframework/container-runtime';
 import { Container } from '@fluidframework/container-loader';
@@ -110,6 +109,6 @@ describe('SharedTree history virtualization', () => {
 		sharedTree2.loadSummary(summary);
 
 		// Ensure chunked edit can be retrieved
-		expect((await sharedTree2.edits.getAtIndex(2)).id).to.equal(expectedEdits[2].id);
+		expect((await sharedTree2.edits.getEditAtIndex(2)).id).to.equal(expectedEdits[2].id);
 	});
 });
