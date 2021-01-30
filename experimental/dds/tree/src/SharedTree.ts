@@ -409,9 +409,9 @@ export class SharedTree extends SharedObject {
 		this.emit(SharedTreeEvent.EditCommitted, edit.id);
 	}
 
-    protected rebaseOpCore() {
-        throw new Error("not implemented");
-    }
+	protected rebaseOpCore() {
+		throw new Error('not implemented');
+	}
 }
 
 function loadSummary(
