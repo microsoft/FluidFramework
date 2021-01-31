@@ -27,9 +27,6 @@ export interface IScribeServerConfiguration {
 
     // Enables writing a summary nack when an exception occurs during summary creation
     ignoreStorageException: boolean;
-
-    // Enables checkpointing kafka when it reprocesses a message
-    checkpointOnReprocess: boolean;
 }
 
 /**
