@@ -166,9 +166,11 @@
             "Framework": {
                 "packages": [
                     "@fluid-internal/client-api",
-                    "@fluid-experimental/experimental-fluidframework"
+                    "@fluid-experimental/experimental-fluidframework",
+                    "@fluid-experimental/data-objects"
                 ],
                 "dirs": [
+                    "experimental/framework/",
                     "packages/framework/"
                 ],
                 "deps": [
