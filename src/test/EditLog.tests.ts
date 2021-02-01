@@ -230,27 +230,30 @@ describe('EditLog', () => {
 		};
 
 		const editIds: EditId[] = [];
-		const editChunk1: EditWithoutId[] = [];
-		const editChunk2: EditWithoutId[] = [];
+		const editChunks: EditWithoutId[][] = [];
+		const numberOfChunks = 2;
+		const editsPerChunk = 5;
 
-		for (let i = 0; i < 10; i++) {
+		let inProgessChunk: EditWithoutId[] = [];
+		for (let i = 0; i < numberOfChunks * editsPerChunk; i++) {
 			const { id, editWithoutId } = separateEditAndId(newEdit([]));
 			editIds.push(id);
-			i > 4 ? editChunk1.push(editWithoutId) : editChunk2.push(editWithoutId);
+
+			inProgessChunk.push(editWithoutId);
+
+			if (inProgessChunk.length === editsPerChunk) {
+				editChunks.push(inProgessChunk.slice());
+				inProgessChunk = [];
+			}
 		}
 
-		const handles: EditHandle[] = [
-			{
+		const handles: EditHandle[] = editChunks.map((chunk) => {
+			return {
 				get: async () => {
-					return IsoBuffer.from(JSON.stringify({ edits: editChunk1 }));
+					return IsoBuffer.from(JSON.stringify({ edits: chunk }));
 				},
-			},
-			{
-				get: async () => {
-					return IsoBuffer.from(JSON.stringify({ edits: editChunk2 }));
-				},
-			},
-		];
+			};
+		});
 
 		let chunkKey = 0;
 		const serializedHandles = handles.map((chunk) => {
