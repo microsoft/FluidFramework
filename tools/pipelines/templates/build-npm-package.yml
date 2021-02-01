@@ -250,7 +250,7 @@ stages:
               testResultsFormat: 'JUnit'
               testResultsFiles: '**/*junit-report.xml'
               searchFolder: ${{ parameters.buildDirectory }}/nyc
-              mergeTestResults: false
+              mergeTestResults: true
             condition: succeededOrFailed()
 
         # Pack

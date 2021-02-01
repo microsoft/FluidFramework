@@ -20,7 +20,7 @@ const config ={
   "unhandled-rejections": "strict"
 };
 
-if(process.env.FLUID_TEST_COVERAGE === "1"){
+if(process.env.FLUID_TEST_REPORT === "1"){
   config["reporter"] = `mocha-junit-reporter`;
   config["reporter-options"] = [
     // give the report file a unique name based on driver config
