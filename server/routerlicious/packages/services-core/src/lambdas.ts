@@ -27,7 +27,7 @@ export interface ILogger {
 
 export interface IContextErrorData {
     /**
-     * Indicates whether the error is recoverable and the lambdashould be restarted.
+     * Indicates whether the error is recoverable and the lambda should be restarted.
      */
     restart: boolean;
 
