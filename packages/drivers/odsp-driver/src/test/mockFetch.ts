@@ -25,6 +25,7 @@ export async function mockFetch<T>(
     callback: () => Promise<T>,
     responseType = okResponse,
     restoreOnCall = false,
+    restoreAtEnd = true,
 ): Promise<T> {
     const fetchStub = sinon.stub(fetchModule, "default");
     fetchStub.callsFake(async () => {
@@ -38,6 +39,8 @@ export async function mockFetch<T>(
     try {
         return await callback();
     } finally {
-        fetchStub.restore();
+        if (restoreAtEnd) {
+            fetchStub.restore();
+        }
     }
 }

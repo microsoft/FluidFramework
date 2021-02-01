@@ -234,7 +234,7 @@ export class EpochTracker {
 }
 
 export class EpochTrackerWithRedemption extends EpochTracker {
-    private readonly treesLatestDeferral = new Deferred<void>();
+    private readonly treesLatestDeferral = new DeferralWithCallback();
 
     protected validateEpochFromResponse(
         epochFromResponse: string | undefined | null,
@@ -246,7 +246,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
         // Any successful call means we have access to a file, i.e. any redemption that was required already happened.
         // That covers cases of "treesLatest" as well as "getVersions" or "createFile" - all the ways we can start
         // exploring a file.
-        this.treesLatestDeferral.resolve();
+        this.treesLatestDeferral.deferral.resolve();
     }
 
     public async fetchAndParseAsJSON<T>(
@@ -257,7 +257,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
     ): Promise<IOdspResponse<T>> {
         // Optimize the flow if we know that treesLatestDeferral was already completed by the timer we started
         // joinSession call. If we did - there is no reason to repeat the call as it will fail with same error.
-        const completed = this.treesLatestDeferral.isCompleted;
+        const completed = this.treesLatestDeferral.deferral.isCompleted;
 
         try {
             return await super.fetchAndParseAsJSON<T>(url, fetchOptions, fetchType, addInBody);
@@ -266,7 +266,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
             // Similar, if getVersions failed, we should not do any further storage calls.
             // So treesLatest is the only call that can have parallel joinSession request.
             if (fetchType === "treesLatest") {
-                this.treesLatestDeferral.reject(error);
+                this.treesLatestDeferral.deferral.reject(error);
             }
             if (fetchType !== "joinSession" || error.statusCode !== 404 || completed) {
                 throw error;
@@ -276,7 +276,27 @@ export class EpochTrackerWithRedemption extends EpochTracker {
         // It is joinSession failing with 404.
         // Repeat after waiting for treeLatest succeeding (of fail if it fails).
         // No special handling after first call - if file has been deleted, then it's game over.
-        await this.treesLatestDeferral.promise;
+        await this.treesLatestDeferral.addListenerWithCallback();
         return super.fetchAndParseAsJSON<T>(url, fetchOptions, fetchType, addInBody);
+    }
+}
+
+class DeferralWithCallback {
+    public readonly deferral;
+    private callback?: () => Promise<any>;
+
+    constructor() {
+        this.deferral = new Deferred<void>();
+    }
+
+    setCallback(callback) {
+        this.callback = callback;
+    }
+
+    async addListenerWithCallback() {
+        if (this.callback) {
+            await this.callback();
+        }
+        await this.deferral.promise;
     }
 }

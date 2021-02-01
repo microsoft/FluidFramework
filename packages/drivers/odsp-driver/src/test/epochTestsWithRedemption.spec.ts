@@ -10,7 +10,7 @@ import { IOdspResolvedUrl } from "../contracts";
 import { EpochTrackerWithRedemption } from "../epochTracker";
 import { ICacheEntry, LocalPersistentCache, LocalPersistentCacheAdapter } from "../odspCache";
 import { getHashedDocumentId } from "../odspUtils";
-import { mockFetch, notFound } from "./mockFetch";
+import { mockFetch, notFound, okResponse } from "./mockFetch";
 
 describe("Tests for Epoch Tracker With Redemption", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -40,10 +40,10 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 
         try {
             // We will trigger a successful call to return the value set in the cache after the failed joinSession call
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            setTimeout(async () => mockFetch({}, async () => {
+            // eslint-disable-next-line @typescript-eslint/dot-notation
+            epochTracker["treesLatestDeferral"].setCallback(async () => mockFetch({}, async () => {
                 return epochTracker.fetchFromCache(cacheEntry1, undefined, "other");
-            }), 100);
+            }, okResponse, false, false));
 
             // Initial joinSession call will return 404 but after the timeout, the call will be retried and succeed
             await mockFetch({ headers: { "x-fluid-epoch": "epoch1" } }, async () => {
@@ -59,17 +59,17 @@ describe("Tests for Epoch Tracker With Redemption", () => {
         let success: boolean = true;
 
         try {
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            setTimeout(async () => {
+            // eslint-disable-next-line @typescript-eslint/dot-notation
+            epochTracker["treesLatestDeferral"].setCallback(async () => {
                 try {
                     await mockFetch({}, async () => {
                         return epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "treesLatest");
-                    }, notFound, true);
+                    }, notFound, false, false);
                 } catch (error) {
                     assert.strictEqual(error.errorType, DriverErrorType.fileNotFoundOrAccessDeniedError,
                         "Error should be file not found or access denied error");
                 }
-            }, 100);
+            });
             await mockFetch({ headers: { "x-fluid-epoch": "epoch1" } }, async () => {
                 return epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession");
             }, notFound, true);
