@@ -96,7 +96,7 @@ export function assertArrayOfOne<T>(array: readonly T[], message = 'array value 
 
 /**
  * Redefine a property to have the given value. This is simply a type-safe wrapper around
- * `Object.defineProperty`, but it is useful for caching getters on first read.
+ * `Object.defineProperty`, but it is useful for caching public getters on first read.
  * @example
  * ```
  * // `randomOnce()` will return a random number, but always the same random number.

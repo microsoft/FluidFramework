@@ -561,7 +561,7 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
     // (undocumented)
     get identifier(): NodeId;
     // (undocumented)
-    get node(): TreeNode<TreeNodeHandle>;
+    get node(): ChangeNode;
     // (undocumented)
     get payload(): Payload | undefined;
     // (undocumented)
