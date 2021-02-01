@@ -40,7 +40,7 @@ function Sanitize(msgPath: string, fullScrub: boolean, noBail: boolean) {
     const input = fs.readFileSync(msgPath, { encoding: "utf-8" });
     const messages = JSON.parse(input) as ISequencedDocumentMessage[];
 
-    const sanitizer = new Sanitizer(messages, fullScrub, noBail);
+    const sanitizer = new Sanitizer(messages, fullScrub, noBail, true);
     const cleanMessages = sanitizer.sanitize();
 
     fs.writeFileSync(msgPath, JSON.stringify(cleanMessages, undefined, 2));

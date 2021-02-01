@@ -79,7 +79,14 @@ class ChunkedOpProcessor {
 
     constructor(
         readonly validateSchemaFn: (object: any, schema: any) => boolean,
+        readonly debug: boolean,
     ) { }
+
+    debugMsg(msg: any) {
+        if (this.debug) {
+            console.error(msg);
+        }
+    }
 
     addMessage(message: any): void {
         this.messages.push(message);
@@ -93,8 +100,8 @@ class ChunkedOpProcessor {
                 parsed = parsed.contents;
             }
         } catch (e) {
-            console.error(e);
-            console.error(message.contents);
+            this.debugMsg(e);
+            this.debugMsg(message.contents);
         }
         this.validateSchemaFn(parsed, chunkedOpContentsSchema);
         this.parsedMessageContents.push(parsed);
@@ -118,8 +125,8 @@ class ChunkedOpProcessor {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return JSON.parse(contentsString);
         } catch (e) {
-            console.error(contentsString);
-            console.error(e);
+            this.debugMsg(contentsString);
+            this.debugMsg(e);
             return undefined;
         }
     }
@@ -139,7 +146,7 @@ class ChunkedOpProcessor {
             stringified = JSON.stringify(contents);
             assert(stringified.length <= this.concatenatedLength);
         } catch (e) {
-            console.error(e);
+            this.debugMsg(e);
             throw e;
         }
 
@@ -164,7 +171,7 @@ class ChunkedOpProcessor {
                     stringifiedParsedContents = JSON.stringify(parsedContents);
                 }
             } catch (e) {
-                console.error(e);
+                this.debugMsg(e);
             }
 
             message.contents = stringifiedParsedContents;
@@ -211,7 +218,7 @@ export class Sanitizer {
             const errorMsg = `Bad msg fmt:\n${result.toString()}\n${JSON.stringify(object, undefined, 2)}`;
 
             if (this.fullScrub || this.noBail) {
-                console.error(errorMsg);
+                this.debugMsg(errorMsg);
             } else {
                 throw new Error(errorMsg);
             }
@@ -219,12 +226,13 @@ export class Sanitizer {
         return result.valid;
     };
 
-    readonly chunkProcessor = new ChunkedOpProcessor(this.objectMatchesSchema);
+    readonly chunkProcessor = new ChunkedOpProcessor(this.objectMatchesSchema, this.debug);
 
     constructor(
         readonly messages: ISequencedDocumentMessage[],
         readonly fullScrub: boolean,
         readonly noBail: boolean,
+        readonly debug: boolean = false,
     ) {
         this.defaultExcludedKeys.add("type");
         this.defaultExcludedKeys.add("id");
@@ -232,6 +240,12 @@ export class Sanitizer {
         this.defaultExcludedKeys.add("snapshotFormatVersion");
         this.defaultExcludedKeys.add("packageVersion");
         this.mergeTreeExcludedKeys.add("nodeType");
+    }
+
+    debugMsg(msg: any) {
+        if (this.debug) {
+            console.error(msg);
+        }
     }
 
     isFluidObjectKey(key: string): boolean {
@@ -377,7 +391,7 @@ export class Sanitizer {
 
             message.data = JSON.stringify(data);
         } catch (e) {
-            console.error(e);
+            this.debugMsg(e);
         }
     }
 
@@ -398,7 +412,7 @@ export class Sanitizer {
                         }
                     }
                 } catch (e) {
-                    console.error(e);
+                    this.debugMsg(e);
                 }
             } else {
                 if (this.fullScrub) {
@@ -422,7 +436,7 @@ export class Sanitizer {
                         element.value.contents = JSON.stringify(data);
                     }
                 } catch (e) {
-                    console.error(e);
+                    this.debugMsg(e);
                 }
             }
         });
@@ -464,7 +478,7 @@ export class Sanitizer {
                 this.fixAttachContents(data);
                 message.contents = JSON.stringify(data);
             } catch (e) {
-                console.error(e);
+                this.debugMsg(e);
                 return;
             }
         } else {
@@ -507,7 +521,7 @@ export class Sanitizer {
                         this.fixAttachContents(data);
                         contents.contents.content = JSON.stringify(data);
                     } catch (e) {
-                        console.error(e);
+                        this.debugMsg(e);
                     }
                 } else {
                     this.fixAttachContents(contents.contents.content);
@@ -558,7 +572,7 @@ export class Sanitizer {
             try {
                 msgContents = JSON.parse(message.contents);
             } catch (e) {
-                console.error(e);
+                this.debugMsg(e);
                 return;
             }
         } else {
@@ -584,7 +598,7 @@ export class Sanitizer {
             return this.fixChunkedOp(message);
         } else if (msgContents.type === "blobAttach") {
             // TODO: handle this properly once blob api is used
-            console.error("TODO: blobAttach ops are skipped/unhandled");
+            this.debugMsg("TODO: blobAttach ops are skipped/unhandled");
             return;
         } else {
             // A regular op
@@ -596,7 +610,7 @@ export class Sanitizer {
             try {
                 message.contents = JSON.stringify(msgContents);
             } catch (e) {
-                console.error(e);
+                this.debugMsg(e);
                 return;
             }
         }
@@ -655,14 +669,14 @@ export class Sanitizer {
                     case "summaryNack":
                         break;
                     default:
-                        console.log(`Unexpected op type ${message.type}`);
+                        this.debugMsg(`Unexpected op type ${message.type}`);
                 }
             });
 
             // make sure we don't miss an incomplete chunked op at the end
             assert(!this.chunkProcessor.isPendingProcessing());
         } catch (error) {
-            console.error(`Error while processing sequenceNumber ${seq}`);
+            this.debugMsg(`Error while processing sequenceNumber ${seq}`);
             throw error;
         }
 
