@@ -1,5 +1,9 @@
 ## 0.34 Breaking changes
+- [Aqueduct writeBlob() and BlobHandle implementation removed](#Aqueduct-writeBlob-and-BlobHandle-implementation-removed)
 - [Connected events raised on registration](#Connected-events-raised-on-registration)
+
+### Aqueduct writeBlob() and BlobHandle implementation removed
+`writeBlob()` and `BlobHandle` have been removed from aqueduct. Please use `FluidDataStoreRuntime.uploadBlob()` or `ContainerRuntime.uploadBlob()` instead.
 
 ### Connected events raised on registration
 Connected / disconnected listeners are called on registration.

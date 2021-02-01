@@ -47,7 +47,8 @@ export class EpochTracker {
 
     public async validateEpochFromPush(details: IConnected) {
         const epoch = details.epoch;
-        assert(epoch !== undefined, "Connection details should contain epoch");
+        // [Todo: Issue https://github.com/microsoft/FluidFramework/issues/4989]
+        // assert(epoch !== undefined, "Connection details should contain epoch");
         try {
             this.validateEpochFromResponse(epoch, "push");
         } catch (error) {

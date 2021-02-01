@@ -14,6 +14,7 @@ import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { EpochTracker } from "../epochTracker";
 import { LocalPersistentCache, LocalPersistentCacheAdapter } from "../odspCache";
 import { IDedupCaches, OdspSummaryUploadManager } from "../odspSummaryUploadManager";
+import { IBlob } from "../contracts";
 import { TokenFetchOptions } from "../tokenFetch";
 import { mockFetch } from "./mockFetch";
 
@@ -30,21 +31,17 @@ describe("Odsp Summary Upload Manager Tests", () => {
             async (options: TokenFetchOptions, name?: string) => "token",
             logger,
             epochTracker,
-            new Map(),
         );
     });
 
     it("Should populate caches properly", async () => {
-        odspSummaryUploadManager["blobCache"].set("blob1",
-            { content: "blob1", id: "blob1", size: 5, byteLength: 1, encoding: undefined });
-        odspSummaryUploadManager["blobCache"].set("blob2",
-            { content: "blob2", id: "blob2", size: 5, byteLength: 1, encoding: undefined });
-        odspSummaryUploadManager["blobCache"].set("blob3",
-            { content: "blob2", id: "blob2", size: 5, byteLength: 1, encoding: undefined });
-        odspSummaryUploadManager["blobCache"].set("blob4",
-            { content: "blob4", id: "blob4", size: 5, byteLength: 1, encoding: undefined });
-        odspSummaryUploadManager["blobCache"].set("blob5",
-            { content: "blob5", id: "blob5", size: 5, byteLength: 1, encoding: undefined });
+        const blobCache = new Map<string, IBlob>();
+
+        blobCache.set("blob1", { content: "blob1", id: "blob1", size: 5, encoding: undefined });
+        blobCache.set("blob2", { content: "blob2", id: "blob2", size: 5, encoding: undefined });
+        blobCache.set("blob3", { content: "blob2", id: "blob2", size: 5, encoding: undefined });
+        blobCache.set("blob4", { content: "blob4", id: "blob4", size: 5, encoding: undefined });
+        blobCache.set("blob5", { content: "blob5", id: "blob5", size: 5, encoding: undefined });
         const protocolTree: api.ISnapshotTree = {
             blobs: {
                 blob1: "blob1",
@@ -78,7 +75,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
             },
         };
 
-        await odspSummaryUploadManager.buildCachesForDedup(snapshotTree);
+        await odspSummaryUploadManager.buildCachesForDedup(snapshotTree, blobCache);
 
         assert.strictEqual(odspSummaryUploadManager["blobTreeDedupCaches"].blobShaToPath.size, 4,
             "4 blobs should be in cache as 4 blobs with different content");
@@ -377,6 +374,86 @@ describe("Odsp Summary Upload Manager Tests", () => {
         assert(serializedTree.includes("\"id\":\"ackHandle2/.app/default/header/root\""),
             "Root blob should be deduped");
         assert(serializedTree.includes("\"id\":\"ackHandle2/.app/default/header/component\""),
+            "Component blob should be deduped");
+    });
+
+    it("Should dedup blobs(with handle expansion)(Missing blob contents)", async () => {
+        const rootBlob: api.ISummaryBlob = {
+            type: api.SummaryType.Blob,
+            content: JSON.stringify("root"),
+        };
+        const componentBlob: api.ISummaryBlob = {
+            type: api.SummaryType.Blob,
+            content: JSON.stringify("component"),
+        };
+        const rootBlobHash = await hashFile(IsoBuffer.from(rootBlob.content, "utf-8"));
+        const rootBlobPath = ".app/default/header/root";
+        const appSummary: api.ISummaryTree = {
+            type: api.SummaryType.Tree,
+            tree: {
+                default: {
+                    type: api.SummaryType.Tree,
+                    tree: {
+                        header: {
+                            type: api.SummaryType.Tree,
+                            tree: {
+                                component: componentBlob,
+                                root: rootBlob,
+                            },
+                        },
+                    },
+                },
+            },
+        };
+
+        const blobTreeDedupCaches: IDedupCaches = {
+            blobShaToPath: new Map(),
+            pathToBlobSha: new Map(),
+            treesPathToTree: new Map(),
+        };
+        await odspSummaryUploadManager["convertSummaryToSnapshotTree"](
+            undefined,
+            cloneDeep(appSummary),
+            blobTreeDedupCaches,
+            ".app",
+            true,
+        );
+
+        // Now insert another blob with same content as component blob
+        appSummary.tree.default2 = {
+            type: api.SummaryType.Tree,
+            tree: {
+                component2: componentBlob,
+                header: {
+                    type: api.SummaryType.Blob,
+                    content: JSON.stringify("headerBlob"),
+                },
+            },
+        };
+        appSummary.tree.default = {
+            type: api.SummaryType.Handle,
+            handle: "default",
+            handleType: api.SummaryType.Tree,
+        };
+
+        // Simulate the condition as if the root blob contents were not returned during snapshot fetch.
+        blobTreeDedupCaches.blobShaToPath.delete(rootBlobHash);
+        blobTreeDedupCaches.pathToBlobSha.set(rootBlobPath, undefined);
+
+        odspSummaryUploadManager["blobTreeDedupCaches"] = blobTreeDedupCaches;
+        const { snapshotTree, blobs, reusedBlobs } = await odspSummaryUploadManager["convertSummaryToSnapshotTree"](
+            "ackHandle",
+            appSummary,
+            blobTreeDedupCaches,
+            ".app",
+            true,
+        );
+        const serializedTree = JSON.stringify(snapshotTree);
+        assert.strictEqual(reusedBlobs, 3, "3 reused blobs should be there");
+        assert.strictEqual(blobs, 1, "1 blob(.app/default2/header) is not deduped as content does not match");
+        assert(serializedTree.includes("\"id\":\"ackHandle/.app/default/header/root\""),
+            "Root blob should be deduped");
+        assert(serializedTree.includes("\"id\":\"ackHandle/.app/default/header/component\""),
             "Component blob should be deduped");
     });
 });

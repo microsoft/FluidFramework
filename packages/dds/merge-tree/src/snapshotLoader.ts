@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { assert, bufferToString } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -40,9 +40,9 @@ export class SnapshotLoader {
         services: IChannelStorageService,
     ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
         const headerLoadedP =
-            services.read(SnapshotLegacy.header).then((header) => {
+            services.readBlob(SnapshotLegacy.header).then((header) => {
                 assert(!!header);
-                return this.loadHeader(header);
+                return this.loadHeader(bufferToString(header,"utf8"));
             });
 
         const catchupOpsP =
@@ -75,7 +75,8 @@ export class SnapshotLoader {
 
             // TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
-            return this.loadCatchupOps(services.read(blobs[0]));
+
+            return this.loadCatchupOps(services.readBlob(blobs[0]));
         } else if (blobs.length !== headerChunk.headerMetadata!.orderedChunkMetadata.length) {
             throw new Error("Unexpected blobs in snapshot");
         }
@@ -226,8 +227,7 @@ export class SnapshotLoader {
      * @returns The decoded messages, but handles aren't parsed.  Matches the format that will be passed in
      * SharedObject.processCore.
      */
-    private async loadCatchupOps(rawMessages: Promise<string>): Promise<ISequencedDocumentMessage[]> {
-        const utf8 = fromBase64ToUtf8(await rawMessages);
-        return JSON.parse(utf8) as ISequencedDocumentMessage[];
+    private async loadCatchupOps(rawMessages: Promise<ArrayBufferLike>): Promise<ISequencedDocumentMessage[]> {
+        return JSON.parse(bufferToString(await rawMessages, "utf8")) as ISequencedDocumentMessage[];
     }
 }
