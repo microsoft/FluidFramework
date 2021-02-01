@@ -119,6 +119,12 @@ class BlobCache {
     // its SHA cache for blobs (currently that happens as result of requesting snapshot tree)
     private blobCacheTimeoutDuration = 2 * 60 * 1000;
 
+    // SPO does not keep old snapshots around for long, so we are running chances of not
+    // being able to rehydrate data store / DDS in the future if we purge anything (and with blob de-duping,
+    // even if blob read by runtime, it could be read again in the future)
+    // So for now, purging is disabled.
+    private readonly purgeEnabled = false;
+
     public get value() {
         return this._blobCache;
     }
@@ -128,6 +134,7 @@ class BlobCache {
             assert(blob.encoding === "base64" || blob.encoding === undefined);
             this._blobCache.set(blob.id, blob);
         });
+        // Reset the timer on cache set
         this.scheduleClearBlobsCache();
     }
 
@@ -153,13 +160,10 @@ class BlobCache {
                     // We want to optimize both - memory footprint and number of future requests to storage.
                     // Note that Container can realize data store or DDS on-demand at any point in time, so we do not
                     // control when blobs will be used.
-                    //
-                    // That all said, SPO does not keep old snapshots around for long, so we are running chances of not
-                    // being able to rehydrate data store / DDS in the future if we purge anything (and with blob de-duping,
-                    // even if blob read by runtime, it could be read again in the future)
-                    // So for now, purging is disabled.
-                    // this._blobCache.forEach((_, blobId) => this.blobsEvicted.add(blobId));
-                    // this._blobCache.clear();
+                    if (this.purgeEnabled) {
+                        this._blobCache.forEach((_, blobId) => this.blobsEvicted.add(blobId));
+                        this._blobCache.clear();
+                    }
                 }
             };
             this.blobCacheTimeout = setTimeout(clearCacheOrDefer, this.blobCacheTimeoutDuration);
@@ -186,7 +190,7 @@ class BlobCache {
         // blobs are de-duped.
         const size = blob instanceof ArrayBuffer ? blob.byteLength : blob.size;
         if (size < 256 * 1024) {
-            // Reset the timer on attempted cache read
+            // Reset the timer on cache set
             this.scheduleClearBlobsCache();
             return this._blobCache.set(blobId, blob);
         } else {
