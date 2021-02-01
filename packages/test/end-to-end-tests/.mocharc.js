@@ -5,7 +5,7 @@
 
 'use strict';
 
-const testDriver = process.env.FLUID_TEST_DRIVER ?? "local";
+const testDriver = process.env.FLUID_TEST_DRIVER ? process.env.FLUID_TEST_DRIVER  : "local";
 
 module.exports = {
   "exit": true,
