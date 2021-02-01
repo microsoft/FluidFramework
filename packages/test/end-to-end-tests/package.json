@@ -29,7 +29,7 @@
     "test:realsvc:local": "mocha dist/test --config src/test/.mocharc.js",
     "test:realsvc:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc",
     "test:realsvc:routerlicious": "cross-env FLUID_TEST_DRIVER=routerlicious npm run test:realsvc:local",
-    "test:realsvc:tinylicious": "cross-env FLUID_TEST_DRIVER=tinylicious start-server-and-test start:tinylicious:test 3000 npm run test:realsvc:local",
+    "test:realsvc:tinylicious": "cross-env FLUID_TEST_DRIVER=tinylicious start-server-and-test start:tinylicious:test 3000 test:realsvc:local",
     "test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
