@@ -276,7 +276,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
         // It is joinSession failing with 404.
         // Repeat after waiting for treeLatest succeeding (of fail if it fails).
         // No special handling after first call - if file has been deleted, then it's game over.
-        await this.treesLatestDeferral.addListenerWithCallback();
+        await this.treesLatestDeferral.triggerCallbackAndAwaitPromise();
         return super.fetchAndParseAsJSON<T>(url, fetchOptions, fetchType, addInBody);
     }
 }
@@ -293,7 +293,7 @@ class DeferralWithCallback {
         this.callback = callback;
     }
 
-    async addListenerWithCallback() {
+    async triggerCallbackAndAwaitPromise() {
         if (this.callback) {
             await this.callback();
         }
