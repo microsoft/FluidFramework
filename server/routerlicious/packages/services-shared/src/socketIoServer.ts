@@ -11,6 +11,8 @@ import * as _ from "lodash";
 import * as redis from "redis";
 import socketIo from "socket.io";
 import socketIoRedis from "socket.io-redis";
+import * as redisSocketIoAdapter from "./redisSocketIoAdapter";
+import { SocketIORedisConnection, SocketIoRedisSubscriptionConnection } from "./socketIoRedisConnection";
 
 const socketJoin = util.promisify(
     (socket: SocketIO.Socket, roomId: string, callback: (err: NodeJS.ErrnoException) => void) => {
@@ -75,7 +77,10 @@ class SocketIoServer implements core.IWebSocketServer {
     }
 }
 
-export function create(redisConfig: any, server: http.Server): core.IWebSocketServer {
+export function create(
+    redisConfig: any,
+    server: http.Server,
+    socketIoAdapterConfig?: any): core.IWebSocketServer {
     const options: any = { auth_pass: redisConfig.pass };
     if (redisConfig.tls) {
         options.tls = {
@@ -90,7 +95,28 @@ export function create(redisConfig: any, server: http.Server): core.IWebSocketSe
 
     // Create and register a socket.io connection on the server
     const io = socketIo();
-    io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
+
+    let adapter: SocketIO.Adapter | undefined;
+
+    if (socketIoAdapterConfig?.enableCustomSocketIoAdapter) {
+        const socketIoRedisOptions: redisSocketIoAdapter.ISocketIoRedisOptions =
+        {
+            pubConnection: new SocketIORedisConnection(pub),
+            subConnection: new SocketIoRedisSubscriptionConnection(sub),
+        };
+
+        redisSocketIoAdapter.RedisSocketIoAdapter.setup(
+            socketIoRedisOptions,
+            socketIoAdapterConfig?.shouldDisableDefaultNamespace);
+
+        adapter = redisSocketIoAdapter.RedisSocketIoAdapter as any;
+    }
+    else {
+        adapter = socketIoRedis({ pubClient: pub, subClient: sub });
+    }
+
     io.attach(server);
+    io.adapter(adapter);
+
     return new SocketIoServer(io, pub, sub);
 }

@@ -71,7 +71,7 @@
     "@fluidframework/build-common": "^0.20.0-0",
     "@fluidframework/eslint-config-fluid": "^0.22.1-0",
     "@fluidframework/mocha-test-setup": "^0.34.0",
-    "@types/assert": "^1.5.1",
+    "@types/assert": "^1.5.2",
     "@types/jsrsasign": "^8.0.8",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",

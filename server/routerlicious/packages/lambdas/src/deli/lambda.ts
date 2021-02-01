@@ -141,6 +141,7 @@ export class DeliLambda implements IPartitionLambda {
     public handler(rawMessage: IQueuedMessage): void {
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset <= this.logOffset) {
+            this.context.checkpoint(rawMessage);
             return;
         }
 

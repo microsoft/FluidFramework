@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
+import { Schema } from "jsonschema";
 
 export const joinContentsSchema = {
     type: "null",
@@ -334,15 +334,15 @@ const mergeTreeDeltaOpSchema = {
     properties: {
         type: {
             type: "number",
-            minimum: MergeTreeDeltaType.INSERT,
-            maximum: MergeTreeDeltaType.ANNOTATE,
+            minimum: 0 /* MergeTreeDeltaType.INSERT */,
+            maximum: 2 /* MergeTreeDeltaType.ANNOTATE */,
         },
     },
     required: [ "type" ],
     oneOf: [
         {
             properties: {
-                type: { enum: [ MergeTreeDeltaType.INSERT ] },
+                type: { enum: [ 0 /* MergeTreeDeltaType.INSERT */ ] },
                 seg: { type: [ "string", "object" ] },
                 pos1: { type: "number" },
             },
@@ -351,7 +351,7 @@ const mergeTreeDeltaOpSchema = {
         },
         {
             properties: {
-                type: { enum: [ MergeTreeDeltaType.REMOVE ] },
+                type: { enum: [ 1 /* MergeTreeDeltaType.REMOVE */ ] },
                 register: { type: "string" },
                 pos1: { type: "number" },
                 pos2: { type: "number" },
@@ -361,7 +361,7 @@ const mergeTreeDeltaOpSchema = {
         },
         {
             properties: {
-                type: { enum: [ MergeTreeDeltaType.ANNOTATE ] },
+                type: { enum: [ 2 /* MergeTreeDeltaType.ANNOTATE */ ] },
                 combiningOp: {
                     type: "object",
                     properties: {
@@ -383,7 +383,9 @@ const mergeTreeDeltaOpSchema = {
             required: [ "props" ],
             additionalProperties: false,
         },
-    ],
+    // There's something weird with the typings/settings here where this doesn't get
+    // recognized as a valid Schema array if more than 1 item has "properties" defined
+    ] as Schema[],
 };
 
 const mergeTreeGroupOpSchema = {
@@ -395,8 +397,8 @@ const mergeTreeGroupOpSchema = {
         },
         type: {
             type: "number",
-            minimum: MergeTreeDeltaType.GROUP,
-            maximum: MergeTreeDeltaType.GROUP,
+            minimum: 3 /* MergeTreeDeltaType.GROUP */,
+            maximum: 3 /* MergeTreeDeltaType.GROUP */,
         },
     },
     required: [ "ops", "type" ],

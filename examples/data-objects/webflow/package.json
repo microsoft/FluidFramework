@@ -125,8 +125,7 @@
     "webpack-bundle-analyzer": "^3.8.0",
     "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^3.8.0",
-    "webpack-merge": "^4.1.4",
-    "webpack-visualizer-plugin": "^0.1.11"
+    "webpack-merge": "^4.1.4"
   },
   "fluid": {
     "browser": {

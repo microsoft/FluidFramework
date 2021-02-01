@@ -4,6 +4,7 @@
  */
 
 import { parse } from "url";
+import { assert } from "@fluidframework/common-utils";
 import {
     IRequest,
 } from "@fluidframework/core-interfaces";
@@ -24,7 +25,8 @@ const r11sServers = [
 export class RouterliciousUrlResolver implements IUrlResolver {
     constructor(
         private readonly config: { provider: Provider, tenantId: string, documentId: string } | undefined,
-        private readonly getToken: () => Promise<string>) {
+        private readonly getToken: () => Promise<string>,
+        private readonly hostUrl: string) {
     }
 
     /**
@@ -129,7 +131,21 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
     ): Promise<string> {
-        throw new Error("Not implmented");
+        const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
+
+        const parsedUrl = parse(fluidResolvedUrl.url);
+        assert(!!parsedUrl.pathname, "PathName should exist");
+        const [, tenantId, documentId] = parsedUrl.pathname.split("/");
+        assert(!!tenantId, "Tenant id should exist");
+        assert(!!documentId, "Document id should exist");
+
+        let url = relativeUrl;
+        if (url.startsWith("/")) {
+            url = url.substr(1);
+        }
+
+        return `${this.hostUrl}/${encodeURIComponent(
+            tenantId)}/${encodeURIComponent(documentId)}/${url}`;
     }
 }
 
