@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IContext, IQueuedMessage, IPartitionLambda } from "@fluidframework/server-services-core";
+import { IContext, IQueuedMessage, IPartitionLambda, LambdaCloseType } from "@fluidframework/server-services-core";
 import { IKafkaSubscriber, ILocalOrdererSetup } from "./interfaces";
 import { LocalKafka } from "./localKafka";
 
@@ -63,7 +63,7 @@ export class LocalLambdaController extends EventEmitter implements IKafkaSubscri
         this._state = "closed";
 
         if (this.lambda) {
-            this.lambda.close();
+            this.lambda.close(LambdaCloseType.Stop);
             this.lambda = undefined;
         }
 

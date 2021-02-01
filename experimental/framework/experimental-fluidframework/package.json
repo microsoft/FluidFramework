@@ -54,7 +54,6 @@
     "eslint-plugin-react": "~7.22.0",
     "eslint-plugin-unicorn": "~26.0.1",
     "rimraf": "^2.6.2",
-    "ts-node": "^7.0.1",
     "typescript": "~4.1.3",
     "typescript-formatter": "7.1.0"
   }

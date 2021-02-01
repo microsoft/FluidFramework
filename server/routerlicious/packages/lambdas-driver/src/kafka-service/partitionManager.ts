@@ -11,6 +11,7 @@ import {
     IPartitionWithEpoch,
     IPartitionLambdaFactory,
     ILogger,
+    LambdaCloseType,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { Partition } from "./partition";
@@ -61,7 +62,7 @@ export class PartitionManager extends EventEmitter {
 
         // Then stop them all
         for (const [, partition] of this.partitions) {
-            partition.close();
+            partition.close(LambdaCloseType.Stop);
         }
 
         this.partitions.clear();
@@ -97,7 +98,7 @@ export class PartitionManager extends EventEmitter {
 
         for (const [id, partition] of this.partitions) {
             this.logger?.info(`Closing partition ${id} due to rebalancing`);
-            partition.close();
+            partition.close(LambdaCloseType.Rebalance);
         }
 
         this.partitions.clear();
@@ -118,7 +119,7 @@ export class PartitionManager extends EventEmitter {
         for (const [id, partition] of existingPartitions) {
             if (!partitionsMap.has(id)) {
                 this.logger?.info(`Closing partition ${id} due to rebalancing`);
-                partition.close();
+                partition.close(LambdaCloseType.Rebalance);
                 this.partitions.delete(id);
             }
         }

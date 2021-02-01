@@ -5,7 +5,6 @@
 
 import { OutgoingHttpHeaders } from "http";
 import querystring from "querystring";
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import {
     IDeltaStorageService,
     IDocumentDeltaStorageService,
@@ -76,7 +75,7 @@ export class DeltaStorageService implements IDeltaStorageService {
         );
 
         if (storageToken) {
-            headers.Authorization = `Basic ${fromUtf8ToBase64(`${tenantId}:${storageToken.jwt}`)}`;
+            headers.Authorization = `Basic ${storageToken.jwt}`;
         }
 
         const ops = await Axios.get<ISequencedDocumentMessage[]>(
