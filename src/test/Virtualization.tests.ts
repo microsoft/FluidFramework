@@ -23,12 +23,6 @@ import { fullHistorySummarizer_0_1_0 } from '../Summary';
 
 export class TestDataObject extends DataObject {
 	public static readonly type = '@fluid-example/test-dataStore';
-	public get _context() {
-		return this.context;
-	}
-	public get _runtime() {
-		return this.runtime;
-	}
 	public get _root() {
 		return this.root;
 	}
@@ -80,11 +74,12 @@ describe('SharedTree history virtualization', () => {
 		sharedTree1.summarizer = fullHistorySummarizer_0_1_0;
 	});
 
-	it('can upload edit chunks and load chunks from handles', async () => {
+	// Adds edits to sharedTree1 to make up the specified number of chunks.
+	const processNewEditChunks = async (numberOfChunks = 1) => {
 		const expectedEdits: Edit[] = [];
 
 		// Add some edits to create a chunk with.
-		while (expectedEdits.length < editsPerChunk) {
+		while (expectedEdits.length < editsPerChunk * numberOfChunks) {
 			const edit = newEdit(setTrait(testTrait, [makeTestNode()]));
 			expectedEdits.push(edit);
 			sharedTree1.processLocalEdit(edit);
@@ -98,6 +93,16 @@ describe('SharedTree history virtualization', () => {
 
 		// Wait for the handle op to be processed.
 		await localTestObjectProvider.opProcessingController.process();
+
+		return expectedEdits;
+	};
+
+	it('correctly uploads filled up chunks', async () => {
+		const expectedEdits: Edit[] = await processNewEditChunks(4);
+	});
+
+	it('can upload edit chunks and load chunks from handles', async () => {
+		const expectedEdits: Edit[] = await processNewEditChunks();
 
 		const summary = sharedTree1.saveSummary();
 
