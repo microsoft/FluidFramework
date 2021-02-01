@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { OdspErrorType } from "@fluidframework/odsp-doclib-utils";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "../contracts";
 import { EpochTrackerWithRedemption } from "../epochTracker";
 import { ICacheEntry, LocalPersistentCache, LocalPersistentCacheAdapter } from "../odspCache";
@@ -66,7 +66,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
                         return epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "treesLatest");
                     }, notFound, true);
                 } catch (error) {
-                    assert.strictEqual(error.errorType, OdspErrorType.fileNotFoundOrAccessDeniedError,
+                    assert.strictEqual(error.errorType, DriverErrorType.fileNotFoundOrAccessDeniedError,
                         "Error should be file not found or access denied error");
                 }
             }, 100);
@@ -75,7 +75,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
             }, notFound, true);
         } catch (error) {
             success = false;
-            assert.strictEqual(error.errorType, OdspErrorType.fileNotFoundOrAccessDeniedError,
+            assert.strictEqual(error.errorType, DriverErrorType.fileNotFoundOrAccessDeniedError,
                 "Error should be file not found or access denied error");
         }
         assert.strictEqual(success, false, "Join session should fail if treesLatest call has failed");

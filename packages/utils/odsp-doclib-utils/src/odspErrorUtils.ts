@@ -64,13 +64,6 @@ export enum OdspErrorType {
      * does not match the one at the server.
      */
     epochVersionMismatch = "epochVersionMismatch",
-
-    /**
-     * File not found or access permissions denied error.
-     * This occurs when the user does not have permissions to the file, the file does not exist, or their
-     * permissions are in the process of being granted.
-     */
-    fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
 }
 
 /**
