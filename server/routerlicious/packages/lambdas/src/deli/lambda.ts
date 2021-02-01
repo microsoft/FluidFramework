@@ -401,16 +401,17 @@ export class DeliLambda implements IPartitionLambda {
                         durableSequenceNumber: number
                         clearCache: boolean
                     };
-                // Deli cache is only cleared when no clients have joined since last noClient was sent to alfred.
-                if (controlContent.clearCache && this.noActiveClients) {
-                    instruction = InstructionType.ClearCache;
-                    this.canClose = true;
-                    this.context.log.info(`Deli cache will be cleared`, { messageMetaData });
-                }
                 const dsn = controlContent.durableSequenceNumber;
-                assert(dsn >= this.durableSequenceNumber,
-                    `Incoming dsn@${dsn} < Current dsn@${this.durableSequenceNumber}`);
-                this.durableSequenceNumber = controlContent.durableSequenceNumber;
+                if (dsn >= this.durableSequenceNumber) {
+                    // Deli cache is only cleared when no clients have joined since last noClient was sent to alfred.
+                    if (controlContent.clearCache && this.noActiveClients) {
+                        instruction = InstructionType.ClearCache;
+                        this.canClose = true;
+                        this.context.log.info(`Deli cache will be cleared`, { messageMetaData });
+                    }
+
+                    this.durableSequenceNumber = dsn;
+                }
             }
         }
 
