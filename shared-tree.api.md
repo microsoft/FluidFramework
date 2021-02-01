@@ -325,6 +325,9 @@ export class PrefetchingCheckout extends Checkout {
 export function revert(edit: Edit, view: Snapshot): Change[];
 
 // @public
+export type SerializedChunk = ISerializedHandle | EditWithoutId[];
+
+// @public
 export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<EditNode>): readonly Change[];
 
 // @public
@@ -580,9 +583,5 @@ export type UuidString = string & {
     readonly UuidString: '9d40d0ae-90d9-44b1-9482-9f55d59d5465';
 };
 
-
-// Warnings were encountered during analysis:
-//
-// src/EditLog.ts:72:47 - (ae-forgotten-export) The symbol "SerializedChunk" needs to be exported by the entry point index.d.ts
 
 ```
