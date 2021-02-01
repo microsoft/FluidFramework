@@ -68,6 +68,7 @@ export interface OrderedEditSet {
 export interface EditLogSummary {
 	/**
 	 * A of list of serialized chunks and their corresponding keys.
+	 * Keys are the index of the first edit in the chunk in relation to the edit log.
 	 */
 	readonly editChunks: readonly { key: number; chunk: SerializedChunk }[];
 
