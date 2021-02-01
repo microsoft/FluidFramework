@@ -243,9 +243,8 @@
                 "--no-timeouts",
                 "--exit",
                 "--require", "ts-node/register",
-                "--require", "${workspaceFolder}/packages/test/test-drivers",
                 "${file}", ],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${fileDirname}",
             "skipFiles": [
                 "<node_internals>/**/*.js"
             ],
