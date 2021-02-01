@@ -282,7 +282,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 }
 
 class DeferralWithCallback {
-    public readonly deferral;
+    public readonly deferral: Deferred<void>;
     private callback?: () => Promise<any>;
 
     constructor() {
