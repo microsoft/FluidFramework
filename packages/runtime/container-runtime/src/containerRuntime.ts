@@ -124,6 +124,7 @@ import {
     IContainerRuntimeMetadata,
     metadataBlobName,
 } from "./snapshot";
+import { BlobAggregatorStorage } from "./blobAggregationStorage";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -539,9 +540,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.deltaManager;
     }
 
+    private readonly _storage: IDocumentStorageService | undefined;
     public get storage(): IDocumentStorageService {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.context.storage!;
+        assert(this._storage !== undefined, "storage missing");
+        return this._storage;
     }
 
     public get branch(): string {
@@ -672,6 +674,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ) {
         super();
 
+        this._storage = context.storage ? new BlobAggregatorStorage(context.storage) : undefined;
         this._connected = this.context.connected;
         this.chunkMap = new Map<string, string[]>(chunks);
 
