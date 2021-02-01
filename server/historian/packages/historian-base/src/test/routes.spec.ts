@@ -431,6 +431,7 @@ describe("routes", () => {
     describe("CorrelationId", () => {
         const correlationIdHeaderName = "x-correlation-id";
         const testCorrelationId = "test-correlation-id";
+        const maxThrottlerLimit = 1000000;
 
         let app: express.Application;
         let superTest: request.SuperTest<request.Test>;
@@ -460,7 +461,7 @@ describe("routes", () => {
                     sha: sha
                 }));
 
-                const throttler = new TestThrottler(limit);
+                const throttler = new TestThrottler(maxThrottlerLimit);
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
@@ -528,7 +529,7 @@ describe("routes", () => {
                     parents: [{ url: url, sha: sha }]
                 }));
 
-                const throttler = new TestThrottler(limit);
+                const throttler = new TestThrottler(maxThrottlerLimit);
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
@@ -606,7 +607,7 @@ describe("routes", () => {
                 }));
                 deleteRefStub = sinon.stub(RestGitService.prototype, "deleteRef").returns(Promise.resolve());
 
-                const throttler = new TestThrottler(limit);
+                const throttler = new TestThrottler(maxThrottlerLimit);
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
@@ -673,7 +674,7 @@ describe("routes", () => {
                     }
                 }));
 
-                const throttler = new TestThrottler(limit);
+                const throttler = new TestThrottler(maxThrottlerLimit);
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
@@ -714,7 +715,7 @@ describe("routes", () => {
                     tree: []
                 }));
 
-                const throttler = new TestThrottler(limit);
+                const throttler = new TestThrottler(maxThrottlerLimit);
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
@@ -749,7 +750,7 @@ describe("routes", () => {
                     tree: []
                 }));
 
-                const throttler = new TestThrottler(limit);
+                const throttler = new TestThrottler(maxThrottlerLimit);
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
@@ -785,7 +786,7 @@ describe("routes", () => {
                     tree: []
                 }));
 
-                const throttler = new TestThrottler(limit);
+                const throttler = new TestThrottler(maxThrottlerLimit);
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,

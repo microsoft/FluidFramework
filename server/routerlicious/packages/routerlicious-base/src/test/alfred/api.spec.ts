@@ -155,6 +155,20 @@ describe("Routerlicious", () => {
                 const correlationIdHeaderName = "x-correlation-id";
                 const testCorrelationId = "test-correlation-id";
 
+                const maxThrottlerLimit = 1000000;
+                beforeEach(() => {
+                    const throttler = new TestThrottler(maxThrottlerLimit);
+                    app = alfredApp.create(
+                        defaultProvider,
+                        defaultTenantManager,
+                        throttler,
+                        defaultStorage,
+                        defaultAppTenants,
+                        defaultMongoManager,
+                        defaultProducer);
+                    supertest = request(app);
+                });
+
                 const assertCorrelationId = async (url: string, method: "get" | "post" | "put" | "patch" | "delete" = "get"): Promise<void> => {
                     await supertest[method](url)
                         .set(correlationIdHeaderName, testCorrelationId)
