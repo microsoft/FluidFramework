@@ -12,7 +12,7 @@ import { sharedStringWithSequentialIdMixin } from "./sharedStringWithSequentialI
 export class SharedStringWithSequentialIdFactory implements IChannelFactory {
     // TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
     // load code
-    public static Type = "https://graph.microsoft.com/types/mergeTree";
+    public static Type = "https://graph.microsoft.com/types/mergeTree/sequential-id-sharedstring";
 
     public static readonly Attributes: IChannelAttributes = {
         type: SharedStringWithSequentialIdFactory.Type,
