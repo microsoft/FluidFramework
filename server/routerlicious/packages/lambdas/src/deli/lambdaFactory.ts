@@ -25,6 +25,7 @@ import { IGitManager } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
 import { DeliLambda } from "./lambda";
+import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
 
 // Epoch should never tick in our current setting. This flag is just for being extra cautious.
 // TODO: Remove when everything is up to date.
@@ -123,14 +124,15 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             ) :
             lastCheckpoint;
 
+        const checkpointManager = createDeliCheckpointManagerFromCollection(tenantId, documentId, this.collection);
+
         // Should the lambda reaize that term has flipped to send a no-op message at the beginning?
         return new DeliLambda(
             context,
             tenantId,
             documentId,
             newCheckpoint,
-            // It probably shouldn't take the collection - I can manage that
-            this.collection,
+            checkpointManager,
             // The producer as well it shouldn't take. Maybe it just gives an output stream?
             this.forwardProducer,
             this.reverseProducer,
@@ -221,7 +223,6 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         const serviceProtocolEntries = generateServiceProtocolEntries(JSON.stringify(checkpoint), scribe);
 
         const [serviceProtocolTree, lastSummaryTree] = await Promise.all([
-            // eslint-disable-next-line no-null/no-null
             gitManager.createTree({ entries: serviceProtocolEntries }),
             gitManager.getTree(lastCommit.tree.sha, false),
         ]);

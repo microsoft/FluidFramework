@@ -42,14 +42,16 @@ export function combine(combiningInfo: ops.ICombiningOp, currentValue: any, newV
             if (currentValue === undefined) {
                 const cv: IConsensusValue = {
                     value: newValue,
-                    seq,
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    seq: seq!,
                 };
 
                 currentValue = cv;
             } else {
                 const cv = currentValue as IConsensusValue;
                 if (cv.seq === -1) {
-                    cv.seq = seq;
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    cv.seq = seq!;
                 }
             }
             break;
@@ -170,9 +172,9 @@ export function createMap<T>(): MapLike<T> {
     // Using 'delete' on an object causes V8 to put the object in dictionary mode.
     // This disables creation of hidden classes, which are expensive when an object is
     // constantly changing shape.
-    // eslint-disable-next-line dot-notation
+    // eslint-disable-next-line @typescript-eslint/dot-notation
     map["__"] = undefined;
-    // eslint-disable-next-line dot-notation, @typescript-eslint/no-dynamic-delete
+    // eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-dynamic-delete
     delete map["__"];
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return

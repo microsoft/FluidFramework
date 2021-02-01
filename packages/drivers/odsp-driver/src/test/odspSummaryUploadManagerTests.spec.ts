@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable dot-notation */
+/* eslint-disable @typescript-eslint/dot-notation */
+
 import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
@@ -373,6 +374,86 @@ describe("Odsp Summary Upload Manager Tests", () => {
         assert(serializedTree.includes("\"id\":\"ackHandle2/.app/default/header/root\""),
             "Root blob should be deduped");
         assert(serializedTree.includes("\"id\":\"ackHandle2/.app/default/header/component\""),
+            "Component blob should be deduped");
+    });
+
+    it("Should dedup blobs(with handle expansion)(Missing blob contents)", async () => {
+        const rootBlob: api.ISummaryBlob = {
+            type: api.SummaryType.Blob,
+            content: JSON.stringify("root"),
+        };
+        const componentBlob: api.ISummaryBlob = {
+            type: api.SummaryType.Blob,
+            content: JSON.stringify("component"),
+        };
+        const rootBlobHash = await hashFile(IsoBuffer.from(rootBlob.content, "utf-8"));
+        const rootBlobPath = ".app/default/header/root";
+        const appSummary: api.ISummaryTree = {
+            type: api.SummaryType.Tree,
+            tree: {
+                default: {
+                    type: api.SummaryType.Tree,
+                    tree: {
+                        header: {
+                            type: api.SummaryType.Tree,
+                            tree: {
+                                component: componentBlob,
+                                root: rootBlob,
+                            },
+                        },
+                    },
+                },
+            },
+        };
+
+        const blobTreeDedupCaches: IDedupCaches = {
+            blobShaToPath: new Map(),
+            pathToBlobSha: new Map(),
+            treesPathToTree: new Map(),
+        };
+        await odspSummaryUploadManager["convertSummaryToSnapshotTree"](
+            undefined,
+            cloneDeep(appSummary),
+            blobTreeDedupCaches,
+            ".app",
+            true,
+        );
+
+        // Now insert another blob with same content as component blob
+        appSummary.tree.default2 = {
+            type: api.SummaryType.Tree,
+            tree: {
+                component2: componentBlob,
+                header: {
+                    type: api.SummaryType.Blob,
+                    content: JSON.stringify("headerBlob"),
+                },
+            },
+        };
+        appSummary.tree.default = {
+            type: api.SummaryType.Handle,
+            handle: "default",
+            handleType: api.SummaryType.Tree,
+        };
+
+        // Simulate the condition as if the root blob contents were not returned during snapshot fetch.
+        blobTreeDedupCaches.blobShaToPath.delete(rootBlobHash);
+        blobTreeDedupCaches.pathToBlobSha.set(rootBlobPath, undefined);
+
+        odspSummaryUploadManager["blobTreeDedupCaches"] = blobTreeDedupCaches;
+        const { snapshotTree, blobs, reusedBlobs } = await odspSummaryUploadManager["convertSummaryToSnapshotTree"](
+            "ackHandle",
+            appSummary,
+            blobTreeDedupCaches,
+            ".app",
+            true,
+        );
+        const serializedTree = JSON.stringify(snapshotTree);
+        assert.strictEqual(reusedBlobs, 3, "3 reused blobs should be there");
+        assert.strictEqual(blobs, 1, "1 blob(.app/default2/header) is not deduped as content does not match");
+        assert(serializedTree.includes("\"id\":\"ackHandle/.app/default/header/root\""),
+            "Root blob should be deduped");
+        assert(serializedTree.includes("\"id\":\"ackHandle/.app/default/header/component\""),
             "Component blob should be deduped");
     });
 });

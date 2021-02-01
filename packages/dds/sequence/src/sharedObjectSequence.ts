@@ -21,6 +21,7 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
      * @param id - optional name of the shared object sequence
      * @returns newly create shared object sequence (but not attached yet)
      */
+    // eslint-disable-next-line @typescript-eslint/no-shadow
     public static create<T>(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, SharedObjectSequenceFactory.Type) as SharedObjectSequence<T>;
     }

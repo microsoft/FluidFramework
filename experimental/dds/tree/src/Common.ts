@@ -26,7 +26,6 @@ class SharedTreeAssertionError extends Error {
 		super(message);
 		this.name = 'Assertion error';
 
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		Error.captureStackTrace?.(this);
 	}
 }
@@ -39,6 +38,8 @@ class SharedTreeAssertionError extends Error {
  * @param containsPII - boolean flag for whether the message passed in contains personally identifying information (PII).
  */
 export function assert(condition: unknown, message?: string, containsPII = false): asserts condition {
+	// Rationale: Assert condition is permitted to by truthy.
+	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 	if (!condition) {
 		fail(message, containsPII);
 	}
@@ -111,7 +112,7 @@ function compareIterators<T, TReturn extends T = T>(
 	let b: IteratorResult<T, TReturn>;
 	for (
 		a = iteratorA.next(), b = iteratorB.next(); // Given two iterators...
-		!a.done && !b.done; // ...while both have elements remaining...
+		a.done !== true && b.done !== true; // ...while both have elements remaining...
 		a = iteratorA.next(), b = iteratorB.next() // ...take one element at a time from each...
 	) {
 		// ...and ensure that their elements are equivalent

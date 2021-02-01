@@ -10,7 +10,7 @@ import {
     InsecureTinyliciousTokenProvider,
     InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
-import { ITestDriver } from "./interfaces";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { pkgVersion } from "./packageVersion";
 
 export class TinyliciousTestDriver implements ITestDriver {

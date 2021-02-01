@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambda, IPartitionLambdaFactory, IQueuedMessage } from "@fluidframework/server-services-core";
+import {
+    IPartitionLambda,
+    IPartitionLambdaFactory,
+    IQueuedMessage,
+    LambdaCloseType,
+} from "@fluidframework/server-services-core";
 import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";
 import { Provider } from "nconf";
@@ -61,12 +66,12 @@ export class DocumentPartition {
             if (restart) {
                 // ensure no more messages are processed by this partition
                 // while the process is restarting / closing
-                this.close();
+                this.close(LambdaCloseType.Error);
             }
         });
 
         // Create the lambda to handle the document messages
-        this.lambdaP = factory.create(documentConfig, context);
+        this.lambdaP = factory.create(documentConfig, context, this.updateActivityTime.bind(this));
         this.lambdaP.then(
             (lambda) => {
                 this.lambda = lambda;
@@ -87,7 +92,7 @@ export class DocumentPartition {
         this.updateActivityTime();
     }
 
-    public close() {
+    public close(closeType: LambdaCloseType) {
         if (this.closed) {
             return;
         }
@@ -98,11 +103,11 @@ export class DocumentPartition {
         this.q.kill();
 
         if (this.lambda) {
-            this.lambda.close();
+            this.lambda.close(closeType);
         } else {
             this.lambdaP.then(
                 (lambda) => {
-                    lambda.close();
+                    lambda.close(closeType);
                 },
                 (error) => {
                     // Lambda was never created - ignoring

@@ -228,7 +228,6 @@ describe("Timers", () => {
 
         function startWithThen(ms?: number, handler?: () => void) {
             timer.start(ms, handler).then(
-                // eslint-disable-next-line  @typescript-eslint/no-unsafe-return
                 (result) => resolveResult = result.timerResult,
                 (error) => assert.fail(error),
             );

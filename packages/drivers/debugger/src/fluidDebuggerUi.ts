@@ -92,8 +92,9 @@ export interface IDebuggerController {
 
     /**
      * "Download ops" option is clicked in the UI. Returns JSON of the full opStream when available.
+     * @param anonymize - anonymize the ops json using the sanitization tool
      */
-    onDownloadOpsButtonClick(): Promise<string>;
+    onDownloadOpsButtonClick(anonymize: boolean): Promise<string>;
 }
 
 const debuggerWindowHtml =
@@ -107,7 +108,11 @@ Close debugger window to proceed to live document<br/><br/>
 &nbsp; &nbsp; &nbsp;
 <button id='buttonVers' style='width:60px'>Go</button><br/>
 <input id='file' type='file' value='Load from file'/>
-<br/><br/><a href='#' id='downloadOps'>Download ops as json</a>
+<br/><br/>
+<h4>Download the current document's ops</h4>
+<input type='checkbox' id='anonymize' value='Anonymize'>
+<label for='anonymize'>Anonymize</label>
+<button type='button' id='downloadOps'>Download ops</button>
 <br/><br/><div id='versionText'></div>
 </body>`;
 
@@ -123,7 +128,10 @@ Step to move: <input type='number' id='steps' value='1' min='1' style='width:50p
 <br/><br/>
 <div id='text1'></div><div id='text2'></div><div id='text3'></div>
 <br/>
-<a href='#' id='downloadOps'>Download ops as json</a>
+<h4>Download the current document's ops</h4>
+<input type='checkbox' id='anonymize' value='Anonymize'>
+<label for='anonymize'>Anonymize</label>
+<button type='button' id='downloadOps'>Download ops</button>
 </body>`;
 
 export class DebuggerUI {
@@ -202,7 +210,8 @@ export class DebuggerUI {
         }, false);
 
         const opDownloadButton = doc.getElementById("downloadOps") as HTMLElement;
-        this.attachDownloadOpsListener(opDownloadButton);
+        const anonymizeCheckbox = doc.getElementById("anonymize") as HTMLInputElement;
+        this.attachDownloadOpsListener(opDownloadButton, anonymizeCheckbox);
 
         this.versionText = doc.getElementById("versionText") as HTMLDivElement;
         this.versionText.textContent = "Fetching snapshots, please wait...";
@@ -210,9 +219,9 @@ export class DebuggerUI {
         controller.connectToUi(this);
     }
 
-    private attachDownloadOpsListener(element: HTMLElement) {
+    private attachDownloadOpsListener(element: HTMLElement, anonymize: HTMLInputElement) {
         element.addEventListener("click", () => {
-            this.controller.onDownloadOpsButtonClick().then((opJson) => {
+            this.controller.onDownloadOpsButtonClick(anonymize.checked).then((opJson) => {
                 this.download("opStream.json", opJson);
             }).catch((error) => {console.log(`Error downloading ops: ${error}`);});
         });
@@ -273,7 +282,8 @@ export class DebuggerUI {
         this.versionText.textContent = text;
 
         const opDownloadButton = doc.getElementById("downloadOps") as HTMLElement;
-        this.attachDownloadOpsListener(opDownloadButton);
+        const anonymizeCheckbox = doc.getElementById("anonymize") as HTMLInputElement;
+        this.attachDownloadOpsListener(opDownloadButton, anonymizeCheckbox);
     }
 
     public disableNextOpButton(disable: boolean) {

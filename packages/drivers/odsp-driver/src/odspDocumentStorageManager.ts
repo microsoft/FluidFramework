@@ -47,7 +47,7 @@ import {
 import { getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
 import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
-import { EpochTracker, FetchType } from "./epochTracker";
+import { EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 
 /* eslint-disable max-len */
@@ -292,7 +292,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                             headers,
                             method: "POST",
                         },
-                        FetchType.createBlob,
+                        "createBlob",
                     );
                     event.end({ blobId: res.content.id });
                     return res;
@@ -325,7 +325,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
                     },
                     async (event) => {
-                        const res = await this.epochTracker.fetchResponse(url, { headers }, FetchType.blob);
+                        const res = await this.epochTracker.fetchResponse(url, { headers }, "blob");
                         blob = await res.arrayBuffer();
                         event.end({
                             size: blob.byteLength,
@@ -502,7 +502,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                     key: "",
                                 },
                                 this.hostPolicy.summarizerClient ? snapshotExpirySummarizerOps : undefined,
-                                FetchType.treesLatest,
+                                "treesLatest",
                             );
 
                             let method: string;
@@ -574,7 +574,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     eventName: "getVersions",
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                 },
-                async () => this.epochTracker.fetchAndParseAsJSON<IDocumentStorageGetVersionsResponse>(url, { headers }, FetchType.treesLatest),
+                async () => this.epochTracker.fetchAndParseAsJSON<IDocumentStorageGetVersionsResponse>(url, { headers }, "treesLatest"),
             );
             const versionsResponse = response.content;
             if (!versionsResponse) {
@@ -686,7 +686,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     signal: controller?.signal,
                     method: "POST",
                 },
-                FetchType.treesLatest,
+                "treesLatest",
                 true,
             );
             const endTime = performance.now();

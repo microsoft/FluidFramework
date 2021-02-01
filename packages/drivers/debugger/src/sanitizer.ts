@@ -18,9 +18,8 @@
  * Messages must match known structures when scrubbing for Fluid Preview.
  */
 
-import fs from "fs";
-import { strict as assert } from "assert";
 import * as Validator from "jsonschema";
+import { assert } from "@fluidframework/common-utils";
 import {
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
@@ -37,23 +36,12 @@ import {
     proposeContentsSchema,
 } from "./messageSchema";
 
-function printUsage() {
-    console.log("Usage:");
-    console.log("   node sanitize [--full | --noBail] <input>");
-    console.log("Where");
-    console.log("  [--full] - scrub fully (result cannot be loaded in Fluid Preview)");
-    console.log("  [--noBail] - don't bail out when encountering an unknown message format (it won't be scrubbed");
-    console.log("  <input> - file path to message.json - file downloaded by FluidFetch tool");
-    console.log("Note: <input> is sanitized in place");
-    process.exit(-1);
-}
-
 enum TextType {
     Generic,
     Email,
     Name,
     FluidObject,
-    MapKey
+    MapKey,
 }
 
 // Workaround to jsonschema package not supporting "false" as a schema
@@ -91,7 +79,14 @@ class ChunkedOpProcessor {
 
     constructor(
         readonly validateSchemaFn: (object: any, schema: any) => boolean,
+        readonly debug: boolean,
     ) { }
+
+    debugMsg(msg: any) {
+        if (this.debug) {
+            console.error(msg);
+        }
+    }
 
     addMessage(message: any): void {
         this.messages.push(message);
@@ -105,8 +100,8 @@ class ChunkedOpProcessor {
                 parsed = parsed.contents;
             }
         } catch (e) {
-            console.error(e);
-            console.error(message.contents);
+            this.debugMsg(e);
+            this.debugMsg(message.contents);
         }
         this.validateSchemaFn(parsed, chunkedOpContentsSchema);
         this.parsedMessageContents.push(parsed);
@@ -130,8 +125,8 @@ class ChunkedOpProcessor {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return JSON.parse(contentsString);
         } catch (e) {
-            console.error(contentsString);
-            console.error(e);
+            this.debugMsg(contentsString);
+            this.debugMsg(e);
             return undefined;
         }
     }
@@ -151,7 +146,8 @@ class ChunkedOpProcessor {
             stringified = JSON.stringify(contents);
             assert(stringified.length <= this.concatenatedLength);
         } catch (e) {
-            console.error(e);
+            this.debugMsg(e);
+            throw e;
         }
 
         for (let i = 0; i < this.messages.length; i++) {
@@ -175,7 +171,7 @@ class ChunkedOpProcessor {
                     stringifiedParsedContents = JSON.stringify(parsedContents);
                 }
             } catch (e) {
-                console.error(e);
+                this.debugMsg(e);
             }
 
             message.contents = stringifiedParsedContents;
@@ -197,7 +193,7 @@ class ChunkedOpProcessor {
     }
 }
 
-class Sanitizer {
+export class Sanitizer {
     readonly validator = new Validator.Validator();
     // Represents the keys used to store Fluid object identifiers, snapshot info,
     // and other string fields that should not be replaced in contents blobs to
@@ -222,7 +218,7 @@ class Sanitizer {
             const errorMsg = `Bad msg fmt:\n${result.toString()}\n${JSON.stringify(object, undefined, 2)}`;
 
             if (this.fullScrub || this.noBail) {
-                console.error(errorMsg);
+                this.debugMsg(errorMsg);
             } else {
                 throw new Error(errorMsg);
             }
@@ -230,12 +226,13 @@ class Sanitizer {
         return result.valid;
     };
 
-    readonly chunkProcessor = new ChunkedOpProcessor(this.objectMatchesSchema);
+    readonly chunkProcessor = new ChunkedOpProcessor(this.objectMatchesSchema, this.debug);
 
     constructor(
         readonly messages: ISequencedDocumentMessage[],
         readonly fullScrub: boolean,
         readonly noBail: boolean,
+        readonly debug: boolean = false,
     ) {
         this.defaultExcludedKeys.add("type");
         this.defaultExcludedKeys.add("id");
@@ -243,6 +240,12 @@ class Sanitizer {
         this.defaultExcludedKeys.add("snapshotFormatVersion");
         this.defaultExcludedKeys.add("packageVersion");
         this.mergeTreeExcludedKeys.add("nodeType");
+    }
+
+    debugMsg(msg: any) {
+        if (this.debug) {
+            console.error(msg);
+        }
     }
 
     isFluidObjectKey(key: string): boolean {
@@ -261,7 +264,7 @@ class Sanitizer {
 
     readonly replaceRandomTextFn = (match: string): string => {
         if (this.replacementMap.has(match)) {
-            return this.replacementMap.get(match);
+            return this.replacementMap.get(match)!;
         }
 
         const replacement = this.getRandomText(match.length);
@@ -273,14 +276,14 @@ class Sanitizer {
      * Replace text with garbage.  FluidObject types are not replaced when not under
      * full scrub mode.  All other text is replaced consistently.
      */
-    replaceText(input?: string, type: TextType = TextType.Generic): string {
+    replaceText(input?: string, type: TextType = TextType.Generic): string | undefined {
         if (input === undefined) {
             return undefined;
         }
 
         if (type === TextType.FluidObject) {
             if (this.replacementMap.has(input)) {
-                return this.replacementMap.get(input);
+                return this.replacementMap.get(input)!;
             }
 
             let replacement: string;
@@ -321,7 +324,6 @@ class Sanitizer {
     // eslint-disable-next-line @typescript-eslint/ban-types
     replaceObject(input: object | null, excludedKeys: Set<string> = this.defaultExcludedKeys): object | null {
         // File might contain actual nulls
-        // eslint-disable-next-line no-null/no-null
         if (input === null || input === undefined) {
             return input;
         }
@@ -352,7 +354,6 @@ class Sanitizer {
      * @param excludedKeys - object keys for which to skip replacement when not in fullScrub
      */
     replaceAny(input: any, excludedKeys: Set<string> = this.defaultExcludedKeys): any {
-        // eslint-disable-next-line no-null/no-null
         if (input === null || input === undefined) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return input;
@@ -390,7 +391,7 @@ class Sanitizer {
 
             message.data = JSON.stringify(data);
         } catch (e) {
-            console.error(e);
+            this.debugMsg(e);
         }
     }
 
@@ -411,7 +412,7 @@ class Sanitizer {
                         }
                     }
                 } catch (e) {
-                    console.error(e);
+                    this.debugMsg(e);
                 }
             } else {
                 if (this.fullScrub) {
@@ -435,7 +436,7 @@ class Sanitizer {
                         element.value.contents = JSON.stringify(data);
                     }
                 } catch (e) {
-                    console.error(e);
+                    this.debugMsg(e);
                 }
             }
         });
@@ -477,7 +478,7 @@ class Sanitizer {
                 this.fixAttachContents(data);
                 message.contents = JSON.stringify(data);
             } catch (e) {
-                console.error(e);
+                this.debugMsg(e);
                 return;
             }
         } else {
@@ -520,7 +521,7 @@ class Sanitizer {
                         this.fixAttachContents(data);
                         contents.contents.content = JSON.stringify(data);
                     } catch (e) {
-                        console.error(e);
+                        this.debugMsg(e);
                     }
                 } else {
                     this.fixAttachContents(contents.contents.content);
@@ -571,7 +572,7 @@ class Sanitizer {
             try {
                 msgContents = JSON.parse(message.contents);
             } catch (e) {
-                console.error(e);
+                this.debugMsg(e);
                 return;
             }
         } else {
@@ -597,7 +598,7 @@ class Sanitizer {
             return this.fixChunkedOp(message);
         } else if (msgContents.type === "blobAttach") {
             // TODO: handle this properly once blob api is used
-            console.error("TODO: blobAttach ops are skipped/unhandled");
+            this.debugMsg("TODO: blobAttach ops are skipped/unhandled");
             return;
         } else {
             // A regular op
@@ -609,7 +610,7 @@ class Sanitizer {
             try {
                 message.contents = JSON.stringify(msgContents);
             } catch (e) {
-                console.error(e);
+                this.debugMsg(e);
                 return;
             }
         }
@@ -668,49 +669,17 @@ class Sanitizer {
                     case "summaryNack":
                         break;
                     default:
-                        console.log(`Unexpected op type ${message.type}`);
+                        this.debugMsg(`Unexpected op type ${message.type}`);
                 }
             });
 
             // make sure we don't miss an incomplete chunked op at the end
             assert(!this.chunkProcessor.isPendingProcessing());
         } catch (error) {
-            console.error(`Error while processing sequenceNumber ${seq}`);
+            this.debugMsg(`Error while processing sequenceNumber ${seq}`);
             throw error;
         }
 
         return this.messages;
     }
 }
-
-function Sanitize(msgPath: string, fullScrub: boolean, noBail: boolean) {
-    const input = fs.readFileSync(msgPath, { encoding: "utf-8" });
-    const messages = JSON.parse(input) as ISequencedDocumentMessage[];
-
-    const sanitizer = new Sanitizer(messages, fullScrub, noBail);
-    const cleanMessages = sanitizer.sanitize();
-
-    fs.writeFileSync(msgPath, JSON.stringify(cleanMessages, undefined, 2));
-
-    console.log("Done.");
-}
-
-function main() {
-    if (process.argv.length === 3) {
-        return Sanitize(process.argv[2], false, false);
-    }
-    if (process.argv.length === 4) {
-        if (process.argv[2] === "--full") {
-            return Sanitize(process.argv[3], true, false);
-        }
-        if (process.argv[2] === "--noBail") {
-            return Sanitize(process.argv[3], false, true);
-        }
-    }
-    printUsage();
-}
-
-main();
-
-// exceptions to not replace:
-// _scheduler values from snapshots?
