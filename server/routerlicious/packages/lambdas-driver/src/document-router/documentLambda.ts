@@ -10,6 +10,7 @@ import {
     IPartitionLambda,
     IPartitionLambdaFactory,
     LambdaCloseType,
+    IContextErrorData,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { DocumentContextManager } from "./contextManager";
@@ -34,8 +35,8 @@ export class DocumentLambda implements IPartitionLambda {
         private readonly partitionActivityTimeout = PartitionActivityTimeout,
         partitionActivityCheckInterval = PartitionActivityCheckInterval) {
         this.contextManager = new DocumentContextManager(context);
-        this.contextManager.on("error", (error, restart) => {
-            context.error(error, restart);
+        this.contextManager.on("error", (error, errorData: IContextErrorData) => {
+            context.error(error, errorData);
         });
         this.activityCheckTimer = setInterval(this.inactivityCheck.bind(this), partitionActivityCheckInterval);
     }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambda, IPartitionLambdaFactory, LambdaCloseType } from "@fluidframework/server-services-core";
+import { IContextErrorData, IPartitionLambda, IPartitionLambdaFactory, LambdaCloseType } from "@fluidframework/server-services-core";
 import {
     KafkaMessageFactory,
     MessageFactory,
@@ -106,9 +106,9 @@ describe("document-router", () => {
 
                 // And trigger a new message that will fail
                 return new Promise<void>((resolve, reject) => {
-                    context.on("error", (error, restart) => {
+                    context.on("error", (error, errorData: IContextErrorData) => {
                         assert.ok(error);
-                        assert.ok(restart);
+                        assert.ok(errorData.restart);
                         resolve();
                     });
 
@@ -153,9 +153,9 @@ describe("document-router", () => {
                 return new Promise<void>((resolve, reject) => {
                     testModule.factories[0].setFailCreateLambda(true);
 
-                    context.on("error", (error, restart) => {
+                    context.on("error", (error, errorData: IContextErrorData) => {
                         assert.ok(error);
-                        assert.ok(restart);
+                        assert.ok(errorData.restart);
                         resolve();
                     });
 

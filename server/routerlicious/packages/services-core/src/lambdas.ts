@@ -25,6 +25,16 @@ export interface ILogger {
     error(message: string, metaData?: any): void;
 }
 
+export interface IContextErrorData {
+    /**
+     * Indicates whether the error is recoverable and the lambdashould be restarted.
+     */
+    restart: boolean;
+
+    tenantId?: string;
+    documentId?: string;
+}
+
 export interface IContext {
     /**
      * Updates the checkpoint
@@ -32,10 +42,11 @@ export interface IContext {
     checkpoint(queuedMessage: IQueuedMessage): void;
 
     /**
-     * Closes the context with an error. The restart flag indicates whether the error is recoverable and the lambda
-     * should be restarted.
+     * Closes the context with an error.
+     * @param error The error object or string
+     * @param errorData Additional information about the error
      */
-    error(error: any, restart: boolean): void;
+    error(error: any, errorData: IContextErrorData): void;
 
     /**
      * Used to log events / errors.

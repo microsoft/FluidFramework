@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { LambdaCloseType } from "@fluidframework/server-services-core";
+import { IContextErrorData, LambdaCloseType } from "@fluidframework/server-services-core";
 import { KafkaMessageFactory, TestConsumer, TestKafka } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import { Provider } from "nconf";
@@ -19,7 +19,7 @@ function verifyClose(
     expectedRestart: boolean = true): Promise<void> {
 
     return new Promise<void>((resolve, reject) => {
-        partition.on("error", (error, restart) => {
+        partition.on("error", (error, errorData: IContextErrorData) => {
             // Clients can either send an explicit value for the error or a boolean indicating whether
             // or not there should have been an error
             if (typeof (expectedError) === "boolean") {
@@ -28,7 +28,7 @@ function verifyClose(
                 assert.equal(error, expectedError);
             }
 
-            assert.equal(restart, expectedRestart);
+            assert.equal(errorData.restart, expectedRestart);
             resolve();
         });
     });
@@ -72,9 +72,9 @@ describe("kafka-service", () => {
                 testFactory.setFailCreate(true);
                 return new Promise<void>((resolve, reject) => {
                     const testPartition = new Partition(0, 0, testFactory, testConsumer, testConfig);
-                    testPartition.on("error", (error, restart) => {
+                    testPartition.on("error", (error, errorData: IContextErrorData) => {
                         assert(error);
-                        assert(restart);
+                        assert(errorData.restart);
                         resolve();
                     });
                 });
@@ -104,7 +104,7 @@ describe("kafka-service", () => {
                     testPartition.process(kafkaMessageFactory.sequenceMessage({}, "test"));
                 }
                 // And then signal to close the lambda
-                testFactory.closeLambdas(closeError, closeRestart);
+                testFactory.closeLambdas(closeError, { restart: closeRestart });
 
                 await verifyP;
             });

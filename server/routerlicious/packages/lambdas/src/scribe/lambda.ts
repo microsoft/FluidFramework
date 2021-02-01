@@ -353,7 +353,11 @@ export class ScribeLambda extends SequencedLambda {
                 }
             },
             (error) => {
-                this.context.error(error, true);
+                this.context.error(error, {
+                    restart: true,
+                    tenantId: this.tenantId,
+                    documentId: this.documentId,
+                });
             });
     }
 
