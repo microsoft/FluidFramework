@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambdaFactory } from "@fluidframework/server-services-core";
+import { IPartitionLambdaFactory, LambdaCloseType } from "@fluidframework/server-services-core";
 import { TestContext } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import nconf from "nconf";
@@ -25,7 +25,7 @@ describe("document-router", () => {
         });
 
         afterEach(async () => {
-           await factory.dispose();
+            await factory.dispose();
         });
 
         describe(".create", () => {
@@ -33,7 +33,7 @@ describe("document-router", () => {
                 const context = new TestContext();
                 const lambda = await factory.create(config, context);
                 assert.ok(lambda);
-                lambda.close();
+                lambda.close(LambdaCloseType.Stop);
             });
         });
     });

@@ -16,14 +16,17 @@ export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageSer
 
     public async get(from: number, to: number): Promise<IDeltasFetchResult> {
         const messages: ISequencedDocumentMessage[] = [];
-        let index: number = -1;
+        let index: number = 0;
 
         // Find first
-        while (this.messages[++index].sequenceNumber <= from) { }
+        while (index < this.messages.length && this.messages[index].sequenceNumber <= from) {
+            index++;
+        }
 
         // start reading
-        while (++index < this.messages.length && this.messages[++index].sequenceNumber < to) {
+        while (index < this.messages.length && this.messages[index].sequenceNumber < to) {
             messages.push(this.messages[index]);
+            index++;
         }
 
         return { messages, partialResult: false };
