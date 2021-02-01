@@ -494,10 +494,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.on("newListener", (event: string, listener: (...args: any[]) => void) => {
             // Fire events on the end of JS turn, giving a chance for caller to be in consistent state.
             Promise.resolve().then(() => {
-                const connected = this._connectionState === ConnectionState.Connected;
-                if (event === connectedEventName && connected) {
+                if (event === connectedEventName && this.connected) {
                     listener(event, this.clientId);
-                } else if (event === disconnectedEventName && !connected) {
+                } else if (event === disconnectedEventName && !this.connected) {
                     listener(event);
                 } else if (event === connectEventName && this._connectionState !== ConnectionState.Disconnected) {
                     listener(event);
