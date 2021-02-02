@@ -39,7 +39,7 @@ describe("CreateIdBetween SequentialId tests", () => {
     assert.equal(result, expectedResult);
   });
 
-  it("Create Id between min and max with bigger min length", () => {
+  it("Create Id between min and max with bigger min length and overflow", () => {
     const min = "ABCC";
     const max = "AD";
     const expectedResult = "ACBB";
@@ -47,7 +47,7 @@ describe("CreateIdBetween SequentialId tests", () => {
     assert.equal(result, expectedResult);
   });
 
-  it("Create Id between min and max with bigger min length", () => {
+  it("Create Id between min and max with overflow", () => {
     const min = "ABCC";
     const max = "ACBB";
     const expectedResult = "ABCCN";
@@ -55,7 +55,7 @@ describe("CreateIdBetween SequentialId tests", () => {
     assert.equal(result, expectedResult);
   });
 
-  it("Create Id between min and max close to limits", () => {
+  it("Create Id between min and max close to limits and 1 digit", () => {
     const min = "Y";
     const max = "Z";
     const expectedResult = "YN";
@@ -63,10 +63,18 @@ describe("CreateIdBetween SequentialId tests", () => {
     assert.equal(result, expectedResult);
   });
 
-  it("Create Id between min and max close to limits", () => {
+  it("Create Id between min and max close to limits and 2 digits", () => {
     const min = "YY";
     const max = "ZZ";
     const expectedResult = "YYN";
+    const result = createIdBetween(min, max);
+    assert.equal(result, expectedResult);
+  });
+
+  it("Create Id between min and max close to smaller limit", () => {
+    const min = "B";
+    const max = "C";
+    const expectedResult = "BN";
     const result = createIdBetween(min, max);
     assert.equal(result, expectedResult);
   });
