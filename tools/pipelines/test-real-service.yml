@@ -75,6 +75,7 @@ stages:
       # Job - Test
       - job: test
         displayName: Test
+        dependsOn: build
         pool: ${{ parameters.poolBuild }}
         steps:
         # Run End-to-end Tests
