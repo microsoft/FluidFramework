@@ -41,6 +41,7 @@ import {
     OpProcessingController,
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
+    TestObjectProvider,
 } from "old-test-utils";
 
 import {v4 as uuid} from "uuid";
@@ -341,15 +342,14 @@ export function createTestObjectProvider(
             : createRuntimeFactory(type, dataStoreFactory, containerOptions?.runtimeOptions);
     };
 
-    // back-compat: 0.33 begins using TestObjectProvider instead of LocalTestObjectProvider
-    // Once this file references 0.33, oldLoader should create a TestObjectProvider instead
+    if (driver === undefined) {
+        throw new Error("Must provide a driver when using the current loader");
+    }
     if (oldLoader) {
-        return new LocalTestObjectProvider(
-            containerFactoryFn as () => IRuntimeFactory, serviceConfiguration);
+        return new TestObjectProvider(
+            driver as any,
+            containerFactoryFn as () => IRuntimeFactory);
     } else {
-        if (driver === undefined) {
-            throw new Error("Must provide a driver when using the current loader");
-        }
         return new newVer.TestObjectProvider(
             driver, containerFactoryFn as () => newVer.IRuntimeFactory);
     }

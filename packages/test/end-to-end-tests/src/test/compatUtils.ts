@@ -142,12 +142,14 @@ export const generateCompatTest = (
     oldApis.forEach((oldApi: oldTypes.OldApi) => {
         describe("compat - old loader, new runtime", function() {
             tests(() => {
+                const driver = getFluidTestDriver();
                 return oldApi.createTestObjectProvider(
                     true, /* oldLoader */
                     false, /* oldContainerRuntime */
                     false, /* oldDataStoreRuntime */
                     TestDataObject.type,
                     options.serviceConfiguration,
+                    driver,
                 );
             }, oldApi);
         });
@@ -182,12 +184,14 @@ export const generateCompatTest = (
 
         describe("compat - old ContainerRuntime, new DataStoreRuntime", function() {
             tests(() => {
+                const driver = getFluidTestDriver();
                 return oldApi.createTestObjectProvider(
                     true, /* oldLoader */
                     true, /* oldContainerRuntime */
                     false, /* oldDataStoreRuntime */
                     TestDataObject.type,
                     options.serviceConfiguration,
+                    driver,
                 );
             }, oldApi);
         });
