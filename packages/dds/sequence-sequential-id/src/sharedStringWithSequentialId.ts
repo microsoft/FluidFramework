@@ -10,6 +10,9 @@ import { SharedString, SequenceDeltaEvent, SequenceMaintenanceEvent } from "@flu
 import { createIdBetween, digitLast, digitZero } from "./generateSequentialId";
 import { SharedStringWithSequentialIdFactory } from "./SharedStringWithSequentialIdFactory";
 
+const minId = digitZero;
+const maxId = digitLast;
+
 export function createStringWithSequentialIdFactory(Base: typeof SharedString = SharedString): typeof SharedString {
     return class SharedStringWithSequentialId extends Base {
         private readonly sortedMarkers: Lazy<SortedSegmentSet>;
@@ -80,11 +83,11 @@ export function createStringWithSequentialIdFactory(Base: typeof SharedString = 
              markerItems[previousMarkerIndex] as Marker : undefined;
             const nextMarker = nextMarkerIndex < markerItems.length ?
              markerItems[nextMarkerIndex] as Marker : undefined;
-            const previousId: string = previousMarker !== undefined ? previousMarker.getId() ?? digitZero : digitZero;
-            const nextId: string = nextMarker !== undefined ? nextMarker.getId() ?? digitLast : digitLast;
-            let newMarkerProps = markerSegment.properties ?? {};
+            const previousId: string = previousMarker !== undefined ? previousMarker.getId() ?? minId : minId;
+            const nextId: string = nextMarker !== undefined ? nextMarker.getId() ?? maxId : maxId;
+            const newMarkerProps = markerSegment.properties ?? {};
             const id = createIdBetween(previousId, nextId);
-            newMarkerProps = { ...newMarkerProps, [reservedMarkerIdKey]: id };
+            newMarkerProps[reservedMarkerIdKey] = id;
             markerSegment.properties = newMarkerProps;
         };
     };
