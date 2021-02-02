@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Lazy } from "@fluidframework/common-utils";
+import { assert, Lazy } from "@fluidframework/common-utils";
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { Marker, MergeTreeDeltaType, MergeTreeMaintenanceType,
      reservedMarkerIdKey, SortedSegmentSet } from "@fluidframework/merge-tree";
@@ -74,6 +74,17 @@ export function createStringWithSequentialIdFactory(factory: SharedStringFactory
             }
         };
 
+        private assignId(marker: Marker | undefined, defaultIdValue: string): string {
+            if (marker !== undefined) {
+                // If the marker is defined, it should have an id assigned.
+                assert(marker.getId() !== undefined, "The id of the marker should be defined");
+                return marker.getId() as string;
+            }
+
+            // If the marker is undefined, we return a defaultValue as an id
+            return defaultIdValue;
+        }
+
         private readonly applyIdToMarker = (markerSegment: Marker): void => {
             this.sortedMarkers.value.addOrUpdate(markerSegment);
             const markerItems = this.sortedMarkers.value.items;
@@ -84,8 +95,8 @@ export function createStringWithSequentialIdFactory(factory: SharedStringFactory
              markerItems[previousMarkerIndex] as Marker : undefined;
             const nextMarker = nextMarkerIndex < markerItems.length ?
              markerItems[nextMarkerIndex] as Marker : undefined;
-            const previousId: string = previousMarker !== undefined ? previousMarker.getId() ?? minId : minId;
-            const nextId: string = nextMarker !== undefined ? nextMarker.getId() ?? maxId : maxId;
+            const previousId: string = this.assignId(previousMarker, minId);
+            const nextId: string = this.assignId(nextMarker, maxId);
             const newMarkerProps = markerSegment.properties ?? {};
             const id = createIdBetween(previousId, nextId);
             newMarkerProps[reservedMarkerIdKey] = id;
