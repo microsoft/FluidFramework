@@ -201,7 +201,7 @@ async function main() {
 
     // When runId is not specified, this is the orchestrator process which will spawn child test runners.
     result = await orchestratorProcess(
-        { ...loginInfo, tenantArg },
+        { ...loginInfo, tenantFriendlyName: tenantArg },
         { ...profile, name: profileArg },
         { driveId, url, debug });
     process.exit(result);
@@ -236,8 +236,8 @@ async function runnerProcess(
  * Implementation of the orchestrator process. Returns the return code to exit the process with.
  */
 async function orchestratorProcess(
-    loginInfo: IOdspTestLoginInfo & { tenantArg: string },
-    profile: ITestConfig &  { name: string },
+    loginInfo: IOdspTestLoginInfo & { tenantFriendlyName: string },
+    profile: ITestConfig & { name: string },
     args: { driveId?: string, url?: string, debug?: true },
 ): Promise<number> {
     let driveId: string;
@@ -285,7 +285,7 @@ async function orchestratorProcess(
         const childArgs: string[] = [
             "./dist/nodeStressTest.js",
             "--driveId", driveId,
-            "--tenant", loginInfo.tenantArg,
+            "--tenant", loginInfo.tenantFriendlyName,
             "--password", loginInfo.password,
             "--profile", profile.name,
             "--runId", i.toString(),
