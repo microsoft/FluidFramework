@@ -23,15 +23,16 @@ describe("SharedStringWithSequential Id", () => {
         const sharedStringSequentialIdFactory = createStringWithSequentialIdFactory();
         // eslint-disable-next-line max-len
         sharedStringWithSequentialId = new sharedStringSequentialIdFactory(dataStoreRuntime, "string-seq-1", SharedStringWithSequentialIdFactory.Attributes);
-                    // Connect the first SharedString.
-                    dataStoreRuntime.local = false;
-                    const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-                    const services1 = {
-                        deltaConnection: containerRuntime1.createDeltaConnection(),
-                        objectStorage: new MockStorage(),
-                    };
-                    sharedStringWithSequentialId.initializeLocal();
-                    sharedStringWithSequentialId.connect(services1);    });
+        // Connect the sharedString.
+        dataStoreRuntime.local = false;
+        const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+        const services1 = {
+            deltaConnection: containerRuntime1.createDeltaConnection(),
+            objectStorage: new MockStorage(),
+        };
+        sharedStringWithSequentialId.initializeLocal();
+        sharedStringWithSequentialId.connect(services1);
+    });
 
     function validateMarker(marker: Marker): void {
         const id = marker.getId();
