@@ -26,7 +26,7 @@ export const enum MergeTreeMaintenanceType {
      */
     UNLINK  = -3,
     /**
-     * Notification that a local change has been acknowedged by the server. 
+     * Notification that a local change has been acknowedged by the server.
      * This means that it has made the round trip to the server and has had a sequence number assigned.
      */
     ACKNOWLEDGED = -4,
