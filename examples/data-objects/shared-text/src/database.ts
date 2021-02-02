@@ -198,7 +198,7 @@ export class GraphQLService {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getHeroes(): Promise<Hero[]> {
+    public getHeroes() {
         const query =
             `
                 {
@@ -209,22 +209,22 @@ export class GraphQLService {
                 }
             `;
 
-        const queryP = graphql<{ heroes: Hero[] }>(this.schema, query).then(
+        const queryP = graphql(this.schema, query).then(
             // eslint-disable-next-line @typescript-eslint/promise-function-async
             (response) => response.errors
                 ? Promise.reject(response.errors)
                 : Promise.resolve(response.data.heroes));
 
-        return queryP;
+        return queryP as Promise<Hero[]>;
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public runQuery<T>(query, variables): Promise<ExecutionResult<T>> {
+    public runQuery<T>(query, variables) {
         return graphql({
             schema: this.schema,
             source: query,
             variableValues: variables,
-        });
+        }) as Promise<ExecutionResult<T>>;
     }
 
     public async subscribeHeroes(): Promise<AsyncIterator<ExecutionResult<{ heroesUpdate: Hero[] }>>> {
@@ -238,7 +238,7 @@ export class GraphQLService {
                 }
             `);
 
-        const value = await subscribe<{ heroUpdate: Hero }>({
+        const value = await subscribe({
             document: query,
             schema: this.schema,
         });
@@ -256,7 +256,7 @@ export class GraphQLService {
                 }
             `);
 
-        const value = await subscribe<{ heroUpdate: Hero }>({
+        const value = await subscribe({
             document: query,
             schema: this.schema,
             variableValues: { id },
@@ -265,7 +265,7 @@ export class GraphQLService {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getHero(id: number): Promise<Hero> {
+    public getHero(id: number) {
         const query =
             `
                 {
@@ -275,17 +275,17 @@ export class GraphQLService {
                     }
                 }
             `;
-        const queryP = graphql<{ heroes: Hero[] }>(this.schema, query).then(
+        const queryP = graphql(this.schema, query).then(
             // eslint-disable-next-line @typescript-eslint/promise-function-async
             (response) => response.errors
                 ? Promise.reject(response.errors)
                 : Promise.resolve(response.data.heroes[0]));
 
-        return queryP;
+        return queryP as Promise<Hero>;
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public updateHero(hero: Hero): Promise<Hero> {
+    public updateHero(hero: Hero) {
         const query =
             `
                 mutation Rename($id: Int!, $name: String!) {
@@ -299,13 +299,13 @@ export class GraphQLService {
             id: hero.id,
             name: hero.name,
         };
-        const queryP = graphql<{ renameHero: Hero }>({ schema: this.schema, source: query, variableValues }).then(
+        const queryP = graphql({ schema: this.schema, source: query, variableValues }).then(
             // eslint-disable-next-line @typescript-eslint/promise-function-async
             (response) => response.errors
                 ? Promise.reject(response.errors)
                 : Promise.resolve(response.data.renameHero));
 
-        return queryP;
+        return queryP as Promise<Hero>;
     }
 
     private getAllHeroes(): Hero[] {

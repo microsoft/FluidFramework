@@ -70,7 +70,7 @@
     "bootstrap": "^3.3.7",
     "debug": "^4.1.1",
     "graphiql": "^0.13.0",
-    "graphql": "^14.1.1",
+    "graphql": "^15.4.0",
     "graphql-subscriptions": "^1.0.0",
     "katex": "^0.10.2",
     "monaco-editor": "^0.15.6",
