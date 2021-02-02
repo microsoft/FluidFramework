@@ -4,12 +4,14 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { fetchTokenErrorCode } from "@fluidframework/odsp-doclib-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISocketStorageDiscovery } from "./contracts";
 import { getWithRetryForTokenRefresh, getOrigin } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
 import { TokenFetchOptions } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
+import { throwOdspNetworkError } from "./odspError";
 
 /**
  * Makes join session call on SPO to get information about the web socket for a document
@@ -33,7 +35,9 @@ export async function fetchJoinSession(
 ): Promise<ISocketStorageDiscovery> {
     return getWithRetryForTokenRefresh(async (options) => {
         const token = await getStorageToken(options, "JoinSession");
-
+        if (token === null) {
+            throwOdspNetworkError("Token is null", fetchTokenErrorCode);
+        }
         const extraProps = options.refresh ? { secondAttempt: 1, hasClaims: !!options.claims } : {};
         return PerformanceEvent.timedExecAsync(logger, { eventName: "JoinSession", ...extraProps }, async (event) => {
             // TODO Extract the auth header-vs-query logic out

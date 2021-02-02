@@ -8,6 +8,7 @@ import cloneDeep from "lodash/cloneDeep";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, hashFile, IsoBuffer, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
+import { fetchTokenErrorCode } from "@fluidframework/odsp-doclib-utils";
 import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
@@ -25,6 +26,7 @@ import { EpochTracker } from "./epochTracker";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { getWithRetryForTokenRefresh } from "./odspUtils";
 import { TokenFetchOptions } from "./tokenFetch";
+import { throwOdspNetworkError } from "./odspError";
 
 /* eslint-disable max-len */
 
@@ -207,7 +209,9 @@ export class OdspSummaryUploadManager {
 
         return getWithRetryForTokenRefresh(async (options) => {
             const storageToken = await this.getStorageToken(options, "WriteSummaryTree");
-
+            if (storageToken === null) {
+                throwOdspNetworkError("Token is null", fetchTokenErrorCode);
+            }
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/snapshot`, storageToken);
             headers["Content-Type"] = "application/json";
 

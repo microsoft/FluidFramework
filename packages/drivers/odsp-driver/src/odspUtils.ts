@@ -10,6 +10,7 @@ import {
     offlineFetchFailureStatusCode,
     fetchFailureStatusCode,
     fetchTimeoutStatusCode,
+    OdspErrorType,
 } from "@fluidframework/odsp-doclib-utils";
 import {
     default as fetch,
@@ -48,6 +49,8 @@ export async function getWithRetryForTokenRefresh<T>(get: (options: TokenFetchOp
                 return get({ refresh: true, claims: e.claims });
             // fetchIncorrectResponse indicates some error on the wire, retry once.
             case DriverErrorType.incorrectServerResponse:
+            // If the token was null, then retry once.
+            case OdspErrorType.fetchTokenError:
                 return get({ refresh: true });
             default:
                 // All code paths (deltas, blobs, trees) already throw exceptions.

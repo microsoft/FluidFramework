@@ -5,7 +5,11 @@
 
 import { Uint8ArrayToString } from "@fluidframework/common-utils";
 import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
-import { fetchIncorrectResponse, invalidFileNameStatusCode } from "@fluidframework/odsp-doclib-utils";
+import {
+    fetchIncorrectResponse,
+    fetchTokenErrorCode,
+    invalidFileNameStatusCode,
+} from "@fluidframework/odsp-doclib-utils";
 import { getGitType } from "@fluidframework/protocol-base";
 import { SummaryType, ISummaryTree, ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -64,6 +68,9 @@ export async function createNewFluidFile(
 
     const itemId = await getWithRetryForTokenRefresh(async (options) => {
         const storageToken = await getStorageToken(options, "CreateNewFile");
+        if (storageToken === null) {
+            throwOdspNetworkError("Token is null", fetchTokenErrorCode);
+        }
 
         return PerformanceEvent.timedExecAsync(
             logger,

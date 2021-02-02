@@ -27,6 +27,8 @@ export const fetchTimeoutStatusCode = 713;
 // with the server epoch version, the server throws this error code.
 // This indicates that the file/container has been modified externally.
 export const fluidEpochMismatchError = 409;
+// Error code for when the fetched token is null.
+export const fetchTokenErrorCode = 724;
 
 export enum OdspErrorType {
     /**
@@ -64,6 +66,8 @@ export enum OdspErrorType {
      * does not match the one at the server.
      */
     epochVersionMismatch = "epochVersionMismatch",
+
+    fetchTokenError = "fetchTokenError",
 }
 
 /**
@@ -134,6 +138,9 @@ export function createOdspNetworkError(
             break;
         case fetchTimeoutStatusCode:
             error = new NonRetryableError(errorMessage, OdspErrorType.fetchTimeout, statusCode);
+            break;
+        case fetchTokenErrorCode:
+            error = new NonRetryableError(errorMessage, OdspErrorType.fetchTokenError, statusCode);
             break;
         default:
             error = createGenericNetworkError(errorMessage, true, retryAfterSeconds, statusCode);
