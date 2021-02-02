@@ -6,14 +6,15 @@ import { Lazy } from "@fluidframework/common-utils";
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { Marker, MergeTreeDeltaType, MergeTreeMaintenanceType,
      reservedMarkerIdKey, SortedSegmentSet } from "@fluidframework/merge-tree";
-import { SharedString, SequenceDeltaEvent, SequenceMaintenanceEvent } from "@fluidframework/sequence";
+import { SharedString, SequenceDeltaEvent,
+    SequenceMaintenanceEvent, SharedStringFactory } from "@fluidframework/sequence";
 import { createIdBetween, digitLast, digitZero } from "./generateSequentialId";
-import { SharedStringWithSequentialIdFactory } from "./SharedStringWithSequentialIdFactory";
 
 const minId = digitZero;
 const maxId = digitLast;
 
-export function createStringWithSequentialIdFactory(Base: typeof SharedString = SharedString): typeof SharedString {
+export function createStringWithSequentialIdFactory(factory: SharedStringFactory,
+     Base: typeof SharedString = SharedString): typeof SharedString {
     return class SharedStringWithSequentialId extends Base {
         private readonly sortedMarkers: Lazy<SortedSegmentSet>;
         constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
@@ -36,7 +37,7 @@ export function createStringWithSequentialIdFactory(Base: typeof SharedString = 
         }
 
         public static getFactory() {
-            return new SharedStringWithSequentialIdFactory();
+            return factory;
         }
 
         private readonly applyIdToRemoteAckedSegment = (event: SequenceDeltaEvent): void => {

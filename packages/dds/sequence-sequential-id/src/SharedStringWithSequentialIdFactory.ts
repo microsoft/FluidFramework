@@ -42,14 +42,14 @@ export class SharedStringWithSequentialIdFactory implements IChannelFactory {
         id: string,
         services: IChannelServices,
         attributes: IChannelAttributes): Promise<SharedString> {
-        const sharedStringWithSequentialIdClass = createStringWithSequentialIdFactory();
+        const sharedStringWithSequentialIdClass = createStringWithSequentialIdFactory(this);
         const sharedString = new sharedStringWithSequentialIdClass(runtime, id, this.attributes);
         await sharedString.load(services);
         return sharedString;
     }
 
     public create(document: IFluidDataStoreRuntime, id: string): SharedString {
-        const sharedStringWithSequentialIdClass = createStringWithSequentialIdFactory();
+        const sharedStringWithSequentialIdClass = createStringWithSequentialIdFactory(this);
         const sharedString = new sharedStringWithSequentialIdClass(document, id, this.attributes);
         sharedString.initializeLocal();
         return sharedString;

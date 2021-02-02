@@ -20,7 +20,8 @@ describe("SharedStringWithSequential Id", () => {
     beforeEach(() => {
         containerRuntimeFactory = new MockContainerRuntimeFactory();
         dataStoreRuntime = new MockFluidDataStoreRuntime();
-        const sharedStringSequentialIdFactory = createStringWithSequentialIdFactory();
+        const factory = new SharedStringWithSequentialIdFactory();
+        const sharedStringSequentialIdFactory = createStringWithSequentialIdFactory(factory);
         // eslint-disable-next-line max-len
         sharedStringWithSequentialId = new sharedStringSequentialIdFactory(dataStoreRuntime, "string-seq-1", SharedStringWithSequentialIdFactory.Attributes);
         // Connect the sharedString.
