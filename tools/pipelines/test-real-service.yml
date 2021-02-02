@@ -72,7 +72,12 @@ stages:
             workingDir: ${{ parameters.buildDirectory }}
             customCommand: 'run ${{ parameters.taskBuild }}'
 
-        # Test
+      # Job - Test
+      - job: test
+        displayName: Test
+        pool: ${{ parameters.poolBuild }}
+        steps:
+        # Run End-to-end Tests
         - task: Npm@1
           displayName: '[end-to-end tests] npm run ci:test:realsvc'
           env:
@@ -85,7 +90,17 @@ stages:
             workingDir: packages/test/end-to-end-tests
             customCommand: 'run ci:test:realsvc' # This script ends with 'exit 0' so this task should never fail
 
-        # Test - Upload results
+        # Run Stress Tests
+        - task: Npm@1
+          displayName: '[stress tests] npm run start'
+          env:
+            login__odsp__test__accounts: $(login-odsp-test-accounts)
+          inputs:
+            command: 'custom'
+            workingDir: packages/test/service-load-test
+            customCommand: 'run start'
+
+        # Upload results
         - task: PublishTestResults@2
           displayName: Publish Test Results
           inputs:
