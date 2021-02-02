@@ -7,7 +7,7 @@ import { assert, assertNotUndefined, compareIterables, fail } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
 import { ChangeNode, TraitLocation, StableRange, Side, StablePlace, NodeData } from './PersistedTypes';
 import { compareTraits } from './EditUtilities';
-import { compareSnapshotNodes, getTreeNodeFromSnapshotNode } from './SnapshotUtilities';
+import { compareSnapshotNodes, getChangeNodeFromSnapshot } from './SnapshotUtilities';
 import { createForest, Delta, Forest as GenericForest } from './Forest';
 
 /**
@@ -114,7 +114,7 @@ export class Snapshot {
 
 	/** Return a tree of JSON-compatible `ChangeNode`s representing the current state of this `Snapshot` */
 	public getChangeNodeTree(): ChangeNode {
-		return getTreeNodeFromSnapshotNode(this, this.root) as ChangeNode;
+		return getChangeNodeFromSnapshot(this, this.root);
 	}
 
 	/**
@@ -135,7 +135,7 @@ export class Snapshot {
 	 * @returns a `ChangeNode` derived from the `SnapshotNode` in this snapshot with the given `NodeId`.
 	 */
 	public getChangeNode(id: NodeId): ChangeNode {
-		return getTreeNodeFromSnapshotNode<ChangeNode>(this, id) as ChangeNode;
+		return getChangeNodeFromSnapshot(this, id);
 	}
 
 	/**
