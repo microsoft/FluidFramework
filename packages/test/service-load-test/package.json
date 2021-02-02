@@ -59,12 +59,14 @@
     "@fluidframework/odsp-driver": "^0.34.0",
     "@fluidframework/test-utils": "^0.34.0",
     "@fluidframework/tool-utils": "^0.34.0",
+    "assert": "^2.0.0",
     "commander": "^5.1.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0-0",
     "@fluidframework/eslint-config-fluid": "^0.22.1-0",
     "@fluidframework/mocha-test-setup": "^0.34.0",
+    "@types/assert": "^1.5.2",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
