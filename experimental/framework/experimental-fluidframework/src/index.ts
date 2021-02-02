@@ -4,11 +4,12 @@
  * Licensed under the MIT License.
  */
 
-export * from  "./Aqueduct";
-export * from  "./CoreInterfaces";
-export * from  "./DataObjects";
-export * from  "./DatastoreDefinitions";
-export * from  "./Map";
-export * from  "./ProtocolDefinitions";
-export * from  "./Sequence";
-export * from  "./ViewInterfaces";
+export * from  "./aqueduct";
+export * from  "./coreInterfaces";
+export * from  "./dataObjects";
+export * from  "./datastoreDefinitions";
+export * from  "./map";
+export * from  "./mergeTree";
+export * from  "./protocolDefinitions";
+export * from  "./sequence";
+export * from  "./viewInterfaces";
