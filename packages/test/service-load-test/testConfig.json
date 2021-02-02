@@ -1,5 +1,14 @@
 {
-    "server": "a830edad9050849829J20060312.sharepoint.com",
+    "tenants": {
+        "fluidCI": {
+            "server": "a830edad9050849829J20060312.sharepoint.com",
+            "username": "user0@a830edad9050849829J20060312.onmicrosoft.com"
+        },
+        "2616-my": {
+            "server": "a830edad9050849830E21012616-my.sharepoint.com",
+            "username": "user0@a830edad9050849830E21012616.onmicrosoft.com"
+        }
+    },
     "profiles": {
         "full": {
             "opRatePerMin": 30,
