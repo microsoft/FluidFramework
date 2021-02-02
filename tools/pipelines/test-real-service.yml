@@ -37,6 +37,7 @@ variables:
 
 jobs:
   - job: run
+    displayName: Build and Run Tests
     pool: ${{ parameters.poolBuild }}
     steps:
     # Setup
