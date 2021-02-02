@@ -584,6 +584,6 @@ export type UuidString = string & {
 
 // Warnings were encountered during analysis:
 //
-// src/EditLog.ts:72:47 - (ae-forgotten-export) The symbol "SerializedChunk" needs to be exported by the entry point index.d.ts
+// src/EditLog.ts:73:47 - (ae-forgotten-export) The symbol "SerializedChunk" needs to be exported by the entry point index.d.ts
 
 ```
