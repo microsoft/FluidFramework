@@ -157,7 +157,7 @@ async function main() {
         try {
             // Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
             const passwords: { [user: string]: string } =
-                JSON.parse(process.env.login__odsp__test__accounts2 ?? "");
+                JSON.parse(process.env.login__odsp__test__accounts ?? "");
 
             password = passwords[tenant.username];
             assert(password, "Expected to find Password in an env variable since it wasn't provided via script param");
