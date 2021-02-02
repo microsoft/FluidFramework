@@ -20,13 +20,17 @@ import {
     bufferToString,
     stringToBuffer,
     unreachableCase,
+    fromUtf8ToBase64,
  } from "@fluidframework/common-utils";
 
-class BlobStats {
-    private readonly content: string[] = [];
+ /**
+  * Class responsible for aggregating smaller blobs into one and unpacking it later on.
+  */
+class BlobAggregator {
+    private readonly content: [string, string][]= [];
 
     public addBlob(key: string, content: string) {
-        this.content.push(key, content);
+        this.content.push([key, content]);
     }
 
     public getContent() {
@@ -38,25 +42,121 @@ class BlobStats {
 
     static load(input: ArrayBufferLike) {
         const data = bufferToString(input, "utf-8");
-        return JSON.parse(data) as string [];
+        return JSON.parse(data) as [string, string][];
     }
 }
 
-export class BlobAggregatorStorage implements IDocumentStorageService {
+/*
+ * Base class that deals with unpacking snapshots (in place) containing aggregated blobs
+ * It relies on abstract methods for reads and storing unpacked blobs.
+ */
+abstract class SnapshotExtractor {
     protected readonly aggregatedBlobName = "__big";
-    protected readonly blobCutOffSize = 1024;
-
-    protected loadedFromSummary = false;
+    protected readonly virtualIdPrefix = "__";
 
     // counter for generation of virtual storage IDs
     protected virtualIdCounter = 0;
     protected getNextVirtualId() {
-        return (++this.virtualIdCounter).toString();
+        return `${this.virtualIdPrefix}${++this.virtualIdCounter}`;
     }
+
+    abstract getBlob(id: string, tree: ISnapshotTree): Promise<ArrayBufferLike>;
+    abstract setBlob(id: string, tree: ISnapshotTree, content: string);
+
+    public async unpackSnapshotCore(snapshot: ISnapshotTree, level = 0): Promise<void> {
+        // for now only working at data store level, i.e.
+        // .app/DataStore/...
+        if (level >= 2) {
+            return;
+        }
+
+        for (const key of Object.keys(snapshot.trees)) {
+            const obj = snapshot.trees[key];
+            await this.unpackSnapshotCore(obj, level + 1);
+        }
+        const blobId = snapshot.blobs[this.aggregatedBlobName];
+        if (blobId !== undefined) {
+            const blob = await this.getBlob(blobId, snapshot);
+            for (const [key, value] of BlobAggregator.load(blob)) {
+                const id = this.getNextVirtualId();
+                this.setBlob(id, snapshot, value);
+                const path = key.split("/");
+                let subTree = snapshot;
+                for (const subPath of path.slice(0, path.length - 1)) {
+                    if (subTree.trees[subPath] === undefined) {
+                        subTree.trees[subPath] = { blobs: {}, commits: {}, trees: {}};
+                    }
+                    subTree = subTree.trees[subPath];
+                }
+                const name = path[path.length - 1];
+                assert(subTree.blobs[name] === undefined);
+                subTree.blobs[name] = id;
+            }
+            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+            delete snapshot.blobs[this.aggregatedBlobName];
+        }
+    }
+}
+
+/*
+ * Snapshot extractor class that works in place, i.e. patches snapshot that has
+ * blob content in ISnapshotTree.blobs itself, not in storage.
+ * AS result, it implements reading and writing of blobs to/from snapshot itself.
+ */
+class SnapshotExtractorInPlace extends SnapshotExtractor {
+    public async getBlob(id: string, tree: ISnapshotTree): Promise<ArrayBufferLike> {
+        const blob = tree.blobs[id];
+        assert(blob !== undefined);
+        return stringToBuffer(blob, "base64");
+    }
+
+    public setBlob(id: string, tree: ISnapshotTree, content: string) {
+        assert(tree.blobs[id] === undefined);
+        tree.blobs[id] = fromUtf8ToBase64(content);
+    }
+}
+
+/*
+ * Snapshot packer and extractor.
+ * When summary is written it will find and aggregate small blobs into bigger blobs
+ * When snapshot is read, it will unpack aggregated blobs and provide them transparently to caller.
+ */
+export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumentStorageService {
+    protected readonly blobCutOffSize = 1024;
+
+    protected loadedFromSummary = false;
 
     protected virtualBlobs = new Map<string, ArrayBufferLike>();
 
-    public constructor(private readonly storage: IDocumentStorageService) {}
+    static wrap(storage: IDocumentStorageService) {
+        if (storage instanceof BlobAggregatorStorage) {
+            return storage;
+        }
+        return new BlobAggregatorStorage(storage);
+    }
+
+    static async unpackSnapshot(snapshot: ISnapshotTree) {
+        const converter = new SnapshotExtractorInPlace();
+        await converter.unpackSnapshotCore(snapshot);
+    }
+
+    public async unpackSnapshot(snapshot: ISnapshotTree) {
+        assert(!this.loadedFromSummary);
+        this.loadedFromSummary = true;
+        await this.unpackSnapshotCore(snapshot);
+    }
+
+    protected constructor(private readonly storage: IDocumentStorageService) {
+        super();
+    }
+
+    public setBlob(id: string, tree: ISnapshotTree, content: string) {
+        this.virtualBlobs.set(id, stringToBuffer(content, "utf-8"));
+    }
+
+    public async getBlob(id: string, tree: ISnapshotTree): Promise<ArrayBufferLike> {
+        return this.readBlob(id);
+    }
 
     public get repositoryUrl() { return this.storage.repositoryUrl; }
     public async getVersions(versionId: string | null, count: number) {
@@ -78,57 +178,19 @@ export class BlobAggregatorStorage implements IDocumentStorageService {
 
     public async read(id: string): Promise<string> {
         const blob = await this.readBlob(id);
-        return bufferToString(blob, "utf-8");
+        return bufferToString(blob, "base64");
     }
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
-        assert(!this.loadedFromSummary, "supporting only loading one summary");
-        this.loadedFromSummary = true;
-
         const tree = await this.storage.getSnapshotTree(version);
         if (tree) {
-            await this.unpackSnapshot(tree, 0);
+            await this.unpackSnapshot(tree);
         }
         return tree;
     }
 
-    protected async unpackSnapshot(snapshot: ISnapshotTree, level: number): Promise<void> {
-        // for now only working at data store level, i.e.
-        // .app/DataStore/...
-        if (level >= 2) {
-            return;
-        }
-
-        for (const key of Object.keys(snapshot.trees)) {
-            const obj = snapshot.trees[key];
-            await this.unpackSnapshot(obj, level + 1);
-        }
-        const blobId = snapshot.blobs[this.aggregatedBlobName];
-        if (blobId !== undefined) {
-            const blob = await this.storage.readBlob(blobId);
-            for (const [key, value] of BlobStats.load(blob)) {
-                const id = this.getNextVirtualId();
-                this.virtualBlobs.set(id, stringToBuffer(value, "utf-8"));
-                const path = key.split("/");
-                let subTree = snapshot;
-                for (const subPath of path.slice(0, path.length - 1)) {
-                    if (subTree.trees[subPath] === undefined) {
-                        subTree.trees[subPath] = { blobs: {}, commits: {}, trees: {}};
-                    }
-                    subTree = subTree.trees[subPath];
-                }
-                const name = path[path.length - 1];
-                assert(subTree.blobs[name] === undefined);
-                subTree.blobs[name] = id;
-            }
-            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-            delete snapshot.blobs[this.aggregatedBlobName];
-        }
-    }
-
     public async readBlob(id: string): Promise<ArrayBufferLike> {
-        const virtualId = this.getVirtualId(id);
-        if (virtualId === undefined) {
+        if (this.isRealStorageId(id)) {
             return this.storage.readBlob(id);
         }
         // We support only reading blobs from the summary we loaded from.
@@ -139,13 +201,13 @@ export class BlobAggregatorStorage implements IDocumentStorageService {
         // are there other ways we can get here? createFile is one flow, but we should not be reading blobs
         // in such flow
         assert(this.loadedFromSummary, "never read summary");
-        const blob = this.virtualBlobs.get(virtualId);
+        const blob = this.virtualBlobs.get(id);
         assert(blob !== undefined, "virtual blob not found");
         return blob;
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
-        const summaryNew = await this.unpackSummary(summary, "", 0);
+        const summaryNew = await this.compressSmallBlobs(summary, "", 0);
         return this.storage.uploadSummaryWithContext(summaryNew, context);
     }
 
@@ -155,21 +217,23 @@ export class BlobAggregatorStorage implements IDocumentStorageService {
     // summary produced by data stores.
     // These simplifications allow us not to touch handles, as they are self-contained (either do not use aggregated
     // blob Or contain aggregated blob that stays relevant for that sub-tree)
-    protected async unpackSummary(
+    protected async compressSmallBlobs(
         summary: ISummaryTree,
         path: string,
         level: number,
-        statsArg?: BlobStats): Promise<ISummaryTree>
+        statsArg?: BlobAggregator): Promise<ISummaryTree>
     {
+        // Only pack at data store level.
+        const startingLevel = level === 1;
+
         let stats = statsArg;
-        const startingLevel = level === 2;
         if (startingLevel) {
             assert(stats === undefined);
-            stats = new BlobStats();
+            stats = new BlobAggregator();
         }
 
         const newSummary: ISummaryTree = {...summary};
-        for (const key of Object.keys(newSummary)) {
+        for (const key of Object.keys(newSummary.tree)) {
             const obj = newSummary.tree[key];
             // Get path relative to root of data store (where we do aggregation)
             const newPath = startingLevel ? key : `${path}/${key}`;
@@ -177,7 +241,7 @@ export class BlobAggregatorStorage implements IDocumentStorageService {
                 case SummaryType.Tree:
                     // If client created empty tree, keep it as is
                     if (obj.tree !== {}) {
-                        const tree = await this.unpackSummary(obj, newPath, level + 1, stats);
+                        const tree = await this.compressSmallBlobs(obj, newPath, level + 1, stats);
                         newSummary.tree[key] = tree;
                         if (tree.tree === {}) {
                             // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
@@ -216,7 +280,7 @@ export class BlobAggregatorStorage implements IDocumentStorageService {
         }
 
         assert(newSummary.tree[this.aggregatedBlobName] === undefined);
-        if (level === 2) {
+        if (startingLevel) {
             assert(stats !== undefined);
             const content = stats.getContent();
             if (content !== undefined) {
@@ -230,11 +294,6 @@ export class BlobAggregatorStorage implements IDocumentStorageService {
     }
 
     protected isRealStorageId(id: string): boolean {
-        return this.getVirtualId(id) === undefined;
-    }
-
-    protected getVirtualId(id: string): string | undefined {
-        if (!id.startsWith("__")) { return undefined; }
-        return id.substr(2);
+        return !id.startsWith(this.virtualIdPrefix);
     }
 }

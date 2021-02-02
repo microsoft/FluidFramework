@@ -482,13 +482,29 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             });
         }
 
+        let storage = context.storage;
+        if (context.baseSnapshot) {
+            // This will patch snapshot in place!
+            // If storage is provided, it will wrap storage with BlobAggregatorStorage that can
+            // pack & unpack aggregated blobs.
+            // Note that if storage is provided later by loader layer, we will wrap storage in this.storage getter.
+            // BlobAggregatorStorage is smart enough for double-wrapping to be no-op
+            if (context.storage) {
+                const aggrStorage = BlobAggregatorStorage.wrap(context.storage);
+                await aggrStorage.unpackSnapshot(context.baseSnapshot);
+                storage = aggrStorage;
+            } else {
+                await BlobAggregatorStorage.unpackSnapshot(context.baseSnapshot);
+            }
+        }
+
         const registry = new ContainerRuntimeDataStoreRegistry(registryEntries);
 
         const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
             const blobId = context.baseSnapshot?.blobs[blobName];
             if (context.baseSnapshot && blobId) {
-                return context.storage ?
-                    readAndParse<T>(context.storage, blobId) :
+                return storage ?
+                    readAndParse<T>(storage, blobId) :
                     readAndParseFromBlobs<T>(context.baseSnapshot.blobs, blobId);
             }
         };
@@ -502,7 +518,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             chunks,
             runtimeOptions,
             containerScope,
-            requestHandler);
+            requestHandler,
+            storage);
 
         // Create all internal data stores if not already existing on storage or loaded a detached
         // container from snapshot(ex. draft mode).
@@ -540,10 +557,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.deltaManager;
     }
 
-    private readonly _storage: IDocumentStorageService | undefined;
     public get storage(): IDocumentStorageService {
-        assert(this._storage !== undefined, "storage missing");
-        return this._storage;
+        // This code is plain wrong. It lies that it never returns undefined!!!
+        // All callers should be fixed, as this API is called in detached state of container when we have
+        // no storage and it's passed down the stack without right typing.
+        if (!this._storage && this.context.storage) {
+            // Note: BlobAggregatorStorage is smart enough for double-wrapping to be no-op
+            this._storage = BlobAggregatorStorage.wrap(this.context.storage);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this._storage!;
     }
 
     public get branch(): string {
@@ -671,10 +694,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         },
         private readonly containerScope: IFluidObject,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
+        private _storage?: IDocumentStorageService,
     ) {
         super();
 
-        this._storage = context.storage ? new BlobAggregatorStorage(context.storage) : undefined;
         this._connected = this.context.connected;
         this.chunkMap = new Map<string, string[]>(chunks);
 
