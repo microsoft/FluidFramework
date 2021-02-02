@@ -26,7 +26,9 @@ export function createStringWithSequentialIdFactory(Base: typeof SharedString = 
                 });
                 return set;
             });
+            // Add listener to maintenance event to get notified of local ops that have been acked.
             this.on("maintenance", this.applyIdToLocalAckedSegment);
+            // Add listener to sequenceDelta event to get notified of remote ops that have been acked.
             this.on("sequenceDelta", this.applyIdToRemoteAckedSegment);
         }
 
@@ -37,11 +39,12 @@ export function createStringWithSequentialIdFactory(Base: typeof SharedString = 
         private readonly applyIdToRemoteAckedSegment = (event: SequenceDeltaEvent): void => {
             if (event.isLocal) {
                 // Do not apply id for local changes
+                // We will apply id for local changes that have been acked via the 'maintenance' event
                 return;
             }
 
             event.ranges.forEach((range) => {
-            const markerSegment = range.segment;
+                const markerSegment = range.segment;
                 if (Marker.is(markerSegment)) {
                     if (event.deltaOperation === MergeTreeDeltaType.INSERT) {
                         this.applyIdToMarker(markerSegment);
