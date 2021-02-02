@@ -83,7 +83,7 @@ export class CopierLambda implements IPartitionLambda {
                 this.sendPending();
             },
             (error) => {
-                this.context.error(error, true);
+                this.context.error(error, { restart: true });
             });
     }
 

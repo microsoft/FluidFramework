@@ -12,6 +12,7 @@ import {
     IPartitionLambdaFactory,
     ILogger,
     LambdaCloseType,
+    IContextErrorData,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { Partition } from "./partition";
@@ -144,11 +145,12 @@ export class PartitionManager extends EventEmitter {
                 this.logger);
 
             // Listen for error events to know when the partition has stopped processing due to an error
-            newPartition.on("error", (error, restart) => {
+            newPartition.on("error", (error, errorData: IContextErrorData) => {
                 // For simplicity we will close the entire manager whenever any partition errors. In the case that the
                 // restart flag is false and there was an error we will eventually need a way to signify that a
                 // partition is 'poisoned'.
-                this.emit("error", error, true);
+                errorData.restart = true;
+                this.emit("error", error, errorData);
             });
 
             this.partitions.set(partition.partition, newPartition);

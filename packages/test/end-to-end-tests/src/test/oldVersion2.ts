@@ -317,7 +317,7 @@ export async function createOldContainer(
     codeDetails,
 ): Promise<IContainer> {
     const loader = createLocalLoader(packageEntries, server, urlResolver, { hotSwapContext: true });
-    return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+    return createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
 }
 
 export function createTestObjectProvider(

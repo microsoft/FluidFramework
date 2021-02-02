@@ -8,6 +8,9 @@ import {
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 
+export const connectedEventName = "connected";
+export const disconnectedEventName = "disconnected";
+
 export function safeRaiseEvent(
     emitter: EventEmitter,
     logger: ITelemetryLogger,
@@ -27,11 +30,11 @@ export function raiseConnectedEvent(
     clientId?: string) {
     try {
         if (connected) {
-            emitter.emit("connected", clientId);
+            emitter.emit(connectedEventName, clientId);
         } else {
-            emitter.emit("disconnected");
+            emitter.emit(disconnectedEventName);
         }
     } catch (error) {
-        logger.sendErrorEvent({ eventName: "RaiseConnectedEventError", clientId }, error);
+        logger.sendErrorEvent({ eventName: "RaiseConnectedEventError" }, error);
     }
 }
