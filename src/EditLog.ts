@@ -115,7 +115,7 @@ interface EditChunk {
 /**
  * Either a chunk of edits or a serialized handle that can be used to load that chunk.
  */
-type SerializedChunk = ISerializedHandle | EditWithoutId[];
+export type SerializedChunk = ISerializedHandle | EditWithoutId[];
 
 type OrderedEditId = SequencedOrderedEditId | LocalOrderedEditId;
 

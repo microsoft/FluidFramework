@@ -54,7 +54,7 @@ export {
 export * from './Factory';
 export * from './HistoryEditFactory';
 export * from './Identifiers';
-export { OrderedEditSet, EditLogSummary } from './EditLog';
+export { OrderedEditSet, EditLogSummary, SerializedChunk } from './EditLog';
 export {
 	EditValidationResult,
 	NodeInTrait,
