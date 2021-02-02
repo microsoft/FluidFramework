@@ -209,9 +209,9 @@ export async function loadContainer(
 ): Promise<Container> {
     const resolved: IFluidResolvedUrl = {
         endpoints: {
-            deltaStorageUrl: "replay.com",
-            ordererUrl: "replay.com",
-            storageUrl: "replay.com",
+            deltaStorageUrl: "example.com",
+            ordererUrl: "example.com",
+            storageUrl: "example.com",
         },
         tokens: {},
         type: "fluid",

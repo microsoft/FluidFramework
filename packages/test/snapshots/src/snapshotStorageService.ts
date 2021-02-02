@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
@@ -58,34 +59,19 @@ export class SnapshotStorageService extends FileSnapshotReader implements IDocum
         message: string,
         ref: string,
     ): Promise<IVersion> {
-        let dataStoreName = ref ? ref : "container";
-        if (tree && tree.entries) {
-            tree.entries.forEach((entry) => {
-                if (entry.path === ".component" && entry.type === TreeEntry.Blob) {
-                    const content = entry.value.contents.split(":");
-                    if (content[0] === `{"pkg"`) {
-                        dataStoreName = content[1].substring(1, content[1].lastIndexOf(`"`));
-                    }
-                }
-            });
-        }
+        assert(ref === "", "This should only be called to write container snapshot whose ref is empty");
 
         // Remove null ids from the tree before calling the callback to notify the new snapshot. This is requried
         // because the saved reference snapshots have the null ids removed.
         removeNullTreeIds(tree);
 
-        const commitName = `commit_${dataStoreName}`;
-        if (ref) {
-            this.commits[commitName] = tree;
-        } else {
-            this.docTree = buildSnapshotTree(tree.entries, this.blobs);
-            const fileSnapshot: IFileSnapshot = { tree, commits: {} };
-            // Call the callback with the snapshot in `IFileSnapshot` format.
-            this.snapshotCb(fileSnapshot);
-        }
+        this.docTree = buildSnapshotTree(tree.entries, this.blobs);
+        const fileSnapshot: IFileSnapshot = { tree, commits: {} };
+        // Call the callback with the snapshot in `IFileSnapshot` format.
+        this.snapshotCb(fileSnapshot);
 
         return {
-            id: commitName,
+            id: "container",
             date: new Date().toUTCString(),
             treeId: FileSnapshotReader.FileStorageVersionTreeId,
         };

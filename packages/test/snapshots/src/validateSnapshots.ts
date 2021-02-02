@@ -42,17 +42,17 @@ export async function validateSnapshots(srcDir: string, destDir: string) {
         }
     };
 
-    for (const node of fs.readdirSync(srcDir, { withFileTypes: true })) {
+    for (const file of fs.readdirSync(srcDir, { withFileTypes: true })) {
         // Don't process sub-directories or files that do not start with "snapshot_" as these are not supported.
-        if (node.isDirectory() || !node.name.startsWith("snapshot_")) {
+        if (file.isDirectory() || !file.name.startsWith("snapshot_")) {
             continue;
         }
 
         // We must have a corresponding destination snapshot for the source snapshot.
-        assert(fs.existsSync(`${destDir}/${node.name}`), `Destination snapshot does not exist for ${node.name}`);
+        assert(fs.existsSync(`${destDir}/${file.name}`), `Destination snapshot does not exist for ${file.name}`);
 
-        const snapshotFileName = node.name.split(".")[0];
-        const srcContent = fs.readFileSync(`${srcDir}/${node.name}`, "utf-8");
+        const snapshotFileName = file.name.split(".")[0];
+        const srcContent = fs.readFileSync(`${srcDir}/${file.name}`, "utf-8");
         // This function will be called by the storage service when the container is snapshotted. When that happens,
         // validate that snapshot with the destination snapshot.
         const onSnapshotCb =
@@ -66,7 +66,7 @@ export async function validateSnapshots(srcDir: string, destDir: string) {
             new StaticStorageDocumentServiceFactory(storage),
             FileStorageDocumentName,
         );
-        await container.snapshot(node.name, true /* fullTree */);
+        await container.snapshot(file.name, true /* fullTree */);
     }
 
     if (errors.length !== 0) {
