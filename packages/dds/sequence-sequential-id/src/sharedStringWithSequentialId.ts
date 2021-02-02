@@ -10,7 +10,7 @@ import { SharedString, SequenceDeltaEvent, SequenceMaintenanceEvent } from "@flu
 import { createIdBetween, digitLast, digitZero } from "./generateSequentialId";
 import { SharedStringWithSequentialIdFactory } from "./SharedStringWithSequentialIdFactory";
 
-export function sharedStringWithSequentialIdMixin(Base: typeof SharedString = SharedString): typeof SharedString {
+export function createStringWithSequentialIdFactory(Base: typeof SharedString = SharedString): typeof SharedString {
     return class SharedStringWithSequentialId extends Base {
         private readonly sortedMarkers: Lazy<SortedSegmentSet>;
         constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {

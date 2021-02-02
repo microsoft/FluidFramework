@@ -8,7 +8,7 @@ import { MockContainerRuntimeFactory,
     MockStorage } from "@fluidframework/test-runtime-utils";
 import { assert } from "@fluidframework/common-utils";
 import { SharedString } from "@fluidframework/sequence";
-import { sharedStringWithSequentialIdMixin } from "../sharedStringWithSequentialId";
+import { createStringWithSequentialIdFactory } from "../sharedStringWithSequentialId";
 import { isValidSeqId } from "../generateSequentialId";
 import { SharedStringWithSequentialIdFactory } from "../SharedStringWithSequentialIdFactory";
 
@@ -20,9 +20,9 @@ describe("SharedStringWithSequential Id", () => {
     beforeEach(() => {
         containerRuntimeFactory = new MockContainerRuntimeFactory();
         dataStoreRuntime = new MockFluidDataStoreRuntime();
-        const sharedStringWithSequentialIdClass = sharedStringWithSequentialIdMixin();
+        const sharedStringSequentialIdFactory = createStringWithSequentialIdFactory();
         // eslint-disable-next-line max-len
-        sharedStringWithSequentialId = new sharedStringWithSequentialIdClass(dataStoreRuntime, "string-seq-1", SharedStringWithSequentialIdFactory.Attributes);
+        sharedStringWithSequentialId = new sharedStringSequentialIdFactory(dataStoreRuntime, "string-seq-1", SharedStringWithSequentialIdFactory.Attributes);
                     // Connect the first SharedString.
                     dataStoreRuntime.local = false;
                     const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);

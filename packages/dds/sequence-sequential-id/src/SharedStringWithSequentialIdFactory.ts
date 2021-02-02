@@ -7,7 +7,7 @@ import { IChannelAttributes, IChannelServices,
     IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { pkgVersion } from "./packageVersion";
-import { sharedStringWithSequentialIdMixin } from "./sharedStringWithSequentialId";
+import { createStringWithSequentialIdFactory } from "./sharedStringWithSequentialId";
 
 export class SharedStringWithSequentialIdFactory implements IChannelFactory {
     public static Type = "https://graph.microsoft.com/types/mergeTree/sequential-id-sharedstring";
@@ -42,14 +42,14 @@ export class SharedStringWithSequentialIdFactory implements IChannelFactory {
         id: string,
         services: IChannelServices,
         attributes: IChannelAttributes): Promise<SharedString> {
-        const sharedStringWithSequentialIdClass = sharedStringWithSequentialIdMixin();
+        const sharedStringWithSequentialIdClass = createStringWithSequentialIdFactory();
         const sharedString = new sharedStringWithSequentialIdClass(runtime, id, this.attributes);
         await sharedString.load(services);
         return sharedString;
     }
 
     public create(document: IFluidDataStoreRuntime, id: string): SharedString {
-        const sharedStringWithSequentialIdClass = sharedStringWithSequentialIdMixin();
+        const sharedStringWithSequentialIdClass = createStringWithSequentialIdFactory();
         const sharedString = new sharedStringWithSequentialIdClass(document, id, this.attributes);
         sharedString.initializeLocal();
         return sharedString;
