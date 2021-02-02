@@ -18,6 +18,7 @@ export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 	consumeLoopTimeoutDelay: number;
 	optimizedRebalance: boolean;
 	commitRetryDelay: number;
+	automaticConsume: boolean;
 	additionalOptions?: kafkaTypes.ConsumerGlobalConfig;
 }
 
@@ -48,6 +49,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			consumeLoopTimeoutDelay: 100,
 			optimizedRebalance: false,
 			commitRetryDelay: 1000,
+			automaticConsume: true,
 			...options,
 		};
 	}
@@ -84,9 +86,13 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 
 		this.consumer.on("ready", () => {
 			this.consumer.subscribe([this.topic]);
-			this.consumer.consume();
 
-			this.emit("connected");
+			if (this.consumerOptions.automaticConsume) {
+				// start the consume loop
+				this.consumer.consume();
+			}
+
+			this.emit("connected", this.consumer);
 		});
 
 		this.consumer.on("disconnected", () => {
