@@ -11,8 +11,9 @@ import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import type { IFluidSerializer } from '@fluidframework/core-interfaces';
+import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISerializedHandle } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
@@ -158,45 +159,29 @@ export type DetachedSequenceId = number & {
 };
 
 // @public
-export interface Edit {
-    readonly changes: readonly Change[];
+export interface Edit extends EditBase {
     readonly id: EditId;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "EditAddedHandler" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export type EditAddedHandler = (edit: Edit, isLocal: boolean) => void;
+// @public
+export interface EditBase {
+    readonly changes: readonly Change[];
+}
 
 // @public
 export type EditId = UuidString & {
     readonly EditId: '56897beb-53e4-4e66-85da-4bf5cd5d0d49';
 };
 
-// Warning: (ae-internal-missing-underscore) The name "EditLog" should be prefixed with an underscore because the declaration is marked as @internal
+// Warning: (ae-internal-missing-underscore) The name "EditLogSummary" should be prefixed with an underscore because the declaration is marked as @internal
 //
-// @internal @sealed
-export class EditLog implements OrderedEditSet {
-    // (undocumented)
-    [Symbol.iterator](): IterableIterator<Edit>;
-    constructor(sequencedEdits?: readonly Edit[]);
-    addLocalEdit(edit: Edit): void;
-    addSequencedEdit(edit: Edit): void;
-    // (undocumented)
-    equals(other: EditLog): boolean;
-    // (undocumented)
-    getAtIndex(index: number): Edit;
-    // (undocumented)
-    indexOf(editId: EditId): number;
-    // (undocumented)
-    isLocalEdit(editId: EditId): boolean;
-    // (undocumented)
-    get length(): number;
-    get numberOfLocalEdits(): number;
-    get numberOfSequencedEdits(): number;
-    registerEditAddedHandler(handler: EditAddedHandler): void;
-    // (undocumented)
-    tryGetEdit(editId: EditId): Edit | undefined;
+// @internal
+export interface EditLogSummary {
+    readonly editChunks: readonly {
+        key: number;
+        chunk: SerializedChunk;
+    }[];
+    readonly editIds: readonly EditId[];
 }
 
 // @public
@@ -223,7 +208,14 @@ export enum EditValidationResult {
 }
 
 // @public
-export function fullHistorySummarizer(sequencedEdits: OrderedEditSet, currentView: Snapshot): SharedTreeSummary;
+export interface EditWithoutId extends EditBase {
+    readonly id?: never;
+}
+
+// Warning: (ae-incompatible-release-tags) The symbol "fullHistorySummarizer" is marked as @public, but its signature references "SharedTreeSummary_0_0_2" which is marked as @internal
+//
+// @public
+export function fullHistorySummarizer(editLog: OrderedEditSet, currentView: Snapshot): SharedTreeSummary_0_0_2;
 
 // @public
 export const initialTree: ChangeNode;
@@ -250,7 +242,8 @@ export function isSharedTreeEvent(event: ITelemetryBaseEvent): boolean;
 //
 // @internal
 export interface LogViewer {
-    getSnapshot(revision: number): Snapshot;
+    getSnapshot(revision: number): Promise<Snapshot>;
+    getSnapshotInSession(revision: number): Snapshot;
     setKnownRevision(revision: number, view: Snapshot): void;
 }
 
@@ -280,21 +273,29 @@ export interface NodeInTrait {
     readonly trait: TraitLocation;
 }
 
+// Warning: (ae-incompatible-release-tags) The symbol "noHistorySummarizer" is marked as @public, but its signature references "SharedTreeSummary_0_0_2" which is marked as @internal
+//
 // @public
-export function noHistorySummarizer(_: OrderedEditSet, currentView: Snapshot): SharedTreeSummary;
+export function noHistorySummarizer(_editLog: OrderedEditSet, currentView: Snapshot): SharedTreeSummary_0_0_2;
 
 // @public @sealed
 export interface OrderedEditSet {
     // (undocumented)
-    [Symbol.iterator](): IterableIterator<Edit>;
+    editIds: EditId[];
     // (undocumented)
-    getAtIndex(index: number): Edit;
+    getEditAtIndex(index: number): Promise<Edit>;
     // (undocumented)
-    indexOf(editId: EditId): number;
+    getEditInSessionAtIndex(index: number): Edit;
+    // @internal (undocumented)
+    getEditLogSummary(): EditLogSummary;
+    // (undocumented)
+    getIdAtIndex(index: number): EditId;
+    // (undocumented)
+    getIndexOfId(editId: EditId): number;
     // (undocumented)
     length: number;
     // (undocumented)
-    tryGetEdit(editId: EditId): Edit | undefined;
+    tryGetEdit(editId: EditId): Promise<Edit | undefined>;
 }
 
 // @public
@@ -324,6 +325,9 @@ export class PrefetchingCheckout extends Checkout {
 export function revert(edit: Edit, view: Snapshot): Change[];
 
 // @public
+export type SerializedChunk = ISerializedHandle | EditWithoutId[];
+
+// @public
 export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<EditNode>): readonly Change[];
 
 // @public
@@ -342,8 +346,6 @@ export class SharedTree extends SharedObject {
     applyEdit(...changes: Change[]): EditId;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedTree;
     // (undocumented)
-    createRevert(editId: EditId): Change[];
-    // (undocumented)
     get currentView(): Snapshot;
     get editor(): SharedTreeEditor;
     // (undocumented)
@@ -353,7 +355,7 @@ export class SharedTree extends SharedObject {
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // @internal
-    loadSummary(summary: SharedTreeSummary): void;
+    loadSummary(summary: SharedTreeSummaryBase): void;
     // (undocumented)
     protected readonly logger: ITelemetryLogger;
     // @internal
@@ -369,11 +371,11 @@ export class SharedTree extends SharedObject {
     // (undocumented)
     protected registerCore(): void;
     // @internal
-    saveSummary(): SharedTreeSummary;
+    saveSummary(): SharedTreeSummaryBase;
     // (undocumented)
     snapshotCore(_serializer: IFluidSerializer): ITree;
     summarizer: SharedTreeSummarizer;
-}
+    }
 
 // @public
 export const sharedTreeAssertionErrorType = "SharedTreeAssertion";
@@ -387,7 +389,7 @@ export class SharedTreeEditor {
     insert(nodes: EditNode[], destination: StablePlace): EditId;
     move(source: ChangeNode, destination: StablePlace): EditId;
     move(source: StableRange, destination: StablePlace): EditId;
-    revert(edit: EditId): EditId;
+    revert(edit: Edit, view: Snapshot): EditId;
     }
 
 // @public
@@ -411,14 +413,19 @@ export class SharedTreeFactory implements IChannelFactory {
 }
 
 // @public
-export type SharedTreeSummarizer = (sequencedEdits: OrderedEditSet, currentView: Snapshot) => SharedTreeSummary;
+export type SharedTreeSummarizer = (editLog: OrderedEditSet, currentView: Snapshot) => SharedTreeSummaryBase;
 
-// @public
-export interface SharedTreeSummary {
+// Warning: (ae-internal-missing-underscore) The name "SharedTreeSummary_0_0_2" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export interface SharedTreeSummary_0_0_2 extends SharedTreeSummaryBase {
     // (undocumented)
     readonly currentTree: ChangeNode;
-    // (undocumented)
     readonly sequencedEdits: readonly Edit[];
+}
+
+// @public
+export interface SharedTreeSummaryBase {
     readonly version: string;
 }
 

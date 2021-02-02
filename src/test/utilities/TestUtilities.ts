@@ -54,6 +54,10 @@ export interface SharedTreeTestingOptions {
 	 * If not set, full history will be preserved.
 	 */
 	summarizer?: SharedTreeSummarizer;
+	/**
+	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
+	 */
+	setupEditId?: EditId;
 
 	/**
 	 * Telemetry logger injected into the SharedTree.
@@ -70,7 +74,7 @@ export const testTrait: TraitLocation = {
 export function setUpTestSharedTree(
 	options: SharedTreeTestingOptions = { localMode: true }
 ): SharedTreeTestingComponents {
-	const { id, initialTree, localMode, containerRuntimeFactory } = options;
+	const { id, initialTree, localMode, containerRuntimeFactory, setupEditId } = options;
 	let componentRuntime: MockFluidDataStoreRuntime;
 	if (options.logger) {
 		const proxyHandler: ProxyHandler<MockFluidDataStoreRuntime> = {
@@ -104,7 +108,7 @@ export function setUpTestSharedTree(
 	}
 
 	if (initialTree !== undefined) {
-		setTestTree(tree, initialTree);
+		setTestTree(tree, initialTree, setupEditId);
 	}
 
 	return {
@@ -115,10 +119,10 @@ export function setUpTestSharedTree(
 }
 
 /** Sets testTrait to contain `node`. */
-export function setTestTree(tree: SharedTree, node: ChangeNode): EditId {
+export function setTestTree(tree: SharedTree, node: ChangeNode, overrideId?: EditId): EditId {
 	const edit = newEdit(setTrait(testTrait, [node]));
-	tree.processLocalEdit(edit);
-	return edit.id;
+	tree.processLocalEdit({ ...edit, id: overrideId || edit.id });
+	return overrideId || edit.id;
 }
 
 /** Creates an empty node for testing purposes. */
@@ -155,6 +159,24 @@ export function assertNoDelta(tree: SharedTree, editor: () => void) {
 }
 
 /**
+ * Used to test error throwing in async functions.
+ */
+export async function asyncFunctionThrowsCorrectly(
+	asyncFunction: () => Promise<unknown>,
+	expectedError: string
+): Promise<boolean> {
+	let errorMessage;
+
+	try {
+		await asyncFunction();
+	} catch (error) {
+		errorMessage = error.message;
+	}
+
+	return errorMessage === expectedError;
+}
+
+/*
  * Returns true if two nodes have equivalent data, otherwise false.
  * Does not compare children or payloads.
  * @param nodes - two or more nodes to compare
@@ -178,10 +200,10 @@ export function areNodesEquivalent(...nodes: NodeData[]): boolean {
 }
 
 /** Left node of 'simpleTestTree' */
-export const left: ChangeNode = makeEmptyNode();
+export const left: ChangeNode = makeEmptyNode('a083857d-a8e1-447a-ba7c-92fd0be9db2b' as NodeId);
 
 /** Right node of 'simpleTestTree' */
-export const right: ChangeNode = makeEmptyNode();
+export const right: ChangeNode = makeEmptyNode('78849e85-cb7f-4b93-9fdc-18439c60fe30' as NodeId);
 
 /** Label for the 'left' trait in 'simpleTestTree' */
 export const leftTraitLabel = 'left' as TraitLabel;
@@ -191,7 +213,7 @@ export const rightTraitLabel = 'right' as TraitLabel;
 
 /** A simple, three node tree useful for testing. Contains one node under a 'left' trait and one under a 'right' trait. */
 export const simpleTestTree: ChangeNode = {
-	...makeEmptyNode(),
+	...makeEmptyNode('25de3875-9537-47ec-8699-8a85e772a509' as NodeId),
 	traits: { [leftTraitLabel]: [left], [rightTraitLabel]: [right] },
 };
 

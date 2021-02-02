@@ -6,15 +6,16 @@
 import { assert, expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
-import { assertArrayOfOne, isSharedTreeEvent } from '../Common';
+import { assertArrayOfOne, assertNotUndefined, isSharedTreeEvent } from '../Common';
 import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers';
 import { SharedTreeEvent } from '../SharedTree';
 import { Change, ChangeType, EditNode, Delete, Insert, ChangeNode, StablePlace, StableRange } from '../PersistedTypes';
 import { deepCompareNodes, newEdit } from '../EditUtilities';
-import { deserialize, noHistorySummarizer, serialize, SharedTreeSummary } from '../Summary';
+import { noHistorySummarizer, serialize } from '../Summary';
 import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
 import { TreeNodeHandle } from '../TreeNodeHandle';
+import { deserialize, SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 import {
 	makeEmptyNode,
 	setUpTestSharedTree,
@@ -343,12 +344,12 @@ describe('SharedTree', () => {
 			const leftTrait = secondTree.currentView.getTrait(leftTraitLocation);
 			expect(leftTrait.length).to.equal(1);
 
-			const edits = Array.from(tree.edits);
+			const editIds = tree.edits.editIds;
 
 			// Edit 0 creates initial tree
-			expect(edits[1].id).is.equal(firstEditId);
-			expect(edits[2].id).is.equal(secondEditId);
-			expect(edits[3].id).is.equal(thirdEditId);
+			expect(editIds[1]).is.equal(firstEditId);
+			expect(editIds[2]).is.equal(secondEditId);
+			expect(editIds[3]).is.equal(thirdEditId);
 		});
 
 		it('tolerates invalid detaches', () => {
@@ -384,11 +385,11 @@ describe('SharedTree', () => {
 			const leftTrait = tree.currentView.getTrait(leftTraitLocation);
 			expect(leftTrait.length).to.equal(3);
 
-			const edits = Array.from(tree.edits);
+			const editIds = tree.edits.editIds;
 			// Edit 0 creates initial tree
-			expect(edits[1].id).to.equal(firstEditId);
-			expect(edits[2].id).to.equal(secondEditId);
-			expect(edits[3].id).to.equal(thirdEditId);
+			expect(editIds[1]).to.equal(firstEditId);
+			expect(editIds[2]).to.equal(secondEditId);
+			expect(editIds[3]).to.equal(thirdEditId);
 		});
 
 		it('tolerates malformed inserts', () => {
@@ -401,6 +402,7 @@ describe('SharedTree', () => {
 			containerRuntimeFactory.processAllMessages();
 
 			let edit;
+
 			assertNoDelta(tree, () => {
 				const build = Change.build([], 0 as DetachedSequenceId);
 				edit = newEdit([build]);
@@ -408,9 +410,8 @@ describe('SharedTree', () => {
 				containerRuntimeFactory.processAllMessages();
 			});
 
-			const edits = Array.from(tree.edits);
 			// Edit 0 creates initial tree
-			expect(edits[1].id).to.equal(edit.id);
+			expect(tree.edits.getIdAtIndex(1)).to.equal(edit.id);
 		});
 
 		runSharedTreeUndoRedoTestSuite({ localMode: false });
@@ -431,7 +432,7 @@ describe('SharedTree', () => {
 
 			// Serialize the state of one uninitialized tree into a second tree
 			const serialized = serialize(uninitializedTree.saveSummary());
-			const parsedTree = deserialize(serialized) as SharedTreeSummary;
+			const parsedTree = deserialize(serialized) as SharedTreeSummary_0_0_2;
 			expect(parsedTree.sequencedEdits).deep.equal([]);
 			expect(deepCompareNodes(parsedTree.currentTree, initialTree)).to.be.true;
 		});
@@ -451,7 +452,7 @@ describe('SharedTree', () => {
 
 				const serialized = serialize(tree.saveSummary());
 				const treeContent = JSON.parse(serialized);
-				const parsedTree = treeContent as SharedTreeSummary;
+				const parsedTree = treeContent as SharedTreeSummary_0_0_2;
 
 				expect(parsedTree.currentTree).to.not.be.undefined;
 				const testRoot = assertArrayOfOne(parsedTree.currentTree.traits[testTrait.label]);
@@ -460,12 +461,15 @@ describe('SharedTree', () => {
 				expect(testRoot.traits.right).to.not.be.undefined;
 				expect(testRoot.traits.left.length).to.equal(2);
 
+				expect(parsedTree.sequencedEdits).to.not.be.undefined;
+				const sequencedEdits = assertNotUndefined(parsedTree.sequencedEdits);
+
 				// Expect there to be a change in the edit history in addition to the one from setUpTestSharedTree
-				expect(parsedTree.sequencedEdits.length).to.equal(2);
+				expect(sequencedEdits.length).to.equal(2);
 				// The first operation to be sequenced is the tree init
-				expect(parsedTree.sequencedEdits[1].changes.length).to.equal(2);
-				expect(parsedTree.sequencedEdits[1].changes[0].type).to.equal(ChangeType.Build);
-				expect(parsedTree.sequencedEdits[1].changes[1].type).to.equal(ChangeType.Insert);
+				expect(sequencedEdits[1].changes.length).to.equal(2);
+				expect(sequencedEdits[1].changes[0].type).to.equal(ChangeType.Build);
+				expect(sequencedEdits[1].changes[1].type).to.equal(ChangeType.Insert);
 			});
 		});
 
@@ -476,14 +480,7 @@ describe('SharedTree', () => {
 			tree.editor.insert(newNode, StablePlace.before(left));
 			containerRuntimeFactory.processAllMessages();
 
-			const serialized = serialize(tree.saveSummary());
-
-			// The second tree is not caught up to the first tree yet
-			expect(tree.equals(secondTree)).to.be.false;
-
-			const summary = deserialize(serialized);
-			assert.typeOf(summary, 'object');
-			secondTree.loadSummary(summary as SharedTreeSummary);
+			secondTree.loadSummary(tree.saveSummary());
 
 			// Trees should have equal state since we deserialized the first tree's state into the second tree
 			expect(tree.equals(secondTree)).to.be.true;
@@ -495,20 +492,16 @@ describe('SharedTree', () => {
 
 			containerRuntimeFactory.processAllMessages();
 
-			const serialized = serialize(tree.saveSummary());
-
 			// The second tree is not caught up to the first tree yet
 			expect(tree.equals(secondTree)).to.be.false;
 
-			const summary = deserialize(serialized);
-			assert.typeOf(summary, 'object');
-			secondTree.loadSummary(summary as SharedTreeSummary);
+			secondTree.loadSummary(tree.saveSummary());
 
 			// Trees should have equal state since we deserialized the first tree's state into the second tree
 			expect(tree.equals(secondTree)).to.be.true;
 		});
 
-		it('can be used without history preservation', () => {
+		it('can be used without history preservation', async () => {
 			const { tree } = setUpTestSharedTree({
 				initialTree: simpleTestTree,
 				localMode: true,
@@ -527,7 +520,7 @@ describe('SharedTree', () => {
 			// The history should have been dropped by the default handling behavior.
 			// It will contain a single entry setting the tree to equal the head revision.
 			expect(tree.edits.length).to.equal(1);
-			expect(tree.edits.tryGetEdit(editID)).to.be.undefined;
+			expect(await tree.edits.tryGetEdit(editID)).to.be.undefined;
 		});
 	});
 
@@ -702,7 +695,7 @@ describe('SharedTree', () => {
 	});
 
 	describe('telemetry', () => {
-		it('decorates events with the correct properties', () => {
+		it('decorates events with the correct properties', async () => {
 			// Test that a handle can wrap a node and retrieve that node's properties
 			const events: ITelemetryBaseEvent[] = [];
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree({
@@ -713,7 +706,7 @@ describe('SharedTree', () => {
 			tree.editor.insert(makeEmptyNode(), StablePlace.after(makeEmptyNode()));
 			containerRuntimeFactory.processAllMessages();
 			// Force demand, which will cause a telemetry event for the invalid edit to be emitted
-			tree.logViewer.getSnapshot(Number.POSITIVE_INFINITY);
+			await tree.logViewer.getSnapshot(Number.POSITIVE_INFINITY);
 			expect(events.length).is.greaterThan(0);
 			events.forEach((event) => {
 				expect(isSharedTreeEvent(event)).is.true;
