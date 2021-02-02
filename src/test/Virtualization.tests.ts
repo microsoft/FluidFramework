@@ -1,8 +1,8 @@
 // Copyright (C) Microsoft Corporation. All rights reserved.
 
+import { expect } from 'chai';
 import { DataObject } from '@fluidframework/aqueduct';
 import { Container } from '@fluidframework/container-loader';
-import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
 import {
 	ChannelFactoryRegistry,
@@ -15,10 +15,9 @@ import { editsPerChunk } from '../EditLog';
 import { newEdit, setTrait } from '../EditUtilities';
 import { Edit, EditWithoutId } from '../PersistedTypes';
 import { SharedTree } from '../SharedTree';
-import { makeTestNode, testTrait } from './utilities/TestUtilities';
-import { expect } from 'chai';
 import { fullHistorySummarizer_0_1_0, SharedTreeSummary } from '../Summary';
 import { assertNotUndefined } from '../Common';
+import { makeTestNode, testTrait } from './utilities/TestUtilities';
 
 export class TestDataObject extends DataObject {
 	public static readonly type = '@fluid-example/test-dataStore';
@@ -90,7 +89,7 @@ describe('SharedTree history virtualization', () => {
 		const summary = sharedTree.saveSummary();
 
 		// Load a second tree using the summary
-		const container2 = (await localTestObjectProvider.loadTestContainer()) as Container;
+		const container2 = await localTestObjectProvider.loadTestContainer();
 		const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, 'default');
 		const sharedTree2 = await dataObject2.getSharedObject<SharedTree>(treeId);
 
@@ -170,12 +169,12 @@ describe('SharedTree history virtualization', () => {
 	});
 
 	it('sends handle ops to connected clients when chunks are uploaded', async () => {
-		const container2 = (await localTestObjectProvider.loadTestContainer()) as Container;
+		const container2 = await localTestObjectProvider.loadTestContainer();
 		const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, 'default');
 		const sharedTree2 = await dataObject2.getSharedObject<SharedTree>(treeId);
 		sharedTree2.summarizer = fullHistorySummarizer_0_1_0;
 
-		const container3 = (await localTestObjectProvider.loadTestContainer()) as Container;
+		const container3 = await localTestObjectProvider.loadTestContainer();
 		const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, 'default');
 		const sharedTree3 = await dataObject3.getSharedObject<SharedTree>(treeId);
 		sharedTree3.summarizer = fullHistorySummarizer_0_1_0;
