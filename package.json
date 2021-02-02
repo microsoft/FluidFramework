@@ -47,7 +47,7 @@
     "stop:docker": "docker-compose -f server/docker-compose.yml down",
     "stop:docker:full": "docker-compose -f server/docker-compose.yml down && docker volume prune --force",
     "stop:tinylicious": "forever stop node_modules/tinylicious/dist/index.js",
-    "test": "npm run test:mocha && npm run test:jest && npm run test:types",
+    "test": "npm run test:mocha && npm run test:jest && npm run test:types && npm run test:realsvc",
     "test:bail": "npm run test:mocha:bail && npm run test:jest:bail",
     "test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
     "test:coverage": "nyc npm run test:report",
