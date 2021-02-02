@@ -36,8 +36,10 @@ describe("Check if the errorType field matches after sending/receiving via telem
                 message: "genericError test",
             };
             mockLogger.sendErrorEvent({ eventName: "A" }, testError);
-            assert(!mockLogger.matchEvents([{
+            assert(mockLogger.matchEvents([{
                 eventName: "A",
+                category: "error",
+                error: "genericError test",
                 errorType: ContainerErrorType.genericError,
                 message: "genericError test",
             }]));
