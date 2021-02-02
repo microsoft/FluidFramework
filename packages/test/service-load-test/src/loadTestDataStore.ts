@@ -8,18 +8,11 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-
-export interface ITestConfig {
-    opRatePerMin: number,
-    progressIntervalMs: number,
-    numClients: number,
-    totalSendCount: number,
-    readWriteCycleMs: number,
-}
+import { ILoadTestConfig } from "./testConfigFile";
 
 export interface IRunConfig {
     runId: number,
-    testConfig: ITestConfig
+    testConfig: ILoadTestConfig
 }
 
 export interface ILoadTest {

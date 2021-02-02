@@ -19,19 +19,10 @@ import {
 } from "@fluidframework/tool-utils";
 import { getAsync, getLoginPageUrl, getOdspScope, IOdspTokens } from "@fluidframework/odsp-doclib-utils";
 import { pkgName, pkgVersion } from "./packageVersion";
-import { ITestConfig, IRunConfig, fluidExport, ILoadTest } from "./loadTestDataStore";
+import { ITestConfig, ILoadTestConfig, ITestTenant } from "./testConfigFile";
+import { IRunConfig, fluidExport, ILoadTest } from "./loadTestDataStore";
 
 const packageName = `${pkgName}@${pkgVersion}`;
-
-interface ITestTenant {
-    server: string,
-    username: string,
-}
-
-interface IConfig {
-    tenants: { [friendlyName: string]: ITestTenant | undefined };
-    profiles: { [name: string]: ITestConfig | undefined };
-}
 
 interface IOdspTestLoginInfo {
     server: string;
@@ -147,7 +138,7 @@ async function main() {
     const log: string | undefined = commander.log;
     const driveId: string | undefined = commander.driveId;
 
-    let config: IConfig;
+    let config: ITestConfig;
     try {
         config = JSON.parse(fs.readFileSync("./testConfig.json", "utf-8"));
     } catch (e) {
@@ -156,7 +147,7 @@ async function main() {
         process.exit(-1);
     }
 
-    const tenant = config.tenants[tenantArg];
+    const tenant: ITestTenant | undefined = config.tenants[tenantArg];
     if (tenant === undefined) {
         console.error("Invalid --tenant argument not found in testConfig.json tenants");
         process.exit(-1);
@@ -178,7 +169,7 @@ async function main() {
     }
     const loginInfo: IOdspTestLoginInfo = { server: tenant.server, username: tenant.username, password };
 
-    const profile = config.profiles[profileArg];
+    const profile: ILoadTestConfig | undefined = config.profile[profileArg];
     if (profile === undefined) {
         console.error("Invalid --profile argument not found in testConfig.json profiles");
         process.exit(-1);
@@ -212,7 +203,7 @@ async function main() {
  */
 async function runnerProcess(
     loginInfo: IOdspTestLoginInfo,
-    profile: ITestConfig,
+    profile: ILoadTestConfig,
     runId: number,
     url: string,
 ): Promise<number> {
@@ -237,7 +228,7 @@ async function runnerProcess(
  */
 async function orchestratorProcess(
     loginInfo: IOdspTestLoginInfo & { tenantFriendlyName: string },
-    profile: ITestConfig & { name: string },
+    profile: ILoadTestConfig & { name: string },
     args: { driveId?: string, url?: string, debug?: true },
 ): Promise<number> {
     let driveId: string;
