@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { Deferred } from "@fluidframework/common-utils";
-import { IContext, IQueuedMessage, ILogger } from "@fluidframework/server-services-core";
+import { IContext, IQueuedMessage, ILogger, IContextErrorData } from "@fluidframework/server-services-core";
 import { DebugLogger } from "./logger";
 
 interface IWaitOffset {
@@ -37,8 +37,8 @@ export class TestContext extends EventEmitter implements IContext {
         });
     }
 
-    public error(error: any, restart: boolean) {
-        this.emit("error", error, restart);
+    public error(error: any, errorData: IContextErrorData) {
+        this.emit("error", error, errorData);
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

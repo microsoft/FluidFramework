@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambda } from "./lambdas";
+import { IPartitionLambda, LambdaCloseType } from "./lambdas";
 import { IQueuedMessage } from "./queue";
 
 /**
@@ -26,9 +26,9 @@ export class CombinedLambda implements IPartitionLambda {
 	 * Closes the lambda. After being called handler will no longer be invoked and the lambda is expected to cancel
 	 * any deferred work.
 	 */
-	public close(): void {
+	public close(closeType: LambdaCloseType): void {
 		for (const lambda of this.lambdas) {
-			lambda.close();
+			lambda.close(closeType);
 		}
 	}
 }
