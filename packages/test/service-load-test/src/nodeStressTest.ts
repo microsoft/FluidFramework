@@ -169,7 +169,7 @@ async function main() {
     }
     const loginInfo: IOdspTestLoginInfo = { server: tenant.server, username: tenant.username, password };
 
-    const profile: ILoadTestConfig | undefined = config.profile[profileArg];
+    const profile: ILoadTestConfig | undefined = config.profiles[profileArg];
     if (profile === undefined) {
         console.error("Invalid --profile argument not found in testConfig.json profiles");
         process.exit(-1);

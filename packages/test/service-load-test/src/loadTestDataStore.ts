@@ -58,15 +58,14 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
     public async run(config: IRunConfig) {
         // Wait for all runners to join
         console.log(`${config.runId.toString().padStart(3)}> waiting`);
-        //* This is hanging for some reason... copmmenting it out for the moment
-        // await new Promise<void>((resolve) => {
-        //     let memberCount = this.context.getQuorum().getMembers().size;
-        //     if (memberCount >= config.testConfig.numClients) { resolve(); }
-        //     this.context.getQuorum().on("addMember", () => {
-        //         memberCount++;
-        //         if (memberCount >= config.testConfig.numClients) { resolve(); }
-        //     });
-        // });
+        await new Promise<void>((resolve) => {
+            let memberCount = this.context.getQuorum().getMembers().size;
+            if (memberCount >= config.testConfig.numClients) { resolve(); }
+            this.context.getQuorum().on("addMember", () => {
+                memberCount++;
+                if (memberCount >= config.testConfig.numClients) { resolve(); }
+            });
+        });
         console.log(`${config.runId.toString().padStart(3)}> begin`);
 
         // At every moment, we want half the client to be concurrent writers, and start and stop

@@ -1,6 +1,10 @@
 {
     "tenants": {
         "fluidCI": {
+            "server": "a830edad9050849830E21012616.sharepoint.com",
+            "username": "user0@a830edad9050849830E21012616.onmicrosoft.com"
+        },
+        "0312": {
             "server": "a830edad9050849829J20060312.sharepoint.com",
             "username": "user0@a830edad9050849829J20060312.onmicrosoft.com"
         },
@@ -21,7 +25,7 @@
             "opRatePerMin": 60,
             "progressIntervalMs": 5000,
             "numClients": 2,
-            "totalSendCount": 30,
+            "totalSendCount": 10,
             "readWriteCycleMs": 10000
         }
     }

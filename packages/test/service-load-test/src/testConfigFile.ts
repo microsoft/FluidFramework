@@ -6,7 +6,7 @@
 /** Type modeling the structure of the testConfig.json file */
 export interface ITestConfig {
     tenants: { [friendlyName: string]: ITestTenant | undefined };
-    profile: { [name: string]: ILoadTestConfig | undefined };
+    profiles: { [name: string]: ILoadTestConfig | undefined };
 }
 
 /** Type modeling the tenant sub-structure of the testConfig.json file */
