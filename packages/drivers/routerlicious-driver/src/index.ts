@@ -14,3 +14,4 @@ export * from "./createDocumentService2";
 export * from "./nullBlobStorageService";
 export * from "./documentServiceFactory";
 export * from "./defaultTokenProvider";
+export * from "./r11sError";

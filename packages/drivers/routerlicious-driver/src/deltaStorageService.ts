@@ -10,13 +10,13 @@ import {
     IDocumentDeltaStorageService,
     IDeltasFetchResult,
 } from "@fluidframework/driver-definitions";
-import Axios from "axios";
 import * as uuid from "uuid";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ITokenProvider } from "./tokens";
 import { DocumentStorageService } from "./documentStorageService";
+import { authorizedRequestWithRetry } from "./requestUtils";
 
 /**
  * Storage service limited to only being able to fetch documents for a specific document
@@ -69,17 +69,18 @@ export class DeltaStorageService implements IDeltaStorageService {
             "x-correlation-id": uuid.v4(),
         };
 
-        const storageToken = await this.tokenProvider.fetchStorageToken(
-            tenantId,
-            id,
+        const getStorageServiceAuthHeader = async () => {
+            const storageToken = await this.tokenProvider.fetchStorageToken(tenantId, id);
+            return `Basic ${storageToken.jwt}`;
+        };
+        const ops = await authorizedRequestWithRetry<ISequencedDocumentMessage[]>(
+            {
+                method: "get",
+                url: `${this.url}?${query}`,
+                headers,
+            },
+            getStorageServiceAuthHeader,
         );
-
-        if (storageToken) {
-            headers.Authorization = `Basic ${storageToken.jwt}`;
-        }
-
-        const ops = await Axios.get<ISequencedDocumentMessage[]>(
-            `${this.url}?${query}`, { headers });
 
         if (this.logger) {
             this.logger.sendTelemetryEvent({

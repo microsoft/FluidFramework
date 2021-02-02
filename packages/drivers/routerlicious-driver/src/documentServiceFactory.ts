@@ -18,12 +18,12 @@ import {
     getDocAttributesFromProtocolSummary,
     getQuorumValuesFromProtocolSummary,
 } from "@fluidframework/driver-utils";
-import Axios from "axios";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { DocumentService } from "./documentService";
 import { DocumentService2 } from "./documentService2";
 import { DefaultErrorTracking } from "./errorTracking";
 import { ITokenProvider } from "./tokens";
+import { authorizedRequestWithRetry } from "./requestUtils";
 
 /**
  * Factory for creating the routerlicious document service. Use this if you want to
@@ -61,23 +61,24 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         }
         const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
         const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
-        const token = await this.tokenProvider.fetchStorageToken(
-            tenantId,
-            id,
-        );
-        await Axios.post(
-            `${resolvedUrl.endpoints.ordererUrl}/documents/${tenantId}`,
+
+        const getStorageServiceAuthHeader = async () => {
+            const storageToken = await this.tokenProvider.fetchStorageToken(tenantId, id);
+            return `Basic ${storageToken.jwt}`;
+        };
+        await authorizedRequestWithRetry(
             {
-                id,
-                summary: appSummary,
-                sequenceNumber: documentAttributes.sequenceNumber,
-                values: quorumValues,
-            },
-            {
-                headers: {
-                    Authorization: `Basic ${token.jwt}`,
+                method: "post",
+                url: `${resolvedUrl.endpoints.ordererUrl}/documents/${tenantId}`,
+                data: {
+                    id,
+                    summary: appSummary,
+                    sequenceNumber: documentAttributes.sequenceNumber,
+                    values: quorumValues,
                 },
-            });
+            },
+            getStorageServiceAuthHeader,
+        );
         return this.createDocumentService(resolvedUrl, logger);
     }
 

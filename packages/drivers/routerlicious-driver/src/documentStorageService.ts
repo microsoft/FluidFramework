@@ -16,7 +16,7 @@ import {
     ISummaryContext,
     IDocumentStorageServicePolicies,
  } from "@fluidframework/driver-definitions";
-import * as resources from "@fluidframework/gitresources";
+import { ICreateTreeEntry } from "@fluidframework/gitresources";
 import { buildHierarchy, getGitType, getGitMode } from "@fluidframework/protocol-base";
 import {
     ICreateBlobResponse,
@@ -28,7 +28,8 @@ import {
     SummaryObject,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
-import * as gitStorage from "@fluidframework/server-services-client";
+import { GitManager } from "@fluidframework/server-services-client";
+import { isStatusRetriable, throwR11sNetworkError } from "./r11sError";
 
 /**
  * Document access to underlying storage for routerlicious driver.
@@ -49,7 +50,7 @@ export class DocumentStorageService implements IDocumentStorageService {
 
     constructor(
         public readonly id: string,
-        public manager: gitStorage.GitManager,
+        public manager: GitManager,
         public readonly policies?: IDocumentStorageServicePolicies) {
     }
 
@@ -64,7 +65,8 @@ export class DocumentStorageService implements IDocumentStorageService {
             requestVersion = versions[0];
         }
 
-        const rawTree = await this.manager.getTree(requestVersion.treeId);
+        const rawTree = await this.manager.getTree(requestVersion.treeId)
+            .catch(DocumentStorageService.enhanceGitServiceError);
         const tree = buildHierarchy(rawTree, this.blobsShaCache);
 
         this._logTailSha = ".logTail" in tree.trees ? tree.trees[".logTail"].blobs.logTail : undefined;
@@ -72,7 +74,8 @@ export class DocumentStorageService implements IDocumentStorageService {
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
-        const commits = await this.manager.getCommits(versionId ? versionId : this.id, count);
+        const commits = await this.manager.getCommits(versionId ? versionId : this.id, count)
+            .catch(DocumentStorageService.enhanceGitServiceError);
         return commits.map((commit) => ({
             date: commit.commit.author.date,
             id: commit.sha,
@@ -81,14 +84,16 @@ export class DocumentStorageService implements IDocumentStorageService {
     }
 
     public async read(blobId: string): Promise<string> {
-        const value = await this.manager.getBlob(blobId);
+        const value = await this.manager.getBlob(blobId)
+            .catch(DocumentStorageService.enhanceGitServiceError);
         this.blobsShaCache.set(value.sha, "");
         return value.content;
     }
 
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         const branch = ref ? `datastores/${this.id}/${ref}` : this.id;
-        const commit = await this.manager.write(branch, tree, parents, message);
+        const commit = await this.manager.write(branch, tree, parents, message)
+            .catch(DocumentStorageService.enhanceGitServiceError);
         return { date: commit.committer.date, id: commit.sha, treeId: commit.tree.sha };
     }
 
@@ -109,16 +114,15 @@ export class DocumentStorageService implements IDocumentStorageService {
     }
 
     public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
-        const response = this.manager.createBlob(
-            Uint8ArrayToString(
-                new Uint8Array(file), "base64"),
-            "base64");
+        const response = this.manager.createBlob(Uint8ArrayToString(new Uint8Array(file), "base64"), "base64")
+            .catch(DocumentStorageService.enhanceGitServiceError);
 
         return response.then((r) => ({ id: r.sha, url: r.url }));
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        const value = await this.manager.getBlob(blobId);
+        const value = await this.manager.getBlob(blobId)
+            .catch(DocumentStorageService.enhanceGitServiceError);
         this.blobsShaCache.set(value.sha, "");
         return stringToBuffer(value.content, value.encoding);
     }
@@ -131,7 +135,7 @@ export class DocumentStorageService implements IDocumentStorageService {
         const entries = await Promise.all(Object.keys(summaryTree.tree).map(async (key) => {
             const entry = summaryTree.tree[key];
             const pathHandle = await this.writeSummaryTreeObject(key, entry, previousFullSnapshot);
-            const treeEntry: resources.ICreateTreeEntry = {
+            const treeEntry: ICreateTreeEntry = {
                 mode: getGitMode(entry),
                 path: encodeURIComponent(key),
                 sha: pathHandle,
@@ -140,7 +144,8 @@ export class DocumentStorageService implements IDocumentStorageService {
             return treeEntry;
         }));
 
-        const treeHandle = await this.manager.createGitTree({ tree: entries });
+        const treeHandle = await this.manager.createGitTree({ tree: entries })
+            .catch(DocumentStorageService.enhanceGitServiceError);
         return treeHandle.sha;
     }
 
@@ -225,9 +230,22 @@ export class DocumentStorageService implements IDocumentStorageService {
         const hash = await gitHashFile(IsoBuffer.from(parsedContent, encoding));
         if (!this.blobsShaCache.has(hash)) {
             this.blobsShaCache.set(hash, "");
-            const blob = await this.manager.createBlob(parsedContent, encoding);
+            const blob = await this.manager.createBlob(parsedContent, encoding)
+                .catch(DocumentStorageService.enhanceGitServiceError);
             assert(hash === blob.sha, "Blob.sha and hash do not match!!");
         }
         return hash;
+    }
+
+    public static async enhanceGitServiceError(error: any): Promise<never> {
+        const messageFallback = "GitManager call failed";
+        // GitManager's Historian's RestWrapper only throws status code when response is available
+        if (typeof error === "number") {
+            // RestWrapper handles 1 429 retry but does not pass along retryAfter, and Historian handles 401 retries.
+            // Anything else can be retried.
+            throwR11sNetworkError(messageFallback, isStatusRetriable(error), error);
+        }
+        // In case response is not available, throw a more generic error
+        throwR11sNetworkError(error?.toString() ?? messageFallback);
     }
 }
