@@ -23,6 +23,21 @@ import {
     fromUtf8ToBase64,
  } from "@fluidframework/common-utils";
 
+// Gate that when flipped, instructs to compress small blobs.
+// We have to first ship with this gate off, such that we can get to saturation bits
+// that can understand compressed format. And only after that flip it.
+ const gatesAllowPacking = false;
+
+// 2K seems like the sweat spot:
+// The smaller the number, less blobs we aggregate. Most storages are very likely to have notion
+// of minimal "cluster" size, so having small blobs is wasteful
+// At the same time increasing the limit ensure that more blobs with user content are aggregated,
+// reducing possibility for de-duping of same blobs (i.e. .attributes rolled into aggregate blob
+// are not reused across data stores, or even within data store, resulting in duplication of content)
+// Note that duplication of content should not have significant impact for bytes over wire as
+// compression of http payload mostly takes care of it, but it does impact storage size and in-memory sizes.
+const blobCutOffSize = 2048;
+
  /**
   * Class responsible for aggregating smaller blobs into one and unpacking it later on.
   */
@@ -74,26 +89,32 @@ abstract class SnapshotExtractor {
             const obj = snapshot.trees[key];
             await this.unpackSnapshotCore(obj, level + 1);
         }
-        const blobId = snapshot.blobs[this.aggregatedBlobName];
-        if (blobId !== undefined) {
-            const blob = await this.getBlob(blobId, snapshot);
-            for (const [key, value] of BlobAggregator.load(blob)) {
-                const id = this.getNextVirtualId();
-                this.setBlob(id, snapshot, value);
-                const path = key.split("/");
-                let subTree = snapshot;
-                for (const subPath of path.slice(0, path.length - 1)) {
-                    if (subTree.trees[subPath] === undefined) {
-                        subTree.trees[subPath] = { blobs: {}, commits: {}, trees: {}};
+
+        // For future proof, we will support multiple aggregated blobs with any name
+        // that starts with this.aggregatedBlobName
+        for (const key of Object.keys(snapshot.blobs)) {
+            if (!key.startsWith(this.aggregatedBlobName)) { continue; }
+            const blobId = snapshot.blobs[key];
+            if (blobId !== undefined) {
+                const blob = await this.getBlob(blobId, snapshot);
+                for (const [path, value] of BlobAggregator.load(blob)) {
+                    const id = this.getNextVirtualId();
+                    this.setBlob(id, snapshot, value);
+                    const pathSplit = path.split("/");
+                    let subTree = snapshot;
+                    for (const subPath of pathSplit.slice(0, pathSplit.length - 1)) {
+                        if (subTree.trees[subPath] === undefined) {
+                            subTree.trees[subPath] = { blobs: {}, commits: {}, trees: {}};
+                        }
+                        subTree = subTree.trees[subPath];
                     }
-                    subTree = subTree.trees[subPath];
+                    const blobName = pathSplit[pathSplit.length - 1];
+                    assert(subTree.blobs[blobName] === undefined);
+                    subTree.blobs[blobName] = id;
                 }
-                const name = path[path.length - 1];
-                assert(subTree.blobs[name] === undefined);
-                subTree.blobs[name] = id;
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                delete snapshot.blobs[this.aggregatedBlobName];
             }
-            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-            delete snapshot.blobs[this.aggregatedBlobName];
         }
     }
 }
@@ -122,8 +143,6 @@ class SnapshotExtractorInPlace extends SnapshotExtractor {
  * When snapshot is read, it will unpack aggregated blobs and provide them transparently to caller.
  */
 export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumentStorageService {
-    protected readonly blobCutOffSize = 1024;
-
     protected loadedFromSummary = false;
 
     protected virtualBlobs = new Map<string, ArrayBufferLike>();
@@ -207,7 +226,7 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
-        const summaryNew = await this.compressSmallBlobs(summary, "", 0);
+        const summaryNew = gatesAllowPacking ? await this.compressSmallBlobs(summary) : summary;
         return this.storage.uploadSummaryWithContext(summaryNew, context);
     }
 
@@ -217,10 +236,16 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
     // summary produced by data stores.
     // These simplifications allow us not to touch handles, as they are self-contained (either do not use aggregated
     // blob Or contain aggregated blob that stays relevant for that sub-tree)
+    // Note:
+    // From perf perspective, it makes sense to place aggregated blobs one level up in the tree not to create extra
+    // tree nodes (i.e. have shallow tree with less edges). But that creates problems with reusability of trees at
+    // incremental summary time - we would need to understand handles and parse them. In current design we can skip
+    // that step because if data store is reused, the hole sub-tree is reused included aggregated blob embedded into it
+    // and that means we can do nothing and be correct!
     protected async compressSmallBlobs(
         summary: ISummaryTree,
-        path: string,
-        level: number,
+        path = "",
+        level = 0,
         statsArg?: BlobAggregator): Promise<ISummaryTree>
     {
         // Only pack at data store level.
@@ -240,7 +265,8 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
             switch (obj.type) {
                 case SummaryType.Tree:
                     // If client created empty tree, keep it as is
-                    if (obj.tree !== {}) {
+                    // Also do not package search blobs - they are path of storage contract
+                    if (obj.tree !== {} && key !== "__search") {
                         const tree = await this.compressSmallBlobs(obj, newPath, level + 1, stats);
                         newSummary.tree[key] = tree;
                         if (tree.tree === {}) {
@@ -250,26 +276,17 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
                     }
                     break;
                 case SummaryType.Blob:
-                    if (stats && typeof obj.content == "string" && obj.content.length < this.blobCutOffSize) {
+                    if (stats && typeof obj.content == "string" && obj.content.length < blobCutOffSize) {
                         stats.addBlob(newPath, obj.content);
                         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                         delete newSummary.tree[key];
                     }
                     break;
                 case SummaryType.Handle:
-                    switch (obj.handleType) {
-                        case SummaryType.Tree:
-                            // Need to expand the tree
-                            // But see simplification above - we can avoid it for now
-                            break;
-                        case SummaryType.Blob:
-                        case SummaryType.Attachment:
-                            // TODO: need to parse and ensure it's real ID.
-                            // assert(this.isRealStorageId(obj.handle));
-                            break;
-                        default:
-                            unreachableCase(obj.handleType, `Unknown type: ${(obj as any).handleType}`);
-                    }
+                    // Would be nice to:
+                    // Trees: expand the tree
+                    // Blobs: parse handle and ensure it points to real blob, not virtual blob.
+                    // We can avoid it for now given data store is the granularity of incremental summaries.
                     break;
                 case SummaryType.Attachment:
                     assert(this.isRealStorageId(obj.id));
@@ -281,6 +298,11 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
 
         assert(newSummary.tree[this.aggregatedBlobName] === undefined);
         if (startingLevel) {
+            // Note: It would be great to add code here to unpack aggregate blob back to normal blobs
+            // If only one blob made it into aggregate. Currently that does not happen as we always have
+            // at least one .component blob and at least one DDS that has .attributes blob, so it's not an issue.
+            // But it's possible that in future that would be great addition!
+            // Good news - it's backward compatible change.
             assert(stats !== undefined);
             const content = stats.getContent();
             if (content !== undefined) {
