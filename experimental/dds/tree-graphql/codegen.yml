@@ -1,0 +1,7 @@
+overwrite: true
+schema: 'src/graphql-schemas/*'
+generates:
+  src/graphql-generated/Pizza.ts:
+    plugins:
+      - 'typescript'
+      - dist/plugins/SharedTreeResolverPlugin.js
