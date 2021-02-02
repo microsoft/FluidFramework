@@ -17,7 +17,7 @@ import {
     DataObjectFactory,
 } from "old-aqueduct2";
 import { SharedCell } from "old-cell2";
-import { IContainer,  IRuntimeFactory } from "old-container-definitions2";
+import {  IRuntimeFactory } from "old-container-definitions2";
 import { Loader } from "old-container-loader2";
 import { IContainerRuntimeOptions } from "old-container-runtime2";
 import { IFluidCodeDetails } from "old-core-interfaces2";
@@ -34,8 +34,6 @@ import { IFluidDataStoreFactory } from "old-runtime-definitions2";
 import { SharedString, SparseMatrix } from "old-sequence2";
 import {
     ChannelFactoryRegistry,
-    createAndAttachContainer,
-    createLocalLoader,
     fluidEntryPoint,
     LocalCodeLoader,
     OpProcessingController,
@@ -174,7 +172,10 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
     public async makeTestContainer(testContainerConfig?: TestContainerConfigType) {
         const loader = this.makeTestLoader(testContainerConfig);
         const container =
-            await createAndAttachContainer(this.documentId, defaultCodeDetails, loader, this.urlResolver);
+            await newVer.createAndAttachContainer(
+                defaultCodeDetails,
+                loader,
+                this.urlResolver.createCreateNewRequest(this.documentId));
 
         // TODO: the old version delta manager on the container doesn't do pause/resume count
         // We can't use it to do pause/resume, or it will conflict with the call from the runtime's
@@ -307,17 +308,6 @@ export function createOldRuntimeFactory(dataStore): IRuntimeFactory {
         factory,
         [[type, Promise.resolve(new DataObjectFactory(type, dataStore, [], {}))]],
     );
-}
-
-export async function createOldContainer(
-    documentId,
-    packageEntries,
-    server,
-    urlResolver,
-    codeDetails,
-): Promise<IContainer> {
-    const loader = createLocalLoader(packageEntries, server, urlResolver, { hotSwapContext: true });
-    return createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
 }
 
 export function createTestObjectProvider(
