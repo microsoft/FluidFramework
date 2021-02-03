@@ -17,7 +17,7 @@ import {
     getMicrosoftConfiguration,
     OdspTokenConfig,
 } from "@fluidframework/tool-utils";
-import { getLoginPageUrl, getOdspScope, getDriveId } from "@fluidframework/odsp-doclib-utils";
+import { getLoginPageUrl, getOdspScope, getDriveId, IOdspTokens } from "@fluidframework/odsp-doclib-utils";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ITestConfig, ILoadTestConfig, ITestTenant } from "./testConfigFile";
 import { IRunConfig, fluidExport, ILoadTest } from "./loadTestDataStore";
@@ -211,10 +211,10 @@ async function orchestratorProcess(
     profile: ILoadTestConfig & { name: string },
     args: { url?: string, debug?: true },
 ): Promise<number> {
-    let driveId: string;
+    let odspTokens: IOdspTokens;
     try {
         // Ensure fresh tokens here so the test runners have them cached
-        const odspTokens = await odspTokenManager.getOdspTokens(
+        odspTokens = await odspTokenManager.getOdspTokens(
             loginInfo.server,
             getMicrosoftConfiguration(),
             passwordTokenConfig(loginInfo.username, loginInfo.password),
@@ -228,9 +228,6 @@ async function orchestratorProcess(
             undefined /* forceRefresh */,
             true /* forceReauth */,
         );
-
-        // Automatically determine driveId based on the server and user
-        driveId = await getDriveId(loginInfo.server, "", "", { accessToken: odspTokens.accessToken });
     } catch (ex) {
         // Log the login page url in case the caller needs to allow consent for this app
         const loginPageUrl =
@@ -243,15 +240,18 @@ async function orchestratorProcess(
             );
 
         console.log("You may need to allow consent for this app. Re-run the tool after allowing consent.");
-        console.log(`Go here allow the app: ${loginPageUrl}`);
+        console.log(`Go here allow the app: ${loginPageUrl}\n`);
 
         throw ex;
     }
 
+    // Automatically determine driveId based on the server and user
+    const driveId = await getDriveId(loginInfo.server, "", undefined, { accessToken: odspTokens.accessToken });
+
     // Create a new file if a url wasn't provided
     const url = args.url ?? await initialize(driveId, loginInfo);
-    const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
 
+    const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
     console.log(`Connecting to ${args.url ? "existing" : "new"} Container targeting dataStore with URL:\n${url}`);
     console.log(`Authenticated as user: ${loginInfo.username}`);
     console.log(`Selected test profile: ${profile.name}`);
@@ -261,9 +261,7 @@ async function orchestratorProcess(
     for (let i = 0; i < profile.numClients; i++) {
         const childArgs: string[] = [
             "./dist/nodeStressTest.js",
-            "--driveId", driveId,
             "--tenant", loginInfo.tenantFriendlyName,
-            "--password", loginInfo.password,
             "--profile", profile.name,
             "--runId", i.toString(),
             "--url", url];

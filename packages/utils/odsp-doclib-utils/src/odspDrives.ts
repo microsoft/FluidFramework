@@ -164,9 +164,14 @@ async function getDriveItem(
 export async function getDriveId(
     server: string,
     account: string,
-    library: string,
+    library: string | undefined,
     authRequestInfo: IOdspAuthRequestInfo,
 ): Promise<string> {
+    if (library === undefined)
+    {
+        const drive = await getDefaultDrive(server, account, authRequestInfo);
+        return drive.id;
+    }
     const drives = await getDrives(server, account, authRequestInfo);
     const accountPath = account ? `/${account}` : "";
     const drivePath = encodeURI(`https://${server}${accountPath}/${library}`);
@@ -177,19 +182,39 @@ export async function getDriveId(
     return drives[index].id;
 }
 
+async function getDefaultDrive(
+    server: string,
+    account: string,
+    authRequestInfo: IOdspAuthRequestInfo,
+): Promise<IOdspDriveInfo> {
+    const response = await getDriveResponse("drive", server, account, authRequestInfo);
+    const getDriveResult = await response.json();
+    return getDriveResult as IOdspDriveInfo;
+}
+
 async function getDrives(
     server: string,
     account: string,
     authRequestInfo: IOdspAuthRequestInfo,
 ): Promise<IOdspDriveInfo[]> {
-    const accountPath = account ? `/${account}` : "";
-    const getDriveUrl = `https://${server}${accountPath}/_api/v2.1/drives`;
-    const response = await getAsync(getDriveUrl, authRequestInfo);
-    if (response.status !== 200) {
-        throwOdspNetworkError("Failed to get drives.", response.status);
-    }
+    const response = await getDriveResponse("drives", server, account, authRequestInfo);
     const getDriveResult = await response.json();
     return getDriveResult.value as IOdspDriveInfo[];
+}
+
+async function getDriveResponse(
+    routeTail: "drive" | "drives",
+    server: string,
+    account: string,
+    authRequestInfo: IOdspAuthRequestInfo,
+) {
+    const accountPath = account ? `/${account}` : "";
+    const getDriveUrl = `https://${server}${accountPath}/_api/v2.1/${routeTail}`;
+    const response = await getAsync(getDriveUrl, authRequestInfo);
+    if (response.status !== 200) {
+        throwOdspNetworkError(`Failed to get ${routeTail}.`, response.status);
+    }
+    return response;
 }
 
 function toIODSPDriveItem(parsedDriveItemBody: any): IOdspDriveItem {
