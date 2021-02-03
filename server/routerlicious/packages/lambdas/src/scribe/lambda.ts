@@ -34,7 +34,7 @@ import {
 import Deque from "double-ended-queue";
 import * as _ from "lodash";
 import { SequencedLambda } from "../sequencedLambda";
-import { ICheckpointManager, ISummaryReader, ISummaryWriter } from "./interfaces";
+import { ICheckpointManager, IPendingMessageReader, ISummaryReader, ISummaryWriter } from "./interfaces";
 import { initializeProtocol } from "./utils";
 
 export class ScribeLambda extends SequencedLambda {
@@ -69,6 +69,7 @@ export class ScribeLambda extends SequencedLambda {
         protected documentId: string,
         private readonly summaryWriter: ISummaryWriter,
         private readonly summaryReader: ISummaryReader,
+        private readonly pendingMessageReader: IPendingMessageReader | undefined,
         private readonly checkpointManager: ICheckpointManager,
         scribe: IScribe,
         private readonly serviceConfiguration: IServiceConfiguration,
@@ -132,10 +133,33 @@ export class ScribeLambda extends SequencedLambda {
                     continue;
                 }
 
+                const lastSequenceNumber = this.pendingMessages.length > 0 ?
+                    this.pendingMessages.peekBack().sequenceNumber :
+                    this.sequenceNumber;
+
                 // Handles a partial checkpoint case where messages were inserted into DB but checkpointing failed.
-                if (this.pendingMessages.length > 0 &&
-                    value.operation.sequenceNumber <= this.pendingMessages.peekBack().sequenceNumber) {
+                if (value.operation.sequenceNumber <= lastSequenceNumber) {
                     continue;
+                }
+
+                // Ensure sequence numbers are monotonically increasing
+                if (value.operation.sequenceNumber !== lastSequenceNumber + 1) {
+                    // unexpected sequence number. if a pending message reader is available, ask for those ops
+                    if (this.pendingMessageReader !== undefined) {
+                        const from = lastSequenceNumber + 1;
+                        const to = value.operation.sequenceNumber - 1;
+                        const additionalPendingMessages = await this.pendingMessageReader.readMessages(from, to);
+                        for (const additionalPendingMessage of additionalPendingMessages) {
+                            this.pendingMessages.push(additionalPendingMessage);
+                        }
+                    } else {
+                        this.context.error(new Error(`Invalid message sequence number`), {
+                            restart: true,
+                            tenantId: this.tenantId,
+                            documentId: this.documentId,
+                        });
+                        return;
+                    }
                 }
 
                 // Add the message to the list of pending for this document and those that we need

@@ -115,7 +115,7 @@ export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormali
                 break;
             }
             case TreeEntry.Tree: {
-                normalizedEntries.push(new TreeTreeEntry(entry.path, getNormalizedSnapshot(entry.value)));
+                normalizedEntries.push(new TreeTreeEntry(entry.path, getNormalizedSnapshot(entry.value, config)));
                 break;
             }
             case TreeEntry.Attachment: {

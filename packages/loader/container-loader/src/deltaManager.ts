@@ -801,8 +801,6 @@ export class DeltaManager
                 if (to === undefined ? (!partialResult && lastFetch < maxFetchTo - 1) : to - 1 <= lastFetch) {
                     callback(deltas);
                     telemetryEvent.end({ lastFetch, deltasRetrievedTotal, requests });
-                    // If we got full range we have asked, it should not be partial result
-                    assert(!partialResult, "partialResult");
                     return;
                 }
 
