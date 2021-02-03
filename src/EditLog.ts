@@ -177,10 +177,14 @@ export class EditLog implements OrderedEditSet {
 
 	/**
 	 * Construct an `EditLog` using the given options.
+	 * @param summary - An edit log summary used to populate the edit log.
+	 * @param serializationHelpers - Helpers for serializing and deserializing edit handles. Required for virtualization support.
 	 */
-	public constructor(options?: EditLogSummary, serializationHelpers?: SerializationHelpers) {
-		const editLogSummary = options || { editIds: [], editChunks: [] };
-		const { editChunks, editIds } = editLogSummary;
+	public constructor(
+		summary: EditLogSummary = { editIds: [], editChunks: [] },
+		serializationHelpers?: SerializationHelpers
+	) {
+		const { editChunks, editIds } = summary;
 
 		this.serializationHelpers = serializationHelpers;
 
