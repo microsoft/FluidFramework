@@ -92,6 +92,9 @@ export function fullHistorySummarizer(editLog: OrderedEditSet, currentView: Snap
 	};
 }
 
+/**
+ * Generates a summary with format version 0.1.0. This will prefer handles over edits in edit chunks where possible.
+ */
 export function fullHistorySummarizer_0_1_0(editLog: OrderedEditSet, currentView: Snapshot): SharedTreeSummary {
 	return {
 		currentTree: currentView.getChangeNodeTree(),

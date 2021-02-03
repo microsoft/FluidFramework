@@ -55,7 +55,8 @@ export interface OrderedEditSet {
 	tryGetEdit(editId: EditId): Promise<Edit | undefined>;
 
 	/**
-	 * @returns the list of edits that do not have associated blob handles.
+	 * @param virtualized - If true, prefers to return in the summary handles associated with virtualized edit chunks over the edits themselves.
+	 * @returns the summary of this `OrderedEditSet` that can be used to reconstruct the edit set.
 	 * @internal
 	 */
 	getEditLogSummary(virtualized?: boolean): EditLogSummary;
@@ -425,7 +426,7 @@ export class EditLog implements OrderedEditSet {
 	}
 
 	/**
-	 * Returns information about the edit log.
+	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.getEditLogSummary}
 	 */
 	public getEditLogSummary(virtualized?: boolean): EditLogSummary {
 		if (virtualized) {
