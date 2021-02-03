@@ -64,6 +64,7 @@ export class ContainerContext implements IContainerContext {
         submitSignalFn: (contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
         closeFn: (error?: ICriticalContainerError) => void,
+        createNextSummarizerFn: (fromSequenceNumber: number, executionContext?: string) => Promise<IFluidObject>,
         version: string,
         previousRuntimeState: IRuntimeState,
     ): Promise<ContainerContext> {
@@ -82,6 +83,7 @@ export class ContainerContext implements IContainerContext {
             submitSignalFn,
             snapshotFn,
             closeFn,
+            createNextSummarizerFn,
             version,
             previousRuntimeState);
         await context.load();
@@ -193,6 +195,8 @@ export class ContainerContext implements IContainerContext {
         public readonly submitSignalFn: (contents: any) => void,
         public readonly snapshotFn: (message: string) => Promise<void>,
         public readonly closeFn: (error?: ICriticalContainerError) => void,
+        public readonly createNextSummarizerFn:
+            (fromSequenceNumber: number, executionContext?: string) => Promise<IFluidObject>,
         public readonly version: string,
         public readonly previousRuntimeState: IRuntimeState,
     ) {

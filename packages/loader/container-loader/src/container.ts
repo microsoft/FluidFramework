@@ -11,11 +11,12 @@ import {
 } from "@fluidframework/common-definitions";
 import { assert, performance } from "@fluidframework/common-utils";
 import {
-    IRequest,
-    IResponse,
-    IFluidRouter,
     IFluidCodeDetails,
     isFluidCodeDetails,
+    IFluidRouter,
+    IFluidObject,
+    IRequest,
+    IResponse,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -36,6 +37,7 @@ import {
     IDocumentStorageService,
     IFluidResolvedUrl,
     IResolvedUrl,
+    IUrlResolver,
     DriverHeader,
 } from "@fluidframework/driver-definitions";
 import {
@@ -1704,6 +1706,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // are set. Global requests will still go directly to the loader
         const loader = new RelativeLoader(this.loader, () => this.originalRequest);
         const previousCodeDetails = this._context?.codeDetails;
+        const createNextSummarizerFn = async (fromSequenceNumber, executionContext) => {
+            return this.createNextSummarizer(
+                this.loader,
+                this.loader.services.urlResolver,
+                this.originalRequest?.url,
+                fromSequenceNumber,
+                executionContext,
+            );
+        };
         this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,
@@ -1719,6 +1730,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
             (error?: ICriticalContainerError) => this.close(error),
+            createNextSummarizerFn,
             Container.version,
             previousRuntimeState,
         );
@@ -1743,5 +1755,80 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // raiseContainerWarning() is the right flow for most cases
     private logContainerError(warning: ContainerWarning) {
         this.logger.sendErrorEvent({ eventName: "ContainerWarning" }, warning);
+    }
+
+    private async createNextSummarizer(
+        // back-compat 0.34 stop passing loader post 0.34 support
+        loader: Loader,
+        urlResolver: IUrlResolver,
+        baseRequestUrl: string | undefined,
+        fromSequenceNumber: number,
+        // TODO #4912 currently ignored
+        executionContext?: string,
+    ): Promise<IFluidObject> {
+        if (baseRequestUrl === undefined) {
+            throw new Error("Base request is not provided");
+        }
+
+        // TODO eventually we may wish to spawn an execution context from which to run this
+        const headers = {
+            [LoaderHeader.cache]: false,
+            [LoaderHeader.clientDetails]: {
+                capabilities: { interactive: false },
+                // TODO #4880 refactor this value into a common location
+                type: "summarizer",
+            },
+            [DriverHeader.summarizingClient]: true,
+            [LoaderHeader.reconnect]: false,
+            [LoaderHeader.sequenceNumber]: fromSequenceNumber,
+            [LoaderHeader.executionContext]: executionContext,
+        };
+
+        const containerRequest: IRequest = {
+            headers,
+            url: baseRequestUrl,
+        };
+
+        const summarizerRequest: IRequest = {
+            headers,
+            url: "/_summarizer",
+        };
+
+        const resolvedAsFluid = await urlResolver.resolve(containerRequest);
+        ensureFluidResolvedUrl(resolvedAsFluid);
+
+        // Parse URL into data stores
+        const parsed = parseUrl(resolvedAsFluid.url);
+        if (parsed === undefined) {
+            return Promise.reject(new Error(`Invalid URL ${resolvedAsFluid.url}`));
+        }
+
+        const container = await Container.load(
+            parsed.id,
+            loader,
+            containerRequest,
+            resolvedAsFluid);
+
+        if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
+            await new Promise<void>((resolve, reject) => {
+                function opHandler(message: ISequencedDocumentMessage) {
+                    if (message.sequenceNumber > fromSequenceNumber) {
+                        resolve();
+                        container.removeListener("op", opHandler);
+                    }
+                }
+
+                container.on("op", opHandler);
+            });
+        }
+
+        const response = await container.request(summarizerRequest);
+
+        if (response.status !== 200
+            || (response.mimeType !== "fluid/object" && response.mimeType !== "fluid/component")) {
+            return Promise.reject(new Error("Invalid summarizer route"));
+        }
+
+        return response.value as IFluidObject;
     }
 }

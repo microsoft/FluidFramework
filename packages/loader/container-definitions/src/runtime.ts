@@ -127,6 +127,8 @@ export interface IContainerContext extends IDisposable {
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: (error?: ICriticalContainerError) => void;
+    readonly createNextSummarizerFn:
+        (fromSequenceNumber: number, executionContext?: string) => Promise<IFluidObject>,
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;

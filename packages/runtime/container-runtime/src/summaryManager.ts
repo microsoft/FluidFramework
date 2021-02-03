@@ -20,7 +20,12 @@ import {
 } from "@fluidframework/container-definitions";
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
-import { ISummarizer, Summarizer, createSummarizingWarning, ISummarizingWarning } from "./summarizer";
+import {
+    createSummarizingWarning,
+    ISummarizer,
+    ISummarizingWarning,
+    Summarizer,
+} from "./summarizer";
 
 export const summarizerClientType = "summarizer";
 
@@ -418,33 +423,44 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             return this.nextSummarizerP;
         }
 
-        const loader = this.context.loader;
+        let summarizer: ISummarizer | undefined;
+        // back-compat 0.33: this function is added in 0.34, but the original path
+        // needs to be preserved until 0.33 is no longer supported at this layer
+        if (!this.context.createNextSummarizerFn) {
+            const loader = this.context.loader;
 
-        // TODO eventually we may wish to spawn an execution context from which to run this
-        const request: IRequest = {
-            headers: {
-                [LoaderHeader.cache]: false,
-                [LoaderHeader.clientDetails]: {
-                    capabilities: { interactive: false },
-                    type: summarizerClientType,
+            // TODO eventually we may wish to spawn an execution context from which to run this
+            const request: IRequest = {
+                headers: {
+                    [LoaderHeader.cache]: false,
+                    [LoaderHeader.clientDetails]: {
+                        capabilities: { interactive: false },
+                        type: summarizerClientType,
+                    },
+                    [DriverHeader.summarizingClient]: true,
+                    [LoaderHeader.reconnect]: false,
+                    [LoaderHeader.sequenceNumber]: this.context.deltaManager.lastSequenceNumber,
+                    [LoaderHeader.executionContext]: this.enableWorker ? "worker" : undefined,
                 },
-                [DriverHeader.summarizingClient]: true,
-                [LoaderHeader.reconnect]: false,
-                [LoaderHeader.sequenceNumber]: this.context.deltaManager.lastSequenceNumber,
-                [LoaderHeader.executionContext]: this.enableWorker ? "worker" : undefined,
-            },
-            url: "/_summarizer",
-        };
+                url: "/_summarizer",
+            };
 
-        const response = await loader.request(request);
+            const response = await loader.request(request);
 
-        if (response.status !== 200
-            || (response.mimeType !== "fluid/object" && response.mimeType !== "fluid/component")) {
-            return Promise.reject(new Error("Invalid summarizer route"));
+            if (response.status !== 200
+                || (response.mimeType !== "fluid/object" && response.mimeType !== "fluid/component")) {
+                return Promise.reject(new Error("Invalid summarizer route"));
+            }
+
+            const rawFluidObject = response.value as IFluidObject;
+            summarizer = rawFluidObject.ISummarizer;
+        } else {
+            const nextSummarizer = await this.context.createNextSummarizerFn(
+                this.context.deltaManager.lastSequenceNumber,
+                this.enableWorker ? "worker" : undefined,
+            );
+            summarizer = nextSummarizer.ISummarizer;
         }
-
-        const rawFluidObject = response.value as IFluidObject;
-        const summarizer = rawFluidObject.ISummarizer;
 
         if (!summarizer) {
             return Promise.reject(new Error("Fluid object does not implement ISummarizer"));
