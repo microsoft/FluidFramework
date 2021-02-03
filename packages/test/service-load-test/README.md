@@ -7,15 +7,15 @@ NodeJs-based test to simulate many clients and a high rate of op generation.
 ## Pre-requisites
 
 * Run [getkeys](/tools/getkeys/README.md) at some point to enable your machine to retrieve required OAuth tokens and passwords.
-_You do not need to rerun it more than once, it will persist the keys for future sessions._
-* If you are using a user account not already present in `testConfig.json`,
+_You do not need to run it more than once, it will persist the keys for future sessions._
+* If you are using a username not already present in `testConfig.json`,
 then you'll need to add the password to the `login__odsp__test__accounts` environment variable. The format is simple:
 
 ```json
 {"user@foo.com": "pwd_foo", "user@bar.com": "pwd_bar", ...}
 ```
 
-If you intend to check in the new user, please reach out to someone on the team who can add the creds to Azure Key Vault.
+If you intend to check in the new username, please reach out to someone on the team who can add the creds to Azure Key Vault.
 
 ## Usage
 
