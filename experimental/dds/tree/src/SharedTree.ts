@@ -8,7 +8,7 @@ import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from '@fluidfra
 import { IFluidDataStoreRuntime, IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
-import type { IFluidSerializer } from '@fluidframework/core-interfaces';
+import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger } from '@fluidframework/telemetry-utils';
 import { assert, fail } from './Common';
