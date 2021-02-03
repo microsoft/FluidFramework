@@ -171,4 +171,16 @@ describe("Buffer isomorphism", () => {
         expect(nodeStringUtf8).toEqual("hellothere");
         expect(browserStringUtf8).toEqual("hellothere");
     });
+
+    test("bufferToString working with IsoBuffer",() => {
+        const test = "aGVsbG90aGVyZQ==";
+
+        const buffer = BufferBrowser.stringToBuffer(test, "base64");
+        expect(BufferBrowser.bufferToString(buffer, "base64")).toEqual(test);
+        expect(BufferBrowser.bufferToString(buffer, "utf-8")).toEqual("hellothere");
+
+        const buffer2 = BufferNode.stringToBuffer(test, "base64");
+        expect(BufferNode.bufferToString(buffer2, "base64")).toEqual(test);
+        expect(BufferNode.bufferToString(buffer2, "utf-8")).toEqual("hellothere");
+    });
 });
