@@ -27,11 +27,12 @@ export function createTestQueryTree(node: EditNode): SharedTree {
 	// Traits are copied off of the Query node and applied to the root node
 	// This is simply to save space/complexity in the tree, rather than adding the query root node _under_ the `initialTree` root node
 	assert(treeNode.definition === 'Query', 'root node must be a Query node');
-	for (const [label, trait] of Object.entries(treeNode.traits))
+	for (const [label, trait] of Object.entries(treeNode.traits)) {
 		tree.editor.insert([...trait], {
 			referenceTrait: { label: label as TraitLabel, parent: initialTree.identifier },
 			side: Side.After,
 		});
+	}
 
 	return tree;
 }
@@ -47,5 +48,5 @@ export class NodeIdGenerator {
 
 /** 'Encode' a scalar type */
 export function encodeScalar(x: string | number | boolean): Payload {
-	return { base64: x.toString() };
+	return { base64: x.toString(10) };
 }

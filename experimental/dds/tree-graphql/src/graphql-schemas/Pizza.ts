@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export default /* GraphQL */ `
+export const typeDefs = /* GraphQL */ `
 	type Query {
 		pizzas: [Pizza!]
 		drinks: [Drink!]

@@ -5,24 +5,25 @@
 
 import { initialTree, SharedTree } from '@fluid-experimental/tree';
 import { graphql, GraphQLSchema } from 'graphql';
-import { makeExecutableSchema } from 'graphql-tools';
-import { Query, resolvers } from './graphql-generated/Pizza';
-import typeDefs from './graphql-schemas/Pizza';
+import { IResolvers, ITypeDefinitions, makeExecutableSchema, Maybe } from 'graphql-tools';
 
 /**
- * Wraps a `SharedTree` and allows it to be easily queried for pizza.
+ * A small helper class to allow repeat queries to a given `SharedTree`
  */
-export default class SharedTreeQuerier {
+export class SharedTreeQuerier<TQuery> {
 	public readonly tree: SharedTree;
 	private readonly schema: GraphQLSchema;
 
-	/** SharedTree must have pizza inside */
-	public constructor(tree: SharedTree) {
+	public constructor(
+		typeDefs: ITypeDefinitions,
+		resolvers: IResolvers<any, SharedTree> | IResolvers<any, SharedTree>[],
+		tree: SharedTree
+	) {
 		this.tree = tree;
 		this.schema = makeExecutableSchema({ typeDefs, resolvers });
 	}
 
-	public async query(query: string): Promise<Query | null> {
-		return (await graphql(this.schema, query, initialTree.identifier, this.tree)).data ?? null;
+	public async query(query: string): Promise<Maybe<TQuery>> {
+		return (await graphql<TQuery>(this.schema, query, initialTree.identifier, this.tree)).data ?? null;
 	}
 }

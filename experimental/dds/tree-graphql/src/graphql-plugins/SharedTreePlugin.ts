@@ -72,7 +72,8 @@ export const plugin: PluginFunction<unknown> = (
 function printImports(...functions: ((...args: never[]) => unknown)[]) {
 	return `import { ${functions
 		.map((f) => f.name)
-		.join(', ')} } from '../../graphql-plugins/SharedTreeResolverPlugin'`;
+		// TODO: This filepath assumes a folder containing generated code (e.g. graphql-generated) alongside a 'graphql-plugins/' folder
+		.join(', ')} } from '../graphql-plugins/SharedTreePlugin'`;
 }
 
 function printFieldResolver(schema: GraphQLSchema, fieldDef: FieldDefinitionNode): string {
@@ -102,11 +103,13 @@ function printFieldResolver(schema: GraphQLSchema, fieldDef: FieldDefinitionNode
 			return printResolver(fieldName, getNonNullTrait);
 		case 'ListType':
 			return printResolver(fieldName, getListTrait);
+		default:
+			throw Error(`Unrecognized or unsupported field type: ${fieldDef.type}`);
 	}
 }
 
 function printScalarResolver(fieldName: string, scalar: FieldInfo): string {
-	if (scalar.isList) {
+	if (scalar.isList === true) {
 		switch (scalar.typeName) {
 			case 'String':
 				return printResolver(fieldName, getStringList);
@@ -118,6 +121,8 @@ function printScalarResolver(fieldName: string, scalar: FieldInfo): string {
 				return printResolver(fieldName, getBooleanList);
 			case 'ID':
 				return printResolver(fieldName, getIDList);
+			default:
+				throw Error(`Unrecognized scalar type: ${scalar.typeName}`);
 		}
 	}
 
@@ -132,9 +137,11 @@ function printScalarResolver(fieldName: string, scalar: FieldInfo): string {
 			return printResolver(fieldName, getBoolean);
 		case 'ID':
 			return printResolver(fieldName, getID);
+		default:
+			break;
 	}
 
-	throw Error(`Unrecognized scalar: ${scalar.typeName}`);
+	throw Error(`Unrecognized scalar type: ${scalar.typeName}`);
 }
 
 function printResolver<TSource, TArgs>(fieldName: string, resolver: GraphQLFieldResolver<TSource, TArgs>): string {
@@ -154,6 +161,8 @@ function unwrapField(fieldType: TypeNode, isNonNull?: boolean, isList?: boolean)
 				isNonNull,
 				isList,
 			};
+		default:
+			throw Error(`Unrecognized or unsupported field type: ${fieldType}`);
 	}
 }
 
@@ -165,6 +174,9 @@ function isScalarTypeName(typeName: string): boolean {
 		case 'Boolean':
 		case 'ID':
 			return true;
+
+		default:
+			break;
 	}
 
 	return false;
@@ -306,7 +318,7 @@ function decodeFloat(s?: string): number | null {
 }
 
 function decodeInt(s?: string): number | null {
-	return s === undefined ? null : parseInt(s);
+	return s === undefined ? null : parseInt(s, 10);
 }
 
 function decodeBoolean(s?: string): boolean | null {
