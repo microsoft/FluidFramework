@@ -748,7 +748,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.pendingStateManager = new PendingStateManager(
             this,
-            async (type, content, localOpMetadata) => this.rebaseOp(type, content, localOpMetadata),
+            async (type, content) => this.rebaseOp(type, content),
             context.pendingLocalState as IPendingLocalState);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
@@ -1022,10 +1022,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
     };
 
-    private async rebaseOp(type: ContainerMessageType, op: ISequencedDocumentMessage, localOpMetadata: unknown) {
+    private async rebaseOp(type: ContainerMessageType, op: ISequencedDocumentMessage): Promise<unknown> {
         switch (type) {
             case ContainerMessageType.FluidDataStoreOp:
-                return this.dataStores.rebaseOp(op, localOpMetadata);
+                return this.dataStores.rebaseOp(op);
             case ContainerMessageType.Attach:
                 return this.dataStores.rebaseAttachOp(op as unknown as IAttachMessage);
             case ContainerMessageType.BlobAttach:

@@ -815,12 +815,12 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
     }
 
-    public async rebaseOp(content: any, localOpMetadata: unknown) {
+    public async rebaseOp(content: any): Promise<unknown> {
         const envelope = content as IEnvelope;
         const channelContext = this.contexts.get(envelope.address);
         assert(!!channelContext, "There should be a channel context for the op");
         await channelContext.getChannel();
-        channelContext.rebaseOp(envelope.contents, localOpMetadata);
+        return channelContext.rebaseOp(envelope.contents);
     }
 
     private setChannelDirty(address: string): void {

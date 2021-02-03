@@ -437,8 +437,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             reSubmit: (content: any, localOpMetadata: unknown) => {
                 this.reSubmit(content, localOpMetadata);
             },
-            rebaseOp: (content: any, localOpMetadata: unknown) => {
-                this.rebaseOp(content, localOpMetadata);
+            rebaseOp: (content: any): unknown => {
+                return this.rebaseOp(content);
             },
         });
 
@@ -497,9 +497,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         this.reSubmitCore(content, localOpMetadata);
     }
 
-    private rebaseOp(content: any, localOpMetadata: unknown) {
-        this.rebaseOpCore(content, localOpMetadata);
+    private rebaseOp(content: any): unknown {
+        return this.rebaseOpCore(content);
     }
 
-    protected abstract rebaseOpCore(content: any, localOpMetadata: unknown);
+    protected abstract rebaseOpCore(content: any): unknown;
 }

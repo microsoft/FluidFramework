@@ -110,9 +110,9 @@ export class RemoteChannelContext implements IChannelContext {
         this.services.deltaConnection.setConnectionState(connected);
     }
 
-    public rebaseOp(message: ISequencedDocumentMessage, localOpMetadata: unknown) {
+    public rebaseOp(message: ISequencedDocumentMessage): unknown {
         assert(this.isLoaded, "Remote channel must be loaded when rebasing op");
-        this.services.deltaConnection.rebaseOp(message, localOpMetadata);
+        return this.services.deltaConnection.rebaseOp(message);
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {

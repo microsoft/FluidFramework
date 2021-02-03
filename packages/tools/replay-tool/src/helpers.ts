@@ -94,7 +94,7 @@ class UnknownChannel implements IChannel {
             },
             reSubmit: (content: any, localOpMetadata: unknown) => {
             },
-            rebaseOp: (content: any, localOpMetadata: unknown) => {
+            rebaseOp: (content: any) => {
             },
         });
     }

@@ -271,11 +271,11 @@ export class DataStores implements IDisposable {
         context.reSubmit(envelope.contents, localOpMetadata);
     }
 
-    public async rebaseOp(content: any, localOpMetadata: unknown) {
+    public async rebaseOp(content: any): Promise<unknown> {
         const envelope = content as IEnvelope;
         const context = this.contexts.get(envelope.address);
         assert(!!context, "There should be a store context for the op");
-        return context.rebaseOp(envelope.contents, localOpMetadata);
+        return context.rebaseOp(envelope.contents);
     }
 
     public async rebaseAttachOp(message: IAttachMessage) {
