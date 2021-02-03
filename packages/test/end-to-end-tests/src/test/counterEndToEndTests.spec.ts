@@ -147,5 +147,5 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 };
 
 describe("SharedCounter", () => {
-    generateTest(tests, { tinylicious: true });
+    generateTest(tests);
 });

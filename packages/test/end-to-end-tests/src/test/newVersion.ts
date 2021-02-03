@@ -27,7 +27,7 @@ export { ConsensusRegisterCollection } from "@fluidframework/register-collection
 export { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 export { SharedString, SparseMatrix } from "@fluidframework/sequence";
 export { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-export { TestDriver } from "@fluidframework/test-driver-definitions";
+export { ITestDriver } from "@fluidframework/test-driver-definitions";
 export {
     createLocalLoader,
     createAndAttachContainer,
