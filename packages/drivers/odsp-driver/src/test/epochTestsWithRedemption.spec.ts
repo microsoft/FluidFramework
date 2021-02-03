@@ -4,13 +4,30 @@
  */
 
 import { strict as assert } from "assert";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { TelemetryNullLogger, Deferred } from "@fluidframework/common-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "../contracts";
 import { EpochTrackerWithRedemption } from "../epochTracker";
 import { ICacheEntry, LocalPersistentCache, LocalPersistentCacheAdapter } from "../odspCache";
 import { getHashedDocumentId } from "../odspUtils";
 import { mockFetch, notFound, okResponse } from "./mockFetch";
+
+class DeferralWithCallback extends Deferred<void> {
+    private epochCallback: () => Promise<any> = async () => {};
+
+    constructor() {
+        super();
+    }
+
+    public setCallback(epochCallback) {
+        this.epochCallback = epochCallback;
+    }
+
+    public get promise() {
+        // eslint-disable-next-line @typescript-eslint/promise-function-async
+        return this.epochCallback().then(() => super.promise);
+    }
+}
 
 describe("Tests for Epoch Tracker With Redemption", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -19,9 +36,14 @@ describe("Tests for Epoch Tracker With Redemption", () => {
     let epochTracker: EpochTrackerWithRedemption;
     let cache: LocalPersistentCacheAdapter;
     const hashedDocumentId = getHashedDocumentId(driveId, itemId);
+    let epochCallback: DeferralWithCallback;
+
     beforeEach(() => {
         cache = new LocalPersistentCacheAdapter(new LocalPersistentCache());
         epochTracker = new EpochTrackerWithRedemption(cache, new TelemetryNullLogger());
+        epochCallback = new DeferralWithCallback();
+        (epochTracker as any).treesLatestDeferral = epochCallback;
+
         const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
         epochTracker.fileEntry = {
             docId: hashedDocumentId,
@@ -40,8 +62,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 
         try {
             // We will trigger a successful call to return the value set in the cache after the failed joinSession call
-            // eslint-disable-next-line @typescript-eslint/dot-notation
-            epochTracker["treesLatestDeferral"].setCallback(async () => mockFetch({}, async () => {
+            epochCallback.setCallback(async () => mockFetch({}, async () => {
                 return epochTracker.fetchFromCache(cacheEntry1, undefined, "other");
             }, okResponse, false, false));
 
@@ -59,8 +80,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
         let success: boolean = true;
 
         try {
-            // eslint-disable-next-line @typescript-eslint/dot-notation
-            epochTracker["treesLatestDeferral"].setCallback(async () => {
+            epochCallback.setCallback(async () => {
                 try {
                     await mockFetch({}, async () => {
                         return epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "treesLatest");
