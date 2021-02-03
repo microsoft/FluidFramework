@@ -48,7 +48,7 @@ class BlobAggregator {
         this.content.push([key, content]);
     }
 
-    public getContent() {
+    public getAggregatedBlobContent() {
         if (this.content.length === 0) {
             return undefined;
         }
@@ -122,7 +122,15 @@ abstract class SnapshotExtractor {
 /*
  * Snapshot extractor class that works in place, i.e. patches snapshot that has
  * blob content in ISnapshotTree.blobs itself, not in storage.
- * AS result, it implements reading and writing of blobs to/from snapshot itself.
+ * As result, it implements reading and writing of blobs to/from snapshot itself.
+ * It follows existing pattern that mixes concerns - ISnapshotTree.blobs is used for two
+ * purposes:
+ * 1. map path name to blob ID
+ * 2. map blob ID to blob content
+ * #2 is what storage (IDocumentStorageService) is for, but in places where we do not have it
+ * (like loading serialized earlier draft content), blob content is put directly into snapshot.
+ * Ideally this should be fixed by using BlobCacheStorageService or something similar and
+ * fixing existing flows to allow switching of storage.
  */
 class SnapshotExtractorInPlace extends SnapshotExtractor {
     public async getBlob(id: string, tree: ISnapshotTree): Promise<ArrayBufferLike> {
@@ -207,17 +215,21 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
     // for big blobs (images)
     public async createBlob(file: ArrayBufferLike) { return this.storage.createBlob(file); }
 
-    public async read(id: string): Promise<string> {
-        const blob = await this.readBlob(id);
-        return bufferToString(blob, "base64");
-    }
-
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
         const tree = await this.storage.getSnapshotTree(version);
         if (tree) {
             await this.unpackSnapshot(tree);
         }
         return tree;
+    }
+
+    public async read(id: string): Promise<string> {
+        // optimize it a bit to avoid unneeded conversions while we transition to using readBlob everywhere.
+        if (this.isRealStorageId(id)) {
+            return this.storage.read(id);
+        }
+        const blob = await this.readBlob(id);
+        return bufferToString(blob, "base64");
     }
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {
@@ -294,12 +306,20 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
                         delete newSummary.tree[key];
                     }
                     break;
-                case SummaryType.Handle:
+                case SummaryType.Handle: {
                     // Would be nice to:
                     // Trees: expand the tree
                     // Blobs: parse handle and ensure it points to real blob, not virtual blob.
                     // We can avoid it for now given data store is the granularity of incremental summaries.
+                    let handlePath = obj.handle;
+                    if (handlePath.startsWith("/")) {
+                        handlePath = handlePath.substr(1);
+                    }
+                    // Ensure only whole data stores can be reused, no reusing at deeper level!
+                    assert(level === 0);
+                    assert(handlePath.indexOf("/") === -1, "data stores are writing incremental summaries!");
                     break;
+                }
                 case SummaryType.Attachment:
                     assert(this.isRealStorageId(obj.id));
                     break;
@@ -316,7 +336,7 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
             // But it's possible that in future that would be great addition!
             // Good news - it's backward compatible change.
             assert(stats !== undefined);
-            const content = stats.getContent();
+            const content = stats.getAggregatedBlobContent();
             if (content !== undefined) {
                 newSummary.tree[this.aggregatedBlobName] = {
                     type: SummaryType.Blob,
