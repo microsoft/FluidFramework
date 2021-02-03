@@ -79,6 +79,11 @@ export enum SharedTreeEvent {
 	 * Passed the EditId of the committed edit.
 	 */
 	EditCommitted = 'committedEdit',
+	/**
+	 * Upload has completed for a set of edit chunks.
+	 * This event is used exclusively for testing.
+	 */
+	ChunksUploaded = 'uploadedChunks',
 }
 
 // TODO:#48151: Support reference payloads, and use this type to identify them.
@@ -313,9 +318,8 @@ export class SharedTree extends SharedObject {
 
 	/**
 	 * Asynchronously uploads edit chunks that have reached the chunk size limit.
-	 * @internal
 	 */
-	public async initiateEditChunkUpload(): Promise<void> {
+	private async initiateEditChunkUpload(): Promise<void> {
 		// Initiate upload of any edit chunks not yet uploaded.
 		const editChunks = this.editLog.getEditLogSummary(true).editChunks;
 		await Promise.all(
@@ -325,6 +329,7 @@ export class SharedTree extends SharedObject {
 				}
 			})
 		);
+		this.emit(SharedTreeEvent.ChunksUploaded);
 	}
 
 	/**
@@ -367,6 +372,7 @@ export class SharedTree extends SharedObject {
 			this.editLog.sequenceLocalEdits();
 		}
 
+		this.initiateEditChunkUpload();
 		return this.summarizer(this.editLog, this.currentView);
 	}
 

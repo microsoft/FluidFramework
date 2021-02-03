@@ -14,7 +14,7 @@ import {
 import { editsPerChunk } from '../EditLog';
 import { newEdit, setTrait } from '../EditUtilities';
 import { Edit, EditWithoutId } from '../PersistedTypes';
-import { SharedTree } from '../SharedTree';
+import { SharedTree, SharedTreeEvent } from '../SharedTree';
 import { fullHistorySummarizer_0_1_0, SharedTreeSummary } from '../Summary';
 import { assertNotUndefined } from '../Common';
 import { makeTestNode, testTrait } from './utilities/TestUtilities';
@@ -74,8 +74,11 @@ describe('SharedTree history virtualization', () => {
 		// Wait for the ops to to be submitted and processed across the containers.
 		await localTestObjectProvider.opProcessingController.process();
 
-		// Upload the edits
-		await sharedTree.initiateEditChunkUpload();
+		// Initiate the edit upload
+		sharedTree.saveSummary();
+
+		// Wait for each chunk to be uploaded
+		await new Promise((resolve) => sharedTree.once(SharedTreeEvent.ChunksUploaded, resolve));
 
 		// Wait for the handle op to be processed.
 		await localTestObjectProvider.opProcessingController.process();
@@ -107,7 +110,10 @@ describe('SharedTree history virtualization', () => {
 		await localTestObjectProvider.opProcessingController.process();
 
 		// Initiate edit upload
-		await sharedTree.initiateEditChunkUpload();
+		sharedTree.saveSummary();
+
+		// Wait for each chunk to be uploaded
+		await new Promise((resolve) => sharedTree.once(SharedTreeEvent.ChunksUploaded, resolve));
 
 		// Wait for any handle ops to be processed.
 		await localTestObjectProvider.opProcessingController.process();
@@ -137,8 +143,11 @@ describe('SharedTree history virtualization', () => {
 		// Wait for the ops to to be submitted and processed across the containers.
 		await localTestObjectProvider.opProcessingController.process();
 
-		// Upload the edits
-		await sharedTree.initiateEditChunkUpload();
+		// Initiate edit upload
+		sharedTree.saveSummary();
+
+		// Wait for each chunk to be uploaded
+		await new Promise((resolve) => sharedTree.once(SharedTreeEvent.ChunksUploaded, resolve));
 
 		// Wait for the handle op to be processed.
 		await localTestObjectProvider.opProcessingController.process();
