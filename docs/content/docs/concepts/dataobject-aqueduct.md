@@ -25,6 +25,7 @@ and ready for you to access within your DataObject subclass.
 
 ```ts
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 class MyDataObject extends DataObject implements IFluidHTMLView { }
 ```
