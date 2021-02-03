@@ -429,7 +429,7 @@ export class EditLog implements OrderedEditSet {
 	/**
 	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.getEditLogSummary}
 	 */
-	public getEditLogSummary(useHandles?: boolean): EditLogSummary {
+	public getEditLogSummary(useHandles = false): EditLogSummary {
 		if (useHandles) {
 			return {
 				editChunks: this.editChunks.toArray().map(([key, { handle, edits }]) => {
