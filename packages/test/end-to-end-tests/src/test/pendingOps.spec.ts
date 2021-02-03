@@ -12,7 +12,7 @@ import { SharedObject } from "@fluidframework/shared-object-base";
 import { ChannelFactoryRegistry, createAndAttachContainer, ITestFluidObject } from "@fluidframework/test-utils";
 import {
     DataObjectFactoryType,
-    generateLocalNonCompatTest,
+    generateNonCompatTest,
     ITestContainerConfig,
     ITestObjectProvider,
 } from "./compatUtils";
@@ -336,5 +336,5 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 };
 
 describe("pending ops", () => {
-    generateLocalNonCompatTest(tests);
+    generateNonCompatTest(tests);
 });

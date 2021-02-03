@@ -11,18 +11,18 @@ import {
     IFluidPackage,
     isFluidPackage,
 } from "@fluidframework/core-interfaces";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createAndAttachContainer,
-    createLocalLoader,
+    createDocumentId,
+    createLoader as createLoaderUtil,
     ITestFluidObject,
     OpProcessingController,
     SupportedExportInterfaces,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 interface ICodeProposalTestPackage extends IFluidPackage{
     version: number,
@@ -37,8 +37,11 @@ function isCodeProposalTestPackage(pkg: unknown): pkg is ICodeProposalTestPackag
 }
 
 describe("CodeProposal.EndToEnd", () => {
-    const documentId = "codeProposalTest";
-    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
+    let driver: ITestDriver;
+    before(()=>{
+        driver = getFluidTestDriver();
+    });
+
     const packageV1: ICodeProposalTestPackage = {
         name: "test",
         version: 1,
@@ -56,11 +59,10 @@ describe("CodeProposal.EndToEnd", () => {
         fluid: {},
     };
 
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
     let opProcessingController: OpProcessingController;
     let hotSwapContext = false;
 
-    function createLoader(urlResolver: LocalResolver) {
+    function createLoader() {
         const codeDetailsComparer: IFluidCodeDetailsComparer = {
             get IFluidCodeDetailsComparer() {return this;},
             compare: async (a, b)=>
@@ -79,45 +81,43 @@ describe("CodeProposal.EndToEnd", () => {
             IFluidCodeDetailsComparer: codeDetailsComparer,
 
         };
-        return createLocalLoader(
+        return createLoaderUtil(
             [
                 [{ package: packageV1 }, fluidExport],
                 [{ package: packageV2 },fluidExport],
                 [{ package: packageV1dot5 }, fluidExport],
             ],
-            deltaConnectionServer, urlResolver,
+            driver.createDocumentServiceFactory(),
+            driver.createUrlResolver(),
             { hotSwapContext });
     }
 
-    async function createContainer(code: IFluidCodeDetails): Promise<IContainer> {
-        const urlResolver = new LocalResolver();
-        const loader = createLoader(urlResolver);
-        return createAndAttachContainer(code, loader, urlResolver.createCreateNewRequest(documentId));
+    async function createContainer(code: IFluidCodeDetails, documentId: string): Promise<IContainer> {
+        const loader = createLoader();
+        return createAndAttachContainer(code, loader, driver.createCreateNewRequest(documentId));
     }
 
-    async function loadContainer(): Promise<IContainer> {
-        const urlResolver = new LocalResolver();
-        const loader = createLoader(urlResolver);
-        return loader.resolve({ url: documentLoadUrl });
+    async function loadContainer(documentId: string): Promise<IContainer> {
+        const loader = createLoader();
+        return loader.resolve({ url: driver.createContainerUrl(documentId) });
     }
 
     let containers: IContainer[];
     beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
         containers = [];
-
+        const documentId = createDocumentId();
         const codeDetails: IFluidCodeDetails = { package: packageV1 };
 
         // Create a Container for the first client.
-        containers.push(await createContainer(codeDetails));
+        containers.push(await createContainer(codeDetails, documentId));
 
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController = new OpProcessingController();
         opProcessingController.addDeltaManagers(containers[0].deltaManager);
 
         await opProcessingController.process();
 
         // Load the Container that was created by the first client.
-        containers.push(await loadContainer());
+        containers.push(await loadContainer(documentId));
         opProcessingController.addDeltaManagers(containers[1].deltaManager);
 
         assert.deepStrictEqual(
@@ -156,8 +156,8 @@ describe("CodeProposal.EndToEnd", () => {
             containers[0].proposeCodeDetails(proposal),
             opProcessingController.process(),
         ]);
-
         assert.strictEqual(res[0], true, "Code proposal should be accepted");
+        await opProcessingController.process();
 
         for (let i = 0; i < containers.length; i++) {
             assert.strictEqual(containers[i].closed, true, `containers[${i}] should be closed`);
@@ -255,6 +255,7 @@ describe("CodeProposal.EndToEnd", () => {
             ]);
 
             assert.strictEqual(res[0], true, "Code proposal should be accepted");
+            await opProcessingController.process();
 
             for (let i = 0; i < containers.length; i++) {
                 assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
@@ -326,6 +327,8 @@ describe("CodeProposal.EndToEnd", () => {
 
             assert.strictEqual(res[0], true, "Code proposal should be accepted");
             assert.strictEqual(containers[0].closed, false, "containers[0] should not be closed");
+            await opProcessingController.process();
+
             assert.deepStrictEqual(
                 containers[0].codeDetails,
                 proposal,
@@ -369,7 +372,7 @@ describe("CodeProposal.EndToEnd", () => {
             if (!container.closed) {
                 const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
                 const map = await dataObject.getSharedObject<ISharedMap>("map");
-                const key = Date.now().toString();
+                const key = createDocumentId();
                 map.set(key, key);
                 keys.push(key);
                 maps.push(map);
@@ -391,6 +394,5 @@ describe("CodeProposal.EndToEnd", () => {
 
     afterEach(async () => {
         await testRoundTrip();
-        await deltaConnectionServer.webSocketServer.close();
     });
 });

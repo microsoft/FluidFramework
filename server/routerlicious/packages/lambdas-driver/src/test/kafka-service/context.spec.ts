@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IContextErrorData } from "@fluidframework/server-services-core";
 import { TestConsumer, TestKafka } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import { CheckpointManager } from "../../kafka-service/checkpointManager";
@@ -34,11 +35,11 @@ describe("kafka-service", () => {
                 const testError = null;
                 const testRestart = true;
 
-                const errorP = testContext.addListener("error", (error, restart) => {
+                const errorP = testContext.addListener("error", (error, errorData: IContextErrorData) => {
                     assert.equal(error, testError);
-                    assert.equal(restart, testRestart);
+                    assert.equal(errorData.restart, testRestart);
                 });
-                testContext.error(testError, testRestart);
+                testContext.error(testError, { restart: testRestart });
 
                 await errorP;
             });

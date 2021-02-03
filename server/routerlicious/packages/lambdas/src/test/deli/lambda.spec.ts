@@ -9,6 +9,7 @@ import {
     IPartitionLambda,
     IProducer,
     ISequencedOperationMessage,
+    LambdaCloseType,
     MongoManager,
     NackOperationType,
     SequencedOperationType,
@@ -96,7 +97,7 @@ describe("Routerlicious", () => {
             });
 
             afterEach(async () => {
-                lambda.close();
+                lambda.close(LambdaCloseType.Stop);
                 await factory.dispose();
             });
 

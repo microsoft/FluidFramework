@@ -355,7 +355,7 @@ function generate(
     };
 
     describe(name, () => {
-        generateTest(tests, { tinylicious: true });
+        generateTest(tests);
     });
 }
 

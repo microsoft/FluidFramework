@@ -25,18 +25,15 @@ import { MessageType, ISequencedDocumentMessage } from "@fluidframework/protocol
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { convertContainerToDriverSerializedFormat, requestFluidObject } from "@fluidframework/runtime-utils";
-import { createLocalResolverCreateNewRequest } from "@fluidframework/local-driver";
 import {
-    generateLocalTest,
-    generateLocalNonCompatTest,
+    generateTest,
+    generateNonCompatTest,
     ITestContainerConfig,
     DataObjectFactoryType,
     ITestObjectProvider,
 } from "./compatUtils";
 
 const detachedContainerRefSeqNumber = 0;
-
-const documentId = "detachedContainerTest";
 
 const sharedStringId = "ss1Key";
 const sharedMapId = "sm1Key";
@@ -81,7 +78,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
     beforeEach(async () => {
         args = argsFactory();
-        request = createLocalResolverCreateNewRequest(documentId);
+        request  = args.driver.createCreateNewRequest(args.documentId);
         loader = args.makeTestLoader(testContainerConfig) as Loader;
     });
 
@@ -106,7 +103,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         assert.strictEqual(container.attachState, AttachState.Attached, "Container should be attached");
         assert.strictEqual(container.closed, false, "Container should be open");
         assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
-        assert.strictEqual(container.id, documentId, "Doc id is not matching!!");
+        assert.strictEqual(container.id, args.documentId, "Doc id is not matching!!");
     });
 
     it("DataStores in detached container", async () => {
@@ -615,17 +612,17 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 };
 
 describe("Detached Container", () => {
-    generateLocalTest(tests);
+    generateTest(tests);
 
     // non compat test
-    generateLocalNonCompatTest((argsFactory: () => ITestObjectProvider) => {
+    generateNonCompatTest((argsFactory: () => ITestObjectProvider) => {
         let args: ITestObjectProvider;
         let request: IRequest;
         let loader: Loader;
 
         beforeEach(async () => {
             args = argsFactory();
-            request = createLocalResolverCreateNewRequest(documentId);
+            request = (args.driver ?? getFluidTestDriver()).createCreateNewRequest(args.documentId);
             loader = args.makeTestLoader(testContainerConfig) as Loader;
         });
 

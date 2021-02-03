@@ -17,7 +17,7 @@ import {
     DataObjectFactory,
 } from "old-aqueduct2";
 import { SharedCell } from "old-cell2";
-import { IContainer,  IRuntimeFactory } from "old-container-definitions2";
+import {  IRuntimeFactory } from "old-container-definitions2";
 import { Loader } from "old-container-loader2";
 import { IContainerRuntimeOptions } from "old-container-runtime2";
 import { IFluidCodeDetails } from "old-core-interfaces2";
@@ -34,8 +34,6 @@ import { IFluidDataStoreFactory } from "old-runtime-definitions2";
 import { SharedString, SparseMatrix } from "old-sequence2";
 import {
     ChannelFactoryRegistry,
-    createAndAttachContainer,
-    createLocalLoader,
     fluidEntryPoint,
     LocalCodeLoader,
     OpProcessingController,
@@ -43,6 +41,7 @@ import {
     TestFluidObjectFactory,
 } from "old-test-utils2";
 
+import {v4 as uuid} from "uuid";
 import {
     createRuntimeFactory,
     DataObjectFactoryType,
@@ -53,36 +52,21 @@ import {
     V2,
 } from "./compatUtils";
 import * as newVer from "./newVersion";
-/* eslint-enable import/no-extraneous-dependencies */
 
-const defaultDocumentId = "defaultDocumentId";
-const defaultDocumentLoadUrl = `fluid-test://localhost/${defaultDocumentId}`;
+/* eslint-enable import/no-extraneous-dependencies */
 const defaultCodeDetails: IFluidCodeDetails = {
     package: "defaultTestPackage",
     config: {},
 };
 
-// This is a replica of the code in localLoader.ts in test-utils, but bind to the old version.
-// TODO: once 0.27 is the back-compat version that we test, we can just use the version in the old-test-utils2
-// However, if there are any changes to these class and code, we can shim it here.
-
 /**
- * A convenience class to manage a set of local test object to create loaders/containers with configurable way
- * to create a runtime factory from channels and factories to allow different version of the runtime to be created.
- * The objects includes the LocalDeltaConnectionServer, DocumentServiceFactory, UrlResolver.
- *
- * When creating and loading containers, it uses a default document id and code detail.
- *
- * Since the channel is just a pass thru to the call back, the type is parameterized to allow use channel
- * from different version. The only types that required to compatible when using different versions are:
- *   fluidEntryPoint
- *   IClientConfiguration
- *   ILocalDeltaConnectionServer
+ * @deprecated - remove once 0.34 is released. see oldVersion for necessary changes
  */
 export class LocalTestObjectProvider<TestContainerConfigType> {
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _defaultUrlResolver: LocalResolver | undefined;
     private _opProcessingController: OpProcessingController | undefined;
+    private _documentId?: string;
 
     /**
      * Create a set of object to
@@ -98,6 +82,15 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
     ) {
 
     }
+
+    readonly driver: newVer.ITestDriver ={
+        type: "local",
+        version: "0.33.0",
+        createContainerUrl: (testId)=>`http://localhost${testId}`,
+        createCreateNewRequest: (testId)=>this.urlResolver.createCreateNewRequest(testId),
+        createDocumentServiceFactory: ()=>this.documentServiceFactory as any as newVer.IDocumentServiceFactory,
+        createUrlResolver: ()=>this.urlResolver,
+    };
 
     get defaultCodeDetails() {
         return defaultCodeDetails;
@@ -134,6 +127,13 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
         return this._opProcessingController;
     }
 
+    get documentId(): string {
+        if(this._documentId === undefined) {
+            this._documentId = uuid();
+        }
+        return this._documentId;
+    }
+
     private createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>) {
         const codeLoader = new LocalCodeLoader(packageEntries);
         return new Loader({
@@ -158,7 +158,10 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
     public async makeTestContainer(testContainerConfig?: TestContainerConfigType) {
         const loader = this.makeTestLoader(testContainerConfig);
         const container =
-            await createAndAttachContainer(defaultDocumentId, defaultCodeDetails, loader, this.urlResolver);
+            await newVer.createAndAttachContainer(
+                defaultCodeDetails,
+                loader as any,
+                this.urlResolver.createCreateNewRequest(this.documentId));
 
         // TODO: the old version delta manager on the container doesn't do pause/resume count
         // We can't use it to do pause/resume, or it will conflict with the call from the runtime's
@@ -174,7 +177,7 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
      */
     public async loadTestContainer(testContainerConfig?: TestContainerConfigType) {
         const loader = this.makeTestLoader(testContainerConfig);
-        const container = await loader.resolve({ url: defaultDocumentLoadUrl });
+        const container = await loader.resolve({ url: `http://localhost/${this.documentId}` });
 
         // TODO: the old version delta manager on the container doesn't do pause/resume count
         // We can't use it to do pause/resume, or it will conflict with the call from the runtime's
@@ -193,6 +196,7 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
         this._deltaConnectionServer = undefined;
         this._documentServiceFactory = undefined;
         this._opProcessingController = undefined;
+        this._documentId = undefined;
     }
 }
 
@@ -292,24 +296,13 @@ export function createOldRuntimeFactory(dataStore): IRuntimeFactory {
     );
 }
 
-export async function createOldContainer(
-    documentId,
-    packageEntries,
-    server,
-    urlResolver,
-    codeDetails,
-): Promise<IContainer> {
-    const loader = createLocalLoader(packageEntries, server, urlResolver, { hotSwapContext: true });
-    return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
-}
-
 export function createTestObjectProvider(
     oldLoader: boolean,
     oldContainerRuntime: boolean,
     oldDataStoreRuntime: boolean,
     type: string,
     serviceConfiguration?: Partial<newVer.IClientConfiguration>,
-    driver?: newVer.TestDriver,
+    driver?: newVer.ITestDriver,
 ): ITestObjectProvider {
     const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
         const dataStoreFactory = oldDataStoreRuntime

@@ -7,17 +7,9 @@ import { strict } from "assert";
 import child_process from "child_process";
 import fs from "fs";
 import { assert, Lazy } from "@fluidframework/common-utils";
-import * as API from "@fluid-internal/client-api";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { IRequest, IFluidHandle } from "@fluidframework/core-interfaces";
-import { Container, Loader } from "@fluidframework/container-loader";
+import { Container } from "@fluidframework/container-loader";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
-import {
-    IDocumentServiceFactory,
-    IFluidResolvedUrl,
-    IResolvedUrl,
-    IUrlResolver,
-} from "@fluidframework/driver-definitions";
 import {
     FileDeltaStorageService,
     FileDocumentServiceFactory,
@@ -33,26 +25,13 @@ import {
     ITree,
     TreeEntry,
     MessageType,
-    SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
     FileSnapshotReader,
     IFileSnapshot,
 } from "@fluidframework/replay-driver";
-import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
-import {
-    IFluidDataStoreContext,
-    IGarbageCollectionData,
-    IChannelSummarizeResult,
-} from "@fluidframework/runtime-definitions";
-import {
-    IFluidDataStoreRuntime,
-    IChannelFactory,
-    IChannelAttributes,
-    IChannelServices,
-    IChannel,
-} from "@fluidframework/datastore-definitions";
+import { compareWithReferenceSnapshot, getNormalizedFileSnapshot, loadContainer } from "./helpers";
+import { ReplayArgs } from "./replayArgs";
 
 // "worker_threads" does not resolve without --experimental-worker flag on command line
 let threads = { isMainThread: true };
@@ -60,7 +39,6 @@ try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     threads = require("worker_threads");
 } catch (error) { }
-import { ReplayArgs } from "./replayArgs";
 
 function expandTreeForReadability(tree: ITree): ITree {
     const newTree: ITree = { entries: [], id: undefined };
@@ -81,122 +59,6 @@ function expandTreeForReadability(tree: ITree): ITree {
         newTree.entries.push(newNode);
     }
     return newTree;
-}
-
-/**
- * Helper function that normalizes the snapshot trees in the given file snapshot.
- * @returns the normalized file snapshot.
- */
-function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapshot {
-    const normalizedSnapshot: IFileSnapshot = {
-        commits: {},
-        tree: getNormalizedSnapshot(snapshot.tree),
-    };
-    for (const commit of Object.keys(snapshot.commits)) {
-        normalizedSnapshot.commits[commit] = getNormalizedSnapshot(snapshot.commits[commit]);
-    }
-    return normalizedSnapshot;
-}
-
-class UnknownChannel implements IChannel {
-    constructor(
-        public readonly id: string,
-        public readonly attributes: IChannelAttributes,
-        services: IChannelServices)
-    {
-        services.deltaConnection.attach({
-            process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => {
-            },
-            setConnectionState: (connected: boolean) => {
-            },
-            reSubmit: (content: any, localOpMetadata: unknown) => {
-            },
-            rebaseOp: (content: any, localOpMetadata: unknown) => {
-            },
-        });
-    }
-
-    get IFluidLoadable() { return this; }
-    get handle(): IFluidHandle {
-        throw new Error("not implemented");
-    }
-
-    public summarize(fullTree?: boolean, trackState?: boolean): IChannelSummarizeResult {
-        return {
-            gcData: { gcNodes: {} },
-            stats: {
-                treeNodeCount: 0,
-                blobNodeCount: 0,
-                handleNodeCount: 0,
-                totalBlobSize: 0,
-            },
-            summary: {
-                type: SummaryType.Tree,
-                tree: { },
-            },
-        };
-    }
-
-    public isAttached() { return true; }
-
-    public connect(services: IChannelServices): void {}
-
-    public getGCData(): IGarbageCollectionData {
-        return { gcNodes: {} };
-    }
-}
-
-class UnknownChannelFactory implements IChannelFactory {
-    readonly type = "Unknown DDS";
-    readonly attributes: IChannelAttributes = {
-        type: "Unknown DDS",
-        snapshotFormatVersion: "1.0",
-        packageVersion: "1.0",
-    };
-
-    async load(
-        runtime: IFluidDataStoreRuntime,
-        id: string,
-        services: IChannelServices,
-        channelAttributes: Readonly<IChannelAttributes>,
-    ): Promise<IChannel> {
-        return new UnknownChannel(id, channelAttributes, services);
-    }
-
-    create(runtime: IFluidDataStoreRuntime, id: string): IChannel {
-        throw new Error("Not implemented");
-    }
-}
-
-class ObjectRegistryWithUnknownChannels implements ISharedObjectRegistry {
-    private static readonly types = new Set<string>();
-
-    constructor(private readonly base: ISharedObjectRegistry) {}
-    public get(name: string): IChannelFactory | undefined {
-        const res = this.base.get(name);
-        if (res) {
-            return res;
-        }
-        if (!ObjectRegistryWithUnknownChannels.types.has(name)) {
-            ObjectRegistryWithUnknownChannels.types.add(name);
-            console.error(`DDS of type ${name} can't be created`);
-        }
-        return new UnknownChannelFactory();
-    }
-}
-
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-function mixinDataStoreWithAnyChannel(
-    Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime)
-{
-    return class RuntimeWithRequestHandler extends Base {
-        constructor(
-            dataStoreContext: IFluidDataStoreContext,
-            sharedObjectRegistry: ISharedObjectRegistry,
-        ) {
-            super(dataStoreContext, new ObjectRegistryWithUnknownChannels(sharedObjectRegistry));
-        }
-    } as typeof FluidDataStoreRuntime;
 }
 
 /**
@@ -274,28 +136,6 @@ class Logger implements ITelemetryBaseLogger {
 }
 
 /**
- * URL Resolver object
- */
-class ContainerUrlResolver implements IUrlResolver {
-    constructor(private readonly cache?: Map<string, IResolvedUrl>) {
-    }
-
-    public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        if (!this.cache.has(request.url)) {
-            return Promise.reject(new Error(`ContainerUrlResolver can't resolve ${request}`));
-        }
-        return this.cache.get(request.url);
-    }
-
-    public async getAbsoluteUrl(
-        resolvedUrl: IResolvedUrl,
-        relativeUrl: string,
-    ): Promise<string> {
-        throw new Error("Not implemented");
-    }
-}
-
-/**
  * Helper class holding container and providing load / snapshot capabilities
  */
 class Document {
@@ -346,10 +186,11 @@ class Document {
             deltaStorageService,
             deltaConnection);
 
-        this.container = await this.loadContainer(
+        this.docLogger = ChildLogger.create(new Logger(this.containerDescription, errorHandler));
+        this.container = await loadContainer(
             documentServiceFactory,
-            this.containerDescription,
-            errorHandler);
+            FileStorageDocumentName,
+            this.docLogger);
 
         this.from = this.container.deltaManager.lastSequenceNumber;
         this.replayer = deltaConnection.getReplayer();
@@ -409,71 +250,6 @@ class Document {
     }
 
     private resolveC = () => { };
-
-    private async loadContainer(
-        documentServiceFactory: IDocumentServiceFactory,
-        containerDescription: string,
-        errorHandler: (event: ITelemetryBaseEvent) => boolean,
-    ): Promise<Container> {
-        const resolved: IFluidResolvedUrl = {
-            endpoints: {
-                deltaStorageUrl: "replay.com",
-                ordererUrl: "replay.com",
-                storageUrl: "replay.com",
-            },
-            tokens: {},
-            type: "fluid",
-            url: `fluid-file://localhost:6000/fluid/${FileStorageDocumentName}`,
-        };
-
-        const urlResolver = new ContainerUrlResolver(
-            new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
-        const chaincode = new API.Chaincode(
-            () => { throw new Error("Can't close Document"); },
-            mixinDataStoreWithAnyChannel());
-        const codeLoader = new API.CodeLoader({ generateSummaries: false },
-            [
-                ["@ms/atmentions", Promise.resolve(chaincode)],
-                ["@ms/augloop", Promise.resolve(chaincode)],
-                ["@ms/catalog", Promise.resolve(chaincode)],
-                ["@ms/scriptor", Promise.resolve(chaincode)],
-                ["@ms/discover", Promise.resolve(chaincode)],
-                ["@ms/registro", Promise.resolve(chaincode)],
-                ["@ms/formula", Promise.resolve(chaincode)],
-                ["@ms/application-services", Promise.resolve(chaincode)],
-                ["@ms/undo-stack", Promise.resolve(chaincode)],
-                ["@ms/commanding-surface", Promise.resolve(chaincode)],
-                ["@ms/dias", Promise.resolve(chaincode)],
-                ["@ms/scriptor/Titulo", Promise.resolve(chaincode)],
-                ["@fluidx/tasks", Promise.resolve(chaincode)],
-                ["@ms/tablero/TableroView", Promise.resolve(chaincode)],
-                ["@ms/tablero/TableroDocument", Promise.resolve(chaincode)],
-                ["@fluid-example/table-document/TableDocument", Promise.resolve(chaincode)],
-                ["LastEditedComponent", Promise.resolve(chaincode)],
-                ["OfficeRootComponent", Promise.resolve(chaincode)],
-            ]);
-
-        // Make sure any package (string[]) is resolved as well.
-        (chaincode as any).IFluidDataStoreRegistry = chaincode;
-        (chaincode as any).get = async () => Promise.resolve(chaincode);
-
-        const options = {};
-
-        // Load the Fluid document
-        this.docLogger = ChildLogger.create(new Logger(containerDescription, errorHandler));
-        const loader = new Loader({
-            urlResolver,
-            documentServiceFactory,
-            codeLoader,
-            options,
-            logger: this.docLogger,
-        });
-        const container: Container = await loader.resolve({ url: resolved.url });
-
-        assert(container.existing); // ReplayFileDeltaConnection.create() guarantees that
-
-        return container;
-    }
 }
 
 /**
@@ -604,7 +380,7 @@ export class ReplayTool {
                     }
                     if (this.args.fromVersion === undefined) {
                         // eslint-disable-next-line max-len
-                        console.error(`Failed to parse ${name} snapshot to fine .attributes blob and check sequence number. This may result in failure to process file. In such case, please point to any snapshot via --from argument.`);
+                        console.error(`Failed to parse ${name} snapshot to find .attributes blob and check sequence number. This may result in failure to process file. In such case, please point to any snapshot via --from argument.`);
                     }
                 }
             }
@@ -768,9 +544,10 @@ export class ReplayTool {
         this.storage.onSnapshotHandler = (snapshot: IFileSnapshot) => {
             content.snapshot = snapshot;
             if (this.args.compare) {
-                this.compareWithReferenceSnapshot(
+                compareWithReferenceSnapshot(
                     content.normalizedSnapshot,
-                    `${dir}/${this.mainDocument.getFileName()}`);
+                    `${dir}/${this.mainDocument.getFileName()}`,
+                    (description: string, error?: any) => this.reportError(description, error));
             } else if (this.args.write) {
                 fs.mkdirSync(dir, { recursive: true });
                 this.expandForReadabilityAndWriteOut(
@@ -983,35 +760,6 @@ export class ReplayTool {
                 `${filename}_expanded.json`,
                 content.snapshotExpanded,
                 { encoding: "utf-8" });
-        }
-    }
-
-    private compareWithReferenceSnapshot(snapshot: IFileSnapshot, referenceSnapshotFilename: string) {
-        // Read the reference snapshot and covert it to normalized IFileSnapshot.
-        const referenceSnapshotString = fs.readFileSync(`${referenceSnapshotFilename}.json`, "utf-8");
-        const referenceSnapshot = getNormalizedFileSnapshot(JSON.parse(referenceSnapshotString));
-
-        /**
-         * The packageVersion of the snapshot could be different from the reference snapshot. Replace all package
-         * package versions with X before we compare them. This is how it will looks like:
-         * Before replace - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
-         * After replace  - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
-         */
-        const packageVersionRegex = /\\"packageversion\\":\\".+\\"/gi;
-        const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X\\\"";
-
-        const normalizedSnapshot = JSON.parse(
-            JSON.stringify(snapshot, undefined, 2).replace(packageVersionRegex, packageVersionPlaceholder),
-        );
-        const normalizedReferenceSnapshot = JSON.parse(
-            JSON.stringify(referenceSnapshot, undefined, 2).replace(packageVersionRegex, packageVersionPlaceholder),
-        );
-
-        // Put the assert in a try catch block, so that we can report errors, if any.
-        try {
-            strict.deepStrictEqual(normalizedSnapshot, normalizedReferenceSnapshot);
-        } catch (error) {
-            this.reportError(`Mismatch in snapshot ${referenceSnapshotFilename}.json`, error);
         }
     }
 }

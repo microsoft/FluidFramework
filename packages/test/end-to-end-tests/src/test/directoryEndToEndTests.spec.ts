@@ -644,5 +644,5 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 };
 
 describe("Directory", () => {
-    generateTest(tests, { tinylicious: true });
+    generateTest(tests);
 });
