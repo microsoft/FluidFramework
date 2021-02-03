@@ -21,6 +21,7 @@ import {
     stringToBuffer,
     unreachableCase,
     fromUtf8ToBase64,
+    Uint8ArrayToString,
  } from "@fluidframework/common-utils";
 
 // Gate that when flipped, instructs to compress small blobs.
@@ -37,6 +38,17 @@ import {
 // Note that duplication of content should not have significant impact for bytes over wire as
 // compression of http payload mostly takes care of it, but it does impact storage size and in-memory sizes.
 const blobCutOffSize = 2048;
+
+/*
+ * Work around for bufferToString having a bug - it can't consume IsoBuffer!
+ * To be removed once bufferToString is fixed!
+*/
+function bufferToString2(blob: ArrayBufferLike, encoding: "utf-8" | "base64"): string {
+    if (blob instanceof Uint8Array) { // IsoBuffer does not have ctor, so it's not in proto chain :(
+        return Uint8ArrayToString(blob, encoding);
+    }
+    return bufferToString(blob, encoding);
+}
 
  /**
   * Class responsible for aggregating smaller blobs into one and unpacking it later on.
@@ -56,7 +68,7 @@ class BlobAggregator {
     }
 
     static load(input: ArrayBufferLike) {
-        const data = bufferToString(input, "utf-8");
+        const data = bufferToString2(input, "utf-8");
         return JSON.parse(data) as [string, string][];
     }
 }
@@ -229,7 +241,7 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
             return this.storage.read(id);
         }
         const blob = await this.readBlob(id);
-        return bufferToString(blob, "base64");
+        return bufferToString2(blob, "base64");
     }
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {
