@@ -657,7 +657,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 // (i.e. it has a base mapping) - then we go ahead and summarize
                 return isAttached;
             }).map(async ([contextId, context]) => {
-                const contextSummary = await context.summarize(fullTree, trackState);
+                // If BlobAggregatorStorage is engaged, we have to write full summary for data stores
+                // BlobAggregatorStorage relies on this behavior, as it aggregates blobs across DDSs.
+                // Not generating full summary will mean data loss, as we will overwrite aggregate blob in new summary,
+                // and any virtual blobs that stayed (for unchanged DDSs) will need aggregate blob in previous summary
+                // that is no longer present in this summary.
+                // This is temporal limitation that cna be lifted in future once BlobAggregatorStorage becomes smarter.
+                const contextSummary = await context.summarize(true /* fullTree */, trackState);
                 summaryBuilder.addWithStats(contextId, contextSummary);
 
                 // back-compat 0.31 - Older versions will not have GC data in summary.
