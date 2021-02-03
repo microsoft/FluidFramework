@@ -352,6 +352,7 @@ export class SharedTree extends SharedObject {
     get edits(): OrderedEditSet;
     equals(sharedTree: SharedTree): boolean;
     static getFactory(): SharedTreeFactory;
+    // @internal
     initiateEditChunkUpload(): Promise<void>;
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;

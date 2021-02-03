@@ -313,6 +313,7 @@ export class SharedTree extends SharedObject {
 
 	/**
 	 * Asynchronously uploads edit chunks that have reached the chunk size limit.
+	 * @internal
 	 */
 	public async initiateEditChunkUpload(): Promise<void> {
 		// Initiate upload of any edit chunks not yet uploaded.
