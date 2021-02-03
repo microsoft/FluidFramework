@@ -347,6 +347,8 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
     ): CreateChildSummarizerNodeFn;
 
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+
+    getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
 }
 
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {

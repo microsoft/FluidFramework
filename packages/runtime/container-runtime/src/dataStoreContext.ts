@@ -621,7 +621,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
-    protected abstract getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
+    public abstract getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
         assert(!!this.channel, "Channel must exist when resubmitting ops");
@@ -768,7 +768,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         return this.initialSnapshotDetailsP;
     }
 
-    protected async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
+    public async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
         return this.gcDetailsInInitialSummaryP;
     }
 
@@ -861,7 +861,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         };
     }
 
-    protected async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
+    public async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
         // Local data store does not have initial summary.
         return {};
     }
