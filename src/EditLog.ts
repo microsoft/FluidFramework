@@ -435,15 +435,16 @@ export class EditLog implements OrderedEditSet {
 	 */
 	public getEditLogSummary(useHandles = false): EditLogSummary {
 		if (useHandles) {
+			const serializationHelpers = assertNotUndefined(
+				this.serializationHelpers,
+				'Edit logs that store handles should include serialization helpers.'
+			);
 			return {
 				editChunks: this.editChunks.toArray().map(([key, { handle, edits }]) => {
 					if (handle !== undefined) {
 						return {
 							key,
-							chunk: assertNotUndefined(
-								this.serializationHelpers,
-								'Edit logs that store handles should include serialization helpers.'
-							).serializeHandle(handle),
+							chunk: serializationHelpers.serializeHandle(handle),
 						};
 					}
 					return { key, chunk: assertNotUndefined(edits) };
