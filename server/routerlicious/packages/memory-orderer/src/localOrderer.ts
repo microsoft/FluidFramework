@@ -329,6 +329,7 @@ export class LocalOrderer implements IOrderer {
             this.documentId,
             summaryWriter,
             summaryReader,
+            undefined,
             checkpointManager,
             scribe,
             this.serviceConfiguration,
