@@ -4,7 +4,7 @@
  */
 
 import { initialTree, SharedTree } from '@fluid-experimental/tree';
-import { graphql, GraphQLSchema } from 'graphql';
+import { ExecutionResult, graphql, GraphQLSchema } from 'graphql';
 import { IResolvers, ITypeDefinitions, makeExecutableSchema, Maybe } from 'graphql-tools';
 
 /**
@@ -24,6 +24,13 @@ export class SharedTreeQuerier<TQuery> {
 	}
 
 	public async query(query: string): Promise<Maybe<TQuery>> {
-		return (await graphql<TQuery>(this.schema, query, initialTree.identifier, this.tree)).data ?? null;
+		const result = (await graphql(
+			this.schema,
+			query,
+			initialTree.identifier,
+			this.tree
+		)) as ExecutionResult<TQuery>;
+
+		return result.data;
 	}
 }

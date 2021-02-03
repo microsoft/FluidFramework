@@ -36,7 +36,7 @@
     "@fluidframework/common-utils": "^0.27.0",
 		"@graphql-codegen/plugin-helpers": "^1.18.2",
 		"@graphql-codegen/visitor-plugin-common": "^1.18.2",
-		"graphql": "^14.1.1",
+		"graphql": "^15.4.0",
 		"graphql-tools": "^7.0.2"
 	},
 	"devDependencies": {

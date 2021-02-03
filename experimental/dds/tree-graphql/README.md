@@ -8,4 +8,4 @@ This repo includes an [example graphql schema called 'Pizza'](.\src\graphql-sche
 
 # Usage
 
-After running `npm run refresh`, run `npm run codegen` in this repo, followed by `npm run build:fast`. Then the tests in [SharedTreeQuerier.tests.ts](.\src\test\SharedTreeQuerier.tests.ts) can be run.
+After running `npm run refresh`, run `npm run codegen` in this package, followed by a build. Then the tests in [SharedTreeQuerier.tests.ts](.\src\test\SharedTreeQuerier.tests.ts) can be run.
