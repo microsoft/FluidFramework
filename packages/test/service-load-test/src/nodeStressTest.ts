@@ -87,7 +87,6 @@ async function initialize(driveId: string, loginInfo: IOdspTestLoginInfo) {
     const request = urlResolver.createCreateNewRequest(siteUrl, driveId, "/test", "test");
     await container.attach(request);
     const dataStoreUrl = await container.getAbsoluteUrl("/");
-    console.log(dataStoreUrl);
     assert(dataStoreUrl);
 
     container.close();
@@ -119,7 +118,7 @@ async function main() {
     commander
         .version("0.0.1")
         .requiredOption("-t, --tenant <tenant>", "Which test tenant info to use from testConfig.json", "fluidCI")
-        .requiredOption("-p, --profile <profile>", "Which test profile to use from testConfig.json", "full")
+        .requiredOption("-p, --profile <profile>", "Which test profile to use from testConfig.json", "ci")
         // eslint-disable-next-line max-len
         .option("-w, --password <password>", "Password for username provided in testconfig.json. Falls back to checking login__odsp__test__accounts from env")
         .option("-u, --url <url>", "Load an existing data store rather than creating new")
@@ -270,6 +269,12 @@ async function orchestratorProcess(
 
     // Create a new file if a url wasn't provided
     const url = args.url ?? await initialize(driveId, loginInfo);
+    const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
+
+    console.log(`Connecting to ${args.url ? "existing" : "new"} Container targeting dataStore with URL:\n${url}`);
+    console.log(`Authenticated as user: ${loginInfo.username}`);
+    console.log(`Selected test profile: ${profile.name}`);
+    console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
 
     const p: Promise<void>[] = [];
     for (let i = 0; i < profile.numClients; i++) {
