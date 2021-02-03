@@ -287,7 +287,7 @@ export interface OrderedEditSet {
     // (undocumented)
     getEditInSessionAtIndex(index: number): Edit;
     // @internal (undocumented)
-    getEditLogSummary(virtualized?: boolean): EditLogSummary;
+    getEditLogSummary(useHandles?: boolean): EditLogSummary;
     // (undocumented)
     getIdAtIndex(index: number): EditId;
     // (undocumented)

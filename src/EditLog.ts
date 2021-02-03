@@ -55,11 +55,12 @@ export interface OrderedEditSet {
 	tryGetEdit(editId: EditId): Promise<Edit | undefined>;
 
 	/**
-	 * @param virtualized - If true, prefers to return in the summary handles associated with virtualized edit chunks over the edits themselves.
+	 * @param useHandles - If true, returns handles instead of edit chunks where possible.
+	 * 					   TODO:#49901: This parameter is used for testing and should be removed once format version 0.1.0 is written.
 	 * @returns the summary of this `OrderedEditSet` that can be used to reconstruct the edit set.
 	 * @internal
 	 */
-	getEditLogSummary(virtualized?: boolean): EditLogSummary;
+	getEditLogSummary(useHandles?: boolean): EditLogSummary;
 }
 
 /**
@@ -428,8 +429,8 @@ export class EditLog implements OrderedEditSet {
 	/**
 	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.getEditLogSummary}
 	 */
-	public getEditLogSummary(virtualized?: boolean): EditLogSummary {
-		if (virtualized) {
+	public getEditLogSummary(useHandles?: boolean): EditLogSummary {
+		if (useHandles) {
 			return {
 				editChunks: this.editChunks.toArray().map(([key, { handle, edits }]) => {
 					if (handle !== undefined) {
