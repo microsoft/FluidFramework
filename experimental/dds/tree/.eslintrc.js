@@ -5,14 +5,10 @@
 
 module.exports = {
 	extends: ['@fluidframework/eslint-config-fluid/eslint7'],
-	// This setting is the same as in fluid. However, specifying it here causes the parser module to be evaluated relative
-	// to shared-tree, which references @typescript-eslint/parser@~4.2.0 rather than @2.17.0. The former supports more advanced array
-	// types which are used in several modules.
-	parser: '@typescript-eslint/parser',
 	root: true,
 	rules: {
-		// Recover "noUnusedLocals" behavior as part of linting.
-		'@typescript-eslint/no-unused-vars': ['error', { args: 'none', varsIgnorePattern: '^_' }],
+		// TODO: Recover "noUnusedLocals" behavior as part of linting.  (This rule seems to be broken in the Fluid repo.)
+		// '@typescript-eslint/no-unused-vars': ['error', { args: 'none', varsIgnorePattern: '^_' }],
 
 		'@typescript-eslint/quotes': [
 			'error',
