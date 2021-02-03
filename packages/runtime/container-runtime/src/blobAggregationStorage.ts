@@ -143,6 +143,18 @@ class SnapshotExtractorInPlace extends SnapshotExtractor {
  * When snapshot is read, it will unpack aggregated blobs and provide them transparently to caller.
  */
 export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumentStorageService {
+    // Tells data store if it can use incremental summary (i.e. reuse DDSs from previous summary
+    // when only one DDS changed).
+    // The answer has to be know long before we enable actual packing. The reason for the is the following:
+    // A the moment when we enable packing, we should assume that all clients out there wil already have bits
+    // that can unpack properly (i.e. enough time passed since we deployed bits that can unpack)
+    // But we can still have clients where some of them already pack, and some do not. If one summary was
+    // using packing, then it relies on non-incremental summaries going forward, even if next client who
+    // produced summary is not packing!
+    // This can have slight improvement by enabling it per file (based on "did summary we loaded from contain
+    // aggregated blobs"), but that's harder to make reliable, so going for simplicity.
+    static readonly fullDataStoreSummaries = true;
+
     protected loadedFromSummary = false;
 
     protected virtualBlobs = new Map<string, ArrayBufferLike>();

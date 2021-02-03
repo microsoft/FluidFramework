@@ -66,6 +66,7 @@ import {
     dataStoreAttributesBlobName,
     DataStoreSnapshotFormatVersion,
 } from "./snapshot";
+import { BlobAggregatorStorage } from "./blobAggregationStorage";
 
 function createAttributes(pkg: readonly string[], isRootDataStore: boolean): IFluidDataStoreAttributes {
     const stringifiedPkg = JSON.stringify(pkg);
@@ -389,7 +390,13 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * @param trackState - This tells whether we should track state from this summary.
      */
     public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IContextSummarizeResult> {
-        return this.summarizerNode.summarize(fullTree, trackState);
+        // If BlobAggregatorStorage is engaged, we have to write full summary for data stores
+        // BlobAggregatorStorage relies on this behavior, as it aggregates blobs across DDSs.
+        // Not generating full summary will mean data loss, as we will overwrite aggregate blob in new summary,
+        // and any virtual blobs that stayed (for unchanged DDSs) will need aggregate blob in previous summary that is
+        // no longer present in this summary.
+        // This is temporal limitation that cna be lifted in future once BlobAggregatorStorage becomes smarter.
+        return this.summarizerNode.summarize(fullTree || BlobAggregatorStorage.fullDataStoreSummaries, trackState);
     }
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
