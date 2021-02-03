@@ -102,8 +102,7 @@ export async function fetchTokens(
     const refreshToken = tokens.refresh_token;
 
     if (accessToken === undefined || refreshToken === undefined) {
-        // eslint-disable-next-line max-len
-        throwOdspNetworkError(`Unable to get access token.\n${JSON.stringify(tokens)}\n`, tokens.error === "invalid_grant" ? 401 : result.status, result);
+        throwOdspNetworkError("Unable to get access token.", tokens.error === "invalid_grant" ? 401 : result.status);
     }
     return { accessToken, refreshToken };
 }
