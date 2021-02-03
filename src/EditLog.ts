@@ -55,7 +55,7 @@ export interface OrderedEditSet {
 	tryGetEdit(editId: EditId): Promise<Edit | undefined>;
 
 	/**
-	 * @param useHandles - If true, returns handles instead of edit chunks where possible.
+	 * @param useHandles - By default, false. If true, returns handles instead of edit chunks where possible.
 	 * 					   TODO:#49901: This parameter is used for testing and should be removed once format version 0.1.0 is written.
 	 * @returns the summary of this `OrderedEditSet` that can be used to reconstruct the edit set.
 	 * @internal
