@@ -79,7 +79,8 @@ class TestString {
     public getSnapshot() {
         const snapshot = new SnapshotV1(this.client.mergeTree, this.client.logger);
         snapshot.extractSync();
-        return snapshot.emit(TestClient.serializer);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return snapshot.emit(TestClient.serializer, undefined!);
     }
 
     public getText() { return this.client.getText(); }

@@ -46,6 +46,12 @@ export interface IConnect {
      * An optional nonce used during connection to identify connection attempts
      */
     nonce?: string;
+
+    /**
+     * Represents the version of document at client. It should match the version on server
+     * for connection to be successful.
+     */
+    epoch?: string;
 }
 
 /**
@@ -126,4 +132,9 @@ export interface IConnected {
      * that is likely to be more up-to-date.
      */
     checkpointSequenceNumber?: number;
+
+    /**
+     * Represents the version of document at server.
+     */
+    epoch?: string;
 }

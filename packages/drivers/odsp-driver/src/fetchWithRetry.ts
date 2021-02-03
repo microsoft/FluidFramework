@@ -256,8 +256,8 @@ async function logFetchResponse(
     if (logger !== undefined) {
         const additionalProps = getAdditionalProps && (await getAdditionalProps(response, isFinalAttempt));
         logger.sendTelemetryEvent({
-            subCategory: "Request",
-            eventName: nameForLogging,
+            eventName: "odspFetchResponse",
+            requestName: nameForLogging,
             isFinalAttempt,
             status: response.status,
             durationMs: response.durationMs,

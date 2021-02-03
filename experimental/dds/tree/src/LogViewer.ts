@@ -130,8 +130,8 @@ export class CachingLogViewer implements LogViewer {
 			// This avoids having to invalidate cache entries when concurrent edits cause local revision
 			// numbers to change when acknowledged.
 			if (i < this.log.numberOfSequencedEdits) {
-				const revision = i + 1; // Revision is the result of the edit being applied.
-				this.sequencedSnapshotCache.set(revision, currentSnapshot);
+				// Revision is the result of the edit being applied.
+				this.sequencedSnapshotCache.set(/* revision: */ i + 1, currentSnapshot);
 			}
 
 			this.processEditResult(editingResult.result, edit.id);

@@ -7,17 +7,9 @@ import { strict } from "assert";
 import child_process from "child_process";
 import fs from "fs";
 import { assert, Lazy } from "@fluidframework/common-utils";
-import * as API from "@fluid-internal/client-api";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { Container, Loader } from "@fluidframework/container-loader";
+import { Container } from "@fluidframework/container-loader";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
-import {
-    IDocumentServiceFactory,
-    IFluidResolvedUrl,
-    IResolvedUrl,
-    IUrlResolver,
-} from "@fluidframework/driver-definitions";
 import {
     FileDeltaStorageService,
     FileDocumentServiceFactory,
@@ -38,7 +30,8 @@ import {
     FileSnapshotReader,
     IFileSnapshot,
 } from "@fluidframework/replay-driver";
-import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
+import { compareWithReferenceSnapshot, getNormalizedFileSnapshot, loadContainer } from "./helpers";
+import { ReplayArgs } from "./replayArgs";
 
 // "worker_threads" does not resolve without --experimental-worker flag on command line
 let threads = { isMainThread: true };
@@ -46,7 +39,6 @@ try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     threads = require("worker_threads");
 } catch (error) { }
-import { ReplayArgs } from "./replayArgs";
 
 function expandTreeForReadability(tree: ITree): ITree {
     const newTree: ITree = { entries: [], id: undefined };
@@ -67,21 +59,6 @@ function expandTreeForReadability(tree: ITree): ITree {
         newTree.entries.push(newNode);
     }
     return newTree;
-}
-
-/**
- * Helper function that normalizes the snapshot trees in the given file snapshot.
- * @returns the normalized file snapshot.
- */
-function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapshot {
-    const normalizedSnapshot: IFileSnapshot = {
-        commits: {},
-        tree: getNormalizedSnapshot(snapshot.tree),
-    };
-    for (const commit of Object.keys(snapshot.commits)) {
-        normalizedSnapshot.commits[commit] = getNormalizedSnapshot(snapshot.commits[commit]);
-    }
-    return normalizedSnapshot;
 }
 
 /**
@@ -159,28 +136,6 @@ class Logger implements ITelemetryBaseLogger {
 }
 
 /**
- * URL Resolver object
- */
-class ContainerUrlResolver implements IUrlResolver {
-    constructor(private readonly cache?: Map<string, IResolvedUrl>) {
-    }
-
-    public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        if (!this.cache.has(request.url)) {
-            return Promise.reject(new Error(`ContainerUrlResolver can't resolve ${request}`));
-        }
-        return this.cache.get(request.url);
-    }
-
-    public async getAbsoluteUrl(
-        resolvedUrl: IResolvedUrl,
-        relativeUrl: string,
-    ): Promise<string> {
-        throw new Error("Not implemented");
-    }
-}
-
-/**
  * Helper class holding container and providing load / snapshot capabilities
  */
 class Document {
@@ -231,10 +186,11 @@ class Document {
             deltaStorageService,
             deltaConnection);
 
-        this.container = await this.loadContainer(
+        this.docLogger = ChildLogger.create(new Logger(this.containerDescription, errorHandler));
+        this.container = await loadContainer(
             documentServiceFactory,
-            this.containerDescription,
-            errorHandler);
+            FileStorageDocumentName,
+            this.docLogger);
 
         this.from = this.container.deltaManager.lastSequenceNumber;
         this.replayer = deltaConnection.getReplayer();
@@ -264,7 +220,7 @@ class Document {
         const fetched = this.replayer.replay(replayTo);
 
         if (fetched > 0 && this.documentSeqNumber !== this.currentOp) {
-            await new Promise((resolve) => {
+            await new Promise<void>((resolve) => {
                 this.resolveC = resolve;
             });
             assert(this.documentSeqNumber === this.currentOp);
@@ -294,66 +250,6 @@ class Document {
     }
 
     private resolveC = () => { };
-
-    private async loadContainer(
-        documentServiceFactory: IDocumentServiceFactory,
-        containerDescription: string,
-        errorHandler: (event: ITelemetryBaseEvent) => boolean,
-    ): Promise<Container> {
-        const resolved: IFluidResolvedUrl = {
-            endpoints: {
-                deltaStorageUrl: "replay.com",
-                ordererUrl: "replay.com",
-                storageUrl: "replay.com",
-            },
-            tokens: {},
-            type: "fluid",
-            url: `fluid-file://localhost:6000/fluid/${FileStorageDocumentName}`,
-        };
-
-        const urlResolver = new ContainerUrlResolver(
-            new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
-        const chaincode = new API.Chaincode(() => {
-            throw new Error("Can't close Document");
-        });
-        const codeLoader = new API.CodeLoader({ generateSummaries: false },
-            [
-                ["@ms/atmentions", Promise.resolve(chaincode)],
-                ["@ms/augloop", Promise.resolve(chaincode)],
-                ["@ms/catalog", Promise.resolve(chaincode)],
-                ["@ms/scriptor", Promise.resolve(chaincode)],
-                ["@ms/discover", Promise.resolve(chaincode)],
-                ["@ms/registro", Promise.resolve(chaincode)],
-                ["@ms/formula", Promise.resolve(chaincode)],
-                ["@ms/application-services", Promise.resolve(chaincode)],
-                ["@ms/undo-stack", Promise.resolve(chaincode)],
-                ["@ms/commanding-surface", Promise.resolve(chaincode)],
-                ["@ms/dias", Promise.resolve(chaincode)],
-                ["@ms/scriptor/Titulo", Promise.resolve(chaincode)],
-                ["@fluidx/tasks", Promise.resolve(chaincode)],
-                ["@ms/tablero/TableroView", Promise.resolve(chaincode)],
-                ["@ms/tablero/TableroDocument", Promise.resolve(chaincode)],
-                ["@fluid-example/table-document/TableDocument", Promise.resolve(chaincode)],
-                ["LastEditedComponent", Promise.resolve(chaincode)],
-                ["OfficeRootComponent", Promise.resolve(chaincode)],
-            ]);
-        const options = {};
-
-        // Load the Fluid document
-        this.docLogger = ChildLogger.create(new Logger(containerDescription, errorHandler));
-        const loader = new Loader({
-            urlResolver,
-            documentServiceFactory,
-            codeLoader,
-            options,
-            logger: this.docLogger,
-        });
-        const container: Container = await loader.resolve({ url: resolved.url });
-
-        assert(container.existing); // ReplayFileDeltaConnection.create() guarantees that
-
-        return container;
-    }
 }
 
 /**
@@ -463,8 +359,35 @@ export class ReplayTool {
 
         this.deltaStorageService = new FileDeltaStorageService(this.args.inDirName);
 
-        this.storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
-        let description = this.args.version ? this.args.version : "main container";
+        // Can't load files from ops any more, due to detached container creation
+        // If there are snapshots present (from fetch tool), find latest snapshot and load from it.
+        if (this.args.fromVersion === undefined) {
+            for (const name of fs.readdirSync(this.args.inDirName)) {
+                if (name.indexOf("9-") === 0) {
+                    // It can be any file, even created not detached and downloaded by fetch-tool
+                    // Do quick and ugly test to see if it's for sequenceNumber <= 1.
+                    // Note we rely here on a fact that .attributes are always downloaded by fetch tool first
+                    // and places as 0-... file. That may change in the future - better test would be to read
+                    // a tree.json and find actual .attributes blob
+                    const dir = `${this.args.inDirName}/${name}/decoded`;
+                    for (const file of fs.readdirSync(dir)) {
+                        try {
+                            if (file.indexOf("0-") === 0 &&
+                                JSON.parse(fs.readFileSync(`${dir}/${file}`).toString("utf-8")).sequenceNumber <= 1) {
+                                this.args.fromVersion = name;
+                            }
+                        } catch (err) {}
+                    }
+                    if (this.args.fromVersion === undefined) {
+                        // eslint-disable-next-line max-len
+                        console.error(`Failed to parse ${name} snapshot to find .attributes blob and check sequence number. This may result in failure to process file. In such case, please point to any snapshot via --from argument.`);
+                    }
+                }
+            }
+        }
+
+        this.storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.fromVersion);
+        let description = this.args.fromVersion ? this.args.fromVersion : "main container";
         this.mainDocument = new Document(this.args, this.storage, description);
         await this.loadDoc(this.mainDocument);
         this.documents.push(this.mainDocument);
@@ -472,8 +395,8 @@ export class ReplayTool {
             this.args.from = this.mainDocument.fromOp;
         }
 
-        if (this.args.version !== undefined) {
-            console.log(`Starting from ${this.args.version}, seq# = ${this.mainDocument.currentOp}`);
+        if (this.args.fromVersion !== undefined) {
+            console.log(`Starting from ${this.args.fromVersion}, seq# = ${this.mainDocument.currentOp}`);
             if (this.mainDocument.currentOp > this.args.to) {
                 return Promise.reject(new Error("--to argument is below snapshot starting op. Nothing to do!"));
             }
@@ -484,7 +407,7 @@ export class ReplayTool {
                 let storage;
                 if (node.isDirectory()) {
                     // Did we load it already as main doc?
-                    if (node.name === this.args.version) {
+                    if (node.name === this.args.fromVersion) {
                         continue;
                     }
 
@@ -527,8 +450,8 @@ export class ReplayTool {
         // This does not seem to provide much value, we can disable it for per reasons
         // It adds about 10% to the duration of the test.
         if (this.args.snapFreq !== undefined || this.args.validateStorageSnapshots) {
-            const storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
-            description = this.args.version ? this.args.version : "secondary container";
+            const storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.fromVersion);
+            description = this.args.fromVersion ? this.args.fromVersion : "secondary container";
             this.documentNeverSnapshot = new Document(this.args, storage, description);
             await this.loadDoc(
                 this.documentNeverSnapshot);
@@ -543,7 +466,7 @@ export class ReplayTool {
                     continue;
                 }
                 // Did we load it already as main doc?
-                if (node.name === this.args.version) {
+                if (node.name === this.args.fromVersion) {
                     continue;
                 }
 
@@ -575,7 +498,7 @@ export class ReplayTool {
 
     private async mainCycle() {
         const originalSummaries =
-            this.args.snapFreq === undefined ? [...this.mainDocument.originalSummarySequenceNumbers] : [];
+            this.args.testSummaries ? [...this.mainDocument.originalSummarySequenceNumbers] : [];
         let nextSnapPoint;
         do {
             nextSnapPoint = originalSummaries.shift() ?? this.args.from;
@@ -621,9 +544,10 @@ export class ReplayTool {
         this.storage.onSnapshotHandler = (snapshot: IFileSnapshot) => {
             content.snapshot = snapshot;
             if (this.args.compare) {
-                this.compareWithReferenceSnapshot(
+                compareWithReferenceSnapshot(
                     content.normalizedSnapshot,
-                    `${dir}/${this.mainDocument.getFileName()}`);
+                    `${dir}/${this.mainDocument.getFileName()}`,
+                    (description: string, error?: any) => this.reportError(description, error));
             } else if (this.args.write) {
                 fs.mkdirSync(dir, { recursive: true });
                 this.expandForReadabilityAndWriteOut(
@@ -836,35 +760,6 @@ export class ReplayTool {
                 `${filename}_expanded.json`,
                 content.snapshotExpanded,
                 { encoding: "utf-8" });
-        }
-    }
-
-    private compareWithReferenceSnapshot(snapshot: IFileSnapshot, referenceSnapshotFilename: string) {
-        // Read the reference snapshot and covert it to normalized IFileSnapshot.
-        const referenceSnapshotString = fs.readFileSync(`${referenceSnapshotFilename}.json`, "utf-8");
-        const referenceSnapshot = getNormalizedFileSnapshot(JSON.parse(referenceSnapshotString));
-
-        /**
-         * The packageVersion of the snapshot could be different from the reference snapshot. Replace all package
-         * package versions with X before we compare them. This is how it will looks like:
-         * Before replace - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
-         * After replace  - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
-         */
-        const packageVersionRegex = /\\"packageversion\\":\\".+\\"/gi;
-        const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X\\\"";
-
-        const normalizedSnapshot = JSON.parse(
-            JSON.stringify(snapshot, undefined, 2).replace(packageVersionRegex, packageVersionPlaceholder),
-        );
-        const normalizedReferenceSnapshot = JSON.parse(
-            JSON.stringify(referenceSnapshot, undefined, 2).replace(packageVersionRegex, packageVersionPlaceholder),
-        );
-
-        // Put the assert in a try catch block, so that we can report errors, if any.
-        try {
-            strict.deepStrictEqual(normalizedSnapshot, normalizedReferenceSnapshot);
-        } catch (error) {
-            this.reportError(`Mismatch in snapshot ${referenceSnapshotFilename}.json`, error);
         }
     }
 }

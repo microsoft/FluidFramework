@@ -119,12 +119,6 @@ If you want to build API documentation locally, see [Building Documentation](htt
 
 ## Architecture
 
-Below is the original Routerlicious architecture diagram. The current system has slight changes from the diagram but
-largely remains unchanged. Detailed descriptions of the components are contained below as well as callouts
-to areas that have changed from the original picture. We will update the README with a more current diagram soon.
-
-![Routerlicious architecture diagram](../../docs/architecture/server/SystemArchitecture.jpg)
-
 ### Microservices
 
 Routerlicious as a whole is a collection of microservices. These microservices are designed to handle a single task and
@@ -179,18 +173,6 @@ More details on content-addressable file systems and Git can be found at
 * https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain
 * http://stefan.saasen.me/articles/git-clone-in-haskell-from-the-bottom-up/
 
-### Picture Errata
-
-* Deli only talks to Kafka
-* Scriptorium should have a line to MongoDB
-* Paparazzi talks to Foreman directly and no longer proxies through a queue
-* Clients can also be Paparazzi and connect directly to Foreman
-* Only a single receive line should be drawn from Redis to Aflred
-* Historian is missing - as well as the underlying storage provider it proxies to.
-  * Clients (including Paparazzi) talk directly to Historian.
-  * Historian makes REST calls to a configured storage provider
-  * Historian caches data via Redis.
-
 ## Distributed data structures
 
 The API currently exposes four distributed data structures
@@ -208,7 +190,9 @@ We make use of [Winston](https://github.com/winstonjs/winston) for logging on th
 
 It's easy to use though. Just import our configured logger via:
 
+```js
 import { logger } from "../utils";
+```
 
 And then you can do logger.info in place of console.log as well as logger.error, logger.warn, logger.verbose, logger.silly to target different levels. The default filter only displays info and above (so error, warning, and info). But you can change this within logger.ts.
 
@@ -269,10 +253,10 @@ By default, the service does not run locally. To run locally, first add the foll
         }
     }
 ```
-This will enable the metric writer to write to telegraf client. Then run `docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.metric.yml up` to bring up telegraf, influxdb, and grafana containers. Navigate "http://localhost:7000" to see grafana up and running.
+This will enable the metric writer to write to telegraf client. Then run `docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.metric.yml up` to bring up telegraf, influxdb, and grafana containers. Navigate to "http://localhost:7000" to get grafana up and running.
 
 ## Authentication model
-Routerlicious uses a token based authentication model. Tenants are registered to routerlicious first and a secret key is generated for each tenant. Apps are expected to pass <secret-key>, <tenant-id>, and <user-info> as a signed token to routerlicious. Tenants are given a symmetric-key beforehand to sign the token.
+Routerlicious uses a token based authentication model. Tenants are registered to routerlicious first and a secret key is generated for each tenant. Apps are expected to pass `<secret-key>`, `<tenant-id>`, and `<user-info>` as a signed token to routerlicious. Tenants are given a symmetric-key beforehand to sign the token.
 
 When a user from a tenant wants to create/access a document in routerlicious, it passes the signed token in api load call. Routerlicious verifies the token, matches the secret-key for the tenant and on a successful verification, grants the user access to the document. The access token is valid for the entire websocket session. User is expected to pass in another signed token for any subsequent api load call.
 

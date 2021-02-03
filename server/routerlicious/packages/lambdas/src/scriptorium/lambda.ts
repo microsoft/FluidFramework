@@ -80,7 +80,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 this.sendPending();
             },
             (error) => {
-                this.context.error(error, true);
+                this.context.error(error, { restart: true });
             });
     }
 
@@ -89,8 +89,10 @@ export class ScriptoriumLambda implements IPartitionLambda {
     }
 
     private async insertOp(messages: ISequencedOperationMessage[]) {
-        const dbOps = messages.map((message) => ({ ...message,
-            mongoTimestamp: new Date(message.operation.timestamp) }));
+        const dbOps = messages.map((message) => ({
+            ...message,
+            mongoTimestamp: new Date(message.operation.timestamp),
+        }));
         return this.opCollection
             .insertMany(dbOps, false)
             .catch(async (error) => {

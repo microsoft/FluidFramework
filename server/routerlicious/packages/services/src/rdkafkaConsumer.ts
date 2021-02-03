@@ -17,6 +17,8 @@ export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 	consumeTimeout: number;
 	consumeLoopTimeoutDelay: number;
 	optimizedRebalance: boolean;
+	commitRetryDelay: number;
+	automaticConsume: boolean;
 	additionalOptions?: kafkaTypes.ConsumerGlobalConfig;
 }
 
@@ -46,6 +48,8 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			consumeTimeout: 1000,
 			consumeLoopTimeoutDelay: 100,
 			optimizedRebalance: false,
+			commitRetryDelay: 1000,
+			automaticConsume: true,
 			...options,
 		};
 	}
@@ -82,16 +86,19 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 
 		this.consumer.on("ready", () => {
 			this.consumer.subscribe([this.topic]);
-			this.consumer.consume();
 
-			this.emit("connected");
+			if (this.consumerOptions.automaticConsume) {
+				// start the consume loop
+				this.consumer.consume();
+			}
+
+			this.emit("connected", this.consumer);
 		});
 
 		this.consumer.on("disconnected", () => {
 			this.emit("disconnected");
 		});
 
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		this.consumer.on("connection.failure", async (error) => {
 			await this.close(true);
 
@@ -106,20 +113,28 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			let shouldRetryCommit = false;
 
 			if (err) {
-				this.emit("error", err);
-
 				// a rebalance occurred while we were committing
 				// we can resubmit the commit if we still own the partition
 				shouldRetryCommit =
-					this.consumerOptions.optimizedRebalance && err.code === kafka.CODES.ERRORS.ERR_ILLEGAL_GENERATION;
+					this.consumerOptions.optimizedRebalance &&
+					(err.code === kafka.CODES.ERRORS.ERR_REBALANCE_IN_PROGRESS ||
+						err.code === kafka.CODES.ERRORS.ERR_ILLEGAL_GENERATION);
+
+				if (!shouldRetryCommit) {
+					this.emit("error", err);
+				}
 			}
 
 			for (const offset of offsets) {
 				const deferredCommit = this.pendingCommits.get(offset.partition);
 				if (deferredCommit) {
-					if (shouldRetryCommit && this.assignedPartitions.has(offset.partition)) {
-						// we still own this partition. checkpoint again
-						this.consumer.commit(offset);
+					if (shouldRetryCommit) {
+						setTimeout(() => {
+							if (this.assignedPartitions.has(offset.partition)) {
+								// we still own this partition. checkpoint again
+								this.consumer?.commit(offset);
+							}
+						}, this.consumerOptions.commitRetryDelay);
 						continue;
 					}
 
@@ -138,7 +153,6 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			}
 		});
 
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		this.consumer.on("rebalance", async (err, topicPartitions) => {
 			if (err.code === kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS ||
 				err.code === kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {

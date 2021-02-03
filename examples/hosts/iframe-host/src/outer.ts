@@ -106,7 +106,7 @@ async function loadOuterLogDiv(
     const quorum = container.getQuorum();
     if (!quorum.has("code")) {
         // we'll never propose the code, so wait for them to do it
-        await new Promise((resolve) => container.once("contextChanged", () => resolve()));
+        await new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
     }
 
     const log =

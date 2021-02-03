@@ -84,6 +84,8 @@ import {
     PerformanceEvent,
     raiseConnectedEvent,
     TelemetryLogger,
+    connectedEventName,
+    disconnectedEventName,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
@@ -95,6 +97,8 @@ import { pkgVersion } from "./packageVersion";
 import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 
 const detachedContainerRefSeqNumber = 0;
+
+const connectEventName = "connect";
 
 interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
@@ -169,10 +173,10 @@ export async function waitContainerToCatchUp(container: Container) {
         }
 
         const callback = () => {
-            deltaManager.off("connect", callback);
+            deltaManager.off(connectEventName, callback);
             waitForOps();
         };
-        deltaManager.on("connect", callback);
+        deltaManager.on(connectEventName, callback);
 
         container.resume();
     });
@@ -482,6 +486,25 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 }
             });
         }
+
+        // We observed that most users of platform do not check Container.connected event on load, causing bugs.
+        // As such, we are raising events when new listener pops up.
+        // Note that we can raise both "disconnected" & "connect" events at the same time,
+        // if we are in connecting stage.
+        this.on("newListener", (event: string, listener: (...args: any[]) => void) => {
+            // Fire events on the end of JS turn, giving a chance for caller to be in consistent state.
+            Promise.resolve().then(() => {
+                if (event === connectedEventName && this.connected) {
+                    listener(event, this.clientId);
+                } else if (event === disconnectedEventName && !this.connected) {
+                    listener(event);
+                } else if (event === connectEventName && this._connectionState !== ConnectionState.Disconnected) {
+                    listener(event);
+                }
+            }).catch((error) =>  {
+                this.logger.sendErrorEvent({ eventName: "RaiseConnectedEventError" }, error);
+            });
+        });
     }
 
     /**
@@ -633,7 +656,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             // Propagate current connection state through the system.
             this.propagateConnectionState();
-            this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
+            if (!this.closed) {
+                this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
+            }
         } finally {
             this.attachInProgress = false;
         }
@@ -697,13 +722,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public resume() {
-        this.resumeInternal();
+        if (!this.closed) {
+            this.resumeInternal();
+        }
     }
 
     protected resumeInternal(args: IConnectionArgs = {}) {
-        if (this.closed) {
-            throw new Error("Attempting to setAutoReconnect() a closed DeltaManager");
-        }
+        assert(!this.closed, "Attempting to setAutoReconnect() a closed DeltaManager");
 
         // Resume processing ops
         if (!this.resumedOpProcessingAfterLoad) {
@@ -1358,7 +1383,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._canReconnect,
         );
 
-        deltaManager.on("connect", (details: IConnectionDetails, opsBehind?: number) => {
+        deltaManager.on(connectEventName, (details: IConnectionDetails, opsBehind?: number) => {
             const oldState = this._connectionState;
             this._connectionState = ConnectionState.Connecting;
 
@@ -1370,7 +1395,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // we know there can no longer be outstanding ops that we sent with the previous client id.
             this.pendingClientId = details.clientId;
 
-            this.emit("connect", opsBehind);
+            this.emit(connectEventName, opsBehind);
 
             // Report telemetry after we set client id!
             this.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);

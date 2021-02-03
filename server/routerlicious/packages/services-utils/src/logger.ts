@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as debug from "debug";
+import { debug } from "debug";
 import * as winston from "winston";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import Transport = require("winston-transport");
@@ -55,8 +55,7 @@ export function configureLogging(config: IWinstonConfig) {
     // Forward all debug library logs through winston
     (debug as any).log = (msg, ...args) => winston.info(msg, ...args);
     // Override the default log format to not include the timestamp since winston will do this for us
-    // eslint-disable-next-line space-before-function-paren
-    (debug as any).formatArgs = function (args) {
+    (debug as any).formatArgs = function(args) {
         const name = this.namespace;
         args[0] = `${name} ${args[0]}`;
     };
