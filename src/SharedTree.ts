@@ -372,7 +372,7 @@ export class SharedTree extends SharedObject {
 			this.editLog.sequenceLocalEdits();
 		}
 
-		this.initiateEditChunkUpload();
+		void this.initiateEditChunkUpload();
 		return this.summarizer(this.editLog, this.currentView);
 	}
 
