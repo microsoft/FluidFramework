@@ -38,6 +38,7 @@ packages/drivers/**:
 - vladsud
 - jatgarg
 - tanviraumi
+- znewton
 
 packages/drivers/odsp-driver/**:
 - GaryWilber
@@ -85,6 +86,13 @@ server/**:
 examples/**:
 - skylerjokiel
 - ChumpChief
+
+# experimental
+experimental/dds/tree/**:
+- DLehenbauer
+- taylorsw04
+- CraigMacomber
+- Abe27342
 
 # docs
 docs/**:

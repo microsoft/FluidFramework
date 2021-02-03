@@ -80,16 +80,68 @@ describe("Directory", () => {
             });
 
             it("should fire correct directory events", async () => {
-                let called1: boolean = false;
-                let called2: boolean = false;
-                let called3: boolean = false;
-                directory.on("op", (arg1, arg2, arg3) => called1 = true);
-                directory.on("valueChanged", (arg1, arg2, arg3, arg4) => called2 = true);
-                directory.on("containedValueChanged", (arg1, arg2, arg3) => called3 = true);
-                directory.set("dwyane", "johnson");
-                assert.equal(called1, false, "did not receive op event");
-                assert.equal(called2, true, "did not receive valueChanged event");
-                assert.equal(called3, true, "did not receive containedValueChanged event");
+                let valueChangedExpected: boolean = true;
+                let containedValueChangedExpected: boolean = true;
+                let clearExpected: boolean = false;
+                let previousValue: any;
+
+                directory.on("op", (arg1, arg2, arg3) => {
+                    assert.fail("shouldn't receive an op event");
+                });
+                directory.on("valueChanged", (changed, local, op, target) => {
+                    assert.equal(valueChangedExpected, true, "valueChange event not expected");
+                    valueChangedExpected = false;
+
+                    assert.equal(changed.key, "dwayne");
+                    assert.equal(changed.previousValue, previousValue);
+                    assert.equal(changed.path, directory.absolutePath);
+
+                    assert.equal(local, true, "local should be true for local action for valueChanged event");
+                    assert.equal(op, null, "op should be null for local actions for valueChanged event");
+                    assert.equal(target, directory, "target should be the directory for valueChanged event");
+                });
+                directory.on("containedValueChanged", (changed, local, target) => {
+                    assert.equal(containedValueChangedExpected, true,
+                        "containedValueChanged event not expected for containedValueChanged event");
+                    containedValueChangedExpected = false;
+
+                    assert.equal(changed.key, "dwayne");
+                    assert.equal(changed.previousValue, previousValue);
+
+                    assert.equal(local, true, "local should be true for local action for containedValueChanged event");
+                    assert.equal(target, directory, "target should be the directory for containedValueChanged event");
+                });
+                directory.on("clear", (local, op, target) => {
+                    assert.equal(clearExpected, true, "clear event not expected");
+                    clearExpected = false;
+
+                    assert.equal(local, true, "local should be true for local action for clear event");
+                    assert.equal(op, null, "op should be null for local actions for clear event");
+                    assert.equal(target, directory, "target should be the directory for clear event");
+                });
+                directory.on("error", (error) => {
+                    // propagate error in the event handlers
+                    throw error;
+                });
+
+                // Test set
+                previousValue = undefined;
+                directory.set("dwayne", "johnson");
+                assert.equal(valueChangedExpected, false, "missing valueChangedExpected event");
+                assert.equal(containedValueChangedExpected, false, "missing containedValueChanged event");
+
+                // Test delete
+                previousValue = "johnson";
+                valueChangedExpected = true;
+                containedValueChangedExpected = true;
+                directory.delete("dwayne");
+                assert.equal(valueChangedExpected, false, "missing valueChangedExpected event");
+                assert.equal(containedValueChangedExpected, false, "missing containedValueChanged event");
+
+                // Test clear
+                clearExpected = true;
+                directory.clear();
+                assert.equal(clearExpected, false, "missing clearExpected event");
             });
 
             it("Rejects a undefined and null key set", () => {
@@ -181,11 +233,9 @@ describe("Directory", () => {
                 directory.set("testKey", "testValue");
                 assert.equal(directory.get("testKey"), "testValue", "Failed to set testKey");
                 directory.createSubDirectory("testSubDir").set("testSubKey", "testSubValue");
-                assert.equal(
-                    directory.getWorkingDirectory("testSubDir").get("testSubKey"),
-                    "testSubValue",
-                    "Failed to set testSubKey",
-                );
+                const subdir = directory.getWorkingDirectory("testSubDir");
+                assert(subdir);
+                assert.equal(subdir.get("testSubKey"), "testSubValue", "Failed to set testSubKey");
             });
 
             it("Should populate the directory from a basic JSON object (old format)", async () => {
@@ -224,16 +274,16 @@ describe("Directory", () => {
                     },
                 });
                 assert.equal(directory.size, 2, "Failed to initialize directory storage correctly");
-                assert.equal(directory.getWorkingDirectory("/foo").get("testKey"), "testValue");
-                assert.equal(directory.getWorkingDirectory("foo").get("testKey2"), "testValue2");
-                assert.equal(directory.getWorkingDirectory("/bar").get("testKey3"), "testValue3");
-                assert.equal(directory.getWorkingDirectory("").get("testKey"), "testValue4");
-                assert.equal(directory.getWorkingDirectory("/").get("testKey2"), "testValue5");
+                assert.equal(directory.getWorkingDirectory("/foo")?.get("testKey"), "testValue");
+                assert.equal(directory.getWorkingDirectory("foo")?.get("testKey2"), "testValue2");
+                assert.equal(directory.getWorkingDirectory("/bar")?.get("testKey3"), "testValue3");
+                assert.equal(directory.getWorkingDirectory("")?.get("testKey"), "testValue4");
+                assert.equal(directory.getWorkingDirectory("/")?.get("testKey2"), "testValue5");
                 directory.set("testKey", "newValue");
                 assert.equal(directory.get("testKey"), "newValue", "Failed to set testKey");
                 directory.createSubDirectory("testSubDir").set("testSubKey", "newSubValue");
                 assert.equal(
-                    directory.getWorkingDirectory("testSubDir").get("testSubKey"),
+                    directory.getWorkingDirectory("testSubDir")?.get("testSubKey"),
                     "newSubValue",
                     "Failed to set testSubKey",
                 );
@@ -273,18 +323,18 @@ describe("Directory", () => {
                     },
                 });
                 assert.equal(directory.size, 2, "Failed to initialize directory storage correctly");
-                assert.equal(directory.getWorkingDirectory("/foo").get("testKey"), "testValue");
-                assert.equal(directory.getWorkingDirectory("foo").get("testKey2"), undefined);
-                assert.equal(directory.getWorkingDirectory("/bar").get("testKey3"), "testValue3");
-                assert.equal(directory.getWorkingDirectory("").get("testKey"), "testValue4");
-                assert.equal(directory.getWorkingDirectory("/").get("testKey2"), undefined);
+                assert.equal(directory.getWorkingDirectory("/foo")?.get("testKey"), "testValue");
+                assert.equal(directory.getWorkingDirectory("foo")?.get("testKey2"), undefined);
+                assert.equal(directory.getWorkingDirectory("/bar")?.get("testKey3"), "testValue3");
+                assert.equal(directory.getWorkingDirectory("")?.get("testKey"), "testValue4");
+                assert.equal(directory.getWorkingDirectory("/")?.get("testKey2"), undefined);
                 assert.ok(directory.has("testKey2"));
-                assert.ok(directory.getWorkingDirectory("/foo").has("testKey2"));
+                assert.ok(directory.getWorkingDirectory("/foo")?.has("testKey2"));
                 directory.set("testKey", "newValue");
                 assert.equal(directory.get("testKey"), "newValue", "Failed to set testKey");
                 directory.createSubDirectory("testSubDir").set("testSubKey", "newSubValue");
                 assert.equal(
-                    directory.getWorkingDirectory("testSubDir").get("testSubKey"),
+                    directory.getWorkingDirectory("testSubDir")?.get("testSubKey"),
                     "newSubValue",
                     "Failed to set testSubKey",
                 );
@@ -331,8 +381,10 @@ describe("Directory", () => {
 
                 assert.equal(directory2.get("first"), "second");
                 assert.equal(directory2.get("long1"), longWord);
-                assert.equal(directory2.getWorkingDirectory("/nested").get("deepKey1"), "deepValue1");
-                assert.equal(directory2.getWorkingDirectory("/nested").get("long2"), logWord2);
+                const nestedSubDir = directory2.getWorkingDirectory("/nested");
+                assert(nestedSubDir);
+                assert.equal(nestedSubDir.get("deepKey1"), "deepValue1");
+                assert.equal(nestedSubDir.get("long2"), logWord2);
             });
         });
 
@@ -472,14 +524,14 @@ describe("Directory", () => {
                 containerRuntimeFactory.processAllMessages();
 
                 // Verify the local SharedDirectory
-                assert.equal(directory1.getWorkingDirectory("foo").get("testKey"), "testValue");
-                assert.equal(directory1.getWorkingDirectory("foo/").get("testKey2"), "testValue2");
-                assert.equal(directory1.getWorkingDirectory("bar").get("testKey3"), "testValue3");
+                assert.equal(directory1.getWorkingDirectory("foo")?.get("testKey"), "testValue");
+                assert.equal(directory1.getWorkingDirectory("foo/")?.get("testKey2"), "testValue2");
+                assert.equal(directory1.getWorkingDirectory("bar")?.get("testKey3"), "testValue3");
 
                 // Verify the remote SharedDirectory
-                assert.equal(directory2.getWorkingDirectory("foo").get("testKey"), "testValue");
-                assert.equal(directory2.getWorkingDirectory("foo/").get("testKey2"), "testValue2");
-                assert.equal(directory2.getWorkingDirectory("bar").get("testKey3"), "testValue3");
+                assert.equal(directory2.getWorkingDirectory("foo")?.get("testKey"), "testValue");
+                assert.equal(directory2.getWorkingDirectory("foo/")?.get("testKey2"), "testValue2");
+                assert.equal(directory2.getWorkingDirectory("bar")?.get("testKey3"), "testValue3");
             });
 
             it("Can clear keys stored directly under the root", () => {
@@ -495,16 +547,16 @@ describe("Directory", () => {
                 containerRuntimeFactory.processAllMessages();
 
                 // Verify the local SharedDirectory
-                assert.equal(directory1.getWorkingDirectory("/foo/").get("testKey"), "testValue");
-                assert.equal(directory1.getWorkingDirectory("./foo").get("testKey2"), "testValue2");
-                assert.equal(directory1.getWorkingDirectory("bar").get("testKey3"), "testValue3");
+                assert.equal(directory1.getWorkingDirectory("/foo/")?.get("testKey"), "testValue");
+                assert.equal(directory1.getWorkingDirectory("./foo")?.get("testKey2"), "testValue2");
+                assert.equal(directory1.getWorkingDirectory("bar")?.get("testKey3"), "testValue3");
                 assert.equal(directory1.get("testKey"), undefined);
                 assert.equal(directory1.get("testKey2"), undefined);
 
                 // Verify the remote SharedDirectory
-                assert.equal(directory2.getWorkingDirectory("/foo/").get("testKey"), "testValue");
-                assert.equal(directory2.getWorkingDirectory("./foo").get("testKey2"), "testValue2");
-                assert.equal(directory2.getWorkingDirectory("bar").get("testKey3"), "testValue3");
+                assert.equal(directory2.getWorkingDirectory("/foo/")?.get("testKey"), "testValue");
+                assert.equal(directory2.getWorkingDirectory("./foo")?.get("testKey2"), "testValue2");
+                assert.equal(directory2.getWorkingDirectory("bar")?.get("testKey3"), "testValue3");
                 assert.equal(directory2.get("testKey"), undefined);
                 assert.equal(directory2.get("testKey2"), undefined);
             });
@@ -522,16 +574,16 @@ describe("Directory", () => {
                 containerRuntimeFactory.processAllMessages();
 
                 // Verify the local SharedDirectory
-                assert.equal(directory1.getWorkingDirectory("foo").get("testKey"), "testValue");
-                assert.equal(directory1.getWorkingDirectory("foo").get("testKey2"), "testValue2");
-                assert.equal(directory1.getWorkingDirectory("bar").get("testKey3"), "testValue3");
+                assert.equal(directory1.getWorkingDirectory("foo")?.get("testKey"), "testValue");
+                assert.equal(directory1.getWorkingDirectory("foo")?.get("testKey2"), "testValue2");
+                assert.equal(directory1.getWorkingDirectory("bar")?.get("testKey3"), "testValue3");
                 assert.equal(directory1.get("testKey"), "testValue4");
                 assert.equal(directory1.get("testKey2"), undefined);
 
                 // Verify the remote SharedDirectory
-                assert.equal(directory2.getWorkingDirectory("foo").get("testKey"), "testValue");
-                assert.equal(directory2.getWorkingDirectory("foo").get("testKey2"), "testValue2");
-                assert.equal(directory2.getWorkingDirectory("bar").get("testKey3"), "testValue3");
+                assert.equal(directory2.getWorkingDirectory("foo")?.get("testKey"), "testValue");
+                assert.equal(directory2.getWorkingDirectory("foo")?.get("testKey2"), "testValue2");
+                assert.equal(directory2.getWorkingDirectory("bar")?.get("testKey3"), "testValue3");
                 assert.equal(directory2.get("testKey"), "testValue4");
                 assert.equal(directory2.get("testKey2"), undefined);
             });
@@ -620,7 +672,9 @@ describe("Directory", () => {
 
                 // Verify the remote SharedDirectory
                 const fooDirectory2 = directory2.getSubDirectory("foo");
+                assert(fooDirectory2);
                 const barDirectory2 = fooDirectory2.getSubDirectory("bar");
+                assert(barDirectory2);
                 assert.equal(fooDirectory2.absolutePath, "/foo");
                 assert.equal(barDirectory2.absolutePath, "/foo/bar");
             });
@@ -636,6 +690,7 @@ describe("Directory", () => {
 
                 // Verify the local SharedDirectory
                 const testSubdir = directory1.getWorkingDirectory("/foo");
+                assert(testSubdir);
                 assert.equal(testSubdir.has("testKey"), true);
                 assert.equal(testSubdir.has("garbage"), false);
                 assert.equal(testSubdir.get("testKey"), "testValue");
@@ -644,6 +699,7 @@ describe("Directory", () => {
 
                 // Verify the remote SharedDirectory
                 const barSubDir = directory2.getWorkingDirectory("/foo");
+                assert(barSubDir);
                 assert.equal(barSubDir.has("testKey"), true);
                 assert.equal(barSubDir.has("garbage"), false);
                 assert.equal(barSubDir.get("testKey"), "testValue");
@@ -656,10 +712,10 @@ describe("Directory", () => {
                 containerRuntimeFactory.processAllMessages();
 
                 // Verify the local sub directory1
-                assert.equal(directory1.getWorkingDirectory("foo").get("fromSubdir"), "testValue4");
+                assert.equal(directory1.getWorkingDirectory("foo")?.get("fromSubdir"), "testValue4");
 
                 // Verify the remote sub directory1
-                assert.equal(directory1.getWorkingDirectory("foo").get("fromSubdir"), "testValue4");
+                assert.equal(directory2.getWorkingDirectory("foo")?.get("fromSubdir"), "testValue4");
             });
 
             it("raises the containedValueChanged event when keys are set and deleted from a subdirectory", () => {
@@ -668,9 +724,13 @@ describe("Directory", () => {
                 containerRuntimeFactory.processAllMessages();
 
                 const foo1 = directory1.getWorkingDirectory("/foo");
+                assert(foo1);
                 const foo2 = directory2.getWorkingDirectory("/foo");
+                assert(foo2);
                 const bar1 = directory1.getWorkingDirectory("/bar");
+                assert(bar1);
                 const bar2 = directory2.getWorkingDirectory("/bar");
+                assert(bar2);
 
                 let called1 = 0;
                 let called2 = 0;
@@ -707,23 +767,28 @@ describe("Directory", () => {
                 directory1.set("testKey", "testValue4");
                 directory1.set("testKey2", "testValue5");
                 const testSubdir = directory1.getWorkingDirectory("/foo");
+                assert(testSubdir);
                 testSubdir.clear();
 
                 containerRuntimeFactory.processAllMessages();
 
                 // Verify the local SharedDirectory
-                assert.equal(directory1.getWorkingDirectory("foo").get("testKey"), undefined);
-                assert.equal(directory1.getWorkingDirectory("foo").get("testKey2"), undefined);
-                assert.equal(directory1.getWorkingDirectory("bar").get("testKey3"), "testValue3");
-                assert.equal(directory1.getWorkingDirectory("..").get("testKey"), "testValue4");
-                assert.equal(directory1.getWorkingDirectory(".").get("testKey2"), "testValue5");
+                const fooSubDirectory1 = directory1.getWorkingDirectory("foo");
+                assert(fooSubDirectory1);
+                assert.equal(fooSubDirectory1.get("testKey"), undefined);
+                assert.equal(fooSubDirectory1.get("testKey2"), undefined);
+                assert.equal(directory1.getWorkingDirectory("bar")?.get("testKey3"), "testValue3");
+                assert.equal(directory1.getWorkingDirectory("..")?.get("testKey"), "testValue4");
+                assert.equal(directory1.getWorkingDirectory(".")?.get("testKey2"), "testValue5");
 
                 // Verify the remote SharedDirectory
-                assert.equal(directory2.getWorkingDirectory("foo").get("testKey"), undefined);
-                assert.equal(directory2.getWorkingDirectory("foo").get("testKey2"), undefined);
-                assert.equal(directory2.getWorkingDirectory("bar").get("testKey3"), "testValue3");
-                assert.equal(directory2.getWorkingDirectory("..").get("testKey"), "testValue4");
-                assert.equal(directory2.getWorkingDirectory(".").get("testKey2"), "testValue5");
+                const fooSubDirectory2 = directory2.getWorkingDirectory("foo");
+                assert(fooSubDirectory2);
+                assert.equal(fooSubDirectory2.get("testKey"), undefined);
+                assert.equal(fooSubDirectory2.get("testKey2"), undefined);
+                assert.equal(directory2.getWorkingDirectory("bar")?.get("testKey3"), "testValue3");
+                assert.equal(directory2.getWorkingDirectory("..")?.get("testKey"), "testValue4");
+                assert.equal(directory2.getWorkingDirectory(".")?.get("testKey2"), "testValue5");
             });
 
             it("Can delete keys from the subdirectory", () => {
@@ -735,23 +800,33 @@ describe("Directory", () => {
                 directory1.set("testKey", "testValue4");
                 directory1.set("testKey2", "testValue5");
                 const testSubdirFoo = directory1.getWorkingDirectory("/foo");
+                assert(testSubdirFoo);
                 testSubdirFoo.delete("testKey2");
                 const testSubdirBar = directory1.getWorkingDirectory("/bar");
+                assert(testSubdirBar);
                 testSubdirBar.delete("testKey3");
 
                 containerRuntimeFactory.processAllMessages();
 
                 // Verify the local SharedDirectory
-                assert.equal(directory1.getWorkingDirectory("foo").get("testKey"), "testValue");
-                assert.equal(directory1.getWorkingDirectory("foo").get("testKey2"), undefined);
-                assert.equal(directory1.getWorkingDirectory("bar").get("testKey3"), undefined);
+                const fooSubDirectory1 = directory1.getWorkingDirectory("foo");
+                assert(fooSubDirectory1);
+                const barSubDirectory1 = directory1.getWorkingDirectory("bar");
+                assert(barSubDirectory1);
+                assert.equal(fooSubDirectory1.get("testKey"), "testValue");
+                assert.equal(fooSubDirectory1.get("testKey2"), undefined);
+                assert.equal(barSubDirectory1.get("testKey3"), undefined);
                 assert.equal(directory1.get("testKey"), "testValue4");
                 assert.equal(directory1.get("testKey2"), "testValue5");
 
                 // Verify the remote SharedDirectory
-                assert.equal(directory2.getWorkingDirectory("foo").get("testKey"), "testValue");
-                assert.equal(directory2.getWorkingDirectory("foo").get("testKey2"), undefined);
-                assert.equal(directory2.getWorkingDirectory("bar").get("testKey3"), undefined);
+                const fooSubDirectory2 = directory2.getWorkingDirectory("foo");
+                assert(fooSubDirectory2);
+                const barSubDirectory2 = directory2.getWorkingDirectory("bar");
+                assert(barSubDirectory2);
+                assert.equal(fooSubDirectory2.get("testKey"), "testValue");
+                assert.equal(fooSubDirectory2.get("testKey2"), undefined);
+                assert.equal(barSubDirectory2.get("testKey3"), undefined);
                 assert.equal(directory2.get("testKey"), "testValue4");
                 assert.equal(directory2.get("testKey2"), "testValue5");
             });
@@ -769,9 +844,11 @@ describe("Directory", () => {
 
                 // Verify the local SharedDirectory
                 const testSubdirFoo = directory1.getWorkingDirectory("/foo");
+                assert(testSubdirFoo);
                 assert.equal(testSubdirFoo.size, 2);
                 // Verify the remote SharedDirectory
                 const testSubdirFoo2 = directory2.getWorkingDirectory("/foo");
+                assert(testSubdirFoo2);
                 assert.equal(testSubdirFoo2.size, 2);
 
                 testSubdirFoo.delete("testKey2");
@@ -793,6 +870,7 @@ describe("Directory", () => {
                 assert.equal(testSubdirFoo2.size, 1);
 
                 const testSubdirBar = directory1.getWorkingDirectory("/bar");
+                assert(testSubdirBar);
                 testSubdirBar.delete("testKey3");
 
                 // Verify the local SharedDirectory
@@ -862,6 +940,7 @@ describe("Directory", () => {
 
                 // Verify the remote SharedDirectory
                 const barDirectory2 = directory2.getSubDirectory("bar");
+                assert(barDirectory2);
                 assert.equal(barDirectory2.getWorkingDirectory("baz"), undefined);
             });
 
@@ -897,6 +976,7 @@ describe("Directory", () => {
 
                 // Verify the local SharedDirectory
                 const fooSubDir = directory1.getWorkingDirectory("/foo");
+                assert(fooSubDir);
                 const fooSubDirIterator = fooSubDir.keys();
                 const fooSubDirResult1 = fooSubDirIterator.next();
                 assert.equal(fooSubDirResult1.value, "testKey");
@@ -909,6 +989,7 @@ describe("Directory", () => {
                 assert.equal(fooSubDirResult3.done, true);
 
                 const barSubDir = directory1.getWorkingDirectory("/bar");
+                assert(barSubDir);
                 const barSubDirIterator = barSubDir.keys();
                 const barSubDirResult1 = barSubDirIterator.next();
                 assert.equal(barSubDirResult1.value, "testKey3");
@@ -919,6 +1000,7 @@ describe("Directory", () => {
 
                 // Verify the remote SharedDirectory
                 const fooSubDir2 = directory2.getWorkingDirectory("/foo");
+                assert(fooSubDir2);
                 const fooSubDir2Iterator = fooSubDir2.keys();
                 const fooSubDir2Result1 = fooSubDir2Iterator.next();
                 assert.equal(fooSubDir2Result1.value, "testKey");
@@ -931,6 +1013,7 @@ describe("Directory", () => {
                 assert.equal(fooSubDir2Result3.done, true);
 
                 const barSubDir2 = directory2.getWorkingDirectory("/bar");
+                assert(barSubDir2);
                 const barSubDir2Iterator = barSubDir2.keys();
                 const barSubDir2Result1 = barSubDir2Iterator.next();
                 assert.equal(barSubDir2Result1.value, "testKey3");
@@ -953,6 +1036,7 @@ describe("Directory", () => {
 
                 // Verify the local SharedDirectory
                 const fooSubDir = directory1.getWorkingDirectory("/foo");
+                assert(fooSubDir);
                 const fooSubDirIterator = fooSubDir.values();
                 const fooSubDirResult1 = fooSubDirIterator.next();
                 assert.equal(fooSubDirResult1.value, "testValue");
@@ -965,6 +1049,7 @@ describe("Directory", () => {
                 assert.equal(fooSubDirResult3.done, true);
 
                 const barSubDir = directory1.getWorkingDirectory("/bar");
+                assert(barSubDir);
                 const barSubDirIterator = barSubDir.values();
                 const barSubDirResult1 = barSubDirIterator.next();
                 assert.equal(barSubDirResult1.value, "testValue3");
@@ -975,6 +1060,7 @@ describe("Directory", () => {
 
                 // Verify the remote SharedDirectory
                 const fooSubDir2 = directory2.getWorkingDirectory("/foo");
+                assert(fooSubDir2);
                 const fooSubDir2Iterator = fooSubDir2.values();
                 const fooSubDir2Result1 = fooSubDir2Iterator.next();
                 assert.equal(fooSubDir2Result1.value, "testValue");
@@ -987,6 +1073,7 @@ describe("Directory", () => {
                 assert.equal(fooSubDir2Result3.done, true);
 
                 const barSubDir2 = directory2.getWorkingDirectory("/bar");
+                assert(barSubDir2);
                 const barSubDir2Iterator = barSubDir2.values();
                 const barSubDir2Result1 = barSubDir2Iterator.next();
                 assert.equal(barSubDir2Result1.value, "testValue3");
@@ -1009,6 +1096,7 @@ describe("Directory", () => {
 
                 // Verify the local SharedDirectory
                 const fooSubDir = directory1.getWorkingDirectory("/foo");
+                assert(fooSubDir);
                 const fooSubDirIterator = fooSubDir.entries();
                 const fooSubDirResult1 = fooSubDirIterator.next();
                 assert.equal(fooSubDirResult1.value[0], "testKey");
@@ -1023,6 +1111,7 @@ describe("Directory", () => {
                 assert.equal(fooSubDirResult3.done, true);
 
                 const barSubDir = directory1.getWorkingDirectory("/bar");
+                assert(barSubDir);
 
                 const expectedEntries = new Set(["testKey3"]);
                 for (const entry of barSubDir) {
@@ -1033,6 +1122,7 @@ describe("Directory", () => {
 
                 // Verify the remote SharedDirectory
                 const fooSubDir2 = directory2.getWorkingDirectory("/foo");
+                assert(fooSubDir2);
                 const fooSubDir2Iterator = fooSubDir2.entries();
                 const fooSubDir2Result1 = fooSubDir2Iterator.next();
                 assert.equal(fooSubDir2Result1.value[0], "testKey");
@@ -1047,6 +1137,7 @@ describe("Directory", () => {
                 assert.equal(fooSubDir2Result3.done, true);
 
                 const barSubDir2 = directory2.getWorkingDirectory("/bar");
+                assert(barSubDir2);
 
                 const expectedEntries2 = new Set(["testKey3"]);
                 for (const entry of barSubDir2) {
@@ -1073,6 +1164,7 @@ describe("Directory", () => {
 
                 // Verify the remote SharedDirectory
                 const fooDirectory2 = directory2.getSubDirectory("foo");
+                assert(fooDirectory2);
                 const expectedDirectories2 = new Set(["bar", "baz"]);
                 for (const [subDirName] of fooDirectory2.subdirectories()) {
                     assert.ok(expectedDirectories2.has(subDirName));

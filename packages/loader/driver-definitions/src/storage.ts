@@ -24,6 +24,21 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "./urlResolver";
 
+export interface IDeltasFetchResult {
+    /**
+     * Sequential set of messages starting from 'from' sequence number.
+     * May be partial result, i.e. not fulfill original request in full.
+     */
+    messages: ISequencedDocumentMessage[];
+
+    /**
+     * If true, storage only partially fulfilled request, but has more ops
+     * If false, the request was fulfilled. If less ops were returned then
+     * requested, then storage does not have more ops in this range.
+     */
+    partialResult: boolean;
+}
+
 /**
  * Interface to provide access to stored deltas for a shared object
  */
@@ -34,8 +49,8 @@ export interface IDeltaStorageService {
     get(
         tenantId: string,
         id: string,
-        from?: number,
-        to?: number): Promise<ISequencedDocumentMessage[]>;
+        from: number,
+        to: number): Promise<IDeltasFetchResult>;
 }
 
 /**
@@ -45,7 +60,7 @@ export interface IDocumentDeltaStorageService {
     /**
      * Retrieves all the delta operations within the exclusive sequence number range
      */
-    get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]>;
+    get(from: number, to: number): Promise<IDeltasFetchResult>;
 }
 
 /**
@@ -68,11 +83,6 @@ export interface IDocumentStorageService {
      * Reads the object with the given ID, returns content in base64
      */
     read(id: string): Promise<string>;
-
-    /**
-     * Reads the object with the given ID, returns content in utf8
-     */
-    readString(id: string): Promise<string>;
 
     /**
      * Writes to the object with the given ID

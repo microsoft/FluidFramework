@@ -198,15 +198,35 @@ export interface ILoader extends IFluidRouter {
     rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
 }
 
+export type ILoaderOptions = {
+    [key in string | number]: any;
+} & {
+    /**
+     * Affects the behavior of the Container when a new code proposal
+     * is accepted that the current loaded code does not satisfy.
+     * True to reload the context without closing the container, or
+     * false to only close the container.
+     * Defaults to false.
+     */
+    hotSwapContext?: boolean;
+
+    /**
+     * Set caching behavior for the loader.  If true, we will load a container from cache if one
+     * with the same id/version exists or create a new container and cache it if it does not. If
+     * false, always load a new container and don't cache it. If the container has already been
+     * closed, it will not be cached.  A cache option in the LoaderHeader for an individual
+     * request will override the Loader's value.
+     * Defaults to true.
+     */
+    cache?: boolean;
+};
+
 /**
  * Accepted header keys for requests coming to the Loader
  */
 export enum LoaderHeader {
     /**
-     * Use cache for this container. If true, we will load a container from cache if one with the same id/version exists
-     * or create a new container and cache it if it does not. If false, always load a new container and don't cache it.
-     * Currently only used to opt-out of caching, as it will default to true but will be false (even if specified as
-     * true) if the reconnect header is false or the pause header is true, since these containers should not be cached.
+     * Override the Loader's default caching behavior for this container.
      */
     cache = "fluid-cache",
 

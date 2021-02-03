@@ -4,13 +4,25 @@
  */
 
 import * as git from "@fluidframework/gitresources";
+import { IThrottler } from "@fluidframework/server-services-core";
+import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
 import { Router } from "express";
 import * as nconf from "nconf";
+import winston from "winston";
 import { ICache, ITenantService } from "../../services";
 import * as utils from "../utils";
 
-export function create(store: nconf.Provider, tenantService: ITenantService, cache: ICache): Router {
+export function create(
+    store: nconf.Provider,
+    tenantService: ITenantService,
+    cache: ICache,
+    throttler: IThrottler): Router {
     const router: Router = Router();
+
+    const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+        throttleIdPrefix: (req) => utils.getParam(req.params, "tenantId"),
+        throttleIdSuffix: utils.Constants.throttleIdSuffix,
+    };
 
     async function createBlob(
         tenantId: string,
@@ -32,48 +44,57 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
     /**
      * Historian https ping endpoint for availability monitoring system
      */
-    router.get("/repos/ping", async (request, response) => {
+    router.get("/repos/ping", throttle(throttler, winston, {
+        ...commonThrottleOptions,
+        throttleIdPrefix: "ping",
+    }), async (request, response) => {
         response.sendStatus(200);
     });
 
-    router.post("/repos/:ignored?/:tenantId/git/blobs", (request, response, next) => {
-        const blobP = createBlob(request.params.tenantId, request.get("Authorization"), request.body);
-        utils.handleResponse(
-            blobP,
-            response,
-            false,
-            201);
+    router.post("/repos/:ignored?/:tenantId/git/blobs",
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const blobP = createBlob(request.params.tenantId, request.get("Authorization"), request.body);
+            utils.handleResponse(
+                blobP,
+                response,
+                false,
+                201);
     });
 
     /**
      * Retrieves the given blob from the repository
      */
-    router.get("/repos/:ignored?/:tenantId/git/blobs/:sha", (request, response, next) => {
-        const useCache = !("disableCache" in request.query);
-        const blobP = getBlob(request.params.tenantId, request.get("Authorization"), request.params.sha, useCache);
-        utils.handleResponse(
-            blobP,
-            response,
-            useCache);
+    router.get("/repos/:ignored?/:tenantId/git/blobs/:sha",
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const useCache = !("disableCache" in request.query);
+            const blobP = getBlob(request.params.tenantId, request.get("Authorization"), request.params.sha, useCache);
+            utils.handleResponse(
+                blobP,
+                response,
+                useCache);
     });
 
     /**
      * Retrieves the given blob as an image
      */
-    router.get("/repos/:ignored?/:tenantId/git/blobs/raw/:sha", (request, response, next) => {
-        const useCache = !("disableCache" in request.query);
+    router.get("/repos/:ignored?/:tenantId/git/blobs/raw/:sha",
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const useCache = !("disableCache" in request.query);
 
-        const blobP = getBlob(request.params.tenantId, request.get("Authorization"), request.params.sha, useCache);
+            const blobP = getBlob(request.params.tenantId, request.get("Authorization"), request.params.sha, useCache);
 
-        blobP.then((blob) => {
-            if (useCache) {
-                response.setHeader("Cache-Control", "public, max-age=31536000");
-            }
-            response.status(200).write(Buffer.from(blob.content, "base64"), () => response.end());
-        },
-        (error) => {
-            response.status(400).json(error);
-        });
+            blobP.then((blob) => {
+                if (useCache) {
+                    response.setHeader("Cache-Control", "public, max-age=31536000");
+                }
+                response.status(200).write(Buffer.from(blob.content, "base64"), () => response.end());
+            },
+            (error) => {
+                response.status(400).json(error);
+            });
     });
 
     return router;

@@ -80,7 +80,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 this.sendPending();
             },
             (error) => {
-                this.context.error(error, true);
+                this.context.error(error, { restart: true });
             });
     }
 
@@ -89,8 +89,12 @@ export class ScriptoriumLambda implements IPartitionLambda {
     }
 
     private async insertOp(messages: ISequencedOperationMessage[]) {
+        const dbOps = messages.map((message) => ({
+            ...message,
+            mongoTimestamp: new Date(message.operation.timestamp),
+        }));
         return this.opCollection
-            .insertMany(messages, false)
+            .insertMany(dbOps, false)
             .catch(async (error) => {
                 // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
                 // All other errors result in a rejected promise.

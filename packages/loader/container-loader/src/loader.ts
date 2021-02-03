@@ -9,6 +9,7 @@ import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-d
 import {
     IFluidObject,
     IRequest,
+    IRequestHeader,
     IResponse,
     IFluidRouter,
     IFluidCodeDetails,
@@ -17,6 +18,7 @@ import {
     ICodeLoader,
     IContainer,
     ILoader,
+    ILoaderOptions,
     IProxyLoaderFactory,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
@@ -43,11 +45,7 @@ function canUseCache(request: IRequest): boolean {
         return true;
     }
 
-    const noCache =
-        request.headers[LoaderHeader.cache] === false ||
-        request.headers[LoaderHeader.reconnect] === false;
-
-    return !noCache;
+    return request.headers[LoaderHeader.cache] !== false;
 }
 
 export class RelativeLoader extends EventEmitter implements ILoader {
@@ -161,7 +159,7 @@ export interface ILoaderProps {
      * A property bag of options used by various layers
      * to control features
      */
-    readonly options?: any;
+    readonly options?: ILoaderOptions;
 
     /**
      * Scope is provided to all container and is a set of shared
@@ -207,7 +205,7 @@ export interface ILoaderServices {
      * A property bag of options used by various layers
      * to control features
      */
-    readonly options: any;
+    readonly options: ILoaderOptions;
 
     /**
      * Scope is provided to all container and is a set of shared
@@ -242,7 +240,7 @@ export class Loader extends EventEmitter implements ILoader {
         resolver: IUrlResolver | IUrlResolver[],
         documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
         codeLoader: ICodeLoader,
-        options: any,
+        options: ILoaderOptions,
         scope: IFluidObject,
         proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
         logger?: ITelemetryBaseLogger,
@@ -363,10 +361,7 @@ export class Loader extends EventEmitter implements ILoader {
             return Promise.reject(new Error(`Invalid URL ${resolvedAsFluid.url}`));
         }
 
-        request.headers = request.headers ?? {};
         const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
-
-        debug(`${canCache} ${request.headers[LoaderHeader.pause]} ${request.headers[LoaderHeader.version]}`);
 
         let container: Container;
         if (canCache) {
@@ -380,8 +375,16 @@ export class Loader extends EventEmitter implements ILoader {
                         parsed.id,
                         request,
                         resolvedAsFluid);
-                this.containers.set(key, containerP);
                 container = await containerP;
+
+                if (!container.closed) {
+                    // Don't cache already closed containers because won't know when to evict
+                    this.containers.set(key, containerP);
+                    container.once("closed", () => {
+                        // Container clears its own listeners so we don't need to
+                        this.containers.delete(key);
+                    });
+                }
             }
         } else {
             container =
@@ -392,7 +395,7 @@ export class Loader extends EventEmitter implements ILoader {
         }
 
         if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 function opHandler(message: ISequencedDocumentMessage) {
                     if (message.sequenceNumber > fromSequenceNumber) {
                         resolve();
@@ -407,17 +410,8 @@ export class Loader extends EventEmitter implements ILoader {
         return { container, parsed };
     }
 
-    private canUseCache(request: IRequest): boolean {
-        if (request.headers === undefined) {
-            return true;
-        }
-
-        const noCache =
-            request.headers[LoaderHeader.cache] === false ||
-            request.headers[LoaderHeader.reconnect] === false ||
-            request.headers[LoaderHeader.pause] === true;
-
-        return !noCache;
+    private canUseCache(headers: IRequestHeader): boolean {
+        return this.services.options.cache !== false && headers[LoaderHeader.cache] !== false;
     }
 
     private parseHeader(parsed: IParsedUrl, request: IRequest) {
@@ -437,8 +431,12 @@ export class Loader extends EventEmitter implements ILoader {
         if (request.headers[LoaderHeader.version] === "null") {
             request.headers[LoaderHeader.version] = null;
         }
+
+        const canCache = this.canUseCache(request.headers);
+        debug(`${canCache} ${request.headers[LoaderHeader.version]}`);
+
         return {
-            canCache: this.canUseCache(request),
+            canCache,
             fromSequenceNumber,
         };
     }

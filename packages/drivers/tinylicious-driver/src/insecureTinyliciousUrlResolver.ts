@@ -20,9 +20,10 @@ import { v4 as uuid } from "uuid";
  */
 export class InsecureTinyliciousUrlResolver implements IUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        const documentId = request.url.split("/")[0];
+        const url = request.url.replace("http://localhost:3000/","");
+        const documentId = url.split("/")[0];
         const encodedDocId = encodeURIComponent(documentId);
-        const documentRelativePath = request.url.slice(documentId.length);
+        const documentRelativePath = url.slice(documentId.length);
 
         const documentUrl = `fluid://localhost:3000/tinylicious/${encodedDocId}${documentRelativePath}`;
         const deltaStorageUrl = `http://localhost:3000/deltas/tinylicious/${encodedDocId}`;

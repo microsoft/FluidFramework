@@ -17,21 +17,17 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
     public abstract getVersions(versionId: string, count: number): Promise<api.IVersion[]>;
     public abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
     public abstract read(blobId: string): Promise<string>;
-    public abstract readString(blobId: string): Promise<string>;
+    public abstract readBlob(blobId: string): Promise<ArrayBufferLike>;
 
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         return Promise.reject(new Error("Invalid operation"));
     }
 
-    public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
+    public async write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion> {
         return Promise.reject(new Error("Invalid operation"));
     }
 
     public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
-        return Promise.reject(new Error("Invalid operation"));
-    }
-
-    public async readBlob(blobId) {
         return Promise.reject(new Error("Invalid operation"));
     }
 

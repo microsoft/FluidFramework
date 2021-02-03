@@ -249,7 +249,7 @@ export class CodeMirrorComponent
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
-        this.text = await this.root.get<IFluidHandle<SharedString>>("text").get();
+        this.text = await this.root.get<IFluidHandle<SharedString>>("text")?.get();
     }
 
     public render(elm: HTMLElement): void {

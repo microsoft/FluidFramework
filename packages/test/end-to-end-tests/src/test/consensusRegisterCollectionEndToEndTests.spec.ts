@@ -39,7 +39,11 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {
-    const tests = (args: ITestObjectProvider) => {
+    const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    beforeEach(()=>{
+        args = argsFactory();
+    });
         let dataStore1: ITestFluidObject;
         let sharedMap1: ISharedMap;
         let sharedMap2: ISharedMap;
@@ -72,6 +76,8 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
                 sharedMap2.wait<IFluidHandle<IConsensusRegisterCollection>>("collection"),
                 sharedMap3.wait<IFluidHandle<IConsensusRegisterCollection>>("collection"),
             ]);
+            assert(collection2Handle);
+            assert(collection3Handle);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
 
@@ -95,6 +101,8 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
                 sharedMap2.wait<IFluidHandle<IConsensusRegisterCollection>>("collection"),
                 sharedMap3.wait<IFluidHandle<IConsensusRegisterCollection>>("collection"),
             ]);
+            assert(collection2Handle);
+            assert(collection3Handle);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
 
@@ -122,6 +130,8 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
                 sharedMap2.wait<IFluidHandle<IConsensusRegisterCollection>>("collection"),
                 sharedMap3.wait<IFluidHandle<IConsensusRegisterCollection>>("collection"),
             ]);
+            assert(collection2Handle);
+            assert(collection3Handle);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
 
@@ -180,6 +190,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             // Pull the collection off of the 2nd container
             const collection2Handle =
                 await sharedMap2.wait<IFluidHandle<IConsensusRegisterCollection>>("collection");
+            assert(collection2Handle);
             const collection2 = await collection2Handle.get();
 
             // acquire one handle in each container

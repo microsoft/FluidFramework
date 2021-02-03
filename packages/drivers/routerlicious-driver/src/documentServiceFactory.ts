@@ -19,6 +19,7 @@ import {
     getQuorumValuesFromProtocolSummary,
 } from "@fluidframework/driver-utils";
 import Axios from "axios";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { DocumentService } from "./documentService";
 import { DocumentService2 } from "./documentService2";
 import { DefaultErrorTracking } from "./errorTracking";
@@ -60,6 +61,10 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         }
         const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
         const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
+        const token = await this.tokenProvider.fetchStorageToken(
+            tenantId,
+            id,
+        );
         await Axios.post(
             `${resolvedUrl.endpoints.ordererUrl}/documents/${tenantId}`,
             {
@@ -67,6 +72,11 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 summary: appSummary,
                 sequenceNumber: documentAttributes.sequenceNumber,
                 values: quorumValues,
+            },
+            {
+                headers: {
+                    Authorization: `Basic ${token.jwt}`,
+                },
             });
         return this.createDocumentService(resolvedUrl, logger);
     }
@@ -99,6 +109,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 `Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
 
+        const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
+
         if (this.useDocumentService2) {
             return new DocumentService2(
                 fluidResolvedUrl,
@@ -109,6 +121,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 this.disableCache,
                 this.historianApi,
                 this.credentials,
+                logger2,
                 this.tokenProvider,
                 tenantId,
                 documentId);
@@ -123,6 +136,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 this.historianApi,
                 this.credentials,
                 this.gitCache,
+                logger2,
                 this.tokenProvider,
                 tenantId,
                 documentId);

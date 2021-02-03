@@ -5,10 +5,10 @@
  */
 
 import { getSessionStorageContainer } from "@fluidframework/get-session-storage-container";
-import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
+import { getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
 
 import { DiceRollerController } from "../src/controller";
-import { KeyValueContainerRuntimeFactory, KeyValueDataObject } from "../src/kvpair-dataobject";
+import { KeyValueContainerRuntimeFactory, KeyValueDataObject, KeyValueInstantiationFactory } from "../src/kvpair-dataobject";
 import { renderDiceRoller } from "../src/view";
 
 // Since this is a single page Fluid application we are generating a new document id
@@ -30,7 +30,11 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     const container = await getSessionStorageContainer(documentId, KeyValueContainerRuntimeFactory, createNewFlag);
 
     // Get the Default Object from the Container
-    const kvPairDataObject = await getDefaultObjectFromContainer<KeyValueDataObject>(container);
+    const dataObjectId = "dice";
+    if (createNewFlag) {
+        await container.request({ url: `/create/${KeyValueInstantiationFactory.type}/${dataObjectId}` });
+    }
+    const kvPairDataObject = await getObjectWithIdFromContainer<KeyValueDataObject>(dataObjectId, container);
     const diceRollerController = new DiceRollerController(kvPairDataObject);
     await diceRollerController.initialize(createNewFlag);
 
@@ -38,7 +42,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     renderDiceRoller(diceRollerController, element);
 
     // Setting "fluidStarted" is just for our test automation
-    // eslint-disable-next-line dot-notation
+    // eslint-disable-next-line @typescript-eslint/dot-notation
     window["fluidStarted"] = true;
 }
 

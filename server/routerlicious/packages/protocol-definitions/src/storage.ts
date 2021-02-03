@@ -56,20 +56,26 @@ export interface ICreateBlobResponse {
 /**
  * A tree entry wraps a path with a type of node
  */
-export interface ITreeEntry {
+export type ITreeEntry = {
     // Path to the object
     path: string;
-
-    // One of the below enum string values
-    type: string;
-
-    // The value of the entry - either a tree or a blob
-    value: IBlob | IAttachment | ITree | string;
-
     // The file mode; one of 100644 for file (blob), 100755 for executable (blob), 040000 for subdirectory (tree),
     // 160000 for submodule (commit), or 120000 for a blob that specifies the path of a symlink
     mode: FileMode;
-}
+} & (
+{
+    type: TreeEntry.Blob;
+    value: IBlob;
+} | {
+    type: TreeEntry.Commit;
+    value: string;
+} | {
+    type: TreeEntry.Tree;
+    value: ITree;
+} | {
+    type: TreeEntry.Attachment;
+    value: IAttachment;
+});
 
 /**
  * Type of entries that can be stored in a tree
@@ -86,14 +92,20 @@ export interface ITree {
 
     // Unique ID representing all entries in the tree. Can be used to optimize snapshotting in the case
     // it is known that the ITree has already been created and stored
-    id: string | null;
+    id?: string;
 }
 
 export interface ISnapshotTree {
-    id: string | null;
+    id? : string;
     blobs: { [path: string]: string };
+    // TODO: Commits should be removed from here to ISnapshotTreeEx once ODSP snapshots move away from commits
     commits: { [path: string]: string };
     trees: { [path: string]: ISnapshotTree };
+}
+
+export interface ISnapshotTreeEx extends ISnapshotTree {
+    id: string;
+    trees: { [path: string]: ISnapshotTreeEx };
 }
 
 /**
