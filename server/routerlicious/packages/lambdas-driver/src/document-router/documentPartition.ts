@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambda, IPartitionLambdaFactory, IQueuedMessage } from "@fluidframework/server-services-core";
+import {
+    IContextErrorData,
+    IPartitionLambda,
+    IPartitionLambdaFactory,
+    IQueuedMessage,
+    LambdaCloseType,
+} from "@fluidframework/server-services-core";
 import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";
 import { Provider } from "nconf";
@@ -47,7 +53,7 @@ export class DocumentPartition {
                     // TODO dead letter queue for bad messages, etc... when the lambda is throwing an exception
                     // for now we will simply continue on to keep the queue flowing
                     winston.error("Error processing partition message", error);
-                    context.error(error, false);
+                    context.error(error, { restart: false, tenantId, documentId });
                     this.corrupt = true;
                 }
 
@@ -57,23 +63,23 @@ export class DocumentPartition {
             1);
         this.q.pause();
 
-        this.context.on("error", (error: any, restart: boolean) => {
-            if (restart) {
+        this.context.on("error", (error: any, errorData: IContextErrorData) => {
+            if (errorData.restart) {
                 // ensure no more messages are processed by this partition
                 // while the process is restarting / closing
-                this.close();
+                this.close(LambdaCloseType.Error);
             }
         });
 
         // Create the lambda to handle the document messages
-        this.lambdaP = factory.create(documentConfig, context);
+        this.lambdaP = factory.create(documentConfig, context, this.updateActivityTime.bind(this));
         this.lambdaP.then(
             (lambda) => {
                 this.lambda = lambda;
                 this.q.resume();
             },
             (error) => {
-                context.error(error, true);
+                context.error(error, { restart: true, tenantId, documentId });
                 this.q.kill();
             });
     }
@@ -87,7 +93,7 @@ export class DocumentPartition {
         this.updateActivityTime();
     }
 
-    public close() {
+    public close(closeType: LambdaCloseType) {
         if (this.closed) {
             return;
         }
@@ -98,11 +104,11 @@ export class DocumentPartition {
         this.q.kill();
 
         if (this.lambda) {
-            this.lambda.close();
+            this.lambda.close(closeType);
         } else {
             this.lambdaP.then(
                 (lambda) => {
-                    lambda.close();
+                    lambda.close(closeType);
                 },
                 (error) => {
                     // Lambda was never created - ignoring

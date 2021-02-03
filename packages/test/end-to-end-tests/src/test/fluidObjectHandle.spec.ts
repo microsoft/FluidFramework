@@ -171,5 +171,5 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 };
 
 describe("FluidObjectHandle", () => {
-    generateTest(tests, { tinylicious: true });
+    generateTest(tests);
 });

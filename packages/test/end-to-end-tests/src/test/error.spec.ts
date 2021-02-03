@@ -15,35 +15,38 @@ import {
     IDocumentServiceFactory,
     DriverErrorType,
     IThrottlingWarning,
+    IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { createWriteError } from "@fluidframework/driver-utils";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import {
     createOdspNetworkError,
     invalidFileNameStatusCode,
     OdspErrorType,
 } from "@fluidframework/odsp-doclib-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { LocalCodeLoader } from "@fluidframework/test-utils";
+import { createDocumentId, LocalCodeLoader } from "@fluidframework/test-utils";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 describe("Errors Types", () => {
-    const id = "fluid-test://localhost/errorTest";
-    const testRequest: IRequest = { url: id };
-
-    let testDeltaConnectionServer: ILocalDeltaConnectionServer;
-    let urlResolver: LocalResolver;
+    let urlResolver: IUrlResolver;
+    let testRequest: IRequest;
     let testResolved: IFluidResolvedUrl;
     let documentServiceFactory: IDocumentServiceFactory;
     let codeLoader: LocalCodeLoader;
     let loader: Loader;
+    let driver: ITestDriver;
+    before(()=>{
+        driver = getFluidTestDriver();
+    });
 
     it("GeneralError Test", async () => {
+        const id = createDocumentId();
         // Setup
-        testDeltaConnectionServer = LocalDeltaConnectionServer.create();
-        urlResolver = new LocalResolver();
-        testResolved = await urlResolver.resolve(testRequest) as IFluidResolvedUrl;
-        documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
+        urlResolver = driver.createUrlResolver();
+        testRequest = { url:driver.createContainerUrl(id) };
+        testResolved =
+            await urlResolver.resolve(testRequest) as IFluidResolvedUrl;
+        documentServiceFactory = driver.createDocumentServiceFactory();
 
         const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
         mockFactory.createDocumentService = async (resolvedUrl) => {
@@ -72,8 +75,6 @@ describe("Errors Types", () => {
         } catch (error) {
             assert.equal(error.errorType, ContainerErrorType.genericError, "Error should be a genericError");
         }
-
-        await testDeltaConnectionServer.webSocketServer.close();
     });
 
     it("GeneralError Logging Test", async () => {

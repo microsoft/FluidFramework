@@ -51,7 +51,8 @@ export class EpochTracker {
 
     public async validateEpochFromPush(details: IConnected) {
         const epoch = details.epoch;
-        assert(epoch !== undefined, "Connection details should contain epoch");
+        // [Todo: Issue https://github.com/microsoft/FluidFramework/issues/4989]
+        // assert(epoch !== undefined, "Connection details should contain epoch");
         try {
             this.validateEpochFromResponse(epoch, "push");
         } catch (error) {
@@ -101,6 +102,11 @@ export class EpochTracker {
             this.validateEpochFromResponse(epochFromResponse, fetchType);
             return response;
         } catch (error) {
+            // Get the server epoch from error in case we don't have it as if undefined we won't be able
+            // to mark it as epoch error.
+            if (epochFromResponse === undefined) {
+                epochFromResponse = error.serverEpoch;
+            }
             await this.checkForEpochError(error, epochFromResponse, fetchType);
             throw error;
         }
@@ -130,6 +136,11 @@ export class EpochTracker {
             this.validateEpochFromResponse(epochFromResponse, fetchType);
             return response;
         } catch (error) {
+            // Get the server epoch from error in case we don't have it as if undefined we won't be able
+            // to mark it as epoch error.
+            if (epochFromResponse === undefined) {
+                epochFromResponse = error.serverEpoch;
+            }
             await this.checkForEpochError(error, epochFromResponse, fetchType);
             throw error;
         }

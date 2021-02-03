@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, ILogger, IQueuedMessage } from "@fluidframework/server-services-core";
+import { IContext, IContextErrorData, ILogger, IQueuedMessage } from "@fluidframework/server-services-core";
 
 export class LocalContext implements IContext {
     constructor(public readonly log: ILogger) { }
@@ -12,7 +12,7 @@ export class LocalContext implements IContext {
         return;
     }
 
-    public error(error: any, restart: boolean) {
+    public error(error: any, errorData: IContextErrorData) {
         return;
     }
 }

@@ -4,7 +4,7 @@
  */
 
 import { Deferred } from "@fluidframework/common-utils";
-import { IConsumer, IPartitionLambdaFactory } from "@fluidframework/server-services-core";
+import { IConsumer, IContextErrorData, IPartitionLambdaFactory } from "@fluidframework/server-services-core";
 import { IRunner } from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -33,7 +33,7 @@ export class KafkaRunner implements IRunner {
         });
 
         this.partitionManager = new PartitionManager(this.factory, this.consumer, this.config, winston);
-        this.partitionManager.on("error", (error, restart) => {
+        this.partitionManager.on("error", (error, errorData: IContextErrorData) => {
             this.deferred.reject(error);
         });
 
