@@ -161,7 +161,7 @@ async function getDriveItem(
     return toIODSPDriveItem(getDriveItemResult);
 }
 
-async function getDriveId(
+export async function getDriveId(
     server: string,
     account: string,
     library: string,
