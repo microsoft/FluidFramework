@@ -4,7 +4,7 @@
  */
 
 import { Types, PluginFunction } from '@graphql-codegen/plugin-helpers';
-import { NodeId, SharedTree, Snapshot, SnapshotNode, TraitLabel } from '@intentional/shared-tree';
+import { NodeId, SharedTree, Snapshot, SnapshotNode, TraitLabel } from '@fluid-experimental/tree';
 import {
 	FieldDefinitionNode,
 	GraphQLSchema,
@@ -35,13 +35,18 @@ export const plugin: PluginFunction<unknown> = (
 			FieldDefinition: (fieldDef) => printFieldResolver(schema, fieldDef),
 			ObjectTypeDefinition: (typeDef) => {
 				return `${typeDef.name.value}: {
-					${typeDef.fields.join('\n')}
+					${typeDef.fields?.join('\n') ?? ''}
 				},`;
 			},
 		},
 	});
 
-	return `${printImports(
+	return `/*!
+    * Copyright (c) Microsoft Corporation. All rights reserved.
+    * Licensed under the MIT License.
+    */
+
+    ${printImports(
 		getString,
 		getFloat,
 		getInt,
@@ -64,8 +69,10 @@ export const plugin: PluginFunction<unknown> = (
 	}`;
 };
 
-function printImports(...functions: ((...args: unknown[]) => unknown)[]) {
-	return `import { ${functions.map((f) => f.name).join(', ')} } from '../../graphql-plugins/SharedTreeResolverPlugin'`;
+function printImports(...functions: ((...args: never[]) => unknown)[]) {
+	return `import { ${functions
+		.map((f) => f.name)
+		.join(', ')} } from '../../graphql-plugins/SharedTreeResolverPlugin'`;
 }
 
 function printFieldResolver(schema: GraphQLSchema, fieldDef: FieldDefinitionNode): string {
@@ -83,7 +90,7 @@ function printFieldResolver(schema: GraphQLSchema, fieldDef: FieldDefinitionNode
 	}
 
 	// Check if this field is an enum type. If so, decode as a string
-	if (schema.getType(fieldInfo.typeName).astNode?.kind === 'EnumTypeDefinition') {
+	if (schema.getType(fieldInfo.typeName)?.astNode?.kind === 'EnumTypeDefinition') {
 		return printScalarResolver(fieldName, { ...fieldInfo, typeName: 'String' });
 	}
 
@@ -169,33 +176,38 @@ function isScalarTypeName(typeName: string): boolean {
 
 // Resolvers for retrieving nullable and non-nullable scalars
 
-export function getString(source: NodeId, _args: never, context: SharedTree, info: GraphQLResolveInfo): string | null {
+export function getString(source: NodeId, args: unknown, context: SharedTree, info: GraphQLResolveInfo): string | null {
 	const node = getScalar(source, context.currentView, info.fieldName);
 	return decodeString(node?.payload?.base64);
 }
 
-export function getFloat(source: NodeId, _args: never, context: SharedTree, info: GraphQLResolveInfo): number | null {
+export function getFloat(source: NodeId, args: unknown, context: SharedTree, info: GraphQLResolveInfo): number | null {
 	const node = getScalar(source, context.currentView, info.fieldName);
 	return decodeFloat(node?.payload?.base64);
 }
 
-export function getInt(source: NodeId, _args: never, context: SharedTree, info: GraphQLResolveInfo): number {
+export function getInt(source: NodeId, args: unknown, context: SharedTree, info: GraphQLResolveInfo): number | null {
 	const node = getScalar(source, context.currentView, info.fieldName);
 	return decodeInt(node?.payload?.base64);
 }
 
-export function getBoolean(source: NodeId, _args: never, context: SharedTree, info: GraphQLResolveInfo): boolean {
+export function getBoolean(
+	source: NodeId,
+	args: unknown,
+	context: SharedTree,
+	info: GraphQLResolveInfo
+): boolean | null {
 	const node = getScalar(source, context.currentView, info.fieldName);
 	return decodeBoolean(node?.payload?.base64);
 }
 
-export function getID(source: NodeId, _args: never, context: SharedTree, info: GraphQLResolveInfo): string {
+export function getID(source: NodeId, args: unknown, context: SharedTree, info: GraphQLResolveInfo): string | null {
 	const node = getScalar(source, context.currentView, info.fieldName);
 	return decodeID(node?.payload?.base64);
 }
 
 /** A special hack for retrieving NodeId_s */
-export function getNodeID(source: NodeId, _args: never, context: SharedTree): NodeId {
+export function getNodeID(source: NodeId, args: unknown, context: SharedTree): NodeId {
 	const node = context.currentView.getSnapshotNode(source);
 	return node.identifier;
 }
@@ -204,7 +216,7 @@ export function getNodeID(source: NodeId, _args: never, context: SharedTree): No
 export function getScalar(parent: NodeId, snapshot: Snapshot, traitLabel: string): SnapshotNode | null {
 	const trait = snapshot.getTrait({ label: traitLabel as TraitLabel, parent });
 	const firstId = trait.length === 0 ? null : trait[0];
-	if (!snapshot.hasNode(firstId)) {
+	if (firstId === null || !snapshot.hasNode(firstId)) {
 		return null;
 	}
 
@@ -213,45 +225,70 @@ export function getScalar(parent: NodeId, snapshot: Snapshot, traitLabel: string
 
 // Resolvers for retrieving lists of scalars
 
-export function getStringList(source: NodeId, _args: never, context: SharedTree, info: GraphQLResolveInfo): string[] {
+export function getStringList(
+	source: NodeId,
+	args: unknown,
+	context: SharedTree,
+	info: GraphQLResolveInfo
+): (string | null)[] {
 	const trait = context.currentView.getTrait({ label: info.fieldName as TraitLabel, parent: source });
 	return trait.map((id) => decodeString(context.currentView.getSnapshotNode(id).payload?.base64));
 }
 
-export function getFloatList(source: NodeId, _args: never, context: SharedTree, info: GraphQLResolveInfo): number[] {
+export function getFloatList(
+	source: NodeId,
+	args: unknown,
+	context: SharedTree,
+	info: GraphQLResolveInfo
+): (number | null)[] {
 	const trait = context.currentView.getTrait({ label: info.fieldName as TraitLabel, parent: source });
 	return trait.map((id) => decodeFloat(context.currentView.getSnapshotNode(id).payload?.base64));
 }
 
-export function getIntList(source: NodeId, _args: never, context: SharedTree, info: GraphQLResolveInfo): number[] {
+export function getIntList(
+	source: NodeId,
+	args: unknown,
+	context: SharedTree,
+	info: GraphQLResolveInfo
+): (number | null)[] {
 	const trait = context.currentView.getTrait({ label: info.fieldName as TraitLabel, parent: source });
 	return trait.map((id) => decodeInt(context.currentView.getSnapshotNode(id).payload?.base64));
 }
 
-export function getBooleanList(source: NodeId, _args: never, context: SharedTree, info: GraphQLResolveInfo): boolean[] {
+export function getBooleanList(
+	source: NodeId,
+	args: unknown,
+	context: SharedTree,
+	info: GraphQLResolveInfo
+): (boolean | null)[] {
 	const trait = context.currentView.getTrait({ label: info.fieldName as TraitLabel, parent: source });
 	return trait.map((id) => decodeBoolean(context.currentView.getSnapshotNode(id).payload?.base64));
 }
 
-export function getIDList(source: NodeId, _args: never, context: SharedTree, info: GraphQLResolveInfo): string[] {
+export function getIDList(
+	source: NodeId,
+	args: unknown,
+	context: SharedTree,
+	info: GraphQLResolveInfo
+): (string | null)[] {
 	const trait = context.currentView.getTrait({ label: info.fieldName as TraitLabel, parent: source });
 	return trait.map((id) => decodeID(context.currentView.getSnapshotNode(id).payload?.base64));
 }
 
 // Resolvers for descending into non-leaf traits
 
-export function getTrait(source: NodeId, _args: never, context: SharedTree, info: GraphQLResolveInfo): NodeId | null {
+export function getTrait(source: NodeId, args: unknown, context: SharedTree, info: GraphQLResolveInfo): NodeId | null {
 	const trait = context.currentView.getTrait({ label: info.fieldName as TraitLabel, parent: source });
 	return trait.length === 0 ? null : trait[0];
 }
 
-export function getNonNullTrait(source: NodeId, _args: never, context: SharedTree, info: GraphQLResolveInfo): NodeId {
+export function getNonNullTrait(source: NodeId, args: unknown, context: SharedTree, info: GraphQLResolveInfo): NodeId {
 	return context.currentView.getTrait({ label: info.fieldName as TraitLabel, parent: source })[0];
 }
 
 export function getListTrait(
 	source: NodeId,
-	_args: never,
+	args: unknown,
 	context: SharedTree,
 	info: GraphQLResolveInfo
 ): readonly NodeId[] {
@@ -260,22 +297,22 @@ export function getListTrait(
 
 // Helpers for decoding primitives from their encoded string format
 
-function decodeString(s?: string): string | undefined {
-	return s;
+function decodeString(s?: string): string | null {
+	return s ?? null;
 }
 
-function decodeFloat(s?: string): number | undefined {
-	return parseFloat(s);
+function decodeFloat(s?: string): number | null {
+	return s === undefined ? null : parseFloat(s);
 }
 
-function decodeInt(s?: string): number | undefined {
-	return parseInt(s);
+function decodeInt(s?: string): number | null {
+	return s === undefined ? null : parseInt(s);
 }
 
-function decodeBoolean(s?: string): boolean | undefined {
-	return s === 'true';
+function decodeBoolean(s?: string): boolean | null {
+	return s === undefined ? null : s === 'true';
 }
 
-function decodeID(s?: string): string | undefined {
-	return s;
+function decodeID(s?: string): string | null {
+	return s ?? null;
 }

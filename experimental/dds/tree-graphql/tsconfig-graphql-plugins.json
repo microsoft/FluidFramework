@@ -1,6 +1,5 @@
 {
 	"extends": "@fluidframework/build-common/ts-common-config.json",
-	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
 		"downlevelIteration": true,
 		"noUnusedLocals": false,
@@ -8,5 +7,5 @@
 		"rootDir": "./src",
 		"types": ["mocha"]
 	},
-	"include": ["plugins/*"]
+	"include": ["src/graphql-plugins/*"]
 }

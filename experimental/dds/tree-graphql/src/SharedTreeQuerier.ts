@@ -22,7 +22,7 @@ export default class SharedTreeQuerier {
 		this.schema = makeExecutableSchema({ typeDefs, resolvers });
 	}
 
-	public async query(query: string): Promise<Query> {
-		return (await graphql(this.schema, query, initialTree.identifier, this.tree)).data;
+	public async query(query: string): Promise<Query | null> {
+		return (await graphql(this.schema, query, initialTree.identifier, this.tree)).data ?? null;
 	}
 }

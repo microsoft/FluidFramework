@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Definition, EditNode, initialTree, NodeId, SharedTree, TreeNodeHandle } from '@intentional/shared-tree';
+import { Definition, EditNode, initialTree, NodeId, SharedTree } from '@fluid-experimental/tree';
 import SharedTreeQuerier from '../SharedTreeQuerier';
 import { createTestQueryTree, encodeScalar, NodeIdGenerator } from './TestUtilities';
 import { assert } from '@fluidframework/common-utils';
@@ -172,30 +172,28 @@ describe('SharedTreeQuerier', () => {
 		},
 	};
 
-	function init(editTree): { tree: SharedTree; querier: SharedTreeQuerier; handle: TreeNodeHandle } {
+	function init(editTree): { tree: SharedTree; querier: SharedTreeQuerier } {
 		const tree = createTestQueryTree(editTree);
 		const querier = new SharedTreeQuerier(tree);
-		const handle = new TreeNodeHandle(tree.currentView, initialTree.identifier);
 		return {
 			tree,
 			querier,
-			handle,
 		};
 	}
 
 	it('can query a field', async () => {
-		const { querier, handle } = init(fourPizzasTree);
+		const { querier } = init(fourPizzasTree);
 		const result = await querier.query(`{
 			pizzas {
 				name
 			}
 		}`);
 
-		expect(result.pizzas!.length).equals(handle.traits['pizzas'].length);
+		expect(result!.pizzas!.length).equals(4);
 	});
 
 	it('can query nested fields', async () => {
-		const { querier, handle } = init(fourPizzasTree);
+		const { querier } = init(fourPizzasTree);
 		const result = await querier.query(`{
 			pizzas {
 				toppings {
@@ -204,10 +202,10 @@ describe('SharedTreeQuerier', () => {
 			}
 		}`);
 
-		expect(result.pizzas![0].toppings?.length).equals(handle.traits['pizzas'][0].traits['toppings']?.length ?? 0);
-		expect(result.pizzas![1].toppings?.length).equals(handle.traits['pizzas'][1].traits['toppings']?.length ?? 0);
-		expect(result.pizzas![2].toppings?.length).equals(handle.traits['pizzas'][2].traits['toppings']?.length ?? 0);
-		expect(result.pizzas![3].toppings?.length).equals(handle.traits['pizzas'][3].traits['toppings']?.length ?? 0);
+		expect(result!.pizzas![0].toppings?.length).equals(0);
+		expect(result!.pizzas![1].toppings?.length).equals(1);
+		expect(result!.pizzas![2].toppings?.length).equals(2);
+		expect(result!.pizzas![3].toppings?.length).equals(2);
 	});
 
 	it('can query strings', async () => {
@@ -218,10 +216,10 @@ describe('SharedTreeQuerier', () => {
 			}
 		}`);
 
-		expect(result.pizzas![0].name).equals('Cheese');
-		expect(result.pizzas![1].name).equals('Pepperoni');
-		expect(result.pizzas![2].name).equals('Hawaiian');
-		expect(result.pizzas![3].name).equals('Green');
+		expect(result!.pizzas![0].name).equals('Cheese');
+		expect(result!.pizzas![1].name).equals('Pepperoni');
+		expect(result!.pizzas![2].name).equals('Hawaiian');
+		expect(result!.pizzas![3].name).equals('Green');
 	});
 
 	it('can query floats', async () => {
@@ -232,10 +230,10 @@ describe('SharedTreeQuerier', () => {
 			}
 		}`);
 
-		expect(result.pizzas![0].price).is.closeTo(8.99, 0.01);
-		expect(result.pizzas![1].price).is.closeTo(9.99, 0.01);
-		expect(result.pizzas![2].price).is.closeTo(11.5, 0.01);
-		expect(result.pizzas![3].price).is.closeTo(9.99, 0.01);
+		expect(result!.pizzas![0].price).is.closeTo(8.99, 0.01);
+		expect(result!.pizzas![1].price).is.closeTo(9.99, 0.01);
+		expect(result!.pizzas![2].price).is.closeTo(11.5, 0.01);
+		expect(result!.pizzas![3].price).is.closeTo(9.99, 0.01);
 	});
 
 	it('can query integers', async () => {
@@ -246,10 +244,10 @@ describe('SharedTreeQuerier', () => {
 			}
 		}`);
 
-		expect(result.pizzas![0].slices).to.equal(6);
-		expect(result.pizzas![1].slices).to.equal(8);
-		expect(result.pizzas![2].slices).to.equal(8);
-		expect(result.pizzas![3].slices).to.equal(4);
+		expect(result!.pizzas![0].slices).to.equal(6);
+		expect(result!.pizzas![1].slices).to.equal(8);
+		expect(result!.pizzas![2].slices).to.equal(8);
+		expect(result!.pizzas![3].slices).to.equal(4);
 	});
 
 	it('can query booleans', async () => {
@@ -260,19 +258,19 @@ describe('SharedTreeQuerier', () => {
 			}
 		}`);
 
-		expect(result.pizzas![0].hasCheese).to.be.true;
-		expect(result.pizzas![1].hasCheese).to.be.true;
-		expect(result.pizzas![2].hasCheese).to.be.true;
-		expect(result.pizzas![3].hasCheese).to.be.false;
+		expect(result!.pizzas![0].hasCheese).to.be.true;
+		expect(result!.pizzas![1].hasCheese).to.be.true;
+		expect(result!.pizzas![2].hasCheese).to.be.true;
+		expect(result!.pizzas![3].hasCheese).to.be.false;
 	});
 
 	it('can query IDs', async () => {
-		const { querier, handle } = init(fourPizzasTree);
+		const { querier } = init(fourPizzasTree);
 		const result = await querier.query(`{
 			version
 		}`);
 
-		expect(result.version).to.equal('0.0.1');
+		expect(result!.version).to.equal('0.0.1');
 	});
 
 	it('can query enums', async () => {
@@ -283,10 +281,10 @@ describe('SharedTreeQuerier', () => {
 			}
 		}`);
 
-		expect(result.pizzas![0].base).equals(PizzaBase.Marinara);
-		expect(result.pizzas![1].base).equals(PizzaBase.Marinara);
-		expect(result.pizzas![2].base).equals(PizzaBase.Marinara);
-		expect(result.pizzas![3].base).equals(PizzaBase.Pesto);
+		expect(result!.pizzas![0].base).equals(PizzaBase.Marinara);
+		expect(result!.pizzas![1].base).equals(PizzaBase.Marinara);
+		expect(result!.pizzas![2].base).equals(PizzaBase.Marinara);
+		expect(result!.pizzas![3].base).equals(PizzaBase.Pesto);
 	});
 
 	it('can query empty lists', async () => {
@@ -302,19 +300,19 @@ describe('SharedTreeQuerier', () => {
 			drinks
 		}`);
 
-		expect(result.drinks!.length).to.equal(0);
+		expect(result!.drinks!.length).to.equal(0);
 	});
 
 	it('can query lists', async () => {
-		const { querier, handle } = init(fourPizzasTree);
+		const { querier } = init(fourPizzasTree);
 		const result = await querier.query(`{
 			drinks
 		}`);
 
-		expect(result.drinks!.length).to.equal(handle.traits['drinks'].length);
-		expect(result.drinks![0]).to.equal(Drink.Water);
-		expect(result.drinks![1]).to.equal(Drink.Coke);
-		expect(result.drinks![2]).to.equal(Drink.Lemonade);
+		expect(result!.drinks!.length).to.equal(3);
+		expect(result!.drinks![0]).to.equal(Drink.Water);
+		expect(result!.drinks![1]).to.equal(Drink.Coke);
+		expect(result!.drinks![2]).to.equal(Drink.Lemonade);
 	});
 
 	it('can query the special identifier field', async () => {
@@ -325,10 +323,10 @@ describe('SharedTreeQuerier', () => {
 			}
 		}`);
 
-		expect(result.pizzas![0].id).to.equal('Cheese Pizza');
-		expect(result.pizzas![1].id).to.equal('Pepperoni Pizza');
-		expect(result.pizzas![2].id).to.equal('Hawaiian Pizza');
-		expect(result.pizzas![3].id).to.equal('Green Pizza');
+		expect(result!.pizzas![0].id).to.equal('Cheese Pizza');
+		expect(result!.pizzas![1].id).to.equal('Pepperoni Pizza');
+		expect(result!.pizzas![2].id).to.equal('Hawaiian Pizza');
+		expect(result!.pizzas![3].id).to.equal('Green Pizza');
 	});
 
 	it('reports missing optional values as null', async () => {
@@ -344,6 +342,6 @@ describe('SharedTreeQuerier', () => {
 			version
 		}`);
 
-		expect(result.version).to.be.null;
+		expect(result!.version).to.be.null;
 	});
 });

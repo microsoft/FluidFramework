@@ -14,7 +14,7 @@ import {
 	TreeNode,
 	NodeId,
 	Payload,
-} from '@intentional/shared-tree';
+} from '@fluid-experimental/tree';
 
 /** From the given `EditNode`, create a `SharedTree` which is suitable for use in a graphql query */
 export function createTestQueryTree(node: EditNode): SharedTree {
