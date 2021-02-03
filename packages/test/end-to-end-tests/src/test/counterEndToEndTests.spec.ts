@@ -24,7 +24,11 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (args: ITestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    beforeEach(()=>{
+        args = argsFactory();
+    });
     let dataStore1: ITestFluidObject;
     let sharedCounter1: ISharedCounter;
     let sharedCounter2: ISharedCounter;
@@ -143,5 +147,5 @@ const tests = (args: ITestObjectProvider) => {
 };
 
 describe("SharedCounter", () => {
-    generateTest(tests, { tinylicious: true });
+    generateTest(tests);
 });

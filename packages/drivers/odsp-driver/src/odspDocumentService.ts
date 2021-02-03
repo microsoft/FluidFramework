@@ -213,7 +213,7 @@ export class OdspDocumentService implements IDocumentService {
             return websocketEndpoint.deltaStorageUrl;
         };
 
-        const res = new OdspDeltaStorageService(
+        const service = new OdspDeltaStorageService(
             urlProvider,
             this.storageManager?.ops,
             this.getStorageToken,
@@ -222,10 +222,10 @@ export class OdspDocumentService implements IDocumentService {
         );
 
         return {
-            get: async (from?: number, to?: number) => {
-                const ops = await res.get(from, to);
-                this.opsReceived(ops);
-                return ops;
+            get: async (from: number, to: number) => {
+                const { messages, partialResult } = await service.get(from, to);
+                this.opsReceived(messages);
+                return { messages, partialResult };
             },
         };
     }
@@ -338,6 +338,7 @@ export class OdspDocumentService implements IDocumentService {
                     nonAfdUrl,
                     this.logger,
                     60000,
+                    this.epochTracker,
                 );
                 const endTime = performance.now();
                 this.logger.sendPerformanceEvent({
@@ -377,6 +378,7 @@ export class OdspDocumentService implements IDocumentService {
                     afdUrl,
                     this.logger,
                     60000,
+                    this.epochTracker,
                 );
                 const endTime = performance.now();
                 // Set the successful connection attempt in the cache so we can skip the non-AFD failure the next time

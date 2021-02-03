@@ -24,6 +24,7 @@ import {
     SnapshotStorage,
 } from "@fluidframework/replay-driver";
 import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUi";
+import { Sanitizer } from "./sanitizer";
 
 export type debuggerUIFactory = (controller: IDebuggerController) => IDebuggerUI | null;
 
@@ -148,14 +149,18 @@ export class DebugReplayController extends ReplayController implements IDebugger
         reader.readAsText(file, "utf-8");
     }
 
-    public async onDownloadOpsButtonClick(): Promise<string> {
+    public async onDownloadOpsButtonClick(anonymize: boolean): Promise<string> {
         if (this.documentService === undefined) {
             throw new Error("DocumentService required");
         }
 
         const documentDeltaStorageService = await this.documentService.connectToDeltaStorage();
         const messages = await this.fetchOpsFromDeltaStorage(documentDeltaStorageService);
-        return JSON.stringify(messages, undefined, 2);
+
+        const sanitizer = new Sanitizer(messages, false /* fullScrub */, false /* noBail */);
+        const cleanMessages = sanitizer.sanitize();
+
+        return JSON.stringify(cleanMessages, undefined, 2);
     }
 
     private async fetchOpsFromDeltaStorage(documentDeltaStorageService): Promise<ISequencedDocumentMessage[]> {
@@ -251,6 +256,13 @@ export class DebugReplayController extends ReplayController implements IDebugger
         throw new Error("Reading blob before storage is setup properly");
     }
 
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
+        if (this.storage !== undefined) {
+            return this.storage.readBlob(blobId);
+        }
+        throw new Error("Reading blob before storage is setup properly");
+    }
+
     public async getVersions(
         versionId: string,
         count: number): Promise<IVersion[]> {
@@ -342,8 +354,9 @@ async function* generateSequencedMessagesFromDeltaStorage(deltaStorage: IDocumen
     let lastSeq = 0;
     const batch = 2000;
     while (true) {
-        const messages = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
+        const { messages, partialResult } = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
         if (messages.length === 0) {
+            assert(!partialResult);
             break;
         }
         yield messages;

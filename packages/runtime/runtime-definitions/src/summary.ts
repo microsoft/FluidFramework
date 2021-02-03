@@ -63,6 +63,14 @@ export interface ISummarizerNodeConfig {
     readonly throwOnFailure?: true,
 }
 
+export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
+    /**
+     * True if GC is disabled. If so, don't track GC related state for a summary.
+     * This is propagated to all child nodes.
+     */
+    readonly gcDisabled?: boolean;
+}
+
 export enum CreateSummarizerNodeSource {
     FromSummary,
     FromAttach,
@@ -161,7 +169,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
          */
         createParam: CreateChildSummarizerNodeParam,
         /** Optional configuration affecting summarize behavior */
-        config?: ISummarizerNodeConfig,
+        config?: ISummarizerNodeConfigWithGC,
         getGCDataFn?: () => Promise<IGarbageCollectionData>,
         getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
     ): ISummarizerNodeWithGC;

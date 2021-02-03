@@ -95,7 +95,7 @@ describe("Runtime", () => {
                     runCount = 0;
                     lastRefSeq = 0;
                     mockLogger = new MockLogger();
-                    summaryCollection = new SummaryCollection(0);
+                    summaryCollection = new SummaryCollection(0, mockLogger);
                     summarizer = await RunningSummarizer.start(
                         summarizerClientId,
                         onBehalfOfClientId,

@@ -637,7 +637,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.immediateSummary = true;
             this.summaryCollection = summaryCollection;
         } else {
-            this.summaryCollection = new SummaryCollection(this.runtime.deltaManager.initialSequenceNumber);
+            this.summaryCollection = new SummaryCollection(
+                this.runtime.deltaManager.initialSequenceNumber,
+                this.logger);
         }
         this.runtime.deltaManager.inbound.on("op",
             (op) => this.summaryCollection.handleOp(op));

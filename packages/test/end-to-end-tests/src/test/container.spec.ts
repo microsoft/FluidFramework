@@ -13,29 +13,27 @@ import { Container, ConnectionState, Loader, ILoaderProps } from "@fluidframewor
 import {
     IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
-import { LocalCodeLoader, LocalTestObjectProvider } from "@fluidframework/test-utils";
+import { LocalCodeLoader, TestObjectProvider } from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { createPrimedDataStoreFactory, createRuntimeFactory, TestDataObject } from "./compatUtils";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
 
 describe("Container", () => {
-    let testDeltaConnectionServer: ILocalDeltaConnectionServer;
+    let driver: ITestDriver;
     beforeEach(()=>{
-        testDeltaConnectionServer = LocalDeltaConnectionServer.create();
+        driver = getFluidTestDriver();
     });
-
     async function loadContainer(props?: Partial<ILoaderProps>) {
         const loader =  new Loader({
             ... props,
-            urlResolver: props?.urlResolver ?? new LocalResolver(),
+            urlResolver: props?.urlResolver ?? driver.createUrlResolver(),
             documentServiceFactory :
-                props?.documentServiceFactory ?? new LocalDocumentServiceFactory(testDeltaConnectionServer),
+                props?.documentServiceFactory ?? driver.createDocumentServiceFactory(),
             codeLoader: props?.codeLoader ?? new LocalCodeLoader([]),
         });
 
@@ -58,7 +56,7 @@ describe("Container", () => {
     it("Load container unsuccessfully", async () => {
         let success: boolean = true;
         try {
-            const documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
+            const documentServiceFactory = driver.createDocumentServiceFactory();
             const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
             // Issue typescript-eslint/typescript-eslint #1256
             mockFactory.createDocumentService = async (resolvedUrl) => {
@@ -81,7 +79,7 @@ describe("Container", () => {
     it("Load container with error", async () => {
         let success: boolean = true;
         try {
-            const documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
+            const documentServiceFactory = driver.createDocumentServiceFactory();
             const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
             // Issue typescript-eslint/typescript-eslint #1256
             mockFactory.createDocumentService = async (resolvedUrl) => {
@@ -105,7 +103,7 @@ describe("Container", () => {
         const deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
-        const documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
+        const documentServiceFactory = driver.createDocumentServiceFactory();
         const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
         // Issue typescript-eslint/typescript-eslint #1256
         mockFactory.createDocumentService = async (resolvedUrl) => {
@@ -128,7 +126,7 @@ describe("Container", () => {
         const deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
-        const documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
+        const documentServiceFactory = driver.createDocumentServiceFactory();
         const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
         // Issue typescript-eslint/typescript-eslint #1256
         mockFactory.createDocumentService = async (resolvedUrl) => {
@@ -161,7 +159,7 @@ describe("Container", () => {
         const deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
-        const documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
+        const documentServiceFactory = driver.createDocumentServiceFactory();
         const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
         // Issue typescript-eslint/typescript-eslint #1256
         mockFactory.createDocumentService = async (resolvedUrl) => {
@@ -188,7 +186,9 @@ describe("Container", () => {
             TestDataObject.type,
             createPrimedDataStoreFactory());
 
-        const localTestObjectProvider = new LocalTestObjectProvider(runtimeFactory, {});
+        const localTestObjectProvider = new TestObjectProvider(
+            driver,
+            runtimeFactory);
 
         const container = await localTestObjectProvider.makeTestContainer() as Container;
         const dataObject = await requestFluidObject<TestDataObject>(container, "default");
@@ -203,9 +203,5 @@ describe("Container", () => {
         assert.strictEqual(container.readonly, true);
 
         assert.strictEqual(runCount, 1);
-    });
-
-    afterEach(async () => {
-        await testDeltaConnectionServer.webSocketServer.close();
     });
 });

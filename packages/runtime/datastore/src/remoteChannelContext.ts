@@ -201,9 +201,6 @@ export class RemoteChannelContext implements IChannelContext {
                 `client format@pkg version: ${factory.attributes.snapshotFormatVersion}@${factory.attributes.packageVersion}`);
         }
 
-        // eslint-disable-next-line max-len
-        debug(`Loading channel ${attributes.type}@${factory.attributes.packageVersion}, snapshot format version: ${attributes.snapshotFormatVersion}`);
-
         const channel = await factory.load(
             this.runtime,
             this.id,
@@ -219,6 +216,7 @@ export class RemoteChannelContext implements IChannelContext {
                 // record sequence number for easier debugging
                 const error = CreateContainerError(err);
                 error.sequenceNumber = message.sequenceNumber;
+                // eslint-disable-next-line @typescript-eslint/no-throw-literal
                 throw error;
             }
         }

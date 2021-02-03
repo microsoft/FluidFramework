@@ -4,7 +4,7 @@
  */
 
 import * as cell from "@fluidframework/cell";
-import { mixinRequestHandler } from "@fluidframework/datastore";
+import { mixinRequestHandler, FluidDataStoreRuntime } from "@fluidframework/datastore";
 import {
     ICodeLoader,
     IContainerContext,
@@ -16,6 +16,7 @@ import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import * as ink from "@fluidframework/ink";
 import * as map from "@fluidframework/map";
+import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import {
     IFluidDataStoreContext,
@@ -39,7 +40,10 @@ export class Chaincode implements IFluidDataStoreFactory {
 
     public get IFluidDataStoreFactory() { return this; }
 
-    public constructor(private readonly closeFn: () => void) { }
+    public constructor(
+        private readonly closeFn: () => void,
+        private readonly dataStoreFactory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime)
+    { }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
         // Create channel factories
@@ -53,6 +57,7 @@ export class Chaincode implements IFluidDataStoreFactory {
         const sparseMatrixFactory = sequence.SparseMatrix.getFactory();
         const directoryFactory = map.SharedDirectory.getFactory();
         const sharedIntervalFactory = sequence.SharedIntervalCollection.getFactory();
+        const sharedMatrixFactory = SharedMatrix.getFactory();
 
         // Register channel factories
         const modules = new Map<string, any>();
@@ -66,6 +71,7 @@ export class Chaincode implements IFluidDataStoreFactory {
         modules.set(sparseMatrixFactory.type, sparseMatrixFactory);
         modules.set(directoryFactory.type, directoryFactory);
         modules.set(sharedIntervalFactory.type, sharedIntervalFactory);
+        modules.set(sharedMatrixFactory.type, sharedMatrixFactory);
 
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
@@ -79,7 +85,8 @@ export class Chaincode implements IFluidDataStoreFactory {
                 } else {
                     return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
                 }
-            });
+            },
+            this.dataStoreFactory);
 
         const runtime = new runtimeClass(context, modules);
 

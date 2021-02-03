@@ -18,7 +18,7 @@ export class VectorUndoProvider {
     private currentGroup?: TrackingGroup;
     private currentOp?: MergeTreeDeltaType;
 
-    constructor (
+    constructor(
         private readonly manager: IUndoConsumer,
         private readonly undoInsert: (segment: PermutationSegment) => void,
         private readonly undoRemove: (segment: PermutationSegment) => void,
@@ -108,7 +108,7 @@ export class VectorUndoProvider {
 }
 
 export class MatrixUndoProvider<T extends Serializable = Serializable> {
-    constructor (
+    constructor(
         private readonly consumer: IUndoConsumer,
         private readonly matrix: SharedMatrix<T>,
         private readonly rows: PermutationVector,

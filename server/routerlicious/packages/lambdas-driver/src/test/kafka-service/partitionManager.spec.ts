@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IContextErrorData } from "@fluidframework/server-services-core";
 import { KafkaMessageFactory, TestConsumer, TestKafka } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import { Provider } from "nconf";
@@ -45,9 +46,9 @@ describe("kafka-service", () => {
                 testConsumer.rebalance();
 
                 const errorP = new Promise<void>((resolve, reject) => {
-                    testManager.on("error", (error, restart) => {
+                    testManager.on("error", (error, errorData: IContextErrorData) => {
                         assert(error);
-                        assert(restart);
+                        assert(errorData.restart);
                         resolve();
                     });
                 });

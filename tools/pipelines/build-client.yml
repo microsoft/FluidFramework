@@ -31,8 +31,8 @@ trigger:
   paths:
     include:
     - packages
-    - components
     - examples
+    - experimental
     - package.json
     - package-lock.json
     - lerna.json
@@ -54,8 +54,8 @@ pr:
   paths:
     include:
     - packages
-    - components
     - examples
+    - experimental
     - package.json
     - package-lock.json
     - lerna.json

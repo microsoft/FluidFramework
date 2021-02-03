@@ -3,14 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { assert, gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import {
+    assert,
+    gitHashFile,
+    IsoBuffer,
+    stringToBuffer,
+    Uint8ArrayToString,
+    unreachableCase,
+} from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import * as resources from "@fluidframework/gitresources";
-import { buildHierarchy } from "@fluidframework/protocol-base";
+import { buildHierarchy, getGitType, getGitMode } from "@fluidframework/protocol-base";
 import {
-    FileMode,
     ICreateBlobResponse,
-    ISnapshotTree,
+    ISnapshotTreeEx,
     ISummaryHandle,
     ISummaryTree,
     ITree,
@@ -40,7 +46,7 @@ export class DocumentStorageService implements IDocumentStorageService {
     constructor(public readonly id: string, public manager: gitStorage.GitManager) {
     }
 
-    public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
+    public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTreeEx | null> {
         let requestVersion = version;
         if (!requestVersion) {
             const versions = await this.getVersions(this.id, 1);
@@ -105,29 +111,24 @@ export class DocumentStorageService implements IDocumentStorageService {
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        const iso = IsoBuffer.from(await this.read(blobId), "base64");
-
-        // In a Node environment, IsoBuffer may be a Node.js Buffer.  Node.js will
-        // pool multiple small Buffer instances into a single ArrayBuffer, in which
-        // case we need to slice the appropriate span of bytes.
-        return iso.byteLength === iso.buffer.byteLength
-            ? iso.buffer
-            : iso.buffer.slice(iso.byteOffset, iso.byteOffset + iso.byteLength);
+        const value = await this.manager.getBlob(blobId);
+        this.blobsShaCache.set(value.sha, "");
+        return stringToBuffer(value.content, value.encoding);
     }
 
     private async writeSummaryTree(
         summaryTree: ISummaryTree,
         /** Entire previous snapshot, not subtree */
-        previousFullSnapshot: ISnapshotTree | undefined,
+        previousFullSnapshot: ISnapshotTreeEx | undefined,
     ): Promise<string> {
         const entries = await Promise.all(Object.keys(summaryTree.tree).map(async (key) => {
             const entry = summaryTree.tree[key];
             const pathHandle = await this.writeSummaryTreeObject(key, entry, previousFullSnapshot);
             const treeEntry: resources.ICreateTreeEntry = {
-                mode: this.getGitMode(entry),
+                mode: getGitMode(entry),
                 path: encodeURIComponent(key),
                 sha: pathHandle,
-                type: this.getGitType(entry),
+                type: getGitType(entry),
             };
             return treeEntry;
         }));
@@ -139,7 +140,7 @@ export class DocumentStorageService implements IDocumentStorageService {
     private async writeSummaryTreeObject(
         key: string,
         object: SummaryObject,
-        previousFullSnapshot: ISnapshotTree | undefined,
+        previousFullSnapshot: ISnapshotTreeEx | undefined,
         currentPath = "",
     ): Promise<string> {
         switch (object.type) {
@@ -160,14 +161,14 @@ export class DocumentStorageService implements IDocumentStorageService {
             }
 
             default:
-                throw Error(`Unexpected summary object type: "${object.type}".`);
+                unreachableCase(object, `Unknown type: ${(object as any).type}`);
         }
     }
 
     private getIdFromPath(
         handleType: SummaryType,
         handlePath: string,
-        previousFullSnapshot: ISnapshotTree,
+        previousFullSnapshot: ISnapshotTreeEx,
     ): string {
         const path = handlePath.split("/").map((part) => decodeURIComponent(part));
         if (path[0] === "") {
@@ -175,9 +176,7 @@ export class DocumentStorageService implements IDocumentStorageService {
             path.shift();
         }
         if (path.length === 0) {
-            const tryId = previousFullSnapshot.id;
-            assert(!!tryId, "Parent summary does not have handle for specified path.");
-            return tryId;
+            return previousFullSnapshot.id;
         }
 
         return this.getIdFromPathCore(handleType, path, previousFullSnapshot);
@@ -187,7 +186,7 @@ export class DocumentStorageService implements IDocumentStorageService {
         handleType: SummaryType,
         path: string[],
         /** Previous snapshot, subtree relative to this path part */
-        previousSnapshot: ISnapshotTree,
+        previousSnapshot: ISnapshotTreeEx,
     ): string {
         assert(path.length > 0, "Expected at least 1 path part");
         const key = path[0];
@@ -223,36 +222,5 @@ export class DocumentStorageService implements IDocumentStorageService {
             assert(hash === blob.sha, "Blob.sha and hash do not match!!");
         }
         return hash;
-    }
-
-    private getGitMode(value: SummaryObject): string {
-        const type = value.type === SummaryType.Handle ? value.handleType : value.type;
-        switch (type) {
-            case SummaryType.Blob:
-            case SummaryType.Attachment:
-                return FileMode.File;
-            case SummaryType.Commit:
-                return FileMode.Commit;
-            case SummaryType.Tree:
-                return FileMode.Directory;
-            default:
-                throw new Error();
-        }
-    }
-
-    private getGitType(value: SummaryObject): string {
-        const type = value.type === SummaryType.Handle ? value.handleType : value.type;
-
-        switch (type) {
-            case SummaryType.Blob:
-            case SummaryType.Attachment:
-                return "blob";
-            case SummaryType.Commit:
-                return "commit";
-            case SummaryType.Tree:
-                return "tree";
-            default:
-                throw new Error();
-        }
     }
 }

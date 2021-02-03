@@ -5,8 +5,9 @@
 
 import * as bodyParser from "body-parser";
 import cors from "cors";
+// eslint-disable-next-line import/no-duplicates
 import express from "express";
-// eslint-disable-next-line no-duplicate-imports
+// eslint-disable-next-line no-duplicate-imports, import/no-duplicates
 import { Express } from "express";
 import morgan from "morgan";
 import * as nconf from "nconf";

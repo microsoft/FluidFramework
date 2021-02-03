@@ -1,8 +1,31 @@
-## 0.33 Breaking changes
-- [Map and Directory typing changes from enabling strictNullCheck](#map-and-directory-typing-changes-from-enabling-strictNullCheck)
+## 0.34 Breaking changes
+- [Aqueduct writeBlob() and BlobHandle implementation removed](#Aqueduct-writeBlob-and-BlobHandle-implementation-removed)
+- [Connected events raised on registration](#Connected-events-raised-on-registration)
 
-## Map and Directory typing changes from enabling strictNullCheck
+### Aqueduct writeBlob() and BlobHandle implementation removed
+`writeBlob()` and `BlobHandle` have been removed from aqueduct. Please use `FluidDataStoreRuntime.uploadBlob()` or `ContainerRuntime.uploadBlob()` instead.
+
+### Connected events raised on registration
+Connected / disconnected listeners are called on registration.
+Pleas see [Connectivity events](packages/loader/container-loader/README.md#Connectivity-events) section of Loader readme.md for more details
+
+## 0.33 Breaking changes
+- [Normalizing enum ContainerErrorType](#normalizing-enum-containererrortype)
+- [Map and Directory typing changes from enabling strictNullCheck](#map-and-directory-typing-changes-from-enabling-strictNullCheck)
+- [MergeTree's ReferencePosition.getTileLabels and ReferencePosition.getRangeLabels() return undefined if it doesn't exist](#mergetree-referenceposition-gettilelabels-getrangelabels-changes)
+- [Containers from Loader.request() are now cached by default](#Containers-from-Loader.request()-are-now-cached-by-default)
+
+### Normalizing enum ContainerErrorType
+In an effort to clarify error categorization, a name and value in this enumeration were changed.
+
+### Map and Directory typing changes from enabling strictNullCheck
 Typescript compile options `strictNullCheck` is enabled for the `@fluidframework/map` package. Some of the API signature is updated to include possibility of `undefined` and `null`, which can cause new typescript compile error when upgrading.  Existing code may need to update to handle the possiblity of `undefined` or `null.
+
+### MergeTree ReferencePosition getTileLabels getRangeLabels changes
+This includes LocalReference and Marker.  getTileLabels and getRangeLabels methods will return undefined instead of creating an empty if the properties for tile labels and range labels is not set.
+
+### Containers from Loader.request() are now cached by default
+Some loader request header options that previously prevented caching (`pause: true` and `reconnect: false`) no longer do.  Callers must now explicitly spcify `cache: false` in the request header to prevent caching of the returned container.  Containers are evicted from the cache in their `closed` event, and closed containers that are requested are not cached.
 
 ## 0.32 Breaking changes
 - [Node version 12.17 required](#Node-version-update)
