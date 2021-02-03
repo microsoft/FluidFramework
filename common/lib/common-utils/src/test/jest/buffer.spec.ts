@@ -175,11 +175,11 @@ describe("Buffer isomorphism", () => {
     test("bufferToString working with IsoBuffer",() => {
         const test = "aGVsbG90aGVyZQ==";
 
-        const buffer = BufferBrowser.stringToBuffer(test, "base64");
+        const buffer = BufferBrowser.IsoBuffer.from(test, "base64");
         expect(BufferBrowser.bufferToString(buffer, "base64")).toEqual(test);
         expect(BufferBrowser.bufferToString(buffer, "utf-8")).toEqual("hellothere");
 
-        const buffer2 = BufferNode.stringToBuffer(test, "base64");
+        const buffer2 = BufferNode.IsoBuffer.from(test, "base64");
         expect(BufferNode.bufferToString(buffer2, "base64")).toEqual(test);
         expect(BufferNode.bufferToString(buffer2, "utf-8")).toEqual("hellothere");
     });
