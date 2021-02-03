@@ -45,7 +45,7 @@
     "@babel/core": "^7.12.10",
     "@babel/plugin-proposal-class-properties": "^7.4.4",
     "@fluidframework/build-common": "^0.20.0",
-    "@fluidframework/eslint-config-fluid": "^0.22.1-0",
+    "@fluidframework/eslint-config-fluid": "^0.22.1",
     "@fluidframework/webpack-fluid-loader": "^0.34.0",
     "@types/babel__core": "^7",
     "@types/node": "^10.17.24",
