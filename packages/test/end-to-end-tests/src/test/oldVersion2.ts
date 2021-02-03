@@ -59,22 +59,8 @@ const defaultCodeDetails: IFluidCodeDetails = {
     config: {},
 };
 
-// This is a replica of the code in localLoader.ts in test-utils, but bind to the old version.
-// TODO: once 0.27 is the back-compat version that we test, we can just use the version in the old-test-utils2
-// However, if there are any changes to these class and code, we can shim it here.
-
 /**
- * A convenience class to manage a set of local test object to create loaders/containers with configurable way
- * to create a runtime factory from channels and factories to allow different version of the runtime to be created.
- * The objects includes the LocalDeltaConnectionServer, DocumentServiceFactory, UrlResolver.
- *
- * When creating and loading containers, it uses a default document id and code detail.
- *
- * Since the channel is just a pass thru to the call back, the type is parameterized to allow use channel
- * from different version. The only types that required to compatible when using different versions are:
- *   fluidEntryPoint
- *   IClientConfiguration
- *   ILocalDeltaConnectionServer
+ * @deprecated - remove once 0.34 is released. see oldVersion for necessary changes
  */
 export class LocalTestObjectProvider<TestContainerConfigType> {
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
