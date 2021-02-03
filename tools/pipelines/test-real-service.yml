@@ -16,7 +16,7 @@ parameters:
 
 - name: poolBuild
   type: object
-  default: Lite
+  default: Main
 
 - name: checkoutSubmodules
   type: boolean
