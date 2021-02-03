@@ -279,12 +279,12 @@ export class EpochTrackerWithRedemption extends EpochTracker {
             if (fetchType === "treesLatest") {
                 this.treesLatestDeferral.reject(error);
             }
-            if (fetchType !== "joinSession" || error.statusCode !== 404 || completed) {
+            if (fetchType !== "joinSession" || error.statusCode < 401 || error.statusCode > 404 || completed) {
                 throw error;
             }
         }
 
-        // It is joinSession failing with 404.
+        // It is joinSession failing with 401..404 error
         // Repeat after waiting for treeLatest succeeding (of fail if it fails).
         // No special handling after first call - if file has been deleted, then it's game over.
         await this.treesLatestDeferral.promise;
