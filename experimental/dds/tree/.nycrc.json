@@ -1,5 +1,5 @@
 {
-	"all": true,
+	"extends": "../../.nycrc.json",
 	"include": ["dist/**", "src/**"],
 	"exclude": ["**/{test,tests}/**", "**/**.{test,tests}.{js,jsx,ts,tsx}", "**/*test_index.js"]
 }
