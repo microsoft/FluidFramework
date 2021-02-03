@@ -161,11 +161,11 @@ describe("Tests for Epoch Tracker", () => {
         cache.put(cacheEntry1, { value: "val1", fluidEpoch: "epoch1", version: "0.1" }, 0);
         // This will set the initial epoch value in epoch tracker.
         await mockFetch({}, async () => {
-            return epochTracker.fetchFromCache(cacheEntry1, undefined, "other");
+            return epochTracker.fetchFromCache(cacheEntry1, undefined, FetchType.other);
         });
         try {
             await mockFetchCustom({ headers: { "x-fluid-epoch": "epoch1" } }, false, 409, async () => {
-                return epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "other");
+                return epochTracker.fetchAndParseAsJSON("fetchUrl", {}, FetchType.other);
             });
         } catch (error) {
             success = false;
@@ -186,11 +186,11 @@ describe("Tests for Epoch Tracker", () => {
         cache.put(cacheEntry1, { value: "val1", fluidEpoch: "epoch1", version: "0.1" }, 0);
         // This will set the initial epoch value in epoch tracker.
         await mockFetch({}, async () => {
-            return epochTracker.fetchFromCache(cacheEntry1, undefined, "other");
+            return epochTracker.fetchFromCache(cacheEntry1, undefined, FetchType.other);
         });
         try {
             await mockFetchCustom({ headers: { "x-fluid-epoch": "epoch2" } }, false, 409, async () => {
-                return epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "other");
+                return epochTracker.fetchAndParseAsJSON("fetchUrl", {}, FetchType.other);
             });
         } catch (error) {
             success = false;
