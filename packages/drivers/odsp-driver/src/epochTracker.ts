@@ -98,6 +98,11 @@ export class EpochTracker {
             this.validateEpochFromResponse(epochFromResponse, fetchType);
             return response;
         } catch (error) {
+            // Get the server epoch from error in case we don't have it as if undefined we won't be able
+            // to mark it as epoch error.
+            if (epochFromResponse === undefined) {
+                epochFromResponse = error.serverEpoch;
+            }
             await this.checkForEpochError(error, epochFromResponse, fetchType);
             throw error;
         }
@@ -127,6 +132,11 @@ export class EpochTracker {
             this.validateEpochFromResponse(epochFromResponse, fetchType);
             return response;
         } catch (error) {
+            // Get the server epoch from error in case we don't have it as if undefined we won't be able
+            // to mark it as epoch error.
+            if (epochFromResponse === undefined) {
+                epochFromResponse = error.serverEpoch;
+            }
             await this.checkForEpochError(error, epochFromResponse, fetchType);
             throw error;
         }

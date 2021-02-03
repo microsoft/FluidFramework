@@ -169,6 +169,28 @@ async function main() {
         result = await runnerProcess(loginInfo, profile, runId, url);
         process.exit(result);
     }
+    const loginInfo: IOdspTestLoginInfo = { server: tenant.server, username: tenant.username, password };
+
+    const profile: ILoadTestConfig | undefined = config.profiles[profileArg];
+    if (profile === undefined) {
+        console.error("Invalid --profile argument not found in testConfig.json profiles");
+        process.exit(-1);
+    }
+
+    if (log !== undefined) {
+        process.env.DEBUG = log;
+    }
+
+    let result: number;
+    // When runId is specified (with url), kick off a single test runner and exit when it's finished
+    if (runId !== undefined) {
+        if (url === undefined) {
+            console.error("Missing --url argument needed to run child process");
+            process.exit(-1);
+        }
+        result = await runnerProcess(loginInfo, profile, runId, url);
+        process.exit(result);
+    }
 
     // When runId is not specified, this is the orchestrator process which will spawn child test runners.
     result = await orchestratorProcess(
