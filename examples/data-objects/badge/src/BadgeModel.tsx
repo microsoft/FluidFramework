@@ -16,9 +16,22 @@ import { defaultItems } from "./helpers";
 import { BadgeClient } from "./BadgeClient";
 
 export class Badge extends DataObject implements IBadgeModel, IFluidHTMLView {
-    currentCell: SharedCell<AsSerializable<IBadgeType>>;
-    optionsMap: SharedMap;
-    historySequence: SharedObjectSequence<IBadgeHistory>;
+    private _currentCell: SharedCell<AsSerializable<IBadgeType>> | undefined;
+    private _optionsMap: SharedMap | undefined;
+    private _historySequence: SharedObjectSequence<IBadgeHistory> | undefined;
+
+    public get currentCell() {
+        if (!this._currentCell) { throw new Error("Not initialized"); }
+        return this._currentCell;
+    }
+    public get optionsMap() {
+        if (!this._optionsMap) { throw new Error("Not initialized"); }
+        return this._optionsMap;
+    }
+    public get historySequence() {
+        if (!this._historySequence) { throw new Error("Not initialized"); }
+        return this._historySequence;
+    }
 
     public get IFluidHTMLView() { return this; }
 
@@ -59,10 +72,13 @@ export class Badge extends DataObject implements IBadgeModel, IFluidHTMLView {
      * object refs as props to the React component.
      */
     protected async hasInitialized() {
-        [this.currentCell, this.optionsMap, this.historySequence] = await Promise.all([
-            this.root.get<IFluidHandle<SharedCell>>(this.currentId).get(),
-            this.root.get<IFluidHandle<SharedMap>>(this.optionsId).get(),
-            this.root.get<IFluidHandle<SharedObjectSequence<IBadgeHistory>>>(this.historyId).get(),
+        [this._currentCell, this._optionsMap, this._historySequence] = await Promise.all([
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.root.get<IFluidHandle<SharedCell>>(this.currentId)!.get(),
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.root.get<IFluidHandle<SharedMap>>(this.optionsId)!.get(),
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.root.get<IFluidHandle<SharedObjectSequence<IBadgeHistory>>>(this.historyId)!.get(),
         ]);
     }
 
