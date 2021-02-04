@@ -15,18 +15,33 @@ export const createResponse = async (response: object, ok: boolean, status: numb
         text: async () => Promise.resolve(JSON.stringify(response)),
         headers: (response as any).headers
             ? new fetchModule.Headers({ ...(response as any).headers }) : new fetchModule.Headers(),
-});
+    });
 
 export const okResponse = async (response: object) => createResponse(response, true, 200);
 export const notFound = async (response: object) => createResponse(response, false, 404);
 
-export async function mockFetch<T>(response: object, callback: () => Promise<T>): Promise<T> {
+export async function mockFetch<T>(
+    response: object,
+    callback: () => Promise<T>,
+    responseType = okResponse,
+    restoreOnCall = false,
+    restoreAtEnd = true,
+): Promise<T> {
     const fetchStub = sinon.stub(fetchModule, "default");
-    fetchStub.returns(okResponse(response));
+    fetchStub.callsFake(async () => {
+        // restoreOnCall needs be true if the fetch call needs to be mocked again before
+        // the callback returns
+        if (restoreOnCall) {
+            fetchStub.restore();
+        }
+        return responseType(response);
+    });
     try {
         return await callback();
     } finally {
-        fetchStub.restore();
+        if (restoreAtEnd) {
+            fetchStub.restore();
+        }
     }
 }
 
