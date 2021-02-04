@@ -754,7 +754,7 @@ export class MapKernel implements IValueTypeCreator {
                     this.submitMessage(op, localOpMetadata);
                 },
                 rebaseOp: (op: IMapValueTypeOperation) => {
-                    assert(false, "not implemented");
+                    assert(false, "rebase not implemented for custom value type ops");
                 },
             });
 

@@ -1019,6 +1019,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         rebaseP.then(() => {
             this.paused = false;
             this.scheduleManager.setPaused(false);
+        }, (error) => {
+            this.closeFn(CreateContainerError(error));
         });
     };
 
@@ -1030,8 +1032,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return this.dataStores.rebaseAttachOp(op as unknown as IAttachMessage);
             case ContainerMessageType.BlobAttach:
                 return;
+            case ContainerMessageType.ChunkedOp:
+                throw new Error(`chunkedOp not expected here`);
             default:
-                throw new Error(`Unable to rebase ${type}`);
+                unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
         }
     }
 
@@ -1576,7 +1580,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ): void {
         this.verifyNotClosed();
 
-        assert(this.context.pendingLocalState === undefined, "op submitted while processing pending initial state");
+        if (this.context.pendingLocalState === undefined) {
+            this.closeFn(CreateContainerError("op submitted while processing pending initial state"));
+        }
 
         let clientSequenceNumber: number = -1;
 
