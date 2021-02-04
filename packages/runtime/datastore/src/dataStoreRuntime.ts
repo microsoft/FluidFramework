@@ -217,7 +217,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         const tree = dataStoreContext.baseSnapshot;
 
         this.initialChannelUsedRoutesP = new LazyPromise(async () => {
-            // back-compat: 0.34.0. getInitialGCSummaryDetails is added to IFluidDataStoreContext in 0.34.0. Remove
+            // back-compat: 0.35.0. getInitialGCSummaryDetails is added to IFluidDataStoreContext in 0.35.0. Remove
             // undefined check when N > 0.36.0.
             const gcDetailsInInitialSummary = await this.dataStoreContext.getInitialGCSummaryDetails?.();
             if (gcDetailsInInitialSummary?.usedRoutes !== undefined) {
@@ -231,7 +231,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         });
 
         this.initialChannelGCDataP = new LazyPromise(async () => {
-            // back-compat: 0.34.0. getInitialGCSummaryDetails is added to IFluidDataStoreContext in 0.34.0. Remove
+            // back-compat: 0.35.0. getInitialGCSummaryDetails is added to IFluidDataStoreContext in 0.35.0. Remove
             // undefined check when N > 0.36.0.
             const gcDetailsInInitialSummary = await this.dataStoreContext.getInitialGCSummaryDetails?.();
             if (gcDetailsInInitialSummary?.gcData !== undefined) {
