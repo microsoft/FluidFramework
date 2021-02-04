@@ -11,7 +11,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { v4 as uuid } from "uuid";
 import { ReferenceType } from "@fluidframework/merge-tree";
-import { generateLocalNonCompatTest, ITestObjectProvider, ITestContainerConfig, TestDataObject } from "./compatUtils";
+import { generateNonCompatTest, ITestObjectProvider, ITestContainerConfig, TestDataObject } from "./compatUtils";
 
 const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: { initialSummarizerDelayMs: 20, summaryConfigOverrides: { maxOps: 1 } },
@@ -143,5 +143,5 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
 describe("blobs", () => {
     // TODO: add back compat test once N-2 is 0.28
-    generateLocalNonCompatTest(tests);
+    generateNonCompatTest(tests);
 });
