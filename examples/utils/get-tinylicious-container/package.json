@@ -32,6 +32,7 @@
     "@fluidframework/driver-definitions": "^0.35.0",
     "@fluidframework/routerlicious-driver": "^0.35.0",
     "@fluidframework/tinylicious-driver": "^0.35.0",
+    "@fluidframework/test-runtime-utils": "^0.35.0",
     "jsonwebtoken": "^8.4.0"
   },
   "devDependencies": {
