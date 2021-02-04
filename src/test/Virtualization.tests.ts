@@ -120,9 +120,7 @@ describe('SharedTree history virtualization', () => {
 		await localTestObjectProvider.opProcessingController.process();
 
 		const { editHistory } = sharedTree.saveSummary() as SharedTreeSummary;
-		expect(editHistory).to.not.be.undefined;
 		const { editChunks } = assertNotUndefined(editHistory);
-		expect(editChunks).to.not.be.undefined;
 		expect(editChunks.length).to.equal(1);
 
 		// The chunk given by the summary should be an array of length 1.
@@ -154,27 +152,24 @@ describe('SharedTree history virtualization', () => {
 		await localTestObjectProvider.opProcessingController.process();
 
 		const { editHistory } = sharedTree.saveSummary() as SharedTreeSummary;
-		expect(editHistory).to.not.be.undefined;
 		const { editChunks } = assertNotUndefined(editHistory);
-		expect(editChunks).to.not.be.undefined;
 		expect(editChunks.length).to.equal(2);
-		expect(Array.isArray(editChunks[0].chunk)).to.be.false;
+		expect((editChunks[0].chunk as ISerializedHandle).type === '__fluid_handle__');
 		expect(Array.isArray(editChunks[1].chunk)).to.be.true;
+		expect((editChunks[1].chunk as EditWithoutId[]).length).to.equal(10);
 	});
 
 	it('correctly saves handles and their corresponding keys to the summary', async () => {
 		await processNewEditChunks(4);
 
 		const { editHistory } = sharedTree.saveSummary() as SharedTreeSummary;
-		expect(editHistory).to.not.be.undefined;
 		const { editChunks } = assertNotUndefined(editHistory);
-		expect(editChunks).to.not.be.undefined;
 		expect(editChunks.length).to.equal(4);
 
 		// Make sure each key is correct and each chunk in the summary is a handle
 		editChunks.forEach(({ key, chunk }, index) => {
 			expect(key).to.equal(index * editsPerChunk);
-			expect(Array.isArray(chunk)).to.be.false;
+			expect((chunk as ISerializedHandle).type === '__fluid_handle__');
 		});
 	});
 
@@ -200,7 +195,7 @@ describe('SharedTree history virtualization', () => {
 		const sharedTreeSummary = sharedTree.saveSummary() as SharedTreeSummary;
 		const sharedTree2Summary = sharedTree2.saveSummary() as SharedTreeSummary;
 		const sharedTree3Summary = sharedTree3.saveSummary() as SharedTreeSummary;
-		const sharedTreeChunk = sharedTreeSummary.editHistory?.editChunks[0].chunk;
+		const sharedTreeChunk = assertNotUndefined(sharedTreeSummary.editHistory).editChunks[0].chunk;
 
 		// Make sure the chunk is the first shared tree is a serialized handle
 		expect((sharedTreeChunk as ISerializedHandle).type === '__fluid_handle__');
