@@ -200,7 +200,7 @@ describe('SharedTree history virtualization', () => {
 		const sharedTreeSummary = sharedTree.saveSummary() as SharedTreeSummary;
 		const sharedTree2Summary = sharedTree2.saveSummary() as SharedTreeSummary;
 		const sharedTree3Summary = sharedTree3.saveSummary() as SharedTreeSummary;
-		const sharedTreeChunk = assertNotUndefined(sharedTreeSummary.editHistory).editChunks[0].chunk;
+		const sharedTreeChunk = sharedTreeSummary.editHistory?.editChunks[0].chunk;
 
 		// Make sure the chunk is the first shared tree is a serialized handle
 		expect((sharedTreeChunk as ISerializedHandle).type === '__fluid_handle__');
