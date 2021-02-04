@@ -3,6 +3,7 @@
 import { expect } from 'chai';
 import { DataObject } from '@fluidframework/aqueduct';
 import { Container } from '@fluidframework/container-loader';
+import { ISerializedHandle } from '@fluidframework/core-interfaces';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
 import {
 	ChannelFactoryRegistry,
@@ -18,7 +19,6 @@ import { SharedTree, SharedTreeEvent } from '../SharedTree';
 import { fullHistorySummarizer_0_1_0, SharedTreeSummary } from '../Summary';
 import { assertNotUndefined } from '../Common';
 import { makeTestNode, testTrait } from './utilities/TestUtilities';
-import { ISerializedHandle } from '@fluidframework/core-interfaces';
 
 export class TestDataObject extends DataObject {
 	public static readonly type = '@fluid-example/test-dataStore';
@@ -201,11 +201,8 @@ describe('SharedTree history virtualization', () => {
 		const sharedTree2Summary = sharedTree2.saveSummary() as SharedTreeSummary;
 		const sharedTree3Summary = sharedTree3.saveSummary() as SharedTreeSummary;
 		const sharedTreeChunk = assertNotUndefined(sharedTreeSummary.editHistory).editChunks[0].chunk;
-		const sharedTree2Chunk = sharedTree2Summary.editHistory?.editChunks[0].chunk;
-		const sharedTree3Chunk = sharedTree3Summary.editHistory?.editChunks[0].chunk;
 
 		// Make sure the chunk is the first shared tree is a serialized handle
-		expect(sharedTreeChunk.hasOwnProperty('type')).to.be.true;
 		expect((sharedTreeChunk as ISerializedHandle).type === '__fluid_handle__');
 
 		expect(sharedTreeSummary).to.deep.equal(sharedTree2Summary);
