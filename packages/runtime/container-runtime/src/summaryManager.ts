@@ -424,8 +424,8 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         }
 
         let summarizer: ISummarizer | undefined;
-        // back-compat 0.33: this function is added in 0.34, but the original path
-        // needs to be preserved until 0.33 is no longer supported at this layer
+        // back-compat 0.34: this function is added in 0.35, but the original path
+        // needs to be preserved until 0.34 is no longer supported at this layer
         if (!this.context.createNextSummarizerFn) {
             const loader = this.context.loader;
 
