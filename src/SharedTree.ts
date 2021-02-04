@@ -82,6 +82,7 @@ export enum SharedTreeEvent {
 	/**
 	 * Upload has completed for a set of edit chunks.
 	 * This event is used exclusively for testing.
+	 * @internal
 	 */
 	ChunksUploaded = 'uploadedChunks',
 }
