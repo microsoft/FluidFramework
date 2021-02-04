@@ -29,3 +29,18 @@ export async function mockFetch<T>(response: object, callback: () => Promise<T>)
         fetchStub.restore();
     }
 }
+
+export async function mockFetchCustom<T>(
+    response: object,
+    ok: boolean,
+    status: number,
+    callback: () => Promise<T>,
+): Promise<T> {
+    const fetchStub = sinon.stub(fetchModule, "default");
+    fetchStub.returns(createResponse(response, ok, status));
+    try {
+        return await callback();
+    } finally {
+        fetchStub.restore();
+    }
+}

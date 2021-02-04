@@ -50,7 +50,7 @@ export class LocalLambdaController extends EventEmitter implements IKafkaSubscri
             }
         } catch (ex) {
             // In the event a lambda fails to start, retry it
-            this.context.error(ex, true);
+            this.context.error(ex, { restart: true });
 
             this.startTimer = setTimeout(() => {
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises

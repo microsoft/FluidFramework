@@ -205,7 +205,11 @@ export class DeliLambda implements IPartitionLambda {
                 };
                 this.context.log.error(
                     `Could not send message to scriptorium: ${JSON.stringify(error)}`, { messageMetaData });
-                this.context.error(error, true);
+                this.context.error(error, {
+                    restart: true,
+                    tenantId: this.tenantId,
+                    documentId: this.documentId,
+                });
             });
 
         // Start a timer to check inactivity on the document. To trigger idle client leave message,
@@ -530,7 +534,11 @@ export class DeliLambda implements IPartitionLambda {
                 tenantId: this.tenantId,
             };
             this.context.log.error(`Could not send message to alfred: ${JSON.stringify(error)}`, { messageMetaData });
-            this.context.error(error, true);
+            this.context.error(error, {
+                restart: true,
+                tenantId: this.tenantId,
+                documentId: this.documentId,
+            });
         });
     }
 
