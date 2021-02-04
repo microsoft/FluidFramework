@@ -4,12 +4,12 @@
  */
 
 import { getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
-import { Container } from "@fluidframework/container-loader";
 import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
+import { IContainer } from "@fluidframework/container-definitions";
 import { KeyValueContainerRuntimeFactory } from "./containerCode";
 
 export class FluidDocument {
-    constructor(private readonly container: Container, public readonly createNew: boolean) { }
+    constructor(private readonly container: IContainer, public readonly createNew: boolean) { }
 
     public async createDataObject<T = any>(type: string, id: string) {
         await this.container.request({ url: `/create/${type}/${id}` });
