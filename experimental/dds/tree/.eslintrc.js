@@ -9,7 +9,6 @@ module.exports = {
 	rules: {
 		// TODO: Recover "noUnusedLocals" behavior as part of linting.  (This rule seems to be broken in the Fluid repo.)
 		// '@typescript-eslint/no-unused-vars': ['error', { args: 'none', varsIgnorePattern: '^_' }],
-
 		'@typescript-eslint/quotes': [
 			'error',
 			'single',
