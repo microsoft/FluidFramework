@@ -63,11 +63,24 @@ export interface IDocumentDeltaStorageService {
     get(from: number, to: number): Promise<IDeltasFetchResult>;
 }
 
+export interface IDocumentStorageServicePolicies {
+    readonly caching?: LoaderCachingPolicy;
+
+    // If this policy is provided, it tells runtime on ideal size for blobs
+    // Blobs that are smaller than that size should be aggregated into bigger blobs
+    readonly minBlobSize?: number;
+}
+
 /**
  * Interface to provide access to snapshots saved for a shared object
  */
 export interface IDocumentStorageService {
     repositoryUrl: string;
+
+    /**
+     * Policies implemented/instructed by driver.
+     */
+    policies?: IDocumentStorageServicePolicies;
 
     /**
      * Returns the snapshot tree.
@@ -208,18 +221,9 @@ export enum LoaderCachingPolicy {
     Prefetch,
 }
 
-export interface IDocumentServicePolicies {
-    readonly caching?: LoaderCachingPolicy;
-}
-
 export interface IDocumentService {
 
     resolvedUrl: IResolvedUrl;
-
-    /**
-     * Policies implemented/instructed by driver.
-     */
-    policies?: IDocumentServicePolicies;
 
     /**
      * Access to storage associated with the document...

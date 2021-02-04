@@ -84,13 +84,13 @@ describe("SharedString", () => {
                 createDocumentService: async (resolvedUrl,logger) => {
                     const realDs = await realSf.createDocumentService(resolvedUrl, logger);
                     const mockDs = Object.create(realDs) as IDocumentService;
-                    mockDs.policies = {
-                        ... mockDs.policies,
-                        caching: LoaderCachingPolicy.NoCaching,
-                    };
                     mockDs.connectToStorage = async ()=>{
                         const realStorage = await realDs.connectToStorage();
                         const mockstorage = Object.create(realStorage) as IDocumentStorageService;
+                        mockstorage.policies = {
+                            ...realStorage.policies,
+                            caching: LoaderCachingPolicy.NoCaching,
+                        };
                         mockstorage.read = async (id)=>{
                             const blob = await realStorage.read(id);
                             const blobObj = JSON.parse(Buffer.from(blob, "Base64").toString());

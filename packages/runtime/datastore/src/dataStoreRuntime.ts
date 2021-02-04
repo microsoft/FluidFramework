@@ -662,7 +662,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 // Not generating full summary will mean data loss, as we will overwrite aggregate blob in new summary,
                 // and any virtual blobs that stayed (for unchanged DDSs) will need aggregate blob in previous summary
                 // that is no longer present in this summary.
-                // This is temporal limitation that cna be lifted in future once BlobAggregatorStorage becomes smarter.
+                // This is temporal limitation that can be lifted in future once BlobAggregatorStorage becomes smarter.
                 const contextSummary = await context.summarize(true /* fullTree */, trackState);
                 summaryBuilder.addWithStats(contextId, contextSummary);
 

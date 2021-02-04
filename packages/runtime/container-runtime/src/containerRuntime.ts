@@ -482,6 +482,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             });
         }
 
+        const logger = ChildLogger.create(context.logger, undefined, {
+            runtimeVersion: pkgVersion,
+        });
+
         let storage = context.storage;
         if (context.baseSnapshot) {
             // This will patch snapshot in place!
@@ -490,7 +494,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Note that if storage is provided later by loader layer, we will wrap storage in this.storage getter.
             // BlobAggregatorStorage is smart enough for double-wrapping to be no-op
             if (context.storage) {
-                const aggrStorage = BlobAggregatorStorage.wrap(context.storage);
+                const aggrStorage = BlobAggregatorStorage.wrap(context.storage, logger);
                 await aggrStorage.unpackSnapshot(context.baseSnapshot);
                 storage = aggrStorage;
             } else {
@@ -518,6 +522,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             chunks,
             runtimeOptions,
             containerScope,
+            logger,
             requestHandler,
             storage);
 
@@ -563,7 +568,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // no storage and it's passed down the stack without right typing.
         if (!this._storage && this.context.storage) {
             // Note: BlobAggregatorStorage is smart enough for double-wrapping to be no-op
-            this._storage = BlobAggregatorStorage.wrap(this.context.storage);
+            this._storage = BlobAggregatorStorage.wrap(this.context.storage, this.logger);
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this._storage!;
@@ -623,10 +628,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public readonly IFluidHandleContext: IFluidHandleContext;
 
-    // internal logger for ContainerRuntime
+    // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly _logger: ITelemetryLogger;
-    // publicly visible logger, to be used by stores, summarize, etc.
-    public readonly logger: ITelemetryLogger;
     public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
     private latestSummaryAck: ISummaryContext;
@@ -693,6 +696,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             enableWorker: false,
         },
         private readonly containerScope: IFluidObject,
+        public readonly logger: ITelemetryLogger,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private _storage?: IDocumentStorageService,
     ) {
@@ -703,10 +707,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.IFluidHandleContext = new ContainerFluidHandleContext("", this);
         this.IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
-
-        this.logger = ChildLogger.create(context.logger, undefined, {
-            runtimeVersion: pkgVersion,
-        });
 
         this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
 

@@ -284,7 +284,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         return this._storageService;
     }
-    private blobsCacheStorageService: IDocumentStorageService | undefined;
 
     private _clientId: string | undefined;
     private _id: string | undefined;
@@ -744,7 +743,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public get storage(): IDocumentStorageService | undefined {
-        return this.blobsCacheStorageService ?? this._storageService;
+        return this._storageService;
     }
 
     /**
@@ -894,8 +893,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         if (blobs.size > 0) {
-            this.blobsCacheStorageService =
+            const blobSize = this.storageService.policies?.minBlobSize;
+            this._storageService =
                 new BlobCacheStorageService(this.storageService, blobs);
+            // ensure we did not lose that policy in the process of wrapping
+            assert(blobSize === this._storageService.policies?.minBlobSize);
         }
         const attributes: IDocumentAttributes = {
             branch: this.id,

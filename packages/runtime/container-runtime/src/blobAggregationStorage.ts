@@ -23,21 +23,12 @@ import {
     fromUtf8ToBase64,
     Uint8ArrayToString,
  } from "@fluidframework/common-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 
 // Gate that when flipped, instructs to compress small blobs.
 // We have to first ship with this gate off, such that we can get to saturation bits
 // that can understand compressed format. And only after that flip it.
  const gatesAllowPacking = false;
-
-// 2K seems like the sweat spot:
-// The smaller the number, less blobs we aggregate. Most storages are very likely to have notion
-// of minimal "cluster" size, so having small blobs is wasteful
-// At the same time increasing the limit ensure that more blobs with user content are aggregated,
-// reducing possibility for de-duping of same blobs (i.e. .attributes rolled into aggregate blob
-// are not reused across data stores, or even within data store, resulting in duplication of content)
-// Note that duplication of content should not have significant impact for bytes over wire as
-// compression of http payload mostly takes care of it, but it does impact storage size and in-memory sizes.
-const blobCutOffSize = 2048;
 
 /*
  * Work around for bufferToString having a bug - it can't consume IsoBuffer!
@@ -121,7 +112,7 @@ abstract class SnapshotExtractor {
                         subTree = subTree.trees[subPath];
                     }
                     const blobName = pathSplit[pathSplit.length - 1];
-                    assert(subTree.blobs[blobName] === undefined);
+                    assert(subTree.blobs[blobName] === undefined, "real blob ID exists");
                     subTree.blobs[blobName] = id;
                 }
                 // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
@@ -147,12 +138,12 @@ abstract class SnapshotExtractor {
 class SnapshotExtractorInPlace extends SnapshotExtractor {
     public async getBlob(id: string, tree: ISnapshotTree): Promise<ArrayBufferLike> {
         const blob = tree.blobs[id];
-        assert(blob !== undefined);
+        assert(blob !== undefined, "aggregate blob missing");
         return stringToBuffer(blob, "base64");
     }
 
     public setBlob(id: string, tree: ISnapshotTree, content: string) {
-        assert(tree.blobs[id] === undefined);
+        assert(tree.blobs[id] === undefined, "blob from aggregate blob exists on its own");
         tree.blobs[id] = fromUtf8ToBase64(content);
     }
 }
@@ -179,11 +170,15 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
 
     protected virtualBlobs = new Map<string, ArrayBufferLike>();
 
-    static wrap(storage: IDocumentStorageService) {
+    static wrap(storage: IDocumentStorageService, logger: ITelemetryLogger) {
         if (storage instanceof BlobAggregatorStorage) {
             return storage;
         }
-        return new BlobAggregatorStorage(storage);
+        // Always create BlobAggregatorStorage even if storage is not asking for packing.
+        // This is mostly to avoid cases where future changes in policy would result in inability to
+        // load old files that were created with aggregation on.
+        const minBlobSize = storage.policies?.minBlobSize;
+        return new BlobAggregatorStorage(storage, logger, minBlobSize);
     }
 
     static async unpackSnapshot(snapshot: ISnapshotTree) {
@@ -191,13 +186,24 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
         await converter.unpackSnapshotCore(snapshot);
     }
 
+    public get policies() {
+        const policies = this.storage.policies;
+        if (policies) {
+            return { ...policies, minBlobSize: undefined };
+        }
+    }
+
     public async unpackSnapshot(snapshot: ISnapshotTree) {
-        assert(!this.loadedFromSummary);
+        assert(!this.loadedFromSummary, "unpack without summary");
         this.loadedFromSummary = true;
         await this.unpackSnapshotCore(snapshot);
     }
 
-    protected constructor(private readonly storage: IDocumentStorageService) {
+    protected constructor(
+        private readonly storage: IDocumentStorageService,
+        private readonly logger: ITelemetryLogger,
+        private readonly blobCutOffSize?: number)
+    {
         super();
     }
 
@@ -206,7 +212,10 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
     }
 
     public async getBlob(id: string, tree: ISnapshotTree): Promise<ArrayBufferLike> {
-        return this.readBlob(id);
+        return this.readBlob(id).catch((error) => {
+            this.logger.sendErrorEvent({ eventName: "BlobDedupNoAggregateBlob" }, error);
+            throw error;
+        });
     }
 
     public get repositoryUrl() { return this.storage.repositoryUrl; }
@@ -282,15 +291,18 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
         summary: ISummaryTree,
         path = "",
         level = 0,
-        statsArg?: BlobAggregator): Promise<ISummaryTree>
+        aggregatorArg?: BlobAggregator): Promise<ISummaryTree>
     {
+        if (this.blobCutOffSize === undefined || this.blobCutOffSize < 0) {
+            return summary;
+        }
         // Only pack at data store level.
         const startingLevel = level === 1;
 
-        let stats = statsArg;
+        let aggregator = aggregatorArg;
         if (startingLevel) {
-            assert(stats === undefined);
-            stats = new BlobAggregator();
+            assert(aggregator === undefined, "logic err with aggregator");
+            aggregator = new BlobAggregator();
         }
 
         const newSummary: ISummaryTree = {...summary};
@@ -301,9 +313,9 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
             switch (obj.type) {
                 case SummaryType.Tree:
                     // If client created empty tree, keep it as is
-                    // Also do not package search blobs - they are path of storage contract
+                    // Also do not package search blobs - they are part of storage contract
                     if (obj.tree !== {} && key !== "__search") {
-                        const tree = await this.compressSmallBlobs(obj, newPath, level + 1, stats);
+                        const tree = await this.compressSmallBlobs(obj, newPath, level + 1, aggregator);
                         newSummary.tree[key] = tree;
                         if (tree.tree === {}) {
                             // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
@@ -312,8 +324,8 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
                     }
                     break;
                 case SummaryType.Blob:
-                    if (stats && typeof obj.content == "string" && obj.content.length < blobCutOffSize) {
-                        stats.addBlob(newPath, obj.content);
+                    if (aggregator && typeof obj.content == "string" && obj.content.length < this.blobCutOffSize) {
+                        aggregator.addBlob(newPath, obj.content);
                         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                         delete newSummary.tree[key];
                     }
@@ -328,27 +340,27 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
                         handlePath = handlePath.substr(1);
                     }
                     // Ensure only whole data stores can be reused, no reusing at deeper level!
-                    assert(level === 0);
+                    assert(level === 0, "tree reuse at lower level");
                     assert(handlePath.indexOf("/") === -1, "data stores are writing incremental summaries!");
                     break;
                 }
                 case SummaryType.Attachment:
-                    assert(this.isRealStorageId(obj.id));
+                    assert(this.isRealStorageId(obj.id), "attachment is aggregate blob");
                     break;
                 default:
                     unreachableCase(obj, `Unknown type: ${(obj as any).type}`);
             }
         }
 
-        assert(newSummary.tree[this.aggregatedBlobName] === undefined);
+        assert(newSummary.tree[this.aggregatedBlobName] === undefined, "duplicate aggregate blob");
         if (startingLevel) {
             // Note: It would be great to add code here to unpack aggregate blob back to normal blobs
             // If only one blob made it into aggregate. Currently that does not happen as we always have
             // at least one .component blob and at least one DDS that has .attributes blob, so it's not an issue.
             // But it's possible that in future that would be great addition!
             // Good news - it's backward compatible change.
-            assert(stats !== undefined);
-            const content = stats.getAggregatedBlobContent();
+            assert(aggregator !== undefined, "logic error");
+            const content = aggregator.getAggregatedBlobContent();
             if (content !== undefined) {
                 newSummary.tree[this.aggregatedBlobName] = {
                     type: SummaryType.Blob,
