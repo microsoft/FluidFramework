@@ -516,5 +516,5 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 };
 
 describe("Batching", () => {
-    generateTest(tests, { tinylicious: true });
+    generateTest(tests);
 });
