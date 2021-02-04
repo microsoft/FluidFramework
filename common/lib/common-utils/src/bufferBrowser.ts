@@ -48,6 +48,11 @@ export const bufferToString = (blob: ArrayBufferLike, encoding: string): string 
  * Minimal implementation of Buffer for our usages in the browser environment.
  */
 export class IsoBuffer extends Uint8Array {
+    // Need to have ctor for it to be in proto chain for instanceof check in from() method to work
+    public constructor(buffer: ArrayBufferLike, byteOffset?: number, length?: number) {
+        super(buffer, byteOffset, length);
+    }
+
     /**
      * Convert the buffer to a string.
      * Only supports encoding the whole string (unlike the Node Buffer equivalent)
@@ -66,6 +71,8 @@ export class IsoBuffer extends Uint8Array {
     static from(value, encodingOrOffset?, length?): IsoBuffer {
         if (typeof value === "string") {
             return IsoBuffer.fromString(value, encodingOrOffset as string | undefined);
+        } else if (value instanceof IsoBuffer) {
+            return value;
         } else if (value instanceof ArrayBuffer) {
             return IsoBuffer.fromArrayBuffer(value, encodingOrOffset as number | undefined, length);
         } else {
