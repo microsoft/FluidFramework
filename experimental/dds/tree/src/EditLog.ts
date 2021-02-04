@@ -53,6 +53,14 @@ interface LocalOrderedEdit {
 type OrderedEdit = SequencedOrderedEdit | LocalOrderedEdit;
 
 /**
+ * Event fired when an edit is added to an `EditLog`.
+ * @param edit - The edit that was added to the log
+ * @param isLocal - true iff this edit was generated locally
+ * @internal
+ */
+export type EditAddedHandler = (edit: Edit, isLocal: boolean) => void;
+
+/**
  * The edit history log for SharedTree.
  * Contains only completed edits (no in-progress edits).
  * Ordered first by locality (acked or local), then by time of insertion.
@@ -61,10 +69,10 @@ type OrderedEdit = SequencedOrderedEdit | LocalOrderedEdit;
  */
 export class EditLog implements OrderedEditSet {
 	private localEditSequence = 0;
-	private version = 0;
 	private readonly sequencedEdits: Edit[] = [];
 	private readonly localEdits: Edit[] = [];
 	private readonly allEdits: Map<EditId, OrderedEdit> = new Map();
+	private readonly editAddedHandlers: EditAddedHandler[] = [];
 
 	/**
 	 * Construct an `EditLog` with the given sequenced `Edits`
@@ -77,10 +85,10 @@ export class EditLog implements OrderedEditSet {
 	}
 
 	/**
-	 * Get a value which can be compared with === to determine if a log has not changed.
+	 * Registers a handler for when an edit is added to this `EditLog`.
 	 */
-	public versionIdentifier(): unknown {
-		return this.version;
+	public registerEditAddedHandler(handler: EditAddedHandler): void {
+		this.editAddedHandlers.push(handler);
 	}
 
 	/**
@@ -153,7 +161,6 @@ export class EditLog implements OrderedEditSet {
 	 * If the id of the supplied edit matches a local edit already present in the log, the local edit will be replaced.
 	 */
 	public addSequencedEdit(edit: Edit): void {
-		this.version++;
 		const sequencedEdit: SequencedOrderedEdit = { edit, index: this.sequencedEdits.length, isLocal: false };
 		this.sequencedEdits.push(edit);
 		const existingEdit = this.allEdits.get(edit.id);
@@ -166,6 +173,7 @@ export class EditLog implements OrderedEditSet {
 		}
 
 		this.allEdits.set(edit.id, sequencedEdit);
+		this.emitAdd(edit, false);
 	}
 
 	/**
@@ -173,11 +181,17 @@ export class EditLog implements OrderedEditSet {
 	 * Duplicate edits are ignored.
 	 */
 	public addLocalEdit(edit: Edit): void {
-		this.version++;
 		assert(!this.allEdits.has(edit.id));
 		const localEdit: LocalOrderedEdit = { edit, localSequence: this.localEditSequence++, isLocal: true };
 		this.localEdits.push(edit);
 		this.allEdits.set(edit.id, localEdit);
+		this.emitAdd(edit, true);
+	}
+
+	private emitAdd(editAdded: Edit, isLocal: boolean): void {
+		for (const handler of this.editAddedHandlers) {
+			handler(editAdded, isLocal);
+		}
 	}
 
 	/**

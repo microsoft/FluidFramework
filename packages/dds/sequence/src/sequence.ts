@@ -144,8 +144,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                     break;
                 case "maintenance":
                     if (!this.client.mergeTreeMaintenanceCallback) {
-                        this.client.mergeTreeMaintenanceCallback = (args) => {
-                            this.emit("maintenance", new SequenceMaintenanceEvent(args, this.client), this);
+                        this.client.mergeTreeMaintenanceCallback = (args, opArgs) => {
+                            this.emit("maintenance", new SequenceMaintenanceEvent(opArgs, args, this.client), this);
                         };
                     }
                     break;
