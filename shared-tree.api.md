@@ -394,6 +394,7 @@ export class SharedTreeEditor {
 
 // @public
 export enum SharedTreeEvent {
+    // @internal
     ChunksUploaded = "uploadedChunks",
     EditCommitted = "committedEdit"
 }
