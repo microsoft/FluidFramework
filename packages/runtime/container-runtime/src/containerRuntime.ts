@@ -1380,11 +1380,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 try {
                     // Get the container's GC data and run GC on the reference graph in it.
                     const gcData = await this.dataStores.getGCData();
-                    const { referencedNodeIds } = runGarbageCollection(gcData.gcNodes, [ "/" ], this.logger);
+                    const { referencedNodeIds, deletedNodeIds } = runGarbageCollection(
+                        gcData.gcNodes, [ "/" ],
+                        this.logger,
+                    );
 
                     // Update stats to be reported in the peformance event.
-                    gcStats.totalGCNodes = Object.keys(gcData.gcNodes).length;
-                    gcStats.deletedGCNodes = gcStats.totalGCNodes - referencedNodeIds.length;
+                    gcStats.deletedGCNodes = deletedNodeIds.length;
+                    gcStats.totalGCNodes = referencedNodeIds.length + gcStats.deletedGCNodes;
 
                     // Update our summarizer node's used routes. Updating used routes in summarizer node before
                     // summarizing is required and asserted by the the summarizer node. We are the root and are
