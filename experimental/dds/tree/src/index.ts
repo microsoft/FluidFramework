@@ -19,8 +19,9 @@
 
 export { initialTree } from './InitialTree';
 export { BlobId, SharedTree, SharedTreeEvent, SharedTreeEditor } from './SharedTree';
+export { TreeNodeHandle } from './TreeNodeHandle';
 export { Delta } from './Forest';
-export { SharedTreeSummary, SharedTreeSummarizer } from './Summary';
+export { SharedTreeSummary, SharedTreeSummarizer, fullHistorySummarizer, noHistorySummarizer } from './Summary';
 export { sharedTreeAssertionErrorType } from './Common';
 export * from './PersistedTypes';
 export * from './Factory';

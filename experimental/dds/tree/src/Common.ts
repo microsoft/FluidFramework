@@ -25,7 +25,6 @@ class SharedTreeAssertionError extends Error {
 	public constructor(message: string) {
 		super(message);
 		this.name = 'Assertion error';
-
 		Error.captureStackTrace?.(this);
 	}
 }
@@ -79,6 +78,32 @@ export function assertNotUndefined<T>(value: T | undefined, message = 'value mus
 export function assertArrayOfOne<T>(array: readonly T[], message = 'array value must contain exactly one item'): T {
 	assert(array.length === 1, message);
 	return array[0];
+}
+
+/**
+ * Redefine a property to have the given value. This is simply a type-safe wrapper around
+ * `Object.defineProperty`, but it is useful for caching getters on first read.
+ * @example
+ * ```
+ * // `randomOnce()` will return a random number, but always the same random number.
+ * {
+ *   get randomOnce(): number {
+ *     return memoizeGetter(this, 'randomOnce', random(100))
+ *   }
+ * }
+ * ```
+ * @param object - the object containing the property
+ * @param propName - the name of the property on the object
+ * @param value - the value of the property
+ */
+export function memoizeGetter<T, K extends keyof T>(object: T, propName: K, value: T[K]): T[K] {
+	Object.defineProperty(object, propName, {
+		value,
+		enumerable: true,
+		configurable: true,
+	});
+
+	return value;
 }
 
 /**
