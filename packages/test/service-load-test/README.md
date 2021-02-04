@@ -32,9 +32,17 @@ node ./dist/nodeStressTest.js --runId <runId> --password <password> --url <url> 
 
 There are several npm scripts in [package.json](./package.json) to make it quicker to launch this tool. Among others:
 `npm run start` - Launches in Orchestrator Mode with default options
-`npm run debug` - Launches in Orchestrator Mode with `--debug` provided to allow for attaching to child test runners.
+`npm run debug` - Debugs in Orchestrator Mode with `--debug` provided to allow for attaching to child test runners.
 
 ### Options
+
+#### --tenant, -t
+
+Specifies which test tenant info to use from [testConfig.json](./testConfig.json). Defaults to **fluidCI**.
+
+#### --profile, -p
+
+Specifies which test profile to use from [testConfig.json](./testConfig.json). Defaults to **ci**.
 
 #### --password, -w
 
@@ -44,10 +52,6 @@ The password for the username provided in testconfig.json, to be used to retriev
 
 If present, the test will load an existing data store (at the given url) rather than creating a new container and data store.
 (Required when `--runId` is provided)
-
-#### --profile, -p
-
-Specifies which test profile to use from [testConfig.json](./testConfig.json). Defaults to **full**.
 
 #### --runId, -r
 
@@ -64,6 +68,9 @@ Launches each test runner with `--inspect-brk` and a unique Node debugging port.
 
 #### --log, -l
 
-Overrides DEBUG environment variable for telemetry logging to console. If DEBUG env variable is unset and this is not provided, only errors will print. The value passed here should be a filter string for the logger namespace.
+Overrides DEBUG environment variable for telemetry logging to console.
+If DEBUG env variable is unset and this is not provided, only errors will print.
+The value passed here should be a filter string for the logger namespace.
 
->To print all messages, provide `--log '*'` or `--log 'fluid:*'`. For example, to filter to only Container logs, provide something like: `-l 'fluid:telemetry:Container:*'`.
+>To print all messages, provide `--log '*'` or `--log 'fluid:*'`. For example, to filter to only Container logs,
+provide something like: `-l 'fluid:telemetry:Container:*'`.
