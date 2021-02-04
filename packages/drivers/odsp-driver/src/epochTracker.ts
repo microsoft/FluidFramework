@@ -286,7 +286,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
         }
 
         // It is joinSession failing with 401..404 error
-        // Repeat after waiting for treeLatest succeeding (of fail if it fails).
+        // Repeat after waiting for treeLatest succeeding (or fail if it failed).
         // No special handling after first call - if file has been deleted, then it's game over.
 
         // Ensure we have some safety here - we do not want to deadlock if we got logic somewhere wrong.
