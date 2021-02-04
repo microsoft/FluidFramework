@@ -8,6 +8,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { fluidEpochMismatchError, OdspErrorType } from "@fluidframework/odsp-doclib-utils";
 import { ThrottlingError } from "@fluidframework/driver-utils";
 import { IConnected } from "@fluidframework/protocol-definitions";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { fetchAndParseAsJSONHelper, fetchHelper, IOdspResponse } from "./odspUtils";
 import { ICacheEntry, IFileEntry, LocalPersistentCacheAdapter } from "./odspCache";
 import { RateLimiter } from "./rateLimiter";
@@ -29,7 +30,7 @@ export class EpochTracker {
 
     constructor(
         private readonly persistedCache: LocalPersistentCacheAdapter,
-        private readonly logger: ITelemetryLogger,
+        protected readonly logger: ITelemetryLogger,
     ) {
         // Limits the max number of concurrent requests to 24.
         this.rateLimiter = new RateLimiter(24);
@@ -287,7 +288,20 @@ export class EpochTrackerWithRedemption extends EpochTracker {
         // It is joinSession failing with 401..404 error
         // Repeat after waiting for treeLatest succeeding (of fail if it fails).
         // No special handling after first call - if file has been deleted, then it's game over.
-        await this.treesLatestDeferral.promise;
+
+        // Ensure we have some safety here - we do not want to deadlock if we got logic somewhere wrong.
+        // If we waited too long, we will log error event and proceed with call.
+        // It may result in failure for user, but refreshing document would address it.
+        // Thus we use rather long timeout (not to get these failures as much as possible), but not large enough
+        // to unblock the process.
+        await PerformanceEvent.timedExecAsync(this.logger, { eventName: "JoinSessionSyncWait" }, async (event) => {
+            const timeoutRes = 51; // anything will work here
+            const timeoutP = new Promise<number>((accept) => setTimeout(() => { accept(timeoutRes); }, 15000));
+            const res = await Promise.race([timeoutP, this.treesLatestDeferral.promise]);
+            if (res === timeoutRes) {
+                event.cancel();
+            }
+        });
         return super.fetchAndParseAsJSON<T>(url, fetchOptions, fetchType, addInBody);
     }
 }
