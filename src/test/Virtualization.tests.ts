@@ -196,11 +196,16 @@ describe('SharedTree history virtualization', () => {
 		await processNewEditChunks();
 
 		// All shared trees should have the new handle
-		const chunk1 = (sharedTree.saveSummary() as SharedTreeSummary).editHistory?.editChunks[0].chunk;
-		const chunk2 = (sharedTree2.saveSummary() as SharedTreeSummary).editHistory?.editChunks[0].chunk;
-		const chunk3 = (sharedTree3.saveSummary() as SharedTreeSummary).editHistory?.editChunks[0].chunk;
-		expect(Array.isArray(chunk1)).to.be.false;
-		expect(Array.isArray(chunk2)).to.be.false;
-		expect(Array.isArray(chunk3)).to.be.false;
+		const sharedTreeSummary = sharedTree.saveSummary() as SharedTreeSummary;
+		const sharedTree2Summary = sharedTree2.saveSummary() as SharedTreeSummary;
+		const sharedTree3Summary = sharedTree3.saveSummary() as SharedTreeSummary;
+		const sharedTreeChunk = sharedTreeSummary.editHistory?.editChunks[0].chunk;
+		const sharedTree2Chunk = sharedTree2Summary.editHistory?.editChunks[0].chunk;
+		const sharedTree3Chunk = sharedTree3Summary.editHistory?.editChunks[0].chunk;
+		expect(Array.isArray(sharedTreeChunk)).to.be.false;
+		expect(Array.isArray(sharedTree2Chunk)).to.be.false;
+		expect(Array.isArray(sharedTree3Chunk)).to.be.false;
+		expect(sharedTreeSummary).to.deep.equal(sharedTree2Summary);
+		expect(sharedTree2Summary).to.deep.equal(sharedTree3Summary);
 	});
 });
