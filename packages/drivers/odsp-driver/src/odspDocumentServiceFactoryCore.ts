@@ -34,6 +34,7 @@ import {
     tokenFromResponse,
 } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
+import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -154,8 +155,12 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 },
                 async (event) => tokenFetcher(resolvedUrl.siteUrl, options.refresh, options.claims)
                 .then((tokenResponse) => {
-                    event.end({ fromCache: isTokenFromCache(tokenResponse) });
-                    return tokenFromResponse(tokenResponse);
+                    const token = tokenFromResponse(tokenResponse);
+                    event.end({ fromCache: isTokenFromCache(tokenResponse), isNull: token === null ? true : false });
+                    if (token === null) {
+                        throwOdspNetworkError("Token is null", fetchTokenErrorCode);
+                    }
+                    return token;
                 }));
         };
     }

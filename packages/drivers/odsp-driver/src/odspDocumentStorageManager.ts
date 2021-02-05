@@ -180,9 +180,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
         const response = await getWithRetryForTokenRefresh(async (options) => {
             const storageToken = await this.getStorageToken(options, "CreateBlob");
-            if (storageToken === null) {
-                throwOdspNetworkError("Token is null", fetchTokenErrorCode);
-            }
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.attachmentPOSTUrl}/content`, storageToken);
             headers["Content-Type"] = "application/octet-stream";
 
@@ -221,9 +218,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
             blob = await getWithRetryForTokenRefresh(async (options) => {
                 const storageToken = await this.getStorageToken(options, "GetBlob");
-                if (storageToken === null) {
-                    throwOdspNetworkError("Token is null", fetchTokenErrorCode);
-                }
                 const unAuthedUrl = `${this.attachmentGETUrl}/${encodeURIComponent(blobId)}/content`;
                 const { url, headers } = getUrlAndHeadersWithAuth(unAuthedUrl, storageToken);
 
@@ -480,9 +474,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
         return getWithRetryForTokenRefresh(async (options) => {
             const storageToken = await this.getStorageToken(options, "GetVersions");
-            if (storageToken === null) {
-                throwOdspNetworkError("Token is null", fetchTokenErrorCode);
-            }
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?count=${count}`, storageToken);
 
             // Fetch the latest snapshot versions for the document
@@ -574,9 +565,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         controller?: AbortController,
     ): Promise<IOdspSnapshot> {
         const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
-        if (storageToken === null) {
-            throwOdspNetworkError("Token is null", fetchTokenErrorCode);
-        }
         const url = `${this.snapshotUrl}/trees/latest?ump=1`;
         const formBoundary = uuid();
         let postBody = `--${formBoundary}\r\n`;
@@ -795,9 +783,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (!tree) {
             tree = await getWithRetryForTokenRefresh(async (options) => {
                 const storageToken = await this.getStorageToken(options, "ReadTree");
-                if (storageToken === null) {
-                    throwOdspNetworkError("Token is null", fetchTokenErrorCode);
-                }
                 const response = await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger, this.epochTracker);
                 const odspSnapshot: IOdspSnapshot = response.content;
                 let treeId = "";
