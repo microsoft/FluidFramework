@@ -98,3 +98,18 @@ extends:
           node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
           cp repo-package.json packages/package.json
           cp repo-package-lock.json packages/package-lock.json
+
+    additionalTests:
+      - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+        - task: Npm@1
+          displayName: '[end-to-end tests] npm run ci:test:realsvc'
+          continueOnError: true
+          env:
+            fluid__webpack__bearerSecret: $(fluid-webpack-bearerSecret)
+            fluid__webpack__fluidHost: $(fluid-webpack-fluidHost)
+            fluid__webpack__tenantId: $(fluid-webpack-tenantId)
+            fluid__webpack__tenantSecret: $(fluid-webpack-tenantSecret)
+          inputs:
+            command: 'custom'
+            workingDir: packages/test/end-to-end-tests
+            customCommand: 'run ci:test:realsvc' # This script ends with 'exit 0' so this task should never fail
