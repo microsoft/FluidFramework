@@ -33,6 +33,7 @@ export async function fetchJoinSession(
 ): Promise<ISocketStorageDiscovery> {
     return getWithRetryForTokenRefresh(async (options) => {
         const token = await getStorageToken(options, "JoinSession");
+
         const extraProps = options.refresh ? { secondAttempt: 1, hasClaims: !!options.claims } : {};
         return PerformanceEvent.timedExecAsync(logger, { eventName: "JoinSession", ...extraProps }, async (event) => {
             // TODO Extract the auth header-vs-query logic out

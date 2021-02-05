@@ -207,6 +207,7 @@ export class OdspSummaryUploadManager {
 
         return getWithRetryForTokenRefresh(async (options) => {
             const storageToken = await this.getStorageToken(options, "WriteSummaryTree");
+
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/snapshot`, storageToken);
             headers["Content-Type"] = "application/json";
 
