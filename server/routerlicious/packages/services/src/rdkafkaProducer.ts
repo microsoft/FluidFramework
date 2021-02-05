@@ -105,12 +105,21 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	}
 
 	public async close(reconnecting: boolean = false): Promise<void> {
+		if (this.closed) {
+			return;
+		}
+
 		if (!reconnecting) {
 			// when closed outside of this class, disable reconnecting
 			this.closed = true;
 		}
 
 		this.connecting = this.connected = false;
+
+		if (this.sendPending) {
+			clearImmediate(this.sendPending);
+			this.sendPending = undefined;
+		}
 
 		await new Promise<void>((resolve) => {
 			const producer = this.producer;
@@ -121,6 +130,11 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 				resolve();
 			}
 		});
+
+		if (this.closed) {
+			this.emit("closed");
+			this.removeAllListeners();
+		}
 	}
 
 	/**
