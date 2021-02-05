@@ -158,7 +158,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     const token = tokenFromResponse(tokenResponse);
                     event.end({ fromCache: isTokenFromCache(tokenResponse), isNull: token === null ? true : false });
                     if (token === null) {
-                        throwOdspNetworkError("Token is null", fetchTokenErrorCode);
+                        throwOdspNetworkError("Storage Token is null", fetchTokenErrorCode);
                     }
                     return token;
                 }));
