@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryLogger, ITelemetryBaseEvent, ITelemetryErrorEvent } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 
 /**
@@ -18,12 +18,6 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
 
     send(event: ITelemetryBaseEvent): void {
         this.events.push(event);
-    }
-
-    sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
-        const newEvent: ITelemetryBaseEvent = { ...event, category: "error" };
-        TelemetryLogger.prepareErrorObject(newEvent, error, false);
-        this.send(newEvent);
     }
 
     /**
