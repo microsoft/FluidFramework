@@ -67,7 +67,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
     describe("Send and receive DataCorruptionError instances", () => {
         it("Send and receive a DataCorruptionError.", () => {
             const testError = new DataCorruptionError(
-                "Two messages with same seq# and different payload!",
+                "dataCorruptionError",
                 {
                     clientId: "clientId",
                     sequenceNumber: 0,
@@ -80,9 +80,14 @@ describe("Check if the errorType field matches after sending/receiving via Conta
             assert(mockLogger.matchEvents([{
                 eventName: "A",
                 category: "error",
-                message: "genericError",
+                message: "dataCorruptionError",
                 errorType: ContainerErrorType.dataCorruptionError,
-                error: "genericError",
+                error: "dataCorruptionError",
+                clientId: "clientId",
+                sequenceNumber: 0,
+                message1: "message1",
+                message2: "message2",
+                exampleExtraTelemetryProp: "exampleExtraTelemetryProp",
             }]));
         });
     });
