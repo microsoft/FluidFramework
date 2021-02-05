@@ -18,15 +18,6 @@ The order of the edits is:
 1. All acknowledged edits, in the order agreed upon by Fluid's consensus.
 2. All local edits (not acknowledged by Fluid yet), in the order they were created.
 
-## Maintenance
-
-This package is currently being maintained in an internal Microsoft repository as well as in the Fluid Framework repository.
-As a result, there are some inconsistencies in development tooling configuration between this package and a typical Fluid package.
-The main difference is that code is formatted using `prettier`.
-Correct formatting can still be produced using the `lint:fix` script and is enforced with the `lint` script.
-For the most part, this means contributers can ignore these style differences.
-However, this dual maintenance should be kept in mind when considering changes to tooling configuration.
-
 # Getting Started
 
 ## Tree Abstraction
