@@ -112,4 +112,5 @@ extends:
           inputs:
             command: 'custom'
             workingDir: packages/test/end-to-end-tests
-            customCommand: 'run ci:test:realsvc' # This script ends with 'exit 0' so this task should never fail
+            customCommand: 'run ci:test:realsvc'
+            
