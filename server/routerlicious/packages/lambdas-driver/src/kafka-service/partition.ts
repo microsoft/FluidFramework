@@ -11,6 +11,7 @@ import {
     IPartitionLambdaFactory,
     ILogger,
     LambdaCloseType,
+    IContextErrorData,
 } from "@fluidframework/server-services-core";
 import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";
@@ -45,8 +46,8 @@ export class Partition extends EventEmitter {
 
         this.checkpointManager = new CheckpointManager(id, consumer);
         this.context = new Context(this.checkpointManager);
-        this.context.on("error", (error: any, restart: boolean) => {
-            this.emit("error", error, restart);
+        this.context.on("error", (error: any, errorData: IContextErrorData) => {
+            this.emit("error", error, errorData);
         });
 
         // Create the incoming message queue
@@ -69,12 +70,18 @@ export class Partition extends EventEmitter {
                 this.q.resume();
             },
             (error) => {
-                this.emit("error", error, true);
+                const errorData: IContextErrorData = {
+                    restart: true,
+                };
+                this.emit("error", error, errorData);
                 this.q.kill();
             });
 
         this.q.error = (error) => {
-            this.emit("error", error, true);
+            const errorData: IContextErrorData = {
+                restart: true,
+            };
+            this.emit("error", error, errorData);
         };
     }
 

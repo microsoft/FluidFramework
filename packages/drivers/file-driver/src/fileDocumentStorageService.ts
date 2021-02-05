@@ -218,7 +218,7 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 
             // Remove tree IDs for easier comparison of snapshots
             delete tree.id;
-            removeNullTreIds(tree);
+            removeNullTreeIds(tree);
 
             if (ref) {
                 this.commitsWriter[commitName] = tree;
@@ -321,10 +321,10 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
         }
     };
 
-function removeNullTreIds(tree: api.ITree) {
+function removeNullTreeIds(tree: api.ITree) {
     for (const node of tree.entries) {
         if (node.type === api.TreeEntry.Tree) {
-            removeNullTreIds(node.value);
+            removeNullTreeIds(node.value);
         }
     }
     assert(tree.id === undefined || tree.id === null);

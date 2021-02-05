@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, IQueuedMessage, ILogger } from "@fluidframework/server-services-core";
+import { IContext, IQueuedMessage, ILogger, IContextErrorData } from "@fluidframework/server-services-core";
 import { TestKafka, DebugLogger } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import { DocumentContextManager } from "../../document-router/contextManager";
@@ -16,7 +16,7 @@ class TestContext implements IContext {
         this.offset = queuedMessage.offset;
     }
 
-    public error(error: any, restart: boolean) {
+    public error(error: any, errorData: IContextErrorData) {
         throw new Error("Method not implemented.");
     }
 
@@ -177,13 +177,13 @@ describe("document-router", () => {
                 testContextManager.setTail(offset0);
 
                 return new Promise<void>((resolve, reject) => {
-                    testContextManager.on("error", (error, restart) => {
+                    testContextManager.on("error", (error, errorData: IContextErrorData) => {
                         assert.ok(error);
-                        assert.ok(restart);
+                        assert.ok(errorData.restart);
                         resolve();
                     });
 
-                    context.error("Test Error", true);
+                    context.error("Test Error", { restart: true });
                 });
             });
         });

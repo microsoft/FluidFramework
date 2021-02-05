@@ -4,6 +4,7 @@
  */
 
 import {
+    IContextErrorData,
     IPartitionLambda,
     IPartitionLambdaFactory,
     IQueuedMessage,
@@ -52,7 +53,7 @@ export class DocumentPartition {
                     // TODO dead letter queue for bad messages, etc... when the lambda is throwing an exception
                     // for now we will simply continue on to keep the queue flowing
                     winston.error("Error processing partition message", error);
-                    context.error(error, false);
+                    context.error(error, { restart: false, tenantId, documentId });
                     this.corrupt = true;
                 }
 
@@ -62,8 +63,8 @@ export class DocumentPartition {
             1);
         this.q.pause();
 
-        this.context.on("error", (error: any, restart: boolean) => {
-            if (restart) {
+        this.context.on("error", (error: any, errorData: IContextErrorData) => {
+            if (errorData.restart) {
                 // ensure no more messages are processed by this partition
                 // while the process is restarting / closing
                 this.close(LambdaCloseType.Error);
@@ -78,7 +79,7 @@ export class DocumentPartition {
                 this.q.resume();
             },
             (error) => {
-                context.error(error, true);
+                context.error(error, { restart: true, tenantId, documentId });
                 this.q.kill();
             });
     }

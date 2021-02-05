@@ -34,7 +34,7 @@ import {
     isTokenFromCache,
     tokenFromResponse,
 } from "./tokenFetch";
-import { EpochTracker } from "./epochTracker";
+import { EpochTracker, EpochTrackerWithRedemption } from "./epochTracker";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -131,7 +131,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.getSocketIOClient,
             cache,
             this.hostPolicy,
-            epochTracker ?? new EpochTracker(new LocalPersistentCacheAdapter(this.persistedCache), odspLogger),
+            epochTracker ?? new EpochTrackerWithRedemption(
+                new LocalPersistentCacheAdapter(this.persistedCache), odspLogger),
         );
     }
 

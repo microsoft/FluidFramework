@@ -308,5 +308,5 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 };
 
 describe("Map", () => {
-    generateTest(tests, { tinylicious: true });
+    generateTest(tests);
 });

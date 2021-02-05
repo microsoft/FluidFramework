@@ -334,5 +334,5 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 };
 
 describe("SharedInterval", () => {
-    generateTest(tests, { tinylicious: true });
+    generateTest(tests);
 });
