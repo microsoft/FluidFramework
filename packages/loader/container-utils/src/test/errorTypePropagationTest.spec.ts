@@ -9,7 +9,6 @@ import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { GenericError, DataCorruptionError } from "../error";
 
-
 describe("Check if the errorType field matches after sending/receiving via Container error classes", () => {
     // In all tests below, the `stack` prop will be left out of validation because it is difficult to properly
     // mock a stack for a mocked error.
