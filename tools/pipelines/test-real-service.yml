@@ -95,12 +95,20 @@ jobs:
         workingDir: packages/test/service-load-test
         customCommand: 'run start'
 
+    # Run Copy Test Results
+    - task: Npm@1
+      displayName: npm run test:copyresult'
+      inputs:
+        command: 'custom'
+        workingDir: ${{ parameters.buildDirectory }}
+        customCommand: 'run test:copyresult'
+
     # Upload results
     - task: PublishTestResults@2
       displayName: Publish Test Results
       inputs:
         testResultsFormat: 'JUnit'
         testResultsFiles: '**/*junit-report.xml'
-        searchFolder: ${{ parameters.buildDirectory }}
+        searchFolder: ${{ parameters.buildDirectory }}/nyc
         mergeTestResults: true
       condition: succeededOrFailed()
