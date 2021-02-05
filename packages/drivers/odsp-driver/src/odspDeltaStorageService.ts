@@ -5,12 +5,10 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import * as api from "@fluidframework/driver-definitions";
-import { fetchTokenErrorCode } from "@fluidframework/odsp-doclib-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { throwOdspNetworkError } from "./odspError";
 import { getWithRetryForTokenRefresh } from "./odspUtils";
 import { TokenFetchOptions } from "./tokenFetch";
 
@@ -47,9 +45,6 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
             const baseUrl = await this.buildUrl(from, to);
 
             const storageToken = await this.getStorageToken(options, "DeltaStorage");
-            if (storageToken === null) {
-                throwOdspNetworkError("Token is null", fetchTokenErrorCode);
-            }
 
             const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, storageToken);
 
