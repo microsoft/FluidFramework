@@ -95,11 +95,11 @@ jobs:
 
     # Run Copy Test Results
     - task: Npm@1
-      displayName: npm run test:copyresult'
+      displayName: npm run test:copyresults'
       inputs:
         command: 'custom'
         workingDir: ${{ parameters.buildDirectory }}
-        customCommand: 'run test:copyresult'
+        customCommand: 'run test:copyresults'
 
     # Upload results
     - task: PublishTestResults@2
