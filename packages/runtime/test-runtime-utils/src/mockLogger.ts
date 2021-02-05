@@ -58,8 +58,6 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
      */
     private static eventsMatch(actual: ITelemetryBaseEvent, expected: Omit<ITelemetryBaseEvent, "category">): boolean {
         const masked = { ...actual, ...expected };
-        console.log(masked);
-        console.log(actual);
         return JSON.stringify(masked) === JSON.stringify(actual);
     }
 }
