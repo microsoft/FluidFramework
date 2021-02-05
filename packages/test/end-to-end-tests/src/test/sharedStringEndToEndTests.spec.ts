@@ -72,5 +72,5 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 };
 
 describe("SharedString", () => {
-    generateTest(tests, { tinylicious: true });
+    generateTest(tests);
 });

@@ -18,6 +18,7 @@ export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 	consumeLoopTimeoutDelay: number;
 	optimizedRebalance: boolean;
 	commitRetryDelay: number;
+	automaticConsume: boolean;
 	additionalOptions?: kafkaTypes.ConsumerGlobalConfig;
 }
 
@@ -48,6 +49,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			consumeLoopTimeoutDelay: 100,
 			optimizedRebalance: false,
 			commitRetryDelay: 1000,
+			automaticConsume: true,
 			...options,
 		};
 	}
@@ -84,9 +86,13 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 
 		this.consumer.on("ready", () => {
 			this.consumer.subscribe([this.topic]);
-			this.consumer.consume();
 
-			this.emit("connected");
+			if (this.consumerOptions.automaticConsume) {
+				// start the consume loop
+				this.consumer.consume();
+			}
+
+			this.emit("connected", this.consumer);
 		});
 
 		this.consumer.on("disconnected", () => {
@@ -107,14 +113,16 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			let shouldRetryCommit = false;
 
 			if (err) {
-				this.emit("error", err);
-
 				// a rebalance occurred while we were committing
 				// we can resubmit the commit if we still own the partition
 				shouldRetryCommit =
 					this.consumerOptions.optimizedRebalance &&
 					(err.code === kafka.CODES.ERRORS.ERR_REBALANCE_IN_PROGRESS ||
 						err.code === kafka.CODES.ERRORS.ERR_ILLEGAL_GENERATION);
+
+				if (!shouldRetryCommit) {
+					this.emit("error", err);
+				}
 			}
 
 			for (const offset of offsets) {
@@ -224,6 +232,10 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	}
 
 	public async close(reconnecting: boolean = false): Promise<void> {
+		if (this.closed) {
+			return;
+		}
+
 		if (!reconnecting) {
 			// when closed outside of this class, disable reconnecting
 			this.closed = true;
@@ -246,6 +258,11 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		this.assignedPartitions.clear();
 		this.pendingCommits.clear();
 		this.latestOffsets.clear();
+
+		if (this.closed) {
+			this.emit("closed");
+			this.removeAllListeners();
+		}
 	}
 
 	public async commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void> {

@@ -126,6 +126,7 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
  */
 export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
     constructor(
+        public readonly opArgs: IMergeTreeDeltaOpArgs | undefined,
         deltaArgs: IMergeTreeMaintenanceCallbackArgs,
         mergeTreeClient: Client,
     ) {

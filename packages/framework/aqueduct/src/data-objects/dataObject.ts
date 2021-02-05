@@ -5,16 +5,13 @@
 
 import {
     IFluidObject,
-    IFluidHandle,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
 import { ITaskManager } from "@fluidframework/runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
-import { v4 as uuid } from "uuid";
 import { IEvent } from "@fluidframework/common-definitions";
-import { BlobHandle } from "./blobHandle";
 import { PureDataObject } from "./pureDataObject";
 
 /**
@@ -37,7 +34,6 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
     private internalRoot: ISharedDirectory | undefined;
     private internalTaskManager: ITaskManager | undefined;
     private readonly rootDirectoryId = "root";
-    private readonly bigBlobs = "bigBlobs/";
 
     public async request(request: IRequest): Promise<IResponse> {
         const url = request.url;
@@ -75,22 +71,6 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
         }
 
         return this.internalTaskManager;
-    }
-
-    /**
-     * Temporary implementation of blobs.
-     * Currently blobs are stored as properties on root map and we rely
-     * on map doing proper snapshot blob partitioning to reuse non-changing big properties.
-     * In future blobs would be implemented as first class citizen, using blob storage APIs
-     */
-    protected async writeBlob(blob: string): Promise<IFluidHandle<string>> {
-        this.runtime.logger.sendTelemetryEvent({
-            eventName: "WriteBlob",
-            size: blob.length,
-        });
-        const path = `${this.bigBlobs}${uuid()}`;
-        this.root.set(path, blob);
-        return new BlobHandle(path, this.root, this.runtime.objectsRoutingContext);
     }
 
     /**
