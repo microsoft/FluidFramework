@@ -71,6 +71,7 @@ jobs:
     - task: Npm@1
       displayName: '[end-to-end tests] npm run ci:test:realsvc'
       continueOnError: true
+      timeoutInMinutes: 0
       env:
         fluid__webpack__bearerSecret: $(fluid-webpack-bearerSecret)
         fluid__webpack__fluidHost: $(fluid-webpack-fluidHost)
@@ -100,6 +101,6 @@ jobs:
       inputs:
         testResultsFormat: 'JUnit'
         testResultsFiles: '**/*junit-report.xml'
-        searchFolder: ${{ parameters.buildDirectory }}/nyc
+        searchFolder: ${{ parameters.buildDirectory }}
         mergeTestResults: true
       condition: succeededOrFailed()
