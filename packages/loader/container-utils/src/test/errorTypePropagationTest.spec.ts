@@ -10,7 +10,9 @@ import {
 //     // ICriticalContainerError,
 //     // IErrorBase,
 } from "@fluidframework/container-definitions";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { GenericError, DataCorruptionError /* CreateContainerError */} from "../error";
+
 
 describe("Check if the errorType field matches after sending/receiving via Container error classes", () => {
     // In all tests below, the `stack` prop will be left out of validation because it is difficult to properly
@@ -88,6 +90,21 @@ describe("Check if the errorType field matches after sending/receiving via Conta
                 message1: "message1",
                 message2: "message2",
                 exampleExtraTelemetryProp: "exampleExtraTelemetryProp",
+            }]));
+        });
+    });
+
+    describe("Send and receive a GenericError using a ChildLogger", () => {
+        it("Send and receive a DataCorruptionError.", () => {
+            const childLogger = ChildLogger.create(mockLogger, "errorTypeTestNamespace");
+            const testError = new GenericError("genericError", undefined);
+            childLogger.sendErrorEvent({ eventName: "A" }, testError);
+            assert(mockLogger.matchEvents([{
+                eventName: "errorTypeTestNamespace:A",
+                category: "error",
+                message: "genericError",
+                errorType: ContainerErrorType.genericError,
+                error: "genericError",
             }]));
         });
     });
