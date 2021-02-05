@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/tree-graphql",
-	"version": "0.1.0",
+  "version": "0.1.0",
   "description": "Prototype using GraphQL to access a distributed tree",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -10,7 +10,7 @@
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
-	"scripts": {
+  "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:codegen": "npm run build:plugins && graphql-codegen --config codegen.yml && prettier --write src/graphql-generated/*",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
@@ -30,23 +30,23 @@
     "test:mocha": "nyc --report-dir='./coverage' mocha \"dist/**/*.tests.js\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc"
-	},
-	"dependencies": {
+  },
+  "dependencies": {
     "@fluid-experimental/tree": "^0.35.0",
     "@fluidframework/common-utils": "^0.27.0",
-		"@graphql-codegen/plugin-helpers": "^1.18.2",
-		"@graphql-codegen/visitor-plugin-common": "^1.18.2",
-		"graphql": "^15.4.0",
-		"graphql-tools": "^7.0.2"
-	},
-	"devDependencies": {
+    "@graphql-codegen/plugin-helpers": "^1.18.2",
+    "@graphql-codegen/visitor-plugin-common": "^1.18.2",
+    "graphql": "^15.4.0",
+    "graphql-tools": "^7.0.2"
+  },
+  "devDependencies": {
     "@fluidframework/mocha-test-setup": "^0.35.0",
     "@fluidframework/test-runtime-utils": "^0.35.0",
     "@graphql-codegen/cli": "1.20.1",
     "@graphql-codegen/typescript": "1.20.2",
-		"@types/ws": "^6.0.1",
-		"@typescript-eslint/parser": "~4.14.0",
-		"chai": "^4.2.0",
+    "@types/ws": "^6.0.1",
+    "@typescript-eslint/parser": "~4.14.0",
+    "chai": "^4.2.0",
     "concurrently": "^5.2.0",
     "cross-env": "^7.0.2",
     "eslint": "~7.18.0",
@@ -58,8 +58,8 @@
     "eslint-plugin-unicorn": "~26.0.1",
     "mocha": "^8.1.1",
     "nyc": "^15.0.0",
-		"prettier": "^2.2.1",
-		"rimraf": "^2.6.2",
-		"typescript": "~4.1.3"
-	}
+    "prettier": "^2.2.1",
+    "rimraf": "^2.6.2",
+    "typescript": "~4.1.3"
+  }
 }
