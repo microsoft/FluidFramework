@@ -15,6 +15,7 @@ import {
     PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import { IOdspResolvedUrl, HostStoragePolicy } from "./contracts";
 import {
     LocalPersistentCache,
@@ -34,7 +35,6 @@ import {
     tokenFromResponse,
 } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
-import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
