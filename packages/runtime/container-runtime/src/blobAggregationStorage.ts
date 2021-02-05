@@ -28,7 +28,15 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 // Gate that when flipped, instructs to compress small blobs.
 // We have to first ship with this gate off, such that we can get to saturation bits
 // that can understand compressed format. And only after that flip it.
- const gatesAllowPacking = false;
+function gatesAllowPacking() {
+    // Leave override for testing purposes
+    if (typeof localStorage === "object" && localStorage !== null && localStorage.FluidAggregateBlobs === "1") {
+        return true;
+    }
+
+    // We are starting disabled.
+    return false;
+}
 
 /*
  * Work around for bufferToString having a bug - it can't consume IsoBuffer!
@@ -194,7 +202,10 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
     }
 
     public async unpackSnapshot(snapshot: ISnapshotTree) {
-        assert(!this.loadedFromSummary, "unpack without summary");
+        // SummarizerNodeWithGC.refreshLatestSummary can call it when this.loadedFromSummary === false
+        // (I assumed after file was created)
+        // assert(!this.loadedFromSummary, "unpack without summary");
+
         this.loadedFromSummary = true;
         await this.unpackSnapshotCore(snapshot);
     }
@@ -271,7 +282,7 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
-        const summaryNew = gatesAllowPacking ? await this.compressSmallBlobs(summary) : summary;
+        const summaryNew = gatesAllowPacking() ? await this.compressSmallBlobs(summary) : summary;
         return this.storage.uploadSummaryWithContext(summaryNew, context);
     }
 
