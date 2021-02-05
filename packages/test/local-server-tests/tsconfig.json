@@ -3,13 +3,13 @@
     "compilerOptions": {
         "declaration": false,
         "declarationMap": false,
-        "rootDir": "./",
-        "outDir": "../../dist/real-service-tests",
+        "rootDir": "./src",
+        "outDir": "./dist",
         "types": [
-            "mocha"
+            "mocha",
         ],
     },
     "include": [
-        "./**/*"
+        "src/**/*"
     ]
 }

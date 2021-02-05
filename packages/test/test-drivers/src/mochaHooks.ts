@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { TestDriver } from "@fluidframework/test-driver-definitions";
+import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { LocalServerTestDriver } from "./localServerTestDriver";
 import { OdspTestDriver } from "./odspTestDriver";
 import { RouterliciousTestDriver } from "./routerliciousTestDriver";
 import { TinyliciousTestDriver } from "./tinyliciousTestDriver";
 
 const envVar = "FLUID_TEST_DRIVER";
-const fluidTestDriverType = process.env[envVar]?.toLocaleLowerCase();
-let fluidTestDriver: TestDriver | undefined;
+const fluidTestDriverType = process.env[envVar]?.toLocaleLowerCase() as TestDriverTypes | undefined | "";
+let fluidTestDriver: ITestDriver | undefined;
 const _global =  global as any;
-_global.getFluidTestDriver = (): TestDriver => {
+_global.getFluidTestDriver = (): ITestDriver => {
     if (fluidTestDriver === undefined) {
         switch (fluidTestDriverType) {
             case undefined:

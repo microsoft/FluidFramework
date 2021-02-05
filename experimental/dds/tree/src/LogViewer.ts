@@ -4,10 +4,11 @@
  */
 
 import BTree from 'sorted-btree';
+import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { assert, fail, noop } from './Common';
 import { EditLog } from './EditLog';
 import { Snapshot } from './Snapshot';
-import { EditResult } from './PersistedTypes';
+import { Edit, EditResult } from './PersistedTypes';
 import { EditId } from './Identifiers';
 import { Transaction } from './Transaction';
 import { initialTree } from './InitialTree';
@@ -17,7 +18,6 @@ import { initialTree } from './InitialTree';
  * Note that edits may be applied multiple times (and with different results due to concurrent edits),
  * and might not be applied when added.
  * This callback cannot be used to simply log each edit as it comes it to see its status.
- * @internal
  */
 export type EditResultCallback = (editResult: EditResult, editId: EditId) => void;
 
@@ -64,16 +64,11 @@ export class CachingLogViewer implements LogViewer {
 	private readonly sequencedSnapshotCache = new BTree<number, Snapshot>();
 
 	/**
-	 * The value of log.versionIdentifier when lastHeadSnapshot was cached.
-	 */
-	private lastVersionIdentifier: unknown = undefined;
-
-	/**
-	 * A cached Snapshot for Head (the newest revision) of log when it was at lastVersionIdentifier.
+	 * A cached Snapshot for Head (the newest revision) of `log`. It is undefined when not computed or invalidated by a change in the log.
 	 * This cache is important as the Head revision is frequently viewed, and just using the sequencedSnapshotCache
 	 * would not cache processing of local edits in this case.
 	 */
-	private lastHeadSnapshot: Snapshot;
+	private lastHeadSnapshot?: Snapshot;
 
 	/**
 	 * Called whenever an edit is processed.
@@ -88,6 +83,18 @@ export class CachingLogViewer implements LogViewer {
 	private readonly expensiveValidation: boolean;
 
 	/**
+	 * Telemetry logger, used to log events such as edit application rejection.
+	 */
+	private readonly logger: ITelemetryBaseLogger;
+
+	/**
+	 * The ordered list of edits that originated from this client that have never been applied (by this log viewer) in a sequenced state.
+	 * This means these edits may be local or sequenced, and may have been applied (possibly multiple times) while still local.
+	 * Used to log telemetry about the result of edit application. Edits are removed when first applied after being sequenced.
+	 */
+	private readonly unappliedSelfEdits: EditId[] = [];
+
+	/**
 	 * Create a new LogViewer
 	 * @param log - the edit log which snapshots will be based on.
 	 * @param baseTree - the tree used in the snapshot corresponding to the 0th revision. Defaults to `initialTree`.
@@ -97,22 +104,29 @@ export class CachingLogViewer implements LogViewer {
 		log: EditLog,
 		baseTree = initialTree,
 		expensiveValidation = false,
-		processEditResult: EditResultCallback = noop
+		processEditResult: EditResultCallback = noop,
+		logger: ITelemetryBaseLogger
 	) {
 		this.log = log;
 		const initialSnapshot = Snapshot.fromTree(baseTree);
-		this.lastHeadSnapshot = initialSnapshot;
 		this.sequencedSnapshotCache.set(0, initialSnapshot);
 		this.processEditResult = processEditResult ?? noop;
 		this.expensiveValidation = expensiveValidation;
+		this.logger = logger;
+		this.log.registerEditAddedHandler(this.handleEditAdded.bind(this));
+	}
+
+	private handleEditAdded(edit: Edit, isLocal: boolean): void {
+		this.lastHeadSnapshot = undefined; // Invalidate HEAD snapshot cache.
+		if (isLocal) {
+			this.unappliedSelfEdits.push(edit.id);
+		}
 	}
 
 	public getSnapshot(revision: number): Snapshot {
 		// Per the documentation for this method, the returned snapshot should be the output of the edit at the largest index <= `revision`.
-		if (revision >= this.log.length) {
-			if (this.lastVersionIdentifier === this.log.versionIdentifier()) {
-				return this.lastHeadSnapshot;
-			}
+		if (revision >= this.log.length && this.lastHeadSnapshot) {
+			return this.lastHeadSnapshot;
 		}
 
 		const [startRevision, startSnapshot] =
@@ -132,13 +146,31 @@ export class CachingLogViewer implements LogViewer {
 			if (i < this.log.numberOfSequencedEdits) {
 				const revision = i + 1; // Revision is the result of the edit being applied.
 				this.sequencedSnapshotCache.set(revision, currentSnapshot);
+
+				// This is the first time this sequenced edit has been processed by this LogViewer. If it was a local edit, log telemetry
+				// in the event that it was invalid or malformed.
+				if (this.unappliedSelfEdits.length > 0) {
+					if (edit.id === this.unappliedSelfEdits[0]) {
+						if (editingResult.result !== EditResult.Applied) {
+							this.logger.send({
+								category: 'generic',
+								eventName:
+									editingResult.result === EditResult.Malformed
+										? 'MalformedSharedTreeEdit'
+										: 'InvalidSharedTreeEdit',
+							});
+						}
+						this.unappliedSelfEdits.shift();
+					} else if (this.expensiveValidation) {
+						assert(this.unappliedSelfEdits.indexOf(edit.id) < 0, 'Local edits processed out of order.');
+					}
+				}
 			}
 
 			this.processEditResult(editingResult.result, edit.id);
 		}
 
 		if (revision >= this.log.length) {
-			this.lastVersionIdentifier = this.log.versionIdentifier();
 			this.lastHeadSnapshot = currentSnapshot;
 		}
 

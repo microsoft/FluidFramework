@@ -25,7 +25,6 @@ class SharedTreeAssertionError extends Error {
 	public constructor(message: string) {
 		super(message);
 		this.name = 'Assertion error';
-
 		Error.captureStackTrace?.(this);
 	}
 }
@@ -38,6 +37,8 @@ class SharedTreeAssertionError extends Error {
  * @param containsPII - boolean flag for whether the message passed in contains personally identifying information (PII).
  */
 export function assert(condition: unknown, message?: string, containsPII = false): asserts condition {
+	// Rationale: Assert condition is permitted to by truthy.
+	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 	if (!condition) {
 		fail(message, containsPII);
 	}
@@ -80,6 +81,32 @@ export function assertArrayOfOne<T>(array: readonly T[], message = 'array value 
 }
 
 /**
+ * Redefine a property to have the given value. This is simply a type-safe wrapper around
+ * `Object.defineProperty`, but it is useful for caching getters on first read.
+ * @example
+ * ```
+ * // `randomOnce()` will return a random number, but always the same random number.
+ * {
+ *   get randomOnce(): number {
+ *     return memoizeGetter(this, 'randomOnce', random(100))
+ *   }
+ * }
+ * ```
+ * @param object - the object containing the property
+ * @param propName - the name of the property on the object
+ * @param value - the value of the property
+ */
+export function memoizeGetter<T, K extends keyof T>(object: T, propName: K, value: T[K]): T[K] {
+	Object.defineProperty(object, propName, {
+		value,
+		enumerable: true,
+		configurable: true,
+	});
+
+	return value;
+}
+
+/**
  * Iterate through two iterables and return true if they yield equivalent elements in the same order.
  * @param iterableA - the first iterable to compare
  * @param iterableB - the second iterable to compare
@@ -110,7 +137,7 @@ function compareIterators<T, TReturn extends T = T>(
 	let b: IteratorResult<T, TReturn>;
 	for (
 		a = iteratorA.next(), b = iteratorB.next(); // Given two iterators...
-		!a.done && !b.done; // ...while both have elements remaining...
+		a.done !== true && b.done !== true; // ...while both have elements remaining...
 		a = iteratorA.next(), b = iteratorB.next() // ...take one element at a time from each...
 	) {
 		// ...and ensure that their elements are equivalent
