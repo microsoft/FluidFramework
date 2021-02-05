@@ -1,5 +1,85 @@
 # Change Log
 
+## 0.42.0
+
+* feat: SharedTree reads summary format 0.1.0 which supports history virtualization
+  * Associated pull request: !27284
+* Add missing export
+* refactor: don't use immtuable.js
+  * Associated pull request: !27072
+* Document key
+* Clean up test
+* fix: type of TreeNodeHandle.node
+  * Associated pull request: !27693
+* comments about immutability
+* fix lint
+* Rename
+* EditLog get edit from handle test
+* Merge remote-tracking branch 'origin/master' into user/crmacomb/unImmute
+* Assert edits not undefined for a chunk
+* Change getSnapshotInSession doc comment
+* Add comment
+* Merge remote-tracking branch 'origin/master' into jennle/sharedtree-history-virtualization
+* Move op types
+* Remove unnecessary fields
+* Revet package update
+* Update packages
+* Fix test
+* Fix package
+* Merge branch 'jennle/sharedtree-history-virtualization' of https://intentional.visualstudio.com/intent/_git/typescript-pipe into jennle/sharedtree-history-virtualization
+* Merge remote-tracking branch 'origin/master' into jennle/sharedtree-history-virtualization
+* Apply suggestions from code review
+* Remove unused packages
+* Rename synchronous to in session
+* Fix linting
+* Fix sorting
+* Add virtualization comment
+* Export legacy summary
+* Merge remote-tracking branch 'origin/master' into jennle/sharedtree-history-virtualization
+* Cleanup
+* Renames and chunk cache changes
+* Create temp edit log for summary back compat
+* Remove extraneous doc comment
+* Reference documentation
+* Make editChunks a b tree
+* Rename editIds
+* Remove SerializedEditLogSummary and move helpers
+* Remove serialization helpers
+* Remove duplicate test utilities
+* Remove revert methods on SharedTree
+* Create shared tree op types
+* Use 'shift' instead of 'splice'
+* Create type for summary 0.0.2
+* Add doc comment to processEditChunkHandle
+* Add legacy comment
+* Clean up package exports
+* Capitalization
+* Add doc to readFormatVersion
+* Use forEach
+* Change transpile to convert
+* Make sure editChunks is never undefined
+* Merge remote-tracking branch 'origin/master' into jennle/sharedtree-history-virtualization
+* Update README
+* Fix linting errors
+* Merge branch 'jennle/sharedtree-history-virtualization' of https://intentional.visualstudio.com/intent/_git/typescript-pipe into jennle/sharedtree-history-virtualization
+* Fix api docs
+* Merge remote-tracking branch 'origin/master' into jennle/sharedtree-history-virtualization
+* Apply suggestions from code review
+* Merge edit and edit id for public APIs
+* Fix typo
+* Finish comment
+* Fix test file path
+* Fix lint error
+* Fix throw error tests and linting errors
+* Remove commented out code
+* Test fixes
+* Merge remote-tracking branch 'origin/master' into jennle/sharedtree-history-virtualization
+* Add skipped virtualization test
+* History virutalization
+* format and and fix package files
+* refactor: don't use immtuable.js
+* Handle serialization test and summary changes
+
 ## 0.35.0
 
 * feat: Add telemetry properties for all SharedTree events
