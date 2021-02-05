@@ -1598,7 +1598,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ): void {
         this.verifyNotClosed();
 
-        if (this.context.pendingLocalState === undefined) {
+        if (this.context.pendingLocalState !== undefined) {
             this.closeFn(CreateContainerError("op submitted while processing pending initial state"));
         }
 
