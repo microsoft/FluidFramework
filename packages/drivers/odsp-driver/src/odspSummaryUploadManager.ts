@@ -198,7 +198,7 @@ export class OdspSummaryUploadManager {
             cloneDeep(tree),
             blobTreeDedupCachesLatest,
             ".app",
-            true,
+            false /* Stop handle expansion due to missing unreferenced flag in summary returned from server */,
             "",
             false,
         );
@@ -390,9 +390,11 @@ export class OdspSummaryUploadManager {
                         reusedBlobs += result.reusedBlobs;
                         blobs += result.blobs;
                     } else {
-                        // Ideally we should not come here as we should have found it in cache. But in order to successfully upload the summary
-                        // we are just logging the event. Once we make sure that we don't have any telemetry for this, we would remove this.
-                        this.logger.sendErrorEvent({ eventName: "SummaryTreeHandleCacheMiss", parentHandle, handlePath: pathKey });
+                        if (allowHandleExpansion) {
+                            // Ideally we should not come here as we should have found it in cache. But in order to successfully upload the summary
+                            // we are just logging the event. Once we make sure that we don't have any telemetry for this, we would remove this.
+                            this.logger.sendErrorEvent({ eventName: "SummaryTreeHandleCacheMiss", parentHandle, handlePath: pathKey });
+                        }
                         id = `${parentHandle}/${pathKey}`;
                     }
                     break;
