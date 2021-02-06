@@ -72,6 +72,14 @@ jobs:
       inputs:
         workingFile: packages/test/service-load-test/scripts/.npmrc
 
+    # Prep dependency injection package for install
+    - task: Bash@3
+      displayName: Prepare DI package
+      inputs:
+        targetType: 'inline'
+        script: 'mv _package.json package.json'
+        workingDirectory: '${{ parameters.buildDirectory }}/packages/test/service-load-test/scripts'
+
     # Install dependency injection package
     - task: Npm@1
       displayName: npm install
@@ -80,6 +88,13 @@ jobs:
         workingDir: ${{ parameters.buildDirectory }}/packages/test/service-load-test/scripts
         customCommand: 'install'
         customRegistry: 'useNpmrc'
+
+    - task: Npm@1
+      displayName: verify DI package install
+      inputs:
+        command: 'custom'
+        workingDir: ${{ parameters.buildDirectory }}/packages/test/service-load-test/scripts/node_modules/@ff-internal/aria-logger
+        customCommand: 'run start'
 
     # Run End-to-end Tests
     - task: Npm@1
