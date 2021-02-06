@@ -72,6 +72,13 @@ jobs:
       inputs:
         workingFile: packages/test/service-load-test/scripts/.npmrc
 
+    # Auth to Office feed
+    - task: npmAuthenticate@0
+      displayName: npm authenticate (office feed)
+      inputs:
+        workingFile: packages/test/service-load-test/scripts/.npmrc
+        customEndpoint: 'Office Packages - Readonly'
+
     # Prep dependency injection package for install
     - task: Bash@3
       displayName: Prepare DI package
