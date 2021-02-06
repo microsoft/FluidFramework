@@ -94,4 +94,5 @@ export interface IPendingBoxcar {
     tenantId: string;
     deferred: Deferred<void>;
     messages: any[];
+    partitionId?: number;
 }
