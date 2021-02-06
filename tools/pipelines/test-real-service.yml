@@ -66,6 +66,21 @@ jobs:
         workingDir: ${{ parameters.buildDirectory }}
         customCommand: 'run ${{ parameters.taskBuild }}'
 
+    # Auth to internal feed
+    - task: npmAuthenticate@0
+      displayName: npm authenticate (internal feed)
+      inputs:
+        workingFile: packages/test/service-load-test/scripts/.npmrc
+
+    # Install dependency injection package
+    - task: Npm@1
+      displayName: npm install
+      inputs:
+        command: 'custom'
+        workingDir: ${{ parameters.buildDirectory }}/packages/test/service-load-test/scripts
+        customCommand: 'install'
+        customRegistry: 'useNpmrc'
+
     # Run End-to-end Tests
     - task: Npm@1
       displayName: '[end-to-end tests] npm run ci:test:realsvc'
