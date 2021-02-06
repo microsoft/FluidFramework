@@ -16,6 +16,7 @@ const config ={
   "require": [
     `${testPackagesDir}/mocha-test-setup`,
     `${testPackagesDir}/test-drivers`,
+    `${testPackagesDir}/service-load-test/scripts/node_modules/@ff-internal/aria-logger`,
   ],
   "unhandled-rejections": "strict"
 };
