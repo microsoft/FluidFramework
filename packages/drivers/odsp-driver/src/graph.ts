@@ -4,10 +4,11 @@
  */
 
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { PromiseCache } from "@fluidframework/common-utils";
-import { fetchFailureStatusCode, offlineFetchFailureStatusCode } from "@fluidframework/odsp-doclib-utils";
-import { authorizedFetchWithRetry } from "./authorizedFetchWithRetry";
-import { allowlist, constantBackoff, RetryFilter, RetryPolicy } from "./fetchWithRetry";
+import { performance, PromiseCache } from "@fluidframework/common-utils";
+import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
+import { fetchAndParseAsJSONHelper, fetchHelper, getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
 import { IdentityType, SharingLinkScopeFor, TokenFetchOptions } from "./tokenFetch";
 
 /**
@@ -25,6 +26,38 @@ function slashTerminatedOriginOrEmptyString(origin: string | undefined) {
         ? origin
         : `${origin}/`
         : "";
+}
+
+const getSPOAndGraphRequestIdsFromResponse = async (headers: Map<string, string>) => {
+    interface LoggingHeader {
+        headerName: string;
+        logName: string;
+    }
+    // We rename headers so that otel doesn't scrub them away. Otel doesn't allow
+    // certain characters in headers including '-'
+    const headersToLog: LoggingHeader[] = [
+        { headerName: "sprequestguid", logName: "spRequestGuid" },
+        { headerName: "request-id", logName: "requestId" },
+        { headerName: "client-request-id", logName: "clientRequestId" },
+        { headerName: "x-msedge-ref", logName: "xMsedgeRef" },
+    ];
+    const additionalProps: ITelemetryProperties = {};
+    if (headers) {
+        headersToLog.forEach((header) => {
+            const headerValue = headers.get(header.headerName);
+            if (headerValue) {
+                additionalProps[header.logName] = headerValue;
+            }
+        });
+    }
+    return additionalProps;
+};
+
+/**
+ * returns a promise that resolves after timeMs
+ */
+export async function delay(timeMs: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(() => resolve(), timeMs));
 }
 
 /**
@@ -50,7 +83,41 @@ export async function getShareLink(
     driveId: string,
     itemId: string,
     identityType: IdentityType,
-    logger?: ITelemetryLogger,
+    logger: ITelemetryLogger,
+    scope: "anonymous" | "organization" | "default" | "existingAccess" = "existingAccess",
+    type: "view" | "edit" = "edit",
+    msGraphOrigin?: string,
+): Promise<string | undefined> {
+    let result: string | undefined;
+    let success = false;
+    let retryAfter = 0;
+    do {
+        try {
+            result = await getShareLinkCore(getShareLinkToken, siteUrl, driveId, itemId, identityType,
+                logger, scope, type, msGraphOrigin);
+            success = true;
+        } catch (err) {
+            // If it is not retriable, then just throw the error.
+            if (!canRetryOnError(err)) {
+                throw err;
+            }
+            // If the error is throttling error, then wait for the specified time before retrying.
+            // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
+            retryAfter = getRetryDelayFromError(err) ?? Math.min(retryAfter * 2, 8000);
+            await delay(retryAfter);
+        }
+    } while (!success);
+    return result;
+}
+
+export async function getShareLinkCore(
+    getShareLinkToken:
+        (options: TokenFetchOptions, scopeFor: SharingLinkScopeFor, siteUrl: string) => Promise<string | null>,
+    siteUrl: string,
+    driveId: string,
+    itemId: string,
+    identityType: IdentityType,
+    logger: ITelemetryLogger,
     scope: "anonymous" | "organization" | "default" | "existingAccess" = "existingAccess",
     type: "view" | "edit" = "edit",
     msGraphOrigin?: string,
@@ -71,13 +138,7 @@ export async function getShareLink(
             body: scope === "default" ? undefined : JSON.stringify({ type, scope }),
         },
     );
-
-    if (createShareLinkResponse.ok) {
-        const body = await createShareLinkResponse.json();
-        return body.link.webUrl as string;
-    }
-
-    return undefined;
+    return createShareLinkResponse.content.link.webUrl;
 }
 
 /**
@@ -89,8 +150,6 @@ export async function getShareLink(
  * @param nameForLogging - Name used for logging
  * @param logger - used to log results of operation, including any error
  * @param requestInit - Request Init to be passed to fetch
- * @param retryPolicy - Retry policy to be passed to fetchWithRetry
- * @param timeoutMs - Timeout value to be passed to fetchWithRetry
  */
 export async function graphFetch(
     getShareLinkToken:
@@ -98,63 +157,29 @@ export async function graphFetch(
     siteUrl: string,
     graphUrl: string,
     nameForLogging: string,
-    logger?: ITelemetryLogger,
+    logger: ITelemetryLogger,
     requestInit?: RequestInit,
-    retryPolicy?: RetryPolicy<Response>,
-    timeoutMs = 0,
-): Promise<Response> {
-    const getToken = async (options: TokenFetchOptions) =>
-        getShareLinkToken(
-            options,
-            SharingLinkScopeFor.nonFileDefaultUrl,
-            siteUrl,
+): Promise<IOdspResponse<IGraphFetchResponse>> {
+    const response = await getWithRetryForTokenRefresh(async (options) => {
+        const odspResponse = await PerformanceEvent.timedExecAsync(logger,
+            { eventName: "odspFetchResponse", requestName: nameForLogging }, async (event) => {
+                const startTime = performance.now();
+                const token = await getShareLinkToken(options, SharingLinkScopeFor.nonFileDefaultUrl, siteUrl);
+                const { url, headers } = getUrlAndHeadersWithAuth(graphUrl.startsWith("http")
+                    ? graphUrl : `https://graph.microsoft.com/v1.0/${graphUrl}`, token);
+                const augmentedRequest = { ...requestInit };
+                augmentedRequest.headers = { ...augmentedRequest.headers, ...headers };
+                const res = await fetchAndParseAsJSONHelper<IGraphFetchResponse>(url, augmentedRequest);
+                const totalTime = performance.now() - startTime;
+                const additionalProps = await getSPOAndGraphRequestIdsFromResponse(res.headers);
+                event.end({ ...additionalProps, totalTime });
+                return res;
+            },
         );
-    const url = graphUrl.startsWith("http") ? graphUrl : `https://graph.microsoft.com/v1.0/${graphUrl}`;
-    const retryFilter: RetryFilter<Response> = allowlist([offlineFetchFailureStatusCode, fetchFailureStatusCode]);
-    const finalRetryPolicy: RetryPolicy<Response> = {
-        backoffFn: constantBackoff(1000),
-        ...retryPolicy,
-        maxRetries: retryPolicy !== undefined ? Math.max(3, retryPolicy?.maxRetries) : 3,
-        filter: (response) => retryFilter(response) || !!retryPolicy?.filter(response),
-    };
-    return (
-        await authorizedFetchWithRetry({
-            getToken,
-            url,
-            requestInit,
-            retryPolicy: finalRetryPolicy,
-            timeoutMs,
-            logger,
-            nameForLogging,
-            getAdditionalProps: getSPOAndGraphRequestIdsFromResponse,
-        })
-    ).result;
+        return odspResponse;
+    });
+    return response;
 }
-
-const getSPOAndGraphRequestIdsFromResponse = async (response: Response) => {
-    interface LoggingHeader {
-        headerName: string;
-        logName: string;
-    }
-    // We rename headers so that otel doesn't scrub them away. Otel doesn't allow
-    // certain characters in headers including '-'
-    const headersToLog: LoggingHeader[] = [
-        { headerName: "sprequestguid", logName: "spRequestGuid" },
-        { headerName: "request-id", logName: "requestId" },
-        { headerName: "client-request-id", logName: "clientRequestId" },
-        { headerName: "x-msedge-ref", logName: "xMsedgeRef" },
-    ];
-    const additionalProps: ITelemetryProperties = {};
-    if (response && response.headers) {
-        headersToLog.forEach((header) => {
-            const headerValue = response.headers.get(header.headerName);
-            if (headerValue) {
-                additionalProps[header.logName] = headerValue;
-            }
-        });
-    }
-    return additionalProps;
-};
 
 /**
  * Returns default link for a file with given drive and item ids.
@@ -176,7 +201,7 @@ async function getFileDefaultUrl(
     driveId: string,
     itemId: string,
     identityType: IdentityType,
-    logger?: ITelemetryLogger,
+    logger: ITelemetryLogger,
     msGraphOrigin?: string,
 ): Promise<string | undefined> {
     const graphItem = await getGraphItemLite(getShareLinkToken, siteUrl, driveId, itemId, logger, msGraphOrigin);
@@ -190,30 +215,34 @@ async function getFileDefaultUrl(
     }
 
     // ODSP link requires extra call to return link that is resistant to file being renamed or moved to different folder
-    const fetchResponse = await authorizedFetchWithRetry({
-        getToken: async (options) =>
-            getShareLinkToken(options, SharingLinkScopeFor.fileDefaultUrl, siteUrl),
-        url: `${siteUrl}/_api/web/GetFileByUrl(@a1)/ListItemAllFields/GetSharingInformation?@a1=${encodeURIComponent(
-            `'${graphItem.webDavUrl}'`,
-        )}`,
-        requestInit: {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json;odata=verbose",
-                "Accept": "application/json;odata=verbose",
+    const response = await getWithRetryForTokenRefresh(async (options) => {
+        const odspResponse = await PerformanceEvent.timedExecAsync(logger,
+            { eventName: "odspFetchResponse", requestName: "getFileDefaultUrl" }, async (event) => {
+                const startTime = performance.now();
+                const token = await getShareLinkToken(options, SharingLinkScopeFor.fileDefaultUrl, siteUrl);
+                const { url, headers } = getUrlAndHeadersWithAuth(
+                    `${siteUrl}/_api/web/GetFileByUrl(@a1)/ListItemAllFields/GetSharingInformation?@a1=${
+                        encodeURIComponent(graphItem.webDavUrl)}`, token);
+                const requestInit = {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json;odata=verbose",
+                        "Accept": "application/json;odata=verbose",
+                        ...headers,
+                    },
+                };
+                const res = await fetchHelper(url, requestInit);
+                const totalTime = performance.now() - startTime;
+                const additionalProps = await getSPOAndGraphRequestIdsFromResponse(new Map(res.headers));
+                event.end({ ...additionalProps, totalTime });
+                const text = JSON.parse(await res.text());
+                return text?.d?.directUrl as string;
             },
-        },
-        logger,
-        nameForLogging: "GetFileDefaultUrl",
-        getAdditionalProps: getSPOAndGraphRequestIdsFromResponse,
+        );
+        return odspResponse;
     });
 
-    if (fetchResponse.result.ok) {
-        const body = await fetchResponse.result.json();
-        return body.d.directUrl as string;
-    }
-
-    return undefined;
+    return response;
 }
 
 // Store details of the requested items for the lifetime of the app
@@ -242,7 +271,7 @@ export async function getGraphItemLite(
     siteUrl: string,
     driveId: string,
     itemId: string,
-    logger?: ITelemetryLogger,
+    logger: ITelemetryLogger,
     msGraphOrigin?: string,
 ): Promise<GraphItemLite | undefined> {
     const cacheKey = `${driveId}_${itemId}`;
@@ -251,35 +280,44 @@ export async function getGraphItemLite(
             const partialUrl = `${slashTerminatedOriginOrEmptyString(msGraphOrigin)
                 }drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl,name`;
 
-            let response: Response | undefined;
+            let response: IOdspResponse<GraphItemLite> | undefined;
             try {
                 response = await graphFetch(getShareLinkToken, siteUrl, partialUrl, "GetGraphItemLite", logger);
-            } catch { }
-
-            // Cache only if we got a response and the response was a 200 (success) or 404 (NotFound)
-            if (!response || (response.status !== 200 && response.status !== 404)) {
-                graphItemLiteCache.remove(cacheKey);
-                return undefined;
-            } else {
-                try {
-                    const result: any = await response.json();
-                    if (result && result.webDavUrl && result.name) {
-                        const liteGraphItemInfo: GraphItemLite = {
-                            webUrl: result.webUrl,
-                            webDavUrl: result.webDavUrl,
-                            name: result.name,
-                        };
-                        return liteGraphItemInfo;
-                    } else {
-                        return undefined;
-                    }
-                } catch (error) {
+            } catch(error) {
+                // Cache only if we got a response and the response was a 200 (success) or 404 (NotFound)
+                if (error.statusCode !== 404) {
                     graphItemLiteCache.remove(cacheKey);
                     return undefined;
                 }
+            }
+
+            try {
+                const result = response?.content;
+                if (result && result.webDavUrl && result.name) {
+                    const liteGraphItemInfo: GraphItemLite = {
+                        webUrl: result.webUrl,
+                        webDavUrl: result.webDavUrl,
+                        name: result.name,
+                    };
+                    return liteGraphItemInfo;
+                } else {
+                    return undefined;
+                }
+            } catch (error) {
+                graphItemLiteCache.remove(cacheKey);
+                return undefined;
             }
         };
         graphItemLiteCache.add(cacheKey, valueGenerator);
     }
     return graphItemLiteCache.get(cacheKey);
+}
+
+export interface IGraphFetchResponse {
+    webUrl: string,
+    webDavUrl: string,
+    name: string,
+    link: {
+        webUrl: string,
+    },
 }
