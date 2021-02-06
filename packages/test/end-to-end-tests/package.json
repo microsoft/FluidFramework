@@ -17,7 +17,7 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:test": "tsc --project ./src/test/tsconfig.json",
-    "ci:test:realsvc": "cross-env FLUID_TEST_REPORT=1 FLUID_TEST_TIMEOUT=10000 npm run test:realsvc:routerlicious",
+    "ci:test:realsvc": "cross-env FLUID_TEST_REPORT=1 FLUID_TEST_TIMEOUT=30000 npm run test:realsvc:routerlicious",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix",
