@@ -23,7 +23,7 @@ export function colIndexToName(colIndex: number) {
 
     let i = colIndex;
     do {
-        const mod = colIndex % 26;
+        const mod = i % 26;
         name = `${String.fromCharCode(65 + mod)}${name}`;
         i = Math.trunc(i / 26) - 1;
     } while (i >= 0);
