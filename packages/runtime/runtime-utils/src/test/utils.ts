@@ -27,15 +27,15 @@ export class MockHandleContext implements IFluidHandleContext {
  * is a factory that is invoked to create the leaves of the graph.
  */
 export function makeJson(breadth: number, depth: number, createLeaf: () => any) {
-    // eslint-disable-next-line no-param-reassign
-    if (--depth === 0) {
+    let depthInternal = depth;
+    if (--depthInternal === 0) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return createLeaf();
     }
 
     const o = {};
     for (let i = 0; i < breadth; i++) {
-        o[`o${i}`] = makeJson(breadth, depth, createLeaf);
+        o[`o${i}`] = makeJson(breadth, depthInternal, createLeaf);
     }
     return o;
 }
