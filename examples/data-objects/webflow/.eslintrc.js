@@ -14,7 +14,6 @@ module.exports = {
         "max-len": "off",
         "no-bitwise": "off",
         "no-case-declarations": "off",
-        "no-null/no-null": "off",
-        "no-param-reassign": "off"
+        "no-null/no-null": "off"
     }
 }
