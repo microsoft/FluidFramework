@@ -86,7 +86,7 @@ export class HandleCache implements IVectorConsumer<Handle> {
     private cacheMiss(position: number) {
         // Coercing 'position' to an Uint32 allows us to handle a negative 'position' value
         // with the same logic that handles 'position' >= length.
-        position >>>= 0;        // eslint-disable-line no-param-reassign
+        const _position = position >>> 0;
 
         // TODO: To bound memory usage, there should be a limit on the maximum size of
         //       handle[].
@@ -95,14 +95,14 @@ export class HandleCache implements IVectorConsumer<Handle> {
         //       the cache to the next MergeTree segment boundary (within the limits of
         //       the handle cache).
 
-        if (position < this.start) {
-            this.handles = this.getHandles(position, this.start).concat(this.handles);
-            this.start = position;
+        if (_position < this.start) {
+            this.handles = this.getHandles(_position, this.start).concat(this.handles);
+            this.start = _position;
             return this.handles[0];
         } else {
-            ensureRange(position, this.vector.getLength());
+            ensureRange(_position, this.vector.getLength());
 
-            this.handles = this.handles.concat(this.getHandles(this.start + this.handles.length, position + 1));
+            this.handles = this.handles.concat(this.getHandles(this.start + this.handles.length, _position + 1));
             return this.handles[this.handles.length - 1];
         }
     }
