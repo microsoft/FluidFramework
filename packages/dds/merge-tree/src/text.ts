@@ -8,10 +8,9 @@ import * as ops from "./ops";
 import { TextSegment } from "./textSegment";
 
 export function loadSegments(content: string, segLimit: number, markers: boolean = false, withProps: boolean = true) {
-    // eslint-disable-next-line no-param-reassign
-    content = content.replace(/^\uFEFF/, "");
+    const BOMFreeContent = content.replace(/^\uFEFF/, "");
 
-    const paragraphs = content.split(/\r?\n/);
+    const paragraphs = BOMFreeContent.split(/\r?\n/);
     for (let i = 0, len = paragraphs.length; i < len; i++) {
         paragraphs[i] = paragraphs[i]
             .replace(/\r?\n/g, " ")
