@@ -243,7 +243,8 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     }
 
     public remove(start: number, end: number) {
-        debug(`remove(${start},${end})`);
+        let _start = start;
+        debug(`remove(${_start},${end})`);
         const ops: IMergeTreeRemoveMsg[] = [];
 
         this.visitRange((position: number, segment: ISegment) => {
@@ -273,17 +274,17 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
                     // Note: The start tag must appear before the position of the current end tag.
                     console.assert(startPos < position);
 
-                    if (!(start <= startPos)) {
+                    if (!(_start <= startPos)) {
                         // If not, remove any positions up to, but excluding the current segment
                         // and adjust the pending removal range to just after this marker.
                         debug(`  exclude end tag '</${segment.properties.tag}>' at ${position}.`);
 
                         // If the preserved end tag is at the beginning of the removal range, no remove op
                         // is necessary.  Just skip over it.
-                        if (start !== position) {
-                            ops.push(createRemoveRangeOp(start, position));
+                        if (_start !== position) {
+                            ops.push(createRemoveRangeOp(_start, position));
                         }
-                        start = position + 1;
+                        _start = position + 1;
                     }
                     break;
                 }
@@ -291,11 +292,11 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
                     break;
             }
             return true;
-        }, start, end);
+        }, _start, end);
 
         // If there is a non-empty span remaining, generate its remove op now.
-        if (start !== end) {
-            ops.push(createRemoveRangeOp(start, end));
+        if (_start !== end) {
+            ops.push(createRemoveRangeOp(_start, end));
         }
 
         // Perform removals in descending order, otherwise earlier deletions will shift the positions
@@ -434,18 +435,18 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     }
 
     public visitRange(callback: LeafAction, start = 0, end = this.length) {
-        end = clamp(0, end, this.length);
-        start = clamp(0, start, end);
+        const _end = clamp(0, end, this.length);
+        const _start = clamp(0, start, end);
 
         // Early exit if passed an empty or invalid range (e.g., NaN).
-        if (!(start < end)) {
+        if (!(_start < _end)) {
             return;
         }
 
         // Note: We pass the leaf callback action as the accumulator, and then use the 'accumAsLeafAction'
         //       actions to invoke the accum for each leaf.  (Paranoid micro-optimization that attempts to
         //       avoid allocation while simplifying the 'LeafAction' signature.)
-        this.sharedString.walkSegments(accumAsLeafAction, start, end, callback);
+        this.sharedString.walkSegments(accumAsLeafAction, _start, _end, callback);
     }
 
     public getText(start?: number, end?: number): string {
@@ -455,19 +456,20 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     public toString() {
         const s: string[] = [];
         this.visitRange((position, segment) => {
-            const kind = getDocSegmentKind(segment);
+            let _segment = segment;
+            const kind = getDocSegmentKind(_segment);
             switch (kind) {
                 case DocSegmentKind.text:
-                    s.push((segment as TextSegment).text);
+                    s.push((_segment as TextSegment).text);
                     break;
                 case DocSegmentKind.beginTags:
-                    for (const tag of segment.properties.tags) {
+                    for (const tag of _segment.properties.tags) {
                         s.push(`<${tag}>`);
                     }
                     break;
                 case DocSegmentKind.endTags:
-                    segment = this.getStart(segment as Marker);
-                    const tags = segment.properties.tags.slice().reverse();
+                    _segment = this.getStart(_segment as Marker);
+                    const tags = _segment.properties.tags.slice().reverse();
                     for (const tag of tags) {
                         s.push(`</${tag}>`);
                     }
