@@ -50,34 +50,35 @@ export function toColorString(color: IColor) {
 
 // Helper function to support HTML hexColor Strings
 export function hexStrToRGBA(hexStr: string): IColor {
+    let _hexStr = hexStr;
     // RGBA color object
     const colorObject: IColor = { r: 1, g: 1, b: 1, a: 1 };
 
     // Remove hash if it exists
-    hexStr = hexStr.replace("#", "");
+    _hexStr = _hexStr.replace("#", "");
 
-    if (hexStr.length === 6) {
+    if (_hexStr.length === 6) {
         // No Alpha
-        colorObject.r = parseInt(hexStr.slice(0, 2), 16) / 255;
-        colorObject.g = parseInt(hexStr.slice(2, 4), 16) / 255;
-        colorObject.b = parseInt(hexStr.slice(4, 6), 16) / 255;
+        colorObject.r = parseInt(_hexStr.slice(0, 2), 16) / 255;
+        colorObject.g = parseInt(_hexStr.slice(2, 4), 16) / 255;
+        colorObject.b = parseInt(_hexStr.slice(4, 6), 16) / 255;
         colorObject.a = parseInt("0xFF", 16) / 255;
-    } else if (hexStr.length === 8) {
+    } else if (_hexStr.length === 8) {
         // Alpha
-        colorObject.r = parseInt(hexStr.slice(0, 2), 16) / 255;
-        colorObject.g = parseInt(hexStr.slice(2, 4), 16) / 255;
-        colorObject.b = parseInt(hexStr.slice(4, 6), 16) / 255;
-        colorObject.a = parseInt(hexStr.slice(6, 8), 16) / 255;
-    } else if (hexStr.length === 3) {
+        colorObject.r = parseInt(_hexStr.slice(0, 2), 16) / 255;
+        colorObject.g = parseInt(_hexStr.slice(2, 4), 16) / 255;
+        colorObject.b = parseInt(_hexStr.slice(4, 6), 16) / 255;
+        colorObject.a = parseInt(_hexStr.slice(6, 8), 16) / 255;
+    } else if (_hexStr.length === 3) {
         // Shorthand hex color
-        const rVal = hexStr.slice(0, 1);
-        const gVal = hexStr.slice(1, 2);
-        const bVal = hexStr.slice(2, 3);
+        const rVal = _hexStr.slice(0, 1);
+        const gVal = _hexStr.slice(1, 2);
+        const bVal = _hexStr.slice(2, 3);
         colorObject.r = parseInt(rVal + rVal, 16) / 255;
         colorObject.g = parseInt(gVal + gVal, 16) / 255;
         colorObject.b = parseInt(bVal + bVal, 16) / 255;
     } else {
-        throw new Error(`Invalid HexString length. Expected either 8, 6, or 3. The actual length was ${hexStr.length}`);
+        throw new Error(`Invalid HexString length: ${_hexStr.length}. Expected HexString length is either 8, 6, or 3.`);
     }
     return colorObject;
 }
@@ -150,9 +151,10 @@ export function parseURL(url) {
 // Following recomendations of https://developer.mozilla.org/en-US/docs/Web/Events/resize to
 // throttle computationally expensive events
 export function throttle(type: string, name: string, obj?: any) {
-    obj = obj || window;
+    let _obj = obj;
+    _obj = _obj || window;
     let running = false;
-    obj.addEventListener(
+    _obj.addEventListener(
         type,
         () => {
             if (running) {
@@ -161,7 +163,7 @@ export function throttle(type: string, name: string, obj?: any) {
 
             running = true;
             requestAnimationFrame(() => {
-                obj.dispatchEvent(new CustomEvent(name));
+                _obj.dispatchEvent(new CustomEvent(name));
                 running = false;
             });
         });
