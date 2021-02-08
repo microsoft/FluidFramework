@@ -7,6 +7,8 @@
 name: $(Build.BuildId)
 
 variables:
+  - name: skipComponentGovernanceDetection
+    value: true
   - group: doc-versions
   - group: storage-vars
   - name: repoToTrigger
@@ -80,7 +82,7 @@ stages:
 
 - stage: json
   displayName: 'API Extractor'
-  pool: Main
+  pool: Lite
   jobs:
     - deployment: upload_json
       displayName: 'Upload JSON'
