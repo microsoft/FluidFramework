@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/test-snapshots",
-  "version": "0.34.1",
+  "version": "0.34.2",
   "private": true,
   "description": "Comprehensive test of snapshot logic.",
   "homepage": "https://fluidframework.com",
@@ -52,14 +52,14 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluid-internal/replay-tool": "^0.34.1",
+    "@fluid-internal/replay-tool": "^0.34.2",
     "@fluidframework/common-utils": "^0.27.0",
     "assert": "^2.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0",
     "@fluidframework/eslint-config-fluid": "^0.22.1",
-    "@fluidframework/mocha-test-setup": "^0.34.1",
+    "@fluidframework/mocha-test-setup": "^0.34.2",
     "@types/assert": "^1.5.2",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",
