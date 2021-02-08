@@ -235,8 +235,8 @@ export function convertOdspSnapshotToCompactSnapshot(
     writeTree(builder.addNode(), snapshotTree, mapping);
 
     const blobsNode = builder.addNode();
-    for (const [id, blob] of blobs) {
-        blobsNode.addNumber(mapping.get(id));
+    for (const [storageBlobId, blob] of blobs) {
+        blobsNode.addNumber(mapping.get(storageBlobId));
         if (blob instanceof Uint8Array) {
             blobsNode.addBlob(blob);
         } else {

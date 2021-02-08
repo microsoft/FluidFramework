@@ -127,7 +127,7 @@ enum Codes {
 
 /**
  * Calculate how many bytes are required to encode an integer.
- * @param num - number to encode. 
+ * @param num - number to encode.
  */
 function calcLength(num: number) {
     let max = 256;
