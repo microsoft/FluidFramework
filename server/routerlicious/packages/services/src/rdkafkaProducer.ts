@@ -105,12 +105,21 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	}
 
 	public async close(reconnecting: boolean = false): Promise<void> {
+		if (this.closed) {
+			return;
+		}
+
 		if (!reconnecting) {
 			// when closed outside of this class, disable reconnecting
 			this.closed = true;
 		}
 
 		this.connecting = this.connected = false;
+
+		if (this.sendPending) {
+			clearImmediate(this.sendPending);
+			this.sendPending = undefined;
+		}
 
 		await new Promise<void>((resolve) => {
 			const producer = this.producer;
@@ -121,30 +130,46 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 				resolve();
 			}
 		});
+
+		if (this.closed) {
+			this.emit("closed");
+			this.removeAllListeners();
+		}
 	}
 
 	/**
 	 * Sends the provided message to Kafka
 	 */
 	// eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
-	public send(messages: object[], tenantId: string, documentId: string): Promise<any> {
+	public send(messages: object[], tenantId: string, documentId: string, partitionId?: number): Promise<any> {
 		const key = `${tenantId}/${documentId}`;
+
+		// the latest boxcar
+		let boxcar: PendingBoxcar;
 
 		// Get the list of boxcars for the given key
 		let boxcars = this.messages.get(key);
-		if (!boxcars) {
-			boxcars = [new PendingBoxcar(tenantId, documentId)];
+		if (boxcars) {
+			boxcar = boxcars[boxcars.length - 1];
+
+			// Create a new boxcar if necessary
+			if (boxcar.partitionId !== partitionId || boxcar.messages.length + messages.length >= MaxBatchSize) {
+				boxcar = new PendingBoxcar(tenantId, documentId);
+				boxcars.push(boxcar);
+			}
+		} else {
+			boxcar = new PendingBoxcar(tenantId, documentId);
+			boxcars = [boxcar];
 			this.messages.set(key, boxcars);
 		}
 
-		// Create a new boxcar if necessary (will only happen when not connected)
-		if (boxcars[boxcars.length - 1].messages.length + messages.length >= MaxBatchSize) {
-			boxcars.push(new PendingBoxcar(tenantId, documentId));
-		}
-
 		// Add the message to the boxcar
-		const boxcar = boxcars[boxcars.length - 1];
 		boxcar.messages.push(...messages);
+
+		if (partitionId !== undefined) {
+			// sending this boxcar to a specific partition
+			boxcar.partitionId = partitionId;
+		}
 
 		// If adding a new message to the boxcar filled it up, and we are connected, then send immediately. Otherwise
 		// request a send
@@ -211,7 +236,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			try {
 				this.producer.produce(
 					this.topic, // topic
-					null, // partition - consistent random for keyed messages
+					boxcar.partitionId ?? null, // partition id or null for consistent random for keyed messages
 					message, // message
 					boxcar.documentId, // key
 					undefined, // timestamp

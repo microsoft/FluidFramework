@@ -15,6 +15,7 @@ import {
     PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import { IOdspResolvedUrl, HostStoragePolicy } from "./contracts";
 import {
     LocalPersistentCache,
@@ -155,8 +156,12 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 },
                 async (event) => tokenFetcher(resolvedUrl.siteUrl, options.refresh, options.claims)
                 .then((tokenResponse) => {
-                    event.end({ fromCache: isTokenFromCache(tokenResponse) });
-                    return tokenFromResponse(tokenResponse);
+                    const token = tokenFromResponse(tokenResponse);
+                    event.end({ fromCache: isTokenFromCache(tokenResponse), isNull: token === null ? true : false });
+                    if (token === null) {
+                        throwOdspNetworkError("Storage Token is null", fetchTokenErrorCode);
+                    }
+                    return token;
                 }));
         };
     }

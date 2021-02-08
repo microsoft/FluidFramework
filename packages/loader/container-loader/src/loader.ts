@@ -372,6 +372,8 @@ export class Loader extends EventEmitter implements ILoader {
             throw new Error(message);
         }
 
+        // parseUrl's id is expected to be of format "tenantId/docId"
+        const [, docId] = parsed.id.split("/");
         const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
         const shouldCache = pendingLocalState !== undefined ? false : canCache;
 
@@ -384,7 +386,7 @@ export class Loader extends EventEmitter implements ILoader {
             } else {
                 const containerP =
                     this.loadContainer(
-                        parsed.id,
+                        docId,
                         request,
                         resolvedAsFluid);
                 container = await containerP;
@@ -401,7 +403,7 @@ export class Loader extends EventEmitter implements ILoader {
         } else {
             container =
                 await this.loadContainer(
-                    parsed.id,
+                    docId,
                     request,
                     resolvedAsFluid,
                     pendingLocalState?.pendingRuntimeState);
@@ -455,13 +457,13 @@ export class Loader extends EventEmitter implements ILoader {
     }
 
     private async loadContainer(
-        id: string,
+        docId: string,
         request: IRequest,
         resolved: IFluidResolvedUrl,
         pendingLocalState?: unknown,
     ): Promise<Container> {
         return Container.load(
-            id,
+            docId,
             this,
             request,
             resolved,

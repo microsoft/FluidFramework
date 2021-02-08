@@ -190,13 +190,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Load an existing container.
      */
     public static async load(
-        id: string,
+        docId: string,
         loader: Loader,
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
         pendingLocalState?: unknown,
     ): Promise<Container> {
-        const [, docId] = id.split("/");
         const container = new Container(
             loader,
             {

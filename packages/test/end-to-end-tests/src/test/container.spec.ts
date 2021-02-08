@@ -40,7 +40,7 @@ describe("Container", () => {
         const testResolved = await loader.services.urlResolver.resolve(testRequest);
         ensureFluidResolvedUrl(testResolved);
         return Container.load(
-            "tenantId/documentId",
+            "documentId",
             loader,
             testRequest,
             testResolved);

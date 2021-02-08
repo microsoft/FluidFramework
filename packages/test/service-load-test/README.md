@@ -6,27 +6,33 @@ NodeJs-based test to simulate many clients and a high rate of op generation.
 
 ## Pre-requisites
 
-* Run [getkeys](/tools/getkeys/README.md) to enable your machine to retrieve OAuth tokens
+* Run [getkeys](/tools/getkeys/README.md) at some point to enable your machine to retrieve required OAuth tokens and passwords.
+_You do not need to run it more than once, it will persist the keys for future sessions._
+* If you are using a username not already present in `testConfig.json`,
+then you'll need to add the password to the `login__odsp__test__accounts` environment variable. The format is simple:
+
+```json
+{"user@foo.com": "pwd_foo", "user@bar.com": "pwd_bar", ...}
+```
+
+If you intend to check in the new username, please reach out to someone on the team who can add the creds to Azure Key Vault.
 
 ## Usage
 
-This test runs in two different modes: Orchestrator Mode and Test Runner mode
+This script runs in two different modes: Orchestrator Mode and Test Runner mode
 
 ### Orchestrator Mode
 
 _This is the main entry point to the test - this Orchestrator process will spawn many Test Runner processes._
 
 ```bash
-node ./dist/nodeStressTest.js --password <password> [--url <url>] [--profile <profile>] [--debug]
+node ./dist/nodeStressTest.js [--url <url>] [--tenant <tenant>] [--profile <profile>] [--debug] [--log <filterTerm>]
 ```
 
 ### Test Runner Mode
 
 _This is not typically invoked manually - rather, the Orchestrator process spawns Test Runners using this mode._
-
-```bash
-node ./dist/nodeStressTest.js --runId <runId> --password <password> --url <url> [--profile <profile>]
-```
+_See the call to `child_process.spawn` in the source code to refer to arguments used to launch in this mode_
 
 ### npm scripts
 
@@ -44,10 +50,6 @@ Specifies which test tenant info to use from [testConfig.json](./testConfig.json
 
 Specifies which test profile to use from [testConfig.json](./testConfig.json). Defaults to **ci**.
 
-#### --password, -w
-
-The password for the username provided in testconfig.json, to be used to retrieve auth tokens. Always required.
-
 #### --url, -u
 
 If present, the test will load an existing data store (at the given url) rather than creating a new container and data store.
@@ -57,10 +59,6 @@ If present, the test will load an existing data store (at the given url) rather 
 
 If present, launch in Test Runner mode with the given runId (to distinguish from other concurrent test runners).
 `--url` is required, since the test runner needs to know which data store to connect to.
-
-#### --driveId, -di
-
-If present, the test will use this driveId instead automatically determining it. This is used internally when in orchestrator mode.
 
 #### --debug, -d
 
