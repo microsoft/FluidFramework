@@ -33,6 +33,7 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
+    "@fluid-experimental/data-objects": "^0.35.0",
     "@fluidframework/aqueduct": "^0.35.0",
     "@fluidframework/container-definitions": "^0.35.0",
     "@fluidframework/container-loader": "^0.35.0",

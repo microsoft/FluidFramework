@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { KeyValueInstantiationFactory } from "@fluid-experimental/data-objects";
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { innerRequestHandler, RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { RequestParser } from "@fluidframework/runtime-utils";
-import { KeyValueInstantiationFactory } from "./DataObject";
 
 /**
  * We'll allow root data stores to be created by requesting a url like /create/dropletType/dataStoreId

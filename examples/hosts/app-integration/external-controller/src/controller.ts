@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IKeyValueDataObject } from "./kvpair-dataobject";
+import { IKeyValueDataObject } from "@fluid-experimental/data-objects";
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.
