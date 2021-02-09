@@ -42,6 +42,10 @@ export class SocketIoRedisPublisher implements core.IPublisher {
         return new SocketIoRedisTopic(this.io.to(topic));
     }
 
+    public emit(topic: string, event: string, ...args: any[]): void {
+        this.io.to(topic).emit(event, ...args);
+    }
+
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public close(): Promise<void> {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
