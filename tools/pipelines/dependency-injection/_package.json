@@ -1,7 +1,7 @@
 {
   "name": "dependency-injection",
   "version": "0.0.1",
-  "description": "Inject dependencies into pipeline VM",
+  "description": "Install dependencies on pipeline VM for DI",
   "main": "index.js",
   "dependencies": {
     "@ff-internal/aria-logger": "^0.0.1"

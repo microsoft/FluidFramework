@@ -33,6 +33,8 @@ variables:
   - template: templates/include-vars.yml
     parameters:
       buildNumberInPatch: true
+  - name: diDir
+    value: '${{ parameters.buildDirectory }}/tools/pipelines/dependency-injection'
 
 jobs:
   - job: run
@@ -66,41 +68,41 @@ jobs:
         workingDir: ${{ parameters.buildDirectory }}
         customCommand: 'run ${{ parameters.taskBuild }}'
 
-    # Auth to internal feed
+    # [DI] Auth to internal feed
     - task: npmAuthenticate@0
-      displayName: npm authenticate (internal feed)
+      displayName: '[DI] npm authenticate (internal feed)'
       inputs:
-        workingFile: packages/test/service-load-test/scripts/.npmrc
+        workingFile: ${{ variables.diDir }}/.npmrc
 
-    # Auth to Office feed
+    # [DI] Auth to Office feed
     - task: npmAuthenticate@0
-      displayName: npm authenticate (office feed)
+      displayName: '[DI] npm authenticate (office feed)'
       inputs:
-        workingFile: packages/test/service-load-test/scripts/.npmrc
+        workingFile: ${{ variables.diDir }}/.npmrc
         customEndpoint: 'Office Packages - Readonly'
 
-    # Prep dependency injection package for install
+    # [DI] Prep dependency injection package for install
     - task: Bash@3
-      displayName: Prepare DI package
+      displayName: '[DI] Prepare DI package'
       inputs:
         targetType: 'inline'
         script: 'mv _package.json package.json'
-        workingDirectory: '${{ parameters.buildDirectory }}/packages/test/service-load-test/scripts'
+        workingDirectory: ${{ variables.diDir }}
 
-    # Install dependency injection package
+    # [DI] Install dependency injection package
     - task: Npm@1
-      displayName: npm install
+      displayName: '[DI] npm install'
       inputs:
         command: 'custom'
-        workingDir: ${{ parameters.buildDirectory }}/packages/test/service-load-test/scripts
+        workingDir: ${{ variables.diDir }}
         customCommand: 'install'
         customRegistry: 'useNpmrc'
 
     - task: Npm@1
-      displayName: verify DI package install
+      displayName: '[DI] verify DI package install'
       inputs:
         command: 'custom'
-        workingDir: ${{ parameters.buildDirectory }}/packages/test/service-load-test/scripts/node_modules/@ff-internal/aria-logger
+        workingDir: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger
         customCommand: 'run start'
 
     # Run End-to-end Tests
@@ -112,6 +114,7 @@ jobs:
         fluid__webpack__fluidHost: $(fluid-webpack-fluidHost)
         fluid__webpack__tenantId: $(fluid-webpack-tenantId)
         fluid__webpack__tenantSecret: $(fluid-webpack-tenantSecret)
+        fluid__dependencyinjection__dir: ${{ parameters.buildDirectory }}/packages/test/service-load-test/scripts/node_modules/@ff-internal/
       inputs:
         command: 'custom'
         workingDir: packages/test/end-to-end-tests
