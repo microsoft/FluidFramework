@@ -40,15 +40,15 @@ export class RouterliciousTestDriver implements ITestDriver {
         }
         else {
             assert(bearerSecret, "Missing bearer secret");
-            assert(tenantSecret, "Missing tenant secret"); 
-            
+            assert(tenantSecret, "Missing tenant secret");
+
             serviceEndpoint = {
                 hostUrl: fluidHost,
                 ordererUrl: fluidHost.replace("www", "alfred"),
-                deltaStorageUrl: fluidHost.replace("www", "historian")
-            }
+                deltaStorageUrl: fluidHost.replace("www", "historian"),
+            };
         }
-        
+
         return new RouterliciousTestDriver(
             bearerSecret,
             tenantId,
