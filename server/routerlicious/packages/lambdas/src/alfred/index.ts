@@ -53,7 +53,7 @@ function getRoomId(room: IRoom) {
 
 const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocketConn`;
 
-const getSubmitOpThrottleId = (tenantId: string, clientId: string) => `${clientId}_${tenantId}_SubmitOp`;
+const getSubmitOpThrottleId = (clientId: string, tenantId: string) => `${clientId}_${tenantId}_SubmitOp`;
 
 // Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
@@ -387,7 +387,7 @@ export function configureWebSocketServices(
 
                     const throttleError = checkThrottle(
                         submitOpThrottler,
-                        getSubmitOpThrottleId(connection.tenantId, clientId),
+                        getSubmitOpThrottleId(clientId, connection.tenantId),
                         logger);
                     if (throttleError) {
                         const nackMessage = createNackMessage(
