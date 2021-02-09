@@ -11,22 +11,49 @@ import { v4 as uuid } from "uuid";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { pkgVersion } from "./packageVersion";
 
+interface IServiceEndpoint {
+    hostUrl: string;
+    ordererUrl: string;
+    deltaStorageUrl: string;
+}
+
 export class RouterliciousTestDriver implements ITestDriver {
     public static createFromEnv() {
-        const bearerSecret = process.env.fluid__webpack__bearerSecret;
+        let bearerSecret = process.env.fluid__webpack__bearerSecret;
+        let tenantSecret = process.env.fluid__webpack__tenantSecret;
         const tenantId = process.env.fluid__webpack__tenantId ?? "fluid";
-        const tenantSecret = process.env.fluid__webpack__tenantSecret;
         const fluidHost = process.env.fluid__webpack__fluidHost;
-        assert(bearerSecret, "Missing bearer secret");
-        assert(tenantId, "Missing tenantId");
-        assert(tenantSecret, "Missing tenant secret");
-        assert(fluidHost, "Missing Fluid host");
 
+        assert(fluidHost, "Missing Fluid host");
+        assert(tenantId, "Missing tenantId");
+
+        let serviceEndpoint: IServiceEndpoint;
+
+        if (fluidHost.includes("localhost")) {
+            serviceEndpoint = {
+                hostUrl: "http://localhost:3000",
+                ordererUrl: "http://localhost:3003",
+                deltaStorageUrl: "http://localhost:3001",
+            };
+            bearerSecret = "create-new-tenants-if-going-to-production";
+            tenantSecret = "create-new-tenants-if-going-to-production";
+        }
+        else {
+            assert(bearerSecret, "Missing bearer secret");
+            assert(tenantSecret, "Missing tenant secret"); 
+            
+            serviceEndpoint = {
+                hostUrl: fluidHost,
+                ordererUrl: fluidHost.replace("www", "alfred"),
+                deltaStorageUrl: fluidHost.replace("www", "historian")
+            }
+        }
+        
         return new RouterliciousTestDriver(
             bearerSecret,
             tenantId,
             tenantSecret,
-            fluidHost,
+            serviceEndpoint,
             process.env.BUILD_BUILD_ID,
         );
     }
@@ -38,7 +65,7 @@ export class RouterliciousTestDriver implements ITestDriver {
         private readonly bearerSecret: string,
         private readonly tenantId: string,
         private readonly tenantSecret: string,
-        private readonly fluidHost: string,
+        private readonly serviceEndpoints: IServiceEndpoint,
         testIdPrefix: string | undefined,
     ) {
         this.testIdPrefix = `${testIdPrefix ?? ""}-`;
@@ -50,7 +77,7 @@ export class RouterliciousTestDriver implements ITestDriver {
 
     createContainerUrl(testId: string): string {
         // eslint-disable-next-line max-len
-        return `${this.fluidHost}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.createDocumentId(testId))}`;
+        return `${this.serviceEndpoints.hostUrl}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.createDocumentId(testId))}`;
     }
 
     createDocumentServiceFactory(): RouterliciousDocumentServiceFactory {
@@ -72,26 +99,13 @@ export class RouterliciousTestDriver implements ITestDriver {
     }
 
     createUrlResolver(): InsecureUrlResolver {
-        const dockerUrls = {
-            hostUrl: "http://localhost:3000",
-            ordererUrl: "http://localhost:3003",
-            storageUrl: "http://localhost:3001",
-        };
-
-        return this.fluidHost.includes("localhost") ?
-            new InsecureUrlResolver(
-                dockerUrls.hostUrl,
-                dockerUrls.ordererUrl,
-                dockerUrls.storageUrl,
-                "fluid",
-                "create-new-tenants-if-going-to-production") :
-            new InsecureUrlResolver(
-                    this.fluidHost,
-                    this.fluidHost.replace("www", "alfred"),
-                    this.fluidHost.replace("www", "historian"),
-                    this.tenantId,
-                    this.bearerSecret,
-                    true);
+        return new InsecureUrlResolver(
+                this.serviceEndpoints.hostUrl,
+                this.serviceEndpoints.ordererUrl,
+                this.serviceEndpoints.deltaStorageUrl,
+                this.tenantId,
+                this.bearerSecret,
+                true);
     }
 
     createCreateNewRequest(testId: string): IRequest {
