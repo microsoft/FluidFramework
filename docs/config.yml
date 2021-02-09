@@ -21,11 +21,14 @@ params:
 
 menu:
   main:
+  - name: "Get started"
+    url: "/docs/get-started/quick-start/"
+    weight: -90
+  - name: "Recipes"
+    url: "/apis/"
+    weight: -80
   - name: "Docs"
     url: "/docs/"
-    weight: -90
-  - name: "API"
-    url: "/apis/"
     weight: -80
   - name: "Community"
     url: "/community/"
