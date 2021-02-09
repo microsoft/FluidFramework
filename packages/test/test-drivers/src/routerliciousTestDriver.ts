@@ -70,7 +70,7 @@ export class RouterliciousTestDriver implements ITestDriver {
             undefined,
         );
     }
-    
+
     createUrlResolver(): InsecureUrlResolver {
         const dockerUrls = {
             hostUrl: "http://localhost:3000",
