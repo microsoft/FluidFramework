@@ -12,7 +12,7 @@ import {
     IDocumentMessage,
     NackErrorType,
 } from "@fluidframework/protocol-definitions";
-import { LocalWebSocket, LocalWebSocketServer } from "@fluidframework/server-local-server";
+import { LocalWebSocketServer } from "@fluidframework/server-local-server";
 import * as core from "@fluidframework/server-services-core";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
@@ -28,7 +28,20 @@ export class LocalDocumentDeltaConnection
         timeoutMs = 60000,
     ): Promise<LocalDocumentDeltaConnection> {
         const socket = (webSocketServer as LocalWebSocketServer).createConnection();
-        const deltaConnection = new LocalDocumentDeltaConnection(socket, id);
+
+        // Cast LocalWebSocket to SocketIOClient.Socket which is the socket that the base class needs. This is hacky
+        // but should be fine because this delta connection is for local use only.
+        const socketWithListener = socket as unknown as SocketIOClient.Socket;
+
+        // Add `off` method the socket which is called by the base class `DocumentDeltaConnection` to remove
+        // event listeners.
+        // We may have to add more methods from SocketIOClient.Socket if they start getting used.
+        socketWithListener.off = (event: string, listener: (...args: any[]) => void) => {
+            socketWithListener.removeListener(event, listener);
+            return socketWithListener;
+        };
+
+        const deltaConnection = new LocalDocumentDeltaConnection(socketWithListener, id);
 
         const connectMessage: IConnect = {
             client,
@@ -42,19 +55,8 @@ export class LocalDocumentDeltaConnection
         return deltaConnection;
     }
 
-    constructor(socket: LocalWebSocket, documentId: string) {
-        // Cast LocalWebSocket to SocketIOClient.Socket which is the socket that the base class needs. Doing this
-        // should be fine because this delta connection is used for local use only.
-        const socketWithListener = socket as unknown as SocketIOClient.Socket;
-
-        // Add `off` method the socket which is called by the base class `DocumentDeltaConnection` to remove
-        // event listeners.
-        // We may have to add more methods from SocketIOClient.Socket if they start getting used.
-        socketWithListener.off = (event: string, listener: (...args: any[]) => void) => {
-            socketWithListener.removeListener(event, listener);
-            return socketWithListener;
-        };
-        super(socketWithListener, documentId, new TelemetryNullLogger());
+    constructor(socket: SocketIOClient.Socket, documentId: string) {
+          super(socket, documentId, new TelemetryNullLogger());
     }
 
     /**
