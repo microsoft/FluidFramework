@@ -353,7 +353,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
             : value;
     }
 
-    protected rebaseOpCore() {
+    protected applyStashedOpCore() {
         throw new Error("not implemented");
     }
 }

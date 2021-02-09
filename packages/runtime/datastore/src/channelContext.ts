@@ -28,7 +28,7 @@ export interface IChannelContext {
 
     reSubmit(content: any, localOpMetadata: unknown): void;
 
-    rebaseOp(content: any): unknown;
+    applyStashedOp(content: any): unknown;
 
     /**
      * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context

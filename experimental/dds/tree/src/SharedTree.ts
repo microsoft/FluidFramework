@@ -414,7 +414,7 @@ export class SharedTree extends SharedObject {
 		this.emit(SharedTreeEvent.EditCommitted, edit.id);
 	}
 
-	protected rebaseOpCore() {
+	protected applyStashedOpCore() {
 		throw new Error('not implemented');
 	}
 }

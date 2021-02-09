@@ -121,8 +121,8 @@ export class LocalChannelContext implements IChannelContext {
         this.services.value.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
-    public rebaseOp() {
-        throw new Error("no rebase on local channel");
+    public applyStashedOp() {
+        throw new Error("no stashed ops on local channel");
     }
 
     /**

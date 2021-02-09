@@ -558,7 +558,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return;
     }
 
-    public async rebaseOp(content: any) {
+    public async applyStashedOp(content: any) {
         return;
     }
 }

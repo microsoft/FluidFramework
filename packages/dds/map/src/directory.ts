@@ -913,7 +913,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         );
     }
 
-    protected rebaseOpCore() {
+    protected applyStashedOpCore() {
         throw new Error("not implemented");
     }
 }

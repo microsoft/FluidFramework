@@ -45,7 +45,7 @@ interface IMapMessageHandler {
      */
     submit(op: IMapOperation, localOpMetadata: unknown): void;
 
-    rebaseOp(op: IMapOperation): unknown;
+    applyStashedOp(op: IMapOperation): unknown;
 }
 
 /**
@@ -501,13 +501,13 @@ export class MapKernel implements IValueTypeCreator {
         return false;
     }
 
-    public tryRebaseOp(op: any): unknown {
+    public tryApplyStashedOp(op: any): unknown {
         const type: string = op.type;
         if (this.messageHandlers.has(type)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this.messageHandlers.get(type)!.rebaseOp(op as IMapOperation);
+            return this.messageHandlers.get(type)!.applyStashedOp(op as IMapOperation);
         }
-        throw new Error("no rebase message handler");
+        throw new Error("no apply stashed op handler");
     }
 
     /**
@@ -682,7 +682,7 @@ export class MapKernel implements IValueTypeCreator {
                     // We don't reuse the metadata but send a new one on each submit.
                     this.submitMapClearMessage(op);
                 },
-                rebaseOp: (op: IMapClearOperation) => {
+                applyStashedOp: (op: IMapClearOperation) => {
                     // We don't reuse the metadata but send a new one on each submit.
                     return this.applyMapClearMessage(op);
                 },
@@ -700,7 +700,7 @@ export class MapKernel implements IValueTypeCreator {
                     // We don't reuse the metadata but send a new one on each submit.
                     this.submitMapKeyMessage(op);
                 },
-                rebaseOp: (op: IMapDeleteOperation) => {
+                applyStashedOp: (op: IMapDeleteOperation) => {
                     // We don't reuse the metadata but send a new one on each submit.
                     return this.applyMapKeyMessage(op);
                 },
@@ -721,7 +721,7 @@ export class MapKernel implements IValueTypeCreator {
                     // We don't reuse the metadata but send a new one on each submit.
                     this.submitMapKeyMessage(op);
                 },
-                rebaseOp: (op: IMapSetOperation) => {
+                applyStashedOp: (op: IMapSetOperation) => {
                     // We don't reuse the metadata but send a new one on each submit.
                     return this.applyMapKeyMessage(op);
                 },
@@ -753,8 +753,8 @@ export class MapKernel implements IValueTypeCreator {
                 submit: (op: IMapValueTypeOperation, localOpMetadata: unknown) => {
                     this.submitMessage(op, localOpMetadata);
                 },
-                rebaseOp: (op: IMapValueTypeOperation) => {
-                    assert(false, "rebase not implemented for custom value type ops");
+                applyStashedOp: (op: IMapValueTypeOperation) => {
+                    assert(false, "apply stashed op not implemented for custom value type ops");
                 },
             });
 

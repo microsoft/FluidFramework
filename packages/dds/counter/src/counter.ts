@@ -200,7 +200,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
         }
     }
 
-    protected rebaseOpCore() {
+    protected applyStashedOpCore() {
         throw new Error("not implemented");
     }
 }

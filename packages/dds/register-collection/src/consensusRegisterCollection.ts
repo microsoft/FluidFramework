@@ -349,7 +349,7 @@ export class ConsensusRegisterCollection<T>
         return serializer.parse(content);
     }
 
-    protected rebaseOpCore() {
+    protected applyStashedOpCore() {
         throw new Error("not implemented");
     }
 }

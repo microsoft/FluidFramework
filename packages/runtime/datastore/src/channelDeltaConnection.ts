@@ -43,8 +43,8 @@ export class ChannelDeltaConnection implements IDeltaConnection {
         this.handler.reSubmit(content, localOpMetadata);
     }
 
-    public rebaseOp(message: ISequencedDocumentMessage): unknown {
-        return this.handler.rebaseOp(message);
+    public applyStashedOp(message: ISequencedDocumentMessage): unknown {
+        return this.handler.applyStashedOp(message);
     }
 
     /**

@@ -748,7 +748,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.pendingStateManager = new PendingStateManager(
             this,
-            async (type, content) => this.rebaseOp(type, content),
+            async (type, content) => this.applyStashedOp(type, content),
             context.pendingLocalState as IPendingLocalState);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
@@ -1003,20 +1003,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * Used to rebase pending initial ops at their reference sequence number.
+     * Used to apply stashed ops at their reference sequence number.
      * Normal op processing is synchronous, but rebasing is async since the
      * data store may not be loaded yet, so we pause DeltaManager between ops.
-     * It's also important that we see each op so we know all pending ops have
-     * been rebased by "connected" event, but process() doesn't see system ops,
+     * It's also important that we see each op so we know all stashed ops have
+     * been applied by "connected" event, but process() doesn't see system ops,
      * so we listen directly from DeltaManager instead.
      */
     private readonly onOp = (op: ISequencedDocumentMessage) => {
         assert(!this.paused);
         this.paused = true;
         this.scheduleManager.setPaused(true);
-        const rebaseP = this.pendingStateManager.rebaseAt(op.sequenceNumber);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        rebaseP.then(() => {
+        const stashP = this.pendingStateManager.applyStashedOpsAt(op.sequenceNumber);
+        stashP.then(() => {
             this.paused = false;
             this.scheduleManager.setPaused(false);
         }, (error) => {
@@ -1024,12 +1023,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
     };
 
-    private async rebaseOp(type: ContainerMessageType, op: ISequencedDocumentMessage): Promise<unknown> {
+    private async applyStashedOp(type: ContainerMessageType, op: ISequencedDocumentMessage): Promise<unknown> {
         switch (type) {
             case ContainerMessageType.FluidDataStoreOp:
-                return this.dataStores.rebaseOp(op);
+                return this.dataStores.applyStashedOp(op);
             case ContainerMessageType.Attach:
-                return this.dataStores.rebaseAttachOp(op as unknown as IAttachMessage);
+                return this.dataStores.applyStashedAttachOp(op as unknown as IAttachMessage);
             case ContainerMessageType.BlobAttach:
                 return;
             case ContainerMessageType.ChunkedOp:

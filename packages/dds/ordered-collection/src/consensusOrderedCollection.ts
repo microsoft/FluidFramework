@@ -401,7 +401,7 @@ export class ConsensusOrderedCollection<T = any>
         return serializer.parse(content);
     }
 
-    protected rebaseOpCore() {
+    protected applyStashedOpCore() {
         throw new Error("not implemented");
     }
 }
