@@ -56,7 +56,7 @@ interface IMapMessageHandler {
 /**
  * Describes an operation specific to a value type.
  */
-interface IMapValueTypeOperation {
+export interface IMapValueTypeOperation {
     /**
      * String identifier of the operation type.
      */
@@ -76,7 +76,7 @@ interface IMapValueTypeOperation {
 /**
  * Operation indicating a value should be set for a key.
  */
-interface IMapSetOperation {
+export interface IMapSetOperation {
     /**
      * String identifier of the operation type.
      */
@@ -96,7 +96,7 @@ interface IMapSetOperation {
 /**
  * Operation indicating a key should be deleted from the map.
  */
-interface IMapDeleteOperation {
+export interface IMapDeleteOperation {
     /**
      * String identifier of the operation type.
      */
@@ -111,12 +111,12 @@ interface IMapDeleteOperation {
 /**
  * Map key operations are one of several types.
  */
-type IMapKeyOperation = IMapValueTypeOperation | IMapSetOperation | IMapDeleteOperation;
+export type IMapKeyOperation = IMapValueTypeOperation | IMapSetOperation | IMapDeleteOperation;
 
 /**
  * Operation indicating the map should be cleared.
  */
-interface IMapClearOperation {
+export interface IMapClearOperation {
     /**
      * String identifier of the operation type.
      */
@@ -126,7 +126,7 @@ interface IMapClearOperation {
 /**
  * Description of a map delta operation
  */
-type IMapOperation = IMapKeyOperation | IMapClearOperation;
+export type IMapOperation = IMapKeyOperation | IMapClearOperation;
 
 /**
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
