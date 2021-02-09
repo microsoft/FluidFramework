@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, assertNotUndefined, compareIterables, fail } from './Common';
+import { assert, assertNotUndefined, fail } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
 import { ChangeNode, TraitLocation, StableRange, Side, StablePlace, NodeData } from './PersistedTypes';
 import { compareTraits } from './EditUtilities';
@@ -409,31 +409,12 @@ export class Snapshot {
 
 	/** Compares this snapshot to another for equality. */
 	public equals(snapshot: Snapshot): boolean {
-		if (this.size !== snapshot.size) {
+		if (this.root !== snapshot.root) {
 			return false;
 		}
 
 		// TODO:#49100:Perf: make this faster and/or remove use by PrefetchingCheckout.
-
-		const compareSnapshotNodes = (nodeA: SnapshotNode, nodeB: SnapshotNode): boolean => {
-			if (nodeA.identifier !== nodeB.identifier) {
-				return false;
-			}
-
-			if (nodeA.definition !== nodeB.definition) {
-				return false;
-			}
-
-			if (nodeA.payload?.base64 !== nodeB.payload?.base64) {
-				return false;
-			}
-
-			const idA = this.getTraitLabel(nodeA.identifier);
-			const idB = this.getTraitLabel(nodeB.identifier);
-			return idA === idB;
-		};
-
-		return compareIterables(this, snapshot, compareSnapshotNodes);
+		return this.forest.equals(snapshot.forest, compareSnapshotNodes);
 	}
 
 	private *iterateNodeDescendants(nodeId: NodeId): IterableIterator<SnapshotNode> {
