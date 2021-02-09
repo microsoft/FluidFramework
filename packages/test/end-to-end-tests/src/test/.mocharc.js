@@ -8,16 +8,23 @@
 const testDriver = process.env.FLUID_TEST_DRIVER ? process.env.FLUID_TEST_DRIVER  : "local";
 const packageDir = `${__dirname}/../..`;
 const testPackagesDir = `${packageDir}/..`;
+const diRoot = process.env.FLUID_DI_ROOT;
+
+const require = [
+    `${testPackagesDir}/mocha-test-setup`,
+    `${testPackagesDir}/test-drivers`,
+  ];
+
+// if diRoot is set, require the @ff-internal/aria-logger package for injecting the logger
+if (diRoot) {
+    require.push(`${diRoot}/@ff-internal/aria-logger`);
+}
 
 const config ={
   "exit": true,
   "recursive": true,
   // "parallel": testDriver === "local",
-  "require": [
-    `${testPackagesDir}/mocha-test-setup`,
-    `${testPackagesDir}/test-drivers`,
-    `${testPackagesDir}/service-load-test/scripts/node_modules/@ff-internal/aria-logger`,
-  ],
+  "require": require,
   "unhandled-rejections": "strict"
 };
 
