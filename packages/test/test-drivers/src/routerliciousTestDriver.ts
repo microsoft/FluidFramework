@@ -70,15 +70,30 @@ export class RouterliciousTestDriver implements ITestDriver {
             undefined,
         );
     }
+    
     createUrlResolver(): InsecureUrlResolver {
-        return new InsecureUrlResolver(
-                this.fluidHost,
-                this.fluidHost.replace("www", "alfred"),
-                this.fluidHost.replace("www", "historian"),
-                this.tenantId,
-                this.bearerSecret,
-                true);
+        const dockerUrls = {
+            hostUrl: "http://localhost:3000",
+            ordererUrl: "http://localhost:3003",
+            storageUrl: "http://localhost:3001",
+        };
+
+        return this.fluidHost.includes("localhost") ?
+            new InsecureUrlResolver(
+                dockerUrls.hostUrl,
+                dockerUrls.ordererUrl,
+                dockerUrls.storageUrl,
+                "fluid",
+                "create-new-tenants-if-going-to-production") :
+            new InsecureUrlResolver(
+                    this.fluidHost,
+                    this.fluidHost.replace("www", "alfred"),
+                    this.fluidHost.replace("www", "historian"),
+                    this.tenantId,
+                    this.bearerSecret,
+                    true);
     }
+
     createCreateNewRequest(testId: string): IRequest {
         return this.createUrlResolver().createCreateNewRequest(this.createDocumentId(testId));
     }
