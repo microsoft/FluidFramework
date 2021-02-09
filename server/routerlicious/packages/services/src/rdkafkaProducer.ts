@@ -38,9 +38,9 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		super(endpoints, clientId, topic, options);
 
 		this.producerOptions = {
-			enableIdempotence: false,
-			pollIntervalMs: 10,
 			...options,
+			enableIdempotence: options?.enableIdempotence ?? false,
+			pollIntervalMs: options?.pollIntervalMs ?? 10,
 		};
 	}
 

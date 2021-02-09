@@ -43,6 +43,8 @@ export class KafkaResourcesFactory implements IResourcesFactory<KafkaResources> 
         const kafkaLibrary = config.get("kafka:lib:name");
         const kafkaEndpoint = config.get("kafka:lib:endpoint");
         const zookeeperEndpoint = config.get("zookeeper:endpoint");
+        const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
+        const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
 
         // Receive topic and group - for now we will assume an entry in config mapping
         // to the given name. Later though the lambda config will likely be split from the stream config
@@ -57,7 +59,9 @@ export class KafkaResourcesFactory implements IResourcesFactory<KafkaResources> 
             zookeeperEndpoint,
             clientId,
             groupId,
-            receiveTopic);
+            receiveTopic,
+            kafkaNumberOfPartitions,
+            kafkaReplicationFactor);
 
         return new KafkaResources(
             lambdaFactory,

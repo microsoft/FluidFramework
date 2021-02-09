@@ -45,12 +45,12 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		super(endpoints, clientId, topic, options);
 
 		this.consumerOptions = {
-			consumeTimeout: 1000,
-			consumeLoopTimeoutDelay: 100,
-			optimizedRebalance: false,
-			commitRetryDelay: 1000,
-			automaticConsume: true,
 			...options,
+			consumeTimeout: options?.consumeTimeout ?? 1000,
+			consumeLoopTimeoutDelay: options?.consumeLoopTimeoutDelay ?? 100,
+			optimizedRebalance: options?.optimizedRebalance ?? false,
+			commitRetryDelay: options?.commitRetryDelay ?? 1000,
+			automaticConsume: options?.automaticConsume ?? true,
 		};
 	}
 
