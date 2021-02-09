@@ -75,7 +75,7 @@ export interface IValueOperation<T> {
      * @param message - The operation itself
      * @alpha
      */
-    process(value: T, params: any, local: boolean, message: ISequencedDocumentMessage);
+    process(value: T, params: any, local: boolean, message: ISequencedDocumentMessage | null);
 }
 
 /**

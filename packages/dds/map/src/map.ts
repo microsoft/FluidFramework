@@ -362,9 +362,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     protected applyStashedOpCore(content: any): unknown {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        this.kernel.tryProcessMessage({ contents: content } as ISequencedDocumentMessage, false, undefined);
-        return this.kernel.tryApplyStashedOp(content);
+        this.kernel.tryProcessMessage(content, false, null, undefined);
+        return this.kernel.tryGetStashedOpLocalMetadata(content);
     }
 
     /**
@@ -372,7 +371,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
-            this.kernel.tryProcessMessage(message, local, localOpMetadata);
+            this.kernel.tryProcessMessage(message.contents, local, message, localOpMetadata);
         }
     }
 

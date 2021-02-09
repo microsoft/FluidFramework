@@ -36,7 +36,12 @@ interface IMapMessageHandler {
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      */
-    process(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage, localOpMetadata: unknown): void;
+    process(
+        op: IMapOperation,
+        local: boolean,
+        message: ISequencedDocumentMessage | null,
+        localOpMetadata: unknown,
+    ): void;
 
     /**
      * Communicate the operation to remote clients.
@@ -45,7 +50,7 @@ interface IMapMessageHandler {
      */
     submit(op: IMapOperation, localOpMetadata: unknown): void;
 
-    applyStashedOp(op: IMapOperation): unknown;
+    getStashedOpLocalMetadata(op: IMapOperation): unknown;
 }
 
 /**
@@ -501,11 +506,11 @@ export class MapKernel implements IValueTypeCreator {
         return false;
     }
 
-    public tryApplyStashedOp(op: any): unknown {
+    public tryGetStashedOpLocalMetadata(op: any): unknown {
         const type: string = op.type;
         if (this.messageHandlers.has(type)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this.messageHandlers.get(type)!.applyStashedOp(op as IMapOperation);
+            return this.messageHandlers.get(type)!.getStashedOpLocalMetadata(op as IMapOperation);
         }
         throw new Error("no apply stashed op handler");
     }
@@ -518,8 +523,12 @@ export class MapKernel implements IValueTypeCreator {
      * For messages from a remote client, this will be undefined.
      * @returns True if the operation was processed, false otherwise.
      */
-    public tryProcessMessage(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): boolean {
-        const op = message.contents as IMapOperation;
+    public tryProcessMessage(
+        op: IMapOperation,
+        local: boolean,
+        message: ISequencedDocumentMessage | null,
+        localOpMetadata: unknown,
+    ): boolean {
         if (this.messageHandlers.has(op.type)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.messageHandlers
@@ -622,7 +631,6 @@ export class MapKernel implements IValueTypeCreator {
     private needProcessKeyOperation(
         op: IMapKeyOperation,
         local: boolean,
-        message: ISequencedDocumentMessage,
         localOpMetadata: unknown,
     ): boolean {
         if (this.pendingClearMessageId !== -1) {
@@ -682,16 +690,16 @@ export class MapKernel implements IValueTypeCreator {
                     // We don't reuse the metadata but send a new one on each submit.
                     this.submitMapClearMessage(op);
                 },
-                applyStashedOp: (op: IMapClearOperation) => {
+                getStashedOpLocalMetadata: (op: IMapClearOperation) => {
                     // We don't reuse the metadata but send a new one on each submit.
-                    return this.applyMapClearMessage(op);
+                    return this.getMapClearMessageLocalMetadata(op);
                 },
             });
         messageHandlers.set(
             "delete",
             {
                 process: (op: IMapDeleteOperation, local, message, localOpMetadata) => {
-                    if (!this.needProcessKeyOperation(op, local, message, localOpMetadata)) {
+                    if (!this.needProcessKeyOperation(op, local, localOpMetadata)) {
                         return;
                     }
                     this.deleteCore(op.key, local, message);
@@ -700,16 +708,16 @@ export class MapKernel implements IValueTypeCreator {
                     // We don't reuse the metadata but send a new one on each submit.
                     this.submitMapKeyMessage(op);
                 },
-                applyStashedOp: (op: IMapDeleteOperation) => {
+                getStashedOpLocalMetadata: (op: IMapDeleteOperation) => {
                     // We don't reuse the metadata but send a new one on each submit.
-                    return this.applyMapKeyMessage(op);
+                    return this.getMapKeyMessageLocalMetadata(op);
                 },
             });
         messageHandlers.set(
             "set",
             {
                 process: (op: IMapSetOperation, local, message, localOpMetadata) => {
-                    if (!this.needProcessKeyOperation(op, local, message, localOpMetadata)) {
+                    if (!this.needProcessKeyOperation(op, local, localOpMetadata)) {
                         return;
                     }
 
@@ -721,9 +729,9 @@ export class MapKernel implements IValueTypeCreator {
                     // We don't reuse the metadata but send a new one on each submit.
                     this.submitMapKeyMessage(op);
                 },
-                applyStashedOp: (op: IMapSetOperation) => {
+                getStashedOpLocalMetadata: (op: IMapSetOperation) => {
                     // We don't reuse the metadata but send a new one on each submit.
-                    return this.applyMapKeyMessage(op);
+                    return this.getMapKeyMessageLocalMetadata(op);
                 },
             });
 
@@ -753,7 +761,7 @@ export class MapKernel implements IValueTypeCreator {
                 submit: (op: IMapValueTypeOperation, localOpMetadata: unknown) => {
                     this.submitMessage(op, localOpMetadata);
                 },
-                applyStashedOp: (op: IMapValueTypeOperation) => {
+                getStashedOpLocalMetadata: (op: IMapValueTypeOperation) => {
                     assert(false, "apply stashed op not implemented for custom value type ops");
                 },
             });
@@ -761,7 +769,7 @@ export class MapKernel implements IValueTypeCreator {
         return messageHandlers;
     }
 
-    private applyMapClearMessage(op: IMapClearOperation): number {
+    private getMapClearMessageLocalMetadata(op: IMapClearOperation): number {
         const pendingMessageId = ++this.pendingMessageId;
         this.pendingClearMessageId = pendingMessageId;
         return pendingMessageId;
@@ -772,11 +780,11 @@ export class MapKernel implements IValueTypeCreator {
      * @param op - The clear message
      */
     private submitMapClearMessage(op: IMapClearOperation): void {
-        const pendingMessageId = this.applyMapClearMessage(op);
+        const pendingMessageId = this.getMapClearMessageLocalMetadata(op);
         this.submitMessage(op, pendingMessageId);
     }
 
-    private applyMapKeyMessage(op: IMapKeyOperation): number {
+    private getMapKeyMessageLocalMetadata(op: IMapKeyOperation): number {
         const pendingMessageId = ++this.pendingMessageId;
         this.pendingKeys.set(op.key, pendingMessageId);
         return pendingMessageId;
@@ -787,7 +795,7 @@ export class MapKernel implements IValueTypeCreator {
      * @param op - The map key message
      */
     private submitMapKeyMessage(op: IMapKeyOperation): void {
-        const pendingMessageId = this.applyMapKeyMessage(op);
+        const pendingMessageId = this.getMapKeyMessageLocalMetadata(op);
         this.submitMessage(op, pendingMessageId);
     }
 
