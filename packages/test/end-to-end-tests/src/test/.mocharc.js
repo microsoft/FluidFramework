@@ -11,8 +11,8 @@ const testPackagesDir = `${packageDir}/..`;
 const diRoot = process.env.FLUID_DI_ROOT;
 
 const require = [
-    `${testPackagesDir}/mocha-test-setup`,
-    `${testPackagesDir}/test-drivers`,
+    `${testPackagesDir}/mocha-test-setup`, // suppresses logging unless FLUID_TEST_VERBOSE is set
+    `${testPackagesDir}/test-drivers`, // implements getFluidTestDriver() according to FLUID_TEST_DRIVER
   ];
 
 // if diRoot is set, require the @ff-internal/aria-logger package for injecting the logger

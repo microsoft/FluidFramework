@@ -27,6 +27,20 @@ import { LoggingError } from "@fluidframework/telemetry-utils";
 import { createDocumentId, LocalCodeLoader } from "@fluidframework/test-utils";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
+//* Remove.
+declare global {
+    // Temporarily defined in @ff-internal/aria-logger, just for hacking purposes.
+    export const otel: string;
+    // export function getTestLogger(): ITelemetryBaseLogger;
+}
+
+//* Remove
+describe("temp", () => {
+    it("validating DI worked", () => {
+        assert.strictEqual(otel, "asdf");
+    });
+});
+
 describe("Errors Types", () => {
     let urlResolver: IUrlResolver;
     let testRequest: IRequest;
