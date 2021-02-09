@@ -11,7 +11,7 @@ import { v4 as uuid } from "uuid";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { pkgVersion } from "./packageVersion";
 
-interface IServiceEndpoint {
+export interface IServiceEndpoint {
     hostUrl: string;
     ordererUrl: string;
     deltaStorageUrl: string;
