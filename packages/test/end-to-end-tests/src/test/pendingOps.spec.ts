@@ -56,8 +56,9 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
         container.close();
         // if we sent the ops successfully the pending state should have a clientId. if not they will be resent anyway
         assert(pendingRuntimeState.clientId !== undefined, "no clientId for successful ops");
+        assert(container.resolvedUrl !== undefined && container.resolvedUrl.type === "fluid");
         pendingState = JSON.stringify({
-            url: `fluid-test://localhost:3000/tenantId/${(args as any).documentId}`,
+            url: container.resolvedUrl.url,
             pendingRuntimeState,
         });
     } else {
@@ -75,7 +76,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     beforeEach(()=>{
         args = argsFactory();
         documentId = (args as any).documentId;
-        url = `http://localhost:3000/${documentId}`;
+        url = args.driver.createContainerUrl(documentId);
     });
     let loader: ILoader;
     let container1: IContainer;
@@ -86,7 +87,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         container1 = await createAndAttachContainer(
             args.defaultCodeDetails,
             loader,
-            (args.urlResolver as any).createCreateNewRequest(documentId));
+            args.driver.createCreateNewRequest(documentId));
         args.opProcessingController.addDeltaManagers((container1 as any).deltaManager);
         const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
@@ -182,7 +183,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     });
 
     it("doesn't resend successful batched ops", async function() {
-        const pendingOps = await getPendingOps(args, false, (container, d, map) => {
+        const pendingOps = await getPendingOps(args, true, (container, d, map) => {
             (container as any).context.runtime.orderSequentially(() => {
                 [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
             });
@@ -222,7 +223,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     it("doesn't resend successful chunked op", async function() {
         const bigString = "a".repeat(container1.deltaManager.maxMessageSize);
 
-        const pendingOps = await getPendingOps(args, false, (c, d, map) => {
+        const pendingOps = await getPendingOps(args, true, (c, d, map) => {
             map.set(testKey, bigString);
             map.set(testKey2, bigString);
         });
