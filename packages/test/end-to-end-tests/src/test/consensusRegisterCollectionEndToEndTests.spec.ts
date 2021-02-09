@@ -40,10 +40,14 @@ const testContainerConfig: ITestContainerConfig = {
 
 function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {
     const tests = (argsFactory: () => ITestObjectProvider) => {
-    let args: ITestObjectProvider;
-    beforeEach(()=>{
-        args = argsFactory();
-    });
+        let args: ITestObjectProvider;
+        beforeEach(()=>{
+            args = argsFactory();
+        });
+        afterEach(() => {
+            args.reset();
+        });
+
         let dataStore1: ITestFluidObject;
         let sharedMap1: ISharedMap;
         let sharedMap2: ISharedMap;

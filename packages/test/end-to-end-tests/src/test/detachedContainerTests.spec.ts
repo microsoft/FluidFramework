@@ -82,6 +82,10 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         loader = args.makeTestLoader(testContainerConfig) as Loader;
     });
 
+    afterEach(() => {
+        args.reset();
+    });
+
     it("Create detached container", async () => {
         const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         assert.strictEqual(container.attachState, AttachState.Detached, "Container should be detached");
@@ -623,6 +627,10 @@ describe("Detached Container", () => {
             args = argsFactory();
             request = (args.driver ?? getFluidTestDriver()).createCreateNewRequest(args.documentId);
             loader = args.makeTestLoader(testContainerConfig) as Loader;
+        });
+
+        afterEach(() => {
+            args.reset();
         });
 
         it("Load attached container from cache and check if they are same", async () => {
