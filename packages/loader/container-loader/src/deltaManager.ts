@@ -108,9 +108,13 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 export class DeltaManager
     extends TypedEventEmitter<IDeltaManagerInternalEvents>
     implements
-    IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+    Omit<IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, "active">,
     IEventProvider<IDeltaManagerInternalEvents>
 {
+    // Despite omitting "active" from IDeltaManager, compiler can't get through if we do not have it here.
+    // So implementing NYI function, actual implementation is provided by Container
+    public get active(): boolean { throw new Error("NYI"); }
+
     public get disposed() { return this.closed; }
 
     public readonly clientDetails: IClientDetails;
@@ -132,8 +136,6 @@ export class DeltaManager
 
     private pending: ISequencedDocumentMessage[] = [];
     private fetching = false;
-
-    private inQuorum = false;
 
     private updateSequenceNumberTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -247,16 +249,6 @@ export class DeltaManager
 
     public get scopes(): string[] | undefined {
         return this.connection?.claims.scopes;
-    }
-
-    public get active(): boolean {
-        const res = this.inQuorum && this.connectionMode === "write";
-        // user can't have r/w connection when user has only read permissions.
-        // That said, connection can be r/w when host called forceReadonly(), as
-        // this is view-only change
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        assert(!(this._readonlyPermissions && res));
-        return res;
     }
 
     public get socketDocumentId(): string | undefined {
@@ -478,14 +470,6 @@ export class DeltaManager
         } else if (this.connection !== undefined || this.connectionP !== undefined) {
             this.fetchMissingDeltas("DocumentOpen", this.lastQueuedSequenceNumber);
         }
-    }
-
-    public updateQuorumJoin() {
-        this.inQuorum = true;
-    }
-
-    public updateQuorumLeave() {
-        this.inQuorum = false;
     }
 
     private static detailsFromConnection(connection: IDocumentDeltaConnection): IConnectionDetails {
@@ -1456,7 +1440,7 @@ export class DeltaManager
     private scheduleSequenceNumberUpdate(message: ISequencedDocumentMessage, immediateNoOp: boolean): void {
         // Exit early for inactive (not in quorum or not writers) clients.
         // They don't take part in the minimum sequence number calculation.
-        if (!this.active) {
+        if (this.connectionMode !== "write") {
             this.stopSequenceNumberUpdate();
             return;
         }
@@ -1482,7 +1466,7 @@ export class DeltaManager
             // Clear an update in 2 s
             this.updateSequenceNumberTimer = setTimeout(() => {
                 this.updateSequenceNumberTimer = undefined;
-                if (this.active) {
+                if (this.connectionMode === "write") {
                     this.submit(MessageType.NoOp, null);
                 }
             }, 2000);

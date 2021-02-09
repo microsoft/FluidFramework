@@ -33,7 +33,6 @@ describe("Loader", () => {
                 deltaManager.inbound.resume();
                 deltaManager.outbound.resume();
                 deltaManager.inboundSignal.resume();
-                deltaManager.updateQuorumJoin();
             }
 
             // function to yield control in the Javascript event loop.

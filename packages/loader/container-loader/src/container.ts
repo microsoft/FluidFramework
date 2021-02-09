@@ -96,6 +96,8 @@ import { Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
 import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 
+type DeltaManagerWithActive = DeltaManager & IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+
 const detachedContainerRefSeqNumber = 0;
 
 const connectEventName = "connect";
@@ -288,7 +290,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _clientId: string | undefined;
     private _id: string | undefined;
     private originalRequest: IRequest | undefined;
-    private readonly _deltaManager: DeltaManager;
+    private readonly _deltaManager: DeltaManagerWithActive;
     private _existing: boolean | undefined;
     private service: IDocumentService | undefined;
     private _connectionState = ConnectionState.Disconnected;
@@ -1270,12 +1272,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         });
 
-        protocol.quorum.on("removeMember", (clientId) => {
-            if (clientId === this._clientId) {
-                this._deltaManager.updateQuorumLeave();
-            }
-        });
-
         protocol.quorum.on("addProposal",(proposal: IPendingProposal) => {
             if (proposal.key === "code" || proposal.key === "code2") {
                 this.emit("codeDetailsProposed", proposal.value, proposal);
@@ -1430,7 +1426,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.emit("readonly", readonly);
         });
 
-        return deltaManager;
+        // Add "active" property.
+        // The meaning of it is Container specific, as we allow container runtime to send ops
+        // only when we are connected as "write" and are up to date, i.e. observed our own join op.
+        // The later info does not exists at DeltaManager layer, it's Container specific logic.
+        Object.defineProperties(deltaManager, {
+            active: {
+                get: () => {
+                    return this.connectionState === ConnectionState.Connected &&
+                        deltaManager.connectionMode === "write";
+                },
+              },
+        });
+
+        return deltaManager as DeltaManagerWithActive;
     }
 
     private attachDeltaManagerOpHandler(attributes: IDocumentAttributes): void {
@@ -1544,7 +1553,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 }
             }
             this._clientId = this.pendingClientId;
-            this._deltaManager.updateQuorumJoin();
         } else if (value === ConnectionState.Disconnected) {
             // Important as we process our own joinSession message through delta request
             this.pendingClientId = undefined;
