@@ -35,6 +35,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
      */
     constructor(
         private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer,
+        private readonly noDeltaStream: boolean = false,
         private readonly innerDocumentService?: IDocumentService) { }
 
     public async createContainer(
@@ -103,6 +104,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
             tenantId,
             documentId,
             this.documentDeltaConnectionsMap,
+            this.noDeltaStream,
             this.innerDocumentService);
     }
 

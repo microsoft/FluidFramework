@@ -28,8 +28,13 @@ export class LocalDocumentService implements api.IDocumentService {
         private readonly tenantId: string,
         private readonly documentId: string,
         private readonly documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>,
+        private readonly noDeltaStream: boolean,
         private readonly innerDocumentService?: api.IDocumentService,
     ) { }
+
+        policies = {
+            noDeltaStream: this.noDeltaStream,
+        };
 
     /**
      * Creates and returns a document storage service for local use.
@@ -57,6 +62,9 @@ export class LocalDocumentService implements api.IDocumentService {
      * @param client - client data
      */
     public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
+        if(this.policies.noDeltaStream === true) {
+            throw new Error();
+        }
         if (this.innerDocumentService) {
             return this.innerDocumentService.connectToDeltaStream(client);
         }
@@ -108,6 +116,7 @@ export function createLocalDocumentService(
     tenantId: string,
     documentId: string,
     documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>,
+    noDeltaStream: boolean,
     innerDocumentService?: api.IDocumentService): api.IDocumentService {
     return new LocalDocumentService(
         resolvedUrl,
@@ -116,6 +125,7 @@ export function createLocalDocumentService(
         tenantId,
         documentId,
         documentDeltaConnectionsMap,
+        noDeltaStream,
         innerDocumentService,
     );
 }

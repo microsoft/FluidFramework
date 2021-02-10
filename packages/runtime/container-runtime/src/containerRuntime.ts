@@ -1007,8 +1007,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         raiseConnectedEvent(this._logger, this, connected, clientId);
 
-        if (connected) {
-            assert(!!clientId);
+        if (connected && clientId) {
             this.summaryManager.setConnected(clientId);
         } else {
             this.summaryManager.setDisconnected();

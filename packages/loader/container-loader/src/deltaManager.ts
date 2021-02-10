@@ -23,6 +23,7 @@ import {
     IDocumentDeltaConnection,
     IDocumentStorageService,
     LoaderCachingPolicy,
+    IDocumentDeltaConnectionEvents,
 } from "@fluidframework/driver-definitions";
 import { isSystemType, isSystemMessage } from "@fluidframework/protocol-base";
 import {
@@ -35,7 +36,9 @@ import {
     INack,
     INackContent,
     ISequencedDocumentMessage,
+    ISignalClient,
     ISignalMessage,
+    ITokenClaims,
     ITrace,
     MessageType,
     ScopeType,
@@ -99,6 +102,31 @@ export enum ReconnectMode {
 export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
     (event: "throttled", listener: (error: IThrottlingWarning) => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
+}
+
+class NoDeltaStream extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection {
+    clientId: string = undefined as any;
+    claims: ITokenClaims = {
+        scopes: [ScopeType.DocRead],
+    } as any;
+    mode: ConnectionMode = "read";
+    existing: boolean = true;
+    maxMessageSize: number = 0;
+    version: string = "";
+    initialMessages: ISequencedDocumentMessage[] = [];
+    initialSignals: ISignalMessage[] = [];
+    initialClients: ISignalClient[] = [];
+    serviceConfiguration: IClientConfiguration = undefined as any;
+    checkpointSequenceNumber?: number | undefined = undefined;
+    submit(messages: IDocumentMessage[]): void {
+        throw new Error("Method not implemented.");
+    }
+    submitSignal(message: any): void {
+        throw new Error("Method not implemented.");
+    }
+    close(): void {
+        throw new Error("Method not implemented.");
+    }
 }
 
 /**
@@ -563,6 +591,15 @@ export class DeltaManager
             throw new Error("Container is not attached");
         }
 
+        if(docService.policies?.noDeltaStream === true) {
+            const connection = new NoDeltaStream();
+            this.connectionP = new Promise((resolve)=>{
+                this.setupNewSuccessfulConnection(connection, "read");
+                resolve(connection);
+            });
+            return this.connectionP;
+        }
+
         // The promise returned from connectCore will settle with a resolved connection or reject with error
         const connectCore = async () => {
             let connection: IDocumentDeltaConnection | undefined;
@@ -579,7 +616,7 @@ export class DeltaManager
 
                 try {
                     this.client.mode = requestedMode;
-                    connection = await docService.connectToDeltaStream(this.client);
+                    connection =  await docService.connectToDeltaStream(this.client);
                 } catch (origError) {
                     const error = CreateContainerError(origError);
 
