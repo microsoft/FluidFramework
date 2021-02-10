@@ -43,7 +43,7 @@ describe('Summary format', () => {
 
 		// Every subsequent edit is a set payload
 		for (let i = 1; i < numberOfEdits; i++) {
-			const edit = newEdit([Change.setPayload(nodeId, { base64: 'test' })]);
+			const edit = newEdit([Change.setPayload(nodeId, { base64: 'dGVzdA==' })]);
 			expectedTree.processLocalEdit({ ...edit, id: editIds[i] });
 		}
 
