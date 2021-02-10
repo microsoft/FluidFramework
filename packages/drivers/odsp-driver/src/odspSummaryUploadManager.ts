@@ -198,7 +198,11 @@ export class OdspSummaryUploadManager {
             cloneDeep(tree),
             blobTreeDedupCachesLatest,
             ".app",
-            false /* Stop handle expansion due to missing unreferenced flag in summary returned from server */,
+            // Issue: https://github.com/microsoft/FluidFramework/issues/5055
+            // Stop handle expansion due to missing unreferenced flag in summary returned from server. So in
+            // case we do expand an unreferenced tree, it could again become referenced.  We would try getting
+            // unreferenced flag in trees/latest from spo so that we can use that and expand accordingly.
+            false,
             "",
             false,
         );
