@@ -14,6 +14,7 @@ import {
     createAndAttachContainer,
     createLoader,
     ITestFluidObject,
+    OpProcessingController,
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
@@ -43,10 +44,10 @@ describe("No Delta Stream", () => {
             codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
     }
 
-    async function loadContainer(): Promise<IContainer> {
+    async function loadContainer(noDeltaStream: boolean): Promise<IContainer> {
         const loader: ILoader = createLoader(
             [[codeDetails, factory]],
-            new LocalDocumentServiceFactory(deltaConnectionServer, true),
+            new LocalDocumentServiceFactory(deltaConnectionServer, noDeltaStream),
             urlResolver);
         return loader.resolve({ url: documentLoadUrl });
     }
@@ -67,11 +68,14 @@ describe("No Delta Stream", () => {
         assert.notStrictEqual(dataObject.runtime.clientId, undefined, "clientId");
 
         dataObject.root.set("test","key");
+        const opc =  new OpProcessingController();
+        opc.addDeltaManagers(container.deltaManager);
+        await opc.process();
     });
 
     it("Validate Properties on Loaded Container With No Delta Stream", async () => {
         // Load the Container that was created by the first client.
-        const container = await loadContainer();
+        const container = await loadContainer(true);
         const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
 
         assert.strictEqual(container.deltaManager.active, false, "active");
@@ -81,7 +85,9 @@ describe("No Delta Stream", () => {
         assert.strictEqual(dataObject.runtime.connected, true, "connected");
         assert.strictEqual(dataObject.runtime.clientId, undefined, "clientId");
 
-        assert.strictEqual(await dataObject.root.wait("test"), "key", "mapKey");
+        assert.strictEqual(dataObject.root.get("test"), "key", "mapKey");
+
+        container.close();
     });
 
     afterEach(async () => {

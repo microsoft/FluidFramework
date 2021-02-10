@@ -125,7 +125,6 @@ class NoDeltaStream extends TypedEventEmitter<IDocumentDeltaConnectionEvents> im
         throw new Error("Method not implemented.");
     }
     close(): void {
-        throw new Error("Method not implemented.");
     }
 }
 
