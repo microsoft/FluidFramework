@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { performance, PromiseCache } from "@fluidframework/common-utils";
+import { PromiseCache } from "@fluidframework/common-utils";
 import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
@@ -45,7 +45,7 @@ const getSPOAndGraphRequestIdsFromResponse = async (headers: Map<string, string>
     if (headers) {
         headersToLog.forEach((header) => {
             const headerValue = headers.get(header.headerName);
-            if (headerValue) {
+            if (headerValue !== undefined) {
                 additionalProps[header.logName] = headerValue;
             }
         });
@@ -62,7 +62,10 @@ export async function delay(timeMs: number): Promise<void> {
 
 /**
  * Returns share link with requested scope and type for a file with given drive and item ids.
- * Scope needed: files.readwrite.all
+ * Scope needed: files.readwrite.all.
+ * This function keeps retrying if it gets a retriable error or wait for some delay if it gets a
+ * throttling error. In future, we are thinking of app allowing to pass some cancel token, with which
+ * we would be able to stop retrying.
  * @param getShareLinkToken - used to fetch access token needed to execute operation
  * @param siteUrl - url of the site that contains the file
  * @param driveId - drive where file is stored
@@ -160,22 +163,22 @@ export async function graphFetch(
     logger: ITelemetryLogger,
     requestInit?: RequestInit,
 ): Promise<IOdspResponse<IGraphFetchResponse>> {
-    const response = await getWithRetryForTokenRefresh(async (options) => {
-        const odspResponse = await PerformanceEvent.timedExecAsync(logger,
-            { eventName: "odspFetchResponse", requestName: nameForLogging }, async (event) => {
-                const startTime = performance.now();
+    let tries = 0;
+    const response = await PerformanceEvent.timedExecAsync(logger,
+        { eventName: "odspFetchResponse", requestName: nameForLogging }, async (event) => {
+            const odspResponse = await getWithRetryForTokenRefresh(async (options) => {
+                tries++;
                 const token = await getShareLinkToken(options, SharingLinkScopeFor.nonFileDefaultUrl, siteUrl);
                 const { url, headers } = getUrlAndHeadersWithAuth(graphUrl.startsWith("http")
                     ? graphUrl : `https://graph.microsoft.com/v1.0/${graphUrl}`, token);
                 const augmentedRequest = { ...requestInit };
                 augmentedRequest.headers = { ...augmentedRequest.headers, ...headers };
                 const res = await fetchAndParseAsJSONHelper<IGraphFetchResponse>(url, augmentedRequest);
-                const totalTime = performance.now() - startTime;
-                const additionalProps = await getSPOAndGraphRequestIdsFromResponse(res.headers);
-                event.end({ ...additionalProps, totalTime });
                 return res;
             },
         );
+        const additionalProps = await getSPOAndGraphRequestIdsFromResponse(odspResponse.headers);
+        event.end({ ...additionalProps, tries });
         return odspResponse;
     });
     return response;
@@ -214,11 +217,13 @@ async function getFileDefaultUrl(
         return graphItem.webUrl;
     }
 
+    let tries = 0;
+    let additionalProps;
     // ODSP link requires extra call to return link that is resistant to file being renamed or moved to different folder
-    const response = await getWithRetryForTokenRefresh(async (options) => {
-        const odspResponse = await PerformanceEvent.timedExecAsync(logger,
+    const response = await PerformanceEvent.timedExecAsync(logger,
             { eventName: "odspFetchResponse", requestName: "getFileDefaultUrl" }, async (event) => {
-                const startTime = performance.now();
+                const odspResponse = await getWithRetryForTokenRefresh(async (options) => {
+                tries++;
                 const token = await getShareLinkToken(options, SharingLinkScopeFor.fileDefaultUrl, siteUrl);
                 const { url, headers } = getUrlAndHeadersWithAuth(
                     `${siteUrl}/_api/web/GetFileByUrl(@a1)/ListItemAllFields/GetSharingInformation?@a1=${
@@ -232,13 +237,12 @@ async function getFileDefaultUrl(
                     },
                 };
                 const res = await fetchHelper(url, requestInit);
-                const totalTime = performance.now() - startTime;
-                const additionalProps = await getSPOAndGraphRequestIdsFromResponse(new Map(res.headers));
-                event.end({ ...additionalProps, totalTime });
+                additionalProps = await getSPOAndGraphRequestIdsFromResponse(new Map(res.headers));
                 const text = JSON.parse(await res.text());
                 return text?.d?.directUrl as string;
             },
         );
+        event.end({ ...additionalProps, tries });
         return odspResponse;
     });
 
@@ -284,11 +288,8 @@ export async function getGraphItemLite(
             try {
                 response = await graphFetch(getShareLinkToken, siteUrl, partialUrl, "GetGraphItemLite", logger);
             } catch(error) {
-                // Cache only if we got a response and the response was a 200 (success) or 404 (NotFound)
-                if (error.statusCode !== 404) {
-                    graphItemLiteCache.remove(cacheKey);
-                    return undefined;
-                }
+                graphItemLiteCache.remove(cacheKey);
+                return undefined;
             }
 
             try {
