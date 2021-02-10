@@ -206,6 +206,7 @@ export class Snapshot {
 				return EditValidationResult.Invalid;
 			}
 
+			// Detached nodes and the root are invalid anchors.
 			if (this.forest.tryGetParent(referenceSibling) === undefined) {
 				return EditValidationResult.Invalid;
 			}
