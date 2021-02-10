@@ -1,3 +1,13 @@
+## 0.35 Breaking changes
+- [Changes-to-Loader-request-headers-and-usage]
+
+### Changes to Loader request headers and usage
+Some Loader headers are being deprecated.
+
+`cache`, `pause`, and `reconnect` should now be specified as part of the `ILoaderOptions` when creating the Loader.  These options are static for a `Loader` instance.  Callers that previously specified these options through the `ILoaderHeader` should instead create a new `Loader` instance with the desired options.
+
+`version` should now be specified as part of the request url when calling `Loader.request(...)` or `Loader.resolve(...)` (this method was already supported previously).
+
 ## 0.34 Breaking changes
 - [Aqueduct writeBlob() and BlobHandle implementation removed](#Aqueduct-writeBlob-and-BlobHandle-implementation-removed)
 - [Connected events raised on registration](#Connected-events-raised-on-registration)

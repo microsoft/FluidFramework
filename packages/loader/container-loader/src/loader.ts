@@ -18,11 +18,12 @@ import {
     ICodeLoader,
     IContainer,
     ILoader,
+    ILoaderEvents,
     ILoaderOptions,
     IProxyLoaderFactory,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
-import { Deferred, performance } from "@fluidframework/common-utils";
+import { Deferred, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
@@ -228,7 +229,7 @@ export interface ILoaderServices {
 /**
  * Manages Fluid resource loading
  */
-export class Loader extends EventEmitter implements ILoader {
+export class Loader extends TypedEventEmitter<ILoaderEvents> implements ILoader {
     private readonly containers = new Map<string, Promise<Container>>();
     public readonly services: ILoaderServices;
     private readonly logger: ITelemetryLogger;
@@ -366,11 +367,13 @@ export class Loader extends EventEmitter implements ILoader {
         const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
 
         let container: Container;
+        let newContainer = true;
         if (canCache) {
             const key = this.getKeyForContainerCache(request, parsed);
             const maybeContainer = await this.containers.get(key);
             if (maybeContainer !== undefined) {
                 container = maybeContainer;
+                newContainer = false;
             } else {
                 const containerP =
                     this.loadContainer(
@@ -383,7 +386,6 @@ export class Loader extends EventEmitter implements ILoader {
                     // Don't cache already closed containers because won't know when to evict
                     this.containers.set(key, containerP);
                     container.once("closed", () => {
-                        // Container clears its own listeners so we don't need to
                         this.containers.delete(key);
                     });
                 }
@@ -395,6 +397,8 @@ export class Loader extends EventEmitter implements ILoader {
                     request,
                     resolvedAsFluid);
         }
+
+        this.emit("containerLoaded", container, newContainer);
 
         if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
             await new Promise<void>((resolve, reject) => {

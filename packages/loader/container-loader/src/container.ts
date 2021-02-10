@@ -194,19 +194,21 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
     ): Promise<Container> {
+        const canReconnect = !(loader.services.options.reconnect === false ||
+            request.headers?.[LoaderHeader.reconnect] === false);
         const container = new Container(
             loader,
             {
                 originalRequest: request,
                 id: decodeURI(docId),
                 resolvedUrl,
-                canReconnect: !(request.headers?.[LoaderHeader.reconnect] === false),
+                canReconnect,
             });
 
         return PerformanceEvent.timedExecAsync(container.logger, { eventName: "Load" }, async (event) => {
             return new Promise<Container>((res, rej) => {
                 const version = request.headers?.[LoaderHeader.version];
-                const pause = request.headers?.[LoaderHeader.pause];
+                const pause = loader.services.options.pause === true || request.headers?.[LoaderHeader.pause];
 
                 const onClosed = (err?: ICriticalContainerError) => {
                     // Depending where error happens, we can be attempting to connect to web socket

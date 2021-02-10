@@ -173,6 +173,13 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 }
 
 /**
+ * Events emitted by the Loader "upwards" to the Host
+ */
+export interface ILoaderEvents extends IEvent {
+    (event: "containerLoaded", listener: (container: IContainer, newlyCreated: boolean) => void): void;
+}
+
+/**
  * The Host's view of the Loader, used for loading Containers
  */
 export interface ILoader extends IFluidRouter {
@@ -219,6 +226,18 @@ export type ILoaderOptions = {
      * Defaults to true.
      */
     cache?: boolean;
+
+    /**
+     * Start the container in a paused, unconnected state.
+     * Defaults to false.
+     */
+    pause?: boolean;
+
+    /**
+     * Allow the container to reconnect.
+     * Defaults to true.
+     */
+    reconnect?: boolean;
 };
 
 /**
@@ -227,6 +246,7 @@ export type ILoaderOptions = {
 export enum LoaderHeader {
     /**
      * Override the Loader's default caching behavior for this container.
+     * @deprected 0.35 Use IloaderOptions.cache instead
      */
     cache = "fluid-cache",
 
@@ -235,8 +255,12 @@ export enum LoaderHeader {
 
     /**
      * Start the container in a paused, unconnected state. Defaults to false
+     * @deprecated 0.35 Provide a loader policy on creation instead
      */
     pause = "pause",
+    /**
+     * @deprecated 0.35 Use ILoaderOptions.reconnect instead
+     */
     reconnect = "fluid-reconnect",
     sequenceNumber = "fluid-sequence-number",
 
@@ -245,6 +269,7 @@ export enum LoaderHeader {
      * null or "null": use ops, no snapshots
      * undefined: fetch latest snapshot
      * otherwise, version sha to load snapshot
+     * @deprecated 0.35 Provide this value in the request URL instead
      */
     version = "version",
 }
