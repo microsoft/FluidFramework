@@ -195,7 +195,11 @@ export class OdspSummaryUploadManager {
             cloneDeep(tree),
             blobTreeDedupCachesLatest,
             ".app",
-            true,
+            // Issue: https://github.com/microsoft/FluidFramework/issues/5055
+            // Stop handle expansion due to missing unreferenced flag in summary returned from server. So in
+            // case we do expand an unreferenced tree, it could again become referenced.  We would try getting
+            // unreferenced flag in trees/latest from spo so that we can use that and expand accordingly.
+            false,
             "",
             false,
         );
@@ -387,9 +391,11 @@ export class OdspSummaryUploadManager {
                         reusedBlobs += result.reusedBlobs;
                         blobs += result.blobs;
                     } else {
-                        // Ideally we should not come here as we should have found it in cache. But in order to successfully upload the summary
-                        // we are just logging the event. Once we make sure that we don't have any telemetry for this, we would remove this.
-                        this.logger.sendErrorEvent({ eventName: "SummaryTreeHandleCacheMiss", parentHandle, handlePath: pathKey });
+                        if (allowHandleExpansion) {
+                            // Ideally we should not come here as we should have found it in cache. But in order to successfully upload the summary
+                            // we are just logging the event. Once we make sure that we don't have any telemetry for this, we would remove this.
+                            this.logger.sendErrorEvent({ eventName: "SummaryTreeHandleCacheMiss", parentHandle, handlePath: pathKey });
+                        }
                         id = `${parentHandle}/${pathKey}`;
                     }
                     break;
