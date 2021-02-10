@@ -24,8 +24,17 @@ export interface TokenFetchOptions {
      */
     refresh: boolean;
 
-    /** Claims that have to be passed with token fetch request */
+    /**
+     * Claims that have to be passed with token fetch request.
+     * These can be used to specify additional information that must be passed to token authority.
+     */
     claims?: string;
+
+    /**
+     * Specific tenant id that must be handling token fetch.
+     * This is used when token is needed when accessing external tenant.
+     */
+    tenantId?: string;
 }
 
 /**

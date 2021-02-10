@@ -148,7 +148,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             // Host should optimize and provide non-expired tokens on all critical paths.
             // Exceptions: race conditions around expiration, revoked tokens, host that does not care
             // (fluid-fetcher)
-
             return PerformanceEvent.timedExecAsync(
                 logger,
                 {
