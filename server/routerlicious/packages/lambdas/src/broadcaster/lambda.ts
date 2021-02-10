@@ -41,7 +41,7 @@ if (typeof setImmediate === "function") {
 
 export class BroadcasterLambda implements IPartitionLambda {
     private pending = new Map<string, BroadcasterBatch>();
-    private pendingOffset: IQueuedMessage;
+    private pendingOffset: IQueuedMessage | undefined;
     private current = new Map<string, BroadcasterBatch>();
     private messageSendingTimerId: unknown | undefined;
 
@@ -52,8 +52,8 @@ export class BroadcasterLambda implements IPartitionLambda {
         const boxcar = extractBoxcar(message);
 
         for (const baseMessage of boxcar.contents) {
-            let topic: string;
-            let event: string;
+            let topic: string | undefined;
+            let event: string | undefined;
 
             if (baseMessage.type === SequencedOperationType) {
                 const value = baseMessage as ISequencedOperationMessage;
@@ -83,6 +83,7 @@ export class BroadcasterLambda implements IPartitionLambda {
     public close() {
         this.pending.clear();
         this.current.clear();
+        this.pendingOffset = undefined;
 
         if (this.messageSendingTimerId !== undefined) {
             clearTaskScheduleTimerFunction(this.messageSendingTimerId);
@@ -96,6 +97,12 @@ export class BroadcasterLambda implements IPartitionLambda {
 
     private sendPending() {
         if (this.pending.size === 0 || this.messageSendingTimerId !== undefined) {
+            // no pending work. checkpoint now if we have a pending offset
+            if (this.pendingOffset) {
+                this.context.checkpoint(this.pendingOffset);
+                this.pendingOffset = undefined;
+            }
+
             return;
         }
 
@@ -105,6 +112,7 @@ export class BroadcasterLambda implements IPartitionLambda {
 
             this.current = this.pending;
             this.pending = new Map<string, BroadcasterBatch>();
+            this.pendingOffset = undefined;
 
             this.messageSendingTimerId = undefined;
 
