@@ -57,7 +57,7 @@ export class DocumentDeltaConnection
 
     private socketConnectionTimeout: ReturnType<typeof setTimeout> | undefined;
 
-    private readonly submitManager: BatchManager<IDocumentMessage[]>;
+    protected readonly submitManager: BatchManager<IDocumentMessage[]>;
 
     private _details: IConnected | undefined;
 

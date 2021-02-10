@@ -110,7 +110,11 @@ export class BroadcasterLambda implements IPartitionLambda {
 
             // Process all the batches + checkpoint
             this.current.forEach((batch, topic) => {
-                this.publisher.to(topic).emit(batch.event, batch.documentId, batch.messages);
+                if (this.publisher.emit) {
+                    this.publisher.emit(topic, batch.event, batch.documentId, batch.messages);
+                } else {
+                    this.publisher.to(topic).emit(batch.event, batch.documentId, batch.messages);
+                }
             });
 
             this.context.checkpoint(batchOffset);
