@@ -96,13 +96,17 @@ export class BroadcasterLambda implements IPartitionLambda {
     }
 
     private sendPending() {
-        if (this.pending.size === 0 || this.messageSendingTimerId !== undefined) {
+        if (this.messageSendingTimerId !== undefined) {
+            // a send is in progress
+            return;
+        }
+
+        if (this.pending.size === 0) {
             // no pending work. checkpoint now if we have a pending offset
             if (this.pendingOffset) {
                 this.context.checkpoint(this.pendingOffset);
                 this.pendingOffset = undefined;
             }
-
             return;
         }
 
