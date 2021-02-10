@@ -108,12 +108,10 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 export class DeltaManager
     extends TypedEventEmitter<IDeltaManagerInternalEvents>
     implements
-    Omit<IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, "active">,
+    IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
     IEventProvider<IDeltaManagerInternalEvents>
 {
-    // Despite omitting "active" from IDeltaManager, compiler can't get through if we do not have it here.
-    // So implementing NYI function, actual implementation is provided by Container
-    public get active(): boolean { throw new Error("NYI"); }
+    public get active(): boolean { return this._active(); }
 
     public get disposed() { return this.closed; }
 
@@ -377,6 +375,7 @@ export class DeltaManager
         private client: IClient,
         private readonly logger: ITelemetryLogger,
         reconnectAllowed: boolean,
+        private readonly _active: () => boolean,
     ) {
         super();
 

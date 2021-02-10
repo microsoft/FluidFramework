@@ -93,6 +93,7 @@ describe("Container Runtime", () => {
                 client as IClient,
                 DebugLogger.create("fluid:testDeltaManager"),
                 false,
+                () => false,
             );
 
             const emitter = new EventEmitter();

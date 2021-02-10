@@ -96,8 +96,6 @@ import { Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
 import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 
-type DeltaManagerWithActive = DeltaManager & IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-
 const detachedContainerRefSeqNumber = 0;
 
 const connectEventName = "connect";
@@ -290,7 +288,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _clientId: string | undefined;
     private _id: string | undefined;
     private originalRequest: IRequest | undefined;
-    private readonly _deltaManager: DeltaManagerWithActive;
+    private readonly _deltaManager: DeltaManager;
     private _existing: boolean | undefined;
     private service: IDocumentService | undefined;
     private _connectionState = ConnectionState.Disconnected;
@@ -1371,11 +1369,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private createDeltaManager() {
-        const deltaManager = new DeltaManager(
+        const deltaManager: DeltaManager = new DeltaManager(
             () => this.service,
             this.client,
             ChildLogger.create(this.subLogger, "DeltaManager"),
             this._canReconnect,
+            // active callback
+            () => {
+                return this.connectionState === ConnectionState.Connected && deltaManager.connectionMode === "write";
+            },
         );
 
         deltaManager.on(connectEventName, (details: IConnectionDetails, opsBehind?: number) => {
@@ -1426,20 +1428,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.emit("readonly", readonly);
         });
 
-        // Add "active" property.
-        // The meaning of it is Container specific, as we allow container runtime to send ops
-        // only when we are connected as "write" and are up to date, i.e. observed our own join op.
-        // The later info does not exists at DeltaManager layer, it's Container specific logic.
-        Object.defineProperties(deltaManager, {
-            active: {
-                get: () => {
-                    return this.connectionState === ConnectionState.Connected &&
-                        deltaManager.connectionMode === "write";
-                },
-              },
-        });
-
-        return deltaManager as DeltaManagerWithActive;
+        return deltaManager;
     }
 
     private attachDeltaManagerOpHandler(attributes: IDocumentAttributes): void {
