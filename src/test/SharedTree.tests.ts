@@ -131,6 +131,15 @@ describe('SharedTree', () => {
 			});
 		});
 
+		it('prevents deletion of the root', () => {
+			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+			expect(tree.currentView.hasNode(initialTree.identifier));
+			assertNoDelta(tree, () => {
+				// Try to delete the root
+				tree.processLocalEdit(newEdit([Delete.create(StableRange.only(initialTree))]));
+			});
+		});
+
 		it('can apply multiple local edits without ack from server', () => {
 			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
 

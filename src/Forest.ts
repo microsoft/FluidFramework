@@ -108,12 +108,20 @@ export interface Forest<ID, T, TParentData> {
 	tryGetParent(id: ID): { parentNode: ID; parentData: TParentData } | undefined;
 
 	/**
-	 * Calculate the difference between two forests
+	 * Calculate the difference between two forests.
 	 * @param forest - the other forest to compare to this one
 	 * @param comparator - a function which returns true if two objects of type T are equivalent, false otherwise
 	 * @returns A {@link Delta} listing which nodes must be changed, added, and removed to get from `this` to `forest`.
 	 */
 	delta(forest: Forest<ID, T, TParentData>, comparator?: (a: T, b: T) => boolean): Delta<ID>;
+
+	/**
+	 * Compares two forests for equality.
+	 * @param forest - the other forest to compare to this one
+	 * @param comparator - a function which returns true if two objects of type T are equivalent, false otherwise
+	 * @returns true iff the forests are equal.
+	 */
+	equals(forest: Forest<ID, T, TParentData>, comparator?: (a: T, b: T) => boolean): boolean;
 }
 
 /**
@@ -298,6 +306,28 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 
 	public tryGetParent(id: ID): { parentNode: ID; parentData: TParentData } | undefined {
 		return this.parents.get(id);
+	}
+
+	public equals(forest: Forest<ID, T, TParentData>, comparator: (a: T, b: T) => boolean = Object.is): boolean {
+		if (this === forest) {
+			return true;
+		}
+		if (forest.size !== this.size) {
+			return false;
+		}
+		if (forest instanceof ForestI) {
+			if (forest.nodes === this.nodes) {
+				return true;
+			}
+		}
+
+		for (const [id, value] of forest) {
+			const otherValue = this.tryGet(id);
+			if (otherValue === undefined || !comparator(value, otherValue)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public delta(forest: Forest<ID, T, TParentData>, comparator: (a: T, b: T) => boolean = Object.is): Delta<ID> {
