@@ -1,64 +1,29 @@
 // Copyright (C) Microsoft Corporation. All rights reserved.
 
 import { expect } from 'chai';
-import { DataObject } from '@fluidframework/aqueduct';
-import { Container } from '@fluidframework/container-loader';
 import { ISerializedHandle } from '@fluidframework/core-interfaces';
-import { requestFluidObject } from '@fluidframework/runtime-utils';
-import {
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-	LocalTestObjectProvider,
-	TestContainerRuntimeFactory,
-	TestFluidObjectFactory,
-} from '@fluidframework/test-utils';
+import { LocalTestObjectProvider } from '@fluidframework/test-utils';
 import { editsPerChunk } from '../EditLog';
 import { newEdit, setTrait } from '../EditUtilities';
 import { Edit, EditWithoutId } from '../PersistedTypes';
 import { SharedTree, SharedTreeEvent } from '../SharedTree';
 import { fullHistorySummarizer_0_1_0, SharedTreeSummary } from '../Summary';
 import { assertNotUndefined } from '../Common';
-import { makeTestNode, testTrait } from './utilities/TestUtilities';
-
-export class TestDataObject extends DataObject {
-	public static readonly type = '@fluid-example/test-dataStore';
-	public get _root() {
-		return this.root;
-	}
-}
-
-enum DataObjectFactoryType {
-	Primed, // default
-	Test,
-}
-
-interface ITestContainerConfig {
-	// TestFluidDataObject instead of PrimedDataStore
-	fluidDataObjectType?: DataObjectFactoryType;
-
-	// An array of channel name and DDS factory pairs to create on container creation time
-	registry?: ChannelFactoryRegistry;
-}
+import {
+	ITestContainerConfig,
+	makeTestNode,
+	setUpLocalServerTestSharedTree,
+	testTrait,
+} from './utilities/TestUtilities';
 
 describe('SharedTree history virtualization', () => {
+	let sharedTree: SharedTree;
 	let localTestObjectProvider: LocalTestObjectProvider<ITestContainerConfig>;
 
-	const treeId = 'test';
-	const registry: ChannelFactoryRegistry = [[treeId, SharedTree.getFactory()]];
-	const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
-		new TestContainerRuntimeFactory(TestDataObject.type, new TestFluidObjectFactory(registry), {
-			initialSummarizerDelayMs: 0,
-		});
-
-	let sharedTree: SharedTree;
-
 	beforeEach(async () => {
-		localTestObjectProvider = new LocalTestObjectProvider(runtimeFactory);
-
-		const container = (await localTestObjectProvider.makeTestContainer()) as Container;
-		const dataObject = await requestFluidObject<ITestFluidObject>(container, 'default');
-		sharedTree = await dataObject.getSharedObject<SharedTree>(treeId);
-		sharedTree.summarizer = fullHistorySummarizer_0_1_0;
+		const testingComponents = await setUpLocalServerTestSharedTree({ summarizer: fullHistorySummarizer_0_1_0 });
+		sharedTree = testingComponents.tree;
+		localTestObjectProvider = testingComponents.localTestObjectProvider;
 	});
 
 	// Adds edits to sharedTree1 to make up the specified number of chunks.
@@ -93,9 +58,7 @@ describe('SharedTree history virtualization', () => {
 		const summary = sharedTree.saveSummary();
 
 		// Load a second tree using the summary
-		const container2 = await localTestObjectProvider.loadTestContainer();
-		const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, 'default');
-		const sharedTree2 = await dataObject2.getSharedObject<SharedTree>(treeId);
+		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({ localTestObjectProvider });
 
 		sharedTree2.loadSummary(summary);
 
@@ -174,15 +137,14 @@ describe('SharedTree history virtualization', () => {
 	});
 
 	it('sends handle ops to connected clients when chunks are uploaded', async () => {
-		const container2 = await localTestObjectProvider.loadTestContainer();
-		const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, 'default');
-		const sharedTree2 = await dataObject2.getSharedObject<SharedTree>(treeId);
-		sharedTree2.summarizer = fullHistorySummarizer_0_1_0;
-
-		const container3 = await localTestObjectProvider.loadTestContainer();
-		const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, 'default');
-		const sharedTree3 = await dataObject3.getSharedObject<SharedTree>(treeId);
-		sharedTree3.summarizer = fullHistorySummarizer_0_1_0;
+		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({
+			localTestObjectProvider,
+			summarizer: fullHistorySummarizer_0_1_0,
+		});
+		const { tree: sharedTree3 } = await setUpLocalServerTestSharedTree({
+			localTestObjectProvider,
+			summarizer: fullHistorySummarizer_0_1_0,
+		});
 
 		// All shared trees should have no edits or chunks
 		expect((sharedTree.saveSummary() as SharedTreeSummary).editHistory?.editChunks.length).to.equal(0);
