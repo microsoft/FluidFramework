@@ -44,6 +44,8 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
         // This may be used for preloading the container package when loading Fluid content.
         containerPackageName?: string
     }
+
+    fileVersion?: string;
 }
 
 /**
