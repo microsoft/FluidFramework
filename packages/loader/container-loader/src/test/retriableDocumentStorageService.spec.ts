@@ -5,12 +5,14 @@
 
 import { strict as assert } from "assert";
 import { DriverErrorType, IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { IsoBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { RetriableDocumentStorageService } from "../retriableDocumentStorageService";
 
 describe("RetriableDocumentStorageService Tests", () => {
     let retriableStorageService: RetriableDocumentStorageService;
     let internalService: IDocumentStorageService;
+    const iso_true = IsoBuffer.from("true");
+    const iso_false = IsoBuffer.from("false").buffer;
     beforeEach(() => {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         internalService = {} as IDocumentStorageService;
@@ -27,20 +29,20 @@ describe("RetriableDocumentStorageService Tests", () => {
 
     it("Should succeed at first time", async () => {
         let retryTimes: number = 1;
-        let success = "false";
-        internalService.read = async (id: string) => {
+        let success = iso_false;
+        internalService.readBlob = async (id: string) => {
             retryTimes -= 1;
-            return "true";
+            return iso_true;
         };
-        success = await retriableStorageService.read("");
+        success = await retriableStorageService.readBlob("");
         assert.strictEqual(retryTimes, 0, "Should succeed at first time");
-        assert.strictEqual(success, "true", "Retry shoul succeed ultimately");
+        assert.strictEqual(success, iso_true, "Retry shoul succeed ultimately");
     });
 
     it("Check that it retries infinitely", async () => {
         let retryTimes: number = 5;
-        let success = "false";
-        internalService.read = async (id: string) => {
+        let success = iso_false;
+        internalService.readBlob = async (id: string) => {
             if (retryTimes > 0) {
                 retryTimes -= 1;
                 const error = new Error("Throw error");
@@ -48,21 +50,21 @@ describe("RetriableDocumentStorageService Tests", () => {
                 (error as any).canRetry = true;
                 throw error;
             }
-            return "true";
+            return iso_true;
         };
-        success = await retriableStorageService.read("");
+        success = await retriableStorageService.readBlob("");
         assert.strictEqual(retryTimes, 0, "Should keep retrying until success");
-        assert.strictEqual(success, "true", "Retry shoul succeed ultimately");
+        assert.strictEqual(success, iso_true, "Retry shoul succeed ultimately");
     });
 
     it("Check that it retries after retry seconds", async () => {
         let retryTimes: number = 1;
-        let success = "false";
+        let success = iso_false;
         let timerFinished = false;
         setTimeout(() => {
             timerFinished = true;
         }, 200);
-        internalService.read = async (id: string) => {
+        internalService.readBlob = async (id: string) => {
             if (retryTimes > 0) {
                 retryTimes -= 1;
                 const error = new Error("Throttle Error");
@@ -71,90 +73,90 @@ describe("RetriableDocumentStorageService Tests", () => {
                 (error as any).canRetry = true;
                 throw error;
             }
-            return "true";
+            return iso_true;
         };
-        success = await retriableStorageService.read("");
+        success = await retriableStorageService.readBlob("");
         assert.strictEqual(timerFinished, true, "Timer should be destroyed");
         assert.strictEqual(retryTimes, 0, "Should retry once");
-        assert.strictEqual(success, "true", "Retry shoul succeed ultimately");
+        assert.strictEqual(success, iso_true, "Retry shoul succeed ultimately");
     });
 
     it("If error is just a string, should retry as canRetry is not false", async () => {
         let retryTimes: number = 1;
-        let success = "false";
-        internalService.read = async (id: string) => {
+        let success = iso_false;
+        internalService.readBlob = async (id: string) => {
             if (retryTimes > 0) {
                 retryTimes -= 1;
                 const err = new Error("error");
                 (err as any).canRetry = true;
                 throw err;
             }
-            return "true";
+            return iso_true;
         };
         try {
-            success = await retriableStorageService.read("");
+            success = await retriableStorageService.readBlob("");
         } catch (error) {}
         assert.strictEqual(retryTimes, 0, "Should retry");
-        assert.strictEqual(success, "true", "Should succeed as retry should be successful");
+        assert.strictEqual(success, iso_true, "Should succeed as retry should be successful");
     });
 
     it("Should not retry if canRetry is set as false", async () => {
         let retryTimes: number = 1;
-        let success = "false";
-        internalService.read = async (id: string) => {
+        let success = iso_false;
+        internalService.readBlob = async (id: string) => {
             if (retryTimes > 0) {
                 retryTimes -= 1;
                 const error = new Error("error");
                 (error as any).canRetry = false;
                 throw error;
             }
-            return "true";
+            return iso_true;
         };
         try {
-            success = await retriableStorageService.read("");
+            success = await retriableStorageService.readBlob("");
             assert.fail("Should not succeed");
         } catch (error) {}
         assert.strictEqual(retryTimes, 0, "Should not retry");
-        assert.strictEqual(success, "false", "Should not succeed as canRetry was not set");
+        assert.strictEqual(success, iso_false, "Should not succeed as canRetry was not set");
     });
 
     it("Should not retry if canRetry is not set", async () => {
         let retryTimes: number = 1;
-        let success = "false";
-        internalService.read = async (id: string) => {
+        let success = iso_false;
+        internalService.readBlob = async (id: string) => {
             if (retryTimes > 0) {
                 retryTimes -= 1;
                 const error = new Error("error");
                 throw error;
             }
-            return "true";
+            return iso_true;
         };
         try {
-            success = await retriableStorageService.read("");
+            success = await retriableStorageService.readBlob("");
             assert.fail("Should not succeed");
         } catch (error) {}
         assert.strictEqual(retryTimes, 0, "Should not retry");
-        assert.strictEqual(success, "false", "Should not succeed as canRetry was not set");
+        assert.strictEqual(success, iso_false, "Should not succeed as canRetry was not set");
     });
 
     it("Should not retry if it is disabled", async () => {
         let retryTimes: number = 1;
-        let success = "false";
+        let success = iso_false;
         retriableStorageService.dispose();
-        internalService.read = async (id: string) => {
+        internalService.readBlob = async (id: string) => {
             if (retryTimes > 0) {
                 retryTimes -= 1;
                 const error = new Error("error");
                 (error as any).canRetry = true;
                 throw error;
             }
-            return "true";
+            return iso_true;
         };
         try {
-            success = await retriableStorageService.read("");
+            success = await retriableStorageService.readBlob("");
             assert.fail("Should not succeed");
         } catch (error) {}
         assert.strictEqual(retryTimes, 0, "Should not retry");
-        assert.strictEqual(success, "false", "Should not succeed as retrying was disabled");
+        assert.strictEqual(success, iso_false, "Should not succeed as retrying was disabled");
     });
 });
