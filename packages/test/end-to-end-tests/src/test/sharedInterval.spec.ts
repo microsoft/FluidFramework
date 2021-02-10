@@ -53,7 +53,11 @@ const assertIntervalsHelper = (
     }
 };
 
-const tests = (args: ITestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    beforeEach(()=>{
+        args = argsFactory();
+    });
     describe("one client", () => {
         const stringId = "stringKey";
 
@@ -330,5 +334,5 @@ const tests = (args: ITestObjectProvider) => {
 };
 
 describe("SharedInterval", () => {
-    generateTest(tests, { tinylicious: true });
+    generateTest(tests);
 });

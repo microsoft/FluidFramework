@@ -35,7 +35,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     renderDiceRoller(defaultObject, element);
 
     // Setting "fluidStarted" is just for our test automation
-    // eslint-disable-next-line dot-notation
+    // eslint-disable-next-line @typescript-eslint/dot-notation
     window["fluidStarted"] = true;
 }
 

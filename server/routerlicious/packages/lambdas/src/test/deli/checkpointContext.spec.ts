@@ -4,7 +4,8 @@
  */
 
 import * as testUtils from "@fluidframework/server-test-utils";
-import { CheckpointContext, ICheckpointParams } from "../../deli/checkpointContext";
+import { CheckpointContext } from "../../deli/checkpointContext";
+import { createDeliCheckpointManagerFromCollection, ICheckpointParams } from "../../deli/checkpointManager";
 
 describe("Routerlicious", () => {
     describe("Deli", () => {
@@ -36,7 +37,9 @@ describe("Routerlicious", () => {
             beforeEach(() => {
                 testContext = new testUtils.TestContext();
                 testCollection = new testUtils.TestCollection([{ documentId: testId, tenantId: testTenant }]);
-                testCheckpointContext = new CheckpointContext(testTenant, testId, testCollection, testContext);
+
+                const checkpointManager = createDeliCheckpointManagerFromCollection(testTenant, testId, testCollection);
+                testCheckpointContext = new CheckpointContext(testTenant, testId, checkpointManager, testContext);
             });
 
             describe(".checkpoint", () => {

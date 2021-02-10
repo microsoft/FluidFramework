@@ -8,7 +8,6 @@ import { create as createDocumentRouter } from "@fluidframework/server-lambdas-d
 import { LocalKafka, LocalContext, LocalLambdaController } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
-import * as bytes from "bytes";
 import { Provider } from "nconf";
 import * as winston from "winston";
 
@@ -16,8 +15,9 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const mongoUrl = config.get("mongo:endpoint") as string;
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
     const kafkaLibrary = config.get("kafka:lib:name");
-    const maxMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
     const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
+    const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
+    const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
 
     const kafkaForwardClientId = config.get("deli:kafkaClientId");
     const kafkaReverseClientId = config.get("alfred:kafkaClientId");
@@ -43,17 +43,19 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         kafkaEndpoint,
         kafkaForwardClientId,
         forwardSendTopic,
-        maxMessageSize,
         true,
-        kafkaProducerPollIntervalMs);
+        kafkaProducerPollIntervalMs,
+        kafkaNumberOfPartitions,
+        kafkaReplicationFactor);
     const reverseProducer = services.createProducer(
         kafkaLibrary,
         kafkaEndpoint,
         kafkaReverseClientId,
         reverseSendTopic,
-        maxMessageSize,
         false,
-        kafkaProducerPollIntervalMs);
+        kafkaProducerPollIntervalMs,
+        kafkaNumberOfPartitions,
+        kafkaReplicationFactor);
 
     const redisConfig = config.get("redis");
     const redisOptions: any = { password: redisConfig.pass };

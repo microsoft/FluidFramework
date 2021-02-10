@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { IsoBuffer } from "@fluidframework/common-utils";
 import { DriverErrorType, IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { RetriableDocumentStorageService } from "../retriableDocumentStorageService";
 
 describe("RetriableDocumentStorageService Tests", () => {
@@ -20,7 +21,11 @@ describe("RetriableDocumentStorageService Tests", () => {
             refreshDelayInfo: () => {},
             emitDelayInfo: () => {},
         };
-        retriableStorageService = new RetriableDocumentStorageService(internalService, deltaManager);
+        retriableStorageService = new RetriableDocumentStorageService(
+            internalService,
+            deltaManager,
+            new TelemetryNullLogger(),
+        );
     });
 
     it("Should succeed at first time", async () => {
@@ -43,6 +48,7 @@ describe("RetriableDocumentStorageService Tests", () => {
                 retryTimes -= 1;
                 const error = new Error("Throw error");
                 (error as any).retryAfterSeconds = 10;
+                (error as any).canRetry = true;
                 throw error;
             }
             return iso_true;
@@ -82,8 +88,9 @@ describe("RetriableDocumentStorageService Tests", () => {
         internalService.readBlob = async (id: string) => {
             if (retryTimes > 0) {
                 retryTimes -= 1;
-                // eslint-disable-next-line no-throw-literal
-                throw "error";
+                const err = new Error("error");
+                (err as any).canRetry = true;
+                throw err;
             }
             return iso_true;
         };
@@ -112,6 +119,25 @@ describe("RetriableDocumentStorageService Tests", () => {
         } catch (error) {}
         assert.strictEqual(retryTimes, 0, "Should not retry");
         assert.strictEqual(success, iso_false, "Should not succeed as canRetry was not set");
+    });
+
+    it("Should not retry if canRetry is not set", async () => {
+        let retryTimes: number = 1;
+        let success = "false";
+        internalService.read = async (id: string) => {
+            if (retryTimes > 0) {
+                retryTimes -= 1;
+                const error = new Error("error");
+                throw error;
+            }
+            return "true";
+        };
+        try {
+            success = await retriableStorageService.read("");
+            assert.fail("Should not succeed");
+        } catch (error) {}
+        assert.strictEqual(retryTimes, 0, "Should not retry");
+        assert.strictEqual(success, "false", "Should not succeed as canRetry was not set");
     });
 
     it("Should not retry if it is disabled", async () => {

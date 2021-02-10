@@ -25,9 +25,10 @@
         "lib": {
             "name": "kafka-node",
             "endpoint": "kafka:9092",
-            "producerPollIntervalMs": 10
-        },
-        "maxMessageSize": "1MB"
+            "producerPollIntervalMs": 10,
+            "numberOfPartitions": 32,
+            "replicationFactor": 3
+        }
     },
     "zookeeper": {
         "endpoint": "zookeeper:2181"
@@ -73,7 +74,11 @@
                 "id": "local",
                 "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
             }
-        ]
+        ],
+        "socketIoAdapter" : {
+            "enableCustomSocketIoAdapter": true,
+            "shouldDisableDefaultNamespace": false
+        }
     },
     "client": {
         "type": "browser",

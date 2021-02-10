@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { bufferToString } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { bufferToString } from "@fluidframework/driver-utils";
 import {
@@ -161,8 +162,6 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
                     },
                 },
             ],
-            // eslint-disable-next-line no-null/no-null
-            id: null,
         };
 
         return tree;
@@ -181,7 +180,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
      */
     protected async loadCore(storage: IChannelStorageService) {
         const blob = await storage.readBlob(snapshotFileName);
-        const header = bufferToString(blob);
+        const header = bufferToString(blob,"utf8");
         this.intervalMapKernel.populate(header);
     }
 

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { bufferToString } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { bufferToString } from "@fluidframework/driver-utils";
 import {
@@ -204,8 +205,6 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
                     },
                 },
             ],
-            // eslint-disable-next-line no-null/no-null
-            id: null,
         };
 
         return tree;
@@ -216,7 +215,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const blob = await storage.readBlob(snapshotFileName);
-        const header = bufferToString(blob);
+        const header = bufferToString(blob, "utf8");
         if (header !== undefined) {
             this.inkData = new InkData(
                 JSON.parse(header) as ISerializableInk,

@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { IContext, IQueuedMessage } from "@fluidframework/server-services-core";
+import { IContext, IContextErrorData, IQueuedMessage } from "@fluidframework/server-services-core";
 import { DocumentContext } from "./documentContext";
 
 const LastCheckpointedOffset: IQueuedMessage = {
@@ -44,7 +44,7 @@ export class DocumentContextManager extends EventEmitter {
         const context = new DocumentContext(head, () => this.tail);
         this.contexts.push(context);
         context.addListener("checkpoint", () => this.updateCheckpoint());
-        context.addListener("error", (error, restart) => this.emit("error", error, restart));
+        context.addListener("error", (error, errorData: IContextErrorData) => this.emit("error", error, errorData));
         return context;
     }
 

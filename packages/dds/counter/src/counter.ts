@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { bufferToString } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { bufferToString } from "@fluidframework/driver-utils";
 import {
@@ -148,8 +149,6 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
                     },
                 },
             ],
-            // eslint-disable-next-line no-null/no-null
-            id: null,
         };
 
         return tree;
@@ -160,7 +159,8 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const blob = await storage.readBlob(snapshotFileName);
-        const rawContent = bufferToString(blob);
+        const rawContent = bufferToString(blob, "utf8");
+
         const content = rawContent !== undefined
             ? JSON.parse(rawContent) as ICounterSnapshotFormat
             : { value: 0 };

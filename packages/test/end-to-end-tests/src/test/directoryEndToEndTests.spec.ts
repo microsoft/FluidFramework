@@ -26,7 +26,11 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (args: ITestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    beforeEach(()=>{
+        args = argsFactory();
+    });
     let dataObject1: ITestFluidObject;
     let sharedDirectory1: ISharedDirectory;
     let sharedDirectory2: ISharedDirectory;
@@ -640,5 +644,5 @@ const tests = (args: ITestObjectProvider) => {
 };
 
 describe("Directory", () => {
-    generateTest(tests, { tinylicious: true });
+    generateTest(tests);
 });

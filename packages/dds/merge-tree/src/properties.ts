@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-param-reassign */
-
 import * as ops from "./ops";
 
 export interface MapLike<T> {
@@ -24,39 +22,43 @@ export interface IConsensusValue {
 }
 
 export function combine(combiningInfo: ops.ICombiningOp, currentValue: any, newValue: any, seq?: number) {
-    if (currentValue === undefined) {
-        currentValue = combiningInfo.defaultValue;
+    let _currentValue = currentValue;
+
+    if (_currentValue === undefined) {
+        _currentValue = combiningInfo.defaultValue;
     }
     // Fixed set of operations for now
     /* eslint-disable default-case */
     switch (combiningInfo.name) {
         case "incr":
-            currentValue += newValue as number;
+            _currentValue += newValue as number;
             if (combiningInfo.minValue) {
-                if (currentValue < combiningInfo.minValue) {
-                    currentValue = combiningInfo.minValue;
+                if (_currentValue < combiningInfo.minValue) {
+                    _currentValue = combiningInfo.minValue;
                 }
             }
             break;
         case "consensus":
-            if (currentValue === undefined) {
+            if (_currentValue === undefined) {
                 const cv: IConsensusValue = {
                     value: newValue,
-                    seq,
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    seq: seq!,
                 };
 
-                currentValue = cv;
+                _currentValue = cv;
             } else {
-                const cv = currentValue as IConsensusValue;
+                const cv = _currentValue as IConsensusValue;
                 if (cv.seq === -1) {
-                    cv.seq = seq;
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    cv.seq = seq!;
                 }
             }
             break;
     }
     /* eslint-enable default-case */
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return currentValue;
+    return _currentValue;
 }
 
 export function matchProperties(a: PropertySet | undefined, b: PropertySet | undefined) {
@@ -141,11 +143,12 @@ export function addProperties(
     op?: ops.ICombiningOp,
     seq?: number,
 ) {
-    if ((!oldProps) || (op && (op.name === "rewrite"))) {
-        oldProps = createMap<any>();
+    let _oldProps = oldProps;
+    if ((!_oldProps) || (op && (op.name === "rewrite"))) {
+        _oldProps = createMap<any>();
     }
-    extend(oldProps, newProps, op, seq);
-    return oldProps;
+    extend(_oldProps, newProps, op, seq);
+    return _oldProps;
 }
 
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined) {
@@ -170,9 +173,9 @@ export function createMap<T>(): MapLike<T> {
     // Using 'delete' on an object causes V8 to put the object in dictionary mode.
     // This disables creation of hidden classes, which are expensive when an object is
     // constantly changing shape.
-    // eslint-disable-next-line dot-notation
+    // eslint-disable-next-line @typescript-eslint/dot-notation
     map["__"] = undefined;
-    // eslint-disable-next-line dot-notation, @typescript-eslint/no-dynamic-delete
+    // eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-dynamic-delete
     delete map["__"];
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return

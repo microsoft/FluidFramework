@@ -6,15 +6,11 @@
         "rootDir": "./",
         "outDir": "../../dist/test",
         "types": [
-            "mocha"
+            "mocha",
+            "@fluidframework/test-driver-definitions",
         ]
     },
     "include": [
         "./**/*"
-    ],
-    "references": [
-        {
-            "path": "../.."
-        }
     ]
 }

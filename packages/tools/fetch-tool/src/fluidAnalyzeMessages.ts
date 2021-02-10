@@ -5,10 +5,8 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    IBlob,
     ISequencedDocumentMessage,
     ISummaryProposal,
-    ITree,
     MessageType,
     TreeEntry,
 } from "@fluidframework/protocol-definitions";
@@ -571,9 +569,9 @@ function processDataStoreAttachOp(
     }
     for (const entry of parsedAttachMessage.snapshot.entries) {
         if (entry.type === TreeEntry.Tree) {
-            for (const entry2 of (entry.value as ITree).entries) {
+            for (const entry2 of entry.value.entries) {
                 if (entry2.path === ".attributes" && entry2.type === TreeEntry.Blob) {
-                    const attrib = JSON.parse((entry2.value as IBlob).contents);
+                    const attrib = JSON.parse(entry2.value.contents);
                     let objectType = attrib.type;
                     if (objectType.startsWith(objectTypePrefix)) {
                         objectType = objectType.substring(objectTypePrefix.length);

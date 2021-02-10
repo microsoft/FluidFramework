@@ -5,7 +5,6 @@
 
 import * as Comlink from "comlink";
 import { fluidExport as TodoContainer } from "@fluid-example/todo";
-import { Container } from "@fluidframework/container-loader";
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import {
     getTinyliciousContainer,
@@ -14,6 +13,7 @@ import {
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerProxy } from "./containerProxy";
 import {
     IFrameInnerApi,
@@ -81,7 +81,7 @@ export async function loadFrame(
     });
 }
 
-async function getFluidObjectAndRender(container: Container, div: HTMLDivElement) {
+async function getFluidObjectAndRender(container: IContainer, div: HTMLDivElement) {
     const response = await container.request({ url: "/" });
     if (response.status !== 200 ||
         !(
@@ -98,7 +98,7 @@ async function getFluidObjectAndRender(container: Container, div: HTMLDivElement
 }
 
 async function loadOuterLogDiv(
-    container: Container,
+    container: IContainer,
     logDivId: string,
 ): Promise<void> {
     const logDiv = document.getElementById(logDivId) as HTMLDivElement;
@@ -106,7 +106,7 @@ async function loadOuterLogDiv(
     const quorum = container.getQuorum();
     if (!quorum.has("code")) {
         // we'll never propose the code, so wait for them to do it
-        await new Promise((resolve) => container.once("contextChanged", () => resolve()));
+        await new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
     }
 
     const log =

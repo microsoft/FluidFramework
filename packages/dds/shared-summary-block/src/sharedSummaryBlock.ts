@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { bufferToString } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { bufferToString } from "@fluidframework/driver-utils";
 import {
@@ -117,8 +118,6 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
                     },
                 },
             ],
-            // eslint-disable-next-line no-null/no-null
-            id: null,
         };
 
         return tree;
@@ -129,7 +128,11 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const blob = await storage.readBlob(snapshotFileName);
+<<<<<<< HEAD
         const rawContent = bufferToString(blob);
+=======
+        const rawContent = bufferToString(blob, "utf8");
+>>>>>>> main
         const contents = JSON.parse(rawContent) as ISharedSummaryBlockDataSerializable;
 
         for (const [key, value] of Object.entries(contents)) {

@@ -4,11 +4,15 @@
  * Licensed under the MIT License.
  */
 
+import {
+    KeyValueDataObject,
+    KeyValueInstantiationFactory
+} from "@fluid-experimental/data-objects";
 import { getSessionStorageContainer } from "@fluidframework/get-session-storage-container";
 import { getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
 
 import { DiceRollerController } from "../src/controller";
-import { KeyValueContainerRuntimeFactory, KeyValueDataObject, KeyValueInstantiationFactory } from "../src/kvpair-dataobject";
+import { KeyValueContainerRuntimeFactory } from "../src/fluid-static";
 import { renderDiceRoller } from "../src/view";
 
 // Since this is a single page Fluid application we are generating a new document id
@@ -42,7 +46,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     renderDiceRoller(diceRollerController, element);
 
     // Setting "fluidStarted" is just for our test automation
-    // eslint-disable-next-line dot-notation
+    // eslint-disable-next-line @typescript-eslint/dot-notation
     window["fluidStarted"] = true;
 }
 

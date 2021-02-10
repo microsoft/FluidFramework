@@ -217,8 +217,8 @@ export interface IContainerRuntimeOptions {
     // Delay before first attempt to spawn summarizing container
     initialSummarizerDelayMs?: number;
 
-    // Flag that enables running garbage collection to delete unused Fluid objects.
-    runGC?: boolean;
+    // Flag that will disable garbage collection if set to true.
+    disableGC?: boolean;
 
     // Override summary configurations
     summaryConfigOverrides?: Partial<ISummaryConfiguration>;
@@ -666,7 +666,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private readonly runtimeOptions: IContainerRuntimeOptions = {
             generateSummaries: true,
             enableWorker: false,
-            runGC: true,
         },
         private readonly containerScope: IFluidObject,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
@@ -706,10 +705,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // Must set to true to throw on any data stores failure that was too severe to be handled.
                 // We also are not decoding the base summaries at the root.
                 throwOnFailure: true,
+                // If GC is disabled, let the summarizer node know so that it does not track GC state.
+                gcDisabled: this.runtimeOptions.disableGC,
             },
         );
-        // Add self route (empty string) to used routes in the summarizer node as the runtime is always considered used.
-        this.summarizerNode.updateUsedRoutes([""]);
 
         this.dataStores = new DataStores(
             getSnapshotForDataStores(context.baseSnapshot, metadata.snapshotFormatVersion),
@@ -930,7 +929,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @deprecated - Use summarize to get summary of the container runtime.
      */
     public async snapshot(): Promise<ITree> {
-        const root: ITree = { entries: await this.dataStores.snapshot(), id: null };
+        const root: ITree = { entries: await this.dataStores.snapshot() };
 
         if (this.chunkMap.size > 0) {
             root.entries.push(new BlobTreeEntry(chunksBlobName, JSON.stringify([...this.chunkMap])));
@@ -1372,14 +1371,37 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { ...attemptData, reason: "disconnected" };
             }
 
-            if (this.runtimeOptions.runGC) {
-                // Get the container's GC data and run GC on the reference graph in it.
-                const gcData = await this.dataStores.getGCData();
-                const { referencedNodeIds } = runGarbageCollection(gcData.gcNodes, [ "/" ], this.logger);
+            if (!this.runtimeOptions.disableGC) {
+                const perfEvent = PerformanceEvent.start(summaryLogger, {
+                    eventName: "GarbageCollection",
+                });
 
-                // Remove this node's route ("/") and notify data stores of routes that are used in it.
-                const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
-                this.dataStores.updateUsedRoutes(usedRoutes);
+                const gcStats: { totalGCNodes?: number; deletedGCNodes?: number } = {};
+                try {
+                    // Get the container's GC data and run GC on the reference graph in it.
+                    const gcData = await this.dataStores.getGCData();
+                    const { referencedNodeIds, deletedNodeIds } = runGarbageCollection(
+                        gcData.gcNodes, [ "/" ],
+                        this.logger,
+                    );
+
+                    // Update stats to be reported in the peformance event.
+                    gcStats.deletedGCNodes = deletedNodeIds.length;
+                    gcStats.totalGCNodes = referencedNodeIds.length + gcStats.deletedGCNodes;
+
+                    // Update our summarizer node's used routes. Updating used routes in summarizer node before
+                    // summarizing is required and asserted by the the summarizer node. We are the root and are
+                    // always referenced, so the used routes is only self-route (empty string).
+                    this.summarizerNode.updateUsedRoutes([""]);
+
+                    // Remove this node's route ("/") and notify data stores of routes that are used in it.
+                    const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
+                    this.dataStores.updateUsedRoutes(usedRoutes);
+                } catch (error) {
+                    perfEvent.cancel(gcStats, error);
+                    throw error;
+                }
+                perfEvent.end(gcStats);
             }
 
             const trace = Trace.start();
@@ -1533,6 +1555,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.verifyNotClosed();
 
         let clientSequenceNumber: number = -1;
+        let opMetadataInternal = opMetadata;
 
         if (this.canSendOps()) {
             const serializedContent = JSON.stringify(content);
@@ -1540,8 +1563,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             // If in manual flush mode we will trigger a flush at the next turn break
             if (this.flushMode === FlushMode.Manual && !this.needsFlush) {
-                // eslint-disable-next-line no-param-reassign
-                opMetadata = { ...opMetadata, batch: true };
+                opMetadataInternal = {
+                    ...opMetadata,
+                    batch: true,
+                };
                 this.needsFlush = true;
 
                 // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
@@ -1562,14 +1587,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     type,
                     content,
                     /* batch: */ this._flushMode === FlushMode.Manual,
-                    opMetadata);
+                    opMetadataInternal);
             } else {
                 clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
             }
         }
 
         // Let the PendingStateManager know that a message was submitted.
-        this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, localOpMetadata, opMetadata);
+        this.pendingStateManager.onSubmitMessage(
+            type,
+            clientSequenceNumber,
+            content,
+            localOpMetadata,
+            opMetadataInternal,
+        );
         if (this.isContainerMessageDirtyable(type, content)) {
             this.updateDocumentDirtyState(true);
         }

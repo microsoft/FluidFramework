@@ -18,6 +18,7 @@ import {
     IDocumentStorageService,
 } from "@fluidframework/driver-definitions";
 import { canRetryOnError } from "@fluidframework/driver-utils";
+import { fetchTokenErrorCode } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
     IErrorTrackingService,
@@ -38,6 +39,7 @@ import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { TokenFetchOptions } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
+import { throwOdspNetworkError } from "./odspError";
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
@@ -213,7 +215,7 @@ export class OdspDocumentService implements IDocumentService {
             return websocketEndpoint.deltaStorageUrl;
         };
 
-        const res = new OdspDeltaStorageService(
+        const service = new OdspDeltaStorageService(
             urlProvider,
             this.storageManager?.ops,
             this.getStorageToken,
@@ -222,10 +224,10 @@ export class OdspDocumentService implements IDocumentService {
         );
 
         return {
-            get: async (from?: number, to?: number) => {
-                const ops = await res.get(from, to);
-                this.opsReceived(ops);
-                return ops;
+            get: async (from: number, to: number) => {
+                const { messages, partialResult } = await service.get(from, to);
+                this.opsReceived(messages);
+                return { messages, partialResult };
             },
         };
     }
@@ -257,12 +259,16 @@ export class OdspDocumentService implements IDocumentService {
                 throw new Error("websocket endpoint should be defined");
             }
 
+            const finalSocketToken = webSocketToken ?? (websocketEndpoint.socketToken || null);
+            if (finalSocketToken === null) {
+                throwOdspNetworkError("Push Token is null", fetchTokenErrorCode);
+            }
             try {
                 const connection = await this.connectToDeltaStreamWithRetry(
                     websocketEndpoint.tenantId,
                     websocketEndpoint.id,
                     // Accounts for ODC where websocket token is returned as part of joinsession response payload
-                    webSocketToken ?? (websocketEndpoint.socketToken || null),
+                    finalSocketToken,
                     io,
                     client,
                     websocketEndpoint.deltaStreamSocketUrl,
@@ -338,6 +344,7 @@ export class OdspDocumentService implements IDocumentService {
                     nonAfdUrl,
                     this.logger,
                     60000,
+                    this.epochTracker,
                 );
                 const endTime = performance.now();
                 this.logger.sendPerformanceEvent({
@@ -377,6 +384,7 @@ export class OdspDocumentService implements IDocumentService {
                     afdUrl,
                     this.logger,
                     60000,
+                    this.epochTracker,
                 );
                 const endTime = performance.now();
                 // Set the successful connection attempt in the cache so we can skip the non-AFD failure the next time

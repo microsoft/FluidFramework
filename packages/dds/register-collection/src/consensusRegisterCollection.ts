@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, bufferToString, unreachableCase } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { bufferToString } from "@fluidframework/driver-utils";
 import {
@@ -101,6 +101,7 @@ export class ConsensusRegisterCollection<T>
      * @param id - optional name of the consensus register collection
      * @returns newly create consensus register collection (but not attached yet)
      */
+    // eslint-disable-next-line @typescript-eslint/no-shadow
     public static create<T>(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, ConsensusRegisterCollectionFactory.Type) as ConsensusRegisterCollection<T>;
     }
@@ -203,8 +204,6 @@ export class ConsensusRegisterCollection<T>
                     },
                 },
             ],
-            // eslint-disable-next-line no-null/no-null
-            id: null,
         };
 
         return tree;
@@ -215,7 +214,7 @@ export class ConsensusRegisterCollection<T>
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const blob = await storage.readBlob(snapshotFileName);
-        const header = bufferToString(blob);
+        const header = bufferToString(blob, "utf8");
         const dataObj = this.parse(header, this.serializer);
 
         for (const key of Object.keys(dataObj)) {

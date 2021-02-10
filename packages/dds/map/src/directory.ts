@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, bufferToString ,TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { bufferToString } from "@fluidframework/driver-utils";
 import { addBlobToTree } from "@fluidframework/protocol-base";
@@ -238,7 +238,7 @@ export interface IDirectoryNewStorageFormat {
 function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): ITree {
     const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
 
-    const tree: ITree = { entries: [], id: null };
+    const tree: ITree = { entries: [] };
     let counter = 0;
     const blobs: string[] = [];
 
@@ -660,7 +660,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      */
     protected async loadCore(storage: IChannelStorageService) {
         const blob = await storage.readBlob(snapshotFileName);
-        const header = bufferToString(blob);
+        const header = bufferToString(blob, "utf8");
         const data = JSON.parse(header);
         const newFormat = data as IDirectoryNewStorageFormat;
         if (Array.isArray(newFormat.blobs)) {
@@ -668,7 +668,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             this.populate(newFormat.content);
             await Promise.all(newFormat.blobs.map(async (value) => {
                 const newBlob = await storage.readBlob(value);
-                const dataExtra = JSON.parse(bufferToString(newBlob));
+                const dataExtra = JSON.parse(bufferToString(newBlob, "utf8"));
                 this.populate(dataExtra as IDirectoryDataObject);
             }));
         } else {

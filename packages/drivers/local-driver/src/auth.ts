@@ -20,11 +20,9 @@ export function generateToken(
     user?: IUser,
     lifetime: number = 60 * 60,
     ver: string = "1.0"): string {
-    // eslint-disable-next-line no-param-reassign
-    user = (user) ? user : generateUser();
-    if (user.id === "" || user.id === undefined) {
-        // eslint-disable-next-line no-param-reassign
-        user = generateUser();
+    let userClaim = (user) ? user : generateUser();
+    if (userClaim.id === "" || userClaim.id === undefined) {
+        userClaim = generateUser();
     }
 
     // Current time in seconds
@@ -34,7 +32,7 @@ export function generateToken(
         documentId,
         scopes,
         tenantId,
-        user,
+        user: userClaim,
         iat: now,
         exp: now + lifetime,
         ver,

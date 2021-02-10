@@ -9,6 +9,7 @@ import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-d
 import {
     IFluidObject,
     IRequest,
+    IRequestHeader,
     IResponse,
     IFluidRouter,
     IFluidCodeDetails,
@@ -44,11 +45,7 @@ function canUseCache(request: IRequest): boolean {
         return true;
     }
 
-    const noCache =
-        request.headers[LoaderHeader.cache] === false ||
-        request.headers[LoaderHeader.reconnect] === false;
-
-    return !noCache;
+    return request.headers[LoaderHeader.cache] !== false;
 }
 
 export class RelativeLoader extends EventEmitter implements ILoader {
@@ -364,10 +361,9 @@ export class Loader extends EventEmitter implements ILoader {
             return Promise.reject(new Error(`Invalid URL ${resolvedAsFluid.url}`));
         }
 
-        request.headers = request.headers ?? {};
+        // parseUrl's id is expected to be of format "tenantId/docId"
+        const [, docId] = parsed.id.split("/");
         const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
-
-        debug(`${canCache} ${request.headers[LoaderHeader.pause]} ${request.headers[LoaderHeader.version]}`);
 
         let container: Container;
         if (canCache) {
@@ -378,16 +374,24 @@ export class Loader extends EventEmitter implements ILoader {
             } else {
                 const containerP =
                     this.loadContainer(
-                        parsed.id,
+                        docId,
                         request,
                         resolvedAsFluid);
-                this.containers.set(key, containerP);
                 container = await containerP;
+
+                if (!container.closed) {
+                    // Don't cache already closed containers because won't know when to evict
+                    this.containers.set(key, containerP);
+                    container.once("closed", () => {
+                        // Container clears its own listeners so we don't need to
+                        this.containers.delete(key);
+                    });
+                }
             }
         } else {
             container =
                 await this.loadContainer(
-                    parsed.id,
+                    docId,
                     request,
                     resolvedAsFluid);
         }
@@ -408,17 +412,8 @@ export class Loader extends EventEmitter implements ILoader {
         return { container, parsed };
     }
 
-    private canUseCache(request: IRequest): boolean {
-        if (request.headers === undefined) {
-            return true;
-        }
-
-        const noCache =
-            request.headers[LoaderHeader.cache] === false ||
-            request.headers[LoaderHeader.reconnect] === false ||
-            request.headers[LoaderHeader.pause] === true;
-
-        return !noCache;
+    private canUseCache(headers: IRequestHeader): boolean {
+        return this.services.options.cache !== false && headers[LoaderHeader.cache] !== false;
     }
 
     private parseHeader(parsed: IParsedUrl, request: IRequest) {
@@ -438,19 +433,23 @@ export class Loader extends EventEmitter implements ILoader {
         if (request.headers[LoaderHeader.version] === "null") {
             request.headers[LoaderHeader.version] = null;
         }
+
+        const canCache = this.canUseCache(request.headers);
+        debug(`${canCache} ${request.headers[LoaderHeader.version]}`);
+
         return {
-            canCache: this.canUseCache(request),
+            canCache,
             fromSequenceNumber,
         };
     }
 
     private async loadContainer(
-        id: string,
+        docId: string,
         request: IRequest,
         resolved: IFluidResolvedUrl,
     ): Promise<Container> {
         return Container.load(
-            id,
+            docId,
             this,
             request,
             resolved);

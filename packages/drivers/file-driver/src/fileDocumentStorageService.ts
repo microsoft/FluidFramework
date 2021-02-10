@@ -4,7 +4,7 @@
  */
 
 import fs from "fs";
-import { assert } from "@fluidframework/common-utils";
+import { assert, fromBase64ToUtf8, stringToBuffer } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
@@ -116,6 +116,17 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
         }
         throw new Error(`Can't find blob ${sha}`);
     }
+
+    public async readBlob(sha: string): Promise<ArrayBufferLike> {
+        if (this.versionName !== undefined) {
+            const fileName = `${this.path}/${this.versionName}/decoded/${sha}`;
+            if (fs.existsSync(fileName)) {
+                const data = fs.readFileSync(fileName);
+                return data;
+            }
+        }
+        throw new Error(`Can't find blob ${sha}`);
+    }
 }
 
 export interface ISnapshotWriterStorage extends IDocumentStorageService {
@@ -125,8 +136,8 @@ export interface ISnapshotWriterStorage extends IDocumentStorageService {
 }
 
 export type ReaderConstructor = new (...args: any[]) => IDocumentStorageService;
-export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(Base: TBase) {
-    return class extends Base implements ISnapshotWriterStorage {
+export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(Base: TBase) =>
+    class extends Base implements ISnapshotWriterStorage {
         // Note: if variable name has same name as in base class, it overrides it!
         public blobsWriter = new Map<string, string>();
         public commitsWriter: { [key: string]: api.ITree } = {};
@@ -151,6 +162,14 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             const blob = this.blobsWriter.get(sha);
             if (blob !== undefined) {
                 return toBuffer(blob, "base64");
+            }
+            return super.readBlob(sha);
+        }
+
+        public async readBlob(sha: string): Promise<ArrayBufferLike> {
+            const blob = this.blobsWriter.get(sha);
+            if (blob !== undefined) {
+                return stringToBuffer(blob, "base64");
             }
             return super.readBlob(sha);
         }
@@ -196,7 +215,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             if (tree && tree.entries) {
                 tree.entries.forEach((entry) => {
                     if (entry.path === ".component" && entry.type === api.TreeEntry.Blob) {
-                        const blob: api.IBlob = entry.value as api.IBlob;
+                        const blob: api.IBlob = entry.value;
                         const content = blob.contents.split(":");
                         if (content[0] === `{"pkg"`) {
                             dataStoreName = content[1].substring(1, content[1].lastIndexOf(`"`));
@@ -212,7 +231,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
 
             // Remove tree IDs for easier comparison of snapshots
             delete tree.id;
-            removeNullTreIds(tree);
+            removeNullTreeIds(tree);
 
             if (ref) {
                 this.commitsWriter[commitName] = tree;
@@ -242,7 +261,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             const commits: { [key: string]: api.ITree } = {};
             for (const entry of tree.entries) {
                 if (entry.type === api.TreeEntry.Commit) {
-                    const commitId = entry.value as string;
+                    const commitId = entry.value;
                     let commit = this.commitsWriter[commitId];
                     if (commit === undefined) {
                         // Read from disk any commits that were referenced in original snapshot
@@ -278,13 +297,13 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             tree.entries.sort((a, b) => a.path.localeCompare(b.path));
             tree.entries.map((entry) => {
                 if (entry.type === api.TreeEntry.Tree) {
-                    this.sortTree(entry.value as api.ITree);
+                    this.sortTree(entry.value);
                 }
             });
         }
 
         public async buildTree(snapshotTree: api.ISnapshotTree): Promise<api.ITree> {
-            const tree: api.ITree = { id: snapshotTree.id, entries: [] };
+            const tree: api.ITree = { entries: [] };
 
             for (const subTreeId of Object.keys(snapshotTree.trees)) {
                 const subTree = await this.buildTree(snapshotTree.trees[subTreeId]);
@@ -314,12 +333,11 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             return tree;
         }
     };
-}
 
-function removeNullTreIds(tree: api.ITree) {
+function removeNullTreeIds(tree: api.ITree) {
     for (const node of tree.entries) {
         if (node.type === api.TreeEntry.Tree) {
-            removeNullTreIds(node.value as api.ITree);
+            removeNullTreeIds(node.value);
         }
     }
     assert(tree.id === undefined || tree.id === null);

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert , bufferToString } from "@fluidframework/common-utils";
 import { IFluidSerializer, ISerializedHandle } from "@fluidframework/core-interfaces";
 import { bufferToString } from "@fluidframework/driver-utils";
 import {
@@ -231,8 +231,6 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
                     },
                 },
             ],
-            // eslint-disable-next-line no-null/no-null
-            id: null,
         };
 
         return tree;
@@ -243,7 +241,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const blob = await storage.readBlob(snapshotFileName);
-        const rawContent = bufferToString(blob);
+        const rawContent = bufferToString(blob, "utf8");
 
         const content = rawContent !== undefined
             ? JSON.parse(rawContent) as ICellValue

@@ -101,11 +101,11 @@ function fetchBlobs(prefix: string,
 }
 
 function createTreeBlob(tree: ISnapshotTree, prefix: string, patched: boolean): IFetchedTree {
-    assert(!!tree.id);
+    const id = tree.id ?? "original";
     const content = JSON.stringify(tree);
-    const filename = patched ? "tree" : `tree-${tree.id}`;
+    const filename = patched ? "tree" : `tree-${id}`;
     const treePath = `${prefix}${filename}`;
-    return { treePath, blobId: tree.id, filename, blob: toBuffer(content, "utf8"), patched, reused: false };
+    return { treePath, blobId: "original tree $id", filename, blob: content, patched, reused: false };
 }
 
 async function fetchBlobsFromSnapshotTree(
@@ -147,8 +147,8 @@ async function fetchBlobsFromSnapshotTree(
             console.error(`No data store tree for data store = ${dataStore}, path = ${prefix}, version = ${dataStoreVersions[0].id}`);
             continue;
         }
-        assert(dataStoreSnapShotTree.id === tree.commits[dataStore]);
-        assert(dataStoreSnapShotTree.id === dataStoreVersions[0].id);
+        assert(dataStoreSnapShotTree.id === undefined || dataStoreSnapShotTree.id === tree.commits[dataStore]);
+        assert(tree.commits[dataStore] === dataStoreVersions[0].id);
         const dataStoreBlobs = await fetchBlobsFromSnapshotTree(
             storage,
             dataStoreSnapShotTree,

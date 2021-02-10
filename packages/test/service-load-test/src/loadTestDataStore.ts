@@ -8,18 +8,11 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-
-export interface ITestConfig {
-    opRatePerMin: number,
-    progressIntervalMs: number,
-    numClients: number,
-    totalSendCount: number,
-    readWriteCycleMs: number,
-}
+import { ILoadTestConfig } from "./testConfigFile";
 
 export interface IRunConfig {
     runId: number,
-    testConfig: ITestConfig
+    testConfig: ILoadTestConfig
 }
 
 export interface ILoadTest {
@@ -63,8 +56,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
     }
 
     public async run(config: IRunConfig) {
+        // Wait for all runners to join
         console.log(`${config.runId.toString().padStart(3)}> waiting`);
-        await new Promise((resolve) => {
+        await new Promise<void>((resolve) => {
             let memberCount = this.context.getQuorum().getMembers().size;
             if (memberCount >= config.testConfig.numClients) { resolve(); }
             this.context.getQuorum().on("addMember", () => {

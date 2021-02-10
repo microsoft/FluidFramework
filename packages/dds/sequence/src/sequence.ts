@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Deferred, assert } from "@fluidframework/common-utils";
+import { Deferred, bufferToString, assert } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { bufferToString } from "@fluidframework/driver-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -145,8 +145,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                     break;
                 case "maintenance":
                     if (!this.client.mergeTreeMaintenanceCallback) {
-                        this.client.mergeTreeMaintenanceCallback = (args) => {
-                            this.emit("maintenance", new SequenceMaintenanceEvent(args, this.client), this);
+                        this.client.mergeTreeMaintenanceCallback = (args, opArgs) => {
+                            this.emit("maintenance", new SequenceMaintenanceEvent(opArgs, args, this.client), this);
                         };
                     }
                     break;
@@ -440,8 +440,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             });
         const tree: ITree = {
             entries,
-            // eslint-disable-next-line no-null/no-null
-            id: null,
         };
 
         return tree;
@@ -497,9 +495,11 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService) {
-        const blob = await storage.readBlob(snapshotFileName);
-        const header = bufferToString(blob);
-        this.intervalMapKernel.populate(header);
+        if (await storage.contains(snapshotFileName)) {
+            const blob = await storage.readBlob(snapshotFileName);
+            const header = bufferToString(blob, "utf8");
+            this.intervalMapKernel.populate(header);
+        }
 
         try {
             // this will load the header, and return a promise

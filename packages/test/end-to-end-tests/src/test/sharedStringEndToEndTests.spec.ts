@@ -25,7 +25,11 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (args: ITestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    beforeEach(()=>{
+        args = argsFactory();
+    });
     let sharedString1: SharedString;
     let sharedString2: SharedString;
 
@@ -68,5 +72,5 @@ const tests = (args: ITestObjectProvider) => {
 };
 
 describe("SharedString", () => {
-    generateTest(tests, { tinylicious: true });
+    generateTest(tests);
 });

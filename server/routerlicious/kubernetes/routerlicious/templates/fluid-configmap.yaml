@@ -35,9 +35,11 @@ data:
         "kafka": {
             "lib": {
                 "name": "kafka-node",
-                "endpoint": "{{ .Values.kafka.url }}"
-            },
-            "maxMessageSize": "1MB"
+                "endpoint": "{{ .Values.kafka.url }}",
+                "producerPollIntervalMs": 10,
+                "numberOfPartitions": 32,
+                "replicationFactor": 3
+            }
         },
         "zookeeper": {
             "endpoint": "{{ .Values.zookeeper.url }}"
@@ -82,7 +84,11 @@ data:
                 {{- range $i, $tenant := .Values.alfred.tenants }}
                 {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
                 {{- end }}
-            ]
+            ],
+            "socketIoAdapter" : {
+                "enableCustomSocketIoAdapter": {{ .Values.alfred.socketIoAdapter.enableCustomSocketIoAdapter }},
+                "shouldDisableDefaultNamespace": {{ .Values.alfred.socketIoAdapter.shouldDisableDefaultNamespace }}
+            }
         },
         "client": {
             "type": "browser",

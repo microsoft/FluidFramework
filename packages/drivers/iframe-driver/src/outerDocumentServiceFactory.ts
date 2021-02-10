@@ -196,7 +196,7 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
     }
 
     private getDeltaStorage(deltaStorage: IDocumentDeltaStorageService): IDocumentDeltaStorageService {
-        const get = Comlink.proxy(async (from?: number, to?: number) => deltaStorage.get(from, to));
+        const get = Comlink.proxy(async (from: number, to: number) => deltaStorage.get(from, to));
 
         return {
             get,

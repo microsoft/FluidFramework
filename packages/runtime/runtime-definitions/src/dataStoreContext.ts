@@ -347,6 +347,12 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
     ): CreateChildSummarizerNodeFn;
 
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+
+    /**
+     * Returns the GC details in the initial summary of this data store. This is used to initialize the data store
+     * and its children with the GC details from the previous summary.
+     */
+    getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
 }
 
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {

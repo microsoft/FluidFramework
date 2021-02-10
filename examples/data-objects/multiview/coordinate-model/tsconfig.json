@@ -8,7 +8,12 @@
         "module": "esnext",
         "outDir": "dist",
         "jsx": "react",
-        "types": ["react", "react-dom", "jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"]
+        "types": [
+            "jest",
+            "puppeteer",
+            "jest-environment-puppeteer",
+            "expect-puppeteer"
+        ]
     },
     "include": [
         "src/**/*"

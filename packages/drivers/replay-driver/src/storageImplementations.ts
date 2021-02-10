@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, stringToBuffer } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -34,7 +34,7 @@ export interface IFileSnapshot {
 
 export class FileSnapshotReader extends ReadDocumentStorageServiceBase implements IDocumentStorageService {
     // IVersion.treeId used to communicate between getVersions() & getSnapshotTree() calls to indicate IVersion is ours.
-    private static readonly FileStorageVersionTreeId = "FileStorageTreeId";
+    protected static readonly FileStorageVersionTreeId = "FileStorageTreeId";
 
     protected docId?: string;
     protected docTree: ISnapshotTree;
@@ -96,6 +96,14 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
         const blob = this.blobs.get(blobId);
         if (blob !== undefined) {
             return blob;
+        }
+        throw new Error(`Unknown blob ID: ${blobId}`);
+    }
+
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
+        const blob = this.blobs.get(blobId);
+        if (blob !== undefined) {
+            return stringToBuffer(blob, "base64");
         }
         throw new Error(`Unknown blob ID: ${blobId}`);
     }

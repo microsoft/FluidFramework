@@ -4,9 +4,9 @@
  */
 
 import {
+    IContainer,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { InsecureTinyliciousTokenProvider, InsecureTinyliciousUrlResolver } from "@fluidframework/tinylicious-driver";
 import { getContainer } from "./getContainer";
@@ -20,7 +20,7 @@ export async function getTinyliciousContainer(
     documentId: string,
     containerRuntimeFactory: IRuntimeFactory,
     createNew: boolean,
-): Promise<Container> {
+): Promise<IContainer> {
     const tokenProvider = new InsecureTinyliciousTokenProvider();
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
 

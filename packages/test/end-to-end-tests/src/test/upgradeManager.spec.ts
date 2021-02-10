@@ -13,15 +13,15 @@ import {
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createAndAttachContainer,
+    createDocumentId,
     LocalCodeLoader,
     OpProcessingController,
 } from "@fluidframework/test-utils";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 class TestDataObject extends DataObject {
     public static readonly type = "@fluid-example/test-dataObject";
@@ -39,52 +39,41 @@ class TestDataObject extends DataObject {
 }
 
 describe("UpgradeManager (hot-swap)", () => {
-    const documentId = "upgradeManagerTest";
-    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
     const codeDetails: IFluidCodeDetails = {
         package: "localLoaderTestPackage",
         config: {},
     };
-
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let urlResolver: LocalResolver;
-    let documentServiceFactory: LocalDocumentServiceFactory;
+    let driver: ITestDriver;
     let opProcessingController: OpProcessingController;
 
-    async function createContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {
+    async function createContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const loader = new Loader({
-            urlResolver,
-            documentServiceFactory,
+            urlResolver: driver.createUrlResolver(),
+            documentServiceFactory: driver.createDocumentServiceFactory(),
             codeLoader,
             options: { hotSwapContext: true },
         });
 
         return createAndAttachContainer(
-            codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
+            codeDetails, loader, driver.createCreateNewRequest(documentId));
     }
 
-    async function loadContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {
+    async function loadContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const loader = new Loader({
-            urlResolver,
-            documentServiceFactory,
+            urlResolver: driver.createUrlResolver(),
+            documentServiceFactory: driver.createDocumentServiceFactory(),
             codeLoader,
             options: { hotSwapContext: true },
         });
 
-        return loader.resolve({ url: documentLoadUrl });
+        return loader.resolve({ url: driver.createContainerUrl(documentId) });
     }
 
     beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
-        urlResolver = new LocalResolver();
-        documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+        driver = getFluidTestDriver();
         opProcessingController = new OpProcessingController();
-    });
-
-    afterEach(async () => {
-        await deltaConnectionServer.webSocketServer.close();
     });
 
     it("prevents multiple approved proposals", async () => {
@@ -93,14 +82,15 @@ describe("UpgradeManager (hot-swap)", () => {
         const addCounts = Array(clients).fill(0);
         const approveCounts = Array(clients).fill(0);
         const containers: IContainer[] = [];
+        const documentId = createDocumentId();
 
         // Create the first Container.
-        const container1 = await createContainer(TestDataObject.getFactory());
+        const container1 = await createContainer(documentId, TestDataObject.getFactory());
         containers.push(container1);
 
         // Load rest of the Containers.
         const restOfContainersP =
-            Array(clients - 1).fill(undefined).map(async () => loadContainer(TestDataObject.getFactory()));
+            Array(clients - 1).fill(undefined).map(async () => loadContainer(documentId, TestDataObject.getFactory()));
         const restOfContainers = await Promise.all(restOfContainersP);
         containers.push(...restOfContainers);
 
@@ -124,8 +114,9 @@ describe("UpgradeManager (hot-swap)", () => {
         dataObjects.map((dataObject) => {
             dataObject._root.set("tempKey", "tempValue");
         });
-
-        await opProcessingController.process();
+        while (containers.filter((c)=>!c.deltaManager.active).length !== 0) {
+            await opProcessingController.process();
+        }
 
         // upgrade all containers at once
         const resultsP = upgradeManagers.map(async (u) => u.upgrade(codeDetails, true));
@@ -142,7 +133,9 @@ describe("UpgradeManager (hot-swap)", () => {
     });
 
     it("1 client low priority is immediate", async () => {
-        const container = await createContainer(TestDataObject.getFactory());
+        const documentId = createDocumentId();
+
+        const container = await createContainer(documentId, TestDataObject.getFactory());
         const dataObject = await requestFluidObject<TestDataObject>(container, "default");
 
         opProcessingController.addDeltaManagers(container.deltaManager);
@@ -156,7 +149,9 @@ describe("UpgradeManager (hot-swap)", () => {
         // nack'd and it reconnects.
         // We should wait for this to happen before we send a new code proposal so that it doesn't get nack'd.
         dataObject._root.set("tempKey", "tempValue");
-        await opProcessingController.process();
+        while (!container.deltaManager.active) {
+            await opProcessingController.process();
+        }
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         upgradeManager.upgrade(codeDetails);
@@ -165,11 +160,13 @@ describe("UpgradeManager (hot-swap)", () => {
     });
 
     it("2 clients low priority is delayed", async () => {
+        const documentId = createDocumentId();
+
         // Create the first Container.
-        const container1 = await createContainer(TestDataObject.getFactory());
+        const container1 = await createContainer(documentId, TestDataObject.getFactory());
 
         // Load the second Container.
-        const container2 = await loadContainer(TestDataObject.getFactory()) as Container;
+        const container2 = await loadContainer(documentId, TestDataObject.getFactory()) as Container;
 
         const upgradeManager = new UpgradeManager((container1 as any).context.runtime);
 
@@ -190,14 +187,15 @@ describe("UpgradeManager (hot-swap)", () => {
         // first op it sends will get nack'd and it reconnects.
         // We should wait for this to happen before we send a new code proposal so that it doesn't get nack'd.
         dataObject._root.set("tempKey", "tempValue");
-        await opProcessingController.process();
-
+        while (!container1.deltaManager.active || !container2.deltaManager.active) {
+            await opProcessingController.process();
+        }
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         upgradeManager.upgrade(codeDetails);
 
         // disconnect one client, which should initiate upgrade
         assert(container2.clientId);
-        documentServiceFactory.disconnectClient(container2.clientId, "test");
+        container2.close();
 
         await upgradeP;
     });

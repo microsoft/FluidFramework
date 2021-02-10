@@ -6,8 +6,8 @@
 import { Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
-import { ITestDriver } from "@fluidframework/test-drivers";
 import { v4 as uuid } from "uuid";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
 import { OpProcessingController } from "./opProcessingController";
@@ -16,6 +16,8 @@ const defaultCodeDetails: IFluidCodeDetails = {
     package: "defaultTestPackage",
     config: {},
 };
+
+export const createDocumentId = (): string=> uuid();
 
 /**
  * Shared base class for test object provider.  Contain code for loader and container creation and loading
@@ -53,7 +55,7 @@ export  class TestObjectProvider<TestContainerConfigType> {
 
     get documentId() {
         if (this._documentId === undefined) {
-            this._documentId = uuid();
+            this._documentId = createDocumentId();
         }
         return this._documentId;
     }

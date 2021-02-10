@@ -238,12 +238,16 @@
             "env": {
                 "TS_NODE_PROJECT": "${fileDirname}/../../tsconfig.json",
             },
-            "args": ["--no-timeouts", "--exit", "--require", "ts-node/register","${file}", ],
-            "cwd": "${workspaceFolder}",
+            "args": [
+                "--no-timeouts",
+                "--exit",
+                "--require", "ts-node/register",
+                "${file}", ],
+            "cwd": "${fileDirname}",
             "skipFiles": [
                 "<node_internals>/**/*.js"
             ],
-            "preLaunchTask": "fluid-build $cwd --nolint"
+            "preLaunchTask": "fluid-build $cwd -s tsc"
         }
 
     ]
