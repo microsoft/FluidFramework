@@ -292,15 +292,13 @@ export async function start(
         });
     }
     console.log("i'm here");
-    const testurl = `https://microsoft.sharepoint-df.com/:u:/r/teams/OfficeOnlinePrague/Shared%20Documents/` +
-    `Fluid%20Preview%20Docs/Loader%20request%20Retrospective.fluid?d=w699e8b8454d94f17af2cd2ed3e22c357&csf=1` +
-    `&web=1&nav=cz0lMkZ0ZWFtcyUyRk9mZmljZU9ubGluZVByYWd1ZSZkPWIhQk95Sk42Qmt5a21fTDY2RWljWkZhREtuUV9jeWRGR` +
-    `kxxcGg4RC10Xzl2cWFNc0dDNFRtOVJZZWM5Umg1YXczbCZmPTAxTjVYNEpONEVST1BHVFdLVUM1SDI2TEdTNVU3Q0ZRMlgmYz0lMk` +
-    `Y3YTViYjJjNi04YWU4LTQ2MTktYWQ2Ni0wMDRhNjFhOGQ4ZmYlM0ZzdGFydCUzRGFlZDZlYjk0LWYxZDQtNGUyNi1hMzI0LTg4N2Jh` +
-    `ZGIzZDFkYyUyNmVuZCUzRGZjMTFmNDYwLWJjYWYtNDRkOC1iNmQwLWEwOWY5YmFkYjM3NCZmbHVpZD0xJnA9JTQwbXMlMkZvZmZ` +
-    `pY2UtZmx1aWQtY29udGFpbmVy`;
-    // let testurl = window.location.href.replace("doc/","");
-    // testurl += "?query=1&query=2";
+
+    // const container3 = await loader1.createDetachedContainer(codeDetails);
+    // const request = await urlResolver.createRequestForCreateNew(documentId);
+    // await container3.attach(request);
+    // const testurl = await container3.getAbsoluteUrl("");
+    let testurl = window.location.href.replace("/doc","");
+    testurl = `${testurl}?query1=1&query2=2`;
     console.log(testurl);
     console.log(loader1.request({ url: testurl }));
 }

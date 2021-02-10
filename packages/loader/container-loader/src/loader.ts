@@ -302,8 +302,7 @@ export class Loader extends EventEmitter implements ILoader {
     public async request(request: IRequest): Promise<IResponse> {
         return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
             const resolved = await this.resolveCore(request);
-            // return resolved.container.request({ url: `${resolved.parsed.path}${resolved.parsed.query}` });
-            return resolved.container.request({ url: resolved.parsed.path });
+            return resolved.container.request({ url: `${resolved.parsed.path}${resolved.parsed.query}` });
         });
     }
 
