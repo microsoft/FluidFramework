@@ -37,7 +37,10 @@
     "@fluidframework/get-session-storage-container": "^0.35.0",
     "@fluidframework/get-tinylicious-container": "^0.35.0",
     "css-loader": "^1.0.0",
-    "style-loader": "^1.0.0"
+    "react": "^16.10.2",
+    "react-dom": "^16.10.2",
+    "style-loader": "^1.0.0",
+    "vue": "^3.0.5"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0-0",

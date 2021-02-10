@@ -6,7 +6,7 @@
 import { getSessionStorageContainer } from "@fluidframework/get-session-storage-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
-import { renderDiceRoller } from "../src/view";
+import { renderSampler } from "../src/view";
 import { DiceRollerContainerRuntimeFactory } from "../src/containerCode";
 import { DiceRoller } from "../src/dataObject";
 
@@ -32,7 +32,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     const defaultObject = await getDefaultObjectFromContainer<DiceRoller>(container);
 
     // Given an IDiceRoller, we can render its data using the view we've created in our app.
-    renderDiceRoller(defaultObject, element);
+    renderSampler(defaultObject, element);
 
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line @typescript-eslint/dot-notation

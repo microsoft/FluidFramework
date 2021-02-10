@@ -7,7 +7,7 @@ import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-contain
 
 import { DiceRollerContainerRuntimeFactory } from "./containerCode";
 import { IDiceRoller } from "./dataObject";
-import { renderDiceRoller } from "./view";
+import { renderSampler } from "./view";
 
 // In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading
 // an existing one.  We also need to provide the unique ID for the document we are creating or loading from.
@@ -48,7 +48,7 @@ async function start(): Promise<void> {
 
     // Given an IDiceRoller, we can render the value and provide controls for users to roll it.
     const div = document.getElementById("content") as HTMLDivElement;
-    renderDiceRoller(diceRoller, div);
+    renderSampler(diceRoller, div);
 }
 
 start().catch((error) => console.error(error));
