@@ -89,8 +89,8 @@ describe("Check if the errorType field matches after sending/receiving via Conta
         });
     });
 
-    describe("Send and receive a GenericError using a ChildLogger", () => {
-        it("Send and receive a DataCorruptionError.", () => {
+    describe("Sending errors using a ChildLogger", () => {
+        it("Send and receive a GenericError.", () => {
             const childLogger = ChildLogger.create(mockLogger, "errorTypeTestNamespace");
             const testError = new GenericError("genericError", undefined);
             childLogger.sendErrorEvent({ eventName: "A" }, testError);
@@ -100,6 +100,23 @@ describe("Check if the errorType field matches after sending/receiving via Conta
                 message: "genericError",
                 errorType: ContainerErrorType.genericError,
                 error: "genericError",
+            }]));
+        });
+
+        it("Send and receive a DataCorruptionError using CreateContainerError", () => {
+            const childLogger = ChildLogger.create(mockLogger, "errorTypeTestNamespace");
+            const testError = new DataCorruptionError(
+                "genericError",
+                { exampleExtraTelemetryProp: "exampleExtraTelemetryProp" },
+            );
+            childLogger.sendErrorEvent({ eventName: "CloseContainerOnDataCorruptionTest" }, testError);
+            assert(mockLogger.matchEvents([{
+                eventName: "errorTypeTestNamespace:CloseContainerOnDataCorruptionTest",
+                category: "error",
+                message: "genericError",
+                errorType: ContainerErrorType.dataCorruptionError,
+                error: "genericError",
+                exampleExtraTelemetryProp: "exampleExtraTelemetryProp",
             }]));
         });
     });
