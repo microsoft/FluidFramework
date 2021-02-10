@@ -73,12 +73,9 @@ export class Badge extends DataObject implements IBadgeModel, IFluidHTMLView {
      */
     protected async hasInitialized() {
         [this._currentCell, this._optionsMap, this._historySequence] = await Promise.all([
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.root.get<IFluidHandle<SharedCell>>(this.currentId)!.get(),
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.root.get<IFluidHandle<SharedMap>>(this.optionsId)!.get(),
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.root.get<IFluidHandle<SharedObjectSequence<IBadgeHistory>>>(this.historyId)!.get(),
+            this.root.get<IFluidHandle<SharedCell>>(this.currentId)?.get(),
+            this.root.get<IFluidHandle<SharedMap>>(this.optionsId)?.get(),
+            this.root.get<IFluidHandle<SharedObjectSequence<IBadgeHistory>>>(this.historyId)?.get(),
         ]);
     }
 
