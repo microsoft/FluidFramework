@@ -28,114 +28,96 @@ export interface ICredentials {
  * Implementation of the IHistorian interface that calls out to a REST interface
  */
 export class Historian implements IHistorian {
-    private readonly restWrapper: RestWrapper;
+    private restWrapper: RestWrapper;
 
     constructor(
         public endpoint: string,
         private readonly historianApi: boolean,
         private readonly disableCache: boolean,
         credentials?: ICredentials,
-        getCorrelationId?: () => string | undefined) {
-        const queryString: { token?; disableCache?} = {};
-        let cacheBust = false;
-        if (this.disableCache && this.historianApi) {
-            queryString.disableCache = this.disableCache;
-        } else if (this.disableCache) {
-            cacheBust = true;
-        }
-
-        if (credentials) {
-            queryString.token = fromUtf8ToBase64(`${credentials.user}`);
-        }
-
-        const headers = credentials ?
-            {
-                Authorization: `Basic ${fromUtf8ToBase64(`${credentials.user}:${credentials.password}`)}`,
-            } :
-            {};
-        if (getCorrelationId) {
-            headers["x-correlation-id"] = getCorrelationId() || uuid.v4();
-        }
-
-        this.restWrapper = new RestWrapper(endpoint, headers, queryString, cacheBust);
+        private readonly getCorrelationId?: () => string | undefined,
+        private readonly getRefreshedCredentials?: () => Promise<ICredentials>) {
+        this.restWrapper = this.createRestWrapper(credentials);
     }
 
     /* eslint-disable @typescript-eslint/promise-function-async */
     public getHeader(sha: string): Promise<any> {
         if (this.historianApi) {
-            return this.restWrapper.get(`/headers/${encodeURIComponent(sha)}`);
+            return this.restCallWithAuthRetry(() => this.restWrapper.get(`/headers/${encodeURIComponent(sha)}`));
         } else {
             return this.getHeaderDirect(sha);
         }
     }
 
     public getFullTree(sha: string): Promise<any> {
-        return this.restWrapper.get(`/tree/${encodeURIComponent(sha)}`);
+        return this.restCallWithAuthRetry(() => this.restWrapper.get(`/tree/${encodeURIComponent(sha)}`));
     }
 
     public getBlob(sha: string): Promise<git.IBlob> {
-        return this.restWrapper.get<git.IBlob>(`/git/blobs/${encodeURIComponent(sha)}`);
+        return this.restCallWithAuthRetry(() => this.restWrapper.get<git.IBlob>(
+            `/git/blobs/${encodeURIComponent(sha)}`));
     }
 
     public createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
-        return this.restWrapper.post<git.ICreateBlobResponse>(`/git/blobs`, blob);
+        return this.restCallWithAuthRetry(() => this.restWrapper.post<git.ICreateBlobResponse>(`/git/blobs`, blob));
     }
 
     public getContent(path: string, ref: string): Promise<any> {
-        return this.restWrapper.get(`/contents/${path}`, { ref });
+        return this.restCallWithAuthRetry(() => this.restWrapper.get(`/contents/${path}`, { ref }));
     }
 
     public getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
-        return this.restWrapper.get<git.ICommitDetails[]>(`/commits`, { count, sha })
+        return this.restCallWithAuthRetry(() => this.restWrapper.get<git.ICommitDetails[]>(`/commits`, { count, sha }))
             .catch((error) => (error === 400 || error === 404) ?
                 [] as git.ICommitDetails[] : Promise.reject<git.ICommitDetails[]>(error));
     }
 
     public getCommit(sha: string): Promise<git.ICommit> {
-        return this.restWrapper.get<git.ICommit>(`/git/commits/${encodeURIComponent(sha)}`);
+        return this.restCallWithAuthRetry(() => this.restWrapper.get<git.ICommit>(
+            `/git/commits/${encodeURIComponent(sha)}`));
     }
 
     public createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
-        return this.restWrapper.post<git.ICommit>(`/git/commits`, commit);
+        return this.restCallWithAuthRetry(() => this.restWrapper.post<git.ICommit>(`/git/commits`, commit));
     }
 
     public getRefs(): Promise<git.IRef[]> {
-        return this.restWrapper.get(`/git/refs`);
+        return this.restCallWithAuthRetry(() => this.restWrapper.get(`/git/refs`));
     }
 
     public getRef(ref: string): Promise<git.IRef> {
-        return this.restWrapper.get(`/git/refs/${ref}`);
+        return this.restCallWithAuthRetry(() => this.restWrapper.get(`/git/refs/${ref}`));
     }
 
     public createRef(params: git.ICreateRefParams): Promise<git.IRef> {
-        return this.restWrapper.post(`/git/refs`, params);
+        return this.restCallWithAuthRetry(() => this.restWrapper.post(`/git/refs`, params));
     }
 
     public updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
-        return this.restWrapper.patch(`/git/refs/${ref}`, params);
+        return this.restCallWithAuthRetry(() => this.restWrapper.patch(`/git/refs/${ref}`, params));
     }
     /* eslint-enable @typescript-eslint/promise-function-async */
 
     public async deleteRef(ref: string): Promise<void> {
-        await this.restWrapper.delete(`/git/refs/${ref}`);
+        await this.restCallWithAuthRetry(async () => this.restWrapper.delete(`/git/refs/${ref}`));
     }
 
     /* eslint-disable @typescript-eslint/promise-function-async */
     public createTag(tag: git.ICreateTagParams): Promise<git.ITag> {
-        return this.restWrapper.post(`/git/tags`, tag);
+        return this.restCallWithAuthRetry(() => this.restWrapper.post(`/git/tags`, tag));
     }
 
     public getTag(tag: string): Promise<git.ITag> {
-        return this.restWrapper.get(`/git/tags/${tag}`);
+        return this.restCallWithAuthRetry(() => this.restWrapper.get(`/git/tags/${tag}`));
     }
 
     public createTree(tree: git.ICreateTreeParams): Promise<git.ITree> {
-        return this.restWrapper.post<git.ITree>(`/git/trees`, tree);
+        return this.restCallWithAuthRetry(() => this.restWrapper.post<git.ITree>(`/git/trees`, tree));
     }
 
     public getTree(sha: string, recursive: boolean): Promise<git.ITree> {
-        return this.restWrapper.get<git.ITree>(
-            `/git/trees/${encodeURIComponent(sha)}`, { recursive: recursive ? 1 : 0 });
+        return this.restCallWithAuthRetry(() => this.restWrapper.get<git.ITree>(
+            `/git/trees/${encodeURIComponent(sha)}`, { recursive: recursive ? 1 : 0 }));
     }
     /* eslint-enable @typescript-eslint/promise-function-async */
 
@@ -157,5 +139,50 @@ export class Historian implements IHistorian {
             blobs,
             tree,
         };
+    }
+
+    private createRestWrapper(
+        credentials?: ICredentials,
+    ): RestWrapper {
+        const queryString: { token?; disableCache?} = {};
+        let cacheBust = false;
+        if (this.disableCache && this.historianApi) {
+            queryString.disableCache = this.disableCache;
+        } else if (this.disableCache) {
+            cacheBust = true;
+        }
+
+        const headers: any = {};
+        if (credentials) {
+            queryString.token = fromUtf8ToBase64(`${credentials.user}`);
+            headers.Authorization = `Basic ${fromUtf8ToBase64(`${credentials.user}:${credentials.password}`)}`;
+        }
+
+        if (this.getCorrelationId) {
+            headers["x-correlation-id"] = this.getCorrelationId() || uuid.v4();
+        }
+
+        return new RestWrapper(this.endpoint, headers, queryString, cacheBust);
+    }
+
+    private async refreshAuthHeaders(): Promise<void> {
+        if (this.getRefreshedCredentials === undefined) {
+            return;
+        }
+        const refreshedCredentials = await this.getRefreshedCredentials();
+        this.restWrapper = this.createRestWrapper(refreshedCredentials);
+    }
+
+    private async restCallWithAuthRetry<T>(restCall: () => Promise<T>): Promise<T> {
+        if (this.getRefreshedCredentials === undefined) {
+            return restCall();
+        }
+        return restCall().catch(async (error) => {
+            if (error === 401 || error?.response?.status === 401) {
+                await this.refreshAuthHeaders();
+                return restCall();
+            }
+            return Promise.reject(error);
+        });
     }
 }
