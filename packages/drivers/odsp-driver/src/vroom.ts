@@ -34,7 +34,7 @@ export async function fetchJoinSession(
     return getWithRetryForTokenRefresh(async (options) => {
         const token = await getStorageToken(options, "JoinSession");
 
-        const extraProps = options.refresh ? { secondAttempt: 1, hasClaims: !!options.claims } : {};
+        const extraProps = options.refresh ? { secondAttempt: 1, hasClaims: !!options.claims, hasTenantId: !!options.tenantId } : {};
         return PerformanceEvent.timedExecAsync(logger, { eventName: "JoinSession", ...extraProps }, async (event) => {
             // TODO Extract the auth header-vs-query logic out
             const siteOrigin = getOrigin(siteUrl);

@@ -31,8 +31,9 @@ export interface TokenFetchOptions {
     claims?: string;
 
     /**
-     * Specific tenant id that must be handling token fetch.
-     * This is used when token is needed when accessing external tenant.
+     * Tenant id of authority that must be handling token fetch.
+     * If it is not specified then it is up to token fetching logic to determine which tenant authority
+     * to use to issue access token.
      */
     tenantId?: string;
 }

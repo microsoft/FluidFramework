@@ -15,7 +15,7 @@ import {
     PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
-import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { fetchTokenErrorCode } from "@fluidframework/odsp-doclib-utils";
 import { IOdspResolvedUrl, HostStoragePolicy } from "./contracts";
 import {
     LocalPersistentCache,
@@ -34,6 +34,7 @@ import {
     tokenFromResponse,
 } from "./tokenFetch";
 import { EpochTracker, EpochTrackerWithRedemption } from "./epochTracker";
+import { throwOdspNetworkError } from "./odspError";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -154,6 +155,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     eventName: `${name || "OdspDocumentService"}_GetToken`,
                     refresh: options.refresh,
                     hasClaims: !!options.claims,
+                    hasTenantId: !!options.tenantId,
                 },
                 async (event) => tokenFetcher({ ...options, siteUrl: resolvedUrl.siteUrl })
                 .then((tokenResponse) => {
