@@ -16,6 +16,7 @@ export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
 	enableIdempotence: boolean;
 	pollIntervalMs: number;
 	additionalOptions?: kafkaTypes.ProducerGlobalConfig;
+	topicConfig?: kafkaTypes.ProducerTopicConfig;
 }
 
 /**
@@ -67,7 +68,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			...this.producerOptions.additionalOptions,
 		};
 
-		this.producer = new kafka.HighLevelProducer(options);
+		this.producer = new kafka.HighLevelProducer(options, this.producerOptions.topicConfig);
 
 		this.producer.on("ready", () => {
 			this.connected = true;
