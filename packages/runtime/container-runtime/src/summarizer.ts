@@ -258,6 +258,7 @@ export class RunningSummarizer implements IDisposable {
         firstAck: ISummaryAttempt,
         immediateSummary: boolean,
         raiseSummarizingError: (description: string) => void,
+        summaryCollection: SummaryCollection,
     ): Promise<RunningSummarizer> {
         const summarizer = new RunningSummarizer(
             clientId,
@@ -269,7 +270,8 @@ export class RunningSummarizer implements IDisposable {
             lastOpSeqNumber,
             firstAck,
             immediateSummary,
-            raiseSummarizingError);
+            raiseSummarizingError,
+            summaryCollection);
 
         await summarizer.waitStart();
 
@@ -305,6 +307,7 @@ export class RunningSummarizer implements IDisposable {
         firstAck: ISummaryAttempt,
         private immediateSummary: boolean = false,
         private readonly raiseSummarizingError: (description: string) => void,
+        summaryCollection: SummaryCollection,
     ) {
         this.logger = new ChildLogger(baseLogger, "Running", undefined, { summaryGenTag: () => this.summarizeCount });
 
@@ -336,6 +339,12 @@ export class RunningSummarizer implements IDisposable {
                     timePending: Date.now() - this.heuristics.lastAttempted.summaryTime,
                 });
             });
+        summaryCollection.setPendingAckTimerTimeoutCallback(maxAckWaitTime, () => {
+            if (this.pendingAckTimer.hasTimer) {
+                this.pendingAckTimer.clear();
+                this.trySummarize("summaryAckMiss");
+            }
+        });
     }
 
     public dispose(): void {
@@ -771,6 +780,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                     this.emit("summarizingError", createSummarizingWarning(`Summarizer: ${description}`, true));
                 }
             },
+            this.summaryCollection,
         );
         this.runningSummarizer = runningSummarizer;
 
