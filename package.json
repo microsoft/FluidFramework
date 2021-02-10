@@ -22,7 +22,7 @@
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf dist lib *.tsbuildinfo *.build.log _api-extractor-temp",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"lint": "npm run eslint",
