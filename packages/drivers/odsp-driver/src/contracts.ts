@@ -281,6 +281,7 @@ export interface OdspFluidDataStoreLocator {
     dataStorePath: string;
     appName?: string;
     containerPackageName?: string;
+    fileVersion?: string;
 }
 
 export enum SharingLinkHeader {
