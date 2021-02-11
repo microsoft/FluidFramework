@@ -30,6 +30,10 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     beforeEach(()=>{
         args = argsFactory();
     });
+    afterEach(() => {
+        args.reset();
+    });
+
     let sharedString1: SharedString;
     let sharedString2: SharedString;
 

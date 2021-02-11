@@ -58,6 +58,10 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     beforeEach(()=>{
         args = argsFactory();
     });
+    afterEach(() => {
+        args.reset();
+    });
+
     describe("one client", () => {
         const stringId = "stringKey";
 
