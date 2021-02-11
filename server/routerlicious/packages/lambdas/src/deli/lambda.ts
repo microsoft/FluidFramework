@@ -599,6 +599,7 @@ export class DeliLambda implements IPartitionLambda {
                 sequenceNumber: this.minimumSequenceNumber,
             },
             tenantId: this.tenantId,
+            timestamp: Date.now(),
             type: NackOperationType,
         };
         return {

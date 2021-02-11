@@ -195,6 +195,7 @@ export class MergeTreeTextHelper {
 
     private readonly gatherText = (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number,
         end: number, accumText: ITextAccumulatorType) => {
+        let _start = start;
         if (TextSegment.is(segment)) {
             if (MergeTree.traceGatherText) {
                 console.log(
@@ -247,17 +248,16 @@ export class MergeTreeTextHelper {
             }
             accumText.textSegment.text += endTags;
             accumText.textSegment.text += beginTags;
-            if ((start <= 0) && (end >= segment.text.length)) {
+            if ((_start <= 0) && (end >= segment.text.length)) {
                 accumText.textSegment.text += segment.text;
             } else {
-                if (start < 0) {
-                    // eslint-disable-next-line no-param-reassign
-                    start = 0;
+                if (_start < 0) {
+                    _start = 0;
                 }
                 if (end >= segment.text.length) {
-                    accumText.textSegment.text += segment.text.substring(start);
+                    accumText.textSegment.text += segment.text.substring(_start);
                 } else {
-                    accumText.textSegment.text += segment.text.substring(start, end);
+                    accumText.textSegment.text += segment.text.substring(_start, end);
                 }
             }
         } else {

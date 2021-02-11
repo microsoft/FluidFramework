@@ -28,13 +28,22 @@ class BroadcasterBatch {
 
 // Set immediate is not available in all environments, specifically it does not work in a browser.
 // Fallback to set timeout in those cases
-const taskScheduleFunction: (cb: () => void) => void = typeof setImmediate === "function" ? setImmediate : setTimeout;
+let taskScheduleFunction: (cb: () => void) => unknown;
+let clearTaskScheduleTimerFunction: (timer: any) => void;
+
+if (typeof setImmediate === "function") {
+    taskScheduleFunction = setImmediate;
+    clearTaskScheduleTimerFunction = clearImmediate;
+} else {
+    taskScheduleFunction = setTimeout;
+    clearTaskScheduleTimerFunction = clearTimeout;
+}
 
 export class BroadcasterLambda implements IPartitionLambda {
     private pending = new Map<string, BroadcasterBatch>();
     private pendingOffset: IQueuedMessage;
     private current = new Map<string, BroadcasterBatch>();
-    private isMessageSending: boolean = false;
+    private messageSendingTimerId: unknown | undefined;
 
     constructor(private readonly publisher: IPublisher, protected context: IContext) {
     }
@@ -75,7 +84,10 @@ export class BroadcasterLambda implements IPartitionLambda {
         this.pending.clear();
         this.current.clear();
 
-        return;
+        if (this.messageSendingTimerId !== undefined) {
+            clearTaskScheduleTimerFunction(this.messageSendingTimerId);
+            this.messageSendingTimerId = undefined;
+        }
     }
 
     public hasPendingWork() {
@@ -83,23 +95,26 @@ export class BroadcasterLambda implements IPartitionLambda {
     }
 
     private sendPending() {
-        if (this.pending.size === 0 || this.isMessageSending) {
+        if (this.pending.size === 0 || this.messageSendingTimerId !== undefined) {
             return;
         }
 
         // Invoke the next send after a delay to give IO time to create more batches
-        this.isMessageSending = true;
-        taskScheduleFunction(() => {
+        this.messageSendingTimerId = taskScheduleFunction(() => {
             const batchOffset = this.pendingOffset;
 
             this.current = this.pending;
             this.pending = new Map<string, BroadcasterBatch>();
 
-            this.isMessageSending = false;
+            this.messageSendingTimerId = undefined;
 
             // Process all the batches + checkpoint
             this.current.forEach((batch, topic) => {
-                this.publisher.to(topic).emit(batch.event, batch.documentId, batch.messages);
+                if (this.publisher.emit) {
+                    this.publisher.emit(topic, batch.event, batch.documentId, batch.messages);
+                } else {
+                    this.publisher.to(topic).emit(batch.event, batch.documentId, batch.messages);
+                }
             });
 
             this.context.checkpoint(batchOffset);

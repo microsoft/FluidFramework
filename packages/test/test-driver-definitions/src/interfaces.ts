@@ -5,11 +5,13 @@
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 
+export type TestDriverTypes = "tinylicious" | "routerlicious" | "odsp" | "local";
+
 export interface ITestDriver{
     /**
      * The type of server the test driver executes against
      */
-    readonly type: "tinylicious" | "routerlicious" | "odsp";
+    readonly type: TestDriverTypes;
 
     /**
      * The semantic version of the test drivers package.

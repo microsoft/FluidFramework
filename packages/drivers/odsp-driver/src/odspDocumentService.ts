@@ -18,6 +18,7 @@ import {
     IDocumentStorageService,
 } from "@fluidframework/driver-definitions";
 import { canRetryOnError } from "@fluidframework/driver-utils";
+import { fetchTokenErrorCode } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
     IErrorTrackingService,
@@ -38,6 +39,7 @@ import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { TokenFetchOptions } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
+import { throwOdspNetworkError } from "./odspError";
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
@@ -257,12 +259,16 @@ export class OdspDocumentService implements IDocumentService {
                 throw new Error("websocket endpoint should be defined");
             }
 
+            const finalSocketToken = webSocketToken ?? (websocketEndpoint.socketToken || null);
+            if (finalSocketToken === null) {
+                throwOdspNetworkError("Push Token is null", fetchTokenErrorCode);
+            }
             try {
                 const connection = await this.connectToDeltaStreamWithRetry(
                     websocketEndpoint.tenantId,
                     websocketEndpoint.id,
                     // Accounts for ODC where websocket token is returned as part of joinsession response payload
-                    webSocketToken ?? (websocketEndpoint.socketToken || null),
+                    finalSocketToken,
                     io,
                     client,
                     websocketEndpoint.deltaStreamSocketUrl,

@@ -12,6 +12,7 @@ export const MaxBatchSize = 32;
 export class PendingBoxcar implements IPendingBoxcar {
     public deferred = new Deferred<void>();
     public messages: any[] = [];
+    public partitionId?: number;
 
     constructor(public tenantId: string, public documentId: string) {
     }

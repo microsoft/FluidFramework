@@ -14,12 +14,11 @@ import { IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
 // (Array<T> ~2% faster than typed array on Node v12 x64)
 const x8ToInterlacedX16 =
     new Array(256).fill(0).map((value, i) => {
-        /* eslint-disable no-param-reassign */
-        i = (i | (i << 4)) & 0x0f0f; // .... 7654 .... 3210
-        i = (i | (i << 2)) & 0x3333; // ..76 ..54 ..32 ..10
-        i = (i | (i << 1)) & 0x5555; // .7.6 .5.4 .3.2 .1.0
-        /* eslint-enable no-param-reassign */
-        return i;
+        let j = i;
+        j = (j | (j << 4)) & 0x0f0f; // .... 7654 .... 3210
+        j = (j | (j << 2)) & 0x3333; // ..76 ..54 ..32 ..10
+        j = (j | (j << 1)) & 0x5555; // .7.6 .5.4 .3.2 .1.0
+        return j;
     });
 
 // Selects individual bytes from a given 32b integer.  The left shift are used to

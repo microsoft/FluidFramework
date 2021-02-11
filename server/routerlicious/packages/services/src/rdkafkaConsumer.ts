@@ -45,12 +45,12 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		super(endpoints, clientId, topic, options);
 
 		this.consumerOptions = {
-			consumeTimeout: 1000,
-			consumeLoopTimeoutDelay: 100,
-			optimizedRebalance: false,
-			commitRetryDelay: 1000,
-			automaticConsume: true,
 			...options,
+			consumeTimeout: options?.consumeTimeout ?? 1000,
+			consumeLoopTimeoutDelay: options?.consumeLoopTimeoutDelay ?? 100,
+			optimizedRebalance: options?.optimizedRebalance ?? false,
+			commitRetryDelay: options?.commitRetryDelay ?? 1000,
+			automaticConsume: options?.automaticConsume ?? true,
 		};
 	}
 
@@ -232,6 +232,10 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	}
 
 	public async close(reconnecting: boolean = false): Promise<void> {
+		if (this.closed) {
+			return;
+		}
+
 		if (!reconnecting) {
 			// when closed outside of this class, disable reconnecting
 			this.closed = true;
@@ -254,6 +258,11 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		this.assignedPartitions.clear();
 		this.pendingCommits.clear();
 		this.latestOffsets.clear();
+
+		if (this.closed) {
+			this.emit("closed");
+			this.removeAllListeners();
+		}
 	}
 
 	public async commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void> {

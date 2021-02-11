@@ -8,7 +8,16 @@
 export { IFluidObject } from "./fluidObject";
 
 export * from "./fluidLoadable";
-export * from "./fluidRouter";
+// Typescript forgets the index signature when customers augment IRequestHeader if we export *.
+// So we export the explicit members as a workaround:
+// https://github.com/microsoft/TypeScript/issues/18877#issuecomment-476921038
+export {
+    IRequest,
+    IRequestHeader,
+    IResponse,
+    IProvideFluidRouter,
+    IFluidRouter,
+} from "./fluidRouter";
 export * from "./handles";
 export * from "./serializer";
 export * from "./fluidPackage";

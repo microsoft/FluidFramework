@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, LazyPromise } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import {
     IChannel,
@@ -19,7 +19,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     CreateChildSummarizerNodeFn,
-    gcBlobKey,
     IContextSummarizeResult,
     IFluidDataStoreContext,
     IGarbageCollectionData,
@@ -49,17 +48,6 @@ export class RemoteChannelContext implements IChannelContext {
     };
     private readonly summarizerNode: ISummarizerNodeWithGC;
 
-    /**
-     * This loads the GC details from the base snapshot of this context.
-     */
-    private readonly gcDetailsInInitialSummaryP = new LazyPromise<IGarbageCollectionSummaryDetails>(async () => {
-        if (await this.services.objectStorage.contains(gcBlobKey)) {
-            return readAndParse<IGarbageCollectionSummaryDetails>(this.services.objectStorage, gcBlobKey);
-        } else {
-            return {};
-        }
-    });
-
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -71,6 +59,7 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly registry: ISharedObjectRegistry,
         extraBlobs: Map<string, string> | undefined,
         createSummarizerNode: CreateChildSummarizerNodeFn,
+        gcDetailsInInitialSummary: () => Promise<IGarbageCollectionSummaryDetails>,
         private readonly attachMessageType?: string,
     ) {
         this.services = createServiceEndpoints(
@@ -88,7 +77,7 @@ export class RemoteChannelContext implements IChannelContext {
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
             async () => this.getGCDataInternal(),
-            async () => this.gcDetailsInInitialSummaryP,
+            async () => gcDetailsInInitialSummary(),
         );
     }
 

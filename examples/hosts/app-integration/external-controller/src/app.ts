@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { DiceRollerController } from "./controller";
 import {
-    Fluid,
     IKeyValueDataObject,
     KeyValueDataObject,
     KeyValueInstantiationFactory,
-} from "./kvpair-dataobject";
+} from "@fluid-experimental/data-objects";
+import { DiceRollerController } from "./controller";
+import { Fluid } from "./fluid-static";
 import { renderDiceRoller } from "./view";
 // import { renderDiceRoller } from "./reactView";
 

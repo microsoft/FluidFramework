@@ -1596,22 +1596,21 @@ export class DocumentTree {
     }
 
     static generateContent(rowProbability: number) {
+        let _rowProbability = rowProbability;
         const items = <DocumentNode[]>[];
         const docLen = DocumentTree.randPack.randInteger(7, 25);
         for (let i = 0; i < docLen; i++) {
-            const rowThreshold = rowProbability * 1000;
+            const rowThreshold = _rowProbability * 1000;
             const selector = DocumentTree.randPack.randInteger(1, 1000);
             if (selector >= rowThreshold) {
                 const pg = DocumentTree.generateParagraph();
                 items.push(pg);
             } else {
-                // eslint-disable-next-line no-param-reassign
-                rowProbability /= 2;
-                if (rowProbability < 0.08) {
-                    // eslint-disable-next-line no-param-reassign
-                    rowProbability = 0;
+                _rowProbability /= 2;
+                if (_rowProbability < 0.08) {
+                    _rowProbability = 0;
                 }
-                const row = DocumentTree.generateRow(rowProbability);
+                const row = DocumentTree.generateRow(_rowProbability);
                 items.push(row);
             }
         }

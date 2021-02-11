@@ -17,16 +17,16 @@ import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
 import { LocalCodeLoader, TestObjectProvider } from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { LocalServerTestDriver } from "@fluidframework/test-drivers";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { createPrimedDataStoreFactory, createRuntimeFactory, TestDataObject } from "./compatUtils";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
 
 describe("Container", () => {
-    let driver: LocalServerTestDriver;
+    let driver: ITestDriver;
     beforeEach(()=>{
-        driver = new LocalServerTestDriver();
+        driver = getFluidTestDriver();
     });
     async function loadContainer(props?: Partial<ILoaderProps>) {
         const loader =  new Loader({
@@ -40,7 +40,7 @@ describe("Container", () => {
         const testResolved = await loader.services.urlResolver.resolve(testRequest);
         ensureFluidResolvedUrl(testResolved);
         return Container.load(
-            "tenantId/documentId",
+            "documentId",
             loader,
             testRequest,
             testResolved);
