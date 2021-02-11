@@ -236,7 +236,6 @@ async function orchestratorProcess(
         // Log the login page url in case the caller needs to allow consent for this app
         const loginPageUrl =
             getLoginPageUrl(
-                false,
                 loginInfo.server,
                 getMicrosoftConfiguration(),
                 getOdspScope(loginInfo.server),
