@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { getTinyliciousContainer } from "@fluid-experimental/get-container";
 import { getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
-import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 import { IContainer } from "@fluidframework/container-definitions";
-import { KeyValueContainerRuntimeFactory } from "./containerCode";
+import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
+import { DOProviderContainerRuntimeFactory } from "./containerCode";
 
 export class FluidDocument {
     constructor(private readonly container: IContainer, public readonly createNew: boolean) { }
@@ -25,13 +26,27 @@ export class FluidDocument {
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Fluid {
-    public static async createDocument(docId: string): Promise<FluidDocument> {
-        const container = await getTinyliciousContainer(docId, KeyValueContainerRuntimeFactory, true /* createNew */);
+    public static async createDocument(
+        docId: string,
+        registryEntries: NamedFluidDataStoreRegistryEntry[],
+    ): Promise<FluidDocument> {
+        const container = await getTinyliciousContainer(
+            docId,
+            new DOProviderContainerRuntimeFactory(registryEntries),
+            true, /* createNew */
+        );
         const document = new FluidDocument(container, true /* createNew */);
         return document;
     }
-    public static async getDocument(docId: string): Promise<FluidDocument> {
-        const container = await getTinyliciousContainer(docId, KeyValueContainerRuntimeFactory, false /* createNew */);
+    public static async getDocument(
+        docId: string,
+        registryEntries: NamedFluidDataStoreRegistryEntry[],
+    ): Promise<FluidDocument> {
+        const container = await getTinyliciousContainer(
+            docId,
+            new DOProviderContainerRuntimeFactory(registryEntries),
+            false, /* createNew */
+        );
         const document = new FluidDocument(container, false /* createNew */);
         return document;
     }

@@ -1,5 +1,6 @@
 ## 0.35 Breaking changes
 - [Removed some api implemenations from odsp driver](#Removed-some-api-implemenations-from-odsp-driver)
+- [get-tinylicious-container and get-session-storage-container moved](#get-tinylicious-container-and-get-session-storage-container-moved)
 - [Moved parseAuthErrorClaims from @fluidframework/odsp-driver to @fluidframework/odsp-doclib-utils](#Moved-parseAuthErrorClaims-from-@fluidframework/odsp-driver-to-@fluidframework/odsp-doclib-utils)
 
 ### Moved parseAuthErrorClaims from @fluidframework/odsp-driver to @fluidframework/odsp-doclib-utils
@@ -8,6 +9,9 @@ Moved `parseAuthErrorClaims` from `@fluidframework/odsp-driver` to `@fluidframew
 ### Removed-some-api-implemenations-from-odsp-driver
 Removed `authorizedFetchWithRetry`, `AuthorizedRequestTokenPolicy`, `AuthorizedFetchProps`, `asyncWithCache`, `asyncWithRetry`,
 `fetchWithRetry` implementation from odspdriver.
+
+### get-tinylicious-container and get-session-storage-container moved
+The functionality from the packages `@fluidframework/get-tinylicious-container` and `@fluidframework/get-session-storage-container` has been moved to the package `@fluid-experimental/get-container`.
 
 ## 0.34 Breaking changes
 - [Aqueduct writeBlob() and BlobHandle implementation removed](#Aqueduct-writeBlob-and-BlobHandle-implementation-removed)

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from "./getSessionStorageContainer";
 export * from "./getTinyliciousContainer";
 export * from "./getContainer";
 export { InsecureTinyliciousUrlResolver } from "@fluidframework/tinylicious-driver";

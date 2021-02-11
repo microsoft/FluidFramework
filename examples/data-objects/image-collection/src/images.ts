@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+ /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import {
     IFluidObject,
     IFluidHandleContext,
@@ -80,7 +82,7 @@ export class ImageCollection extends LazyLoadedDataObject<ISharedDirectory> impl
         const id = `image-${Date.now()}`;
         this.root.set(id, "https://media.giphy.com/media/13V60VgE2ED7oc/giphy.gif");
         // Relying on valueChanged event to create the bar is error prone
-        return this.images.get(id);
+        return this.images.get(id)!;
     }
 
     public removeCollectionItem(instance: IFluidObject): void {
@@ -109,7 +111,7 @@ export class ImageCollection extends LazyLoadedDataObject<ISharedDirectory> impl
         // or at least to request a value >= a sequence number
         await this.root.wait(trimmed);
 
-        return this.images.get(trimmed).request({ url: trimmed.substr(1 + trimmed.length) });
+        return this.images.get(trimmed)!.request({ url: trimmed.substr(1 + trimmed.length) });
     }
 
     private initialize() {
@@ -117,7 +119,7 @@ export class ImageCollection extends LazyLoadedDataObject<ISharedDirectory> impl
             this.images.set(
                 key,
                 new ImageComponent(
-                    this.root.get(key),
+                    this.root.get(key)!,
                     key,
                     this.runtime.objectsRoutingContext));
         }
@@ -128,7 +130,7 @@ export class ImageCollection extends LazyLoadedDataObject<ISharedDirectory> impl
                 // this.videoPlayers.get(changed.key).update(this.root.get(changed.key));
             } else {
                 const player = new ImageComponent(
-                    this.root.get(changed.key),
+                    this.root.get(changed.key)!,
                     changed.key,
                     this.runtime.objectsRoutingContext);
                 this.images.set(changed.key, player);
