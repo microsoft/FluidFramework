@@ -31,7 +31,7 @@ export abstract class RdkafkaBase extends EventEmitter {
 		protected readonly endpoints: IKafkaEndpoints,
 		public readonly clientId: string,
 		public readonly topic: string,
-		options: Partial<IKafkaBaseOptions>,
+		options?: Partial<IKafkaBaseOptions>,
 	) {
 		super();
 
@@ -40,9 +40,9 @@ export abstract class RdkafkaBase extends EventEmitter {
 		}
 
 		this.options = {
-			numberOfPartitions: 32,
-			replicationFactor: 3,
 			...options,
+			numberOfPartitions: options?.numberOfPartitions ?? 32,
+			replicationFactor: options?.replicationFactor ?? 3,
 		};
 
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
