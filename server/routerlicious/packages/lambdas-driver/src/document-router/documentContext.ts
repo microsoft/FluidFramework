@@ -82,5 +82,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 
     public close() {
         this.closed = true;
+
+        this.removeAllListeners();
     }
 }
