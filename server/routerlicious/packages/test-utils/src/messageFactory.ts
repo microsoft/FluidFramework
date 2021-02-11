@@ -7,6 +7,7 @@ import {
     IClientJoin,
     IDocumentMessage,
     IDocumentSystemMessage,
+    ISequencedDocumentAugmentedMessage,
     ISequencedDocumentMessage,
     MessageType,
     ScopeType,
@@ -192,6 +193,62 @@ export class MessageFactory {
             timestamp: Date.now(),
             traces: [],
             type: operation.type,
+        };
+
+        const message: ISequencedOperationMessage = {
+            documentId: this.documentId,
+            operation: sequencedOperation,
+            tenantId: this.tenantId,
+            type: SequencedOperationType,
+        };
+
+        return message;
+    }
+
+    public createSummarize(): ISequencedOperationMessage {
+        const operation = this.createDocumentMessage(0);
+        const sequencedOperation: ISequencedDocumentAugmentedMessage = {
+            clientId: this.clientId,
+            clientSequenceNumber: operation.clientSequenceNumber,
+            contents: operation.contents,
+            metadata: operation.metadata,
+            minimumSequenceNumber: 0,
+            origin: undefined,
+            referenceSequenceNumber: operation.referenceSequenceNumber,
+            sequenceNumber: this.sequenceNumber++,
+            term: 1,
+            timestamp: Date.now(),
+            traces: [],
+            type: MessageType.Summarize,
+            additionalContent: "",
+        };
+
+        const message: ISequencedOperationMessage = {
+            documentId: this.documentId,
+            operation: sequencedOperation,
+            tenantId: this.tenantId,
+            type: SequencedOperationType,
+        };
+
+        return message;
+    }
+
+    public createNoClient(): ISequencedOperationMessage {
+        const operation = this.createDocumentMessage(0);
+        const sequencedOperation: ISequencedDocumentAugmentedMessage = {
+            clientId: this.clientId,
+            clientSequenceNumber: operation.clientSequenceNumber,
+            contents: operation.contents,
+            metadata: operation.metadata,
+            minimumSequenceNumber: 0,
+            origin: undefined,
+            referenceSequenceNumber: operation.referenceSequenceNumber,
+            sequenceNumber: this.sequenceNumber++,
+            term: 1,
+            timestamp: Date.now(),
+            traces: [],
+            type: MessageType.NoClient,
+            additionalContent: "",
         };
 
         const message: ISequencedOperationMessage = {
