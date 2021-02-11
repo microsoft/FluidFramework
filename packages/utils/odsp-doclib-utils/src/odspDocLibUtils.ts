@@ -16,6 +16,8 @@ export function getSharepointTenant(server: string) {
     let tenantName = server.substr(0, server.indexOf(".")).toLowerCase();
     if (tenantName.endsWith("-my")) {
         tenantName = tenantName.substr(0, tenantName.length - 3);
+    } else if (tenantName.endsWith("-admin")) {
+        tenantName = tenantName.substr(0, tenantName.length - 6);
     }
 
     let restOfTenantHostname = server.substr(tenantName.length).toLowerCase();
@@ -23,7 +25,7 @@ export function getSharepointTenant(server: string) {
         restOfTenantHostname = `.onmicrosoft.${restOfTenantHostname.substr(12)}`;
     }
 
-    return tenantName === "microsoft" ? "organizations" : `${tenantName}${restOfTenantHostname}`;
+    return `${tenantName}${restOfTenantHostname}`;
 }
 
 export function getServer(tenantId: string): string {
