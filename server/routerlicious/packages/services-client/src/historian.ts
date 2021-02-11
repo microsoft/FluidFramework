@@ -28,95 +28,96 @@ export interface ICredentials {
  * Implementation of the IHistorian interface that calls out to a REST interface
  */
 export class Historian implements IHistorian {
-    private restWrapper: RestWrapper;
+    private restWrapperP: Promise<RestWrapper>;
 
     constructor(
         public endpoint: string,
         private readonly historianApi: boolean,
         private readonly disableCache: boolean,
-        credentials?: ICredentials,
-        private readonly getCorrelationId?: () => string | undefined,
-        private readonly getRefreshedCredentials?: () => Promise<ICredentials>) {
-        this.restWrapper = this.createRestWrapper(credentials);
+        private readonly getCredentials?: () => ICredentials | Promise<ICredentials>,
+        private readonly getCorrelationId?: () => string | undefined) {
+        this.restWrapperP = this.createRestWrapper();
     }
 
     /* eslint-disable @typescript-eslint/promise-function-async */
     public getHeader(sha: string): Promise<any> {
         if (this.historianApi) {
-            return this.restCallWithAuthRetry(() => this.restWrapper.get(`/headers/${encodeURIComponent(sha)}`));
+            return this.restCallWithAuthRetry((restWrapper) => restWrapper.get(`/headers/${encodeURIComponent(sha)}`));
         } else {
             return this.getHeaderDirect(sha);
         }
     }
 
     public getFullTree(sha: string): Promise<any> {
-        return this.restCallWithAuthRetry(() => this.restWrapper.get(`/tree/${encodeURIComponent(sha)}`));
+        return this.restCallWithAuthRetry((restWrapper) => restWrapper.get(`/tree/${encodeURIComponent(sha)}`));
     }
 
     public getBlob(sha: string): Promise<git.IBlob> {
-        return this.restCallWithAuthRetry(() => this.restWrapper.get<git.IBlob>(
+        return this.restCallWithAuthRetry((restWrapper) => restWrapper.get<git.IBlob>(
             `/git/blobs/${encodeURIComponent(sha)}`));
     }
 
     public createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
-        return this.restCallWithAuthRetry(() => this.restWrapper.post<git.ICreateBlobResponse>(`/git/blobs`, blob));
+        return this.restCallWithAuthRetry((restWrapper) => restWrapper.post<git.ICreateBlobResponse>(
+            `/git/blobs`, blob));
     }
 
     public getContent(path: string, ref: string): Promise<any> {
-        return this.restCallWithAuthRetry(() => this.restWrapper.get(`/contents/${path}`, { ref }));
+        return this.restCallWithAuthRetry((restWrapper) => restWrapper.get(`/contents/${path}`, { ref }));
     }
 
     public getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
-        return this.restCallWithAuthRetry(() => this.restWrapper.get<git.ICommitDetails[]>(`/commits`, { count, sha }))
-            .catch((error) => (error === 400 || error === 404) ?
-                [] as git.ICommitDetails[] : Promise.reject<git.ICommitDetails[]>(error));
+        return this.restCallWithAuthRetry((restWrapper) => restWrapper.get<git.ICommitDetails[]>(
+            `/commits`, { count, sha }))
+                .catch((error) => (error === 400 || error === 404) ?
+                    [] as git.ICommitDetails[] : Promise.reject<git.ICommitDetails[]>(error));
     }
 
     public getCommit(sha: string): Promise<git.ICommit> {
-        return this.restCallWithAuthRetry(() => this.restWrapper.get<git.ICommit>(
+        return this.restCallWithAuthRetry((restWrapper) => restWrapper.get<git.ICommit>(
             `/git/commits/${encodeURIComponent(sha)}`));
     }
 
     public createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
-        return this.restCallWithAuthRetry(() => this.restWrapper.post<git.ICommit>(`/git/commits`, commit));
+        return this.restCallWithAuthRetry((restWrapper) => restWrapper.post<git.ICommit>(`/git/commits`, commit));
     }
 
     public getRefs(): Promise<git.IRef[]> {
-        return this.restCallWithAuthRetry(() => this.restWrapper.get(`/git/refs`));
+        return this.restCallWithAuthRetry((restWrapper) => restWrapper.get(`/git/refs`));
     }
 
     public getRef(ref: string): Promise<git.IRef> {
-        return this.restCallWithAuthRetry(() => this.restWrapper.get(`/git/refs/${ref}`));
+        return this.restCallWithAuthRetry((restWrapper) => restWrapper.get(`/git/refs/${ref}`));
     }
 
     public createRef(params: git.ICreateRefParams): Promise<git.IRef> {
-        return this.restCallWithAuthRetry(() => this.restWrapper.post(`/git/refs`, params));
+        return this.restCallWithAuthRetry((restWrapper) => restWrapper.post(`/git/refs`, params));
     }
 
     public updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
-        return this.restCallWithAuthRetry(() => this.restWrapper.patch(`/git/refs/${ref}`, params));
+        return this.restCallWithAuthRetry((restWrapper) => restWrapper.patch(`/git/refs/${ref}`, params));
     }
     /* eslint-enable @typescript-eslint/promise-function-async */
 
     public async deleteRef(ref: string): Promise<void> {
-        await this.restCallWithAuthRetry(async () => this.restWrapper.delete(`/git/refs/${ref}`));
+        await this.restCallWithAuthRetry(async (restWrapper) => restWrapper.delete(`/git/refs/${ref}`));
     }
 
     /* eslint-disable @typescript-eslint/promise-function-async */
     public createTag(tag: git.ICreateTagParams): Promise<git.ITag> {
-        return this.restCallWithAuthRetry(() => this.restWrapper.post(`/git/tags`, tag));
+        return this.restCallWithAuthRetry((restWrapper) => restWrapper.post(`/git/tags`, tag));
     }
 
     public getTag(tag: string): Promise<git.ITag> {
-        return this.restCallWithAuthRetry(() => this.restWrapper.get(`/git/tags/${tag}`));
+        return this.restCallWithAuthRetry((restWrapper) => restWrapper.get(`/git/tags/${tag}`));
     }
 
     public createTree(tree: git.ICreateTreeParams): Promise<git.ITree> {
-        return this.restCallWithAuthRetry(() => this.restWrapper.post<git.ITree>(`/git/trees`, tree));
+        return this.restCallWithAuthRetry((restWrapper) => restWrapper.post<git.ITree>(`/git/trees`, tree));
     }
 
     public getTree(sha: string, recursive: boolean): Promise<git.ITree> {
-        return this.restCallWithAuthRetry(() => this.restWrapper.get<git.ITree>(
+        return this.restCallWithAuthRetry((restWrapper) => restWrapper.get<git.ITree>(
             `/git/trees/${encodeURIComponent(sha)}`, { recursive: recursive ? 1 : 0 }));
     }
     /* eslint-enable @typescript-eslint/promise-function-async */
@@ -141,9 +142,7 @@ export class Historian implements IHistorian {
         };
     }
 
-    private createRestWrapper(
-        credentials?: ICredentials,
-    ): RestWrapper {
+    private async createRestWrapper(): Promise<RestWrapper> {
         const queryString: { token?; disableCache?} = {};
         let cacheBust = false;
         if (this.disableCache && this.historianApi) {
@@ -153,7 +152,8 @@ export class Historian implements IHistorian {
         }
 
         const headers: any = {};
-        if (credentials) {
+        if (typeof this.getCredentials === "function") {
+            const credentials = await this.getCredentials();
             queryString.token = fromUtf8ToBase64(`${credentials.user}`);
             headers.Authorization = `Basic ${fromUtf8ToBase64(`${credentials.user}:${credentials.password}`)}`;
         }
@@ -165,22 +165,16 @@ export class Historian implements IHistorian {
         return new RestWrapper(this.endpoint, headers, queryString, cacheBust);
     }
 
-    private async refreshAuthHeaders(): Promise<void> {
-        if (this.getRefreshedCredentials === undefined) {
-            return;
+    private async restCallWithAuthRetry<T>(restCall: (restWrapper: RestWrapper) => Promise<T>): Promise<T> {
+        let restWrapper = await this.restWrapperP;
+        if (this.getCredentials === undefined) {
+            return restCall(restWrapper);
         }
-        const refreshedCredentials = await this.getRefreshedCredentials();
-        this.restWrapper = this.createRestWrapper(refreshedCredentials);
-    }
-
-    private async restCallWithAuthRetry<T>(restCall: () => Promise<T>): Promise<T> {
-        if (this.getRefreshedCredentials === undefined) {
-            return restCall();
-        }
-        return restCall().catch(async (error) => {
+        return restCall(restWrapper).catch(async (error) => {
             if (error === 401 || error?.response?.status === 401) {
-                await this.refreshAuthHeaders();
-                return restCall();
+                this.restWrapperP = this.createRestWrapper();
+                restWrapper = await this.restWrapperP;
+                return restCall(restWrapper);
             }
             return Promise.reject(error);
         });

@@ -25,6 +25,15 @@ describe.only("Historian", () => {
         user: "test-user",
         password: "new-test-password",
     };
+    let sendFreshCredentials: boolean = false;
+    const getCredentials = () => {
+        if (sendFreshCredentials) {
+            return freshCredentials;
+        }
+        sendFreshCredentials = true;
+        return initialCredentials;
+    }
+
     const mockAuthor: git.IAuthor = {
         name: "Fabrikam",
         email: "contoso@microsoft.com",
@@ -121,13 +130,12 @@ describe.only("Historian", () => {
     };
 
     beforeEach(() => {
+        sendFreshCredentials = false;
         historian = new Historian(
             endpoint,
             true,
             false,
-            initialCredentials,
-            undefined,
-            async () => freshCredentials,
+            getCredentials,
         );
         axiosMock.reset();
     });

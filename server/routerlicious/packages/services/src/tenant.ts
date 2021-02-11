@@ -51,11 +51,12 @@ export class TenantManager implements core.ITenantManager {
             password: generateToken(tenantId, null, key, null),
             user: tenantId,
         };
+        const getCredentials = () => credentials;
         const historian = new Historian(
             `${details.data.storage.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`,
             true,
             false,
-            credentials,
+            getCredentials,
             getCorrelationId);
         const gitManager = new GitManager(historian);
         const tenant = new Tenant(details.data, gitManager);
