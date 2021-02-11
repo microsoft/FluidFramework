@@ -29,6 +29,7 @@ interface ITreeDemoViewProps {
     model: Snapshot;
 }
 
+// Helper for reading scalar values from SharedTree
 function readScalar<T>(snapshot: Snapshot, parent: NodeId, label: string) {
     const [nodeId] = snapshot.getTrait({ parent, label: label as TraitLabel });
 
@@ -38,6 +39,7 @@ function readScalar<T>(snapshot: Snapshot, parent: NodeId, label: string) {
     return JSON.parse(base64) as T;
 }
 
+// Helper for writing scalar vales to SharedTree
 function writeScalar(tree: SharedTree, parent: NodeId, label: string, value: Jsonable) {
     const edit: SetValue = {
         nodeToModify: tree.currentView.getTrait({ parent, label: label as TraitLabel })[0],
@@ -47,6 +49,7 @@ function writeScalar(tree: SharedTree, parent: NodeId, label: string, value: Jso
     tree.applyEdit(edit);
 }
 
+// Helper for traversing SharedTree nodes
 function ref(snapshot: Snapshot, node: NodeId, ...path: (string | number)[]) {
     let children: readonly NodeId[] = [];
 
@@ -117,6 +120,7 @@ export class TreeDemo extends DataObject implements IFluidHTMLView {
 
     private nodeId() { return Math.random().toString(36).slice(2) as NodeId; }
 
+    // Helper for creating Scalar nodes in SharedTree
     private makeScalar(value: Jsonable) {
         const node: EditNode = {
             identifier: this.nodeId(),
@@ -128,6 +132,7 @@ export class TreeDemo extends DataObject implements IFluidHTMLView {
         return node;
     }
 
+    // Helper for making SharedTree subtrees representing boxes
     private makeBox(x: number, y: number, color: string) {
         const node: EditNode = {
             identifier: this.nodeId(),
