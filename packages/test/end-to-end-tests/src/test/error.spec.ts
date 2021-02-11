@@ -80,7 +80,7 @@ describe("Errors Types", () => {
 
         try {
             await Container.load(
-                "tenantId/documentId",
+                "documentId",
                 loader,
                 testRequest,
                 testResolved);

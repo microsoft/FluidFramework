@@ -28,6 +28,10 @@ const config ={
   "unhandled-rejections": "strict"
 };
 
+if(process.env.FLUID_TEST_TIMEOUT !== undefined){
+  config["timeout"] = process.env.FLUID_TEST_TIMEOUT;
+}
+
 if(process.env.FLUID_TEST_REPORT === "1"){
   config["reporter"] = `mocha-junit-reporter`;
   config["reporter-options"] = [
