@@ -25,10 +25,7 @@ describe("Logger", () => {
                 TelemetryLogger.prepareErrorObject(event, true, false);
                 assert(event.error === true, "boolean should work");
 
-                // Shouldn't actually be supported (see TelemetryEventPropertyType) but not checked properly in the code
-                event = freshEvent();
-                TelemetryLogger.prepareErrorObject(event, [42, "the answer", true], false);
-                assert((event.error as unknown as any[]).length === 3, "array should work");
+                // Technically this violates TelemetryEventPropertyType's type constraint but it's actually supported
                 event = freshEvent();
                 TelemetryLogger.prepareErrorObject(event, null, false);
                 assert(event.error === null, "null should work");
@@ -54,7 +51,7 @@ describe("Logger", () => {
             });
             it("getTelemetryProperties present", () => {
                 const event = freshEvent();
-                const error = { foo: "foo", bar: 2, getTelemetryProperties };
+                const error = { foo: "foo", bar: 2, getTelemetryProperties: () => ({}) };
                 TelemetryLogger.prepareErrorObject(event, error, false);
                 assert(event.foo === undefined && event.bar === undefined);
             });
