@@ -29,10 +29,10 @@ RUN apt-get update
 # Install .so libraries required for Puppeteer tests
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
-	    libpangocairo-1.0-0 \
-	    libxi6 \
-    	libatk-bridge2.0-0 \
-    	libgtk-3-0 \
+        libpangocairo-1.0-0 \
+        libxi6 \
+        libatk-bridge2.0-0 \
+        libgtk-3-0 \
         libasound2 \
         libatk1.0-0 \
         libcups2 \
