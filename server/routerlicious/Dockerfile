@@ -33,6 +33,7 @@ COPY packages/local-server/package*.json packages/local-server/
 COPY packages/memory-orderer/package*.json packages/memory-orderer/
 COPY packages/routerlicious/package*.json packages/routerlicious/
 COPY packages/routerlicious-base/package*.json packages/routerlicious-base/
+COPY packages/services/package*.json packages/services/
 COPY packages/services-client/package*.json packages/services-client/
 COPY packages/services-core/package*.json packages/services-core/
 COPY packages/services-ordering-eventhubs/package*.json packages/services-ordering-eventhubs/
@@ -41,7 +42,6 @@ COPY packages/services-ordering-rdkafka/package*.json packages/services-ordering
 COPY packages/services-ordering-zookeeper/package*.json packages/services-ordering-zookeeper/
 COPY packages/services-shared/package*.json packages/services-shared/
 COPY packages/services-utils/package*.json packages/services-utils/
-COPY packages/services/package*.json packages/services/
 COPY packages/test-utils/package*.json packages/test-utils/
 COPY packages/protocol-base/package*.json packages/protocol-base/
 
