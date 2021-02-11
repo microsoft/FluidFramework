@@ -15,6 +15,7 @@ import {
     SharingLinkTokenFetchOptions,
     TokenFetcher,
     TokenFetchOptions,
+    tokenFromResponse,
     TokenResponse,
 } from "./tokenFetch";
 
@@ -170,8 +171,10 @@ async function graphFetch(
             const odspResponse = await getWithRetryForTokenRefresh(async (options) => {
                 tries++;
                 const token = await getToken(options);
-                const { url, headers } = getUrlAndHeadersWithAuth(graphUrl.startsWith("http")
-                    ? graphUrl : `https://graph.microsoft.com/v1.0/${graphUrl}`, token);
+                const { url, headers } = getUrlAndHeadersWithAuth(
+                    graphUrl.startsWith("http") ? graphUrl : `https://graph.microsoft.com/v1.0/${graphUrl}`,
+                    tokenFromResponse(token),
+                );
                 const augmentedRequest = { ...requestInit };
                 augmentedRequest.headers = { ...augmentedRequest.headers, ...headers };
                 const res = await fetchAndParseAsJSONHelper<IGraphFetchResponse>(url, augmentedRequest);
@@ -236,7 +239,7 @@ async function getFileDefaultUrl(
                 const { url, headers } = getUrlAndHeadersWithAuth(
                     `${siteUrl}/_api/web/GetFileByUrl(@a1)/ListItemAllFields/GetSharingInformation?@a1=${
                         encodeURIComponent(graphItem.webDavUrl)
-                    }`, token);
+                    }`, tokenFromResponse(token));
                 const requestInit = {
                     method: "POST",
                     headers: {
@@ -287,7 +290,8 @@ async function getGraphItemLite(
     const cacheKey = `${driveId}_${itemId}`;
     if (graphItemLiteCache.has(cacheKey) === false) {
         const valueGenerator = async function() {
-            const partialUrl = `${slashTerminatedOriginOrEmptyString(msGraphOrigin)
+            const partialUrl = `${
+                slashTerminatedOriginOrEmptyString(msGraphOrigin)
                 }drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl,name`;
 
             let response: IOdspResponse<GraphItemLite> | undefined;
