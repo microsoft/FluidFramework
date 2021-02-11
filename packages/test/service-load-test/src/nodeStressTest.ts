@@ -12,7 +12,7 @@ import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import {
     OdspDocumentServiceFactory,
     OdspDriverUrlResolver,
-    ResourceTokenFetchOptions,
+    OdspResourceTokenFetchOptions,
 } from "@fluidframework/odsp-driver";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import {
@@ -51,7 +51,7 @@ const passwordTokenConfig = (username, password): OdspTokenConfig => ({
 
 function createLoader(loginInfo: IOdspTestLoginInfo) {
     const documentServiceFactory = new OdspDocumentServiceFactory(
-        async (options: ResourceTokenFetchOptions) => {
+        async (options: OdspResourceTokenFetchOptions) => {
             const tokens = await odspTokenManager.getOdspTokens(
                 loginInfo.server,
                 getMicrosoftConfiguration(),
@@ -60,7 +60,7 @@ function createLoader(loginInfo: IOdspTestLoginInfo) {
             );
             return tokens.accessToken;
         },
-        async (options: ResourceTokenFetchOptions) => {
+        async (options: OdspResourceTokenFetchOptions) => {
             const tokens = await odspTokenManager.getPushTokens(
                 loginInfo.server,
                 getMicrosoftConfiguration(),

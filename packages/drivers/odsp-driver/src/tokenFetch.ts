@@ -15,7 +15,7 @@ export interface TokenResponse {
 }
 
 /**
- * Represents token fetch options
+ * Represents access token fetch options
  */
 export interface TokenFetchOptions {
     /**
@@ -47,32 +47,37 @@ export interface TokenFetchOptions {
  */
 export type TokenFetcher = (options: TokenFetchOptions) => Promise<string | TokenResponse | null>;
 
-export interface ResourceTokenFetchOptions extends TokenFetchOptions {
-    /** Site url representing resource location */
+/**
+ * Represents access token fetch options for ODSP resource
+ */
+export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
+    /** Site url representing ODSP resource location */
     siteUrl: string;
 }
 
 /**
- * Method signature for callback method used to fetch token for resource with location represented by site url
+ * Method signature for callback method used to fetch token for accessing ODSP resource with location
+ * represented by site url.
  * @param options - token fetch options
  * @returns If successful, TokenResponse object representing token value along with flag indicating
  * whether token came from cache. Legacy implementation may return a string for token value;
  * in this case it should be assumes that fromCache signal is undefined. Null is returned in case of failure.
  */
-export type ResourceTokenFetcher = (options: ResourceTokenFetchOptions) => Promise<string | TokenResponse | null>;
+export type OdspResourceTokenFetcher =
+    (options: OdspResourceTokenFetchOptions) => Promise<string | TokenResponse | null>;
 
-export interface GraphResourceTokenFetchOptions extends ResourceTokenFetchOptions {
+export interface GraphResourceTokenFetchOptions extends OdspResourceTokenFetchOptions {
     type: "Graph";
 }
 
-export interface OneDriveResourceTokenFetchOptions extends ResourceTokenFetchOptions {
+export interface OneDriveResourceTokenFetchOptions extends OdspResourceTokenFetchOptions {
     type: "OneDrive";
 }
 
 export type SharingLinkTokenFetchOptions = GraphResourceTokenFetchOptions | OneDriveResourceTokenFetchOptions;
 
 /**
- * Method signature for callback method used to fetch Sharing link token
+ * Method signature for callback method used to fetch tokens used when generating Sharing link
  * @param options - token fetch options
  * @returns If successful, TokenResponse object representing token value along with flag indicating
  * whether token came from cache. Legacy implementation may return a string for token value;

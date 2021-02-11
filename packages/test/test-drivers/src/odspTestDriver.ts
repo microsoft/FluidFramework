@@ -11,7 +11,7 @@ import {
     OdspDocumentServiceFactory,
     OdspDriverUrlResolver,
     createOdspCreateContainerRequest,
-    ResourceTokenFetchOptions,
+    OdspResourceTokenFetchOptions,
  } from "@fluidframework/odsp-driver";
 import {
     OdspTokenConfig,
@@ -67,7 +67,7 @@ export class OdspTestDriver implements ITestDriver {
 
     createDocumentServiceFactory(): IDocumentServiceFactory {
         return new OdspDocumentServiceFactory(
-            async (options: ResourceTokenFetchOptions) => {
+            async (options: OdspResourceTokenFetchOptions) => {
                 const tokens = await this.odspTokenManager.getOdspTokens(
                     this.config.server,
                     this.config,
@@ -76,7 +76,7 @@ export class OdspTestDriver implements ITestDriver {
                 );
                 return tokens.accessToken;
             },
-            async (options: ResourceTokenFetchOptions) => {
+            async (options: OdspResourceTokenFetchOptions) => {
                 const tokens = await this.odspTokenManager.getPushTokens(
                     this.config.server,
                     this.config,
