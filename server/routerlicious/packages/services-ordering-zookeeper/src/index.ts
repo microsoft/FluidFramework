@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./document-router";
-export * from "./kafka-service";
+export * from "./zookeeperClient";

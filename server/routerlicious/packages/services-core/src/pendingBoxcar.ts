@@ -4,7 +4,7 @@
  */
 
 import { Deferred } from "@fluidframework/common-utils";
-import { IPendingBoxcar } from "@fluidframework/server-services-core";
+import { IPendingBoxcar } from "./queue";
 
 // 1MB batch size / (16KB max message size + overhead)
 export const MaxBatchSize = 32;

@@ -12,10 +12,9 @@ import {
     IQueuedMessage,
     IZookeeperClient,
 } from "@fluidframework/server-services-core";
+import { ZookeeperClient } from "@fluidframework/server-services-ordering-zookeeper";
 import * as kafka from "kafka-node";
-import { debug } from "./debug";
 import { ensureTopics } from "./kafkaTopics";
-import { ZookeeperClient } from "./zookeeperClient";
 
 // time before reconnecting after an error occurs
 const defaultReconnectDelay = 5000;
@@ -101,8 +100,6 @@ export class KafkaNodeConsumer implements IConsumer {
                 this.client.close();
                 this.client = undefined;
             }
-
-            debug("Kafka error - attempting reconnect", error);
 
             this.events.emit("error", error);
 

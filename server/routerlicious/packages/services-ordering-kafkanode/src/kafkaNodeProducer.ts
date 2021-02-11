@@ -5,11 +5,16 @@
 
 import { EventEmitter } from "events";
 import * as util from "util";
-import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@fluidframework/server-services-core";
+import {
+    BoxcarType,
+    IBoxcarMessage,
+    IPendingBoxcar,
+    IProducer,
+    PendingBoxcar,
+    MaxBatchSize,
+} from "@fluidframework/server-services-core";
 import * as kafka from "kafka-node";
-import { debug } from "./debug";
 import { ensureTopics } from "./kafkaTopics";
-import { PendingBoxcar, MaxBatchSize } from "./pendingBoxcar";
 
 /**
  * Kafka producer using the kafka-node library
@@ -190,7 +195,7 @@ export class KafkaNodeProducer implements IProducer {
         }
 
         this.connecting = this.connected = false;
-        debug("Kafka error - closing", error);
+
         this.events.emit("error", error);
         this.connect();
     }

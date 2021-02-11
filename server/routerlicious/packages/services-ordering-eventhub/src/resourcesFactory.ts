@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { createConsumer } from "@fluidframework/server-services";
 import { IConsumer, IPartitionLambdaFactory } from "@fluidframework/server-services-core";
 import { IResources, IResourcesFactory } from "@fluidframework/server-services-utils";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
+import { EventHubConsumer } from "./eventHubConsumer";
 
-export interface IKafkaResources extends IResources {
+export interface IEventHubResources extends IResources {
     lambdaFactory: IPartitionLambdaFactory;
 
     consumer: IConsumer;
@@ -17,7 +17,7 @@ export interface IKafkaResources extends IResources {
     config: Provider;
 }
 
-export class KafkaResources implements IKafkaResources {
+export class EventHubResources implements IEventHubResources {
     constructor(
         public lambdaFactory: IPartitionLambdaFactory,
         public consumer: IConsumer,
@@ -30,21 +30,19 @@ export class KafkaResources implements IKafkaResources {
     }
 }
 
-export class KafkaResourcesFactory implements IResourcesFactory<KafkaResources> {
+export class EventHubResourcesFactory implements IResourcesFactory<EventHubResources> {
     constructor(private readonly name, private readonly lambdaModule) {
     }
 
-    public async create(config: Provider): Promise<KafkaResources> {
+    public async create(config: Provider): Promise<EventHubResources> {
         // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
         const plugin = require(this.lambdaModule);
         const lambdaFactory = await plugin.create(config) as IPartitionLambdaFactory;
 
         // Inbound Kafka configuration
-        const kafkaLibrary = config.get("kafka:lib:name");
-        const kafkaEndpoint = config.get("kafka:lib:endpoint");
-        const zookeeperEndpoint = config.get("zookeeper:endpoint");
-        const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
-        const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
+        const endpoint = config.get("eventHub:endpoint");
+        const storageEndpoint = config.get("eventHub:storageEndpoint");
+        const storageContainer = config.get("eventHub:storageContainer");
 
         // Receive topic and group - for now we will assume an entry in config mapping
         // to the given name. Later though the lambda config will likely be split from the stream config
@@ -52,18 +50,18 @@ export class KafkaResourcesFactory implements IResourcesFactory<KafkaResources> 
         const groupId = streamConfig.group;
         const receiveTopic = streamConfig.topic;
 
+        console.log(`${groupId} ${receiveTopic}`);
+
         const clientId = moniker.choose();
-        const consumer = createConsumer(
-            kafkaLibrary,
-            kafkaEndpoint,
-            zookeeperEndpoint,
+        const consumer = new EventHubConsumer(
+            endpoint,
             clientId,
             groupId,
             receiveTopic,
-            kafkaNumberOfPartitions,
-            kafkaReplicationFactor);
+            storageEndpoint,
+            storageContainer);
 
-        return new KafkaResources(
+        return new EventHubResources(
             lambdaFactory,
             consumer,
             config);

@@ -3,14 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { EventHubConsumer } from "@fluidframework/server-services";
 import { IConsumer, IPartitionLambdaFactory } from "@fluidframework/server-services-core";
-import { IResourcesFactory } from "@fluidframework/server-services-utils";
+import { IResources, IResourcesFactory } from "@fluidframework/server-services-utils";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
-import { IKafkaResources } from "../kafka-service";
+import { RdkafkaConsumer } from "./rdkafkaConsumer";
 
-export class EventHubResources implements IKafkaResources {
+export interface IRdkafkaResources extends IResources {
+    lambdaFactory: IPartitionLambdaFactory;
+
+    consumer: IConsumer;
+
+    config: Provider;
+}
+
+export class RdkafkaResources implements IRdkafkaResources {
     constructor(
         public lambdaFactory: IPartitionLambdaFactory,
         public consumer: IConsumer,
@@ -23,19 +30,20 @@ export class EventHubResources implements IKafkaResources {
     }
 }
 
-export class EventHubResourcesFactory implements IResourcesFactory<EventHubResources> {
+export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResources> {
     constructor(private readonly name, private readonly lambdaModule) {
     }
 
-    public async create(config: Provider): Promise<EventHubResources> {
+    public async create(config: Provider): Promise<RdkafkaResources> {
         // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
         const plugin = require(this.lambdaModule);
         const lambdaFactory = await plugin.create(config) as IPartitionLambdaFactory;
 
         // Inbound Kafka configuration
-        const endpoint = config.get("eventHub:endpoint");
-        const storageEndpoint = config.get("eventHub:storageEndpoint");
-        const storageContainer = config.get("eventHub:storageContainer");
+        const kafkaEndpoint = config.get("kafka:lib:endpoint");
+        const zookeeperEndpoint = config.get("zookeeper:endpoint");
+        const numberOfPartitions = config.get("kafka:lib:numberOfPartitions");
+        const replicationFactor = config.get("kafka:lib:replicationFactor");
 
         // Receive topic and group - for now we will assume an entry in config mapping
         // to the given name. Later though the lambda config will likely be split from the stream config
@@ -43,18 +51,18 @@ export class EventHubResourcesFactory implements IResourcesFactory<EventHubResou
         const groupId = streamConfig.group;
         const receiveTopic = streamConfig.topic;
 
-        console.log(`${groupId} ${receiveTopic}`);
-
         const clientId = moniker.choose();
-        const consumer = new EventHubConsumer(
-            endpoint,
-            clientId,
-            groupId,
-            receiveTopic,
-            storageEndpoint,
-            storageContainer);
 
-        return new EventHubResources(
+        const endpoints = { kafka: [kafkaEndpoint], zooKeeper: [zookeeperEndpoint] };
+        const consumer = new RdkafkaConsumer(
+            endpoints,
+            clientId,
+            receiveTopic,
+            groupId,
+            { numberOfPartitions, replicationFactor },
+        );
+
+        return new RdkafkaResources(
             lambdaFactory,
             consumer,
             config);

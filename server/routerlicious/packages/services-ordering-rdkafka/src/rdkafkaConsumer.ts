@@ -7,7 +7,7 @@ import type * as kafkaTypes from "node-rdkafka";
 
 import { Deferred } from "@fluidframework/common-utils";
 import { IConsumer, IPartition, IPartitionWithEpoch, IQueuedMessage } from "@fluidframework/server-services-core";
-import { ZookeeperClient } from "./zookeeperClient";
+import { ZookeeperClient } from "@fluidframework/server-services-ordering-zookeeper";
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 import { tryImportNodeRdkafka } from "./tryImport";
 
