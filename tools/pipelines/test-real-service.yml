@@ -34,7 +34,7 @@ variables:
     parameters:
       buildNumberInPatch: true
   - name: diDir
-    value: '${{ Build.SourcesDirectory }}/tools/pipelines/dependency-injection'
+    value: '$(Build.SourcesDirectory)/tools/pipelines/dependency-injection'
 
 jobs:
   - job: run
