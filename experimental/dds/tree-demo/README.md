@@ -1,12 +1,4 @@
-# @fluid-example/diceroller
-
-**Dice Roller** is a basic example that has a die and a button. Clicking the button re-rolls the die and
-persists the value in the root SharedDirectory. The Fluid Container is defined index.ts, the Fluid object is
-defined in main.tsx.
-
-<!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) -->
-<!-- The getting started instructions are automatically generated.
-To update them, edit md-magic.config.js in the root of the repo, then run npm run readme:update -->
+# @fluid-experimental/tree-demo
 
 ## Getting Started
 
@@ -33,9 +25,3 @@ For in browser testing update `./jest-puppeteer.config.js` to:
     headless: false,
   },
 ```
-
-## Data model
-
-Dice Roller uses the following distributed data structures:
-
-- SharedDirectory - root
