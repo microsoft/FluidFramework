@@ -4,7 +4,7 @@
  */
 
 import { IDiceRoller } from "./dataObject";
-import { jsRenderDiceRoller, reactRenderDiceRoller } from "./views";
+import { jsRenderDiceRoller, reactRenderDiceRoller, vueRenderDiceRoller } from "./views";
 
 /**
  * Render an IDiceRoller into a given div as a text character, with a button to roll it.
@@ -16,8 +16,15 @@ export function renderSampler(diceRoller: IDiceRoller, div: HTMLDivElement) {
     const reactDiv = document.createElement("div");
     const vueDiv = document.createElement("div");
 
+    div.append(
+        jsDiv,
+        document.createElement("hr"),
+        reactDiv,
+        document.createElement("hr"),
+        vueDiv,
+    );
+
     jsRenderDiceRoller(diceRoller, jsDiv);
     reactRenderDiceRoller(diceRoller, reactDiv);
-    // vueRenderDiceRoller(diceRoller, vueDiv);
-    div.append(jsDiv, reactDiv, vueDiv);
+    vueRenderDiceRoller(diceRoller, vueDiv);
 }

@@ -41,7 +41,8 @@ export const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRolle
     const diceColor = `hsl(${diceValue * 60}, 70%, 50%)`;
 
     return (
-        <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 50, textAlign: "center" }}>
+            <div>React</div>
             <div style={{ fontSize: 200, color: diceColor }}>{diceChar}</div>
             <button style={{ fontSize: 50 }} onClick={props.model.roll}>Roll</button>
         </div>

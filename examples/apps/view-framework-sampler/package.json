@@ -40,7 +40,7 @@
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
     "style-loader": "^1.0.0",
-    "vue": "^3.0.5"
+    "vue": "^2.6.12"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0-0",
