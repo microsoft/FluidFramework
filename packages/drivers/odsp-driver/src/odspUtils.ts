@@ -11,6 +11,7 @@ import {
     fetchFailureStatusCode,
     fetchTimeoutStatusCode,
     OdspErrorType,
+    throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils";
 import {
     default as fetch,
@@ -20,7 +21,6 @@ import {
 } from "node-fetch";
 import sha from "sha.js";
 import { debug } from "./debug";
-import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 
 /** Parse the given url and return the origin (host name) */
