@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { getTinyliciousContainer } from "@fluid-experimental/get-container";
 import { getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
-import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 import { IContainer } from "@fluidframework/container-definitions";
 import { KeyValueContainerRuntimeFactory } from "./containerCode";
 

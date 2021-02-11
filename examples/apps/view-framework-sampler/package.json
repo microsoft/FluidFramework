@@ -33,9 +33,8 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
+    "@fluid-experimental/get-container": "^0.35.0",
     "@fluidframework/aqueduct": "^0.35.0",
-    "@fluidframework/get-session-storage-container": "^0.35.0",
-    "@fluidframework/get-tinylicious-container": "^0.35.0",
     "css-loader": "^1.0.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
