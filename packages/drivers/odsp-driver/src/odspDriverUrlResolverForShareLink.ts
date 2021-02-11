@@ -201,7 +201,6 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             dataStorePath: relativeUrl,
             appName: this.appName,
             containerPackageName: packageName,
-            fileVersion: odspResolvedUrl.fileVersion,
         });
 
         return shareLinkUrl.href;
