@@ -11,7 +11,6 @@ import {
 import { DiceRollerController } from "./controller";
 import { Fluid } from "./fluid-static";
 import { renderDiceRoller } from "./view";
-// import { renderDiceRoller } from "./reactView";
 
 let createNew = false;
 if (location.hash.length === 0) {
