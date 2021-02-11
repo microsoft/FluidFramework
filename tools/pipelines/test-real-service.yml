@@ -47,6 +47,25 @@ jobs:
       lfs: ${{ parameters.checkoutSubmodules }}
       submodules: ${{ parameters.checkoutSubmodules }}
 
+    # Print parameters/Vars
+    - task: Bash@3
+      displayName: Print Parameters and Variables
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: |
+          # Show all task group conditions
+
+          echo "
+          Pipeline Parameters:
+            buildDirectory=${{ parameters.buildDirectory }}
+            taskBuild=${{ parameters.taskBuild }}
+            poolBuild=${{ parameters.poolBuild }}
+            checkoutSubmodules=${{ parameters.checkoutSubmodules }}
+
+          Pipeline Variables:
+            releaseBuild=${{ variables.diDir }}
+
     # Install
     - task: UseNode@1
       displayName: Use Node 12.x
