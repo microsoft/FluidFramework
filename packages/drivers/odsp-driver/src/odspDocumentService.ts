@@ -69,6 +69,15 @@ function isAfdCacheValid(): boolean {
 }
 
 /**
+ * Clear the AfdCache
+ */
+function clearAfdCache() {
+    if (localStorageAvailable) {
+        localStorage.removeItem(lastAfdConnectionTimeMsKey);
+    }
+}
+
+/**
  * Safely tries to write to local storage
  * Returns false if writing to localStorage fails. True otherwise
  *
@@ -398,7 +407,7 @@ export class OdspDocumentService implements IDocumentService {
             } catch (connectionError) {
                 const endTime = performance.now();
                 // Clear cache since it failed
-                localStorage.removeItem(lastAfdConnectionTimeMsKey);
+                clearAfdCache();
                 // Log before throwing
                 const canRetry = canRetryOnError(connectionError);
                 this.logger.sendPerformanceEvent(

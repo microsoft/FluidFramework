@@ -13,6 +13,7 @@ import {
     TestFluidObject,
     OpProcessingController,
     createDocumentId,
+    LoaderContainerTracker,
 } from "@fluidframework/test-utils";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
@@ -54,6 +55,8 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
     let loader: Loader;
     let request: IRequest;
     let opProcessingController: OpProcessingController;
+    const loaderContainerTracker = new LoaderContainerTracker();
+
     async function createDetachedContainerAndGetRootDataStore() {
         const container = await loader.createDetachedContainer(codeDetails);
         // Get the root dataStore from the detached container.
@@ -80,11 +83,13 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         ]);
         const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const documentServiceFactory = driver.createDocumentServiceFactory();
-        return new Loader({
+        const testLoader = new Loader({
             urlResolver: driver.createUrlResolver(),
             documentServiceFactory,
             codeLoader,
         });
+        loaderContainerTracker.add(testLoader);
+        return testLoader;
     }
 
     const createPeerDataStore = async (
@@ -104,6 +109,10 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         request = driver.createCreateNewRequest(documentId);
         loader = createTestLoader();
         opProcessingController = new OpProcessingController();
+    });
+
+    afterEach(() => {
+        loaderContainerTracker.reset();
     });
 
     it("Dehydrated container snapshot", async () => {

@@ -14,9 +14,13 @@ import * as oldTypes from "./oldVersionTypes";
 
 const tests = (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
-    beforeEach(()=>{
+    beforeEach(() => {
         args = argsFactory();
     });
+    afterEach(() => {
+        args.reset();
+    });
+
     const leader = "leader";
     describe("Single client", () => {
         let scheduler: IAgentScheduler;
