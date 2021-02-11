@@ -5,7 +5,7 @@
 
 import { globals } from "../jest.config";
 
-describe("diceRoller", () => {
+describe("tree-demo", () => {
     beforeAll(async () => {
         // Wait for the page to load first before running any tests
         // so this time isn't attributed to the first test
