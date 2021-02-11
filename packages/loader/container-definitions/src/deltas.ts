@@ -157,8 +157,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
      * and do not know if user has write access to a file.
      */
     readonly readonly?: boolean;
-
-    readonly deltaStreamMode: ConnectionMode | "none" | undefined;
+    readonly storageOnly: boolean | undefined;
 
     /** Terminate the connection to storage */
     close(): void;

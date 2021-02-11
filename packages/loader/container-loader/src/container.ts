@@ -697,7 +697,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.logger.sendTelemetryEvent({
             eventName: reconnect ? "AutoReconnectEnabled" : "AutoReconnectDisabled",
-            deltaStreamMode: this._deltaManager.deltaStreamMode,
+            connectionMode: this._deltaManager.connectionMode,
             connectionState: ConnectionState[this.connectionState],
         });
 
@@ -1405,7 +1405,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // connection was fully established.
             // Note that we might be still initializing quorum - connection is established proactively on load!
             if ((this._protocolHandler !== undefined && this._protocolHandler.quorum.has(details.clientId))
-                    || deltaManager.deltaStreamMode !== "write") {
+                    || deltaManager.connectionMode === "read") {
                 this.setConnectionState(ConnectionState.Connected);
             }
 
@@ -1464,7 +1464,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const duration = time - this.connectionTransitionTimes[oldState];
 
         let durationFromDisconnected: number | undefined;
-        let deltaStreamMode: string | undefined;
+        let connectionMode: string | undefined;
         let connectionInitiationReason: string | undefined;
         let autoReconnect: ReconnectMode | undefined;
         let checkpointSequenceNumber: number | undefined;
@@ -1473,7 +1473,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (value === ConnectionState.Disconnected) {
             autoReconnect = this._deltaManager.reconnectMode;
         } else {
-            deltaStreamMode = this._deltaManager.deltaStreamMode;
+            connectionMode = this._deltaManager.connectionMode;
             sequenceNumber = this.deltaManager.lastSequenceNumber;
             if (value === ConnectionState.Connected) {
                 durationFromDisconnected = time - this.connectionTransitionTimes[ConnectionState.Disconnected];
@@ -1504,7 +1504,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             socketDocumentId: this._deltaManager.socketDocumentId,
             pendingClientId: this.pendingClientId,
             clientId: this.clientId,
-            connectionMode: deltaStreamMode,
+            connectionMode: connectionMode,
             autoReconnect,
             opsBehind,
             online: OnlineStatus[isOnline()],
@@ -1562,7 +1562,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const logOpsOnReconnect: boolean =
             this._connectionState === ConnectionState.Connected &&
             !this.firstConnection &&
-            this._deltaManager.deltaStreamMode === "write";
+            this._deltaManager.connectionMode === "write";
         if (logOpsOnReconnect) {
             this.messageCountAfterDisconnection = 0;
         }

@@ -75,6 +75,7 @@ export class MockDeltaManager extends EventEmitter
     public get disposed() { return undefined; }
 
     public readonly readonly = false;
+    public readonly storageOnly = false;
     public readonly clientType: string;
     public readonly clientDetails: IClientDetails;
     public get IDeltaSender() { return this; }
@@ -118,8 +119,6 @@ export class MockDeltaManager extends EventEmitter
     public get active(): boolean {
         return true;
     }
-
-    public readonly deltaStreamMode = "write";
 
     public close(): void { }
 

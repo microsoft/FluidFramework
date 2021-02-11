@@ -130,8 +130,8 @@ export class DeltaManagerProxy
         return this.deltaManager.readonly;
     }
 
-    public get deltaStreamMode() {
-        return this.deltaManager.deltaStreamMode;
+    public get storageOnly(): boolean | undefined {
+        return this.deltaManager.storageOnly;
     }
 
     constructor(private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>) {

@@ -86,23 +86,24 @@ describe("No Delta Stream", () => {
         // Load the Container that was created by the first client.
         const container = await loadContainer(true) as Container;
 
-        assert.strictEqual(container.connected, true, "connected");
-        assert.strictEqual(container.clientId, undefined, "clientId");
-        assert.strictEqual(container.existing, true, "existing");
-        assert.strictEqual(container.readonly, true, "readonly");
-        assert.strictEqual(container.readonlyPermissions, true, "readonlyPermissions");
+        assert.strictEqual(container.connected, true, "container.connected");
+        assert.strictEqual(container.clientId, undefined, "container.clientId");
+        assert.strictEqual(container.existing, true, "container.existing");
+        assert.strictEqual(container.readonly, true, "container.readonly");
+        assert.strictEqual(container.readonlyPermissions, true, "container.readonlyPermissions");
 
         const deltaManager = container.deltaManager as DeltaManager;
-        assert.strictEqual(deltaManager.active, false, "active");
-        assert.strictEqual(deltaManager.readonly, true, "readonly");
-        assert.strictEqual(deltaManager.readonlyPermissions, true, "readonlyPermissions");
-        assert.strictEqual(deltaManager.connectionMode, "read", "connectionMode");
-        assert.strictEqual(deltaManager.deltaStreamMode, "none", "deltaStreamMode");
+        assert.strictEqual(deltaManager.active, false, "deltaManager.active");
+        assert.strictEqual(deltaManager.readonly, true, "deltaManager.readonly");
+        assert.strictEqual(deltaManager.readonlyPermissions, true, "deltaManager.readonlyPermissions");
+        assert.strictEqual(deltaManager.connectionMode, "read", "deltaManager.connectionMode");
+        assert.strictEqual(deltaManager.storageOnly, true, "deltaManager.storageOnly");
+
 
         const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-        assert.strictEqual(dataObject.runtime.existing, true, "existing");
-        assert.strictEqual(dataObject.runtime.connected, true, "connected");
-        assert.strictEqual(dataObject.runtime.clientId, undefined, "clientId");
+        assert.strictEqual(dataObject.runtime.existing, true, "dataObject.runtime.existing");
+        assert.strictEqual(dataObject.runtime.connected, true, "dataObject.runtime.connected");
+        assert.strictEqual(dataObject.runtime.clientId, undefined, "dataObject.runtime.clientId");
 
         assert.strictEqual(dataObject.root.get("test"), "key", "mapKey");
 

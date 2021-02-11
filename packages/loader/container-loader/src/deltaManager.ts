@@ -117,10 +117,14 @@ class NoDeltaStream extends TypedEventEmitter<IDocumentDeltaConnectionEvents> im
     serviceConfiguration: IClientConfiguration = undefined as any;
     checkpointSequenceNumber?: number | undefined = undefined;
     submit(messages: IDocumentMessage[]): void {
-        throw new Error("Method not implemented.");
+        const err = new Error("Cannot submit with storage only connection");
+        this.emit("error", err);
+        throw err;
     }
     submitSignal(message: any): void {
-        throw new Error("Method not implemented.");
+        const err = new Error("Cannot submitSignal with storage only connection");
+        this.emit("error", err);
+        throw err;
     }
     close(): void {
     }
@@ -288,16 +292,8 @@ export class DeltaManager
         return this.connection?.claims.documentId;
     }
 
-    public get deltaStreamMode(): ConnectionMode | "none" | undefined {
-        if (this.connection instanceof NoDeltaStream) {
-            return "none";
-        }
-        return this.connection?.mode;
-    }
-
     /**
      * The current connection mode, initially read.
-     * @deprecated - use deltaStreamMode instead
      */
     public get connectionMode(): ConnectionMode {
         if (this.connection === undefined) {
@@ -320,6 +316,13 @@ export class DeltaManager
             return true;
         }
         return this._readonlyPermissions;
+    }
+
+    public get storageOnly() {
+        if(this.connection === undefined) {
+            return undefined;
+        }
+        return this.connection instanceof NoDeltaStream;
     }
 
     /**
