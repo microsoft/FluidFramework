@@ -13,8 +13,9 @@ import { RouterliciousUrlResolver } from "../urlResolver";
 
 describe("Routerlicious Url Resolver", () => {
     const token = "dummy";
+    const hostUrl = "https://dummy.com";
     it("Should resolve the Routerlicious urls correctly", async () => {
-        const urlResolver = new RouterliciousUrlResolver(undefined, async () => Promise.resolve(token));
+        const urlResolver = new RouterliciousUrlResolver(undefined, async () => Promise.resolve(token), hostUrl);
         const url: string = "https://www.wu2.prague.office-int.com/loader/fluid/thinkable-list?chaincode=@fluid-example/shared-text@0.11.14146";
         const resolved = (await urlResolver.resolve({ url })) as IFluidResolvedUrl;
         assert.equal(resolved.tokens.jwt, token, "Token does not match");
@@ -25,7 +26,7 @@ describe("Routerlicious Url Resolver", () => {
     });
 
     it("Should resolve the localhost urls correctly", async () => {
-        const urlResolver = new RouterliciousUrlResolver(undefined, async () => Promise.resolve(token));
+        const urlResolver = new RouterliciousUrlResolver(undefined, async () => Promise.resolve(token), hostUrl);
         const url: string = "http://localhost:3000/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0";
         const resolved = (await urlResolver.resolve({ url })) as IFluidResolvedUrl;
         assert.equal(resolved.tokens.jwt, token, "Token does not match");
@@ -55,7 +56,7 @@ describe("Routerlicious Url Resolver", () => {
             tenantId: "fluid",
             documentId: "damp-competition",
         };
-        const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token));
+        const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token), hostUrl);
 
         const { endpoints, url } = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
 
@@ -85,7 +86,7 @@ describe("Routerlicious Url Resolver", () => {
             documentId: "damp-competition",
         };
 
-        const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token));
+        const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token), hostUrl);
         const { endpoints, url } = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
 
         assert.equal(endpoints.storageUrl, "http://historian:3000/repos/fluid", "Improperly Formed storageUrl");
@@ -113,7 +114,7 @@ describe("Routerlicious Url Resolver", () => {
             documentId: "damp-competition",
         };
 
-        const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token));
+        const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token), hostUrl);
         const { endpoints, url } = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
 
         assert.equal(endpoints.storageUrl, "http://smelly-wolf-historian:3000/repos/fluid", "Improperly Formed storageUrl");
@@ -142,12 +143,20 @@ describe("Routerlicious Url Resolver", () => {
             documentId: "damp-competition",
         };
 
-        const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token));
+        const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token), hostUrl);
         const { endpoints, url } = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
 
         assert.equal(endpoints.storageUrl, "https://historian.wu2-ppe.prague.office-int.com/repos/fluid", "Storage url does not match");
         assert.equal(endpoints.deltaStorageUrl, "https://alfred.wu2-ppe.prague.office-int.com/deltas/fluid/damp-competition", "Delta storage url does not match");
         assert.equal(endpoints.ordererUrl, "https://alfred.wu2-ppe.prague.office-int.com", "Orderer url does not match");
         assert.equal(url, "fluid://alfred.wu2-ppe.prague.office-int.com/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0", "FluidUrl does not match");
+    });
+
+    it("Should return the absolute url when requested", async () => {
+        const urlResolver = new RouterliciousUrlResolver(undefined, async () => Promise.resolve(token), hostUrl);
+        const url: string = "http://localhost:3000/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0";
+        const resolved = (await urlResolver.resolve({ url })) as IFluidResolvedUrl;
+        const absoluteUrl = await urlResolver.getAbsoluteUrl(resolved, "relative");
+        assert.strictEqual(absoluteUrl, `${hostUrl}/fluid/damp-competition/relative`, "Absolute url should match");
     });
 });

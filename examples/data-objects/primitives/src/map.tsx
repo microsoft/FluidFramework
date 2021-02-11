@@ -88,12 +88,12 @@ export class MapEntryComponent extends React.Component<IMapEntryProps, IMapEntry
         super(props);
 
         this.state = {
-            mapValue: this.props.map.get(this.props.mapKey),
+            mapValue: this.props.map.get(this.props.mapKey) ?? "",
         };
 
         this.props.map.on("valueChanged", (changed) => {
             if (changed.key === this.props.mapKey) {
-                this.setState({ mapValue: this.props.map.get(this.props.mapKey) });
+                this.setState({ mapValue: this.props.map.get(this.props.mapKey) ?? "" });
             }
         });
     }

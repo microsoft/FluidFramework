@@ -5,14 +5,9 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "target": "es6",
         "module": "esnext",
         "outDir": "dist",
         "jsx": "react",
-        "lib": [
-            "es2015",
-            "dom"
-        ],
         "types": []
     },
     "include": [

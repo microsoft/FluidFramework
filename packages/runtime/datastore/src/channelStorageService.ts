@@ -7,6 +7,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
+import { stringToBuffer } from "@fluidframework/common-utils";
 
 export class ChannelStorageService implements IChannelStorageService {
     private static flattenTree(base: string, tree: ISnapshotTree, results: { [path: string]: string }) {
@@ -21,40 +22,50 @@ export class ChannelStorageService implements IChannelStorageService {
         }
     }
 
-    private readonly flattenedTreeP: Promise<{ [path: string]: string }>;
+    private readonly flattenedTree: { [path: string]: string };
 
     constructor(
-        private readonly tree: Promise<ISnapshotTree> | undefined,
-        private readonly storage: Pick<IDocumentStorageService, "read">,
-        private readonly extraBlobs?: Promise<Map<string, string>>,
+        private readonly tree: ISnapshotTree | undefined,
+        private readonly storage: Pick<IDocumentStorageService, "read" | "readBlob">,
+        private readonly extraBlobs?: Map<string, string>,
     ) {
+        this.flattenedTree = {};
         // Create a map from paths to blobs
         if (tree !== undefined) {
-            this.flattenedTreeP = tree.then((snapshotTree) => {
-                const flattenedTree: { [path: string]: string } = {};
-                ChannelStorageService.flattenTree("", snapshotTree, flattenedTree);
-                return flattenedTree;
-            });
-        } else {
-            this.flattenedTreeP = Promise.resolve({});
+             ChannelStorageService.flattenTree("", tree, this.flattenedTree);
         }
     }
 
     public async contains(path: string): Promise<boolean> {
-        return (await this.flattenedTreeP)[path] !== undefined;
+        return this.flattenedTree[path] !== undefined;
     }
 
     public async read(path: string): Promise<string> {
         const id = await this.getIdForPath(path);
         const blob = this.extraBlobs !== undefined
-            ? (await this.extraBlobs).get(id)
+            ? this.extraBlobs.get(id)
             : undefined;
 
         return blob ?? this.storage.read(id);
     }
 
+    public async readBlob(path: string): Promise<ArrayBufferLike> {
+        const id = await this.getIdForPath(path);
+        const blob = this.extraBlobs !== undefined
+            ? this.extraBlobs.get(id)
+            : undefined;
+
+        if (blob !== undefined) {
+            return stringToBuffer(blob, "base64");
+        }
+
+        // for back compat. will be replaced with readBlob after version 0.35
+        const res = await this.storage.read(id);
+        return stringToBuffer(res, "base64");
+    }
+
     public async list(path: string): Promise<string[]> {
-        let tree = await this.tree;
+        let tree = this.tree;
         const pathParts = getNormalizedObjectStoragePathParts(path);
         while (tree !== undefined && pathParts.length > 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -69,6 +80,6 @@ export class ChannelStorageService implements IChannelStorageService {
     }
 
     private async getIdForPath(path: string): Promise<string> {
-        return (await this.flattenedTreeP)[path];
+        return this.flattenedTree[path];
     }
 }

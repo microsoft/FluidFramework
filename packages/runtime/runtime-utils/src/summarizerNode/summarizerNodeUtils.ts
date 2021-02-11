@@ -11,7 +11,7 @@ import {
     ISequencedDocumentMessage,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "../summaryUtils";
 
 const baseSummaryTreeKey = "_baseSummary";
@@ -287,4 +287,31 @@ export interface ICreateChildDetails {
     latestSummary: SummaryNode | undefined;
     /** Sequence number of latest known change to the node */
     changeSequenceNumber: number;
+}
+
+export interface ISubtreeInfo {
+    /** Tree to use to find children subtrees */
+    childrenTree: ISnapshotTree,
+    /** Additional path part where children are isolated */
+    childrenPathPart: string | undefined,
+}
+
+/**
+ * Checks if the summary contains .channels subtree where the children subtrees
+ * would be located if exists.
+ * @param baseSummary - summary to check
+ */
+export function parseSummaryForSubtrees(baseSummary: ISnapshotTree): ISubtreeInfo {
+    // New versions of snapshots have child nodes isolated in .channels subtree
+    const channelsSubtree = baseSummary.trees[channelsTreeName];
+    if (channelsSubtree !== undefined) {
+        return {
+            childrenTree: channelsSubtree,
+            childrenPathPart: channelsTreeName,
+        };
+    }
+    return {
+        childrenTree: baseSummary,
+        childrenPathPart: undefined,
+    };
 }

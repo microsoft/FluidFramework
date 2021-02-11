@@ -13,7 +13,6 @@ import {
     IDocumentMessage,
     IDocumentSystemMessage,
     INack,
-    IServiceConfiguration,
     ISignalMessage,
     MessageType,
     NackErrorType,
@@ -30,28 +29,6 @@ import {
     getRandomInt,
     generateClientId,
 } from "../utils";
-
-export const DefaultServiceConfiguration: IServiceConfiguration = {
-    blockSize: 64436,
-    maxMessageSize: 16 * 1024,
-    enableTraces: true,
-    summary: {
-        idleTime: 5000,
-        maxOps: 1000,
-        maxTime: 5000 * 12,
-        maxAckWaitTime: 600000,
-    },
-    deli: {
-        clientTimeout: 5 * 60 * 1000,
-        activityTimeout: 30 * 1000,
-        noOpConsolidationTimeout: 250,
-    },
-    scribe: {
-        generateServiceSummary: true,
-        clearCacheAfterServiceSummary: false,
-        ignoreStorageException: false,
-    },
-};
 
 interface IRoom {
 
@@ -73,6 +50,10 @@ interface IConnectedClient {
 function getRoomId(room: IRoom) {
     return `${room.tenantId}/${room.documentId}`;
 }
+
+const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocketConn`;
+
+const getSubmitOpThrottleId = (clientId: string, tenantId: string) => `${clientId}_${tenantId}_SubmitOp`;
 
 // Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
@@ -117,6 +98,35 @@ function selectProtocolVersion(connectVersions: string[]): string {
     }
 }
 
+/**
+ * @returns ThrottlingError if throttled; undefined if not throttled or no throttler provided.
+ */
+function checkThrottle(
+    throttler: core.IThrottler | undefined,
+    throttleId: string,
+    logger?: core.ILogger): core.ThrottlingError | undefined {
+    if (!throttler) {
+        return;
+    }
+
+    try {
+        throttler.incrementCount(throttleId);
+    } catch (e) {
+        if (e instanceof core.ThrottlingError) {
+            return e;
+        } else {
+            logger?.error(
+                `Throttle increment failed: ${safeStringify(e, undefined, 2)}`,
+                {
+                    messageMetaData: {
+                        key: throttleId,
+                        eventName: "throttling",
+                    },
+                });
+        }
+    }
+}
+
 export function configureWebSocketServices(
     webSocketServer: core.IWebSocketServer,
     orderManager: core.IOrdererManager,
@@ -127,7 +137,9 @@ export function configureWebSocketServices(
     logger: core.ILogger,
     maxNumberOfClientsPerDocument: number = 1000000,
     maxTokenLifetimeSec: number = 60 * 60,
-    isTokenExpiryEnabled: boolean = false) {
+    isTokenExpiryEnabled: boolean = false,
+    connectThrottler?: core.IThrottler,
+    submitOpThrottler?: core.IThrottler) {
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, core.IOrdererConnection>();
@@ -169,6 +181,13 @@ export function configureWebSocketServices(
         }
 
         async function connectDocument(message: IConnect): Promise<IConnectedClient> {
+            const throttleError = checkThrottle(
+                connectThrottler,
+                getSocketConnectThrottleId(message.tenantId),
+                logger);
+            if (throttleError) {
+                return Promise.reject(throttleError);
+            }
             if (!message.token) {
                 // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject("Must provide an authorization token");
@@ -306,9 +325,9 @@ export function configureWebSocketServices(
                     // Back-compat, removal tracked with issue #4346
                     parentBranch: null, // Does not matter for now.
                     serviceConfiguration: {
-                        blockSize: DefaultServiceConfiguration.blockSize,
-                        maxMessageSize: DefaultServiceConfiguration.maxMessageSize,
-                        summary: DefaultServiceConfiguration.summary,
+                        blockSize: core.DefaultServiceConfiguration.blockSize,
+                        maxMessageSize: core.DefaultServiceConfiguration.maxMessageSize,
+                        summary: core.DefaultServiceConfiguration.summary,
                     },
                     initialClients: clients,
                     initialMessages: [],
@@ -365,6 +384,20 @@ export function configureWebSocketServices(
                     socket.emit("nack", "", [nackMessage]);
                 } else {
                     const connection = connectionsMap.get(clientId);
+
+                    const throttleError = checkThrottle(
+                        submitOpThrottler,
+                        getSubmitOpThrottleId(clientId, connection.tenantId),
+                        logger);
+                    if (throttleError) {
+                        const nackMessage = createNackMessage(
+                            throttleError.code,
+                            NackErrorType.ThrottlingError,
+                            throttleError.message,
+                            throttleError.retryAfter);
+                        socket.emit("nack", "", [nackMessage]);
+                        return;
+                    }
 
                     messageBatches.forEach((messageBatch) => {
                         const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];

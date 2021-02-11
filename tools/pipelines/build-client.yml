@@ -31,8 +31,8 @@ trigger:
   paths:
     include:
     - packages
-    - components
     - examples
+    - experimental
     - package.json
     - package-lock.json
     - lerna.json
@@ -54,8 +54,8 @@ pr:
   paths:
     include:
     - packages
-    - components
     - examples
+    - experimental
     - package.json
     - package-lock.json
     - lerna.json
@@ -99,16 +99,3 @@ extends:
           cp repo-package.json packages/package.json
           cp repo-package-lock.json packages/package-lock.json
 
-    additionalTests:
-      - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-        - task: Npm@1
-          displayName: '[end-to-end tests] npm run ci:test:realsvc'
-          env:
-            fluid__webpack__bearerSecret: $(fluid__webpack__bearerSecret)
-            fluid__webpack__fluidHost: $(fluid__webpack__fluidHost)
-            fluid__webpack__tenantId: $(fluid__webpack__tenantId)
-            fluid__webpack__tenantSecret: $(fluid__webpack__tenantSecret)
-          inputs:
-            command: 'custom'
-            workingDir: packages/test/end-to-end-tests
-            customCommand: 'run ci:test:realsvc' # This script ends with 'exit 0' so this task should never fail

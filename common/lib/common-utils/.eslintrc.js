@@ -8,7 +8,7 @@ module.exports = {
         "@fluidframework/eslint-config-fluid/eslint7"
     ],
     "parserOptions": {
-        "project": [ "./tsconfig.json", "./test/tsconfig.json", "./testJest/tsconfig.json" ]
+        "project": [ "./tsconfig.json", "./src/test/mocha/tsconfig.json", "./src/test/jest/tsconfig.json" ]
     },
     "rules": {
         "@typescript-eslint/no-non-null-assertion": "off",

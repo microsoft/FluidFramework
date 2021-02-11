@@ -44,6 +44,8 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
         // This may be used for preloading the container package when loading Fluid content.
         containerPackageName?: string
     }
+
+    fileVersion?: string;
 }
 
 /**
@@ -133,7 +135,8 @@ export enum SnapshotType {
 export interface ISnapshotRequest {
     type: SnapshotType;
     message: string;
-    sequenceNumber: number;
+    // Server only looks at it when the Snapshot type is "container".
+    sequenceNumber?: number;
     entries: SnapshotTreeEntry[];
 }
 
@@ -145,12 +148,13 @@ export type SnapshotTreeEntry = ISnapshotTreeValueEntry | ISnapshotTreeHandleEnt
 
 export interface ISnapshotTreeBaseEntry {
     path: string;
-    type: string;
+    type: "blob" | "tree" | "commit";
 }
 
 export interface ISnapshotTreeValueEntry extends ISnapshotTreeBaseEntry {
-    id?: string;
     value: SnapshotTreeValue;
+    // Indicates that this tree entry is unreferenced. If this is not present, the tree entry is considered referenced.
+    unreferenced?: true;
 }
 
 export interface ISnapshotTreeHandleEntry extends ISnapshotTreeBaseEntry {
@@ -160,16 +164,18 @@ export interface ISnapshotTreeHandleEntry extends ISnapshotTreeBaseEntry {
 export type SnapshotTreeValue = ISnapshotTree | ISnapshotBlob | ISnapshotCommit;
 
 export interface ISnapshotTree {
+    type: "tree";
     entries?: SnapshotTreeEntry[];
 }
 
 export interface ISnapshotBlob {
-    contents?: string;
-    content?: string;
-    encoding: string;
+    type: "blob";
+    content: string;
+    encoding: "base64" | "utf-8";
 }
 
 export interface ISnapshotCommit {
+    type: "commit";
     content: string;
 }
 
@@ -186,11 +192,13 @@ export interface ITree {
 }
 
 /**
- * Blob content
+ * Blob content, represents blobs in downloaded snapshot.
  */
 export interface IBlob {
     content: string;
-    encoding: string;
+    // SPO only uses "base64" today for download.
+    // We are adding undefined too, as temp way to roundtrip strings unchanged.
+    encoding: "base64" | undefined;
     id: string;
     size: number;
 }
@@ -240,11 +248,6 @@ export interface HostStoragePolicy {
      * Passing true results in faster loads and keeping cache more current, but it increases bandwidth consumption.
      */
     concurrentSnapshotFetch?: boolean;
-
-    /**
-     * Use post call to fetch the latest snapshot
-     */
-    usePostForTreesLatest?: boolean;
 }
 
 /**
@@ -278,6 +281,7 @@ export interface OdspFluidDataStoreLocator {
     dataStorePath: string;
     appName?: string;
     containerPackageName?: string;
+    fileVersion?: string;
 }
 
 export enum SharingLinkHeader {

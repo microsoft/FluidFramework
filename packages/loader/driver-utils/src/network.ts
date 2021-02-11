@@ -9,7 +9,7 @@ import {
     IAuthorizationError,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 
 export enum OnlineStatus {
     Offline,
@@ -31,37 +31,39 @@ export function isOnline(): OnlineStatus {
 /**
  * Generic network error class.
  */
-export class GenericNetworkError extends CustomErrorWithProps implements IDriverErrorBase {
+export class GenericNetworkError extends LoggingError implements IDriverErrorBase {
     readonly errorType = DriverErrorType.genericNetworkError;
 
     constructor(
         errorMessage: string,
         readonly canRetry: boolean,
-        readonly statusCode?: number,
+        statusCode: number | undefined,
     ) {
-        super(errorMessage);
+        super(errorMessage, { statusCode });
     }
 }
 
-export class AuthorizationError extends CustomErrorWithProps implements IAuthorizationError {
+export class AuthorizationError extends LoggingError implements IAuthorizationError {
     readonly errorType = DriverErrorType.authorizationError;
     readonly canRetry = false;
 
     constructor(
         errorMessage: string,
-        readonly claims?: string,
+        readonly claims: string | undefined,
+        statusCode: number,
     ) {
-        super(errorMessage);
+        super(errorMessage, { statusCode });
     }
 }
 
-export class NetworkErrorBasic<T> extends CustomErrorWithProps {
+export class NetworkErrorBasic<T> extends LoggingError {
     constructor(
         errorMessage: string,
         readonly errorType: T,
         readonly canRetry: boolean,
+        statusCode: number | undefined,
     ) {
-        super(errorMessage);
+        super(errorMessage, { statusCode });
     }
 }
 
@@ -69,29 +71,30 @@ export class NonRetryableError<T> extends NetworkErrorBasic<T> {
     constructor(
         errorMessage: string,
         readonly errorType: T,
+        statusCode: number | undefined,
     ) {
-        super(errorMessage, errorType, false);
+        super(errorMessage, errorType, false, statusCode);
     }
 }
 
 /**
  * Throttling error class - used to communicate all throttling errors
  */
-export class ThrottlingError extends CustomErrorWithProps implements IThrottlingWarning {
+export class ThrottlingError extends LoggingError implements IThrottlingWarning {
     readonly errorType = DriverErrorType.throttlingError;
     readonly canRetry = true;
 
     constructor(
         errorMessage: string,
         readonly retryAfterSeconds: number,
-        readonly statusCode?: number,
+        statusCode?: number,
     ) {
-        super(errorMessage);
+        super(errorMessage, { statusCode });
     }
 }
 
 export const createWriteError = (errorMessage: string) =>
-    new NonRetryableError(errorMessage, DriverErrorType.writeError);
+    new NonRetryableError(errorMessage, DriverErrorType.writeError, undefined /* statusCodes */);
 
 export function createGenericNetworkError(
     errorMessage: string,
@@ -105,7 +108,11 @@ export function createGenericNetworkError(
 }
 
 /**
- * Check if a connection error can be retried.  Unless explicitly disallowed, retry is allowed.
+ * Check if a connection error can be retried.  Unless explicitly allowed, retry is disallowed.
+ * I.e. asserts or unexpected exceptions in our code result in container failure.
  * @param error - The error to inspect for ability to retry
  */
-export const canRetryOnError = (error: any): boolean => error?.canRetry !== false;
+export const canRetryOnError = (error: any): boolean => error?.canRetry === true;
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+export const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds;

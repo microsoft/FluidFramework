@@ -1,0 +1,15 @@
+/**
+ * Config file for API Extractor. For more info, please visit: https://api-extractor.com
+ */
+{
+	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+	"extends": "@fluidframework/build-common/api-extractor-common.json",
+	/**
+	 * For now, retain explicit report generation in the package folder.
+	 */
+	"apiReport": {
+		"enabled": true,
+		"reportFolder": "<projectFolder>",
+		"reportTempFolder": "<projectFolder>/_api-extractor-temp"
+	}
+}

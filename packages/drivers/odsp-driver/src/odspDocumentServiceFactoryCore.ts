@@ -15,6 +15,7 @@ import {
     PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import { IOdspResolvedUrl, HostStoragePolicy } from "./contracts";
 import {
     LocalPersistentCache,
@@ -33,7 +34,7 @@ import {
     isTokenFromCache,
     tokenFromResponse,
 } from "./tokenFetch";
-import { EpochTracker } from "./epochTracker";
+import { EpochTracker, EpochTrackerWithRedemption } from "./epochTracker";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -130,7 +131,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.getSocketIOClient,
             cache,
             this.hostPolicy,
-            epochTracker ?? new EpochTracker(new LocalPersistentCacheAdapter(this.persistedCache), odspLogger),
+            epochTracker ?? new EpochTrackerWithRedemption(
+                new LocalPersistentCacheAdapter(this.persistedCache), odspLogger),
         );
     }
 
@@ -154,8 +156,12 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 },
                 async (event) => tokenFetcher(resolvedUrl.siteUrl, options.refresh, options.claims)
                 .then((tokenResponse) => {
-                    event.end({ fromCache: isTokenFromCache(tokenResponse) });
-                    return tokenFromResponse(tokenResponse);
+                    const token = tokenFromResponse(tokenResponse);
+                    event.end({ fromCache: isTokenFromCache(tokenResponse), isNull: token === null ? true : false });
+                    if (token === null) {
+                        throwOdspNetworkError("Storage Token is null", fetchTokenErrorCode);
+                    }
+                    return token;
                 }));
         };
     }

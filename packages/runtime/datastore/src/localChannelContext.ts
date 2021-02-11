@@ -16,6 +16,7 @@ import {
 import {
     IContextSummarizeResult,
     IFluidDataStoreContext,
+    IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
@@ -67,9 +68,8 @@ export class LocalChannelContext implements IChannelContext {
                 this.submitFn,
                 this.dirtyFn,
                 this.storageService,
-                clonedSnapshotTree !== undefined ? Promise.resolve(clonedSnapshotTree) : undefined,
-                blobMap !== undefined ?
-                    Promise.resolve(blobMap) : undefined,
+                clonedSnapshotTree,
+                blobMap,
             );
         });
         this.factory = registry.get(type);
@@ -164,6 +164,7 @@ export class LocalChannelContext implements IChannelContext {
                 // record sequence number for easier debugging
                 const error = CreateContainerError(err);
                 error.sequenceNumber = message.sequenceNumber;
+                // eslint-disable-next-line @typescript-eslint/no-throw-literal
                 throw error;
             }
         }
@@ -196,5 +197,24 @@ export class LocalChannelContext implements IChannelContext {
         for (const value of Object.values(snapshotTree.trees)) {
             this.collectExtraBlobsAndSanitizeSnapshot(value, blobMap);
         }
+    }
+
+    /**
+     * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context.
+     * Each node has a set of outbound routes to other GC nodes in the document. This should be called only after
+     * the context has loaded.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
+     */
+    public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
+        assert(this.isLoaded && this.channel !== undefined, "Channel should be loaded to run GC");
+        return this.channel.getGCData(fullGC);
+    }
+
+    public updateUsedRoutes(usedRoutes: string[]) {
+        /**
+         * Currently, DDSs are always considered referenced and are not garbage collected.
+         * Once we have GC at DDS level, this channel context's used routes will be updated as per the passed
+         * value. See - https://github.com/microsoft/FluidFramework/issues/4611
+         */
     }
 }

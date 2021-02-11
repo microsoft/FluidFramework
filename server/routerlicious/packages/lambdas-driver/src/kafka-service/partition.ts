@@ -10,6 +10,8 @@ import {
     IPartitionLambda,
     IPartitionLambdaFactory,
     ILogger,
+    LambdaCloseType,
+    IContextErrorData,
 } from "@fluidframework/server-services-core";
 import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";
@@ -44,8 +46,8 @@ export class Partition extends EventEmitter {
 
         this.checkpointManager = new CheckpointManager(id, consumer);
         this.context = new Context(this.checkpointManager);
-        this.context.on("error", (error: any, restart: boolean) => {
-            this.emit("error", error, restart);
+        this.context.on("error", (error: any, errorData: IContextErrorData) => {
+            this.emit("error", error, errorData);
         });
 
         // Create the incoming message queue
@@ -68,12 +70,18 @@ export class Partition extends EventEmitter {
                 this.q.resume();
             },
             (error) => {
-                this.emit("error", error, true);
+                const errorData: IContextErrorData = {
+                    restart: true,
+                };
+                this.emit("error", error, errorData);
                 this.q.kill();
             });
 
         this.q.error = (error) => {
-            this.emit("error", error, true);
+            const errorData: IContextErrorData = {
+                restart: true,
+            };
+            this.emit("error", error, errorData);
         };
     }
 
@@ -81,7 +89,7 @@ export class Partition extends EventEmitter {
         this.q.push(rawMessage);
     }
 
-    public close(): void {
+    public close(closeType: LambdaCloseType): void {
         // Stop any pending message processing
         this.q.kill();
 
@@ -92,7 +100,7 @@ export class Partition extends EventEmitter {
         // Notify the lambda (should it be resolved) of the close
         this.lambdaP.then(
             (lambda) => {
-                lambda.close();
+                lambda.close(closeType);
             },
             (error) => {
                 // Lambda never existed - no need to close

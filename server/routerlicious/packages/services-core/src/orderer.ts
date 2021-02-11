@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IClient, IDocumentMessage, IServiceConfiguration } from "@fluidframework/protocol-definitions";
+import { IClient, IDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IServiceConfiguration } from "./configuration";
 import { IDocumentDetails } from "./document";
 import { IWebSocket } from "./http";
 
@@ -46,7 +47,7 @@ export interface IOrdererConnection {
     /**
      * Sends the client join op for this connection
      */
-    connect(): Promise<void>;
+    connect(clientJoinMessageServerMetadata?: any): Promise<void>;
 
     /**
      * Orders the provided list of messages. The messages in the array are guaranteed to be ordered sequentially

@@ -4,10 +4,12 @@
  */
 
 import {
+    DefaultServiceConfiguration,
     ICollection,
     IPartitionLambda,
     IProducer,
     ISequencedOperationMessage,
+    LambdaCloseType,
     MongoManager,
     NackOperationType,
     SequencedOperationType,
@@ -23,7 +25,6 @@ import {
 import { strict as assert } from "assert";
 import * as _ from "lodash";
 import nconf from "nconf";
-import { DefaultServiceConfiguration } from "../../alfred";
 import { DeliLambdaFactory } from "../../deli/lambdaFactory";
 
 const MinSequenceNumberWindow = 2000;
@@ -96,7 +97,7 @@ describe("Routerlicious", () => {
             });
 
             afterEach(async () => {
-                lambda.close();
+                lambda.close(LambdaCloseType.Stop);
                 await factory.dispose();
             });
 

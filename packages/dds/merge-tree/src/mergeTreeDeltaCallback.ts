@@ -25,6 +25,11 @@ export const enum MergeTreeMaintenanceType {
      *    b) The segment's tracking collection is empty (e.g., not being tracked for undo/redo).
      */
     UNLINK  = -3,
+    /**
+     * Notification that a local change has been acknowledged by the server.
+     * This means that it has made the round trip to the server and has had a sequence number assigned.
+     */
+    ACKNOWLEDGED = -4,
 }
 
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
@@ -70,4 +75,4 @@ export type MergeTreeDeltaCallback =
 export interface IMergeTreeMaintenanceCallbackArgs extends IMergeTreeDeltaCallbackArgs<MergeTreeMaintenanceType> { }
 
 export type MergeTreeMaintenanceCallback =
-    (MaintenanceArgs: IMergeTreeMaintenanceCallbackArgs) => void;
+    (MaintenanceArgs: IMergeTreeMaintenanceCallbackArgs, opArgs: IMergeTreeDeltaOpArgs | undefined) => void;

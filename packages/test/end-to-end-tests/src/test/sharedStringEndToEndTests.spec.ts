@@ -25,7 +25,15 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (args: ITestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    beforeEach(()=>{
+        args = argsFactory();
+    });
+    afterEach(() => {
+        args.reset();
+    });
+
     let sharedString1: SharedString;
     let sharedString2: SharedString;
 
@@ -62,10 +70,11 @@ const tests = (args: ITestObjectProvider) => {
         const newContainer = await args.loadTestContainer(testContainerConfig) as Container;
         const newComponent = await requestFluidObject<ITestFluidObject>(newContainer, "default");
         const newSharedString = await newComponent.getSharedObject<SharedString>(stringId);
-        assert.equal(newSharedString.getText(), text, "The new container should receive the inserted text on creation");
+        assert.equal(
+            newSharedString.getText(), text, "The new container should receive the inserted text on creation");
     });
 };
 
 describe("SharedString", () => {
-    generateTest(tests, { tinylicious: true });
+    generateTest(tests);
 });

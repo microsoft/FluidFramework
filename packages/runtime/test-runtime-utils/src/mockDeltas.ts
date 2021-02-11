@@ -5,10 +5,10 @@
 
 import { EventEmitter } from "events";
 import {
+    IClientConfiguration,
     IClientDetails,
     IDocumentMessage,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
@@ -50,10 +50,12 @@ class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         return [];
     }
 
+    // back-compat: usage removed in 0.33, remove in future versions
     public async systemPause(): Promise<void> {
         return;
     }
 
+    // back-compat: usage removed in 0.33, remove in future versions
     public systemResume(): void {
         return undefined;
     }
@@ -109,7 +111,7 @@ export class MockDeltaManager extends EventEmitter
         return 0;
     }
 
-    public get serviceConfiguration(): IServiceConfiguration {
+    public get serviceConfiguration(): IClientConfiguration {
         return undefined;
     }
 

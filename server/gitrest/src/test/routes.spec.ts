@@ -13,7 +13,8 @@ import {
 } from "@fluidframework/gitresources";
 import {
     ICreateRefParamsExternal,
-} from "@fluidframework/server-services-core";
+    IGetRefParamsExternal,
+} from "@fluidframework/server-services-client";
 import * as async from "async";
 import lorem from "lorem-ipsum";
 import * as moniker from "moniker";
@@ -141,6 +142,15 @@ describe("GitRest", () => {
             ref: "refs/heads/main",
             sha: "cf0b592907d683143b28edd64d274ca70f68998e",
             config: { enabled: true },
+        };
+
+        const testReadParams: IGetRefParamsExternal = {
+            config: { enabled: true },
+        };
+
+        const testRefWriteDisabled: ICreateRefParams = {
+            ref: "refs/heads/main",
+            sha: "cf0b592907d683143b28edd64d274ca70f68998e",
         };
 
         const externalStorageManager = new ExternalStorageManager(testUtils.defaultProvider);
@@ -356,13 +366,20 @@ describe("GitRest", () => {
                 });
 
                 it("Can delete a reference", async () => {
-                    await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
+                    await initBaseRepo(
+                        supertest,
+                        testOwnerName,
+                        testRepoName,
+                        testBlob,
+                        testTree,
+                        testCommit,
+                        testRefWriteDisabled);
                     await supertest
-                        .delete(`/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}`)
+                        .delete(`/repos/${testOwnerName}/${testRepoName}/git/${testRefWriteDisabled.ref}`)
                         .expect(204);
 
                     return supertest
-                        .get(`/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}`)
+                        .get(`/repos/${testOwnerName}/${testRepoName}/git/${testRefWriteDisabled.ref}`)
                         .expect(400);
                 });
             });
@@ -447,6 +464,7 @@ describe("GitRest", () => {
                             testRepoName,
                             lastCommit,
                             1,
+                            testReadParams,
                             externalStorageManager);
                         const parentCommit = commits[0];
                         assert.ok(parentCommit.commit);
@@ -474,7 +492,7 @@ describe("GitRest", () => {
                     },
                     5);
 
-                const resultP = new Promise((resolve, reject) => {
+                const resultP = new Promise<void>((resolve, reject) => {
                     queue.drain = () => {
                         resolve();
                     };
@@ -513,6 +531,140 @@ describe("GitRest", () => {
                     return supertest
                         .get(`/repos/${fullRepoPath}/contents/${testTree.tree[0].path}?ref=${testRef.sha}`)
                         .expect(200);
+                });
+            });
+        });
+
+        describe("CorrelationId", () => {
+            const correlationIdHeaderName = "x-correlation-id";
+            const testCorrelationId = "test-correlation-id";
+
+            const assertCorrelationId =
+                async (url: string, method: "get" | "post" | "patch" | "delete" = "get"): Promise<void> => {
+                    await supertest[method](url)
+                        .set(correlationIdHeaderName, testCorrelationId)
+                        .set("Accept", "application/json")
+                        .set("Content-Type", "application/json")
+                        .then((res) => {
+                            assert.strictEqual(res.headers?.[correlationIdHeaderName], testCorrelationId);
+                    });
+            };
+
+            describe("Git", () => {
+                describe("Blobs", () => {
+                    it("Should have correlation id when creating a blob", async () => {
+                        await assertCorrelationId(
+                            `/${testOwnerName}/repos`,
+                            "post",
+                        );
+                    });
+                    it("Should have correlation id when getting a blob", async () => {
+                        await assertCorrelationId(
+                            `/repos/${testOwnerName}/${testRepoName}/git/blobs/${testTree.tree[0].sha}`,
+                        );
+                    });
+                });
+
+                describe("Commits", () => {
+                    it("Should have correlation id when creating a commit", async () => {
+                        await assertCorrelationId(
+                            `/repos/${testOwnerName}/${testRepoName}/git/commits`,
+                            "post",
+                        );
+                    });
+                    it("Should have correlation id when getting a commit", async () => {
+                        await assertCorrelationId(
+                            `/repos/${testOwnerName}/${testRepoName}/git/commits/${testTree.tree[0].sha}`,
+                        );
+                    });
+                });
+
+                describe("Refs", () => {
+                    it("GET /repos/:owner/:repo/git/refs", async () => {
+                        await assertCorrelationId(
+                            `/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}`,
+                        );
+                    });
+                    it("GET /repos/:owner/:repo/git/refs/*", async () => {
+                        await assertCorrelationId(
+                            `/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}/*`,
+                        );
+                    });
+                    it("POST /repos/:owner/:repo/git/refs", async () => {
+                        await assertCorrelationId(
+                            `/repos/${testOwnerName}/${testRepoName}/git/refs`,
+                            "post",
+                        );
+                    });
+                    it("PATCH /repos/:owner/:repo/git/refs/*", async () => {
+                        await assertCorrelationId(
+                            `/repos/${testOwnerName}/${testRepoName}/git/refs/heads/patch`,
+                            "patch",
+                        );
+                    });
+                    it("DELETE /repos/:owner/:repo/git/refs/*", async () => {
+                        await assertCorrelationId(
+                            `/repos/${testOwnerName}/${testRepoName}/git/${testRefWriteDisabled.ref}`,
+                            "delete",
+                        );
+                    });
+                });
+
+                describe("Repos", () => {
+                    it("Should have correlation id when creating a repo", async () => {
+                        await assertCorrelationId(`/repos/${testOwnerName}/repos`, "post");
+                    });
+                    it("Should have correlation id when getting a repo", async () => {
+                        await assertCorrelationId(
+                            `/repos/${testOwnerName}/${testRepoName}`,
+                        );
+                    });
+                });
+
+                describe("Tags", () => {
+                    it("Should have correlation id when creating a tag", async () => {
+                        await assertCorrelationId(
+                            `/repos/${testOwnerName}/${testRepoName}/git/tags`,
+                            "post",
+                        );
+                    });
+                    it("Should have correlation id when getting a tag", async () => {
+                        await assertCorrelationId(
+                            `/repos/${testOwnerName}/${testRepoName}/git/tags/${testTree.tree[0].sha}`,
+                        );
+                    });
+                });
+
+                describe("Trees", () => {
+                    it("Should have correlation id when creating a tree", async () => {
+                        await assertCorrelationId(
+                            `/repos/${testOwnerName}/${testRepoName}/git/trees`, "post",
+                        );
+                    });
+                    it("Should have correlation id when getting a tree", async () => {
+                        await assertCorrelationId(
+                            `/repos/${testOwnerName}/${testRepoName}/git/trees/${testTree.tree[0].sha}`,
+                        );
+                    });
+                });
+            });
+
+            describe("Repository", () => {
+                describe("Commits", () => {
+                    it("Should have correlation id when listing recent commits", async () => {
+                        await assertCorrelationId(
+                            `/repos/${testOwnerName}/${testRepoName}/commits?sha=main`,
+                        );
+                    });
+                });
+
+                describe("Content", () => {
+                    it("Should have correlation id when retrieving a stored object", async () => {
+                        const fullRepoPath = `${testOwnerName}/${testRepoName}`;
+                        await assertCorrelationId(
+                            `/repos/${fullRepoPath}/contents/${testTree.tree[0].path}?ref=${testRef.sha}`,
+                        );
+                    });
                 });
             });
         });

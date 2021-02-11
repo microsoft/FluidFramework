@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { IContext, IQueuedMessage, ILogger } from "@fluidframework/server-services-core";
+import { IContext, IQueuedMessage, ILogger, IContextErrorData } from "@fluidframework/server-services-core";
 import * as winston from "winston";
 
 export class DocumentContext extends EventEmitter implements IContext {
@@ -72,8 +72,8 @@ export class DocumentContext extends EventEmitter implements IContext {
         this.emit("checkpoint", this);
     }
 
-    public error(error: any, restart: boolean) {
-        this.emit("error", error, restart);
+    public error(error: any, errorData: IContextErrorData) {
+        this.emit("error", error, errorData);
     }
 
     public get log(): ILogger {
@@ -82,5 +82,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 
     public close() {
         this.closed = true;
+
+        this.removeAllListeners();
     }
 }

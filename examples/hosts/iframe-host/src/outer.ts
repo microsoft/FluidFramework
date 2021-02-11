@@ -3,16 +3,22 @@
  * Licensed under the MIT License.
  */
 
+import * as Comlink from "comlink";
 import { fluidExport as TodoContainer } from "@fluid-example/todo";
-import { Container } from "@fluidframework/container-loader";
 import { IFluidObject } from "@fluidframework/core-interfaces";
-import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 import {
-    RouterliciousDocumentServiceFactory,
-} from "@fluidframework/routerlicious-driver";
+    getTinyliciousContainer,
+    InsecureTinyliciousUrlResolver,
+} from "@fluidframework/get-tinylicious-container";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
-import { InsecureTokenProvider, InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
-import { IFrameOuterHost } from "./inframehost";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+import { IContainer } from "@fluidframework/container-definitions";
+import { ContainerProxy } from "./containerProxy";
+import {
+    IFrameInnerApi,
+    IFrameOuterHost,
+} from "./inframehost";
 
 let createNew = false;
 const getDocumentId = () => {
@@ -22,22 +28,23 @@ const getDocumentId = () => {
     }
     return window.location.hash.substring(1);
 };
-const getDocumentUrl = (documentId: string) => `${window.location.origin}/${documentId}`;
-const getTinyliciousUrlResolver =
-    () => new InsecureUrlResolver(
-        "http://localhost:3000",
-        "http://localhost:3000",
-        "http://localhost:3000",
-        "tinylicious",
-        "bearer");
 
-export async function loadFrame(iframeId: string, logId: string) {
+export async function loadFrame(
+    iframeDivId: string,
+    dataStoreDivId: string,
+    logDivId: string,
+) {
     const documentId = getDocumentId();
-    const iframe = document.getElementById(iframeId) as HTMLIFrameElement;
+    const iframeDiv = document.getElementById(iframeDivId) as HTMLIFrameElement;
+    const iframe = document.createElement("iframe");
+    iframe.src = "/inner.html";
+    // TODO: remove "allow-same-origin"
+    iframe.sandbox.add("allow-scripts", "allow-forms", "allow-same-origin");
+    iframeDiv.appendChild(iframe);
 
-    const urlResolver = getTinyliciousUrlResolver();
+    const urlResolver = new InsecureTinyliciousUrlResolver();
 
-    const tokenProvider = new InsecureTokenProvider("tinylicious", documentId, "12345", { id: "userid0" });
+    const tokenProvider = new InsecureTokenProvider("12345", { id: "userid0" });
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
 
     const host = new IFrameOuterHost({
@@ -45,29 +52,36 @@ export async function loadFrame(iframeId: string, logId: string) {
         documentServiceFactory,
     });
 
-    const proxyContainer = await host.load(
-        { url: getDocumentUrl(documentId) },
-        iframe,
-    );
+    const innerPort = await host.loadOuterProxy(iframe);
 
-    const text = document.getElementById(logId) as HTMLDivElement;
-    const quorum = proxyContainer.getQuorum();
+    iframe.addEventListener("load", function loadFn() {
+        void (async () => {
+            // TODO: Inner IFrame exposes its API on its contentWindow currently while outer IFrame
+            // exposes it through a MessageChannel.  MessageChannel supports two-way communication
+            // but Comlink does not, so use two one-way paths until we have a two-way wrapper that
+            // doesn't use naked postMessage
 
-    const log =
-        (emitter: { on(event: string, listener: (...args: any[]) => void) }, name: string, ...events: string[]) => {
-            events.forEach((event) =>
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                emitter.on(event, (...args) => {
-                    text.innerHTML += `${name}: ${event}: ${JSON.stringify(args)}<br/>`;
-                }));
-        };
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const innerApi = Comlink.wrap<IFrameInnerApi>(Comlink.windowEndpoint(iframe.contentWindow!));
+            await innerApi.setMessagePort(Comlink.transfer(innerPort, [innerPort]));
 
-    quorum.getMembers().forEach((client) => text.innerHTML += `Quorum: client: ${JSON.stringify(client)}<br/>`);
-    log(quorum, "Quorum", "error", "addMember", "removeMember");
-    log(proxyContainer, "Container", "error", "connected", "disconnected");
+            // load the code inside the iframe but attach it here outside
+            const containerProxy = await ContainerProxy.create(innerApi, documentId, createNew);
+            if (createNew) {
+                await containerProxy.attach({ url: documentId });
+            }
+
+            const container = await host.loadContainer({ url: documentId });
+            await loadOuterLogDiv(container, logDivId);
+
+            await loadOuterDataStoreDiv(dataStoreDivId);
+
+            iframe.removeEventListener("load", loadFn);
+        })();
+    });
 }
 
-async function getFluidObjectAndRender(container: Container, div: HTMLDivElement) {
+async function getFluidObjectAndRender(container: IContainer, div: HTMLDivElement) {
     const response = await container.request({ url: "/" });
     if (response.status !== 200 ||
         !(
@@ -83,25 +97,54 @@ async function getFluidObjectAndRender(container: Container, div: HTMLDivElement
     view.render(div, { display: "block" });
 }
 
-export async function loadDiv(divId: string) {
-    const div = document.getElementById(divId) as HTMLDivElement;
+async function loadOuterLogDiv(
+    container: IContainer,
+    logDivId: string,
+): Promise<void> {
+    const logDiv = document.getElementById(logDivId) as HTMLDivElement;
 
+    const quorum = container.getQuorum();
+    if (!quorum.has("code")) {
+        // we'll never propose the code, so wait for them to do it
+        await new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
+    }
+
+    const log =
+        (emitter: { on(event: string, listener: (...args: any[]) => void) }, name: string, ...events: string[]) => {
+            events.forEach((event) =>
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                emitter.on(event, (...args) => {
+                    logDiv.innerHTML += `${name}: ${event}: ${JSON.stringify(args)}<br/>`;
+                }));
+        };
+
+    quorum.getMembers().forEach((client) => logDiv.innerHTML += `Quorum: client: ${JSON.stringify(client)}<br/>`);
+    log(quorum, "Quorum", "error", "addMember", "removeMember");
+    log(container, "Container", "error", "connected", "disconnected");
+}
+
+/**
+ * Verify that the iframe container may be loaded in a regular, non-iframe environment
+ * @param dataStoreDivId
+ */
+async function loadOuterDataStoreDiv(
+    dataStoreDivId: string,
+): Promise<void> {
     const container = await getTinyliciousContainer(
         getDocumentId(),
         TodoContainer,
-        createNew,
+        // The container is always expected to have been created here
+        false /* createNew */,
     );
 
-    await getFluidObjectAndRender(container, div).catch(() => { });
+    const dataStoreDiv = document.getElementById(dataStoreDivId) as HTMLDivElement;
+    getFluidObjectAndRender(container, dataStoreDiv).catch(() => {});
     // Handle the code upgrade scenario (which fires contextChanged)
     container.on("contextChanged", (value) => {
-        getFluidObjectAndRender(container, div).catch(() => { });
+        getFluidObjectAndRender(container, dataStoreDiv).catch(() => {});
     });
 }
 
-export async function runOuter(iframeId: string, divId: string, logId: string) {
-    await Promise.all([
-        loadFrame(iframeId, logId),
-        loadDiv(divId).catch(),
-    ]);
+export async function runOuter(iframeDivId: string, divId: string, logId: string) {
+    await loadFrame(iframeDivId, divId, logId);
 }

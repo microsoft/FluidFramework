@@ -112,6 +112,10 @@ export interface INackMessage extends ITicketedMessage {
 
     // The details of the nack
     operation: INack;
+
+    // The time the server created the message, in milliseconds elapsed since
+    // 1 January 1970 00:00:00 UTC, with leap seconds ignored.
+    timestamp: number;
 }
 
 /**
@@ -140,5 +144,5 @@ export interface IControlMessage {
  */
 export enum ControlMessageType {
     // Instruction sent to update Durable sequence number
-    UpdateDSN = "updateDSN"
+    UpdateDSN = "updateDSN",
 }

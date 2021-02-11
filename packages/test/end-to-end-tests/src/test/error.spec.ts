@@ -15,35 +15,42 @@ import {
     IDocumentServiceFactory,
     DriverErrorType,
     IThrottlingWarning,
+    IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { createWriteError } from "@fluidframework/driver-utils";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import {
     createOdspNetworkError,
     invalidFileNameStatusCode,
     OdspErrorType,
 } from "@fluidframework/odsp-doclib-utils";
-import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { LocalCodeLoader } from "@fluidframework/test-utils";
+import { LoggingError } from "@fluidframework/telemetry-utils";
+import { createDocumentId, LocalCodeLoader, LoaderContainerTracker } from "@fluidframework/test-utils";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 describe("Errors Types", () => {
-    const id = "fluid-test://localhost/errorTest";
-    const testRequest: IRequest = { url: id };
-
-    let testDeltaConnectionServer: ILocalDeltaConnectionServer;
-    let urlResolver: LocalResolver;
+    let urlResolver: IUrlResolver;
+    let testRequest: IRequest;
     let testResolved: IFluidResolvedUrl;
     let documentServiceFactory: IDocumentServiceFactory;
     let codeLoader: LocalCodeLoader;
     let loader: Loader;
+    let driver: ITestDriver;
+    const loaderContainerTracker = new LoaderContainerTracker();
+    before(() => {
+        driver = getFluidTestDriver();
+    });
+    afterEach(() => {
+        loaderContainerTracker.reset();
+    });
 
     it("GeneralError Test", async () => {
+        const id = createDocumentId();
         // Setup
-        testDeltaConnectionServer = LocalDeltaConnectionServer.create();
-        urlResolver = new LocalResolver();
-        testResolved = await urlResolver.resolve(testRequest) as IFluidResolvedUrl;
-        documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
+        urlResolver = driver.createUrlResolver();
+        testRequest = { url: driver.createContainerUrl(id) };
+        testResolved =
+            await urlResolver.resolve(testRequest) as IFluidResolvedUrl;
+        documentServiceFactory = driver.createDocumentServiceFactory();
 
         const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
         mockFactory.createDocumentService = async (resolvedUrl) => {
@@ -60,10 +67,11 @@ describe("Errors Types", () => {
             documentServiceFactory: mockFactory,
             codeLoader,
         });
+        loaderContainerTracker.add(loader);
 
         try {
             await Container.load(
-                "tenantId/documentId",
+                "documentId",
                 loader,
                 testRequest,
                 testResolved);
@@ -72,8 +80,6 @@ describe("Errors Types", () => {
         } catch (error) {
             assert.equal(error.errorType, ContainerErrorType.genericError, "Error should be a genericError");
         }
-
-        await testDeltaConnectionServer.webSocketServer.close();
     });
 
     it("GeneralError Logging Test", async () => {
@@ -81,24 +87,24 @@ describe("Errors Types", () => {
             userData: "My name is Mark",
             message: "Some message",
         };
-        const iError = (CreateContainerError(err) as any) as CustomErrorWithProps;
-        const props = iError.getCustomProperties();
+        const iError = (CreateContainerError(err) as any) as LoggingError;
+        const props = iError.getTelemetryProperties();
         assert.equal(props.userData, undefined, "We shouldn't expose the properties of the inner/original error");
         assert.equal(props.message, err.message, "But name is copied over!");
     });
 
     function assertCustomPropertySupport(err: any) {
         err.asdf = "asdf";
-        if (err.getCustomProperties !== undefined) {
-            assert.equal(err.getCustomProperties().asdf, "asdf", "Error should have property asdf");
+        if (err.getTelemetryProperties !== undefined) {
+            assert.equal(err.getTelemetryProperties().asdf, "asdf", "Error should have property asdf");
         }
         else {
-            assert.fail("Error should support getCustomProperties()");
+            assert.fail("Error should support getTelemetryProperties()");
         }
     }
 
     it("GenericNetworkError Test_1", async () => {
-        const networkError = createOdspNetworkError("Test Message");
+        const networkError = createOdspNetworkError("Test Message", 500);
         assert.equal(networkError.errorType, DriverErrorType.genericNetworkError,
             "Error should be a genericNetworkError");
         assertCustomPropertySupport(networkError);
@@ -209,7 +215,7 @@ describe("Errors Types", () => {
     it("ThrottlingError Test", async () => {
         const networkError = createOdspNetworkError(
             "Test Message",
-            undefined,
+            429,
             100 /* retryAfterSeconds */) as IThrottlingWarning;
         assertCustomPropertySupport(networkError);
         assert.equal(networkError.errorType, DriverErrorType.throttlingError, "Error should be a throttlingError");
@@ -232,7 +238,7 @@ describe("Errors Types", () => {
     });
 
     it("Check double conversion of network error", async () => {
-        const networkError = createOdspNetworkError("Test Error");
+        const networkError = createOdspNetworkError("Test Error", 400);
         const error1 = CreateContainerError(networkError);
         const error2 = CreateContainerError(error1);
         assertCustomPropertySupport(error1);

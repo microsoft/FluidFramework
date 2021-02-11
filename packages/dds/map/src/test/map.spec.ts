@@ -54,13 +54,52 @@ describe("Map", () => {
 
             it("should fire correct map events", async () => {
                 const dummyMap = map;
-                let called1: boolean = false;
-                let called2: boolean = false;
-                dummyMap.on("op", (agr1, arg2, arg3) => called1 = true);
-                dummyMap.on("valueChanged", (agr1, arg2, arg3, arg4) => called2 = true);
+                let valueChangedExpected = true;
+                let clearExpected = false;
+                let previousValue: any;
+
+                dummyMap.on("op", (arg1, arg2, arg3) => {
+                    assert.fail("shouldn't receive an op event");
+                });
+                dummyMap.on("valueChanged", (changed, local, op, target) => {
+                    assert.equal(valueChangedExpected, true, "valueChange event not expected");
+                    valueChangedExpected = false;
+
+                    assert.equal(changed.key, "marco");
+                    assert.equal(changed.previousValue, previousValue);
+
+                    assert.equal(local, true, "local should be true for local action for valueChanged event");
+                    assert.equal(op, null, "op should be null for local actions for valueChanged event");
+                    assert.equal(target, dummyMap, "target should be the map for valueChanged event");
+                });
+                dummyMap.on("clear", (local, op, target) => {
+                    assert.equal(clearExpected, true, "clear event not expected");
+                    clearExpected = false;
+
+                    assert.equal(local, true, "local should be true for local action  for clear event");
+                    assert.equal(op, null, "op should be null for local actions for clear event");
+                    assert.equal(target, dummyMap, "target should be the map for clear event");
+                });
+                dummyMap.on("error", (error) => {
+                    // propagate error in the event handlers
+                    throw error;
+                });
+
+                // Test set
+                previousValue = undefined;
                 dummyMap.set("marco", "polo");
-                assert.equal(called1, false, "did not receive op event");
-                assert.equal(called2, true, "did not receive valueChanged event");
+                assert.equal(valueChangedExpected, false, "missing valueChanged event");
+
+                // Test delete
+                previousValue = "polo";
+                valueChangedExpected = true;
+                dummyMap.delete("marco");
+                assert.equal(valueChangedExpected, false, "missing valueChanged event");
+
+                // Test clear
+                clearExpected = true;
+                dummyMap.clear();
+                assert.equal(clearExpected, false, "missing clear event");
             });
 
             it("Should return undefined when a key does not exist in the map", () => {
@@ -69,10 +108,10 @@ describe("Map", () => {
 
             it("Should reject undefined and null key sets", () => {
                 assert.throws(() => {
-                    map.set(undefined, "one");
+                    map.set(undefined as any, "one");
                 }, "Should throw for key of undefined");
                 assert.throws(() => {
-                    map.set(null, "two");
+                    map.set(null as any, "two");
                 }, "Should throw for key of null");
             });
         });
@@ -363,11 +402,13 @@ describe("Map", () => {
 
                     // Verify the local SharedMap
                     const localSubMap = map1.get<IFluidHandle>("test");
+                    assert(localSubMap);
                     assert.equal(
                         localSubMap.absolutePath, subMap.handle.absolutePath, "could not get the handle's path");
 
                     // Verify the remote SharedMap
                     const remoteSubMap = map2.get<IFluidHandle>("test");
+                    assert(remoteSubMap);
                     assert.equal(
                         remoteSubMap.absolutePath,
                         subMap.handle.absolutePath,

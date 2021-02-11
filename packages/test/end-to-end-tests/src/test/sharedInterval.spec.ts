@@ -53,7 +53,15 @@ const assertIntervalsHelper = (
     }
 };
 
-const tests = (args: ITestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    beforeEach(()=>{
+        args = argsFactory();
+    });
+    afterEach(() => {
+        args.reset();
+    });
+
     describe("one client", () => {
         const stringId = "stringKey";
 
@@ -255,9 +263,9 @@ const tests = (args: ITestObjectProvider) => {
             sharedMap1.set("outerString", SharedString.create(dataObject1.runtime).handle);
             await args.opProcessingController.process();
 
-            const outerString1 = await sharedMap1.get<IFluidHandle<SharedString>>("outerString").get();
-            const outerString2 = await sharedMap2.get<IFluidHandle<SharedString>>("outerString").get();
-            const outerString3 = await sharedMap3.get<IFluidHandle<SharedString>>("outerString").get();
+            const outerString1 = await sharedMap1.get<IFluidHandle<SharedString>>("outerString")?.get();
+            const outerString2 = await sharedMap2.get<IFluidHandle<SharedString>>("outerString")?.get();
+            const outerString3 = await sharedMap3.get<IFluidHandle<SharedString>>("outerString")?.get();
             assert.ok(outerString1, "String did not correctly set as value in container 1's map");
             assert.ok(outerString2, "String did not correctly set as value in container 2's map");
             assert.ok(outerString3, "String did not correctly set as value in container 3's map");
@@ -330,5 +338,5 @@ const tests = (args: ITestObjectProvider) => {
 };
 
 describe("SharedInterval", () => {
-    generateTest(tests, { tinylicious: true });
+    generateTest(tests);
 });

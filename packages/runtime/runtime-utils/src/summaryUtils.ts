@@ -16,10 +16,8 @@ import {
     SummaryType,
     ISummaryTree,
     SummaryObject,
-    IBlob,
     ISummaryBlob,
     TreeEntry,
-    IAttachment,
     ITreeEntry,
     ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
@@ -92,6 +90,11 @@ export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, co
     summary.stats.totalBlobSize += getBlobSize(content);
 }
 
+export function addTreeToSummary(summary: ISummaryTreeWithStats, key: string, summarizeResult: ISummarizeResult): void {
+    summary.summary.tree[key] = summarizeResult.summary;
+    summary.stats = mergeStats(summary.stats, summarizeResult.stats);
+}
+
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     private attachmentCounter: number = 0;
 
@@ -125,7 +128,11 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
         }, key, content);
     }
 
-    public addHandle(key: string, handleType: SummaryType, handle: string): void {
+    public addHandle(
+        key: string,
+        handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment,
+        handle: string): void
+    {
         this.summaryTree[key] = {
             type: SummaryType.Handle,
             handleType,
@@ -161,7 +168,7 @@ export function convertToSummaryTreeWithStats(
     for (const entry of snapshot.entries) {
         switch (entry.type) {
             case TreeEntry.Blob: {
-                const blob = entry.value as IBlob;
+                const blob = entry.value;
                 let content: string | Uint8Array;
                 if (blob.encoding === "base64") {
                     content = IsoBuffer.from(blob.contents, "base64");
@@ -174,7 +181,7 @@ export function convertToSummaryTreeWithStats(
 
             case TreeEntry.Tree: {
                 const subtree = convertToSummaryTree(
-                    entry.value as ITree,
+                    entry.value,
                     fullTree);
                 builder.addWithStats(entry.path, subtree);
 
@@ -182,7 +189,7 @@ export function convertToSummaryTreeWithStats(
             }
 
             case TreeEntry.Attachment: {
-                const id = (entry.value as IAttachment).id;
+                const id = entry.value.id;
                 builder.addAttachment(id);
 
                 break;
@@ -309,10 +316,6 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
                 break;
             }
 
-            case SummaryType.Commit: {
-                throw new Error("Should not have Commit type in summary tree");
-            }
-
             case SummaryType.Handle: {
                 throw new Error("Should not have Handle type in summary tree");
             }
@@ -323,7 +326,5 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
     }
     return {
         entries,
-        // eslint-disable-next-line no-null/no-null
-        id: null,
     };
 }

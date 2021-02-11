@@ -5,11 +5,11 @@
 
 import { merge } from "lodash";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
-import { IClient, IServiceConfiguration } from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
 import {
     BroadcasterLambda,
     CheckpointManager,
-    DefaultServiceConfiguration,
+    createDeliCheckpointManagerFromCollection,
     DeliLambda,
     ForemanLambda,
     ScribeLambda,
@@ -19,6 +19,7 @@ import {
 } from "@fluidframework/server-lambdas";
 import { IGitManager } from "@fluidframework/server-services-client";
 import {
+    DefaultServiceConfiguration,
     IContext,
     IDeliState,
     IDatabaseManager,
@@ -29,6 +30,7 @@ import {
     IOrdererConnection,
     IPublisher,
     IScribe,
+    IServiceConfiguration,
     ITaskMessageSender,
     ITenantManager,
     ITopic,
@@ -267,12 +269,14 @@ export class LocalOrderer implements IOrderer {
             async (lambdaSetup, context) => {
                 const documentCollection = await lambdaSetup.documentCollectionP();
                 const lastCheckpoint = JSON.parse(this.dbObject.deli);
+                const checkpointManager =
+                    createDeliCheckpointManagerFromCollection(this.tenantId, this.documentId, documentCollection);
                 return new DeliLambda(
                     context,
                     this.tenantId,
                     this.documentId,
                     lastCheckpoint,
-                    documentCollection,
+                    checkpointManager,
                     this.deltasKafka,
                     this.rawDeltasKafka,
                     this.serviceConfiguration);
@@ -299,7 +303,6 @@ export class LocalOrderer implements IOrderer {
             : { members: [], proposals: [], values: [] };
 
         const protocolHandler = new ProtocolOpHandler(
-            this.documentId,
             scribe.minimumSequenceNumber,
             scribe.sequenceNumber,
             1, // TODO (Change when local orderer also ticks epoch)
@@ -326,6 +329,7 @@ export class LocalOrderer implements IOrderer {
             this.documentId,
             summaryWriter,
             summaryReader,
+            undefined,
             checkpointManager,
             scribe,
             this.serviceConfiguration,

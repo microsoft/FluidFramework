@@ -18,32 +18,31 @@ import {
     ITrace,
     MessageType,
     NackErrorType,
-    IServiceConfiguration,
 } from "@fluidframework/protocol-definitions";
 import { canSummarize } from "@fluidframework/server-services-client";
 import {
     ControlMessageType,
     extractBoxcar,
     IClientSequenceNumber,
-    ICollection,
     IContext,
     IControlMessage,
     IDeliState,
-    IDocument,
     IMessage,
     INackMessage,
     IPartitionLambda,
     IProducer,
     IRawOperationMessage,
     ISequencedOperationMessage,
+    IServiceConfiguration,
     ITicketedMessage,
     NackOperationType,
     RawOperationType,
     SequencedOperationType,
     IQueuedMessage,
 } from "@fluidframework/server-services-core";
-import { CheckpointContext, ICheckpointParams } from "./checkpointContext";
+import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
+import { IDeliCheckpointManager, ICheckpointParams } from "./checkpointManager";
 
 enum IncomingMessageOrder {
     Duplicate,
@@ -109,7 +108,7 @@ export class DeliLambda implements IPartitionLambda {
         private readonly tenantId: string,
         private readonly documentId: string,
         readonly lastCheckpoint: IDeliState,
-        collection: ICollection<IDocument>,
+        checkpointManager: IDeliCheckpointManager,
         private readonly forwardProducer: IProducer,
         private readonly reverseProducer: IProducer,
         private readonly serviceConfiguration: IServiceConfiguration) {
@@ -136,12 +135,13 @@ export class DeliLambda implements IPartitionLambda {
         this.minimumSequenceNumber = msn === -1 ? this.sequenceNumber : msn;
 
         this.logOffset = lastCheckpoint.logOffset;
-        this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, collection, context);
+        this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, checkpointManager, context);
     }
 
     public handler(rawMessage: IQueuedMessage): void {
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset <= this.logOffset) {
+            this.context.checkpoint(rawMessage);
             return;
         }
 
@@ -205,7 +205,11 @@ export class DeliLambda implements IPartitionLambda {
                 };
                 this.context.log.error(
                     `Could not send message to scriptorium: ${JSON.stringify(error)}`, { messageMetaData });
-                this.context.error(error, true);
+                this.context.error(error, {
+                    restart: true,
+                    tenantId: this.tenantId,
+                    documentId: this.documentId,
+                });
             });
 
         // Start a timer to check inactivity on the document. To trigger idle client leave message,
@@ -401,16 +405,17 @@ export class DeliLambda implements IPartitionLambda {
                         durableSequenceNumber: number
                         clearCache: boolean
                     };
-                // Deli cache is only cleared when no clients have joined since last noClient was sent to alfred.
-                if (controlContent.clearCache && this.noActiveClients) {
-                    instruction = InstructionType.ClearCache;
-                    this.canClose = true;
-                    this.context.log.info(`Deli cache will be cleared`, { messageMetaData });
-                }
                 const dsn = controlContent.durableSequenceNumber;
-                assert(dsn >= this.durableSequenceNumber,
-                    `Incoming dsn@${dsn} < Current dsn@${this.durableSequenceNumber}`);
-                this.durableSequenceNumber = controlContent.durableSequenceNumber;
+                if (dsn >= this.durableSequenceNumber) {
+                    // Deli cache is only cleared when no clients have joined since last noClient was sent to alfred.
+                    if (controlContent.clearCache && this.noActiveClients) {
+                        instruction = InstructionType.ClearCache;
+                        this.canClose = true;
+                        this.context.log.info(`Deli cache will be cleared`, { messageMetaData });
+                    }
+
+                    this.durableSequenceNumber = dsn;
+                }
             }
         }
 
@@ -529,7 +534,11 @@ export class DeliLambda implements IPartitionLambda {
                 tenantId: this.tenantId,
             };
             this.context.log.error(`Could not send message to alfred: ${JSON.stringify(error)}`, { messageMetaData });
-            this.context.error(error, true);
+            this.context.error(error, {
+                restart: true,
+                tenantId: this.tenantId,
+                documentId: this.documentId,
+            });
         });
     }
 
@@ -590,6 +599,7 @@ export class DeliLambda implements IPartitionLambda {
                 sequenceNumber: this.minimumSequenceNumber,
             },
             tenantId: this.tenantId,
+            timestamp: Date.now(),
             type: NackOperationType,
         };
         return {

@@ -40,7 +40,7 @@ export function create(
      * Looks up the version of a chaincode in the cache.
      */
     const getUrlWithVersion = async (chaincode: string) => {
-        return new Promise<string>((resolve) => {
+        return new Promise<string | undefined>((resolve) => {
             if (chaincode !== "" && chaincode.indexOf("@") === chaincode.lastIndexOf("@")) {
                 cache.get(chaincode).then((value) => {
                     resolve(value as string);
@@ -61,8 +61,8 @@ export function create(
         const start = Date.now();
         const chaincode: string = queryParamAsString(request.query.chaincode);
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        getUrlWithVersion(chaincode).then((version: string) => {
-            if (version) {
+        getUrlWithVersion(chaincode).then((version?: string) => {
+            if (version !== undefined) {
                 const redirectUrl = `${request.originalUrl}@${version}`;
                 winston.info(`Redirecting to ${redirectUrl}`);
                 response.redirect(redirectUrl);
@@ -177,14 +177,10 @@ export function create(
 
                 Promise.all([resolvedP, fullTreeP, pkgP, scriptsP, timingsP])
                     .then(([resolved, fullTree, pkg, scripts, timings]) => {
-                        // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        resolved!.url += path + (search ?? "");
+                        resolved.url += path + (search ?? "");
                         winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
-                        // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        timings!.push(Date.now() - start);
+                        timings.push(Date.now() - start);
                         const configClientId = config.get("login:microsoft").clientId;
                         response.render(
                             "loaderHost",

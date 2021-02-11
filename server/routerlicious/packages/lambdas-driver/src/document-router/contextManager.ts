@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { IContext, IQueuedMessage } from "@fluidframework/server-services-core";
+import { IContext, IContextErrorData, IQueuedMessage } from "@fluidframework/server-services-core";
 import { DocumentContext } from "./documentContext";
 
 const LastCheckpointedOffset: IQueuedMessage = {
@@ -20,7 +20,7 @@ const LastCheckpointedOffset: IQueuedMessage = {
  * from them.
  */
 export class DocumentContextManager extends EventEmitter {
-    private readonly contexts: DocumentContext[] = [];
+    private readonly contexts: Set<DocumentContext> = new Set();
 
     // Head and tail represent our processing position of the queue. Head is the latest message seen and
     // tail is the last message processed
@@ -42,10 +42,14 @@ export class DocumentContextManager extends EventEmitter {
 
         // Create the new context and register for listeners on it
         const context = new DocumentContext(head, () => this.tail);
-        this.contexts.push(context);
+        this.contexts.add(context);
         context.addListener("checkpoint", () => this.updateCheckpoint());
-        context.addListener("error", (error, restart) => this.emit("error", error, restart));
+        context.addListener("error", (error, errorData: IContextErrorData) => this.emit("error", error, errorData));
         return context;
+    }
+
+    public removeContext(context: DocumentContext): void {
+        this.contexts.delete(context);
     }
 
     public setHead(head: IQueuedMessage) {

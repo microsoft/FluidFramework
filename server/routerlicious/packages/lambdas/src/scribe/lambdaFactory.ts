@@ -15,10 +15,10 @@ import {
     IProducer,
     IScribe,
     ISequencedOperationMessage,
+    IServiceConfiguration,
     ITenantManager,
     MongoManager,
 } from "@fluidframework/server-services-core";
-import { IServiceConfiguration } from "@fluidframework/protocol-definitions";
 import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
 import { CheckpointManager } from "./checkpointManager";
@@ -108,10 +108,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             lastCheckpoint = JSON.parse(document.scribe);
         }
 
-        const protocolHandler = initializeProtocol(
-            document.documentId,
-            lastCheckpoint.protocolState,
-            latestSummary.term);
+        const protocolHandler = initializeProtocol(lastCheckpoint.protocolState, latestSummary.term);
 
         const summaryWriter = new SummaryWriter(tenantId, documentId, gitManager, this.messageCollection);
         const checkpointManager = new CheckpointManager(
@@ -126,6 +123,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             document.documentId,
             summaryWriter,
             summaryReader,
+            undefined,
             checkpointManager,
             lastCheckpoint,
             this.serviceConfiguration,

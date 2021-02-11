@@ -4,7 +4,6 @@
  */
 
 import { assert , BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
-
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
@@ -13,40 +12,17 @@ import {
 import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
-    IClient,
+    IClientConfiguration,
     IConnect,
     IConnected,
     IDocumentMessage,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
 } from "@fluidframework/protocol-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { debug } from "./debug";
-
-const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
-
-/**
- * Error raising for socket.io issues
- */
-function createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
-    // Note: we suspect the incoming error object is either:
-    // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
-    // - a socketError: add it to the OdspError object for driver to be able to parse it and reason
-    //   over it.
-    let message = `socket.io: ${handler}`;
-    if (error !== undefined) {
-        message = `${message}: ${error}`;
-    }
-    const errorObj = createGenericNetworkError(
-        message,
-        canRetry,
-    );
-
-    (errorObj as any).socketError = error;
-    return errorObj;
-}
 
 interface IEventListener {
     event: string;
@@ -60,53 +36,6 @@ export class DocumentDeltaConnection
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
     implements IDocumentDeltaConnection {
     static readonly eventsToForward = ["nack", "disconnect", "op", "signal", "pong", "error"];
-
-    /**
-     * Create a DocumentDeltaConnection
-     *
-     * @param tenantId - the ID of the tenant
-     * @param id - document ID
-     * @param token - authorization token for storage service
-     * @param io - websocket library
-     * @param client - information about the client
-     * @param mode - connection mode
-     * @param url - websocket URL
-     * @param timeoutMs - timeout for socket connection attempt in milliseconds (default: 20000)
-     */
-    public static async create(
-        tenantId: string,
-        id: string,
-        token: string | null,
-        io: SocketIOClientStatic,
-        client: IClient,
-        url: string,
-        timeoutMs: number = 20000): Promise<IDocumentDeltaConnection> {
-        const socket = io(
-            url,
-            {
-                query: {
-                    documentId: id,
-                    tenantId,
-                },
-                reconnection: false,
-                transports: ["websocket"],
-                timeout: timeoutMs,
-            });
-
-        const connectMessage: IConnect = {
-            client,
-            id,
-            mode: client.mode,
-            tenantId,
-            token,  // Token is going to indicate tenant level information, etc...
-            versions: protocolVersions,
-        };
-
-        const deltaConnection = new DocumentDeltaConnection(socket, id);
-
-        await deltaConnection.initialize(connectMessage, timeoutMs);
-        return deltaConnection;
-    }
 
     /**
      * Last known sequence number to ordering service at the time of connection
@@ -128,7 +57,7 @@ export class DocumentDeltaConnection
 
     private socketConnectionTimeout: ReturnType<typeof setTimeout> | undefined;
 
-    private readonly submitManager: BatchManager<IDocumentMessage[]>;
+    protected readonly submitManager: BatchManager<IDocumentMessage[]>;
 
     private _details: IConnected | undefined;
 
@@ -147,7 +76,7 @@ export class DocumentDeltaConnection
      */
     protected closed: boolean = false;
 
-    private get details(): IConnected {
+    public get details(): IConnected {
         if (!this._details) {
             throw new Error("Internal error: calling method before _details is initialized!");
         }
@@ -161,6 +90,7 @@ export class DocumentDeltaConnection
     protected constructor(
         protected readonly socket: SocketIOClient.Socket,
         public documentId: string,
+        protected readonly logger: ITelemetryLogger,
     ) {
         super();
 
@@ -245,7 +175,7 @@ export class DocumentDeltaConnection
     /**
      * Configuration details provided by the service
      */
-    public get serviceConfiguration(): IServiceConfiguration {
+    public get serviceConfiguration(): IClientConfiguration {
         return this.details.serviceConfiguration;
     }
 
@@ -323,22 +253,36 @@ export class DocumentDeltaConnection
      * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection.
      */
     public close() {
-        // We set the closed flag as a part of the contract for overriding the disconnect method. This is used by
-        // DocumentDeltaConnection to determine if emitting on the socket is allowed, which is important since
-        // OdspDocumentDeltaConnection reuses the socket rather than truly disconnecting it.  Note that below we may
-        // still send disconnect_document which is allowed; this is only intended to prevent normal messages from
-        // being emitted.
+        this.closeCore(
+            false, // socketProtocolError
+            createGenericNetworkError("client closing connection", true /* canRetry */));
+    }
+
+    protected closeCore(socketProtocolError: boolean, err: DriverError) {
         if (this.closed) {
+            // We see cases where socket is closed while we have two "disconnect" listeners - one from DeltaManager,
+            // one - early handler that should have been removed on establishing connection. This causes asserts in
+            // OdspDocumentDeltaConnection.disconnect() due to not expectting two calls.
+            this.logger.sendErrorEvent(
+                {
+                    eventName: "DoubleClose",
+                    connectionEvents: this.connectionListeners.length,
+                    trackedEvents: this.trackedListeners.length,
+                    socketProtocolError,
+                },
+                err);
             return;
         }
+
+        // We set the closed flag as a part of the contract for overriding the disconnect method. This is used by
+        // DocumentDeltaConnection to determine if emitting messages (ops) on the socket is allowed, which is
+        // important since OdspDocumentDeltaConnection reuses the socket rather than truly disconnecting it. Note that
+        // OdspDocumentDeltaConnection may still send disconnect_document which is allowed; this is only intended
+        // to prevent normal messages from being emitted.
         this.closed = true;
 
-        const reason = createGenericNetworkError(
-            "client closing connection",
-            true, // canRetry
-        );
         this.removeTrackedListeners();
-        this.disconnect(false, reason);
+        this.disconnect(socketProtocolError, err);
     }
 
     /**
@@ -360,26 +304,27 @@ export class DocumentDeltaConnection
 
         this._details = await new Promise<IConnected>((resolve, reject) => {
             const fail = (socketProtocolError: boolean, err: DriverError) => {
-                this.closed = true;
-                this.removeTrackedListeners();
-                this.disconnect(socketProtocolError, err);
+                // timeout & "error" can happen after successful connection
+                if (!success) {
+                    this.closeCore(socketProtocolError, err);
+                }
                 reject(err);
             };
 
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
-                fail(true, createErrorObject("connect_error", error));
+                fail(true, this.createErrorObject("connect_error", error));
             });
 
             // Listen for timeouts
             this.addConnectionListener("connect_timeout", () => {
-                fail(true, createErrorObject("connect_timeout"));
+                fail(true, this.createErrorObject("connect_timeout"));
             });
 
             // Socket can be disconnected while waiting for Fluid protocol messages
             // (connect_document_error / connect_document_success)
             this.addConnectionListener("disconnect", (reason) => {
-                fail(true, createErrorObject("disconnect", reason));
+                fail(true, this.createErrorObject("disconnect", reason));
             });
 
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
@@ -403,7 +348,7 @@ export class DocumentDeltaConnection
             this.addTrackedListener("error", ((error) => {
                 // First, raise an error event, to give clients a chance to observe error contents
                 // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
-                const err = createErrorObject("error", error, error !== "Invalid namespace");
+                const err = this.createErrorObject("error", error, error !== "Invalid namespace");
                 this.emit("error", err);
                 // Disconnect socket - required if happened before initial handshake
                 fail(true, err);
@@ -419,16 +364,14 @@ export class DocumentDeltaConnection
 
                 // This is not an socket.io error - it's Fluid protocol error.
                 // In this case fail connection and indicate that we were unable to create connection
-                fail(false, createErrorObject("connect_document_error", error));
+                fail(false, this.createErrorObject("connect_document_error", error));
             }));
 
             this.socket.emit("connect_document", connectMessage);
 
             // Give extra 2 seconds for handshake on top of socket connection timeout
             this.socketConnectionTimeout = setTimeout(() => {
-                if (!success) {
-                    fail(false, createErrorObject("Timeout waiting for handshake from ordering service"));
-                }
+                fail(false, this.createErrorObject("Timeout waiting for handshake from ordering service"));
             }, timeout + 2000);
         });
     }
@@ -469,8 +412,6 @@ export class DocumentDeltaConnection
         // removeTrackedListeners removes all listeners, including connection listeners
         this.removeConnectionListeners();
 
-        clearTimeout(this.socketConnectionTimeout);
-
         this.removeEarlyOpHandler();
         this.removeEarlySignalHandler();
 
@@ -478,9 +419,31 @@ export class DocumentDeltaConnection
     }
 
     private removeConnectionListeners() {
+        clearTimeout(this.socketConnectionTimeout);
+
         for (const { event, listener } of this.connectionListeners) {
             this.socket.off(event, listener);
         }
         this.connectionListeners = [];
+    }
+
+    /**
+     * Error raising for socket.io issues
+     */
+    protected createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
+        // Note: we suspect the incoming error object is either:
+        // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
+        // - a socketError: add it to the OdspError object for driver to be able to parse it and reason
+        //   over it.
+        let message = `socket.io: ${handler}`;
+        if (typeof error === "string") {
+            message = `${message}: ${error}`;
+        }
+        const errorObj = createGenericNetworkError(
+            message,
+            canRetry,
+        );
+
+        return errorObj;
     }
 }

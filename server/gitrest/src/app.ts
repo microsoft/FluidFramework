@@ -5,14 +5,16 @@
 
 import * as bodyParser from "body-parser";
 import cors from "cors";
+// eslint-disable-next-line import/no-duplicates
 import express from "express";
-// eslint-disable-next-line no-duplicate-imports
+// eslint-disable-next-line no-duplicate-imports, import/no-duplicates
 import { Express } from "express";
 import morgan from "morgan";
 import * as nconf from "nconf";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import split = require("split");
 import * as winston from "winston";
+import { bindCorrelationId } from "@fluidframework/server-services-utils";
 import { IExternalStorageManager } from "./externalStorageManager";
 import * as routes from "./routes";
 import * as utils from "./utils";
@@ -36,6 +38,8 @@ export function create(
     const requestSize = store.get("requestSizeLimit");
     app.use(bodyParser.json({ limit: requestSize }));
     app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
+
+    app.use(bindCorrelationId());
 
     app.use(cors());
     const repoManager = new utils.RepositoryManager(store.get("storageDir"));

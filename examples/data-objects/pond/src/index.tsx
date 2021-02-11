@@ -49,11 +49,18 @@ export class Pond extends DataObject implements IFluidHTMLView {
     }
 
     protected async hasInitialized() {
-        const clicker = await this.root.get<IFluidHandle>(Clicker.ComponentName).get();
+        const clickerHandle = this.root.get<IFluidHandle>(Clicker.ComponentName);
+        if (!clickerHandle) {
+            throw new Error("Pond not intialized correctly");
+        }
+        const clicker = await clickerHandle.get();
         this.clickerView = new HTMLViewAdapter(clicker);
 
-        const clickerUsingProviders
-            = await this.root.get<IFluidHandle>(ExampleUsingProviders.ComponentName).get();
+        const clickerUserProvidersHandle = this.root.get<IFluidHandle>(ExampleUsingProviders.ComponentName);
+        if (!clickerUserProvidersHandle) {
+            throw new Error("Pond not intialized correctly");
+        }
+        const clickerUsingProviders = await clickerUserProvidersHandle.get();
         this.clickerUsingProvidersView = new HTMLViewAdapter(clickerUsingProviders);
     }
 

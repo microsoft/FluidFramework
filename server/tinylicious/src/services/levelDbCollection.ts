@@ -10,7 +10,7 @@ import * as charwise from "charwise";
 import * as _ from "lodash";
 
 export interface ICollectionProperty {
-    indexes: string[]; // Index structure for the collecion.
+    indexes: string[]; // Index structure for the collection.
     limit?: number;  // Range query maximum fetch. If set, last index should be a number.
 }
 
@@ -112,7 +112,7 @@ export class Collection<T> implements ICollection<T> {
     }
 
     private async insertOneInternal(value: any): Promise<any> {
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
             this.db.put(this.getKey(value), value, (error) => {
                 if (error) {
                     reject(error);

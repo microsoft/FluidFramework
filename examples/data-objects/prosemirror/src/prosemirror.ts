@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
+ /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { EventEmitter } from "events";
+import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import {
     IFluidLoadable,
     IFluidRouter,
@@ -57,9 +60,9 @@ function createTreeMarkerOps(
 }
 
 class ProseMirrorView implements IFluidHTMLView {
-    private content: HTMLDivElement;
-    private editorView: EditorView;
-    private textArea: HTMLDivElement;
+    private content: HTMLDivElement | undefined;
+    private editorView: EditorView | undefined;
+    private textArea: HTMLDivElement | undefined;
     public get IFluidHTMLView() { return this; }
 
     public constructor(private readonly collabManager: FluidCollabManager) { }
@@ -77,9 +80,9 @@ class ProseMirrorView implements IFluidHTMLView {
         // Reparent if needed
         if (this.textArea.parentElement !== elm) {
             this.textArea.remove();
-            this.content.remove();
+            this.content!.remove();
             elm.appendChild(this.textArea);
-            elm.appendChild(this.content);
+            elm.appendChild(this.content!);
         }
 
         if (!this.editorView) {
@@ -111,12 +114,12 @@ export class ProseMirror extends EventEmitter
     public get IFluidLoadable() { return this; }
     public get IFluidRouter() { return this; }
     public get IFluidHTMLView() { return this; }
-    public get IRichTextEditor() { return this.collabManager; }
+    public get IRichTextEditor() { return this.collabManager!; }
 
-    public text: SharedString;
-    private root: ISharedMap;
-    private collabManager: FluidCollabManager;
-    private view: ProseMirrorView;
+    public text: SharedString | undefined;
+    private root: ISharedMap | undefined;
+    private collabManager: FluidCollabManager | undefined;
+    private view: ProseMirrorView | undefined;
     private readonly innerHandle: IFluidHandle<this>;
 
     constructor(
@@ -129,11 +132,7 @@ export class ProseMirror extends EventEmitter
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return {
-            mimeType: "fluid/object",
-            status: 200,
-            value: this,
-        };
+        return defaultFluidObjectRequestHandler(this, request);
     }
 
     private async initialize() {
@@ -150,18 +149,18 @@ export class ProseMirror extends EventEmitter
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
-        this.text = await this.root.get<IFluidHandle<SharedString>>("text").get();
+        this.text = await this.root.get<IFluidHandle<SharedString>>("text")!.get();
 
         this.collabManager = new FluidCollabManager(this.text, this.runtime.loader);
 
         // Access for debugging
-        // eslint-disable-next-line dot-notation
+        // eslint-disable-next-line @typescript-eslint/dot-notation
         window["easyComponent"] = this;
     }
 
     public render(elm: HTMLElement): void {
         if (!this.view) {
-            this.view = new ProseMirrorView(this.collabManager);
+            this.view = new ProseMirrorView(this.collabManager!);
         }
         this.view.render(elm);
     }

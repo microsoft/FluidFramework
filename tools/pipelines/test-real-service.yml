@@ -1,0 +1,112 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# test-real-service pipeline
+
+name: $(Build.BuildId)
+
+parameters:
+- name: buildDirectory
+  type: string
+  default: .
+
+- name: taskBuild
+  type: string
+  default: ci:build
+
+- name: poolBuild
+  type: object
+  default: Main
+
+- name: checkoutSubmodules
+  type: boolean
+  default: false
+
+pr: none
+
+variables:
+  # We use 'chalk' to colorize output, which auto-detects color support in the
+  # running terminal.  The log output shown in Azure DevOps job runs only has
+  # basic ANSI color support though, so force that in the pipeline
+  - name: FORCE_COLOR
+    value: 1
+  - template: templates/include-vars.yml
+    parameters:
+      buildNumberInPatch: true
+
+jobs:
+  - job: run
+    displayName: Build and Run Tests
+    pool: ${{ parameters.poolBuild }}
+    steps:
+    # Setup
+    - checkout: self
+      clean: true
+      lfs: ${{ parameters.checkoutSubmodules }}
+      submodules: ${{ parameters.checkoutSubmodules }}
+
+    # Install
+    - task: UseNode@1
+      displayName: Use Node 12.x
+      inputs:
+        version: 12.x
+    - task: Npm@1
+      displayName: npm ci
+      inputs:
+        command: 'custom'
+        workingDir: ${{ parameters.buildDirectory }}
+        customCommand: 'ci --unsafe-perm'
+        customRegistry: 'useNpmrc'
+
+    # Build
+    - task: Npm@1
+      displayName: npm run ${{ parameters.taskBuild }}
+      inputs:
+        command: 'custom'
+        workingDir: ${{ parameters.buildDirectory }}
+        customCommand: 'run ${{ parameters.taskBuild }}'
+
+    # Run End-to-end Tests
+    - task: Npm@1
+      displayName: '[end-to-end tests] npm run ci:test:realsvc'
+      continueOnError: true
+      env:
+        fluid__webpack__bearerSecret: $(fluid-webpack-bearerSecret)
+        fluid__webpack__fluidHost: $(fluid-webpack-fluidHost)
+        fluid__webpack__tenantId: $(fluid-webpack-tenantId)
+        fluid__webpack__tenantSecret: $(fluid-webpack-tenantSecret)
+      inputs:
+        command: 'custom'
+        workingDir: packages/test/end-to-end-tests
+        customCommand: 'run ci:test:realsvc'
+
+    # Run Stress Tests
+    - task: Npm@1
+      displayName: '[stress tests] npm run start'
+      continueOnError: true
+      env:
+        login__microsoft__clientId: $(login-microsoft-clientId)
+        login__microsoft__secret: $(login-microsoft-secret)
+        login__odsp__test__accounts: $(login-odsp-test-accounts)
+      inputs:
+        command: 'custom'
+        workingDir: packages/test/service-load-test
+        customCommand: 'run start'
+
+    # Run Copy Test Results
+    - task: Npm@1
+      displayName: npm run test:copyresults'
+      inputs:
+        command: 'custom'
+        workingDir: ${{ parameters.buildDirectory }}
+        customCommand: 'run test:copyresults'
+
+    # Upload results
+    - task: PublishTestResults@2
+      displayName: Publish Test Results
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/*junit-report.xml'
+        searchFolder: ${{ parameters.buildDirectory }}/nyc
+        mergeTestResults: true
+      condition: succeededOrFailed()

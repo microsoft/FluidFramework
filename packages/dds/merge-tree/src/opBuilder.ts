@@ -23,7 +23,7 @@ import { PropertySet } from "./properties";
  * @returns The annotate op
  */
 export function createAnnotateMarkerOp(
-    marker: Marker, props: PropertySet, combiningOp: ICombiningOp): IMergeTreeAnnotateMsg {
+    marker: Marker, props: PropertySet, combiningOp: ICombiningOp): IMergeTreeAnnotateMsg | undefined {
     const id = marker.getId();
     if (!id) {
         return undefined;
@@ -47,7 +47,7 @@ export function createAnnotateMarkerOp(
  * @returns The annotate op
  */
 export function createAnnotateRangeOp(
-    start: number, end: number, props: PropertySet, combiningOp: ICombiningOp): IMergeTreeAnnotateMsg {
+    start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined): IMergeTreeAnnotateMsg {
     return {
         combiningOp,
         pos1: start,

@@ -5,10 +5,8 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    IBlob,
     ISequencedDocumentMessage,
     ISummaryProposal,
-    ITree,
     MessageType,
     TreeEntry,
 } from "@fluidframework/protocol-definitions";
@@ -480,64 +478,66 @@ function processOp(
     messageTypeStats: Map<string, [number, number]>) {
     let type = message.type;
     let recorded = false;
-    if (message.type === ContainerMessageType.Attach) {
-        const attachMessage = message.contents as IAttachMessage;
-        processDataStoreAttachOp(attachMessage, dataType);
-    } else if (isRuntimeMessage(message)) {
+    if (isRuntimeMessage(message)) {
         const runtimeMessage = unpackRuntimeMessage(message);
-        let envelop = runtimeMessage.contents as IEnvelope;
-        // TODO: Legacy?
-        if (envelop && typeof envelop === "string") {
-            envelop = JSON.parse(envelop);
-        }
-        const innerContent = envelop.contents as {
-            content: any;
-            type: string;
-        };
-        const address = envelop.address;
-        type = `${type}/${innerContent.type}`;
-        if (innerContent.type === DataStoreMessageType.Attach) {
-            const attachMessage = innerContent.content as IAttachMessage;
-            let objectType = attachMessage.type;
-            if (objectType.startsWith(objectTypePrefix)) {
-                objectType = objectType.substring(objectTypePrefix.length);
+        if (runtimeMessage.type === ContainerMessageType.Attach) {
+            const attachMessage = runtimeMessage.contents as IAttachMessage;
+            processDataStoreAttachOp(attachMessage, dataType);
+        } else {
+            let envelop = runtimeMessage.contents as IEnvelope;
+            // TODO: Legacy?
+            if (envelop && typeof envelop === "string") {
+                envelop = JSON.parse(envelop);
             }
-            dataType.set(getObjectId(address, attachMessage.id), objectType);
-        } else if (innerContent.type === DataStoreMessageType.ChannelOp) {
-            const innerEnvelop = innerContent.content as IEnvelope;
-            const innerContent2 = innerEnvelop.contents as {
-                type?: string;
-                value?: any;
+            const innerContent = envelop.contents as {
+                content: any;
+                type: string;
             };
-
-            const objectId = getObjectId(address, innerEnvelop.address);
-            incr(objectStats, objectId, msgSize);
-            let objectType = dataType.get(objectId);
-            if (objectType === undefined) {
-                // Somehow we do not have data...
-                dataType.set(objectId, objectId);
-                objectType = objectId;
-            }
-            incr(dataTypeStats, objectType, msgSize);
-            recorded = true;
-
-            let subType = innerContent2.type;
-            if (innerContent2.type === "set" &&
-                typeof innerContent2.value === "object" &&
-                innerContent2.value !== null) {
-                type = `${type}/${subType}`;
-                subType = innerContent2.value.type;
-            } else if (objectType === "mergeTree" && subType !== undefined) {
-                const types = ["insert", "remove", "annotate", "group"];
-                if (types[subType]) {
-                    subType = types[subType];
+            const address = envelop.address;
+            type = `${type}/${innerContent.type}`;
+            if (innerContent.type === DataStoreMessageType.Attach) {
+                const attachMessage = innerContent.content as IAttachMessage;
+                let objectType = attachMessage.type;
+                if (objectType.startsWith(objectTypePrefix)) {
+                    objectType = objectType.substring(objectTypePrefix.length);
                 }
-            }
-            if (subType !== undefined) {
-                type = `${type}/${subType}`;
-            }
+                dataType.set(getObjectId(address, attachMessage.id), objectType);
+            } else if (innerContent.type === DataStoreMessageType.ChannelOp) {
+                const innerEnvelop = innerContent.content as IEnvelope;
+                const innerContent2 = innerEnvelop.contents as {
+                    type?: string;
+                    value?: any;
+                };
 
-            type = `${type} (${objectType})`;
+                const objectId = getObjectId(address, innerEnvelop.address);
+                incr(objectStats, objectId, msgSize);
+                let objectType = dataType.get(objectId);
+                if (objectType === undefined) {
+                    // Somehow we do not have data...
+                    dataType.set(objectId, objectId);
+                    objectType = objectId;
+                }
+                incr(dataTypeStats, objectType, msgSize);
+                recorded = true;
+
+                let subType = innerContent2.type;
+                if (innerContent2.type === "set" &&
+                    typeof innerContent2.value === "object" &&
+                    innerContent2.value !== null) {
+                    type = `${type}/${subType}`;
+                    subType = innerContent2.value.type;
+                } else if (objectType === "mergeTree" && subType !== undefined) {
+                    const types = ["insert", "remove", "annotate", "group"];
+                    if (types[subType]) {
+                        subType = types[subType];
+                    }
+                }
+                if (subType !== undefined) {
+                    type = `${type}/${subType}`;
+                }
+
+                type = `${type} (${objectType})`;
+            }
         }
     }
 
@@ -569,9 +569,9 @@ function processDataStoreAttachOp(
     }
     for (const entry of parsedAttachMessage.snapshot.entries) {
         if (entry.type === TreeEntry.Tree) {
-            for (const entry2 of (entry.value as ITree).entries) {
+            for (const entry2 of entry.value.entries) {
                 if (entry2.path === ".attributes" && entry2.type === TreeEntry.Blob) {
-                    const attrib = JSON.parse((entry2.value as IBlob).contents);
+                    const attrib = JSON.parse(entry2.value.contents);
                     let objectType = attrib.type;
                     if (objectType.startsWith(objectTypePrefix)) {
                         objectType = objectType.substring(objectTypePrefix.length);

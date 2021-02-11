@@ -132,7 +132,7 @@ export interface IPersistedCache {
  * (Based off of the same class in promiseCache.ts, could be consolidated)
  */
 class GarbageCollector<TKey> {
-    private readonly gcTimeouts = new Map<TKey, NodeJS.Timeout>();
+    private readonly gcTimeouts = new Map<TKey, ReturnType<typeof setTimeout>>();
 
     constructor(
         private readonly cleanup: (key: TKey) => void,

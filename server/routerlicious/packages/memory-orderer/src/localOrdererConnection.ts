@@ -9,7 +9,6 @@ import {
     IClientJoin,
     IDocumentMessage,
     IDocumentSystemMessage,
-    IServiceConfiguration,
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -19,6 +18,7 @@ import {
     IOrdererConnection,
     IProducer,
     IRawOperationMessage,
+    IServiceConfiguration,
     RawOperationType,
 } from "@fluidframework/server-services-core";
 import { ISubscriber } from "./pubsub";
@@ -43,7 +43,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
         this.maxMessageSize = serviceConfiguration.maxMessageSize;
     }
 
-    public async connect() {
+    public async connect(clientJoinMessageServerMetadata?: any) {
         // Send the connect message
         const clientDetail: IClientJoin = {
             clientId: this.clientId,
@@ -57,6 +57,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
             referenceSequenceNumber: -1,
             traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.ClientJoin,
+            serverMetadata: clientJoinMessageServerMetadata,
         };
 
         const message: IRawOperationMessage = {

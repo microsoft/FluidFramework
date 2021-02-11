@@ -6,16 +6,24 @@
 import type * as kafkaTypes from "node-rdkafka";
 import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@fluidframework/server-services-core";
 
-import { IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
+import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 import { PendingBoxcar, MaxBatchSize } from "./pendingBoxcar";
 import { tryImportNodeRdkafka } from "./tryImport";
 
 const kafka = tryImportNodeRdkafka();
 
+export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
+	enableIdempotence: boolean;
+	pollIntervalMs: number;
+	additionalOptions?: kafkaTypes.ProducerGlobalConfig;
+	topicConfig?: kafkaTypes.ProducerTopicConfig;
+}
+
 /**
  * Kafka producer using the node-rdkafka library
  */
 export class RdkafkaProducer extends RdkafkaBase implements IProducer {
+	private readonly producerOptions: IKafkaProducerOptions;
 	private readonly messages = new Map<string, IPendingBoxcar[]>();
 	private producer?: kafkaTypes.Producer;
 	private sendPending?: NodeJS.Immediate;
@@ -27,11 +35,14 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		endpoints: IKafkaEndpoints,
 		clientId: string,
 		topic: string,
-		private readonly enableIdempotence: boolean = false,
-		private readonly pollIntervalMs: number = 10,
-		numberOfPartitions?: number,
-		replicationFactor?: number) {
-		super(endpoints, clientId, topic, numberOfPartitions, replicationFactor);
+		options?: Partial<IKafkaProducerOptions>) {
+		super(endpoints, clientId, topic, options);
+
+		this.producerOptions = {
+			...options,
+			enableIdempotence: options?.enableIdempotence ?? false,
+			pollIntervalMs: options?.pollIntervalMs ?? 10,
+		};
 	}
 
 	/**
@@ -45,16 +56,19 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 		this.connecting = true;
 
-		this.producer = new kafka.HighLevelProducer({
+		const options: kafkaTypes.ProducerGlobalConfig = {
 			"metadata.broker.list": this.endpoints.kafka.join(","),
 			"socket.keepalive.enable": true,
 			"socket.nagle.disable": true,
 			"client.id": this.clientId,
-			"enable.idempotence": this.enableIdempotence,
+			"enable.idempotence": this.producerOptions.enableIdempotence,
 			"queue.buffering.max.messages": 100000,
 			"queue.buffering.max.ms": 0.5,
 			"batch.num.messages": 10000,
-		});
+			...this.producerOptions.additionalOptions,
+		};
+
+		this.producer = new kafka.HighLevelProducer(options, this.producerOptions.topicConfig);
 
 		this.producer.on("ready", () => {
 			this.connected = true;
@@ -88,10 +102,14 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 		this.producer.connect();
 
-		this.producer.setPollInterval(this.pollIntervalMs);
+		this.producer.setPollInterval(this.producerOptions.pollIntervalMs);
 	}
 
 	public async close(reconnecting: boolean = false): Promise<void> {
+		if (this.closed) {
+			return;
+		}
+
 		if (!reconnecting) {
 			// when closed outside of this class, disable reconnecting
 			this.closed = true;
@@ -99,7 +117,12 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 		this.connecting = this.connected = false;
 
-		await new Promise((resolve) => {
+		if (this.sendPending) {
+			clearImmediate(this.sendPending);
+			this.sendPending = undefined;
+		}
+
+		await new Promise<void>((resolve) => {
 			const producer = this.producer;
 			this.producer = undefined;
 			if (producer && producer.isConnected()) {
@@ -108,30 +131,46 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 				resolve();
 			}
 		});
+
+		if (this.closed) {
+			this.emit("closed");
+			this.removeAllListeners();
+		}
 	}
 
 	/**
 	 * Sends the provided message to Kafka
 	 */
 	// eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
-	public send(messages: object[], tenantId: string, documentId: string): Promise<any> {
+	public send(messages: object[], tenantId: string, documentId: string, partitionId?: number): Promise<any> {
 		const key = `${tenantId}/${documentId}`;
+
+		// the latest boxcar
+		let boxcar: PendingBoxcar;
 
 		// Get the list of boxcars for the given key
 		let boxcars = this.messages.get(key);
-		if (!boxcars) {
-			boxcars = [new PendingBoxcar(tenantId, documentId)];
+		if (boxcars) {
+			boxcar = boxcars[boxcars.length - 1];
+
+			// Create a new boxcar if necessary
+			if (boxcar.partitionId !== partitionId || boxcar.messages.length + messages.length >= MaxBatchSize) {
+				boxcar = new PendingBoxcar(tenantId, documentId);
+				boxcars.push(boxcar);
+			}
+		} else {
+			boxcar = new PendingBoxcar(tenantId, documentId);
+			boxcars = [boxcar];
 			this.messages.set(key, boxcars);
 		}
 
-		// Create a new boxcar if necessary (will only happen when not connected)
-		if (boxcars[boxcars.length - 1].messages.length + messages.length >= MaxBatchSize) {
-			boxcars.push(new PendingBoxcar(tenantId, documentId));
-		}
-
 		// Add the message to the boxcar
-		const boxcar = boxcars[boxcars.length - 1];
 		boxcar.messages.push(...messages);
+
+		if (partitionId !== undefined) {
+			// sending this boxcar to a specific partition
+			boxcar.partitionId = partitionId;
+		}
 
 		// If adding a new message to the boxcar filled it up, and we are connected, then send immediately. Otherwise
 		// request a send
@@ -198,7 +237,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			try {
 				this.producer.produce(
 					this.topic, // topic
-					null, // partition - consistent random for keyed messages
+					boxcar.partitionId ?? null, // partition id or null for consistent random for keyed messages
 					message, // message
 					boxcar.documentId, // key
 					undefined, // timestamp

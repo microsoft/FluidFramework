@@ -11,7 +11,6 @@ module.exports = {
         "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
         "no-bitwise": "off",
-        "no-case-declarations": "off",
-        "no-param-reassign": "off"
+        "no-case-declarations": "off"
     }
 }

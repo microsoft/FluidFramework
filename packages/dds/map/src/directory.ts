@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { assert, bufferToString ,TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
@@ -23,6 +23,7 @@ import * as path from "path-browserify";
 import { debug } from "./debug";
 import {
     IDirectory,
+    IDirectoryEvents,
     IDirectoryValueChanged,
     ISerializableValue,
     ISerializedValue,
@@ -30,6 +31,7 @@ import {
     IValueOpEmitter,
     IValueTypeOperationValue,
     ISharedDirectoryEvents,
+    IValueChanged,
 } from "./interfaces";
 import {
     ILocalValue,
@@ -235,7 +237,7 @@ export interface IDirectoryNewStorageFormat {
 function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): ITree {
     const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
 
-    const tree: ITree = { entries: [], id: null };
+    const tree: ITree = { entries: [] };
     let counter = 0;
     const blobs: string[] = [];
 
@@ -244,7 +246,8 @@ function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): I
     stack.push([root, content]);
 
     while (stack.length > 0) {
-        const [currentSubDir, currentSubDirObject] = stack.pop();
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const [currentSubDir, currentSubDirObject] = stack.pop()!;
         for (const [key, value] of currentSubDir.getSerializedStorage(serializer)) {
             if (!currentSubDirObject.storage) {
                 currentSubDirObject.storage = {};
@@ -428,12 +431,19 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         super(id, runtime, attributes);
         this.localValueMaker = new LocalValueMaker(this.serializer);
         this.setMessageHandlers();
+        // Mirror the containedValueChanged op on the SharedDirectory
+        this.root.on(
+            "containedValueChanged",
+            (changed: IValueChanged, local: boolean) => {
+                this.emit("containedValueChanged", changed, local, this);
+            },
+        );
     }
 
     /**
      * {@inheritDoc IDirectory.get}
      */
-    public get<T = any>(key: string): T {
+    public get<T = any>(key: string): T | undefined {
         return this.root.get<T>(key);
     }
 
@@ -534,7 +544,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * {@inheritDoc IDirectory.getSubDirectory}
      */
-    public getSubDirectory(subdirName: string): IDirectory {
+    public getSubDirectory(subdirName: string): IDirectory | undefined {
         return this.root.getSubDirectory(subdirName);
     }
 
@@ -562,7 +572,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * {@inheritDoc IDirectory.getWorkingDirectory}
      */
-    public getWorkingDirectory(relativePath: string): IDirectory {
+    public getWorkingDirectory(relativePath: string): IDirectory | undefined {
         const absolutePath = this.makeAbsolute(relativePath);
         if (absolutePath === posix.sep) {
             return this.root;
@@ -622,7 +632,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             // Send the localOpMetadata as undefined because we don't care about the ack.
             this.submitDirectoryMessage(op, undefined /* localOpMetadata */);
             const event: IDirectoryValueChanged = { key, path: absolutePath, previousValue };
-            this.emit("valueChanged", event, true, null);
+            this.emit("valueChanged", event, true, null, this);
         };
         return { emit };
     }
@@ -640,6 +650,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         const message = content as IDirectoryOperation;
         const handler = this.messageHandlers.get(message.type);
+        assert(handler !== undefined, `Missing message handler for message type: ${message.type}`);
         handler.submit(message, localOpMetadata);
     }
 
@@ -647,15 +658,16 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService) {
-        const header = await storage.read(snapshotFileName);
-        const data = JSON.parse(fromBase64ToUtf8(header));
+        const blob = await storage.readBlob(snapshotFileName);
+        const header = bufferToString(blob, "utf8");
+        const data = JSON.parse(header);
         const newFormat = data as IDirectoryNewStorageFormat;
         if (Array.isArray(newFormat.blobs)) {
             // New storage format
             this.populate(newFormat.content);
-            await Promise.all(newFormat.blobs.map(async (blob) => {
-                const blobContent = await storage.read(blob);
-                const dataExtra = JSON.parse(fromBase64ToUtf8(blobContent));
+            await Promise.all(newFormat.blobs.map(async (value) => {
+                const newBlob = await storage.readBlob(value);
+                const dataExtra = JSON.parse(bufferToString(newBlob, "utf8"));
                 this.populate(dataExtra as IDirectoryDataObject);
             }));
         } else {
@@ -673,7 +685,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         const stack: [SubDirectory, IDirectoryDataObject][] = [];
         stack.push([this.root, data]);
         while (stack.length > 0) {
-            const [currentSubDir, currentSubDirObject] = stack.pop();
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const [currentSubDir, currentSubDirObject] = stack.pop()!;
             if (currentSubDirObject.subdirectories) {
                 for (const [subdirName, subdirObject] of Object.entries(currentSubDirObject.subdirectories)) {
                     let newSubDir = currentSubDir.getSubDirectory(subdirName) as SubDirectory;
@@ -729,10 +742,9 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         if (message.type === MessageType.Operation) {
             const op: IDirectoryOperation = message.contents as IDirectoryOperation;
-            if (this.messageHandlers.has(op.type)) {
-                this.messageHandlers.get(op.type)
-                    .process(op, local, message, localOpMetadata);
-            }
+            const handler = this.messageHandlers.get(op.type);
+            assert(handler !== undefined, `Missing message handler for message type: ${message.type}`);
+            handler.process(op, local, message, localOpMetadata);
         }
     }
 
@@ -762,7 +774,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         if (serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared]) {
             return this.localValueMaker.fromSerializable(serializable);
         } else {
-            return this.localValueMaker.fromSerializable(
+            return this.localValueMaker.fromSerializableValueType(
                 serializable,
                 this.makeDirectoryValueOpEmitter(key, absolutePath),
             );
@@ -777,13 +789,13 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             "clear",
             {
                 process: (op: IDirectoryClearOperation, local, message, localOpMetadata) => {
-                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
+                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     if (subdir) {
                         subdir.processClearMessage(op, local, message, localOpMetadata);
                     }
                 },
                 submit: (op: IDirectoryClearOperation, localOpMetadata: unknown) => {
-                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
+                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     if (subdir) {
                         // We don't reuse the metadata but send a new one on each submit.
                         subdir.submitClearMessage(op);
@@ -795,13 +807,13 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             "delete",
             {
                 process: (op: IDirectoryDeleteOperation, local, message, localOpMetadata) => {
-                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
+                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     if (subdir) {
                         subdir.processDeleteMessage(op, local, message, localOpMetadata);
                     }
                 },
                 submit: (op: IDirectoryDeleteOperation, localOpMetadata: unknown) => {
-                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
+                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     if (subdir) {
                         // We don't reuse the metadata but send a new one on each submit.
                         subdir.submitKeyMessage(op);
@@ -813,14 +825,14 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             "set",
             {
                 process: (op: IDirectorySetOperation, local, message, localOpMetadata) => {
-                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
+                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     if (subdir) {
                         const context = local ? undefined : this.makeLocal(op.key, op.path, op.value);
                         subdir.processSetMessage(op, context, local, message, localOpMetadata);
                     }
                 },
                 submit: (op: IDirectorySetOperation, localOpMetadata: unknown) => {
-                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
+                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     if (subdir) {
                         // We don't reuse the metadata but send a new one on each submit.
                         subdir.submitKeyMessage(op);
@@ -833,13 +845,13 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             "createSubDirectory",
             {
                 process: (op: IDirectoryCreateSubDirectoryOperation, local, message, localOpMetadata) => {
-                    const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory;
+                    const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     if (parentSubdir) {
                         parentSubdir.processCreateSubDirectoryMessage(op, local, message, localOpMetadata);
                     }
                 },
                 submit: (op: IDirectoryCreateSubDirectoryOperation, localOpMetadata: unknown) => {
-                    const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory;
+                    const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     if (parentSubdir) {
                         // We don't reuse the metadata but send a new one on each submit.
                         parentSubdir.submitSubDirectoryMessage(op);
@@ -852,13 +864,13 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             "deleteSubDirectory",
             {
                 process: (op: IDirectoryDeleteSubDirectoryOperation, local, message, localOpMetadata) => {
-                    const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory;
+                    const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     if (parentSubdir) {
                         parentSubdir.processDeleteSubDirectoryMessage(op, local, message, localOpMetadata);
                     }
                 },
                 submit: (op: IDirectoryDeleteSubDirectoryOperation, localOpMetadata: unknown) => {
-                    const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory;
+                    const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     if (parentSubdir) {
                         // We don't reuse the metadata but send a new one on each submit.
                         parentSubdir.submitSubDirectoryMessage(op);
@@ -875,7 +887,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             "act",
             {
                 process: (op: IDirectoryValueTypeOperation, local, message, localOpMetadata) => {
-                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
+                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     // Subdir might not exist if we deleted it
                     if (!subdir) {
                         return;
@@ -892,7 +904,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                     const translatedValue = this.serializer.parse(JSON.stringify(op.value.value));
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IDirectoryValueChanged = { key: op.key, path: op.path, previousValue };
-                    this.emit("valueChanged", event, local, message);
+                    this.emit("valueChanged", event, local, message, this);
                 },
                 submit: (op, localOpMetadata: unknown) => {
                     this.submitDirectoryMessage(op, localOpMetadata);
@@ -906,7 +918,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
  * Node of the directory tree.
  * @sealed
  */
-class SubDirectory implements IDirectory {
+class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirectory {
     /**
      * String representation for the class.
      */
@@ -954,7 +966,9 @@ class SubDirectory implements IDirectory {
         private readonly directory: SharedDirectory,
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly serializer: IFluidSerializer,
-        public readonly absolutePath: string) {
+        public readonly absolutePath: string,
+    ) {
+        super();
     }
 
     /**
@@ -969,12 +983,8 @@ class SubDirectory implements IDirectory {
     /**
      * {@inheritDoc IDirectory.get}
      */
-    public get<T = any>(key: string): T {
-        if (!this._storage.has(key)) {
-            return undefined;
-        }
-
-        return this._storage.get(key).value as T;
+    public get<T = any>(key: string): T | undefined {
+        return this._storage.get(key)?.value as T | undefined;
     }
 
     /**
@@ -983,14 +993,16 @@ class SubDirectory implements IDirectory {
     public async wait<T = any>(key: string): Promise<T> {
         // Return immediately if the value already exists
         if (this._storage.has(key)) {
-            return this._storage.get(key).value as T;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return this._storage.get(key)!.value as T;
         }
 
         // Otherwise subscribe to changes
         return new Promise<T>((resolve, reject) => {
             const callback = (changed: IDirectoryValueChanged) => {
                 if (this.absolutePath === changed.path && key === changed.key) {
-                    resolve(this.get<T>(changed.key));
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    resolve(this._storage.get(key)!.value as T);
                     this.directory.removeListener("valueChanged", callback);
                 }
             };
@@ -1054,7 +1066,8 @@ class SubDirectory implements IDirectory {
         // Create the sub directory locally first.
         this.createSubDirectoryCore(subdirName, true, null);
 
-        const subDir: IDirectory = this._subdirectories.get(subdirName);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const subDir: IDirectory = this._subdirectories.get(subdirName)!;
 
         // If we are not attached, don't submit the op.
         if (!this.directory.isAttached()) {
@@ -1074,7 +1087,7 @@ class SubDirectory implements IDirectory {
     /**
      * {@inheritDoc IDirectory.getSubDirectory}
      */
-    public getSubDirectory(subdirName: string): IDirectory {
+    public getSubDirectory(subdirName: string): IDirectory | undefined {
         return this._subdirectories.get(subdirName);
     }
 
@@ -1117,7 +1130,7 @@ class SubDirectory implements IDirectory {
     /**
      * {@inheritDoc IDirectory.getWorkingDirectory}
      */
-    public getWorkingDirectory(relativePath: string): IDirectory {
+    public getWorkingDirectory(relativePath: string): IDirectory | undefined {
         return this.directory.getWorkingDirectory(this.makeAbsolute(relativePath));
     }
 
@@ -1268,7 +1281,7 @@ class SubDirectory implements IDirectory {
             return;
         }
         this.clearExceptPendingKeys();
-        this.directory.emit("clear", local, op);
+        this.directory.emit("clear", local, op, this.directory);
     }
 
     /**
@@ -1303,7 +1316,7 @@ class SubDirectory implements IDirectory {
      */
     public processSetMessage(
         op: IDirectorySetOperation,
-        context: ILocalValue,
+        context: ILocalValue | undefined,
         local: boolean,
         message: ISequencedDocumentMessage,
         localOpMetadata: unknown,
@@ -1311,7 +1324,12 @@ class SubDirectory implements IDirectory {
         if (!this.needProcessStorageOperation(op, local, message, localOpMetadata)) {
             return;
         }
-        this.setCore(op.key, context, local, message);
+
+        // needProcessStorageOperation should have returned false if local is true
+        // so we can assume context is not undefined
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.setCore(op.key, context!, local, message);
     }
 
     /**
@@ -1527,7 +1545,8 @@ class SubDirectory implements IDirectory {
         // we will get the value for the pendingKeys and clear the map
         const temp = new Map<string, ILocalValue>();
         this.pendingKeys.forEach((value, key, map) => {
-            temp.set(key, this._storage.get(key));
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            temp.set(key, this._storage.get(key)!);
         });
         this._storage.clear();
         temp.forEach((value, key, map) => {
@@ -1540,9 +1559,9 @@ class SubDirectory implements IDirectory {
      * @param local - Whether the message originated from the local client
      * @param op - The message if from a remote clear, or null if from a local clear
      */
-    private clearCore(local: boolean, op: ISequencedDocumentMessage) {
+    private clearCore(local: boolean, op: ISequencedDocumentMessage | null) {
         this._storage.clear();
-        this.directory.emit("clear", local, op);
+        this.directory.emit("clear", local, op, this.directory);
     }
 
     /**
@@ -1552,12 +1571,14 @@ class SubDirectory implements IDirectory {
      * @param op - The message if from a remote delete, or null if from a local delete
      * @returns True if the key existed and was deleted, false if it did not exist
      */
-    private deleteCore(key: string, local: boolean, op: ISequencedDocumentMessage) {
+    private deleteCore(key: string, local: boolean, op: ISequencedDocumentMessage | null) {
         const previousValue = this.get(key);
         const successfullyRemoved = this._storage.delete(key);
         if (successfullyRemoved) {
             const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
-            this.directory.emit("valueChanged", event, local, op);
+            this.directory.emit("valueChanged", event, local, op, this.directory);
+            const containedEvent: IValueChanged = { key, previousValue };
+            this.emit("containedValueChanged", containedEvent, local, this);
         }
         return successfullyRemoved;
     }
@@ -1569,11 +1590,13 @@ class SubDirectory implements IDirectory {
      * @param local - Whether the message originated from the local client
      * @param op - The message if from a remote set, or null if from a local set
      */
-    private setCore(key: string, value: ILocalValue, local: boolean, op: ISequencedDocumentMessage) {
+    private setCore(key: string, value: ILocalValue, local: boolean, op: ISequencedDocumentMessage | null) {
         const previousValue = this.get(key);
         this._storage.set(key, value);
         const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
-        this.directory.emit("valueChanged", event, local, op);
+        this.directory.emit("valueChanged", event, local, op, this.directory);
+        const containedEvent: IValueChanged = { key, previousValue };
+        this.emit("containedValueChanged", containedEvent, local, this);
     }
 
     /**
@@ -1582,7 +1605,7 @@ class SubDirectory implements IDirectory {
      * @param local - Whether the message originated from the local client
      * @param op - The message if from a remote create, or null if from a local create
      */
-    private createSubDirectoryCore(subdirName: string, local: boolean, op: ISequencedDocumentMessage) {
+    private createSubDirectoryCore(subdirName: string, local: boolean, op: ISequencedDocumentMessage | null) {
         if (!this._subdirectories.has(subdirName)) {
             this._subdirectories.set(
                 subdirName,
@@ -1601,7 +1624,7 @@ class SubDirectory implements IDirectory {
      * @param local - Whether the message originated from the local client
      * @param op - The message if from a remote delete, or null if from a local delete
      */
-    private deleteSubDirectoryCore(subdirName: string, local: boolean, op: ISequencedDocumentMessage) {
+    private deleteSubDirectoryCore(subdirName: string, local: boolean, op: ISequencedDocumentMessage | null) {
         // This should make the subdirectory structure unreachable so it can be GC'd and won't appear in snapshots
         // Might want to consider cleaning out the structure more exhaustively though?
         return this._subdirectories.delete(subdirName);
