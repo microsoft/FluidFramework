@@ -97,10 +97,9 @@ experimental/dds/tree/**:
 # docs
 docs/**:
 - tylerbutler
-"**/*.md":
+"**/README*.md":
 - tylerbutler
 
 # tools
 tools/**:
 - curtisman
-
