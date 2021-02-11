@@ -23,9 +23,7 @@ export function vueRenderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement
                 Roll
             </button>
         </div>`,
-        data: {
-            diceValue: diceRoller.value,
-        },
+        data: () => ({ diceValue: diceRoller.value }),
         methods: {
             rollDice() {
                 diceRoller.roll();
@@ -36,17 +34,14 @@ export function vueRenderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement
         },
         computed: {
             diceCharacter() {
-                return String.fromCodePoint(0x267f + (this.diceValue as number));
+                return String.fromCodePoint(0x267f + this.diceValue);
             },
             diceColor() {
                 return `hsl(${this.diceValue * 60}, 70%, 50%)`;
             },
         },
         mounted() {
-            diceRoller.on("diceRolled", this.updateDiceValue);
-        },
-        unmounted() {
-            diceRoller.off("diceRolled", this.updateDiceValue);
+            diceRoller.on("diceRolled", (this as any).updateDiceValue);
         },
     });
 
