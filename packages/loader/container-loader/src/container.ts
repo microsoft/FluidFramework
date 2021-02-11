@@ -30,7 +30,7 @@ import {
     AttachState,
     IThrottlingWarning,
 } from "@fluidframework/container-definitions";
-import { CreateContainerError, GenericError } from "@fluidframework/container-utils";
+import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -1617,9 +1617,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 errorMsg = "messageClientIdShouldHaveLeft";
             }
             if (errorMsg !== undefined) {
-                const error = new GenericError(
+                const error = new DataCorruptionError(
                     errorMsg,
-                    undefined,
                     {
                         clientId: this._clientId,
                         messageClientId: message.clientId,
