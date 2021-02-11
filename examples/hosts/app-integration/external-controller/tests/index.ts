@@ -8,7 +8,7 @@ import {
     KeyValueDataObject,
     KeyValueInstantiationFactory
 } from "@fluid-experimental/data-objects";
-import { getSessionStorageContainer } from "@fluidframework/get-session-storage-container";
+import { getSessionStorageContainer } from "@fluid-experimental/get-container";
 import { getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
 
 import { DiceRollerController } from "../src/controller";
