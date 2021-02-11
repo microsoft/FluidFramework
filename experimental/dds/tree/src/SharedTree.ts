@@ -9,6 +9,7 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { bufferToString } from '@fluidframework/common-utils';
 import { ChildLogger } from '@fluidframework/telemetry-utils';
 import { assert, fail } from './Common';
 import { EditLog, OrderedEditSet } from './EditLog';
@@ -39,7 +40,6 @@ import {
 import * as HistoryEditFactory from './HistoryEditFactory';
 import { initialTree } from './InitialTree';
 import { CachingLogViewer, LogViewer } from './LogViewer';
-import { bufferToString } from '@fluidframework/common-utils';
 
 /**
  * Filename where the snapshot is stored.
@@ -365,7 +365,7 @@ export class SharedTree extends SharedObject {
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const header = await storage.readBlob(snapshotFileName);
-		const summary = deserialize(bufferToString(header,"utf8"));
+		const summary = deserialize(bufferToString(header, 'utf8'));
 		if (typeof summary === 'string') {
 			fail(summary); // TODO: Where does this error propagate?
 		}
