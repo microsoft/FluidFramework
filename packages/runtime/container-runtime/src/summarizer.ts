@@ -339,12 +339,15 @@ export class RunningSummarizer implements IDisposable {
                     timePending: Date.now() - this.heuristics.lastAttempted.summaryTime,
                 });
             });
-        summaryCollection.setPendingAckTimerTimeoutCallback(maxAckWaitTime, () => {
-            if (this.pendingAckTimer.hasTimer) {
-                this.pendingAckTimer.clear();
-                this.trySummarize("summaryAckMiss");
-            }
-        });
+        // back-compat 0.34 noSetPendingAckTimerTimeoutCallback
+        if (summaryCollection.setPendingAckTimerTimeoutCallback !== undefined) {
+            summaryCollection.setPendingAckTimerTimeoutCallback(maxAckWaitTime, () => {
+                if (this.pendingAckTimer.hasTimer) {
+                    this.pendingAckTimer.clear();
+                    this.trySummarize("summaryAckMiss");
+                }
+            });
+        }
     }
 
     public dispose(): void {
