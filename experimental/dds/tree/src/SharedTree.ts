@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from '@fluidframework/common-utils';
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from '@fluidframework/protocol-definitions';
 import { IFluidDataStoreRuntime, IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
@@ -40,6 +39,7 @@ import {
 import * as HistoryEditFactory from './HistoryEditFactory';
 import { initialTree } from './InitialTree';
 import { CachingLogViewer, LogViewer } from './LogViewer';
+import { bufferToString } from '@fluidframework/common-utils';
 
 /**
  * Filename where the snapshot is stored.
@@ -364,8 +364,8 @@ export class SharedTree extends SharedObject {
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
-		const header = await storage.read(snapshotFileName);
-		const summary = deserialize(fromBase64ToUtf8(header));
+		const header = await storage.readBlob(snapshotFileName);
+		const summary = deserialize(bufferToString(header,"utf8"));
 		if (typeof summary === 'string') {
 			fail(summary); // TODO: Where does this error propagate?
 		}
