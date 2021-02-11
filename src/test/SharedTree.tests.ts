@@ -688,7 +688,7 @@ describe('SharedTree', () => {
 			const rootHandle = new TreeNodeHandle(tree.currentView, simpleTestTree.identifier);
 			expect(areNodesEquivalent(simpleTestTree, rootHandle)).to.be.true;
 			const leftHandle = rootHandle.traits.left[0];
-			expect(areNodesEquivalent(left, leftHandle));
+			expect(areNodesEquivalent(left, leftHandle)).to.be.true;
 			expect(leftHandle instanceof TreeNodeHandle).to.be.true;
 		});
 
@@ -700,6 +700,27 @@ describe('SharedTree', () => {
 			// Move "right" under "left"
 			tree.editor.move(right, StablePlace.atStartOf({ parent: left.identifier, label: rightTraitLabel }));
 			expect(leftHandle.traits.right).to.be.undefined;
+		});
+
+		it('can be fully demanded', () => {
+			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+			const rootHandle = new TreeNodeHandle(tree.currentView, simpleTestTree.identifier);
+			const rootNode = rootHandle.demandTree();
+			expect(areNodesEquivalent(simpleTestTree, rootNode)).to.be.true;
+			const printBeforeDemand = JSON.stringify(rootNode);
+			// Demand the tree by walking into its traits. If they were lazy, this would change the `rootNode` object.
+			expect(areNodesEquivalent(left, rootNode.traits.left[0])).to.be.true;
+			expect(areNodesEquivalent(right, rootNode.traits.right[0])).to.be.true;
+			// Ensure that they were _not_ lazy by comparing with the initial print of the tree
+			expect(JSON.stringify(rootNode)).equals(printBeforeDemand);
+		});
+
+		it('implement toString', () => {
+			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+			const rootHandle = new TreeNodeHandle(tree.currentView, simpleTestTree.identifier);
+			const print = `${rootHandle}`;
+			// Shouldn't print the default toString for objects
+			expect(print.startsWith('[object')).to.be.false;
 		});
 	});
 

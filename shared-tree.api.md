@@ -565,12 +565,14 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
     constructor(snapshot: Snapshot, nodeId: NodeId);
     // (undocumented)
     get definition(): Definition;
+    demandTree(): ChangeNode;
     // (undocumented)
     get identifier(): NodeId;
-    // (undocumented)
     get node(): ChangeNode;
     // (undocumented)
     get payload(): Payload | undefined;
+    // (undocumented)
+    toString(): string;
     // (undocumented)
     get traits(): TraitMap<TreeNodeHandle>;
 }

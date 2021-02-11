@@ -55,7 +55,22 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
 		return memoizeGetter(this, 'traits', traitMap);
 	}
 
+	/**
+	 * Get a `ChangeNode` for the snapshot node that this handle references
+	 */
 	public get node(): ChangeNode {
 		return memoizeGetter(this, 'node', getChangeNodeFromSnapshot(this.snapshot, this.nodeId, true));
+	}
+
+	/**
+	 * Generate a new `ChangeNode` for the snapshot node that this handle references. The returned node will be fully
+	 * demanded, i.e. will contain no lazy/virtualized subtrees.
+	 */
+	public demandTree(): ChangeNode {
+		return getChangeNodeFromSnapshot(this.snapshot, this.nodeId, false);
+	}
+
+	public toString(): string {
+		return JSON.stringify(this.demandTree());
 	}
 }
