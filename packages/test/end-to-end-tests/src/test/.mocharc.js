@@ -10,6 +10,8 @@ const packageDir = `${__dirname}/../..`;
 const testPackagesDir = `${packageDir}/..`;
 const diRoot = process.env.FLUID_DI_ROOT;
 
+console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+console.log(`${diRoot}`);
 
 const config ={
   "exit": true,
