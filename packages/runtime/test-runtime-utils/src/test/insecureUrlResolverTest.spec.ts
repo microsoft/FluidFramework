@@ -59,7 +59,7 @@ describe("Insecure Url Resolver Test", () => {
         };
         // Mocking window since the resolver depends on window.location.host
         if (typeof window === "undefined" && typeof global === "object") {
-            // eslint-disable-next-line dot-notation
+            // eslint-disable-next-line @typescript-eslint/dot-notation
             global["window"] = { location: { host:"localhost" } };
         }
         const resolvedUrl = await resolver.resolve(testRequest);
@@ -76,7 +76,7 @@ describe("Insecure Url Resolver Test", () => {
         };
         // Mocking window since the resolver depends on window.location.host
         if (typeof window === "undefined" && typeof global === "object") {
-            // eslint-disable-next-line dot-notation
+            // eslint-disable-next-line @typescript-eslint/dot-notation
             global["window"] = { location: { host:"localhost" } };
         }
 
@@ -100,7 +100,7 @@ describe("Insecure Url Resolver Test", () => {
         };
         // Mocking window since the resolver depends on window.location.host
         if (typeof window === "undefined" && typeof global === "object") {
-            // eslint-disable-next-line dot-notation
+            // eslint-disable-next-line @typescript-eslint/dot-notation
             global["window"] = { location: { host:"localhost" } };
         }
         const resolvedUrl = await resolver.resolve(testRequest);
@@ -117,7 +117,7 @@ describe("Insecure Url Resolver Test", () => {
         };
         // Mocking window since the resolver depends on window.location.host
         if (typeof window === "undefined" && typeof global === "object") {
-            // eslint-disable-next-line dot-notation
+            // eslint-disable-next-line @typescript-eslint/dot-notation
             global["window"] = { location: { host:"localhost" } };
         }
         const resolvedUrl = await resolver.resolve(testRequest);
@@ -134,7 +134,7 @@ describe("Insecure Url Resolver Test", () => {
         };
         // Mocking window since the resolver depends on window.location.host
         if (typeof window === "undefined" && typeof global === "object") {
-            // eslint-disable-next-line dot-notation
+            // eslint-disable-next-line @typescript-eslint/dot-notation
             global["window"] = { location: { host:"localhost" } };
         }
         const resolvedUrl = await resolver.resolve(testRequest);

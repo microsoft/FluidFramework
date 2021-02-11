@@ -23,12 +23,12 @@ export function convertOdspSnapshotToSnapsohtTreeAndBlobs(odspSnapshot: IOdspSna
     cache.initTreesCache(odspSnapshot.trees);
     // versionId is the id of the first tree
     if (odspSnapshot.blobs) {
-        cache.initBlobsCache(odspSnapshot.blobs);
+        cache.addBlobs(odspSnapshot.blobs);
     }
     const iTree = cache.treesCache.get(odspSnapshot.trees[0].id);
     assert(iTree !== undefined);
     const tree = cache.snapshotTreeFromITree(iTree);
-    return { tree, blobs: cache.blobCache, ops: odspSnapshot.ops };
+    return { tree, blobs: cache.value, ops: odspSnapshot.ops };
 }
 
 /**

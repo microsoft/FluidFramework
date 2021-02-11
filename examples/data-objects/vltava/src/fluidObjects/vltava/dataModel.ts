@@ -59,7 +59,8 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     }
 
     public async getDefaultFluidObject(): Promise<IFluidObject> {
-        return this.defaultFluidObject.get();
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this.defaultFluidObject.get()!;
     }
 
     public getTitle(): string {

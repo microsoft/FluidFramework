@@ -8,10 +8,9 @@ import * as ops from "./ops";
 import { TextSegment } from "./textSegment";
 
 export function loadSegments(content: string, segLimit: number, markers: boolean = false, withProps: boolean = true) {
-    // eslint-disable-next-line no-param-reassign
-    content = content.replace(/^\uFEFF/, "");
+    const BOMFreeContent = content.replace(/^\uFEFF/, "");
 
-    const paragraphs = content.split(/\r?\n/);
+    const paragraphs = BOMFreeContent.split(/\r?\n/);
     for (let i = 0, len = paragraphs.length; i < len; i++) {
         paragraphs[i] = paragraphs[i]
             .replace(/\r?\n/g, " ")
@@ -24,14 +23,14 @@ export function loadSegments(content: string, segLimit: number, markers: boolean
 
     const segments = [] as MergeTree.ISegment[];
     for (const paragraph of paragraphs) {
-        let pgMarker: MergeTree.Marker;
+        let pgMarker: MergeTree.Marker | undefined;
         if (markers) {
             pgMarker = MergeTree.Marker.make(ops.ReferenceType.Tile,
                 { [MergeTree.reservedTileLabelsKey]: ["pg"] });
         }
         if (withProps) {
             if ((paragraph.includes("Chapter")) || (paragraph.includes("PRIDE AND PREJ"))) {
-                if (markers) {
+                if (pgMarker) {
                     pgMarker.addProperties({ header: 2 });
                     segments.push(new TextSegment(paragraph));
                 } else {
@@ -57,7 +56,7 @@ export function loadSegments(content: string, segLimit: number, markers: boolean
         } else {
             segments.push(new TextSegment(paragraph));
         }
-        if (markers) {
+        if (pgMarker) {
             segments.push(pgMarker);
         }
     }

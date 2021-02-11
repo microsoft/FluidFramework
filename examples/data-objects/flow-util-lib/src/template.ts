@@ -35,12 +35,13 @@ class Cursor {
     public previous() { this.moveTo(Cursor.previous); }
 
     public child(index: number) {
+        let _index = index;
         // Calculate the distance to the child from the last child.
-        let delta = this.element.childElementCount - index;
+        let delta = this.element.childElementCount - _index;
 
-        if (index < delta) {
+        if (_index < delta) {
             this.first();
-            while (index-- > 0) {
+            while (_index-- > 0) {
                 this.next();
             }
         } else {

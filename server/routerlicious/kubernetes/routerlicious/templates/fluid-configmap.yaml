@@ -21,6 +21,7 @@ data:
         },
         "mongo": {
             "endpoint": "{{ .Values.mongodb.url }}",
+            "expireAfterSeconds": "{{ .Values.mongodb.expireAfterSeconds }}",
             "collectionNames": {
                 "deltas": "deltas",
                 "documents": "documents",
@@ -34,9 +35,11 @@ data:
         "kafka": {
             "lib": {
                 "name": "kafka-node",
-                "endpoint": "{{ .Values.kafka.url }}"
-            },
-            "maxMessageSize": "1MB"
+                "endpoint": "{{ .Values.kafka.url }}",
+                "producerPollIntervalMs": 10,
+                "numberOfPartitions": 32,
+                "replicationFactor": 3
+            }
         },
         "zookeeper": {
             "endpoint": "{{ .Values.zookeeper.url }}"
@@ -52,6 +55,26 @@ data:
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
             "maxNumberOfClientsPerDocument": {{ .Values.alfred.maxNumberOfClientsPerDocument }},
+            "throttling": {
+                "restCalls": {
+                    "maxPerMs": {{ .Values.alfred.throttling.restCalls.maxPerMs }},
+                    "maxBurst": {{ .Values.alfred.throttling.restCalls.maxBurst }},
+                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.restCalls.minCooldownIntervalInMs }},
+                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.restCalls.minThrottleIntervalInMs }}
+                },
+                "socketConnections": {
+                    "maxPerMs": {{ .Values.alfred.throttling.socketConnections.maxPerMs }},
+                    "maxBurst": {{ .Values.alfred.throttling.socketConnections.maxBurst }},
+                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.socketConnections.minCooldownIntervalInMs }},
+                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.socketConnections.minThrottleIntervalInMs }}
+                },
+                "submitOps": {
+                    "maxPerMs": {{ .Values.alfred.throttling.submitOps.maxPerMs }},
+                    "maxBurst": {{ .Values.alfred.throttling.submitOps.maxBurst }},
+                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.submitOps.minCooldownIntervalInMs }},
+                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.submitOps.minThrottleIntervalInMs }}
+                }
+            },
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",
             "restJsonSize": "50mb",
@@ -61,7 +84,11 @@ data:
                 {{- range $i, $tenant := .Values.alfred.tenants }}
                 {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
                 {{- end }}
-            ]
+            ],
+            "socketIoAdapter" : {
+                "enableCustomSocketIoAdapter": {{ .Values.alfred.socketIoAdapter.enableCustomSocketIoAdapter }},
+                "shouldDisableDefaultNamespace": {{ .Values.alfred.socketIoAdapter.shouldDisableDefaultNamespace }}
+            }
         },
         "client": {
             "type": "browser",
@@ -147,6 +174,12 @@ data:
             "port": "{{ .Values.redis2.port }}",
             "pass": "{{ .Values.redis2.password }}",
             "tls": {{ .Values.redis2.tls }}
+        },
+        "redisForThrottling": {
+            "host": "{{ .Values.redisForThrottling.url }}",
+            "port": "{{ .Values.redisForThrottling.port }}",
+            "pass": "{{ .Values.redisForThrottling.password }}",
+            "tls": {{ .Values.redisForThrottling.tls }}
         },
         "error": {
             "track": {{ .Values.error.track }},

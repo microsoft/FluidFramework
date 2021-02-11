@@ -86,7 +86,7 @@ The Aqueduct offers a factory for each of the data objects provided.
 
 #### DataObjectFactory Example
 
-In the below example we build a `DataObjectFactory` for the [`Clicker`](####Data-Object-Example) example above. In the above example we use `this.root` to store our `"clicks"`. The `DataObject` comes with the `SharedDirectory` already initialized so we do not need to add additional distributed data structures.
+In the below example we build a `DataObjectFactory` for the [`Clicker`](####Data-Object-Example) example above. To build a `DataObjectFactory`, we need to provide factories for the distributed data structures we are using inside of our `DataObject`. In the above example we store a handle to a `SharedCounter` in `this.root` to track our `"clicks"`. The `DataObject` comes with the `SharedDirectory` (`this.root`) already initialized, so we just need to add the factory for `SharedCounter`.
 
 ```typescript
 export const ClickerInstantiationFactory = new DataObjectFactory(

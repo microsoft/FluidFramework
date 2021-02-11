@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 import * as cell from "@fluidframework/cell";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import {
-    IDeltaManager,
+    IDeltaManager, ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -75,8 +75,7 @@ export class Document extends EventEmitter {
         return this.runtime.existing;
     }
 
-    public get options(): any {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    public get options(): ILoaderOptions {
         return this.runtime.options;
     }
 
@@ -241,7 +240,7 @@ async function requestDocument(loader: Loader, container: Container, uri: string
 export async function load(
     url: string,
     urlResolver: IUrlResolver,
-    options: any = {},
+    options: ILoaderOptions = {},
     documentServiceFactory: IDocumentServiceFactory = defaultDocumentServiceFactory,
     runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false },
 ): Promise<Document> {

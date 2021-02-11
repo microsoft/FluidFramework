@@ -5,11 +5,10 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "strictNullChecks": false,
         "rootDir": "./src",
         "outDir": "./dist",
         "types": [
-            "mocha"
+            "mocha", "node"
         ]
     },
     "include": [

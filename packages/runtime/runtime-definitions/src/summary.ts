@@ -10,7 +10,7 @@ import {
     ISnapshotTree,
     ITree,
 } from "@fluidframework/protocol-definitions";
-import { IGCData } from "./garbageCollection";
+import { IGarbageCollectionData, IGarbageCollectionSummaryDetails } from "./garbageCollection";
 
 export interface ISummaryStats {
     treeNodeCount: number;
@@ -26,7 +26,7 @@ export interface ISummaryTreeWithStats {
 
 export interface IChannelSummarizeResult extends ISummaryTreeWithStats {
     /** The channel's garbage collection data */
-    gcData: IGCData;
+    gcData: IGarbageCollectionData;
 }
 
 export interface ISummarizeResult {
@@ -36,7 +36,7 @@ export interface ISummarizeResult {
 
 export interface IContextSummarizeResult extends ISummarizeResult {
     /** The context's garbage collection data */
-    gcData: IGCData;
+    gcData: IGarbageCollectionData;
 }
 
 export interface ISummarizeInternalResult extends IContextSummarizeResult {
@@ -63,6 +63,14 @@ export interface ISummarizerNodeConfig {
     readonly throwOnFailure?: true,
 }
 
+export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
+    /**
+     * True if GC is disabled. If so, don't track GC related state for a summary.
+     * This is propagated to all child nodes.
+     */
+    readonly gcDisabled?: boolean;
+}
+
 export enum CreateSummarizerNodeSource {
     FromSummary,
     FromAttach,
@@ -81,12 +89,6 @@ export type CreateChildSummarizerNodeParam = {
 export interface ISummarizerNode {
     /** Latest successfully acked summary reference sequence number */
     readonly referenceSequenceNumber: number;
-    /**
-     * True if a change has been recorded with sequence number exceeding
-     * the latest successfully acked summary reference sequence number.
-     * False implies that the previous summary can be reused.
-     */
-    hasChanged(): boolean;
     /**
      * Marks the node as having a change with the given sequence number.
      * @param sequenceNumber - sequence number of change
@@ -139,14 +141,20 @@ export interface ISummarizerNode {
 
 /**
  * Extends the functionality of ISummarizerNode to support garbage collection. It adds / udpates the following APIs:
+ * - usedRoutes - The routes in this node that are currently in use.
  * - getGCData - A new API that can be used to get the garbage collection data for this node.
  * - summarize - Added a trackState flag which indicates whether the summarizer node should track the state of the
  *   summary or not.
  * - createChild - Added the following params:
  *   - getGCDataFn - This gets the GC data from the caller. This must be provided in order for getGCData to work.
- *   - getInitialGCDataFn - This gets the initial GC data for this node from the caller.
+ *   - getInitialGCDetailsFn - This gets the initial GC details from the caller.
+ * - isReferenced - This tells whether this node is referenced in the document or not.
+ * - updateUsedRoutes - Used to notify this node of routes that are currently in use in it.
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
+    /** The routes in this node that are currently in use. */
+    readonly usedRoutes: string[];
+
     summarize(fullTree: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
     createChild(
         /** Summarize function */
@@ -161,11 +169,29 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
          */
         createParam: CreateChildSummarizerNodeParam,
         /** Optional configuration affecting summarize behavior */
-        config?: ISummarizerNodeConfig,
-        getGCDataFn?: () => Promise<IGCData>,
-        getInitialGCDataFn?: () => Promise<IGCData | undefined>,
+        config?: ISummarizerNodeConfigWithGC,
+        getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
+        getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
     ): ISummarizerNodeWithGC;
 
     getChild(id: string): ISummarizerNodeWithGC | undefined;
-    getGCData(): Promise<IGCData>;
+
+    /**
+     * Returns this node's data that is used for garbage collection. This includes a list of GC nodes that represent
+     * this node. Each node has a set of outbound routes to other GC nodes in the document.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
+     */
+    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+
+    /** Tells whether this node is being referenced in this document or not. Unreferenced node will get GC'd */
+    isReferenced(): boolean;
+
+    /**
+     * After GC has run, called to notify this node of routes that are used in it. These are used for the following:
+     * 1. To identify if this node is being referenced in the document or not.
+     * 2. To identify if this node or any of its children's used routes changed since last summary.
+     */
+    updateUsedRoutes(usedRoutes: string[]): void;
 }
+
+export const channelsTreeName = ".channels";

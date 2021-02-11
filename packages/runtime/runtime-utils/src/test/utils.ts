@@ -3,38 +3,39 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { RemoteFluidObjectHandle } from "../remoteFluidObjectHandle";
+import { IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
 
-export const mockHandleContext: IFluidHandleContext = {
-    absolutePath: "",
-    isAttached: false,
-    IFluidHandleContext: undefined as any,
+export class MockHandleContext implements IFluidHandleContext {
+    public isAttached = false;
+    public get IFluidHandleContext() {
+        return this;
+    }
 
-    attachGraph: () => {
+    constructor(public readonly absolutePath = "", public readonly routeContext?: IFluidHandleContext) {}
+
+    public attachGraph() {
         throw new Error("Method not implemented.");
-    },
-    resolveHandle: () => {
-        throw new Error("Method not implemented.");
-    },
-};
+    }
 
-export const handle: IFluidHandle = new RemoteFluidObjectHandle("", mockHandleContext);
+    public async resolveHandle(request: IRequest) {
+        return { status: 404, mimeType: "text/plain", value: `Method not implemented.` };
+    }
+}
 
 /**
  * Creates a Jsonable object graph of a specified breadth/depth.  The 'createLeaf' callback
  * is a factory that is invoked to create the leaves of the graph.
  */
 export function makeJson(breadth: number, depth: number, createLeaf: () => any) {
-    // eslint-disable-next-line no-param-reassign
-    if (--depth === 0) {
+    let depthInternal = depth;
+    if (--depthInternal === 0) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return createLeaf();
     }
 
     const o = {};
     for (let i = 0; i < breadth; i++) {
-        o[`o${i}`] = makeJson(breadth, depth, createLeaf);
+        o[`o${i}`] = makeJson(breadth, depthInternal, createLeaf);
     }
     return o;
 }

@@ -39,7 +39,7 @@ below steps if you'd like to run a local version of the service or need to make 
 
 #### For Development
 
-* [Node v12.x](https://nodejs.org/en/)
+* [Node v12.x](https://nodejs.org/en/) (v12.17 or above is required)
 * [Node-gyp](https://github.com/nodejs/node-gyp) dependencies
     * If building on Windows, the easiest way to install the dependencies is with windows-build-tools: `npm install --global --production windows-build-tools`
 
@@ -118,12 +118,7 @@ If you want to build API documentation locally, see [Building Documentation](htt
 * Perf === Magic
 
 ## Architecture
-
-Below is the original Routerlicious architecture diagram. The current system has slight changes from the diagram but
-largely remains unchanged. Detailed descriptions of the components are contained below as well as callouts
-to areas that have changed from the original picture. We will update the README with a more current diagram soon.
-
-![Routerlicious architecture diagram](../../docs/architecture/server/SystemArchitecture.jpg)
+![](./docs/Routerlicious-Architecture.svg)
 
 ### Microservices
 
@@ -132,41 +127,26 @@ have clear input and output characteristics. Many can be run as serverless lambd
 [lambda framework](./src/kafka-service). We chose this path to have greater control over the throughput and latency
 characteristics of our message processing. But could be also be run with Azure Functions, AWS Lambdas, Fission, etc...
 
-#### [Alfred](./src/alfred)
+#### [Alfred](./packages/routerlicious/src/alfred)
 
 Alfred is the entry point to the system. Clients connect to Alfred to join the operation stream. Joining the stream
 allows them to receive push notifications for new operations, retrieve old operations, as well as create new ones. We
 make use of Redis for push notifications. New operations are placed inside of Apache Kafka for processing.
 
-#### [Deli](./src/deli)
+#### [Deli](./packages/routerlicious/src/deli)
 
 Deli retrieves unsequenced messages from Kafka and then attaches a new sequence number to them. Sequence numbers
 are per-document monotonically increasing numbers. Sequenced messages are placed back into Apache Kafka for processing.
-
-#### [Scriptorium](./src/scriptorium)
+The Deli microservice also runs the [Broadcaster](./packages/lambdas/src/broadcaster) lambda that directly put sequenced
+message into redis so that alfred can listen and broadcast back to the clients.
+#### [Scriptorium](./packages/routerlicious/src/scriptorium)
 
 Scriptorium retrieves sequenced messages from Kafka. It then broadcasts the new message and writes the message
 to a database for storage. We currently make use of Redis for broadcasting and MongoDB for storage.
 
-#### [Paparazzi](./src/paparazzi)
+#### [Scribe](./packages/routerlicious/src/scribe)
 
-The logical storage model for documents is an ordered sequence of operations. Rather than requiring clients to replay
-all operations when loading a document we instead periodically create consolidated logs of the operations. These
-consolidated logs, or snapshots, are designed for quick and efficient loading of the document at a particular
-sequence number.
-
-Paparazzi was initially charged with just creating snapshots of documents. But it has since evolved to run
-intelligent agents. Paparazzi agents are designed to be isomorphic - that is they can be run on both the server
-and the client. This enables a connected client join in with a pool of server Paparazzi instances to perform
-snapshotting and intelligence on a document.
-
-Paparazzi instances connect to Foreman to receive instructions on what operations to perform on the document.
-
-#### [Foreman](./src/foreman)
-
-Foreman is in charge of managing a pool of Paparazzi instances. It listens to the same stream of Kafka messages as
-Scriptorium but uses this to understand which documents are active. It then schedules and manages work to be run
-across the pool of Paparazzi instances (snapshot, spell check, entity extraction, etc...).
+Scribe is responsible for listening to inbound summary ops and then writing them to the public record in the Historian
 
 #### [Historian](../historian)
 
@@ -179,18 +159,17 @@ More details on content-addressable file systems and Git can be found at
 * https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain
 * http://stefan.saasen.me/articles/git-clone-in-haskell-from-the-bottom-up/
 
-### Picture Errata
+### Other Microservices
 
-* Deli only talks to Kafka
-* Scriptorium should have a line to MongoDB
-* Paparazzi talks to Foreman directly and no longer proxies through a queue
-* Clients can also be Paparazzi and connect directly to Foreman
-* Only a single receive line should be drawn from Redis to Aflred
-* Historian is missing - as well as the underlying storage provider it proxies to.
-  * Clients (including Paparazzi) talk directly to Historian.
-  * Historian makes REST calls to a configured storage provider
-  * Historian caches data via Redis.
+#### [Copier](./packages/routerlicious/src/copier)
 
+Copier directly reads the raw (unticketed) operations and store it in the database.  The data can later be retrieved
+via alfred for testing and verification.
+#### [Foreman](./packages/routerlicious/src/foreman)
+
+Foreman is in charge of managing a pool of remote agent instances. It listens to the same stream of Kafka messages as
+Scriptorium but uses this to understand which documents are active. It then schedules and manages work to be run
+across the pool of remote agent instances (spell check, entity extraction, etc...).
 ## Distributed data structures
 
 The API currently exposes four distributed data structures
@@ -208,7 +187,9 @@ We make use of [Winston](https://github.com/winstonjs/winston) for logging on th
 
 It's easy to use though. Just import our configured logger via:
 
+```js
 import { logger } from "../utils";
+```
 
 And then you can do logger.info in place of console.log as well as logger.error, logger.warn, logger.verbose, logger.silly to target different levels. The default filter only displays info and above (so error, warning, and info). But you can change this within logger.ts.
 
@@ -269,10 +250,10 @@ By default, the service does not run locally. To run locally, first add the foll
         }
     }
 ```
-This will enable the metric writer to write to telegraf client. Then run `docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.metric.yml up` to bring up telegraf, influxdb, and grafana containers. Navigate "http://localhost:7000" to see grafana up and running.
+This will enable the metric writer to write to telegraf client. Then run `docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.metric.yml up` to bring up telegraf, influxdb, and grafana containers. Navigate to "http://localhost:7000" to get grafana up and running.
 
 ## Authentication model
-Routerlicious uses a token based authentication model. Tenants are registered to routerlicious first and a secret key is generated for each tenant. Apps are expected to pass <secret-key>, <tenant-id>, and <user-info> as a signed token to routerlicious. Tenants are given a symmetric-key beforehand to sign the token.
+Routerlicious uses a token based authentication model. Tenants are registered to routerlicious first and a secret key is generated for each tenant. Apps are expected to pass `<secret-key>`, `<tenant-id>`, and `<user-info>` as a signed token to routerlicious. Tenants are given a symmetric-key beforehand to sign the token.
 
 When a user from a tenant wants to create/access a document in routerlicious, it passes the signed token in api load call. Routerlicious verifies the token, matches the secret-key for the tenant and on a successful verification, grants the user access to the document. The access token is valid for the entire websocket session. User is expected to pass in another signed token for any subsequent api load call.
 

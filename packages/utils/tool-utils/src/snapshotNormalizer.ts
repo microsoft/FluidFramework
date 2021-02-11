@@ -6,14 +6,13 @@
 import { AttachmentTreeEntry, BlobTreeEntry, CommitTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
     ITree,
-    IBlob,
     TreeEntry,
-    IAttachment,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
 
+export const gcBlobKey = "gc";
 // A list of runtime blob paths whose contents should be normalized.
-const runtimeBlobsToNormalize = [ ".gc" ];
+const runtimeBlobsToNormalize = [ gcBlobKey ];
 
 export interface ISnapshotNormalizerConfig {
     // The paths of blobs whose contents should be normalized.
@@ -107,7 +106,7 @@ export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormali
     for (const entry of snapshot.entries) {
         switch (entry.type) {
             case TreeEntry.Blob: {
-                let contents = (entry.value as IBlob).contents;
+                let contents = entry.value.contents;
                 // If this blob has to be normalized, parse and sort the blob contents first.
                 if (blobsToNormalize.includes(entry.path)) {
                     contents = getSortedBlobContent(contents);
@@ -116,15 +115,15 @@ export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormali
                 break;
             }
             case TreeEntry.Tree: {
-                normalizedEntries.push(new TreeTreeEntry(entry.path, getNormalizedSnapshot(entry.value as ITree)));
+                normalizedEntries.push(new TreeTreeEntry(entry.path, getNormalizedSnapshot(entry.value, config)));
                 break;
             }
             case TreeEntry.Attachment: {
-                normalizedEntries.push(new AttachmentTreeEntry(entry.path, (entry.value as IAttachment).id));
+                normalizedEntries.push(new AttachmentTreeEntry(entry.path, (entry.value).id));
                 break;
             }
             case TreeEntry.Commit:
-                normalizedEntries.push(new CommitTreeEntry(entry.path, entry.value as string));
+                normalizedEntries.push(new CommitTreeEntry(entry.path, entry.value));
                 break;
             default:
                 throw new Error("Unknown entry type");

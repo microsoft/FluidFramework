@@ -4,13 +4,13 @@
  */
 
 import {
+    IContainer,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { InsecureTinyliciousTokenProvider, InsecureTinyliciousUrlResolver } from "@fluidframework/tinylicious-driver";
 import { getContainer } from "./getContainer";
-import { InsecureTinyliciousTokenProvider } from "./insecureTinyliciousTokenProvider";
-import { InsecureTinyliciousUrlResolver } from "./insecureTinyliciousUrlResolver";
+
 /**
  * Connect to the Tinylicious service and retrieve a Container with the given ID running the given code.
  * @param documentId - The document id to retrieve or create
@@ -20,8 +20,8 @@ export async function getTinyliciousContainer(
     documentId: string,
     containerRuntimeFactory: IRuntimeFactory,
     createNew: boolean,
-): Promise<Container> {
-    const tokenProvider = new InsecureTinyliciousTokenProvider(documentId);
+): Promise<IContainer> {
+    const tokenProvider = new InsecureTinyliciousTokenProvider();
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
 
     const urlResolver = new InsecureTinyliciousUrlResolver();

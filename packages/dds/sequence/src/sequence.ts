@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Deferred, fromBase64ToUtf8, assert } from "@fluidframework/common-utils";
+import { Deferred, bufferToString, assert } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { IValueChanged, MapKernel } from "@fluidframework/map";
@@ -144,8 +144,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                     break;
                 case "maintenance":
                     if (!this.client.mergeTreeMaintenanceCallback) {
-                        this.client.mergeTreeMaintenanceCallback = (args) => {
-                            this.emit("maintenance", new SequenceMaintenanceEvent(args, this.client), this);
+                        this.client.mergeTreeMaintenanceCallback = (args, opArgs) => {
+                            this.emit("maintenance", new SequenceMaintenanceEvent(opArgs, args, this.client), this);
                         };
                     }
                     break;
@@ -415,8 +415,11 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     protected snapshotCore(serializer: IFluidSerializer): ITree {
-        const tree: ITree = {
-            entries: [
+        const entries = [];
+        // TODO: once the change to conditionally read these has propagated
+        // conditionally write them as well
+        // if (this.intervalMapKernel.size > 0) {
+            entries.push(
                 {
                     mode: FileMode.File,
                     path: snapshotFileName,
@@ -425,17 +428,17 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                         contents: this.intervalMapKernel.serialize(serializer),
                         encoding: "utf-8",
                     },
-                },
-                {
-                    mode: FileMode.Directory,
-                    path: contentPath,
-                    type: TreeEntry.Tree,
-                    value: this.snapshotMergeTree(serializer),
-                },
-
-            ],
-            // eslint-disable-next-line no-null/no-null
-            id: null,
+                });
+        // }
+        entries.push(
+            {
+                mode: FileMode.Directory,
+                path: contentPath,
+                type: TreeEntry.Tree,
+                value: this.snapshotMergeTree(serializer),
+            });
+        const tree: ITree = {
+            entries,
         };
 
         return tree;
@@ -491,10 +494,11 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService) {
-        const header = await storage.read(snapshotFileName);
-
-        const data: string = header ? fromBase64ToUtf8(header) : undefined;
-        this.intervalMapKernel.populate(data);
+        if (await storage.contains(snapshotFileName)) {
+            const blob = await storage.readBlob(snapshotFileName);
+            const header = bufferToString(blob, "utf8");
+            this.intervalMapKernel.populate(header);
+        }
 
         try {
             // this will load the header, and return a promise

@@ -92,9 +92,9 @@ export class PartialSequenceLengths {
         recur = false) {
         let combinedPartialLengths = new PartialSequenceLengths(collabWindow.minSeq);
         PartialSequenceLengths.fromLeaves(mergeTree, branchId, combinedPartialLengths, block, collabWindow);
-        let prevPartial: PartialSequenceLength;
+        let prevPartial: PartialSequenceLength | undefined;
 
-        function cloneOverlapRemoveClients(oldTree: RedBlackTree<number, IOverlapClient>) {
+        function cloneOverlapRemoveClients(oldTree: RedBlackTree<number, IOverlapClient> | undefined) {
             if (!oldTree) { return undefined; }
             const newTree = new RedBlackTree<number, IOverlapClient>(compareNumbers);
             oldTree.map((bProp: Property<number, IOverlapClient>) => {
@@ -105,14 +105,15 @@ export class PartialSequenceLengths {
         }
 
         function combineOverlapClients(a: PartialSequenceLength, b: PartialSequenceLength) {
-            if (a.overlapRemoveClients) {
+            const overlapRemoveClientsA = a.overlapRemoveClients;
+            if (overlapRemoveClientsA) {
                 if (b.overlapRemoveClients) {
                     b.overlapRemoveClients.map((bProp: Property<number, IOverlapClient>) => {
-                        const aProp = a.overlapRemoveClients.get(bProp.key);
+                        const aProp = overlapRemoveClientsA.get(bProp.key);
                         if (aProp) {
                             aProp.data.seglen += bProp.data.seglen;
                         } else {
-                            a.overlapRemoveClients.put(bProp.data.clientId, { ...bProp.data });
+                            overlapRemoveClientsA.put(bProp.data.clientId, { ...bProp.data });
                         }
                         return true;
                     });
@@ -157,7 +158,8 @@ export class PartialSequenceLengths {
                     childBlock.partialLengths =
                         PartialSequenceLengths.combine(mergeTree, childBlock, collabWindow, true);
                 }
-                childPartials.push(childBlock.partialLengths.partialLengthsForBranch(branchId));
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                childPartials.push(childBlock.partialLengths!.partialLengthsForBranch(branchId));
             }
         }
         let childPartialsLen = childPartials.length;
@@ -185,14 +187,16 @@ export class PartialSequenceLengths {
                     // Find next earliest sequence number
                     if (indices[k] < childPartialsCounts[k]) {
                         const cpLen = childPartials[k].partialLengths[indices[k]];
-                        if ((outerIndexOfEarliest < 0) || (cpLen.seq < earliestPartialLength.seq)) {
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        if ((outerIndexOfEarliest < 0) || (cpLen.seq < earliestPartialLength!.seq)) {
                             outerIndexOfEarliest = k;
                             earliestPartialLength = cpLen;
                         }
                     }
                 }
                 if (outerIndexOfEarliest >= 0) {
-                    addNext(earliestPartialLength);
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    addNext(earliestPartialLength!);
                     indices[outerIndexOfEarliest]++;
                 }
             }
@@ -235,7 +239,8 @@ export class PartialSequenceLengths {
                 // eslint-disable-next-line max-len
                 // console.log(`seg br ${segBranchId} cli ${glc(mergeTree, segment.clientId)} me ${glc(mergeTree, mergeTree.collabWindow.clientId)}`);
                 if (segBranchId <= branchId) {
-                    if (seqLTE(segment.seq, collabWindow.minSeq)) {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    if (seqLTE(segment.seq!, collabWindow.minSeq)) {
                         combinedPartialLengths.minLength += segment.cachedLength;
                     } else {
                         if (segment.seq !== UnassignedSequenceNumber) {
@@ -243,7 +248,8 @@ export class PartialSequenceLengths {
                         }
                     }
                     const removalInfo = mergeTree.getRemovalInfo(branchId, segBranchId, segment);
-                    if (seqLTE(removalInfo.removedSeq, collabWindow.minSeq)) {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    if (seqLTE(removalInfo.removedSeq!, collabWindow.minSeq)) {
                         combinedPartialLengths.minLength -= segment.cachedLength;
                     } else {
                         if ((removalInfo.removedSeq !== undefined) &&
@@ -251,7 +257,6 @@ export class PartialSequenceLengths {
                             PartialSequenceLengths.insertSegment(
                                 combinedPartialLengths,
                                 segment,
-                                true,
                                 removalInfo);
                         }
                     }
@@ -304,17 +309,19 @@ export class PartialSequenceLengths {
     private static insertSegment(
         combinedPartialLengths: PartialSequenceLengths,
         segment: ISegment,
-        removedSeq = false,
         removalInfo?: IRemovalInfo) {
-        let seq = segment.seq;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        let seq = segment.seq!;
         let segmentLen = segment.cachedLength;
         let clientId = segment.clientId;
-        let removeClientOverlap: number[];
+        let removeClientOverlap: number[] | undefined;
 
-        if (removedSeq) {
-            seq = removalInfo.removedSeq;
+        if (removalInfo) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            seq = removalInfo.removedSeq!;
             segmentLen = -segmentLen;
-            clientId = removalInfo.removedClientId;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            clientId = removalInfo.removedClientId!;
             if (removalInfo.removedClientOverlap) {
                 removeClientOverlap = removalInfo.removedClientOverlap;
             }
@@ -360,8 +367,8 @@ export class PartialSequenceLengths {
     }
 
     private static addSeq(partialLengths: PartialSequenceLength[], seq: number, seqSeglen: number, clientId?: number) {
-        let seqPartialLen: PartialSequenceLength;
-        let penultPartialLen: PartialSequenceLength;
+        let seqPartialLen: PartialSequenceLength | undefined;
+        let penultPartialLen: PartialSequenceLength | undefined;
         let leqIndex = latestLEQ(partialLengths, seq);
         if (leqIndex >= 0) {
             const pLen = partialLengths[leqIndex];
@@ -397,7 +404,7 @@ export class PartialSequenceLengths {
     public segmentCount = 0;
     public partialLengths: PartialSequenceLength[] = [];
     public clientSeqNumbers: PartialSequenceLength[][] = [];
-    public downstreamPartialLengths: PartialSequenceLengths[];
+    public downstreamPartialLengths: PartialSequenceLengths[] | undefined;
 
     constructor(public minSeq: number) {
     }
@@ -418,7 +425,8 @@ export class PartialSequenceLengths {
             for (let i = 0; i < mergeTree.localBranchId; i++) {
                 const branchId = i + 1;
                 if (segBranchId <= branchId) {
-                    this.downstreamPartialLengths[i].updateBranch(
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    this.downstreamPartialLengths![i].updateBranch(
                         mergeTree,
                         branchId,
                         block,
@@ -436,7 +444,8 @@ export class PartialSequenceLengths {
             console.log(`plen branch ${branchId}`);
         }
         if (branchId > 0) {
-            return this.downstreamPartialLengths[branchId - 1].getBranchPartialLength(refSeq, clientId);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return this.downstreamPartialLengths![branchId - 1].getBranchPartialLength(refSeq, clientId);
         } else {
             return this.getBranchPartialLength(refSeq, clientId);
         }
@@ -532,7 +541,8 @@ export class PartialSequenceLengths {
 
     // Assumes sequence number already coalesced
     private addClientSeqNumberFromPartial(partialLength: PartialSequenceLength) {
-        this.addClientSeqNumber(partialLength.clientId, partialLength.seq, partialLength.seglen);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.addClientSeqNumber(partialLength.clientId!, partialLength.seq, partialLength.seglen);
         if (partialLength.overlapRemoveClients) {
             partialLength.overlapRemoveClients.map((oc: Property<number, IOverlapClient>) => {
                 this.addClientSeqNumber(oc.data.clientId, partialLength.seq, oc.data.seglen);
@@ -558,7 +568,8 @@ export class PartialSequenceLengths {
             const child = node.children[i];
             if (!child.isLeaf()) {
                 const childBlock = child;
-                const branchPartialLengths = childBlock.partialLengths.partialLengthsForBranch(branchId);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const branchPartialLengths = childBlock.partialLengths!.partialLengthsForBranch(branchId);
                 const partialLengths = branchPartialLengths.partialLengths;
                 const seqIndex = latestLEQ(partialLengths, seq);
                 if (seqIndex >= 0) {
@@ -606,7 +617,8 @@ export class PartialSequenceLengths {
 
     private partialLengthsForBranch(branchId: number) {
         if (branchId > 0) {
-            return this.downstreamPartialLengths[branchId - 1];
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return this.downstreamPartialLengths![branchId - 1];
         } else {
             return this;
         }

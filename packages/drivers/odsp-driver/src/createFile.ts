@@ -17,6 +17,7 @@ import {
     SnapshotTreeEntry,
     SnapshotType,
     ICreateFileResponse,
+    ISnapshotRequest,
 } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
@@ -28,7 +29,7 @@ import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
-import { EpochTracker, FetchType } from "./epochTracker";
+import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 
 const isInvalidFileName = (fileName: string): boolean => {
@@ -78,7 +79,7 @@ export async function createNewFluidFile(
                         headers,
                         method: "POST",
                     },
-                    FetchType.createFile);
+                    "createFile");
 
                 const content = fetchResponse.content;
                 if (!content || !content.itemId) {
@@ -116,7 +117,7 @@ function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
         },
     };
     const snapshotTree = convertSummaryToSnapshotTreeForCreateNew(convertedCreateNewSummary);
-    const snapshot = {
+    const snapshot: ISnapshotRequest = {
         entries: snapshotTree.entries ?? [],
         message: "app",
         sequenceNumber: documentAttributes.sequenceNumber,

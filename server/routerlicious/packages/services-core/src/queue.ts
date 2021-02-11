@@ -35,7 +35,7 @@ export interface IConsumer {
     /**
      * Event Handler.
      */
-    on(event: "connected", listener: () => void): this;
+    on(event: "connected" | "disconnected" | "closed", listener: () => void): this;
     on(event: "data", listener: (message: IQueuedMessage) => void): this;
     on(event: "rebalancing", listener: (partitions: IPartition[]) => void): this;
     on(event: "rebalanced", listener: (partitions: IPartitionWithEpoch[]) => void): this;
@@ -83,9 +83,9 @@ export interface IProducer {
     /**
      * Event handlers
      */
-    on(event: "connected" | "disconnected" | "produced" | "throttled" | "error",
+    on(event: "connected" | "disconnected" | "closed" | "produced" | "throttled" | "error",
         listener: (...args: any[]) => void): this;
-    once(event: "connected" | "disconnected" | "produced" | "throttled" | "error",
+    once(event: "connected" | "disconnected" | "closed" | "produced" | "throttled" | "error",
         listener: (...args: any[]) => void): this;
 }
 
@@ -94,4 +94,5 @@ export interface IPendingBoxcar {
     tenantId: string;
     deferred: Deferred<void>;
     messages: any[];
+    partitionId?: number;
 }

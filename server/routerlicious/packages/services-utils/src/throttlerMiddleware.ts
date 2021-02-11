@@ -72,25 +72,21 @@ export function throttle(
 
         return (req, res, next) => {
             const throttleId = getThrottleId(req, throttleOptions);
-            const messageMetaData = {
-                key: throttleId,
-                weight: throttleOptions.weight,
-                event_type: "throttling",
-            };
 
-            logger?.info(`Incrementing throttle count: ${throttleId}`, { messageMetaData });
             try {
                 throttler.incrementCount(throttleId, throttleOptions.weight);
             } catch (e) {
                 if (e instanceof ThrottlingError) {
-                    logger?.info(`Throttled: ${throttleId}`, { messageMetaData: {
-                        ...messageMetaData,
-                        reason: e.message,
-                        retryAfterInSeconds: e.retryAfter,
-                    } });
                     return res.status(e.code).json(e);
                 } else {
-                    logger?.error(`Throttle increment failed: ${safeStringify(e, undefined, 2)}`, { messageMetaData });
+                    logger?.error(
+                        `Throttle increment failed: ${safeStringify(e, undefined, 2)}`,
+                        {
+                            messageMetaData: {
+                                key: throttleId,
+                                eventName: "throttling",
+                            },
+                        });
                 }
             }
 

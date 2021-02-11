@@ -25,7 +25,15 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (args: ITestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    beforeEach(()=>{
+        args = argsFactory();
+    });
+    afterEach(() => {
+        args.reset();
+    });
+
     const initialCellValue = "Initial cell value";
     const newCellValue = "A new cell value";
 
@@ -215,5 +223,5 @@ const tests = (args: ITestObjectProvider) => {
 };
 
 describe("Cell", () => {
-    generateTest(tests, { tinylicious: true });
+    generateTest(tests);
 });

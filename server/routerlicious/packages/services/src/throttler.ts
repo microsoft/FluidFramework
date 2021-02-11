@@ -24,7 +24,7 @@ export class Throttler implements IThrottler {
 
     constructor(
         private readonly throttlerHelper: IThrottlerHelper,
-        private readonly minThrottleIntervalInMs: number,
+        private readonly minThrottleIntervalInMs: number = 1000000,
         private readonly logger?: ILogger,
         maxCacheSize: number = 1000,
         maxCacheAge: number = 1000 * 60,
@@ -51,12 +51,19 @@ export class Throttler implements IThrottler {
         // check cached throttle status, but allow operation through if status is not yet cached
         const cachedThrottlerResponse = this.throttlerResponseCache.get(id);
         if (cachedThrottlerResponse && cachedThrottlerResponse.throttleStatus) {
-            this.logger?.info(`Throttling ${id} for ${cachedThrottlerResponse.retryAfterInMs}ms: ${
-                cachedThrottlerResponse.throttleReason
-            }`);
+            const retryAfterInSeconds = Math.ceil(cachedThrottlerResponse.retryAfterInMs / 1000);
+            this.logger?.info(`Throttled: ${id}`, {
+                messageMetaData: {
+                    key: id,
+                    reason: cachedThrottlerResponse.throttleReason,
+                    retryAfterInSeconds,
+                    eventName: "throttling",
+                },
+            });
+            // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw new ThrottlingError(
                 cachedThrottlerResponse.throttleReason,
-                Math.ceil(cachedThrottlerResponse.retryAfterInMs / 1000),
+                retryAfterInSeconds,
             );
         }
     }
@@ -83,12 +90,18 @@ export class Throttler implements IThrottler {
             const countDelta = this.countDeltaMap.get(id);
             this.lastThrottleUpdateAtMap.set(id, now);
             this.countDeltaMap.set(id, 0);
+            const messageMetaData = {
+                key: id,
+                weight: countDelta,
+                eventName: "throttling",
+            };
             await this.throttlerHelper.updateCount(id, countDelta)
                 .then((throttlerResponse) => {
+                    this.logger?.info(`Incremented throttle count for ${id} by ${countDelta}`, { messageMetaData });
                     this.throttlerResponseCache.set(id, throttlerResponse);
                 })
                 .catch((err) => {
-                    this.logger?.error(`Failed to update throttling count for ${id}: ${err}`);
+                    this.logger?.error(`Failed to update throttling count for ${id}: ${err}`, { messageMetaData });
                 });
         }
     }

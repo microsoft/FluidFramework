@@ -17,10 +17,12 @@ import {
     ILoader,
     BindState,
     AttachState,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import {
     assert,
     Deferred,
+    LazyPromise,
     TypedEventEmitter,
     unreachableCase,
 } from "@fluidframework/common-utils";
@@ -46,7 +48,8 @@ import {
     IEnvelope,
     IFluidDataStoreContext,
     IFluidDataStoreChannel,
-    IGCData,
+    IGarbageCollectionData,
+    IGarbageCollectionSummaryDetails,
     IInboundSignalMessage,
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
@@ -65,7 +68,13 @@ import {
     IChannelFactory,
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
-import {  GCDataBuilder } from "@fluidframework/garbage-collector";
+import {
+    cloneGCData,
+    GCDataBuilder,
+    getChildNodesGCData,
+    getChildNodesUsedRoutes,
+    removeRouteFromAllNodes,
+} from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
@@ -176,11 +185,19 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public readonly documentId: string;
     public readonly id: string;
     public existing: boolean;
-    public readonly options: any;
+    public readonly options: ILoaderOptions;
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private readonly quorum: IQuorum;
     private readonly audience: IAudience;
     public readonly logger: ITelemetryLogger;
+
+    // A map of child channel context ids to the context's used routes in the initial summary of this data store. This
+    // is used to initialize the context with data from the previous summary.
+    private readonly initialChannelUsedRoutesP: LazyPromise<Map<string, string[]>>;
+
+    // A map of child channel context ids to the channel context's GC data in the initial summary of this data store.
+    // This is used to initialize the context with data from the previous summary.
+    private readonly initialChannelGCDataP: LazyPromise<Map<string, IGarbageCollectionData>>;
 
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -199,9 +216,41 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         const tree = dataStoreContext.baseSnapshot;
 
+        this.initialChannelUsedRoutesP = new LazyPromise(async () => {
+            // back-compat: 0.35.0. getInitialGCSummaryDetails is added to IFluidDataStoreContext in 0.35.0. Remove
+            // undefined check when N > 0.36.0.
+            const gcDetailsInInitialSummary = await this.dataStoreContext.getInitialGCSummaryDetails?.();
+            if (gcDetailsInInitialSummary?.usedRoutes !== undefined) {
+                // Remove the route to this data store, if it exists.
+                const usedRoutes = gcDetailsInInitialSummary.usedRoutes.filter(
+                    (id: string) => { return id !== "/" && id !== ""; },
+                );
+                return getChildNodesUsedRoutes(usedRoutes);
+            }
+            return new Map();
+        });
+
+        this.initialChannelGCDataP = new LazyPromise(async () => {
+            // back-compat: 0.35.0. getInitialGCSummaryDetails is added to IFluidDataStoreContext in 0.35.0. Remove
+            // undefined check when N > 0.36.0.
+            const gcDetailsInInitialSummary = await this.dataStoreContext.getInitialGCSummaryDetails?.();
+            if (gcDetailsInInitialSummary?.gcData !== undefined) {
+                const gcData = cloneGCData(gcDetailsInInitialSummary.gcData);
+                // Remove GC node for this data store, if any.
+                delete gcData.gcNodes["/"];
+                // Remove the back route to this data store that was added when generating each child's GC nodes.
+                removeRouteFromAllNodes(gcData.gcNodes, this.absolutePath);
+                return getChildNodesGCData(gcData);
+            }
+            return new Map();
+        });
+
         // Must always receive the data store type inside of the attributes
         if (tree?.trees !== undefined) {
             Object.keys(tree.trees).forEach((path) => {
+                // Issue #4414
+                if (path === "_search") { return; }
+
                 let channelContext: IChannelContext;
                 // If already exists on storage, then create a remote channel. However, if it is case of rehydrating a
                 // container from snapshot where we load detached container from a snapshot, isLocalDataStore would be
@@ -242,7 +291,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         this.dataStoreContext.getCreateChildSummarizerNodeFn(
                             path,
                             { type: CreateSummarizerNodeSource.FromSummary },
-                        ));
+                        ),
+                        async () => this.getChannelInitialGCDetails(path));
                 }
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
@@ -508,6 +558,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                                 snapshot: attachMessage.snapshot,
                             },
                         ),
+                        async () => this.getChannelInitialGCDetails(id),
                         attachMessage.type);
 
                     this.contexts.set(id, remoteChannelContext);
@@ -585,7 +636,18 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         builder.addNode("/", this.getOutboundRoutes());
     }
 
-    public async getGCData(): Promise<IGCData> {
+    /**
+     * Generates data used for garbage collection. This includes a list of GC nodes that represent this channel
+     * including any of its child channel contexts. Each node has a set of outbound routes to other GC nodes in the
+     * document. It does the following:
+     * 1. Calls into each child context to get its GC data.
+     * 2. Prefixs the child context's id to the GC nodes in the child's GC data. This makes sure that the node can be
+     *    idenfied as belonging to the child.
+     * 3. Adds a GC node for this channel to the nodes received from the children. All these nodes together represent
+     *    the GC data of this channel.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
+     */
+    public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
         const builder = new GCDataBuilder();
         // Iterate over each channel context and get their GC data.
         await Promise.all(Array.from(this.contexts)
@@ -594,14 +656,58 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 // graph so any references they might have won't be connected as well.
                 return this.isChannelAttached(contextId);
             }).map(async ([contextId, context]) => {
-                const contextGCData = await context.getGCData();
-                // Prefix the child's id to the ids of its GC nodes. This gradually builds the id of each node to be
-                // a path from the root.
+                const contextGCData = await context.getGCData(fullGC);
+                // Prefix the child's id to the ids of its GC nodes so they can be identified as belonging to the child.
+                // This also gradually builds the id of each node to be a path from the root.
                 builder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
             }));
 
         this.updateGCNodes(builder);
         return builder.getGCData();
+    }
+
+    /**
+     * After GC has run, called to notify this channel of routes that are used in it. It calls the child contexts to
+     * update their used routes.
+     * @param usedRoutes - The routes that are used in all contexts in this channel.
+     */
+    public updateUsedRoutes(usedRoutes: string[]) {
+        // Get a map of channel ids to routes used in it.
+        const usedContextRoutes = getChildNodesUsedRoutes(usedRoutes);
+
+        // Verify that the used routes are correct.
+        for (const [id] of usedContextRoutes) {
+            assert(this.contexts.has(id), "Used route does not belong to any known context");
+        }
+
+        // Update the used routes in each context. Used routes is empty for unused context.
+        for (const [contextId, context] of this.contexts) {
+            context.updateUsedRoutes(usedContextRoutes.get(contextId) ?? []);
+        }
+    }
+
+    /**
+     * Returns the GC details in initial summary for the channel with the given id. The initial summary of the data
+     * store contains the GC details of all the child channel contexts that were created before the summary was taken.
+     * We find the GC details belonging to the given channel context and return it.
+     * @param channelId - The id of the channel context that is asked for the initial GC details.
+     * @returns the requested channel's GC details in the initial summary.
+     */
+    private async getChannelInitialGCDetails(channelId: string): Promise<IGarbageCollectionSummaryDetails> {
+        const channelInitialUsedRoutes = await this.initialChannelUsedRoutesP;
+        const channelInitialGCData = await this.initialChannelGCDataP;
+
+        let channelUsedRoutes = channelInitialUsedRoutes.get(channelId);
+        // Currently, channel context's are always considered used. So, it there is no used route for it, we still
+        // need to mark it as used. Add self-route (empty string) to the channel context's used routes.
+        if (channelUsedRoutes === undefined || channelUsedRoutes.length === 0) {
+            channelUsedRoutes = [""];
+        }
+
+        return {
+            usedRoutes: channelUsedRoutes,
+            gcData: channelInitialGCData.get(channelId),
+        };
     }
 
     /**
@@ -639,16 +745,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             ...summaryBuilder.getSummaryTree(),
             gcData: gcDataBuilder.getGCData(),
         };
-    }
-
-    /**
-     * back-compat 0.28 - snapshot is being removed and replaced with summary.
-     * So, getAttachSnapshot has been deprecated and getAttachSummary should be used instead.
-     */
-    public getAttachSnapshot(): ITreeEntry[] {
-        const summaryTree = this.getAttachSummary();
-        const tree = convertSummaryTreeToITree(summaryTree.summary);
-        return tree.entries;
     }
 
     public getAttachSummary(): IChannelSummarizeResult {
@@ -848,11 +944,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
  * @param Base - base class, inherits from FluidDataStoreRuntime
  * @param requestHandler - request handler to mix in
  */
-export function mixinRequestHandler(
+export const mixinRequestHandler = (
     requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>,
-    Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime)
-{
-    return class RuntimeWithRequestHandler extends Base {
+    Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
+) => class RuntimeWithRequestHandler extends Base {
         public async request(request: IRequest) {
             const response  = await super.request(request);
             if (response.status === 404) {
@@ -861,18 +956,15 @@ export function mixinRequestHandler(
             return response;
         }
     } as typeof FluidDataStoreRuntime;
-}
 
 /**
  * Mixin class that adds await for DataObject to finish initialization before we proceed to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  */
-export function mixinSummaryHandler(
+export const mixinSummaryHandler = (
     handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[], content: string }>,
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
-    )
-{
-    return class RuntimeWithSummarizerHandler extends Base {
+) => class RuntimeWithSummarizerHandler extends Base {
         private addBlob(summary: ISummaryTreeWithStats, path: string[], content: string) {
             const firstName = path.shift();
             if (firstName === undefined) {
@@ -903,4 +995,3 @@ export function mixinSummaryHandler(
             return summary;
         }
     } as typeof FluidDataStoreRuntime;
-}

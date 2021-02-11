@@ -14,23 +14,36 @@ import { tryImportNodeRdkafka } from "./tryImport";
 // always point to kafka-node library. Production code can use either one of those.
 const kafka = tryImportNodeRdkafka();
 
+export interface IKafkaBaseOptions {
+	numberOfPartitions: number;
+	replicationFactor: number;
+}
+
 export interface IKafkaEndpoints {
 	kafka: string[];
-	zooKeeper?: string[]
+	zooKeeper?: string[];
 }
 
 export abstract class RdkafkaBase extends EventEmitter {
+	private readonly options: IKafkaBaseOptions;
+
 	constructor(
 		protected readonly endpoints: IKafkaEndpoints,
 		public readonly clientId: string,
 		public readonly topic: string,
-		private readonly numberOfPartitions: number = 32,
-		private readonly replicationFactor: number = 3) {
+		options?: Partial<IKafkaBaseOptions>,
+	) {
 		super();
 
 		if (!kafka) {
 			throw new Error("Invalid node-rdkafka package");
 		}
+
+		this.options = {
+			...options,
+			numberOfPartitions: options?.numberOfPartitions ?? 32,
+			replicationFactor: options?.replicationFactor ?? 3,
+		};
 
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		this.initialize();
@@ -61,8 +74,8 @@ export abstract class RdkafkaBase extends EventEmitter {
 
 		const newTopic: kafkaTypes.NewTopic = {
 			topic: this.topic,
-			num_partitions: this.numberOfPartitions,
-			replication_factor: this.replicationFactor,
+			num_partitions: this.options.numberOfPartitions,
+			replication_factor: this.options.replicationFactor,
 		};
 
 		return new Promise<void>((resolve, reject) => {

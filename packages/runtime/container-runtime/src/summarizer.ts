@@ -11,7 +11,7 @@ import {
     Timer,
     IPromiseTimerResult,
 } from "@fluidframework/common-utils";
-import { ChildLogger, CustomErrorWithProps, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ChildLogger, LoggingError, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IFluidRouter,
     IFluidRunnable,
@@ -79,7 +79,7 @@ export interface ISummarizingWarning extends IErrorBase {
     readonly logged: boolean;
 }
 
-export class SummarizingWarning extends CustomErrorWithProps implements ISummarizingWarning {
+export class SummarizingWarning extends LoggingError implements ISummarizingWarning {
     readonly errorType = summarizingError;
     readonly canRetry = true;
 
@@ -637,7 +637,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.immediateSummary = true;
             this.summaryCollection = summaryCollection;
         } else {
-            this.summaryCollection = new SummaryCollection(this.runtime.deltaManager.initialSequenceNumber);
+            this.summaryCollection = new SummaryCollection(
+                this.runtime.deltaManager.initialSequenceNumber,
+                this.logger);
         }
         this.runtime.deltaManager.inbound.on("op",
             (op) => this.summaryCollection.handleOp(op));

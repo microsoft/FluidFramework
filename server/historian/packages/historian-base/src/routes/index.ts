@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IThrottler } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import * as nconf from "nconf";
 import { ICache, ITenantService } from "../services";
@@ -33,19 +34,23 @@ export interface IRoutes {
 }
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function create(store: nconf.Provider, tenantService: ITenantService, cache: ICache): IRoutes {
+export function create(
+    store: nconf.Provider,
+    tenantService: ITenantService,
+    cache: ICache,
+    throttler: IThrottler): IRoutes {
     return {
         git: {
-            blobs: blobs.create(store, tenantService, cache),
-            commits: commits.create(store, tenantService, cache),
-            refs: refs.create(store, tenantService, cache),
-            tags: tags.create(store, tenantService, cache),
-            trees: trees.create(store, tenantService, cache),
+            blobs: blobs.create(store, tenantService, cache, throttler),
+            commits: commits.create(store, tenantService, cache, throttler),
+            refs: refs.create(store, tenantService, cache, throttler),
+            tags: tags.create(store, tenantService, cache, throttler),
+            trees: trees.create(store, tenantService, cache, throttler),
         },
         repository: {
-            commits: repositoryCommits.create(store, tenantService, cache),
-            contents: contents.create(store, tenantService, cache),
-            headers: headers.create(store, tenantService, cache),
+            commits: repositoryCommits.create(store, tenantService, cache, throttler),
+            contents: contents.create(store, tenantService, cache, throttler),
+            headers: headers.create(store, tenantService, cache, throttler),
         },
     };
 }

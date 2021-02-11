@@ -24,6 +24,7 @@ import {
     SnapshotStorage,
 } from "@fluidframework/replay-driver";
 import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUi";
+import { Sanitizer } from "./sanitizer";
 
 export type debuggerUIFactory = (controller: IDebuggerController) => IDebuggerUI | null;
 
@@ -148,14 +149,18 @@ export class DebugReplayController extends ReplayController implements IDebugger
         reader.readAsText(file, "utf-8");
     }
 
-    public async onDownloadOpsButtonClick(): Promise<string> {
+    public async onDownloadOpsButtonClick(anonymize: boolean): Promise<string> {
         if (this.documentService === undefined) {
             throw new Error("DocumentService required");
         }
 
         const documentDeltaStorageService = await this.documentService.connectToDeltaStorage();
         const messages = await this.fetchOpsFromDeltaStorage(documentDeltaStorageService);
-        return JSON.stringify(messages, undefined, 2);
+
+        const sanitizer = new Sanitizer(messages, false /* fullScrub */, false /* noBail */);
+        const cleanMessages = sanitizer.sanitize();
+
+        return JSON.stringify(cleanMessages, undefined, 2);
     }
 
     private async fetchOpsFromDeltaStorage(documentDeltaStorageService): Promise<ISequencedDocumentMessage[]> {
@@ -251,12 +256,9 @@ export class DebugReplayController extends ReplayController implements IDebugger
         throw new Error("Reading blob before storage is setup properly");
     }
 
-    /**
-     * {@inheritDoc @fluidframework/driver-definitions#IDocumentStorageService.readString}
-     */
-    public async readString(blobId: string): Promise<string> {
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
         if (this.storage !== undefined) {
-            return this.storage.readString(blobId);
+            return this.storage.readBlob(blobId);
         }
         throw new Error("Reading blob before storage is setup properly");
     }
@@ -301,9 +303,10 @@ export class DebugReplayController extends ReplayController implements IDebugger
     public async replay(
         emitter: (op: ISequencedDocumentMessage[]) => void,
         fetchedOps: ISequencedDocumentMessage[]): Promise<void> {
+        let _fetchedOps = fetchedOps;
         // eslint-disable-next-line no-constant-condition
         while (true) {
-            if (fetchedOps.length === 0) {
+            if (_fetchedOps.length === 0) {
                 this.ui.updateNextOpText([]);
                 return;
             }
@@ -312,7 +315,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
                 this.ui.disableNextOpButton(false);
                 this.stepsDeferred = new Deferred<number>();
 
-                this.ui.updateNextOpText(fetchedOps);
+                this.ui.updateNextOpText(_fetchedOps);
 
                 this.stepsToPlay = await this.stepsDeferred.promise;
 
@@ -321,13 +324,12 @@ export class DebugReplayController extends ReplayController implements IDebugger
             }
 
             let playOps: ISequencedDocumentMessage[];
-            if (this.stepsToPlay >= fetchedOps.length) {
-                playOps = fetchedOps;
-                this.stepsToPlay -= fetchedOps.length;
-                // eslint-disable-next-line no-param-reassign
-                fetchedOps = [];
+            if (this.stepsToPlay >= _fetchedOps.length) {
+                playOps = _fetchedOps;
+                this.stepsToPlay -= _fetchedOps.length;
+                _fetchedOps = [];
             } else {
-                playOps = fetchedOps.splice(0, this.stepsToPlay);
+                playOps = _fetchedOps.splice(0, this.stepsToPlay);
                 this.stepsToPlay = 0;
             }
             emitter(playOps);
@@ -352,8 +354,9 @@ async function* generateSequencedMessagesFromDeltaStorage(deltaStorage: IDocumen
     let lastSeq = 0;
     const batch = 2000;
     while (true) {
-        const messages = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
+        const { messages, partialResult } = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
         if (messages.length === 0) {
+            assert(!partialResult);
             break;
         }
         yield messages;

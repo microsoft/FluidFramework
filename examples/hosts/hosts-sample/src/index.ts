@@ -52,10 +52,7 @@ export async function start(url: string, code: string, createNew: boolean): Prom
         tenantId,
         bearerSecret);
 
-    const parsedUrl = new URL(url);
-    const documentId = parsedUrl.pathname.substr(1).split("/")[0];
-
-    const tokenProvider = new InsecureTokenProvider(tenantId, documentId, tenantKey, user);
+    const tokenProvider = new InsecureTokenProvider(tenantKey, user);
 
     // The RouterliciousDocumentServiceFactory creates the driver that allows connections to the Routerlicious service.
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);

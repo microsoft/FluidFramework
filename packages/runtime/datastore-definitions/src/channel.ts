@@ -5,7 +5,7 @@
 
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IChannelSummarizeResult, IGCData } from "@fluidframework/runtime-definitions";
+import { IChannelSummarizeResult, IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
@@ -38,8 +38,9 @@ export interface IChannel extends IFluidLoadable {
     /**
      * Returns the GC data for this channel. It contains a list of GC nodes that contains references to
      * other GC nodes.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    getGCData(): IGCData;
+    getGCData(fullGC?: boolean): IGarbageCollectionData;
 }
 
 /**
@@ -108,6 +109,7 @@ export interface IChannelStorageService {
      */
     read(path: string): Promise<string>;
 
+    readBlob(path: string): Promise<ArrayBufferLike>;
     /**
      * Determines if there is an object contained at the given path.
      */
