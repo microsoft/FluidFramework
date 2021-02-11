@@ -288,8 +288,16 @@ export class DeltaManager
         return this.connection?.claims.documentId;
     }
 
+    public get deltaStreamMode(): ConnectionMode | "none" | undefined {
+        if (this.connection instanceof NoDeltaStream) {
+            return "none";
+        }
+        return this.connection?.mode;
+    }
+
     /**
      * The current connection mode, initially read.
+     * @deprecated - use deltaStreamMode instead
      */
     public get connectionMode(): ConnectionMode {
         if (this.connection === undefined) {

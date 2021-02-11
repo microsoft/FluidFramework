@@ -158,6 +158,8 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
      */
     readonly readonly?: boolean;
 
+    readonly deltaStreamMode: ConnectionMode | "none" | undefined;
+
     /** Terminate the connection to storage */
     close(): void;
 

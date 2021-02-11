@@ -119,6 +119,8 @@ export class MockDeltaManager extends EventEmitter
         return true;
     }
 
+    public readonly deltaStreamMode = "write";
+
     public close(): void { }
 
     public submitSignal(content: any): void { }

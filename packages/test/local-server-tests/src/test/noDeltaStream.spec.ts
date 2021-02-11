@@ -6,7 +6,11 @@
 import { strict as assert } from "assert";
 import { IContainer, ILoader } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+import {
+    createLocalResolverCreateNewRequest,
+    LocalDocumentServiceFactory,
+    LocalResolver,
+ } from "@fluidframework/local-driver";
 import { SharedString } from "@fluidframework/sequence";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -18,6 +22,7 @@ import {
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
+import { Container, DeltaManager } from "@fluidframework/container-loader";
 
 describe("No Delta Stream", () => {
     const documentId = "localServerTest";
@@ -33,28 +38,34 @@ describe("No Delta Stream", () => {
         {generateSummaries: true});
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let urlResolver: LocalResolver;
+    let opc: OpProcessingController;
 
     async function createContainer(): Promise<IContainer> {
         const loader: ILoader = createLoader(
             [[codeDetails, factory]],
             new LocalDocumentServiceFactory(deltaConnectionServer),
-            urlResolver);
-        return createAndAttachContainer(
-            codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
+            new LocalResolver());
+        const container = await createAndAttachContainer(
+            codeDetails,
+            loader,
+            createLocalResolverCreateNewRequest(documentId));
+        opc.addDeltaManagers(container.deltaManager);
+        return container;
     }
 
     async function loadContainer(noDeltaStream: boolean): Promise<IContainer> {
         const loader: ILoader = createLoader(
             [[codeDetails, factory]],
             new LocalDocumentServiceFactory(deltaConnectionServer, noDeltaStream),
-            urlResolver);
-        return loader.resolve({ url: documentLoadUrl });
+            new LocalResolver());
+        const container = await loader.resolve({ url: documentLoadUrl });
+        opc.addDeltaManagers(container.deltaManager);
+        return container;
     }
 
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
-        urlResolver = new LocalResolver();
+        opc = new OpProcessingController();
 
         // Create a Container for the first client.
         const container = await createContainer();
@@ -68,19 +79,27 @@ describe("No Delta Stream", () => {
         assert.notStrictEqual(dataObject.runtime.clientId, undefined, "clientId");
 
         dataObject.root.set("test","key");
-        const opc =  new OpProcessingController();
-        opc.addDeltaManagers(container.deltaManager);
         await opc.process();
     });
 
     it("Validate Properties on Loaded Container With No Delta Stream", async () => {
         // Load the Container that was created by the first client.
-        const container = await loadContainer(true);
+        const container = await loadContainer(true) as Container;
+
+        assert.strictEqual(container.connected, true, "connected");
+        assert.strictEqual(container.clientId, undefined, "clientId");
+        assert.strictEqual(container.existing, true, "existing");
+        assert.strictEqual(container.readonly, true, "readonly");
+        assert.strictEqual(container.readonlyPermissions, true, "readonlyPermissions");
+
+        const deltaManager = container.deltaManager as DeltaManager;
+        assert.strictEqual(deltaManager.active, false, "active");
+        assert.strictEqual(deltaManager.readonly, true, "readonly");
+        assert.strictEqual(deltaManager.readonlyPermissions, true, "readonlyPermissions");
+        assert.strictEqual(deltaManager.connectionMode, "read", "connectionMode");
+        assert.strictEqual(deltaManager.deltaStreamMode, "none", "deltaStreamMode");
+
         const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-
-        assert.strictEqual(container.deltaManager.active, false, "active");
-        assert.strictEqual(container.deltaManager.readonly, true, "readonly");
-
         assert.strictEqual(dataObject.runtime.existing, true, "existing");
         assert.strictEqual(dataObject.runtime.connected, true, "connected");
         assert.strictEqual(dataObject.runtime.clientId, undefined, "clientId");
