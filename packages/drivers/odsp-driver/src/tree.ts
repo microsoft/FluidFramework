@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert, IsoBuffer } from "@fluidframework/common-utils";
+import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 
 /** Default encoding for strings */
 const stringEncoding = "utf-8";
@@ -148,7 +148,7 @@ export abstract class BlobCore {
     public abstract get buffer(): Uint8Array;
 
     public toString(encoding = stringEncoding) {
-        return IsoBuffer.from(this.buffer).toString(encoding);
+        return Uint8ArrayToString(this.buffer, encoding);
     }
 
     public write(buffer: WriteBuffer) {
@@ -341,7 +341,8 @@ export class Node {
                 case Codes.Blob3:
                 case Codes.Blob4:
                 {
-                    const blob = BlobShallowCopy.read(buffer, code - Codes.Blob0);
+                    // BlobShallowCopy
+                    const blob = BlobDeepCopy.read(buffer, code - Codes.Blob0);
                     this.children.push(blob);
                     break;
                 }

@@ -2,10 +2,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-// import { assert } from "@fluidframework/common-utils";
-
 import fs from "fs";
-import { assert } from "@fluidframework/common-utils";
+import assert from "assert";
 import { IOdspSnapshot, IBlob } from "../contracts";
 
 import {
@@ -21,7 +19,7 @@ function convertToCompact() {
 
     const odspSnapshot: IOdspSnapshot = JSON.parse(data.toString("utf-8"));
     const { tree, blobs } = convertOdspSnapshotToSnapsohtTreeAndBlobs(odspSnapshot);
-    let blobs2: Map<string, IBlob | Uint8Array> = blobs;
+    let blobs2: Map<string, IBlob | ArrayBuffer> = blobs;
     blobs2 = unpackBlobs(blobs2);
     // blobs2 = await dedupBlobs(snapshotTree, blobs2);
     // blobs2 = shortenBlobIds(snapshotTree, blobs2);
@@ -40,7 +38,7 @@ describe("Snapshot test", () => {
         for (let i = 0; i < 500; i++) {
             const odspSnapshot: IOdspSnapshot = JSON.parse(data.toString("utf-8"));
             const { tree, blobs } = convertOdspSnapshotToSnapsohtTreeAndBlobs(odspSnapshot);
-            let blobs2: Map<string, IBlob | Uint8Array> = blobs;
+            let blobs2: Map<string, IBlob | ArrayBuffer> = blobs;
             blobs2 = unpackBlobs(blobs2);
             holder.push(tree, blobs2);
         }
@@ -48,12 +46,12 @@ describe("Snapshot test", () => {
 
     it("Round-trip", async () => {
         const buffer = convertToCompact();
-        // fs.writeFileSync("output1.bin", buffer.buffer);
+        fs.writeFileSync("output1.bin", buffer.buffer);
 
         const { tree, blobs, ops } = convertCompactSnapshotToSnapshotTree(buffer);
         const buffer2 = convertOdspSnapshotToCompactSnapshot(tree, blobs, ops);
 
-        assert(buffer.length === buffer2.length);
+        assert.equal(buffer.length, buffer2.length);
         for (let i = 0; i < buffer.length; i++) {
             assert(buffer[i] === buffer2[i]);
         }
