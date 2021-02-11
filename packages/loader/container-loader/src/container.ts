@@ -1619,11 +1619,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             if (errorMsg !== undefined) {
                 const error = new GenericError(
                     errorMsg,
+                    undefined,
                     {
                         clientId: this._clientId,
                         messageClientId: message.clientId,
                         sequenceNumber: message.sequenceNumber,
                         clientSequenceNumber: message.clientSequenceNumber,
+                        opTimestamp: message.timestamp,
                     },
                 );
                 this.close(CreateContainerError(error));
