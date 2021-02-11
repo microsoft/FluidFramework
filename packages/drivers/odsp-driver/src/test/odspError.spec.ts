@@ -12,10 +12,11 @@ import {
     invalidFileNameStatusCode,
     OdspError,
     OdspErrorType,
+    throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils";
 import { IOdspSocketError } from "../contracts";
 import { getWithRetryForTokenRefresh } from "../odspUtils";
-import { errorObjectFromSocketError, throwOdspNetworkError } from "../odspError";
+import { errorObjectFromSocketError } from "../odspError";
 
 describe("Odsp Error", () => {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

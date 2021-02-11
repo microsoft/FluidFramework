@@ -38,4 +38,4 @@ export function parseAuthErrorClaims(responseHeader: Headers): string | undefine
     });
 
     return detectedErrorIndicator ? claims : undefined;
-  }
+}

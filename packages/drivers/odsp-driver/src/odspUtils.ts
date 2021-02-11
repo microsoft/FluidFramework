@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { isOnline, OnlineStatus } from "@fluidframework/driver-utils";
 import {
@@ -11,6 +12,7 @@ import {
     fetchFailureStatusCode,
     fetchTimeoutStatusCode,
     OdspErrorType,
+    throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils";
 import {
     default as fetch,
@@ -20,7 +22,6 @@ import {
 } from "node-fetch";
 import sha from "sha.js";
 import { debug } from "./debug";
-import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 
 /** Parse the given url and return the origin (host name) */
@@ -110,6 +111,7 @@ export async function fetchAndParseAsJSONHelper<T>(
     requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<T>> {
     const response = await fetchHelper(requestInfo, requestInit);
+    let res: IOdspResponse<T> | undefined;
     // JSON.parse() can fail and message (that goes into telemetry) would container full request URI, including
     // tokens... It fails for me with "Unexpected end of JSON input" quite often - an attempt to download big file
     // (many ops) almost always ends up with this error - I'd guess 1% of op request end up here... It always
@@ -121,14 +123,15 @@ export async function fetchAndParseAsJSONHelper<T>(
         for (const [key, value] of response.headers.entries()) {
             newHeaders.set(key, value);
         }
-        const res = {
+        res = {
             headers: newHeaders,
             content: JSON.parse(text),
         };
-        return res;
     } catch (e) {
         throwOdspNetworkError(`Error while parsing fetch response: ${e}`, fetchIncorrectResponse, response);
     }
+    assert(res !== undefined, "Response should be defined here");
+    return res;
 }
 
 /**
