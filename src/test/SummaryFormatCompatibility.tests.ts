@@ -127,6 +127,8 @@ describe('Summary format', () => {
 
 			await localTestObjectProvider.opProcessingController.process();
 
+			await catchupExpectedTree();
+
 			validateSummaryRead('0.1.0-large');
 			validateSummaryWrite(fullHistorySummarizer_0_1_0);
 		});
