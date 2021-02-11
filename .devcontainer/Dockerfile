@@ -23,7 +23,7 @@ RUN mkdir /tmp/library-scripts \
     && /bin/bash /tmp/library-scripts/docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "${SOURCE_SOCKET}" "${TARGET_SOCKET}" "node" \
     && rm -rf /tmp/library-scripts/
 
-# Update package information before install dependencies
+# Update package information before installing
 RUN apt-get update
 
 # Install .so libraries required for Puppeteer tests
