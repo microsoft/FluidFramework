@@ -1,5 +1,20 @@
 # Change Log
 
+## 0.49.0
+
+* feat: Add demandTree() to TreeNodeHandle
+  * Associated pull request: !28004
+* chore: Replace usages of `del-cli` with `rimraf`
+  * Associated pull request: !27947
+* test: Detach of the root should be invalid
+  * Associated pull request: !27943
+* build: Update dependencies
+  * Associated pull request: !27930
+* refactor: make createFluidDocumentStore async, and make expensiveValidation internal
+  * Associated pull request: !27170
+* build: Updated packages to use `version.json` files to track their recorded versions
+  * Associated pull request: !27776
+
 ## 0.42.0
 
 * feat: SharedTree reads summary format 0.1.0 which supports history virtualization
