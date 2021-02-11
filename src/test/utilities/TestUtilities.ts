@@ -200,7 +200,7 @@ export async function setUpLocalServerTestSharedTree(
 
 	if (localTestObjectProvider !== undefined) {
 		provider = localTestObjectProvider;
-		container = (await provider.loadTestContainer()) as Container;
+		container = await provider.loadTestContainer();
 	} else {
 		provider = new LocalTestObjectProvider(runtimeFactory);
 		container = (await provider.makeTestContainer()) as Container;
