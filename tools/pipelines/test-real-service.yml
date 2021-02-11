@@ -114,7 +114,7 @@ jobs:
         fluid__webpack__fluidHost: $(fluid-webpack-fluidHost)
         fluid__webpack__tenantId: $(fluid-webpack-tenantId)
         fluid__webpack__tenantSecret: $(fluid-webpack-tenantSecret)
-        FLUID_DI_ROOT: ${{ parameters.buildDirectory }}/packages/test/service-load-test/scripts/node_modules
+        FLUID_DI_ROOT: ${{ variables.diDir }}/node_modules
       inputs:
         command: 'custom'
         workingDir: packages/test/end-to-end-tests
