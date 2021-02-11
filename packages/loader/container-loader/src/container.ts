@@ -1625,7 +1625,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         messageClientId: message.clientId,
                         sequenceNumber: message.sequenceNumber,
                         clientSequenceNumber: message.clientSequenceNumber,
-                        opTimestamp: message.timestamp,
+                        messageTimestamp: message.timestamp,
                     },
                 );
                 this.close(CreateContainerError(error));
