@@ -64,7 +64,8 @@ jobs:
             checkoutSubmodules=${{ parameters.checkoutSubmodules }}
 
           Pipeline Variables:
-            releaseBuild=${{ variables.diDir }}
+            diDir=${{ variables.diDir }}
+          "
 
     # Install
     - task: UseNode@1

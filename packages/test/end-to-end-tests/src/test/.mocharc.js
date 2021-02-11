@@ -12,6 +12,7 @@ const diRoot = process.env.FLUID_DI_ROOT;
 
 console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
 console.log(`${diRoot}`);
+console.log(`${__dirname}`);
 
 const config ={
   "exit": true,
