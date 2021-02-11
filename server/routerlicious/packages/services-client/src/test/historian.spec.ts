@@ -26,7 +26,7 @@ describe.only("Historian", () => {
         password: "new-test-password",
     };
     let sendFreshCredentials: boolean = false;
-    const getCredentials = () => {
+    const getCredentials = async () => {
         if (sendFreshCredentials) {
             return freshCredentials;
         }

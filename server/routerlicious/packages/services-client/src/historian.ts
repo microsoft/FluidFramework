@@ -34,7 +34,7 @@ export class Historian implements IHistorian {
         public endpoint: string,
         private readonly historianApi: boolean,
         private readonly disableCache: boolean,
-        private readonly getCredentials?: () => ICredentials | Promise<ICredentials>,
+        private readonly getCredentials?: () => Promise<ICredentials>,
         private readonly getCorrelationId?: () => string | undefined) {
         this.restWrapperP = this.createRestWrapper();
     }
