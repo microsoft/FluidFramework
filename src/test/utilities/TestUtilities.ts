@@ -195,10 +195,17 @@ export async function setUpLocalServerTestSharedTree(
 			initialSummarizerDelayMs: 0,
 		});
 
-	const provider: LocalTestObjectProvider<ITestContainerConfig> =
-		localTestObjectProvider || new LocalTestObjectProvider(runtimeFactory);
+	let provider: LocalTestObjectProvider<ITestContainerConfig>;
+	let container: Container;
 
-	const container = (await provider.makeTestContainer()) as Container;
+	if (localTestObjectProvider !== undefined) {
+		provider = localTestObjectProvider;
+		container = (await provider.loadTestContainer()) as Container;
+	} else {
+		provider = new LocalTestObjectProvider(runtimeFactory);
+		container = (await provider.makeTestContainer()) as Container;
+	}
+
 	const dataObject = await requestFluidObject<ITestFluidObject>(container, 'default');
 	const tree = await dataObject.getSharedObject<SharedTree>(treeId);
 
