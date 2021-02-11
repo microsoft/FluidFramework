@@ -20,6 +20,24 @@ export const createResponse = async (response: object, ok: boolean, status: numb
 export const okResponse = async (response: object) => createResponse(response, true, 200);
 export const notFound = async (response: object) => createResponse(response, false, 404);
 
+export async function mockFetchMultiple<T>(
+    responses: [response: object, responseType: (res: object) => object][],
+    callback: () => Promise<T>,
+): Promise<T> {
+    const fetchStub = sinon.stub(fetchModule, "default");
+    fetchStub.callsFake(async () => {
+        const value = responses.shift();
+        if (value !== undefined) {
+            return value[1](value[0]);
+        }
+    });
+    try {
+        return await callback();
+    } finally {
+        fetchStub.restore();
+    }
+}
+
 export async function mockFetch<T>(
     response: object,
     callback: () => Promise<T>,

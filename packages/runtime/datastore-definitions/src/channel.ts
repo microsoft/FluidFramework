@@ -38,8 +38,9 @@ export interface IChannel extends IFluidLoadable {
     /**
      * Returns the GC data for this channel. It contains a list of GC nodes that contains references to
      * other GC nodes.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    getGCData(): IGarbageCollectionData;
+    getGCData(fullGC?: boolean): IGarbageCollectionData;
 }
 
 /**

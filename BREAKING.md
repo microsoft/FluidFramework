@@ -1,3 +1,10 @@
+## 0.35 Breaking changes
+- [Removed some api implemenations from odsp driver](#Removed-some-api-implemenations-from-odsp-driver)
+
+### Removed-some-api-implemenations-from-odsp-driver
+Removed `authorizedFetchWithRetry`, `AuthorizedRequestTokenPolicy`, `AuthorizedFetchProps`, `asyncWithCache`, `asyncWithRetry`,
+`fetchWithRetry` implementation from odspdriver.
+
 ## 0.34 Breaking changes
 - [Aqueduct writeBlob() and BlobHandle implementation removed](#Aqueduct-writeBlob-and-BlobHandle-implementation-removed)
 - [Connected events raised on registration](#Connected-events-raised-on-registration)

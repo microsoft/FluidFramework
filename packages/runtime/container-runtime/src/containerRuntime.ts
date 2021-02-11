@@ -220,6 +220,10 @@ export interface IContainerRuntimeOptions {
     // Flag that will disable garbage collection if set to true.
     disableGC?: boolean;
 
+    // Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether the node
+    // changed or not.
+    runFullGC?: boolean;
+
     // Override summary configurations
     summaryConfigOverrides?: Partial<ISummaryConfiguration>;
 }
@@ -716,7 +720,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
             (id: string, createParam: CreateChildSummarizerNodeParam) => (
                     summarizeInternal: SummarizeInternalFn,
-                    getGCDataFn: () => Promise<IGarbageCollectionData>,
+                    getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
                     getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
                 ) => this.summarizerNode.createChild(
                     summarizeInternal,
@@ -1378,7 +1382,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 const gcStats: { totalGCNodes?: number; deletedGCNodes?: number } = {};
                 try {
                     // Get the container's GC data and run GC on the reference graph in it.
-                    const gcData = await this.dataStores.getGCData();
+                    const gcData = await this.dataStores.getGCData(this.runtimeOptions.runFullGC === true);
                     const { referencedNodeIds, deletedNodeIds } = runGarbageCollection(
                         gcData.gcNodes, [ "/" ],
                         this.logger,

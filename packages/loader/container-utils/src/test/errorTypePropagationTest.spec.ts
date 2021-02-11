@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { MockLogger } from "@fluidframework/test-runtime-utils";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { GenericError, DataCorruptionError } from "../error";
+import { GenericError, DataCorruptionError, CreateContainerError } from "../error";
 
 describe("Check if the errorType field matches after sending/receiving via Container error classes", () => {
     // In all tests below, the `stack` prop will be left out of validation because it is difficult to properly
@@ -89,8 +89,8 @@ describe("Check if the errorType field matches after sending/receiving via Conta
         });
     });
 
-    describe("Send and receive a GenericError using a ChildLogger", () => {
-        it("Send and receive a DataCorruptionError.", () => {
+    describe("Send errors using a ChildLogger", () => {
+        it("Send and receive a GenericError.", () => {
             const childLogger = ChildLogger.create(mockLogger, "errorTypeTestNamespace");
             const testError = new GenericError("genericError", undefined);
             childLogger.sendErrorEvent({ eventName: "A" }, testError);
@@ -100,6 +100,31 @@ describe("Check if the errorType field matches after sending/receiving via Conta
                 message: "genericError",
                 errorType: ContainerErrorType.genericError,
                 error: "genericError",
+            }]));
+        });
+
+        it("Send and receive a DataCorruptionError using CreateContainerError", () => {
+            const childLogger = ChildLogger.create(mockLogger, "errorTypeTestNamespace");
+            // Example dataCorruptionError kicked up by some process:
+            const testError = new DataCorruptionError(
+                "dataCorruptionErrorTest",
+                { exampleExtraTelemetryProp: "exampleExtraTelemetryProp" },
+            );
+            // Equivalent of common scenario where we call container.close(CreateContainerError(some_error)):
+            const wrappedTestError = CreateContainerError(testError);
+            childLogger.sendErrorEvent({
+                eventName: "CloseContainerOnDataCorruptionTest",
+                sequenceNumber: 0,
+            }, wrappedTestError);
+
+            assert(mockLogger.matchEvents([{
+                eventName: "errorTypeTestNamespace:CloseContainerOnDataCorruptionTest",
+                category: "error",
+                message: "dataCorruptionErrorTest",
+                errorType: ContainerErrorType.dataCorruptionError,
+                error: "dataCorruptionErrorTest",
+                exampleExtraTelemetryProp: "exampleExtraTelemetryProp",
+                sequenceNumber: 0,
             }]));
         });
     });
