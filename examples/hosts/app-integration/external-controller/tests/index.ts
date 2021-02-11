@@ -12,7 +12,7 @@ import { getSessionStorageContainer } from "@fluidframework/get-session-storage-
 import { getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
 
 import { DiceRollerController } from "../src/controller";
-import { KeyValueContainerRuntimeFactory } from "../src/fluid-static";
+import { KeyValueContainerRuntimeFactory } from "@fluid-experimental/fluid-static";
 import { renderDiceRoller } from "../src/view";
 
 // Since this is a single page Fluid application we are generating a new document id

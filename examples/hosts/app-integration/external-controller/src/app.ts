@@ -8,8 +8,8 @@ import {
     KeyValueDataObject,
     KeyValueInstantiationFactory,
 } from "@fluid-experimental/data-objects";
+import { Fluid } from "@fluid-experimental/fluid-static";
 import { DiceRollerController } from "./controller";
-import { Fluid } from "./fluid-static";
 import { renderDiceRoller } from "./view";
 
 let createNew = false;
