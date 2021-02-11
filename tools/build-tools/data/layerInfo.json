@@ -151,7 +151,8 @@
             "HostUtils": {
                 "dev": true,
                 "packages": [
-                    "@fluid-experimental/get-container"
+                    "@fluid-experimental/get-container",
+                    "@fluid-experimental/fluid-static"
                 ],
                 "deps": [
                     "Loader",
