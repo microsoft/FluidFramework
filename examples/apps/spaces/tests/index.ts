@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getSessionStorageContainer } from "@fluidframework/get-session-storage-container";
+import { getSessionStorageContainer } from "@fluid-experimental/get-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
 import { SpacesContainer } from "../src/container";

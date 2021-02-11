@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { KeyValueInstantiationFactory } from "@fluid-experimental/data-objects";
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { innerRequestHandler, RuntimeRequestHandler } from "@fluidframework/request-handler";
+import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
 
 /**
@@ -21,13 +21,13 @@ const createRequestHandler: RuntimeRequestHandler =
     };
 
 /**
- * The DropletContainerRuntimeFactory is the container code for our scenario.
+ * The DOProviderContainerRuntimeFactory is the container code for our scenario.
  *
  * By including the createRequestHandler, we can create any droplet types we include in the registry on-demand.
  * These can then be retrieved via container.request("/dataObjectId").
  */
-export const KeyValueContainerRuntimeFactory = new BaseContainerRuntimeFactory(
-    [KeyValueInstantiationFactory.registryEntry],
-    [],
-    [createRequestHandler, innerRequestHandler],
-);
+export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
+    constructor(registryEntries: NamedFluidDataStoreRegistryEntry[]) {
+        super(registryEntries, [], [createRequestHandler, innerRequestHandler]);
+    }
+}
