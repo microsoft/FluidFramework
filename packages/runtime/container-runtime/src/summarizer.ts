@@ -344,7 +344,6 @@ export class RunningSummarizer implements IDisposable {
             summaryCollection.setPendingAckTimerTimeoutCallback(maxAckWaitTime, () => {
                 if (this.pendingAckTimer.hasTimer) {
                     this.pendingAckTimer.clear();
-                    this.trySummarize("summaryAckMiss");
                 }
             });
         }
