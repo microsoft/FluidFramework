@@ -120,3 +120,62 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
      */
     shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void;
 }
+
+//////////////////////// fluidError.ts in common-definitions /////////////////////////////
+/**
+ * Can be decl merged to add stuff like packagename, odspErrorResponse, etc
+ * The logger impl can choose to log anything in here as appropriate, but by default it's not
+ */
+export interface ISensitiveDebugData {
+    innerError?: any;
+}
+
+export interface IFluidError extends Error {
+    errorType: string;
+    getFluidTelemetryProps: () => ITelemetryProperties;  //* use property getters?
+    getSensitiveDebugData: () => ISensitiveDebugData & { stack: string };
+    addDetails: (props: ITelemetryProperties, debugData: ISensitiveDebugData) => void;
+}
+
+export function isIFluidError(err: any): err is IFluidError {
+    return (
+        typeof(err?.errorType) === "string" &&
+        typeof(err?.getFluidTelemetryProps) === "function" && //* Or only check this for brevity/perf?
+        typeof(err?.getSensitiveDebugData) === "function" &&
+        typeof(err?.addDetails) === "function");
+}
+
+//////////////////////// fluidError.ts in common-utils /////////////////////////////
+
+export class FluidError extends Error implements IFluidError {
+    private props: ITelemetryProperties;
+    private debugData: ISensitiveDebugData;
+    constructor(message: string, readonly errorType: string, props: ITelemetryProperties, debugData: Omit<ISensitiveDebugData, "stack">) {
+        super(message);
+        this.props = { ...props, message, errorType };
+        this.debugData = { ...debugData };
+    }
+
+    public getFluidTelemetryProps() { return { ...this.props }; };
+    public getSensitiveDebugData() { return { ...this.debugData, stack: this.stack ?? "" }; }; //* Or implement deep copy? Not even possible...?
+
+    public addDetails(props: ITelemetryProperties, debugData: Partial<ISensitiveDebugData>) {
+        this.props = { ...this.props, ...props };
+        this.debugData = { ...this.debugData, ...debugData };
+    }
+}
+
+export function wrapAsFluidError(err: any): IFluidError {
+    if (isIFluidError(err)) {
+        return err;
+    }
+
+    //* start with promoting err's message, per present behavior, and then pull out in later scoped change.
+    //* Same with stack above?
+    return new FluidError(
+        "External Error",
+        "generic",
+        {},
+        { innerError: err },
+    );
+}
