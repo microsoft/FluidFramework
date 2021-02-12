@@ -11,7 +11,7 @@ import { RetriableDocumentStorageService } from "../retriableDocumentStorageServ
 describe("RetriableDocumentStorageService Tests", () => {
     let retriableStorageService: RetriableDocumentStorageService;
     let internalService: IDocumentStorageService;
-    const iso_true = IsoBuffer.from("true");
+    const iso_true = IsoBuffer.from("true").buffer;
     const iso_false = IsoBuffer.from("false").buffer;
     beforeEach(() => {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

@@ -251,7 +251,9 @@ async function saveSnapshot(name: string, fetchedData: IFetchedData[], saveDir: 
         } else {
             // Write out same data for tree
             fs.writeFileSync(`${outDir}/${item.filename}.json`, data);
-            fs.writeFileSync(`${outDir}/decoded/${item.filename}.json`, JSON.stringify(JSON.parse(data), undefined, 2));
+            const decoded = bufferToString(buffer,"utf8");
+            fs.writeFileSync(`${outDir}/decoded/${item.filename}.json`,
+                JSON.stringify(JSON.parse(decoded), undefined, 2));
         }
     }));
 }
