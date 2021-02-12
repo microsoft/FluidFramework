@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IThrottler } from "@fluidframework/server-services-core";
 import { AsyncLocalStorage } from "async_hooks";
+import { IThrottler } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import * as nconf from "nconf";
 import { ICache, ITenantService } from "../services";

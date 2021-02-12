@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IThrottler } from "@fluidframework/server-services-core";
 import { AsyncLocalStorage } from "async_hooks";
+import { IThrottler } from "@fluidframework/server-services-core";
 import * as bodyParser from "body-parser";
 import compression from "compression";
 import cors from "cors";
@@ -25,7 +25,12 @@ const stream = split().on("data", (message) => {
     winston.info(message);
 });
 
-export function create(config: nconf.Provider, tenantService: ITenantService, cache: ICache, throttler: IThrottler, asyncLocalStorage: AsyncLocalStorage<string>) {
+export function create(
+    config: nconf.Provider,
+    tenantService: ITenantService,
+    cache: ICache,
+    throttler: IThrottler,
+    asyncLocalStorage: AsyncLocalStorage<string>) {
     // Express app configuration
     const app: express.Express = express();
 

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { AsyncLocalStorage } from "async_hooks";
 import { OutgoingHttpHeaders } from "http";
 import { ITenantConfig } from "@fluidframework/server-services-core";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
-import { AsyncLocalStorage } from "async_hooks";
 import * as uuid from "uuid";
 import * as request from "request-promise-native";
 import * as winston from "winston";
@@ -15,7 +15,10 @@ import { ITenantService } from "./definitions";
 import { RedisTenantCache } from "./redisTenantCache";
 
 export class RiddlerService implements ITenantService {
-    constructor(private readonly endpoint: string, private readonly cache: RedisTenantCache, private readonly asyncLocalStorage: AsyncLocalStorage<string>) {
+    constructor(
+        private readonly endpoint: string,
+        private readonly cache: RedisTenantCache,
+        private readonly asyncLocalStorage: AsyncLocalStorage<string>) {
     }
 
     public async getTenant(tenantId: string, token: string): Promise<ITenantConfig> {

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { AsyncLocalStorage } from "async_hooks";
 import * as querystring from "querystring";
 import * as git from "@fluidframework/gitresources";
 import {
@@ -10,7 +11,6 @@ import {
     ICreateRefParamsExternal,
     IPatchRefParamsExternal } from "@fluidframework/server-services-client";
 import { ITenantStorage } from "@fluidframework/server-services-core";
-import { AsyncLocalStorage } from "async_hooks";
 import * as uuid from "uuid";
 import request from "request";
 import * as winston from "winston";

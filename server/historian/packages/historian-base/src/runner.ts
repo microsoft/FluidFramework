@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { AsyncLocalStorage } from "async_hooks";
 import { Deferred } from "@fluidframework/common-utils";
 import { IThrottler, IWebServer, IWebServerFactory } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
-import { AsyncLocalStorage } from "async_hooks";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { ICache, ITenantService } from "./services";
