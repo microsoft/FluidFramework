@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, assertNotUndefined, fail } from './Common';
+import { assert, assertNotUndefined, copyPropertyIfDefined, fail } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
 import { ChangeNode, TraitLocation, StableRange, Side, StablePlace, NodeData } from './PersistedTypes';
 import { compareTraits } from './EditUtilities';
@@ -86,7 +86,7 @@ export class Snapshot {
 	 */
 	public static fromTree(root: ChangeNode): Snapshot {
 		function insertNodeRecursive(node: ChangeNode, newSnapshotNodes: Map<NodeId, SnapshotNode>): NodeId {
-			const { identifier, payload, definition } = node;
+			const { identifier, definition } = node;
 			const traits: Map<TraitLabel, readonly NodeId[]> = new Map();
 			// eslint-disable-next-line no-restricted-syntax
 			for (const key in node.traits) {
@@ -98,7 +98,8 @@ export class Snapshot {
 					);
 				}
 			}
-			const snapshotNode: SnapshotNode = { identifier, ...(payload ? { payload } : {}), definition, traits };
+			const snapshotNode: SnapshotNode = { identifier, definition, traits };
+			copyPropertyIfDefined(node, snapshotNode, 'payload');
 			newSnapshotNodes.set(snapshotNode.identifier, snapshotNode);
 			return snapshotNode.identifier;
 		}

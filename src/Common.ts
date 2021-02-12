@@ -195,3 +195,14 @@ export function compareArrays<T>(
 export function noop(): void {
 	// noop
 }
+
+/**
+ * Copies a property in such a way that it is only set on `destination` if it is present on `source`.
+ * This avoids having explicit undefined values under properties that would cause `Object.hasOwnProperty` to return true.
+ */
+export function copyPropertyIfDefined<TSrc, TDst>(source: TSrc, destination: TDst, property: keyof TSrc): void {
+	const value = source[property];
+	if (value !== undefined) {
+		(destination as any)[property] = value;
+	}
+}

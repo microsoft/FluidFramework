@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { memoizeGetter } from './Common';
+import { copyPropertyIfDefined, memoizeGetter } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
 import { ChangeNode, TraitMap } from './PersistedTypes';
 import { Snapshot, SnapshotNode } from './Snapshot';
@@ -63,8 +63,8 @@ export function getChangeNodeFromSnapshot(snapshot: Snapshot, nodeId: NodeId, la
 	const nodeData = {
 		definition: node.definition,
 		identifier: node.identifier,
-		...(node.payload ? { payload: node.payload } : {}),
 	};
+	copyPropertyIfDefined(node, nodeData, 'payload');
 
 	if (lazyTraits) {
 		return {
