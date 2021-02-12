@@ -5,8 +5,7 @@
 
 import { EventEmitter } from "events";
 import { EventHubClient } from "@azure/event-hubs";
-import { IPendingBoxcar, IProducer } from "@fluidframework/server-services-core";
-import { PendingBoxcar, MaxBatchSize } from "./pendingBoxcar";
+import { IPendingBoxcar, IProducer, PendingBoxcar, MaxBatchSize } from "@fluidframework/server-services-core";
 
 export class EventHubProducer implements IProducer {
     private readonly events = new EventEmitter();

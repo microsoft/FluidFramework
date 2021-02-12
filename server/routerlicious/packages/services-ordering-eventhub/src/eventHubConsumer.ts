@@ -12,7 +12,6 @@ import {
     IQueuedMessage,
     IPartition,
 } from "@fluidframework/server-services-core";
-import { debug } from "./debug";
 
 interface IEventHubMessage extends IQueuedMessage {
     context: PartitionContext;
@@ -56,8 +55,6 @@ export class EventHubConsumer implements IConsumer {
         const eventHubMessage = queuedMessage as IEventHubMessage;
         if (eventHubMessage && eventHubMessage.context && eventHubMessage.data) {
             await eventHubMessage.context.checkpointFromEventData(eventHubMessage.data);
-        } else {
-            debug("Invalid message metadata");
         }
     }
 

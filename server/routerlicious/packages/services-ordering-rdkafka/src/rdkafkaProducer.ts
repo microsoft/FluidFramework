@@ -4,10 +4,16 @@
  */
 
 import type * as kafkaTypes from "node-rdkafka";
-import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@fluidframework/server-services-core";
+import {
+	BoxcarType,
+	IBoxcarMessage,
+	IPendingBoxcar,
+	IProducer,
+	PendingBoxcar,
+	MaxBatchSize,
+} from "@fluidframework/server-services-core";
 
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
-import { PendingBoxcar, MaxBatchSize } from "./pendingBoxcar";
 import { tryImportNodeRdkafka } from "./tryImport";
 
 const kafka = tryImportNodeRdkafka();
