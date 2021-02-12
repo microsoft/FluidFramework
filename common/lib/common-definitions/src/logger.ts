@@ -130,8 +130,9 @@ export interface ISensitiveDebugData {
     innerError?: any;
 }
 
-export interface IFluidError extends Error {
+export interface IFluidError {
     errorType: string;
+    message: string;
     getFluidTelemetryProps: () => ITelemetryProperties;  //* use property getters?
     getSensitiveDebugData: () => ISensitiveDebugData & { stack: string };
     addDetails: (props: ITelemetryProperties, debugData: ISensitiveDebugData) => void;
@@ -145,21 +146,21 @@ export const isIFluidError = (err: any): err is IFluidError => (
 
 // ////////////////////// fluidError.ts in common-utils /////////////////////////////
 
-export class FluidError extends Error implements IFluidError {
-    private props: ITelemetryProperties;
-    private debugData: ISensitiveDebugData;
+export abstract class FluidError extends Error implements IFluidError {
+    public abstract errorType: string;
+
+    private props: ITelemetryProperties = {};
+    private debugData: ISensitiveDebugData = {};
     constructor(
         message: string,
-        readonly errorType: string,
-        props: ITelemetryProperties,
-        debugData: ISensitiveDebugData,
+        props: ITelemetryProperties = {},
+        debugData: ISensitiveDebugData = {},
     ) {
         super(message);
-        this.props = { ...props, message, errorType };
-        this.debugData = { ...debugData };
+        this.addDetails(props, debugData);
     }
 
-    public getFluidTelemetryProps() { return { ...this.props }; }
+    public getFluidTelemetryProps() { return { ...this.props, message: this.message, errorType: this.errorType }; }
     public getSensitiveDebugData() {
         return { ...this.debugData, stack: this.stack ?? "" };
     } //* Or implement deep copy? Not even possible...?
@@ -170,6 +171,10 @@ export class FluidError extends Error implements IFluidError {
     }
 }
 
+export class GenericError extends FluidError {
+    public errorType: string = "generic";
+}
+
 export function wrapAsFluidError(err: any): IFluidError {
     if (isIFluidError(err)) {
         return err;
@@ -177,10 +182,52 @@ export function wrapAsFluidError(err: any): IFluidError {
 
     //* start with promoting err's message, per present behavior, and then pull out in later scoped change.
     //* Same with stack above?
-    return new FluidError(
+    return new GenericError(
         "External Error",
-        "generic",
         {},
         { innerError: err },
     );
+}
+
+// ///////////////// Testing ////////////////////
+
+export enum DriverErrorType {
+    throttlingError = "throttlingError",
+    asdf = "asdf",
+}
+
+export interface IDriverErrorBase extends IFluidError {
+    readonly errorType: DriverErrorType;
+    canRetry: boolean;
+    online?: string;
+}
+
+export interface IThrottlingWarning extends IDriverErrorBase {
+    readonly errorType: DriverErrorType.throttlingError;
+    readonly retryAfterSeconds: number;
+}
+
+export class ThrottlingError extends FluidError implements IThrottlingWarning {
+    readonly errorType = DriverErrorType.throttlingError;
+    readonly canRetry = true;
+
+    constructor(
+        errorMessage: string,
+        readonly retryAfterSeconds: number,
+        statusCode?: number,
+    ) {
+        //* As-is, need to include retryAfterSeconds here since we're no longer
+        //* just pulling every property off the object but rather keeping them
+        //* separated in props. Something to consider.
+        super(errorMessage, { retryAfterSeconds, statusCode });
+    }
+}
+
+export class AssertError extends FluidError {
+    constructor(
+        errorMessage: string,
+        readonly errorType: string,
+    ) {
+        super(errorMessage);
+    }
 }
