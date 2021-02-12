@@ -249,7 +249,20 @@
                 "<node_internals>/**/*.js"
             ],
             "preLaunchTask": "fluid-build $cwd -s tsc"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Current Test (JS)",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "stopOnEntry": false,
+            "sourceMaps": true,
+            "args": [
+                "--no-timeouts",
+                "--exit",
+                "../../dist/test/${fileBasenameNoExtension}.js", ],
+            "cwd": "${fileDirname}",
+            "outFiles": ["${fileDirname}/../../dist/**/*.js"],
         }
-
     ]
 }
