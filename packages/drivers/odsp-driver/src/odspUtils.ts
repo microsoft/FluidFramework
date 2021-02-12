@@ -46,7 +46,7 @@ export async function getWithRetryForTokenRefresh<T>(get: (options: TokenFetchOp
         switch (e.errorType) {
             // If the error is 401 or 403 refresh the token and try once more.
             case DriverErrorType.authorizationError:
-                return get({ refresh: true, claims: e.claims });
+                return get({ refresh: true, claims: e.claims, tenantId: e.tenantId });
             // fetchIncorrectResponse indicates some error on the wire, retry once.
             case DriverErrorType.incorrectServerResponse:
             // If the token was null, then retry once.
