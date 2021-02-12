@@ -35,8 +35,11 @@ declare global {
 }
 
 //* Remove
-describe("temp", () => {
-    it("validating DI worked", () => {
+describe.only("temp", () => {
+    it("temp blah temp", () => {
+        assert.strictEqual("asdf", "asdf");
+    });
+    it("temp validating DI worked", () => {
         assert.strictEqual(otel, "asdf");
     });
 });
