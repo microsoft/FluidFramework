@@ -45,6 +45,9 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         const container2 = await args.loadTestContainer(testContainerConfig) as Container;
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
     });
+    afterEach(() => {
+        args.reset();
+    });
 
     describe("Attach signal Handlers on Both Clients", () => {
         it("Validate data store runtime signals", async () => {

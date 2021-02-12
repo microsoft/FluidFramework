@@ -23,6 +23,9 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     beforeEach(()=>{
         args = argsFactory();
     });
+    afterEach(() => {
+        args.reset();
+    });
     it("attach sends an op", async function() {
         const container = await args.makeTestContainer(testContainerConfig);
 
