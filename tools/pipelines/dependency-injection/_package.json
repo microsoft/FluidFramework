@@ -4,6 +4,6 @@
   "description": "Install dependencies on pipeline VM for DI",
   "main": "index.js",
   "dependencies": {
-    "@ff-internal/aria-logger": "^0.0.1"
+    "@ff-internal/aria-logger": "^0.0.2"
   }
 }
