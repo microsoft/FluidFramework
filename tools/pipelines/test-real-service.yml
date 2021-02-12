@@ -8,7 +8,7 @@ name: $(Build.BuildId)
 parameters:
 - name: buildDirectory
   type: string
-  default: .
+  default: $(Build.SourcesDirectory)
 
 - name: taskBuild
   type: string
@@ -34,7 +34,7 @@ variables:
     parameters:
       buildNumberInPatch: true
   - name: diDir
-    value: '${{ parameters.buildDirectory }}/tools/pipelines/dependency-injection'
+    value: '$(Build.SourcesDirectory)/tools/pipelines/dependency-injection'
 
 jobs:
   - job: run
