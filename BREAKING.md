@@ -1,9 +1,22 @@
 ## 0.35 Breaking changes
-- [Removed some api implemenations from odsp driver](#Removed-some-api-implemenations-from-odsp-driver)
+- [Removed some api implementations from odsp driver](#Removed-some-api-implemenations-from-odsp-driver)
+- [get-tinylicious-container and get-session-storage-container moved](#get-tinylicious-container-and-get-session-storage-container-moved)
+- [Moved parseAuthErrorClaims from @fluidframework/odsp-driver to @fluidframework/odsp-doclib-utils](#Moved-parseAuthErrorClaims-from-@fluidframework/odsp-driver-to-@fluidframework/odsp-doclib-utils)
+- [Refactored token fetcher types in odsp-driver](#refactored-token-fetcher-types-in-odsp-driver)
 
-### Removed-some-api-implemenations-from-odsp-driver
+### Removed-some-api-implementations-from-odsp-driver
 Removed `authorizedFetchWithRetry`, `AuthorizedRequestTokenPolicy`, `AuthorizedFetchProps`, `asyncWithCache`, `asyncWithRetry`,
 `fetchWithRetry` implementation from odspdriver.
+
+### get-tinylicious-container and get-session-storage-container moved
+The functionality from the packages `@fluidframework/get-tinylicious-container` and `@fluidframework/get-session-storage-container` has been moved to the package `@fluid-experimental/get-container`.
+
+### Moved parseAuthErrorClaims from @fluidframework/odsp-driver to @fluidframework/odsp-doclib-utils
+Moved `parseAuthErrorClaims` from `@fluidframework/odsp-driver` to `@fluidframework/odsp-doclib-utils`
+
+## Refactored token fetcher types in odsp-driver
+Streamlined interfaces and types used to facilitate access tokens needed by odsp-driver to call ODSP implementation of Fluid services.
+Added support for passing siteUrl when fetching token that is used to establish co-authoring session for Fluid content stored in ODSP file which is hosted in external tenant. This token is used by ODSP ordering service implementation (aka ODSP Push service).
 
 ## 0.34 Breaking changes
 - [Aqueduct writeBlob() and BlobHandle implementation removed](#Aqueduct-writeBlob-and-BlobHandle-implementation-removed)

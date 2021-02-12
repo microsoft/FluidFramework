@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambdaFactory, IPlugin } from "@fluidframework/server-services-core";
+import { DefaultServiceConfiguration, IPartitionLambdaFactory, IPlugin } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { DocumentLambdaFactory } from "./lambdaFactory";
 
@@ -18,5 +18,5 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     // Factory used to create document lambda processors
     const factory = await plugin.create(config);
 
-    return new DocumentLambdaFactory(factory);
+    return new DocumentLambdaFactory(factory, DefaultServiceConfiguration.documentLambda);
 }

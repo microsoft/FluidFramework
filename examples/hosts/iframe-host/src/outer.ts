@@ -5,11 +5,11 @@
 
 import * as Comlink from "comlink";
 import { fluidExport as TodoContainer } from "@fluid-example/todo";
-import { IFluidObject } from "@fluidframework/core-interfaces";
 import {
     getTinyliciousContainer,
     InsecureTinyliciousUrlResolver,
-} from "@fluidframework/get-tinylicious-container";
+} from "@fluid-experimental/get-container";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
