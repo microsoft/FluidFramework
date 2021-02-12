@@ -56,17 +56,12 @@ function replaceBlobs(tree: ISnapshotTree, mapping: Map<string, string>) {
  * @param blobs - array of blobs
  * @returns - new array of blobs.
  */
-export async function dedupBlobs(snapshotTree: ISnapshotTree, blobs: Map<string, IBlob | ArrayBuffer>) {
+export async function dedupBlobs(snapshotTree: ISnapshotTree, blobs: Map<string, Uint8Array>) {
     const hashToId = new Map<string, string>();
     const idToId = new Map<string, string>();
     const newBlobs = new Map<string, IBlob | ArrayBuffer>();
     for (const [id, blob] of blobs) {
-        let sha: string;
-        if (blob instanceof ArrayBuffer) {
-            sha = await hashFile(IsoBuffer.from(blob));
-        } else {
-            sha = await hashFile(IsoBuffer.from(blob.content, blob.encoding));
-        }
+        const sha = await hashFile(IsoBuffer.from(blob, blob.byteOffset, blob.byteLength));
         if (!hashToId.has(sha)) {
             hashToId.set(sha, id);
             newBlobs.set(id, blob);
@@ -83,18 +78,14 @@ export async function dedupBlobs(snapshotTree: ISnapshotTree, blobs: Map<string,
  * @param blobs - array of blobs
  * @returns - new array of blobs.
  */
-export function shortenBlobIds(snapshotTree: ISnapshotTree, blobs: Map<string, IBlob | ArrayBuffer>) {
+export function shortenBlobIds(snapshotTree: ISnapshotTree, blobs: Map<string, Uint8Array>) {
     const idToId = new Map<string, string>();
     const newBlobs = new Map<string, IBlob | ArrayBuffer>();
     let counter = 0;
     for (const [id, blob] of blobs) {
         const newId = counter.toString(36);
         counter++;
-        if (blob instanceof ArrayBuffer) {
-            newBlobs.set(newId, blob);
-        } else {
-            newBlobs.set(newId, { ...blob, id: newId });
-        }
+        newBlobs.set(newId, blob);
         idToId.set(id, newId);
     }
     replaceBlobs(snapshotTree, idToId);
@@ -104,13 +95,13 @@ export function shortenBlobIds(snapshotTree: ISnapshotTree, blobs: Map<string, I
 /**
  * Decodes base64 or utf-8 blobs and returns back blobs in ArrayBuffer format.
  */
-export function unpackBlobs(blobs: Map<string, IBlob | ArrayBuffer>) {
-    const newBlobs = new Map<string, ArrayBuffer>();
+export function unpackIBlobs(blobs: Map<string, IBlob | ArrayBuffer>) {
+    const newBlobs = new Map<string, Uint8Array>();
     for (const [id, blob] of blobs) {
         if (blob instanceof ArrayBuffer) {
-            newBlobs.set(id, blob);
+            newBlobs.set(id, new Uint8Array(blob));
         } else {
-            newBlobs.set(id, stringToBuffer(blob.content, blob.encoding ?? "uint-8"));
+            newBlobs.set(id, new Uint8Array(stringToBuffer(blob.content, blob.encoding ?? "uint-8")));
         }
     }
     return newBlobs;
@@ -210,7 +201,7 @@ function buildDictionary(tree: ISnapshotTree, dict: Set<string>) {
  */
 export function convertOdspSnapshotToCompactSnapshot(
     snapshotTree: ISnapshotTree,
-    blobs: Map<string, IBlob | ArrayBuffer>,
+    blobs: Map<string, IBlob | Uint8Array>,
     ops?: ISequencedDeltaOpMessage[]): ReadBuffer
 {
     const dict: Set<string> = new Set();
@@ -237,8 +228,8 @@ export function convertOdspSnapshotToCompactSnapshot(
     const blobsNode = builder.addNode();
     for (const [storageBlobId, blob] of blobs) {
         blobsNode.addNumber(mapping.get(storageBlobId));
-        if (blob instanceof ArrayBuffer) {
-            blobsNode.addBlob(new Uint8Array(blob));
+        if (blob instanceof Uint8Array) {
+            blobsNode.addBlob(blob);
         } else {
             blobsNode.addBlob(new Uint8Array(stringToBuffer(blob.content, blob.encoding ?? "utf-8")));
         }
@@ -260,7 +251,7 @@ export function convertOdspSnapshotToCompactSnapshot(
 export function convertCompactSnapshotToSnapshotTree(buffer: ReadBuffer) {
     const builder = TreeBuilder.load(buffer);
     let ops: ISequencedDeltaOpMessage[] | undefined;
-    const blobs: Map<string, ArrayBuffer> = new Map();
+    const blobs: Map<string, Uint8Array> = new Map();
     const mapping: string[] = [];
 
     assert(builder.length >= 3 && builder.length <= 4, "length");
@@ -277,7 +268,7 @@ export function convertCompactSnapshotToSnapshotTree(buffer: ReadBuffer) {
         assert(blob instanceof BlobCore, "blob content");
         const id = mapping[idIndex];
         assert(id !== undefined, "blob id");
-        blobs.set(id, blob.buffer.buffer);
+        blobs.set(id, blob.buffer);
     }
 
     if (builder.length === 4) {

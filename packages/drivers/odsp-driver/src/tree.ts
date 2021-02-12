@@ -341,8 +341,7 @@ export class Node {
                 case Codes.Blob3:
                 case Codes.Blob4:
                 {
-                    // BlobShallowCopy
-                    const blob = BlobDeepCopy.read(buffer, code - Codes.Blob0);
+                    const blob = BlobShallowCopy.read(buffer, code - Codes.Blob0);
                     this.children.push(blob);
                     break;
                 }

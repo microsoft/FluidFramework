@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import fs from "fs";
-import assert from "assert";
+import { strict as assert } from "assert";
 import { IOdspSnapshot, IBlob } from "../contracts";
 
 import {
@@ -11,7 +11,7 @@ import {
     convertOdspSnapshotToCompactSnapshot,
     // dedupBlobs,
     convertCompactSnapshotToSnapshotTree,
-    unpackBlobs,
+    unpackIBlobs,
 } from "../snapshot";
 
 function convertToCompact() {
@@ -19,8 +19,7 @@ function convertToCompact() {
 
     const odspSnapshot: IOdspSnapshot = JSON.parse(data.toString("utf-8"));
     const { tree, blobs } = convertOdspSnapshotToSnapsohtTreeAndBlobs(odspSnapshot);
-    let blobs2: Map<string, IBlob | ArrayBuffer> = blobs;
-    blobs2 = unpackBlobs(blobs2);
+    const blobs2 = unpackIBlobs(blobs);
     // blobs2 = await dedupBlobs(snapshotTree, blobs2);
     // blobs2 = shortenBlobIds(snapshotTree, blobs2);
     const buffer = convertOdspSnapshotToCompactSnapshot(tree, blobs2, odspSnapshot.ops);
@@ -39,7 +38,7 @@ describe("Snapshot test", () => {
             const odspSnapshot: IOdspSnapshot = JSON.parse(data.toString("utf-8"));
             const { tree, blobs } = convertOdspSnapshotToSnapsohtTreeAndBlobs(odspSnapshot);
             let blobs2: Map<string, IBlob | ArrayBuffer> = blobs;
-            blobs2 = unpackBlobs(blobs2);
+            blobs2 = unpackIBlobs(blobs2);
             holder.push(tree, blobs2);
         }
     }).timeout(1000000);
