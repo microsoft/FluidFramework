@@ -36,6 +36,7 @@ import {
     TestFluidObjectFactory,
     TestObjectProvider,
 } from "old-test-utils";
+import { LoaderContainerTracker } from "@fluidframework/test-utils";
 
 import {
     createRuntimeFactory,
@@ -74,16 +75,16 @@ export class OldTestDataObjectV2 extends OldTestDataObject {
 }
 
 const registryMapping = {
-    [newVer.SharedMap.getFactory().type]                    : SharedMap.getFactory(),
-    [newVer.SharedString.getFactory().type]                 : SharedString.getFactory(),
-    [newVer.SharedDirectory.getFactory().type]              : SharedDirectory.getFactory(),
-    [newVer.ConsensusRegisterCollection.getFactory().type]  : ConsensusRegisterCollection.getFactory(),
-    [newVer.SharedCell.getFactory().type]                   : SharedCell.getFactory(),
-    [newVer.Ink.getFactory().type]                          : Ink.getFactory(),
-    [newVer.SharedMatrix.getFactory().type]                 : SharedMatrix.getFactory(),
-    [newVer.ConsensusQueue.getFactory().type]               : ConsensusQueue.getFactory(),
-    [newVer.SparseMatrix.getFactory().type]                 : SparseMatrix.getFactory(),
-    [newVer.SharedCounter.getFactory().type]                : SharedCounter.getFactory(),
+    [newVer.SharedMap.getFactory().type]: SharedMap.getFactory(),
+    [newVer.SharedString.getFactory().type]: SharedString.getFactory(),
+    [newVer.SharedDirectory.getFactory().type]: SharedDirectory.getFactory(),
+    [newVer.ConsensusRegisterCollection.getFactory().type]: ConsensusRegisterCollection.getFactory(),
+    [newVer.SharedCell.getFactory().type]: SharedCell.getFactory(),
+    [newVer.Ink.getFactory().type]: Ink.getFactory(),
+    [newVer.SharedMatrix.getFactory().type]: SharedMatrix.getFactory(),
+    [newVer.ConsensusQueue.getFactory().type]: ConsensusQueue.getFactory(),
+    [newVer.SparseMatrix.getFactory().type]: SparseMatrix.getFactory(),
+    [newVer.SharedCounter.getFactory().type]: SharedCounter.getFactory(),
 };
 
 // convert a channel factory registry for TestFluidDataStoreFactory to one with old channel factories
@@ -178,9 +179,26 @@ export function createTestObjectProvider(
         throw new Error("Must provide a driver when using the current loader");
     }
     if (oldLoader) {
-        return new TestObjectProvider(
+        const oldProvider = new TestObjectProvider(
             driver as any,
             containerFactoryFn as () => IRuntimeFactory);
+
+        // Remove once the older version support container tracking (for close)
+        if (!(TestObjectProvider as any).patchLoader) {
+            const loaderContainerTracker = new LoaderContainerTracker();
+            const oldMakeTestLoader = oldProvider.makeTestLoader.bind(oldProvider);
+            oldProvider.makeTestLoader = (testContainerConfig?: unknown) => {
+                const testLoader = oldMakeTestLoader(testContainerConfig);
+                loaderContainerTracker.add(testLoader);
+                return testLoader;
+            };
+            const oldReset = oldProvider.reset.bind(oldProvider);
+            oldProvider.reset = () => {
+                loaderContainerTracker.reset();
+                oldReset();
+            };
+        }
+        return oldProvider;
     } else {
         return new newVer.TestObjectProvider(
             driver, containerFactoryFn as () => newVer.IRuntimeFactory);

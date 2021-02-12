@@ -29,6 +29,9 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     beforeEach(()=>{
         args = argsFactory();
     });
+    afterEach(() => {
+        args.reset();
+    });
     let dataStore1: ITestFluidObject;
     let sharedCounter1: ISharedCounter;
     let sharedCounter2: ISharedCounter;

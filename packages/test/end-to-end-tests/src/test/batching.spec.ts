@@ -38,6 +38,10 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     beforeEach(()=>{
         args = argsFactory();
     });
+    afterEach(() => {
+        args.reset();
+    });
+
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;
     let dataObject1map1: SharedMap;

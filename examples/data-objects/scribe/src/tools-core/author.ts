@@ -60,31 +60,31 @@ export function normalizeText(input: string): string {
 
 export interface IScribeMetrics {
     // Average latency between when a message is sent and when it is ack'd by the server
-    latencyAverage: number;
-    latencyStdDev: number;
-    latencyMinimum: number;
-    latencyMaximum: number;
+    latencyAverage?: number;
+    latencyStdDev?: number;
+    latencyMinimum?: number;
+    latencyMaximum?: number;
 
     // The rate of both typing messages and receiving replies
-    ackRate: number;
-    typingRate: number;
+    ackRate?: number;
+    typingRate?: number;
 
     // Server ordering performance
-    serverAverage: number;
+    serverAverage?: number;
 
     // Total number of ops
     totalOps: number;
 
     // The progress of typing and receiving ack for messages in the range [0,1]
-    typingProgress: number;
-    ackProgress: number;
+    typingProgress?: number;
+    ackProgress?: number;
 
     time: number;
     textLength: number;
 
-    pingAverage: number;
-    pingMaximum: number;
-    processAverage: number;
+    pingAverage?: number;
+    pingMaximum?: number;
+    processAverage?: number;
 
     typingInterval: number;
     writers: number;
@@ -205,7 +205,8 @@ export async function typeFile(
         return new Promise((resolve, reject) => {
             q = queue(async (chunkKey, queueCallback) => {
                 const chunk = chunkMap.get(chunkKey);
-                const a = authors.shift();
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const a = authors.shift()!;
                 curKey++;
                 metrics.typingProgress = curKey / totalKeys;
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -275,10 +276,10 @@ export async function typeChunk(
                     metrics.ackRate = rate;
                 }
 
-                let clientStart: number;
-                let clientEnd: number;
-                let orderBegin: number;
-                let orderEnd: number;
+                let clientStart: number = 0;
+                let clientEnd: number = 0;
+                let orderBegin: number = 0;
+                let orderEnd: number = 0;
 
                 for (const trace of message.traces) {
                     if (trace.service === "alfred" && trace.action === "start") {

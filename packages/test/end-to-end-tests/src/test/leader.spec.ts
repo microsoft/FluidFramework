@@ -28,6 +28,9 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         await ensureConnected(container1);
     });
+    afterEach(() => {
+        args.reset();
+    });
 
     it("Create and load", async () => {
         // after detach create, we are in view only mode

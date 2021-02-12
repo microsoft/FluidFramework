@@ -23,7 +23,7 @@ import {
     IDocumentStorageService,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { OdspErrorType } from "@fluidframework/odsp-doclib-utils";
+import { OdspErrorType, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IDocumentStorageGetVersionsResponse,
     IOdspResolvedUrl,
@@ -45,7 +45,6 @@ import {
     persistedCacheValueVersion,
 } from "./odspCache";
 import { getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
-import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";

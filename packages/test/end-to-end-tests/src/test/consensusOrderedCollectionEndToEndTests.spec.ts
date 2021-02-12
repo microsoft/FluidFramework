@@ -45,10 +45,13 @@ function generate(
     name: string, ctor: ISharedObjectConstructor<IConsensusOrderedCollection>,
     input: any[], output: any[]) {
     const tests = (argsFactory: () => ITestObjectProvider) => {
-    let args: ITestObjectProvider;
-    beforeEach(()=>{
-        args = argsFactory();
-    });
+        let args: ITestObjectProvider;
+        beforeEach(()=>{
+            args = argsFactory();
+        });
+        afterEach(() => {
+            args.reset();
+        });
         let container1: IContainer;
         let container2: IContainer;
         let dataStore1: ITestFluidObject;

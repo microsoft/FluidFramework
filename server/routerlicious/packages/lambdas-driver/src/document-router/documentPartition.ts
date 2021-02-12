@@ -117,7 +117,7 @@ export class DocumentPartition {
     }
 
     public isInactive(now: number = Date.now()) {
-        return now > this.activityTimeoutTime;
+        return !this.context.hasPendingWork() && now > this.activityTimeoutTime;
     }
 
     private updateActivityTime() {
