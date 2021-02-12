@@ -58,6 +58,10 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     beforeEach(()=>{
         args = argsFactory();
     });
+    afterEach(() => {
+        args.reset();
+    });
+
     describe("one client", () => {
         const stringId = "stringKey";
 
@@ -334,5 +338,5 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 };
 
 describe("SharedInterval", () => {
-    generateTest(tests, { tinylicious: true });
+    generateTest(tests);
 });

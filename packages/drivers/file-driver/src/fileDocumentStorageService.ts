@@ -123,8 +123,8 @@ export interface ISnapshotWriterStorage extends IDocumentStorageService {
 }
 
 export type ReaderConstructor = new (...args: any[]) => IDocumentStorageService;
-export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(Base: TBase) {
-    return class extends Base implements ISnapshotWriterStorage {
+export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(Base: TBase) =>
+    class extends Base implements ISnapshotWriterStorage {
         // Note: if variable name has same name as in base class, it overrides it!
         public blobsWriter = new Map<string, string>();
         public commitsWriter: { [key: string]: api.ITree } = {};
@@ -218,7 +218,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
 
             // Remove tree IDs for easier comparison of snapshots
             delete tree.id;
-            removeNullTreIds(tree);
+            removeNullTreeIds(tree);
 
             if (ref) {
                 this.commitsWriter[commitName] = tree;
@@ -320,12 +320,11 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             return tree;
         }
     };
-}
 
-function removeNullTreIds(tree: api.ITree) {
+function removeNullTreeIds(tree: api.ITree) {
     for (const node of tree.entries) {
         if (node.type === api.TreeEntry.Tree) {
-            removeNullTreIds(node.value);
+            removeNullTreeIds(node.value);
         }
     }
     assert(tree.id === undefined || tree.id === null);

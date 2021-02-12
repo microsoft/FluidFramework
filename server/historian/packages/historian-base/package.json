@@ -40,7 +40,7 @@
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.19",
     "morgan": "^1.9.1",
-    "nconf": "^0.10.0",
+    "nconf": "^0.11.0",
     "redis": "^2.8.0",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.5",
@@ -85,6 +85,6 @@
     "sinon": "^9.2.3",
     "supertest": "^3.3.0",
     "tslint": "^5.12.0",
-    "typescript": "~3.8.2"
+    "typescript": "~4.1.3"
   }
 }

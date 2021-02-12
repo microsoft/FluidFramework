@@ -283,6 +283,7 @@ export interface ITilePos {
 function getPrecedingTile(
     sharedString: SharedString, tile: MergeTree.Marker, tilePos: number, label: string,
     filter: (candidate: MergeTree.Marker) => boolean, precedingTileCache?: ITilePos[]) {
+    let _tilePos = tilePos;
     if (precedingTileCache) {
         for (let i = precedingTileCache.length - 1; i >= 0; i--) {
             const candidate = precedingTileCache[i];
@@ -291,9 +292,9 @@ function getPrecedingTile(
             }
         }
     }
-    while (tilePos > 0) {
-        tilePos = tilePos - 1;
-        const prevTileInfo = sharedString.findTile(tilePos, label);
+    while (_tilePos > 0) {
+        _tilePos = _tilePos - 1;
+        const prevTileInfo = sharedString.findTile(_tilePos, label);
         if (prevTileInfo && filter(<MergeTree.Marker>prevTileInfo.tile)) {
             return prevTileInfo;
         }

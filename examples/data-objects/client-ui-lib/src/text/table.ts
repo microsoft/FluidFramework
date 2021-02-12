@@ -38,23 +38,24 @@ function createRelativeMarkerOp(
     relativePos1: MergeTree.IRelativePosition,
     id: string, refType: MergeTree.ReferenceType, rangeLabels: string[],
     tileLabels?: string[], props?: MergeTree.PropertySet) {
-    if (!props) {
-        props = <MergeTree.MapLike<any>>{
+    let _props = props;
+    if (!_props) {
+        _props = <MergeTree.MapLike<any>>{
         };
     }
 
     if (id.length > 0) {
-        props[MergeTree.reservedMarkerIdKey] = id;
+        _props[MergeTree.reservedMarkerIdKey] = id;
     }
 
     if (rangeLabels.length > 0) {
-        props[MergeTree.reservedRangeLabelsKey] = rangeLabels;
+        _props[MergeTree.reservedRangeLabelsKey] = rangeLabels;
     }
     if (tileLabels) {
-        props[MergeTree.reservedTileLabelsKey] = tileLabels;
+        _props[MergeTree.reservedTileLabelsKey] = tileLabels;
     }
     return <MergeTree.IMergeTreeInsertMsg>{
-        seg: { marker: { refType }, props },
+        seg: { marker: { refType }, props: _props },
         relativePos1,
         type: MergeTree.MergeTreeDeltaType.INSERT,
     };
@@ -64,21 +65,22 @@ export function createMarkerOp(
     pos1: number, id: string,
     refType: MergeTree.ReferenceType, rangeLabels: string[], tileLabels?: string[],
     props?: MergeTree.PropertySet) {
-    if (!props) {
-        props = <MergeTree.MapLike<any>>{
+    let _props = props;
+    if (!_props) {
+        _props = <MergeTree.MapLike<any>>{
         };
     }
     if (id.length > 0) {
-        props[MergeTree.reservedMarkerIdKey] = id;
+        _props[MergeTree.reservedMarkerIdKey] = id;
     }
     if (rangeLabels.length > 0) {
-        props[MergeTree.reservedRangeLabelsKey] = rangeLabels;
+        _props[MergeTree.reservedRangeLabelsKey] = rangeLabels;
     }
     if (tileLabels) {
-        props[MergeTree.reservedTileLabelsKey] = tileLabels;
+        _props[MergeTree.reservedTileLabelsKey] = tileLabels;
     }
     return <MergeTree.IMergeTreeInsertMsg>{
-        seg: { marker: { refType }, props },
+        seg: { marker: { refType }, props: _props },
         pos1,
         type: MergeTree.MergeTreeDeltaType.INSERT,
     };

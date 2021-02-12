@@ -27,12 +27,11 @@ export abstract class SequencedLambda implements IPartitionLambda {
         }, 1);
 
         this.q.error = (error) => {
-            const documentError = {
-                documentId: this.documentId,
-                error,
+            context.error(error, {
+                restart: true,
                 tenantId: this.tenantId,
-            };
-            context.error(documentError, true);
+                documentId: this.documentId,
+            });
         };
     }
 

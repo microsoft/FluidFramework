@@ -229,7 +229,7 @@ function checkMarkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number,
 export function mergeTreeTest1() {
     const mergeTree = new MergeTree.MergeTree();
     mergeTree.insertSegments(0, [TextSegment.make("the cat is on the mat")], UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, undefined);
-    mergeTree.map({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId);
+    mergeTree.map({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId, undefined);
     let fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
     checkInsertMergeTree(mergeTree, 4, fuzzySeg);
     fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
@@ -237,7 +237,7 @@ export function mergeTreeTest1() {
     checkMarkRemoveMergeTree(mergeTree, 4, 13);
     // checkRemoveSegTree(segTree, 4, 13);
     checkInsertMergeTree(mergeTree, 4, makeCollabTextSegment("fi"));
-    mergeTree.map({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId);
+    mergeTree.map({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId, undefined);
     const segoff = mergeTree.getContainingSegment(4, UniversalSequenceNumber, LocalClientId);
     log(mergeTree.getPosition(segoff.segment, UniversalSequenceNumber, LocalClientId));
     log(new MergeTree.MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId));
@@ -1596,22 +1596,21 @@ export class DocumentTree {
     }
 
     static generateContent(rowProbability: number) {
+        let _rowProbability = rowProbability;
         const items = <DocumentNode[]>[];
         const docLen = DocumentTree.randPack.randInteger(7, 25);
         for (let i = 0; i < docLen; i++) {
-            const rowThreshold = rowProbability * 1000;
+            const rowThreshold = _rowProbability * 1000;
             const selector = DocumentTree.randPack.randInteger(1, 1000);
             if (selector >= rowThreshold) {
                 const pg = DocumentTree.generateParagraph();
                 items.push(pg);
             } else {
-                // eslint-disable-next-line no-param-reassign
-                rowProbability /= 2;
-                if (rowProbability < 0.08) {
-                    // eslint-disable-next-line no-param-reassign
-                    rowProbability = 0;
+                _rowProbability /= 2;
+                if (_rowProbability < 0.08) {
+                    _rowProbability = 0;
                 }
-                const row = DocumentTree.generateRow(rowProbability);
+                const row = DocumentTree.generateRow(_rowProbability);
                 items.push(row);
             }
         }

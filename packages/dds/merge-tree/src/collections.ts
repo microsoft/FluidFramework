@@ -4,10 +4,9 @@
  */
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions, eqeqeq, object-shorthand */
-/* eslint-disable no-bitwise, no-param-reassign */
+/* eslint-disable no-bitwise */
 
 /* Remove once strictNullCheck is enabled */
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 
 import { Trace } from "@fluidframework/common-utils";
 import * as Base from "./base";
@@ -241,27 +240,29 @@ export class Heap<T> {
     }
 
     private fixup(k: number) {
-        while (k > 1 && (this.comp.compare(this.L[k >> 1], this.L[k]) > 0)) {
-            const tmp = this.L[k >> 1];
-            this.L[k >> 1] = this.L[k];
-            this.L[k] = tmp;
-            k = k >> 1;
+        let _k = k;
+        while (_k > 1 && (this.comp.compare(this.L[_k >> 1], this.L[_k]) > 0)) {
+            const tmp = this.L[_k >> 1];
+            this.L[_k >> 1] = this.L[_k];
+            this.L[_k] = tmp;
+            _k = _k >> 1;
         }
     }
 
     private fixdown(k: number) {
-        while ((k << 1) <= (this.count())) {
-            let j = k << 1;
+        let _k = k;
+        while ((_k << 1) <= (this.count())) {
+            let j = _k << 1;
             if ((j < this.count()) && (this.comp.compare(this.L[j], this.L[j + 1]) > 0)) {
                 j++;
             }
-            if (this.comp.compare(this.L[k], this.L[j]) <= 0) {
+            if (this.comp.compare(this.L[_k], this.L[j]) <= 0) {
                 break;
             }
-            const tmp = this.L[k];
-            this.L[k] = this.L[j];
+            const tmp = this.L[_k];
+            this.L[_k] = this.L[j];
             this.L[j] = tmp;
-            k = j;
+            _k = j;
         }
     }
 }
@@ -274,19 +275,22 @@ export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey
         console.log(`size is ${props.length}`);
     }
     function mapRange<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
+        let _start = start;
+        let _end = end;
+
         if (props.length !== 0) { return; }
 
-        if (start === undefined) {
+        if (_start === undefined) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            start = min()!.key;
+            _start = min()!.key;
         }
-        if (end === undefined) {
+        if (_end === undefined) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            end = max()!.key;
+            _end = max()!.key;
         }
         for (let i = 0, len = props.length; i < len; i++) {
-            if (compareKeys(start, props[i].key) <= 0) {
-                const ecmp = compareKeys(end, props[i].key);
+            if (compareKeys(_start, props[i].key) <= 0) {
+                const ecmp = compareKeys(_end, props[i].key);
                 if (ecmp < 0) {
                     break;
                 }
@@ -419,16 +423,17 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         }
     }
     nodeGet(node: RBNode<TKey, TData> | undefined, key: TKey) {
-        while (node) {
-            const cmp = this.compareKeys(key, node.key);
+        let _node = node;
+        while (_node) {
+            const cmp = this.compareKeys(key, _node.key);
             if (cmp < 0) {
-                node = node.left;
+                _node = _node.left;
             }
             else if (cmp > 0) {
-                node = node.right;
+                _node = _node.right;
             }
             else {
-                return node;
+                return _node;
             }
         }
     }
@@ -479,48 +484,49 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         key: TKey, data: TData,
         conflict?: Base.ConflictAction<TKey, TData>,
     ) {
-        if (!node) {
+        let _node = node;
+        if (!_node) {
             return this.makeNode(key, data, RBColor.RED, 1);
         }
         else {
-            const cmp = this.compareKeys(key, node.key);
+            const cmp = this.compareKeys(key, _node.key);
             if (cmp < 0) {
-                node.left = this.nodePut(node.left, key, data, conflict);
+                _node.left = this.nodePut(_node.left, key, data, conflict);
             }
             else if (cmp > 0) {
-                node.right = this.nodePut(node.right, key, data, conflict);
+                _node.right = this.nodePut(_node.right, key, data, conflict);
             }
             else {
                 if (conflict) {
-                    const kd = conflict(key, node.key, data, node.data);
+                    const kd = conflict(key, _node.key, data, _node.data);
                     if (kd.key) {
-                        node.key = kd.key;
+                        _node.key = kd.key;
                     }
                     if (kd.data) {
-                        node.data = kd.data;
+                        _node.data = kd.data;
                     } else {
-                        node.data = data;
+                        _node.data = data;
                     }
                 }
                 else {
-                    node.data = data;
+                    _node.data = data;
                 }
             }
-            if (this.isRed(node.right) && (!this.isRed(node.left))) {
-                node = this.rotateLeft(node);
+            if (this.isRed(_node.right) && (!this.isRed(_node.left))) {
+                _node = this.rotateLeft(_node);
             }
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            if (this.isRed(node.left) && this.isRed(node.left!.left)) {
-                node = this.rotateRight(node);
+            if (this.isRed(_node.left) && this.isRed(_node.left!.left)) {
+                _node = this.rotateRight(_node);
             }
-            if (this.isRed(node.left) && this.isRed(node.right)) {
-                this.flipColors(node);
+            if (this.isRed(_node.left) && this.isRed(_node.right)) {
+                this.flipColors(_node);
             }
-            node.size = this.nodeSize(node.left) + this.nodeSize(node.right) + 1;
+            _node.size = this.nodeSize(_node.left) + this.nodeSize(_node.right) + 1;
             if (this.aug) {
-                this.updateLocal(node);
+                this.updateLocal(_node);
             }
-            return node;
+            return _node;
         }
     }
 
@@ -552,14 +558,15 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         // TODO: error on empty
     }
     nodeRemoveMin(node: RBNode<TKey, TData>) {
-        if (node.left) {
-            if ((!this.isRed(node.left)) && (!this.isRed(node.left.left))) {
-                node = this.moveRedLeft(node);
+        let _node = node;
+        if (_node.left) {
+            if ((!this.isRed(_node.left)) && (!this.isRed(_node.left.left))) {
+                _node = this.moveRedLeft(_node);
             }
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            node.left = this.nodeRemoveMin(node.left!);
-            return this.balance(node);
+            _node.left = this.nodeRemoveMin(_node.left!);
+            return this.balance(_node);
         }
     }
 
@@ -578,22 +585,24 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
 
     nodeRemoveMax(node: RBNode<TKey, TData>) {
-        if (this.isRed(node.left)) {
-            node = this.rotateRight(node);
+        let _node = node;
+
+        if (this.isRed(_node.left)) {
+            _node = this.rotateRight(_node);
         }
 
-        if (!node.right) {
+        if (!_node.right) {
             return undefined;
         }
 
-        if ((!this.isRed(node.right)) && (!this.isRed(node.right.left))) {
-            node = this.moveRedRight(node);
+        if ((!this.isRed(_node.right)) && (!this.isRed(_node.right.left))) {
+            _node = this.moveRedRight(_node);
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        node.right = this.nodeRemoveMax(node.right!);
+        _node.right = this.nodeRemoveMax(_node.right!);
 
-        return this.balance(node);
+        return this.balance(_node);
     }
 
     remove(key: TKey) {
@@ -615,39 +624,40 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
 
     nodeRemove(node: RBNode<TKey, TData>, key: TKey) {
-        if (this.compareKeys(key, node.key) < 0) {
+        let _node = node;
+        if (this.compareKeys(key, _node.key) < 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            if ((!this.isRed(node.left)) && (!this.isRed(node.left!.left))) {
-                node = this.moveRedLeft(node);
+            if ((!this.isRed(_node.left)) && (!this.isRed(_node.left!.left))) {
+                _node = this.moveRedLeft(_node);
             }
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            node.left = this.nodeRemove(node.left!, key);
+            _node.left = this.nodeRemove(_node.left!, key);
         }
         else {
-            if (this.isRed(node.left)) {
-                node = this.rotateRight(node);
+            if (this.isRed(_node.left)) {
+                _node = this.rotateRight(_node);
             }
-            if ((this.compareKeys(key, node.key) == 0) && (!node.right)) {
+            if ((this.compareKeys(key, _node.key) == 0) && (!_node.right)) {
                 return undefined;
             }
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            if ((!this.isRed(node.right)) && (!this.isRed(node.right!.left))) {
-                node = this.moveRedRight(node);
+            if ((!this.isRed(_node.right)) && (!this.isRed(_node.right!.left))) {
+                _node = this.moveRedRight(_node);
             }
-            if (this.compareKeys(key, node.key) == 0) {
+            if (this.compareKeys(key, _node.key) == 0) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                const subtreeMin = this.nodeMin(node.right!);
-                node.key = subtreeMin.key;
-                node.data = subtreeMin.data;
+                const subtreeMin = this.nodeMin(_node.right!);
+                _node.key = subtreeMin.key;
+                _node.data = subtreeMin.data;
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                node.right = this.nodeRemoveMin(node.right!);
+                _node.right = this.nodeRemoveMin(_node.right!);
             }
             else {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                node.right = this.nodeRemove(node.right!, key);
+                _node.right = this.nodeRemove(_node.right!, key);
             }
         }
-        return this.balance(node);
+        return this.balance(_node);
     }
     height() {
         return this.nodeHeight(this.root);
@@ -790,25 +800,27 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
 
     moveRedLeft(node: RBNode<TKey, TData>) {
-        this.flipColors(node);
+        let _node = node;
+        this.flipColors(_node);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        if (this.isRed(node.right!.left)) {
+        if (this.isRed(_node.right!.left)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            node.right = this.rotateRight(node.right!);
-            node = this.rotateLeft(node);
-            this.flipColors(node);
+            _node.right = this.rotateRight(_node.right!);
+            _node = this.rotateLeft(_node);
+            this.flipColors(_node);
         }
-        return node;
+        return _node;
     }
 
     moveRedRight(node: RBNode<TKey, TData>) {
-        this.flipColors(node);
+        let _node = node;
+        this.flipColors(_node);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        if (this.isRed(node.left!.left)) {
-            node = this.rotateRight(node);
-            this.flipColors(node);
+        if (this.isRed(_node.left!.left)) {
+            _node = this.rotateRight(_node);
+            this.flipColors(_node);
         }
-        return node;
+        return _node;
     }
 
     balance(input: RBNode<TKey, TData>) {
@@ -895,27 +907,29 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         accum?: TAccum,
         start?: TKey,
         end?: TKey) {
+        let _start = start;
+        let _end = end;
         if (!node) {
             return true;
         }
-        if (start === undefined) {
-            start = this.nodeMin(node).key;
+        if (_start === undefined) {
+            _start = this.nodeMin(node).key;
         }
-        if (end === undefined) {
-            end = this.nodeMax(node).key;
+        if (_end === undefined) {
+            _end = this.nodeMax(node).key;
         }
-        const cmpStart = this.compareKeys(start, node.key);
-        const cmpEnd = this.compareKeys(end, node.key);
+        const cmpStart = this.compareKeys(_start, node.key);
+        const cmpEnd = this.compareKeys(_end, node.key);
         let go = true;
         if (cmpStart < 0) {
-            go = this.nodeMap(node.left, action, accum, start, end);
+            go = this.nodeMap(node.left, action, accum, _start, _end);
         }
         if (go && (cmpStart <= 0) && (cmpEnd >= 0)) {
             // REVIEW: test for black node here
             go = action(node, accum);
         }
         if (go && (cmpEnd > 0)) {
-            go = this.nodeMap(node.right, action, accum, start, end);
+            go = this.nodeMap(node.right, action, accum, _start, _end);
         }
         return go;
     }
@@ -1210,23 +1224,24 @@ export class TST<T> {
     }
 
     nodePut(x: TSTNode<T> | undefined, key: string, val: T, d: number) {
+        let _x = x;
         const c = key.charAt(d);
-        if (x === undefined) {
-            x = { c };
+        if (_x === undefined) {
+            _x = { c };
         }
-        if (c < x.c) {
-            x.left = this.nodePut(x.left, key, val, d);
+        if (c < _x.c) {
+            _x.left = this.nodePut(_x.left, key, val, d);
         }
-        else if (c > x.c) {
-            x.right = this.nodePut(x.right, key, val, d);
+        else if (c > _x.c) {
+            _x.right = this.nodePut(_x.right, key, val, d);
         }
         else if (d < (key.length - 1)) {
-            x.mid = this.nodePut(x.mid, key, val, d + 1);
+            _x.mid = this.nodePut(_x.mid, key, val, d + 1);
         }
         else {
-            x.val = val;
+            _x.val = val;
         }
-        return x;
+        return _x;
     }
 
     neighbors(text: string, distance = 2) {

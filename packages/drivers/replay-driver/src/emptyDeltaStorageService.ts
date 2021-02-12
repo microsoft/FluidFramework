@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
-import * as api from "@fluidframework/protocol-definitions";
+import { IDocumentDeltaStorageService, IDeltasFetchResult } from "@fluidframework/driver-definitions";
 
 export class EmptyDeltaStorageService implements IDocumentDeltaStorageService {
     /**
@@ -13,7 +12,7 @@ export class EmptyDeltaStorageService implements IDocumentDeltaStorageService {
      * @param to - Op are returned from to - 1.
      * @returns Array of ops requested by the user.
      */
-    public async get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
-        return [];
+    public async get(from: number, to: number): Promise<IDeltasFetchResult> {
+        return { messages: [], partialResult: false };
     }
 }

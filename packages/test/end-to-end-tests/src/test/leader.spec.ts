@@ -6,29 +6,30 @@
 import { strict as assert } from "assert";
 import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestFluidObject } from "@fluidframework/test-utils";
+import { ITestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
 import {
-    generateLocalNonCompatTest,
+    generateNonCompatTest,
     ITestObjectProvider,
 } from "./compatUtils";
 
 async function ensureConnected(container: Container) {
     if (!container.connected) {
-        await new Promise((resolve, rejected) => container.on("connected", resolve));
+        await timeoutPromise((resolve, rejected) => container.on("connected", resolve));
     }
 }
 
 const tests = (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
-    beforeEach(()=>{
-        args = argsFactory();
-    });
     let container1: Container;
     let dataObject1: ITestFluidObject;
     beforeEach(async () => {
+        args = argsFactory();
         container1 = await args.makeTestContainer() as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         await ensureConnected(container1);
+    });
+    afterEach(() => {
+        args.reset();
     });
 
     it("Create and load", async () => {
@@ -183,5 +184,5 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 };
 
 describe("Leader", () => {
-    generateLocalNonCompatTest(tests, { tinylicious: true });
+    generateNonCompatTest(tests);
 });

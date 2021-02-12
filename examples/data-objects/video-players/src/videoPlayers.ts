@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+ /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import {
     IFluidObject,
     IFluidHandleContext,
@@ -39,7 +41,7 @@ class YouTubeAPI {
     }
 
     private static async Create(): Promise<YouTubeAPI> {
-        const playerApiReadyP = new Promise((resolve) => {
+        const playerApiReadyP = new Promise<void>((resolve) => {
             window.onYouTubeIframeAPIReady = resolve;
         });
 
@@ -76,8 +78,8 @@ interface IYouTubePlayer {
 
 export class VideoPlayer implements
     IFluidLoadable, IFluidHTMLView, IFluidRouter, ClientUI.controls.IViewLayout {
-    private player: IYouTubePlayer;
-    private playerDiv: HTMLDivElement;
+    private player: IYouTubePlayer | undefined;
+    private playerDiv: HTMLDivElement | undefined;
 
     public get IFluidHTMLView() { return this; }
     public get IFluidRouter() { return this; }
@@ -125,9 +127,9 @@ export class VideoPlayer implements
                 size.height,
                 this.videoId);
         } else {
-            if (elm !== this.playerDiv.parentElement) {
-                this.playerDiv.remove();
-                elm.appendChild(this.playerDiv);
+            if (elm !== this.playerDiv!.parentElement) {
+                this.playerDiv!.remove();
+                elm.appendChild(this.playerDiv!);
             }
 
             this.player.setSize(size.width, size.height);
@@ -179,7 +181,7 @@ export class VideoPlayerCollection extends LazyLoadedDataObject<ISharedDirectory
         const id = `video-${Date.now()}`;
         this.root.set(id, "RMzXmkrlFNg");
         // Relying on valueChanged event to create the bar is error prone
-        return this.videoPlayers.get(id);
+        return this.videoPlayers.get(id)!;
     }
 
     public removeCollectionItem(instance: IFluidObject): void {
@@ -208,7 +210,7 @@ export class VideoPlayerCollection extends LazyLoadedDataObject<ISharedDirectory
         // or at least to request a value >= a sequence number
         await this.root.wait(trimmed);
 
-        return this.videoPlayers.get(trimmed).request({ url: trimmed.substr(1 + trimmed.length) });
+        return this.videoPlayers.get(trimmed)!.request({ url: trimmed.substr(1 + trimmed.length) });
     }
 
     private async initialize() {
@@ -220,7 +222,7 @@ export class VideoPlayerCollection extends LazyLoadedDataObject<ISharedDirectory
             this.videoPlayers.set(
                 key,
                 new VideoPlayer(
-                    this.root.get(key),
+                    this.root.get(key)!,
                     this.runtime.objectsRoutingContext,
                     key,
                     youTubeApi,
@@ -233,7 +235,7 @@ export class VideoPlayerCollection extends LazyLoadedDataObject<ISharedDirectory
                 // this.videoPlayers.get(changed.key).update(this.root.get(changed.key));
             } else {
                 const player = new VideoPlayer(
-                    this.root.get(changed.key),
+                    this.root.get(changed.key)!,
                     this.runtime.objectsRoutingContext,
                     changed.key,
                     youTubeApi,

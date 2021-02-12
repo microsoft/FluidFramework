@@ -6,21 +6,25 @@
 import { Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
-import { ITestDriver } from "@fluidframework/test-drivers";
 import { v4 as uuid } from "uuid";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
 import { OpProcessingController } from "./opProcessingController";
+import { LoaderContainerTracker } from "./loaderContainerTracker";
 
 const defaultCodeDetails: IFluidCodeDetails = {
     package: "defaultTestPackage",
     config: {},
 };
 
+export const createDocumentId = (): string => uuid();
+
 /**
  * Shared base class for test object provider.  Contain code for loader and container creation and loading
  */
-export  class TestObjectProvider<TestContainerConfigType> {
+export class TestObjectProvider<TestContainerConfigType> {
+    private readonly _loaderContainerTracker = new LoaderContainerTracker();
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _urlResolver: IUrlResolver | undefined;
     private _opProcessingController?: OpProcessingController;
@@ -53,7 +57,7 @@ export  class TestObjectProvider<TestContainerConfigType> {
 
     get documentId() {
         if (this._documentId === undefined) {
-            this._documentId = uuid();
+            this._documentId = createDocumentId();
         }
         return this._documentId;
     }
@@ -84,7 +88,9 @@ export  class TestObjectProvider<TestContainerConfigType> {
      * @param testContainerConfig - optional configuring the test Container
      */
     public makeTestLoader(testContainerConfig?: TestContainerConfigType) {
-        return this.createLoader([[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]]);
+        const loader = this.createLoader([[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]]);
+        this._loaderContainerTracker.add(loader);
+        return loader;
     }
 
     /**
@@ -117,6 +123,7 @@ export  class TestObjectProvider<TestContainerConfigType> {
     }
 
     public reset() {
+        this._loaderContainerTracker.reset();
         this._documentServiceFactory = undefined;
         this._urlResolver = undefined;
         this._opProcessingController = undefined;

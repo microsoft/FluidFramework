@@ -755,8 +755,11 @@ function isComponentView(marker: MergeTree.Marker) {
 function renderSegmentIntoLine(
     segment: MergeTree.ISegment, segpos: number, refSeq: number,
     clientId: number, start: number, end: number, lineContext: ILineContext) {
+    let _start = start;
+    let _end = end;
+
     if (lineContext.lineDiv.linePos === undefined) {
-        lineContext.lineDiv.linePos = segpos + start;
+        lineContext.lineDiv.linePos = segpos + _start;
         lineContext.lineDiv.lineEnd = lineContext.lineDiv.linePos;
     }
     if (MergeTree.TextSegment.is(segment)) {
@@ -765,16 +768,16 @@ function renderSegmentIntoLine(
             // TODO: show math box if cursor in math
             lineContext.mathBuffer += segment.text;
         } else {
-            if (start < 0) {
-                start = 0;
+            if (_start < 0) {
+                _start = 0;
             }
-            if (end > segment.cachedLength) {
-                end = segment.cachedLength;
+            if (_end > segment.cachedLength) {
+                _end = segment.cachedLength;
             }
-            const text = segment.text.substring(start, end);
-            const textStartPos = segpos + start;
-            const textEndPos = segpos + end;
-            lineContext.span = makeSegSpan(lineContext.flowView, text, segment, start, segpos);
+            const text = segment.text.substring(_start, _end);
+            const textStartPos = segpos + _start;
+            const textEndPos = segpos + _end;
+            lineContext.span = makeSegSpan(lineContext.flowView, text, segment, _start, segpos);
             if ((lineContext.lineDiv.endPGMarker) && (lineContext.lineDiv.endPGMarker.properties.header)) {
                 lineContext.span.style.color = wordHeadingColor;
             }
@@ -1008,23 +1011,24 @@ function getWidthInLine(
     breakIndex: number,
     defaultFontstr: string,
     offset: number) {
+    let _offset = offset;
     let itemIndex = endPGMarker.cache.breaks[breakIndex].startItemIndex;
     let w = 0;
-    while (offset > 0) {
+    while (_offset > 0) {
         const item = endPGMarker.itemCache.items[itemIndex];
         if (!item || (item.type === Paragraph.ParagraphItemType.Marker)) {
             itemIndex++;
             break;
         }
         const blockItem = <Paragraph.IPGBlock>item;
-        if (blockItem.text.length > offset) {
+        if (blockItem.text.length > _offset) {
             const fontstr = item.fontstr || defaultFontstr;
-            const subw = domutils.getTextWidth(blockItem.text.substring(0, offset), fontstr);
+            const subw = domutils.getTextWidth(blockItem.text.substring(0, _offset), fontstr);
             return Math.floor(w + subw);
         } else {
             w += item.width;
         }
-        offset -= blockItem.text.length;
+        _offset -= blockItem.text.length;
         itemIndex++;
     }
     return Math.round(w);
@@ -1632,6 +1636,8 @@ export class Viewport {
         x: number, y: number,
         lineHeight: number,
         movingMarker = false) {
+        let _x = x;
+        let _y = y;
         if ((!flowView.movingInclusion.onTheMove) ||
             ((flowView.movingInclusion.onTheMove && (flowView.movingInclusion.marker !== marker)) ||
                 movingMarker)) {
@@ -1652,16 +1658,16 @@ export class Viewport {
                 if (irdoc.layout) {
                     h = Math.floor(w * irdoc.layout.ar);
                 }
-                if ((x + w) > this.width) {
-                    x -= w;
+                if ((_x + w) > this.width) {
+                    _x -= w;
                 }
-                x = Math.floor(x + dx);
-                if (x < minX) {
-                    x = 0;
+                _x = Math.floor(_x + dx);
+                if (_x < minX) {
+                    _x = 0;
                 }
-                y += lineHeight;
-                y = Math.floor(y + dy);
-                const exclu = makeExcludedRectangle(x, y, w, h, irdoc.referenceDocId);
+                _y += lineHeight;
+                _y = Math.floor(_y + dy);
+                const exclu = makeExcludedRectangle(_x, _y, w, h, irdoc.referenceDocId);
                 // This logic eventually triggers the marker to get moved based on the requiresUL property
                 if (movingMarker) {
                     exclu.requiresUL = true;
@@ -3397,23 +3403,24 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public checkRow(lineDiv: ILineDiv, fn: (lineDiv: ILineDiv) => ILineDiv, rev?: boolean) {
-        let rowDiv = lineDiv as IRowDiv;
+        let _lineDiv = lineDiv;
+        let rowDiv = _lineDiv as IRowDiv;
         let oldRowDiv: IRowDiv;
         while (rowDiv && (rowDiv !== oldRowDiv) && rowDiv.rowView) {
             oldRowDiv = rowDiv;
-            lineDiv = undefined;
+            _lineDiv = undefined;
             for (const cell of rowDiv.rowView.cells) {
                 if (cell.div) {
                     const innerDiv = this.lineDivSelect(fn, (cell as ICellView).viewport.div, true, rev);
                     if (innerDiv) {
-                        lineDiv = innerDiv;
+                        _lineDiv = innerDiv;
                         rowDiv = innerDiv as IRowDiv;
                         break;
                     }
                 }
             }
         }
-        return lineDiv;
+        return _lineDiv;
     }
 
     public lineDivSelect(fn: (lineDiv: ILineDiv) => ILineDiv, viewportDiv: IViewportDiv, dive = false, rev?: boolean) {
@@ -3481,11 +3488,12 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public getSegSpan(span: ISegSpan): ISegSpan {
-        while (span.tagName === "SPAN") {
-            if (span.segPos) {
-                return span;
+        let _span = span;
+        while (_span.tagName === "SPAN") {
+            if (_span.segPos) {
+                return _span;
             } else {
-                span = span.parentElement as ISegSpan;
+                _span = _span.parentElement as ISegSpan;
             }
         }
     }

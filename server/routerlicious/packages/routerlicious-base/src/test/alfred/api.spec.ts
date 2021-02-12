@@ -150,6 +150,69 @@ describe("Routerlicious", () => {
                     });
                 });
             });
+
+            describe("CorrelationId", () => {
+                const correlationIdHeaderName = "x-correlation-id";
+                const testCorrelationId = "test-correlation-id";
+
+                const maxThrottlerLimit = 1000000;
+                beforeEach(() => {
+                    const throttler = new TestThrottler(maxThrottlerLimit);
+                    app = alfredApp.create(
+                        defaultProvider,
+                        defaultTenantManager,
+                        throttler,
+                        defaultStorage,
+                        defaultAppTenants,
+                        defaultMongoManager,
+                        defaultProducer);
+                    supertest = request(app);
+                });
+
+                const assertCorrelationId = async (url: string, method: "get" | "post" | "put" | "patch" | "delete" = "get"): Promise<void> => {
+                    await supertest[method](url)
+                        .set(correlationIdHeaderName, testCorrelationId)
+                        .then((res) => {
+                            assert.strictEqual(res.header?.[correlationIdHeaderName], testCorrelationId);
+                    });
+                };
+
+                describe("/api/v1", () => {
+                    it("/ping", async () => {
+                        await assertCorrelationId("/api/v1/ping");
+                    });
+                    it("/:tenantId/:id/root", async () => {
+                        await assertCorrelationId(`/api/v1/${appTenant1.id}/${document1._id}/root`, "patch");
+                    });
+                    it("/:tenantId/:id/blobs", async () => {
+                        await assertCorrelationId(`/api/v1/${appTenant1.id}/${document1._id}/blobs`, "post");
+                    });
+                });
+
+                describe("/documents", () => {
+                    it("/:tenantId?/:id", async () => {
+                        await assertCorrelationId(`/documents/${appTenant1.id}/${document1._id}`);
+                    });
+                    it("/:tenantId/:id/blobs", async () => {
+                        await assertCorrelationId(`/documents/${appTenant1.id}`, "post");
+                    });
+                });
+
+                describe("/deltas", () => {
+                    it("/raw/:tenantId?/:id", async () => {
+                        await assertCorrelationId(`/deltas/raw/${appTenant1.id}/${document1._id}`);
+                    });
+                    it("/:tenantId?/:id", async () => {
+                        await assertCorrelationId(`/deltas/${appTenant1.id}/${document1._id}`);
+                    });
+                    it("/v1/:tenantId?/:id", async () => {
+                        await assertCorrelationId(`/deltas/v1/${appTenant1.id}/${document1._id}`);
+                    });
+                    it("/:tenantId?/:id/v1", async () => {
+                        await assertCorrelationId(`/deltas/${appTenant1.id}/${document1._id}/v1`);
+                    });
+                });
+            });
         });
     });
 });

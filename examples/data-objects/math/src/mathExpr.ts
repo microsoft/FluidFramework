@@ -348,17 +348,17 @@ export function tokenAtPos(mathCursor: number, tokens: MathToken[]) {
 
 export function mathTokFwd(tokIndex: number, tokens: MathToken[]) {
     const toklen = tokens.length;
-    tokIndex++;
-    while (tokIndex < toklen) {
-        if ((tokens[tokIndex].type === MathTokenType.Space) ||
-            ((tokens[tokIndex].type === MathTokenType.Command) &&
-                ((tokens[tokIndex] as MathCommandToken).isModifier))) {
-            tokIndex++;
+    let _tokIndex = tokIndex + 1;
+    while (_tokIndex < toklen) {
+        if ((tokens[_tokIndex].type === MathTokenType.Space) ||
+            ((tokens[_tokIndex].type === MathTokenType.Command) &&
+                ((tokens[_tokIndex] as MathCommandToken).isModifier))) {
+            _tokIndex++;
         } else {
             break;
         }
     }
-    return tokIndex;
+    return _tokIndex;
 }
 
 export interface IMathCursor {
@@ -400,22 +400,22 @@ export function bksp(mathMarker: IMathMarker, mc: IMathCursor) {
 }
 
 export function mathTokRev(tokIndex: number, tokens: MathToken[]) {
-    tokIndex--;
-    if (tokIndex > (tokens.length - 1)) {
-        tokIndex = tokens.length - 1;
+    let _tokIndex = tokIndex - 1;
+    if (_tokIndex > (tokens.length - 1)) {
+        _tokIndex = tokens.length - 1;
     }
-    while (tokIndex >= 0) {
-        const tok = tokens[tokIndex];
+    while (_tokIndex >= 0) {
+        const tok = tokens[_tokIndex];
         if ((tok.type === MathTokenType.Space) ||
             ((tok.type === MathTokenType.Command) &&
                 ((tok as MathCommandToken).isModifier))) {
-            tokIndex--;
+            _tokIndex--;
         } else {
             break;
         }
     }
-    if (tokIndex >= 0) {
-        return tokIndex;
+    if (_tokIndex >= 0) {
+        return _tokIndex;
     } else {
         return Nope;
     }
@@ -860,10 +860,11 @@ function tokStreamCreateFromRange(text: string, tokens: MathToken[], start: numb
 }
 
 function tokStreamCreate(text: string, tokens: MathToken[], filter = true) {
+    let _tokens = tokens;
     if (filter) {
-        tokens = tokens.filter((v) => v.type !== MathTokenType.Space);
+        _tokens = _tokens.filter((v) => v.type !== MathTokenType.Space);
     }
-    return tokStreamCreateFromRange(text, tokens, 0, Nope);
+    return tokStreamCreateFromRange(text, _tokens, 0, Nope);
 }
 
 export enum ExprType {
@@ -899,26 +900,26 @@ namespace Constants {
 
     export function rationalOp(op: Operator, r1: IRational, r2: IRational) {
         const l = lcd(r1, r2);
-        r1 = l.r1;
-        r2 = l.r2;
+        const _r1 = l.r1;
+        const _r2 = l.r2;
         switch (op) {
             case Operator.ADD:
-                return { type: ExprType.RATIONAL, a: r1.a + r2.a, b: r1.b };
+                return { type: ExprType.RATIONAL, a: _r1.a + _r2.a, b: _r1.b };
             case Operator.SUB:
-                return { type: ExprType.RATIONAL, a: r1.a - r2.a, b: r1.b };
+                return { type: ExprType.RATIONAL, a: _r1.a - _r2.a, b: _r1.b };
             case Operator.MUL:
-                return simplifyRational({ type: ExprType.RATIONAL, a: r1.a * r2.a, b: r1.b * r1.b });
+                return simplifyRational({ type: ExprType.RATIONAL, a: _r1.a * _r2.a, b: _r1.b * _r1.b });
             case Operator.DIV:
-                return simplifyRational({ type: ExprType.RATIONAL, a: r1.a * r2.b, b: r1.b * r2.a });
+                return simplifyRational({ type: ExprType.RATIONAL, a: _r1.a * _r2.b, b: _r1.b * _r2.a });
             case Operator.EXP:
-                if (r2.b === 1) {
-                    return simplifyRational({ type: ExprType.RATIONAL, a: Math.pow(r1.a, r2.a), b: Math.pow(r1.b, r2.a) });
-                } else if ((r2.a % r2.b) === 0) {
-                    const exp = r2.a / r2.b;
-                    return simplifyRational({ type: ExprType.RATIONAL, a: Math.pow(r1.a, exp), b: Math.pow(r1.b, exp) });
+                if (_r2.b === 1) {
+                    return simplifyRational({ type: ExprType.RATIONAL, a: Math.pow(_r1.a, _r2.a), b: Math.pow(_r1.b, _r2.a) });
+                } else if ((_r2.a % _r2.b) === 0) {
+                    const exp = _r2.a / _r2.b;
+                    return simplifyRational({ type: ExprType.RATIONAL, a: Math.pow(_r1.a, exp), b: Math.pow(_r1.b, exp) });
                 } else {
                     // punt to real
-                    return ({ type: ExprType.REAL, value: Math.pow(r1.a / r1.b, r2.a / r2.b) });
+                    return ({ type: ExprType.REAL, value: Math.pow(_r1.a / _r1.b, _r2.a / _r2.b) });
                 }
             default:
         }
@@ -1371,14 +1372,15 @@ export function extractFirstVar(s: string) {
 // assume left and right sides linear in v
 // eliminate fractions then simplify both sides
 function normalize(eqn: IExpr) {
+    let _eqn = eqn;
     const result = buildIfMatch([
         { pattern: "a/b=c/d", template: "ad=bc" },
         { pattern: "a/b=c", template: "a=bc" },
-        { pattern: "a=c/d", template: "ad=c" }], eqn);
+        { pattern: "a=c/d", template: "ad=c" }], _eqn);
     if (result) {
-        eqn = result;
+        _eqn = result;
     }
-    return simplifyExpr(eqn);
+    return simplifyExpr(_eqn);
 }
 
 // asume binex is a product
@@ -1567,9 +1569,9 @@ function accumCoefficients(expr: IExpr, v: IVariable, poly: ISplitTerm[], negate
         switch (expr.type) {
             case ExprType.UNOP: {
                 const unex = expr as IUnop;
-                negate = !negate;
+                const _negate = !negate;
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return accumCoefficients(unex.operand1, v, poly, negate);
+                return accumCoefficients(unex.operand1, v, poly, _negate);
             }
             case ExprType.VARIABLE: {
                 // bare v term
@@ -1910,25 +1912,26 @@ function isSumOfProducts(e: IExpr): boolean {
 const diagB = false;
 // find correct place to check for divide by zero
 function simplifyExpr(expr: IExpr): IExpr {
+    let _expr = expr;
     let delta = true;
     while (delta) {
         delta = false;
         if (diagB) {
-            const tex = exprToTexParens(expr);
+            const tex = exprToTexParens(_expr);
             console.log(`simplifying ${tex}`);
         }
         let operand1: IExpr;
         let operand2: IExpr;
-        switch (expr.type) {
+        switch (_expr.type) {
             case ExprType.INTEGER:
             case ExprType.REAL:
             case ExprType.VARIABLE:
-                return expr;
+                return _expr;
             case ExprType.RATIONAL:
-                return Constants.simplifyRational(expr as IRational);
+                return Constants.simplifyRational(_expr as IRational);
             case ExprType.UNOP: {
                 // currently only unary '-'
-                const unex = expr as IUnop;
+                const unex = _expr as IUnop;
                 if (isConstant(unex.operand1)) {
                     return Constants.negate(unex.operand1);
                 } else {
@@ -1936,13 +1939,13 @@ function simplifyExpr(expr: IExpr): IExpr {
                     if (operand1 !== unex.operand1) {
                         delta = true;
                         const op1Unex: IUnop = { type: ExprType.UNOP, op: unex.op, operand1 };
-                        expr = op1Unex;
+                        _expr = op1Unex;
                     }
                 }
                 break;
             }
             case ExprType.BINOP:
-                const binex = expr as IBinop;
+                const binex = _expr as IBinop;
                 if (isConstant(binex.operand1)) {
                     if (isConstant(binex.operand2)) {
                         return applyBinop(binex);
@@ -2005,7 +2008,7 @@ function simplifyExpr(expr: IExpr): IExpr {
                         console.log(`match ${info.index}: ${info.pat}`);
                     }
                     delta = true;
-                    expr = result;
+                    _expr = result;
                 } else {
                     if (diagB) {
                         console.log("no match");
@@ -2015,7 +2018,7 @@ function simplifyExpr(expr: IExpr): IExpr {
                     if ((operand1 !== binex.operand1) || (operand2 !== binex.operand2)) {
                         delta = true;
                         const resBinex: IBinop = { type: ExprType.BINOP, op: binex.op, operand1, operand2 };
-                        expr = resBinex;
+                        _expr = resBinex;
                     }
                 }
                 break;
@@ -2023,10 +2026,10 @@ function simplifyExpr(expr: IExpr): IExpr {
             case ExprType.ERROR:
                 break;
             default:
-                console.log(`simplify: unrecognized expr type ${ExprType[expr.type]}`);
+                console.log(`simplify: unrecognized expr type ${ExprType[_expr.type]}`);
         }
     }
-    return expr;
+    return _expr;
 }
 
 export interface IExpr {
@@ -2374,13 +2377,14 @@ export function testExprLine(s: string, tokenIndex: number, tokens: MathToken[])
 }
 
 function equivalent(e: IExpr, soln: IExpr, v: IVariable) {
-    if ((e.type !== ExprType.BINOP) || ((e as IBinop).op !== Operator.EQ)) {
+    let _e = e;
+    if ((_e.type !== ExprType.BINOP) || ((_e as IBinop).op !== Operator.EQ)) {
         return false;
     }
-    e = simplifyExpr(e);
-    e = solve(e, v);
+    _e = simplifyExpr(_e);
+    _e = solve(_e, v);
     const solnEqn = soln as IBinop;
-    const eqn = e as IBinop;
+    const eqn = _e as IBinop;
     if (eqn &&
         match(solnEqn.operand1, eqn.operand1, {}, true) &&
         match(solnEqn.operand2, eqn.operand2, {}, true)) {

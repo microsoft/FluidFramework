@@ -12,10 +12,11 @@ import {
     invalidFileNameStatusCode,
     OdspError,
     OdspErrorType,
+    throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils";
 import { IOdspSocketError } from "../contracts";
 import { getWithRetryForTokenRefresh } from "../odspUtils";
-import { errorObjectFromSocketError, throwOdspNetworkError } from "../odspError";
+import { errorObjectFromSocketError } from "../odspError";
 
 describe("Odsp Error", () => {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -58,7 +59,7 @@ describe("Odsp Error", () => {
                 "message should contain original message");
             assert.notEqual(-1, networkError.message.indexOf("testStatusText"),
                 "message should contain Response.statusText");
-            assert((networkError as any).type === "default", "message should contain Response.type");
+            assert((networkError as any).responseType === "default", "message should contain Response.type");
             assert.equal(false, networkError.canRetry, "canRetry should be false");
         }
     });
@@ -80,11 +81,11 @@ describe("Odsp Error", () => {
             message: "testMessage",
             code: 400,
         };
-        const networkError = errorObjectFromSocketError(socketError);
+        const networkError = errorObjectFromSocketError(socketError, "disconnect");
         if (networkError.errorType !== DriverErrorType.genericNetworkError) {
             assert.fail("networkError should be a genericNetworkError");
         } else {
-            assert.equal(networkError.message, "testMessage");
+            assert.equal(networkError.message, "socket.io: disconnect: testMessage");
             assert.equal(networkError.canRetry, false);
             assert.equal(networkError.statusCode, 400);
         }
@@ -95,11 +96,11 @@ describe("Odsp Error", () => {
             message: "testMessage",
             code: 400,
         };
-        const networkError = errorObjectFromSocketError(socketError);
+        const networkError = errorObjectFromSocketError(socketError, "error");
         if (networkError.errorType !== DriverErrorType.genericNetworkError) {
             assert.fail("networkError should be a genericNetworkError");
         } else {
-            assert.equal(networkError.message, "testMessage");
+            assert.equal(networkError.message, "socket.io: error: testMessage");
             assert.equal(networkError.canRetry, false);
             assert.equal(networkError.statusCode, 400);
         }
@@ -111,11 +112,11 @@ describe("Odsp Error", () => {
             code: 429,
             retryAfter: 10,
         };
-        const networkError = errorObjectFromSocketError(socketError);
+        const networkError = errorObjectFromSocketError(socketError, "429");
         if (networkError.errorType !== DriverErrorType.throttlingError) {
             assert.fail("networkError should be a throttlingError");
         } else {
-            assert.equal(networkError.message, "testMessage");
+            assert.equal(networkError.message, "socket.io: 429: testMessage");
             assert.equal(networkError.retryAfterSeconds, 10);
         }
     });

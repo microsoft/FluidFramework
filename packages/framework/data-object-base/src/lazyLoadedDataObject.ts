@@ -72,5 +72,5 @@ export abstract class LazyLoadedDataObject<
     // #endregion IFluidLoadable
 
     public abstract create(props?: any);
-    public abstract async load();
+    public abstract load(): Promise<void>;
 }
