@@ -1504,7 +1504,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             socketDocumentId: this._deltaManager.socketDocumentId,
             pendingClientId: this.pendingClientId,
             clientId: this.clientId,
-            connectionMode: connectionMode,
+            connectionMode,
             autoReconnect,
             opsBehind,
             online: OnlineStatus[isOnline()],

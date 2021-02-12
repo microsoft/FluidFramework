@@ -99,13 +99,27 @@ describe("No Delta Stream", () => {
         assert.strictEqual(deltaManager.connectionMode, "read", "deltaManager.connectionMode");
         assert.strictEqual(deltaManager.storageOnly, true, "deltaManager.storageOnly");
 
-
         const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
         assert.strictEqual(dataObject.runtime.existing, true, "dataObject.runtime.existing");
         assert.strictEqual(dataObject.runtime.connected, true, "dataObject.runtime.connected");
         assert.strictEqual(dataObject.runtime.clientId, undefined, "dataObject.runtime.clientId");
 
         assert.strictEqual(dataObject.root.get("test"), "key", "mapKey");
+
+        container.close();
+    });
+
+    it("can't send ops", async () => {
+        const container = await loadContainer(true) as Container;
+        const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+
+        let err = false;
+        try {
+            dataObject.root.set("asdfasdf", "asfdasdfasdfasdf");
+        } catch (e) {
+            err = true;
+        }
+        assert.strictEqual(err, true);
 
         container.close();
     });

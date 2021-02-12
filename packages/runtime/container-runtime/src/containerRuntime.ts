@@ -1557,6 +1557,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ): void {
         this.verifyNotClosed();
 
+        if (this.deltaManager.storageOnly) {
+            throw new Error("cannot submit ops in storage-only mode");
+        }
+
         let clientSequenceNumber: number = -1;
         let opMetadataInternal = opMetadata;
 

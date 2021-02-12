@@ -318,8 +318,12 @@ export class DeltaManager
         return this._readonlyPermissions;
     }
 
+    /**
+     * Tells if container is in storage-only mode. In this mode container will
+     * not connect to delta stream.
+     */
     public get storageOnly() {
-        if(this.connection === undefined) {
+        if (this.connection === undefined) {
             return undefined;
         }
         return this.connection instanceof NoDeltaStream;
@@ -599,9 +603,9 @@ export class DeltaManager
             throw new Error("Container is not attached");
         }
 
-        if(docService.policies?.noDeltaStream === true) {
+        if (docService.policies?.noDeltaStream === true) {
             const connection = new NoDeltaStream();
-            this.connectionP = new Promise((resolve)=>{
+            this.connectionP = new Promise((resolve) => {
                 this.setupNewSuccessfulConnection(connection, "read");
                 resolve(connection);
             });
@@ -624,7 +628,7 @@ export class DeltaManager
 
                 try {
                     this.client.mode = requestedMode;
-                    connection =  await docService.connectToDeltaStream(this.client);
+                    connection = await docService.connectToDeltaStream(this.client);
                 } catch (origError) {
                     const error = CreateContainerError(origError);
 

@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -52,8 +51,8 @@ function generate(
         afterEach(() => {
             args.reset();
         });
-        let container1: IContainer;
-        let container2: IContainer;
+        let container1;
+        let container2;
         let dataStore1: ITestFluidObject;
         let dataStore2: ITestFluidObject;
         let sharedMap1: ISharedMap;
