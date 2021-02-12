@@ -340,13 +340,11 @@ export class RunningSummarizer implements IDisposable {
                 });
             });
         // back-compat 0.34 noSetPendingAckTimerTimeoutCallback
-        if (summaryCollection.setPendingAckTimerTimeoutCallback !== undefined) {
-            summaryCollection.setPendingAckTimerTimeoutCallback(maxAckWaitTime, () => {
-                if (this.pendingAckTimer.hasTimer) {
-                    this.pendingAckTimer.clear();
-                }
-            });
-        }
+        summaryCollection.setPendingAckTimerTimeoutCallback?.(maxAckWaitTime, () => {
+            if (this.pendingAckTimer.hasTimer) {
+                this.pendingAckTimer.clear();
+            }
+        });
     }
 
     public dispose(): void {
