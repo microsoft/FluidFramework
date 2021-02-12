@@ -136,7 +136,6 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
 
         deltaManager.on("connect", (details) => this.connect(details.clientId));
         deltaManager.on("disconnect", (reason) => {
-            // assert(this.clientId !== undefined);
             this.trace("DIS");
             this.clientId = undefined;
             // Once disconnected, the runtime is going to keep track of ops and replay as necessary

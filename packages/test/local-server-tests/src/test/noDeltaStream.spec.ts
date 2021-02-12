@@ -53,10 +53,10 @@ describe("No Delta Stream", () => {
         return container;
     }
 
-    async function loadContainer(noDeltaStream: boolean): Promise<IContainer> {
+    async function loadContainer(storageOnly: boolean): Promise<IContainer> {
         const loader: ILoader = createLoader(
             [[codeDetails, factory]],
-            new LocalDocumentServiceFactory(deltaConnectionServer, noDeltaStream),
+            new LocalDocumentServiceFactory(deltaConnectionServer, { storageOnly }),
             new LocalResolver());
         const container = await loader.resolve({ url: documentLoadUrl });
         opc.addDeltaManagers(container.deltaManager);
@@ -90,6 +90,7 @@ describe("No Delta Stream", () => {
         assert.strictEqual(container.clientId, undefined, "container.clientId");
         assert.strictEqual(container.existing, true, "container.existing");
         assert.strictEqual(container.readonly, true, "container.readonly");
+        assert.strictEqual(container.storageOnly, true, "container.storageOnly");
         assert.strictEqual(container.readonlyPermissions, true, "container.readonlyPermissions");
 
         const deltaManager = container.deltaManager as DeltaManager;
@@ -113,15 +114,29 @@ describe("No Delta Stream", () => {
         const container = await loadContainer(true) as Container;
         const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
 
-        let err = false;
         try {
             dataObject.root.set("asdfasdf", "asfdasdfasdfasdf");
-        } catch (e) {
-            err = true;
-        }
-        assert.strictEqual(err, true);
+            assert.fail("no error thrown on set()");
+        } catch (e) { }
 
         container.close();
+    });
+
+    it("doesn't affect normal containers", async () => {
+        await loadContainer(true) as Container;
+        const normalContainer1 = await loadContainer(false) as Container;
+        const normalContainer2 = await loadContainer(false) as Container;
+        const normalDataObject1 = await requestFluidObject<ITestFluidObject>(normalContainer1, "default");
+        const normalDataObject2 = await requestFluidObject<ITestFluidObject>(normalContainer2, "default");
+        normalDataObject1.root.set("fluid", "great");
+        normalDataObject2.root.set("prague", "a city in europe");
+        assert.strictEqual(await normalDataObject1.root.wait("prague"), "a city in europe");
+        assert.strictEqual(await normalDataObject2.root.wait("fluid"), "great");
+
+        const storageOnlyContainer = await loadContainer(true);
+        const storageOnlyDataObject = await requestFluidObject<ITestFluidObject>(storageOnlyContainer, "default");
+        assert.strictEqual(await storageOnlyDataObject.root.wait("prague"), "a city in europe");
+        assert.strictEqual(await storageOnlyDataObject.root.wait("fluid"), "great");
     });
 
     afterEach(async () => {

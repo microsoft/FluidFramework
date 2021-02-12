@@ -169,7 +169,8 @@ export class OdspDocumentService implements IDocumentService {
         this.policies = {
             // By default, ODSP tells the container not to prefetch/cache.
             caching: LoaderCachingPolicy.NoCaching,
-            noDeltaStream: odspResolvedUrl.fileVersion !== undefined,
+            // load in storage-only mode if a file version is specified
+            storageOnly: odspResolvedUrl.fileVersion !== undefined,
         };
 
         epochTracker.fileEntry = {

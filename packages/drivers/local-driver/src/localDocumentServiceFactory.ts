@@ -7,6 +7,7 @@ import { parse } from "url";
 import {
     IDocumentService,
     IDocumentServiceFactory,
+    IDocumentServicePolicies,
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
@@ -35,7 +36,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
      */
     constructor(
         private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer,
-        private readonly noDeltaStream: boolean = false,
+        private readonly policies?: IDocumentServicePolicies,
         private readonly innerDocumentService?: IDocumentService) { }
 
     public async createContainer(
@@ -104,7 +105,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
             tenantId,
             documentId,
             this.documentDeltaConnectionsMap,
-            this.noDeltaStream,
+            this.policies,
             this.innerDocumentService);
     }
 

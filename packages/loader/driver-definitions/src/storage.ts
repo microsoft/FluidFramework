@@ -210,7 +210,10 @@ export enum LoaderCachingPolicy {
 
 export interface IDocumentServicePolicies {
     readonly caching?: LoaderCachingPolicy;
-    readonly noDeltaStream?: boolean;
+    /**
+     * Do not connect to delta stream
+     */
+    readonly storageOnly?: boolean;
 }
 
 export interface IDocumentService {

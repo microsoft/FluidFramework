@@ -160,7 +160,7 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
         const container =
             await newVer.createAndAttachContainer(
                 defaultCodeDetails,
-                loader as any,
+                loader,
                 this.urlResolver.createCreateNewRequest(this.documentId));
 
         // TODO: the old version delta manager on the container doesn't do pause/resume count

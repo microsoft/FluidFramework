@@ -2,15 +2,20 @@
 
 **Topics covered below:**
 
-- [Fluid loader](#Fluid-loader)
-- [Expectations from host implementers](#Expectations-from-host-implementers)
-- [Expectations from container runtime and data store implementers](#Expectations-from-container-runtime-and-data-store-implementers)
-- [Container Lifetime](#Container-lifetime)
-- [Audience](#Audience)
-- [ClientID and client identification](#ClientId-and-client-identification)
-- [Error Handling](#Error-handling)
-- [Connectivity events](#Connectivity-events)
-- [Readonly states](#Readonly-states)
+- [@fluidframework/container-loader](#fluidframeworkcontainer-loader)
+  - [Fluid Loader](#fluid-loader)
+  - [Expectations from host implementers](#expectations-from-host-implementers)
+  - [Expectations from container runtime and data store implementers](#expectations-from-container-runtime-and-data-store-implementers)
+  - [Container Lifetime](#container-lifetime)
+    - [Loading](#loading)
+    - [Connectivity](#connectivity)
+    - [Closure](#closure)
+  - [Audience](#audience)
+  - [ClientID and client identification](#clientid-and-client-identification)
+  - [Error handling](#error-handling)
+  - [Connectivity events](#connectivity-events)
+  - [Readonly states](#readonly-states)
+    - [Storage-only](#storage-only)
 
 **Related topics covered elsewhere:**
 
@@ -168,7 +173,12 @@ Container and DeltaManager expose `"readonly"` event and property. It can have 3
   - Container.readonlyPermissions === true
   - Container.forceReadonly(true) was called
   - Container is closed
-- **false**: None of the above (Container.forceReadonly was never called or last call was with false), plus it's none that user has write permissions to a file (see below for more details)
+- **false**: None of the above (Container.forceReadonly was never called or last call was with false), plus it's known that user has write permissions to a file (see below for more details)
 - **undefined**: Same as above, but we do not know yet if current user has write access to a file (because there were no successful connection to ordering service yet).
 
 Readonly events are accessible by data stores and DDSes (through ContainerRuntime.deltaManager). It's expected that data stores adhere to requirements and expose read-only (or rather 'no edit') experiences.
+
+### Storage-only
+Storage-only mode is a readonly mode in which the container does not connect to the delta stream and is unable to submit or recieve ops. This is useful for viewing a specific version of a document.
+
+In this mode `"readonly"` event and property will behave as in normal readonly mode, and `storageOnly` property on Container and DeltaManager will be true.

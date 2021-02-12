@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { IContainer } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -15,16 +16,8 @@ import {
     waitAcquireAndComplete,
 } from "@fluidframework/ordered-collection";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import {
-    ITestFluidObject,
-    ChannelFactoryRegistry,
-} from "@fluidframework/test-utils";
-import {
-    generateTest,
-    ITestObjectProvider,
-    ITestContainerConfig,
-    DataObjectFactoryType,
-} from "./compatUtils";
+import { ChannelFactoryRegistry, ITestFluidObject } from "@fluidframework/test-utils";
+import { DataObjectFactoryType, generateTest, ITestContainerConfig, ITestObjectProvider } from "./compatUtils";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IFluidDataStoreRuntime, id?: string): T;
@@ -51,8 +44,8 @@ function generate(
         afterEach(() => {
             args.reset();
         });
-        let container1;
-        let container2;
+        let container1: IContainer;
+        let container2: IContainer;
         let dataStore1: ITestFluidObject;
         let dataStore2: ITestFluidObject;
         let sharedMap1: ISharedMap;

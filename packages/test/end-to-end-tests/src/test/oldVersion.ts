@@ -189,7 +189,7 @@ export function createTestObjectProvider(
             const oldMakeTestLoader = oldProvider.makeTestLoader.bind(oldProvider);
             oldProvider.makeTestLoader = (testContainerConfig?: unknown) => {
                 const testLoader = oldMakeTestLoader(testContainerConfig);
-                loaderContainerTracker.add(testLoader as any);
+                loaderContainerTracker.add(testLoader);
                 return testLoader;
             };
             const oldReset = oldProvider.reset.bind(oldProvider);

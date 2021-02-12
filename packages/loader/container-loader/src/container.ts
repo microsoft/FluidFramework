@@ -341,6 +341,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     /**
+     * {@inheritDoc DeltaManager.storageOnly}
+     */
+    public get storageOnly() {
+        return this._deltaManager.storageOnly;
+    }
+
+    /**
      * {@inheritDoc DeltaManager.readonlyPermissions}
      */
     public get readonlyPermissions() {

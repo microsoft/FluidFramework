@@ -102,6 +102,10 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
 }
 
+/**
+ * Implementation of IDocumentDeltaConnection that does not support submitting
+ * or receiving ops. Used in storage-only mode.
+ */
 class NoDeltaStream extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection {
     clientId: string = undefined as any;
     claims: ITokenClaims = {
@@ -603,7 +607,7 @@ export class DeltaManager
             throw new Error("Container is not attached");
         }
 
-        if (docService.policies?.noDeltaStream === true) {
+        if (docService.policies?.storageOnly === true) {
             const connection = new NoDeltaStream();
             this.connectionP = new Promise((resolve) => {
                 this.setupNewSuccessfulConnection(connection, "read");
