@@ -1,6 +1,10 @@
 ## 0.35 Breaking changes
 - [Removed some api implemenations from odsp driver](#Removed-some-api-implemenations-from-odsp-driver)
 - [get-tinylicious-container and get-session-storage-container moved](#get-tinylicious-container-and-get-session-storage-container-moved)
+- [Moved parseAuthErrorClaims from @fluidframework/odsp-driver to @fluidframework/odsp-doclib-utils](#Moved-parseAuthErrorClaims-from-@fluidframework/odsp-driver-to-@fluidframework/odsp-doclib-utils)
+
+### Moved parseAuthErrorClaims from @fluidframework/odsp-driver to @fluidframework/odsp-doclib-utils
+Moved `parseAuthErrorClaims` from `@fluidframework/odsp-driver` to `@fluidframework/odsp-doclib-utils`
 
 ### Removed-some-api-implemenations-from-odsp-driver
 Removed `authorizedFetchWithRetry`, `AuthorizedRequestTokenPolicy`, `AuthorizedFetchProps`, `asyncWithCache`, `asyncWithRetry`,

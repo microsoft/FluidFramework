@@ -196,6 +196,7 @@
                 "dev": true,
                 "dirs": [
                     "examples/",
+                    "experimental/examples/",
                     "packages/agents/"
                 ],
                 "deps": [
