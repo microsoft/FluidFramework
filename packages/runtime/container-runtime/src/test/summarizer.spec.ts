@@ -301,6 +301,10 @@ describe("Runtime", () => {
 
                     // Emit next op after maxAckWaitTime
                     await emitNextOp(1, Date.now() + summaryConfig.maxAckWaitTime + 1000);
+                    assert(mockLogger.matchEvents([
+                        { eventName: "Running:MissingSummaryAckFoundByOps",
+                            timerRunning: true },
+                    ]), "unexpected log sequence 1");
 
                     // eslint-disable-next-line @typescript-eslint/dot-notation
                     assert.strictEqual(summarizer["pendingAckTimer"].hasTimer, false,
@@ -314,7 +318,7 @@ describe("Runtime", () => {
                         { eventName: "Running:GenerateSummary_end",
                             summaryGenTag: runCount, message: "maxOps" },
                         { eventName: "Running:SummaryOp", summaryGenTag: runCount },
-                    ]), "unexpected log sequence 1");
+                    ]), "unexpected log sequence 2");
 
                     assert(!mockLogger.matchEvents([
                         { eventName: "Running:SummaryAck" },
@@ -324,7 +328,7 @@ describe("Runtime", () => {
                     await emitAck();
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:SummaryAck", summaryGenTag: runCount },
-                    ]), "unexpected log sequence 2");
+                    ]), "unexpected log sequence 3");
                 });
             });
         });
