@@ -8,11 +8,11 @@ const odspTenants = new Map<string, string>([
     ["spo-df", "microsoft-my.sharepoint-df.com"],
 ]);
 
-export function isSharepointURL(server: string) {
+export function isOdspSiteUrl(server: string) {
     return server.endsWith("sharepoint.com") || server.endsWith("sharepoint-df.com");
 }
 
-export function getSharepointTenant(server: string) {
+export function getAadTenant(server: string) {
     let tenantName = server.substr(0, server.indexOf(".")).toLowerCase();
     if (tenantName.endsWith("-my")) {
         tenantName = tenantName.substr(0, tenantName.length - 3);

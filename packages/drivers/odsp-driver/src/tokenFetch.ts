@@ -39,15 +39,6 @@ export interface TokenFetchOptions {
 }
 
 /**
- * Method signature for callback method used to fetch access token
- * @param options - token fetch options
- * @returns If successful, TokenResponse object representing token value along with flag indicating
- * whether token came from cache. Legacy implementation may return a string for token value;
- * in this case it should be assumes that fromCache signal is undefined. Null is returned in case of failure.
- */
-export type TokenFetcher = (options: TokenFetchOptions) => Promise<string | TokenResponse | null>;
-
-/**
  * Represents access token fetch options for ODSP resource
  */
 export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
@@ -56,34 +47,33 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
 }
 
 /**
- * Method signature for callback method used to fetch token for accessing ODSP resource with location
- * represented by site url.
- * @param options - token fetch options
- * @returns If successful, TokenResponse object representing token value along with flag indicating
- * whether token came from cache. Legacy implementation may return a string for token value;
- * in this case it should be assumes that fromCache signal is undefined. Null is returned in case of failure.
+ * Represents access token fetch options for ODSP resource addressable via Graph API
  */
-export type OdspResourceTokenFetcher =
-    (options: OdspResourceTokenFetchOptions) => Promise<string | TokenResponse | null>;
-
 export interface GraphResourceTokenFetchOptions extends OdspResourceTokenFetchOptions {
     type: "Graph";
 }
 
+/**
+ * Represents access token fetch options for ODSP resource addressable via Vroom API
+ */
 export interface OneDriveResourceTokenFetchOptions extends OdspResourceTokenFetchOptions {
     type: "OneDrive";
 }
 
+/**
+ * Represents access token fetch options for sharing link. Either Graph or Vroom or both tokens might be
+ * needed to generate sharing link.
+ */
 export type SharingLinkTokenFetchOptions = GraphResourceTokenFetchOptions | OneDriveResourceTokenFetchOptions;
 
 /**
- * Method signature for callback method used to fetch tokens used when generating Sharing link
+ * Method signature for callback method used to fetch access token
  * @param options - token fetch options
  * @returns If successful, TokenResponse object representing token value along with flag indicating
  * whether token came from cache. Legacy implementation may return a string for token value;
  * in this case it should be assumes that fromCache signal is undefined. Null is returned in case of failure.
  */
-export type SharingLinkTokenFetcher = (options: SharingLinkTokenFetchOptions) => Promise<string | TokenResponse | null>;
+export type TokenFetcher<T> = (options: T) => Promise<string | TokenResponse | null>;
 
 /**
  * Helper method which transforms return value for TokenFetcher method to token string

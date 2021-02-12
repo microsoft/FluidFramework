@@ -28,10 +28,11 @@ import { OdspDocumentService } from "./odspDocumentService";
 import { INewFileInfo } from "./odspUtils";
 import { createNewFluidFile } from "./createFile";
 import {
-    OdspResourceTokenFetcher,
     TokenFetchOptions,
     isTokenFromCache,
     tokenFromResponse,
+    OdspResourceTokenFetchOptions,
+    TokenFetcher,
 } from "./tokenFetch";
 import { EpochTracker, EpochTrackerWithRedemption } from "./epochTracker";
 
@@ -109,8 +110,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
    * @param persistedCache - PersistedCache provided by host for use in this session.
    */
     constructor(
-        private readonly getStorageToken: OdspResourceTokenFetcher,
-        private readonly getWebsocketToken: OdspResourceTokenFetcher,
+        private readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
+        private readonly getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions>,
         private readonly getSocketIOClient: () => Promise<SocketIOClientStatic>,
         protected persistedCache: IPersistedCache = new LocalPersistentCache(),
         private readonly hostPolicy: HostStoragePolicy = {},
@@ -156,7 +157,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     private toInstrumentedOdspTokenFetcher(
         logger: ITelemetryLogger,
         resolvedUrl: IOdspResolvedUrl,
-        tokenFetcher: OdspResourceTokenFetcher,
+        tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
         defaultEventName: string,
         throwOnNullToken: boolean,
     ): (options: TokenFetchOptions, name?: string) => Promise<string | null> {

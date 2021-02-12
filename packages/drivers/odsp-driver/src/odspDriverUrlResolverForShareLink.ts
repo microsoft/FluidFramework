@@ -17,8 +17,8 @@ import { getShareLink } from "./graph";
 import {
     IdentityType,
     isTokenFromCache,
-    SharingLinkTokenFetcher,
     SharingLinkTokenFetchOptions,
+    TokenFetcher,
 } from "./tokenFetch";
 
 /**
@@ -29,16 +29,16 @@ import {
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     private readonly logger: ITelemetryLogger;
     private readonly sharingLinkCache = new PromiseCache<string, string>();
-    private readonly getSharingLinkToken: SharingLinkTokenFetcher;
+    private readonly getSharingLinkToken: TokenFetcher<SharingLinkTokenFetchOptions>;
     public constructor(
-        tokenFetcher: SharingLinkTokenFetcher,
+        tokenFetcher: TokenFetcher<SharingLinkTokenFetchOptions>,
         private readonly identityType: IdentityType = "Enterprise",
         logger?: ITelemetryBaseLogger,
         private readonly appName?: string,
         private readonly msGraphOrigin?: string,
     ) {
         this.logger = ChildLogger.create(logger, "OdspDriver");
-        this.getSharingLinkToken = this.toInstrumentedSharingLinkTokenFetcher(this.logger, tokenFetcher);
+        this.getSharingLinkToken = this.toInstrumentedTokenFetcher(this.logger, tokenFetcher);
     }
 
     public createCreateNewRequest(
@@ -119,10 +119,10 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         return odspResolvedUrl;
     }
 
-    private toInstrumentedSharingLinkTokenFetcher(
+    private toInstrumentedTokenFetcher(
         logger: ITelemetryLogger,
-        tokenFetcher: SharingLinkTokenFetcher,
-    ): SharingLinkTokenFetcher {
+        tokenFetcher: TokenFetcher<SharingLinkTokenFetchOptions>,
+    ): TokenFetcher<SharingLinkTokenFetchOptions> {
         return async (options: SharingLinkTokenFetchOptions) => {
             return PerformanceEvent.timedExecAsync(
                 logger,

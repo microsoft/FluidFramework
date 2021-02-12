@@ -20,6 +20,7 @@ import { EpochTracker } from "./epochTracker";
  * @param method - The type of request, such as GET or POST
  * @param logger - A logger to use for this request
  * @param getStorageToken - A function that is able to provide the access token for this request
+ * @param epochTracker - fetch wrapper which incorporates epoch logic around joisSession call.
  */
 export async function fetchJoinSession(
     driveId: string,

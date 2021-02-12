@@ -11,12 +11,10 @@ import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { fetchAndParseAsJSONHelper, fetchHelper, getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
 import {
     IdentityType,
-    SharingLinkTokenFetcher,
     SharingLinkTokenFetchOptions,
     TokenFetcher,
     TokenFetchOptions,
     tokenFromResponse,
-    TokenResponse,
 } from "./tokenFetch";
 
 /**
@@ -88,7 +86,7 @@ export async function delay(timeMs: number): Promise<void> {
  * @returns Promise which resolves to share link url when successful; otherwise, undefined.
  */
 export async function getShareLink(
-    getToken: (options: SharingLinkTokenFetchOptions) => Promise<string | TokenResponse | null>,
+    getToken: TokenFetcher<SharingLinkTokenFetchOptions>,
     siteUrl: string,
     driveId: string,
     itemId: string,
@@ -121,7 +119,7 @@ export async function getShareLink(
 }
 
 export async function getShareLinkCore(
-    getToken: (options: SharingLinkTokenFetchOptions) => Promise<string | TokenResponse | null>,
+    getToken: TokenFetcher<SharingLinkTokenFetchOptions>,
     siteUrl: string,
     driveId: string,
     itemId: string,
@@ -159,7 +157,7 @@ export async function getShareLinkCore(
  * @param requestInit - Request Init to be passed to fetch
  */
 async function graphFetch(
-    getToken: TokenFetcher,
+    getToken: TokenFetcher<TokenFetchOptions>,
     graphUrl: string,
     nameForLogging: string,
     logger: ITelemetryLogger,
@@ -202,7 +200,7 @@ async function graphFetch(
  * @returns Promise which resolves to file url when successful; otherwise, undefined.
  */
 async function getFileDefaultUrl(
-    getToken: SharingLinkTokenFetcher,
+    getToken: TokenFetcher<SharingLinkTokenFetchOptions>,
     siteUrl: string,
     driveId: string,
     itemId: string,
@@ -281,7 +279,7 @@ const graphItemLiteCache = new PromiseCache<string, GraphItemLite | undefined>()
  * powering MRU and Share functionality.
  */
 async function getGraphItemLite(
-    getToken: TokenFetcher,
+    getToken: TokenFetcher<TokenFetchOptions>,
     driveId: string,
     itemId: string,
     logger: ITelemetryLogger,
