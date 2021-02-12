@@ -22,7 +22,7 @@ import {
     IProxyLoaderFactory,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
-import { Deferred, performance } from "@fluidframework/common-utils";
+import { assert, Deferred, performance } from "@fluidframework/common-utils";
 import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
@@ -66,14 +66,14 @@ export class RelativeLoader extends EventEmitter implements ILoader {
 
     public get IFluidRouter(): IFluidRouter { return this; }
 
-    public async resolve(request: IRequest): Promise<IContainer> {
+    public async resolve(request: IRequest, initialLoad?: boolean): Promise<IContainer> {
         if (request.url.startsWith("/")) {
             // If no headers are set that require a reload make use of the same object
             const container = await this.containerDeferred.promise;
             return container;
         }
 
-        return this.loader.resolve(request);
+        return this.loader.resolve(request, initialLoad);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -290,9 +290,9 @@ export class Loader extends EventEmitter implements ILoader {
             JSON.parse(snapshot));
     }
 
-    public async resolve(request: IRequest): Promise<Container> {
+    public async resolve(request: IRequest, initialLoad?: boolean): Promise<Container> {
         return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Resolve" }, async () => {
-            const resolved = await this.resolveCore(request);
+            const resolved = await this.resolveCore(request, initialLoad);
             return resolved.container;
         });
     }
@@ -351,6 +351,7 @@ export class Loader extends EventEmitter implements ILoader {
 
     private async resolveCore(
         request: IRequest,
+        initialLoad = true,
     ): Promise<{ container: Container; parsed: IParsedUrl }> {
         const resolvedAsFluid = await this.services.urlResolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
@@ -376,7 +377,8 @@ export class Loader extends EventEmitter implements ILoader {
                     this.loadContainer(
                         docId,
                         request,
-                        resolvedAsFluid);
+                        resolvedAsFluid,
+                        initialLoad);
                 container = await containerP;
 
                 if (!container.closed) {
@@ -393,10 +395,14 @@ export class Loader extends EventEmitter implements ILoader {
                 await this.loadContainer(
                     docId,
                     request,
-                    resolvedAsFluid);
+                    resolvedAsFluid,
+                    initialLoad);
         }
 
         if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
+            assert(request.headers?.[LoaderHeader.pause] !== true);
+            assert(initialLoad === true);
+
             await new Promise<void>((resolve, reject) => {
                 function opHandler(message: ISequencedDocumentMessage) {
                     if (message.sequenceNumber > fromSequenceNumber) {
@@ -447,11 +453,17 @@ export class Loader extends EventEmitter implements ILoader {
         docId: string,
         request: IRequest,
         resolved: IFluidResolvedUrl,
+        initialLoad: boolean,
     ): Promise<Container> {
-        return Container.load(
+        const container = Container.create(
             docId,
             this,
             request,
             resolved);
+
+        if (initialLoad) {
+            await container.finishLoad(request);
+        }
+        return container;
     }
 }

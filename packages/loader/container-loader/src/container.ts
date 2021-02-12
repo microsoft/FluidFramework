@@ -194,6 +194,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
     ): Promise<Container> {
+        const container = Container.create(docId, loader, request, resolvedUrl);
+        await container.finishLoad(request);
+        return container;
+    }
+
+    /**
+     * Load an existing container.
+     */
+    public static create(
+        docId: string,
+        loader: Loader,
+        request: IRequest,
+        resolvedUrl: IFluidResolvedUrl,
+    ): Container {
         const container = new Container(
             loader,
             {
@@ -203,35 +217,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 canReconnect: !(request.headers?.[LoaderHeader.reconnect] === false),
             });
 
-        return PerformanceEvent.timedExecAsync(container.logger, { eventName: "Load" }, async (event) => {
-            return new Promise<Container>((res, rej) => {
-                const version = request.headers?.[LoaderHeader.version];
-                const pause = request.headers?.[LoaderHeader.pause];
-
-                const onClosed = (err?: ICriticalContainerError) => {
-                    // Depending where error happens, we can be attempting to connect to web socket
-                    // and continuously retrying (consider offline mode)
-                    // Host has no container to close, so it's prudent to do it here
-                    const error = err ?? CreateContainerError("Container closed without an error");
-                    container.close(error);
-                    rej(error);
-                };
-                container.on("closed", onClosed);
-
-                container.load(version, pause === true)
-                    .finally(() => {
-                        container.removeListener("closed", onClosed);
-                    })
-                    .then((props) => {
-                        event.end(props);
-                        res(container);
-                    },
-                        (error) => {
-                            const err = CreateContainerError(error);
-                            onClosed(err);
-                        });
-            });
-        });
+        container._attachState = AttachState.Attached;
+        return container;
     }
 
     /**
@@ -664,6 +651,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async request(path: IRequest): Promise<IResponse> {
+        await this.finishLoad(path);
+
         return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
             return this.context.request(path);
         });
@@ -987,21 +976,61 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._deltaManager.connect(args);
     }
 
+    public async finishLoad(request: IRequest) {
+        if (this._context !== undefined) { return; }
+
+        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Load" }, async (event) => {
+            // This code to capture errors from "closed" event is only needed
+            // - for safety, in case error does not propagate through stack
+            // - for safety, to break out any infinite retries by closing container.
+            // - for cases where loader.request() is used directly by caller, not leveraging loader.resolve()
+            //   to get container earlier and be able to register all the right handlers to listen for errors.
+            return new Promise<Container>((res, rej) => {
+                const onClosed = (err?: ICriticalContainerError) => {
+                    rej(err ?? CreateContainerError("Container closed without an error"));
+                };
+                this.on("closed", onClosed);
+
+                this._attachState = AttachState.Attached;
+                this.finishLoadCore(request)
+                    .finally(() => {
+                        this.removeListener("closed", onClosed);
+                    })
+                    .then((props) => {
+                        event.end(props);
+                        res(this);
+                    },
+                    (error) => {
+                        const err = CreateContainerError(error);
+                        // Depending where error happens, we can be attempting to connect to web socket
+                        // and continuously retrying (consider offline mode)
+                        // Host has no container to close, so it's prudent to do it here
+                        this.close(err);
+                        rej(err);
+                    });
+            });
+        });
+    }
+
     /**
      * Load container.
      *
-     * @param specifiedVersion - one of the following
+     * @param [LoaderHeader.version] header - one of the following
      *   - null: use ops, no snapshots
      *   - undefined - fetch latest snapshot
      *   - otherwise, version sha to load snapshot
-     * @param pause - start the container in a paused state
+     * @param [LoaderHeader.pause] header - start the container in a paused state
      */
-    private async load(specifiedVersion: string | null | undefined, pause: boolean) {
+    private async finishLoadCore(request: IRequest) {
+        assert(this._context === undefined);
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
         }
-        this.service = await this.serviceFactory.createDocumentService(this._resolvedUrl, this.subLogger);
 
+        const specifiedVersion = request.headers?.[LoaderHeader.version];
+        const pause = (request.headers?.[LoaderHeader.pause] === true);
+
+        this.service = await this.serviceFactory.createDocumentService(this._resolvedUrl, this.subLogger);
         let startConnectionP: Promise<IConnectionDetails> | undefined;
 
         // Ideally we always connect as "read" by default.
@@ -1023,7 +1052,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         this._storageService = await this.getDocumentStorageService();
-        this._attachState = AttachState.Attached;
 
         // Fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
         const { snapshot, versionId } = await this.fetchSnapshotTree(specifiedVersion);
