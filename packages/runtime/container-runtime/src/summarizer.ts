@@ -341,13 +341,12 @@ export class RunningSummarizer implements IDisposable {
             });
         // back-compat 0.34 noSetPendingAckTimerTimeoutCallback
         summaryCollection.setPendingAckTimerTimeoutCallback?.(maxAckWaitTime, () => {
-            this.logger.sendTelemetryEvent({
-                eventName: "MissingSummaryAckFoundByOps",
-                timerRunning: this.pendingAckTimer.hasTimer,
-                refSequenceNumber: this.heuristics.lastAttempted.refSequenceNumber,
-                summarySequenceNumber: this.heuristics.lastAttempted.summarySequenceNumber,
-            });
             if (this.pendingAckTimer.hasTimer) {
+                this.logger.sendTelemetryEvent({
+                    eventName: "MissingSummaryAckFoundByOps",
+                    refSequenceNumber: this.heuristics.lastAttempted.refSequenceNumber,
+                    summarySequenceNumber: this.heuristics.lastAttempted.summarySequenceNumber,
+                });
                 this.pendingAckTimer.clear();
             }
         });

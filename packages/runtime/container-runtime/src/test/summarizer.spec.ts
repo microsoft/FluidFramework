@@ -302,8 +302,7 @@ describe("Runtime", () => {
                     // Emit next op after maxAckWaitTime
                     await emitNextOp(1, Date.now() + summaryConfig.maxAckWaitTime + 1000);
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:MissingSummaryAckFoundByOps",
-                            timerRunning: true },
+                        { eventName: "Running:MissingSummaryAckFoundByOps" },
                     ]), "unexpected log sequence 1");
 
                     // eslint-disable-next-line @typescript-eslint/dot-notation
