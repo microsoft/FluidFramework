@@ -72,6 +72,10 @@ export class DocumentContextManager extends EventEmitter {
         for (const context of this.contexts) {
             context.close();
         }
+
+        this.contexts.clear();
+
+        this.removeAllListeners();
     }
 
     private updateCheckpoint() {
