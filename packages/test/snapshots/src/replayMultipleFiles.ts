@@ -243,7 +243,8 @@ async function processNodeForWrite(
 }
 
 /**
- * Runs back-compat snapshot tests. We have a set of reference snapshots. Each set has snapshots in the current format
+ * Runs backward compatibility snapshot tests
+ * We have a set of reference snapshots. Each set has snapshots in the current format
  * and may have snapshots in an older format. For each set, the test does the following:
  * 1. Loads a document with the snapshot in old version.
  * 2. Takes a snapshot of the document.

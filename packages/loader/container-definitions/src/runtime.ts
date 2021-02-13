@@ -98,9 +98,6 @@ export interface IRuntime extends IDisposable {
      * @param attachState - State of the container.
      */
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
-
-    // 0.24 back-compat attachingBeforeSummary
-    readonly runtimeVersion?: string;
 }
 
 /**

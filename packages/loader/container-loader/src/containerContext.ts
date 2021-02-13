@@ -110,10 +110,6 @@ export class ContainerContext implements IContainerContext {
         return this.attributes.branch;
     }
 
-    public get runtimeVersion(): string | undefined {
-        return this.runtime?.runtimeVersion;
-    }
-
     public get connected(): boolean {
         return this.container.connected;
     }

@@ -302,8 +302,6 @@ export function configureWebSocketServices(
                     existing: details.existing,
                     maxMessageSize: connection.maxMessageSize,
                     mode: "write",
-                    // Back-compat, removal tracked with issue #4346
-                    parentBranch: null,
                     serviceConfiguration: {
                         blockSize: connection.serviceConfiguration.blockSize,
                         maxMessageSize: connection.serviceConfiguration.maxMessageSize,
@@ -322,8 +320,6 @@ export function configureWebSocketServices(
                     existing: details.existing,
                     maxMessageSize: 1024, // Readonly client can't send ops.
                     mode: "read",
-                    // Back-compat, removal tracked with issue #4346
-                    parentBranch: null, // Does not matter for now.
                     serviceConfiguration: {
                         blockSize: core.DefaultServiceConfiguration.blockSize,
                         maxMessageSize: core.DefaultServiceConfiguration.maxMessageSize,
