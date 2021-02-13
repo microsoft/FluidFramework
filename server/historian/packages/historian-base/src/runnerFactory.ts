@@ -49,7 +49,7 @@ export class HistorianResourcesFactory implements utils.IResourcesFactory<Histor
         const tenantCache = new historianServices.RedisTenantCache(redisClient);
         // Create services
         const riddlerEndpoint = config.get("riddler");
-        const asyncLocalStorage = config.get("asyncLocalStorageInstance");
+        const asyncLocalStorage = config.get("asyncLocalStorageInstance")[0];
         const riddler = new historianServices.RiddlerService(riddlerEndpoint, tenantCache, asyncLocalStorage);
 
         // Redis connection for throttling.
