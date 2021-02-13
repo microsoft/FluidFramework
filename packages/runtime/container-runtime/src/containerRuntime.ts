@@ -1015,7 +1015,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (clientId) {
                 this.summaryManager.setConnected(clientId);
             } else {
-                assert(!!this.deltaManager.storageOnly);
+                assert(!!this.deltaManager.storageOnly, "connected with no clientId");
             }
         } else {
             this.summaryManager.setDisconnected();

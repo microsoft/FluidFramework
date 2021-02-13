@@ -157,6 +157,8 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
      * and do not know if user has write access to a file.
      */
     readonly readonly?: boolean;
+
+    /** Tells if container is in storage-only mode. In this mode container will not connect to delta stream. */
     readonly storageOnly?: boolean | undefined;
 
     /** Terminate the connection to storage */
