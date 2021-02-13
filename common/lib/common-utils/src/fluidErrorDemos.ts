@@ -8,7 +8,7 @@ import {
     ITelemetryProperties,
     ITelemetryBaseEvent,
 } from "@fluidframework/common-definitions";
-import { FluidError, wrapAsFluidError } from "./fluidError";
+import { FluidError, wrapAsFluidError, GenericFluidError } from "./fluidError";
 
 // ///////////////// Demo of usage for Driver Errors ///////////////// //
 // Compare with packages\loader\driver-definitions\src\driverError.ts
@@ -102,4 +102,18 @@ export function prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetch
     if (event.stack === undefined && fetchStack) {
         //* event.stack = TelemetryLogger.getStack();
     }
+}
+
+// ///////////////// Demo of usage of addDetails for PII ///////////////// //
+// Compare with packages\runtime\container-runtime\src\dataStoreContext.ts
+
+declare module "@fluidframework/common-definitions" {
+    export interface ISensitiveDebugData {
+        packageName?: string;
+    }
+}
+
+export function rejectDeferredRealize(reason: string, packageName: string): never {
+    const error = new GenericFluidError(reason, {}, { packageName });
+    throw error;
 }

@@ -30,13 +30,13 @@ export abstract class FluidError extends Error implements IFluidError {
         return { ...this.debugData, stack: this.stack ?? "" };
     } //* Or implement deep copy? Not even possible...?
 
-    public addDetails(props: ITelemetryProperties, debugData: Partial<ISensitiveDebugData>) {
+    public addDetails(props: Partial<ITelemetryProperties>, debugData: Partial<ISensitiveDebugData>) {
         this.props = { ...this.props, ...props };
         this.debugData = { ...this.debugData, ...debugData };
     }
 }
 
-export class GenericError extends FluidError {
+export class GenericFluidError extends FluidError {
     public errorType: string = "generic";
 }
 
@@ -52,7 +52,7 @@ export function wrapAsFluidError(err: any): IFluidError {
 
     //* start with promoting err's message, per present behavior, and then pull out in later scoped change.
     //* Same with stack above?
-    return new GenericError(
+    return new GenericFluidError(
         "External Error",
         {},
         { innerError: err },
