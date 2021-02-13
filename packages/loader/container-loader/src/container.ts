@@ -783,35 +783,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             return undefined;
         }
 
-        // TODO: Remove support for legacy requestUrl in 0.20
-        const legacyResolver = this.urlResolver as {
-            requestUrl?(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse>;
-
-            getAbsoluteUrl?(
-                resolvedUrl: IResolvedUrl,
-                relativeUrl: string,
-            ): Promise<string>;
-        };
-
-        if (legacyResolver.getAbsoluteUrl !== undefined) {
-            return this.urlResolver.getAbsoluteUrl(
-                this.resolvedUrl,
-                relativeUrl,
-                this._context?.codeDetails);
-        }
-
-        if (legacyResolver.requestUrl !== undefined) {
-            const response = await legacyResolver.requestUrl(
-                this.resolvedUrl,
-                { url: relativeUrl });
-
-            if (response.status === 200) {
-                return response.value as string;
-            }
-            throw new Error(response.value);
-        }
-
-        throw new Error("Url Resolver does not support creating urls");
+        return this.urlResolver.getAbsoluteUrl(
+            this.resolvedUrl,
+            relativeUrl,
+            this._context?.codeDetails);
     }
 
     public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {

@@ -14,6 +14,7 @@ import {
     OnlineStatus,
 } from "@fluidframework/driver-utils";
 import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
+import { parseAuthErrorTenant } from "./parseAuthErrorTenant";
 
 // eslint-disable-next-line no-null/no-null
 const nullToUndefined = (a: string | null) => a === null ? undefined : a;
@@ -96,14 +97,15 @@ export function createOdspNetworkError(
     responseText?: string,
 ): OdspError {
     let error: OdspError;
-    const claims = statusCode === 401 && response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
     switch (statusCode) {
         case 400:
             error = new GenericNetworkError(errorMessage, false, statusCode);
             break;
         case 401:
         case 403:
-            error = new AuthorizationError(errorMessage, claims, statusCode);
+            const claims = response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
+            const tenantId = response?.headers ? parseAuthErrorTenant(response.headers) : undefined;
+            error = new AuthorizationError(errorMessage, claims, tenantId, statusCode);
             break;
         case 404:
             error = new NetworkErrorBasic(

@@ -8,16 +8,27 @@ const odspTenants = new Map<string, string>([
     ["spo-df", "microsoft-my.sharepoint-df.com"],
 ]);
 
-export function isSharepointURL(server: string) {
-    return server.endsWith("sharepoint.com") || server.endsWith("sharepoint-df.com");
+export function isOdspHostname(hostname: string) {
+    return hostname.endsWith("sharepoint.com") || hostname.endsWith("sharepoint-df.com");
 }
 
-export function getSharepointTenant(server: string) {
-    let tenant = server.substr(0, server.indexOf("."));
-    if (tenant.endsWith("-my")) {
-        tenant = tenant.substr(0, tenant.length - 3);
+export function getAadTenant(hostname: string) {
+    let tenantName = hostname.substr(0, hostname.indexOf(".")).toLowerCase();
+    let restOfTenantHostname = hostname.substr(tenantName.length).toLowerCase();
+
+    if (tenantName.endsWith("-my")) {
+        tenantName = tenantName.substr(0, tenantName.length - 3);
+    } else if (tenantName.endsWith("-admin")) {
+        tenantName = tenantName.substr(0, tenantName.length - 6);
     }
-    return tenant === "microsoft" ? "organizations" : `${tenant}.onmicrosoft.com`;
+
+    if (restOfTenantHostname.indexOf(".sharepoint.") === 0) {
+        restOfTenantHostname = `.onmicrosoft.${restOfTenantHostname.substr(12)}`;
+    } if (restOfTenantHostname.indexOf(".sharepoint-df.") === 0) {
+        restOfTenantHostname = `.onmicrosoft.${restOfTenantHostname.substr(15)}`;
+    }
+
+    return `${tenantName}${restOfTenantHostname}`;
 }
 
 export function getServer(tenantId: string): string {
