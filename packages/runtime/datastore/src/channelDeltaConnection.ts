@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
+import { CreateCorruptionError } from "@fluidframework/container-utils";
 
 export class ChannelDeltaConnection implements IDeltaConnection {
     private _handler: IDeltaHandler | undefined;
@@ -36,7 +37,11 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        this.handler.process(message, local, localOpMetadata);
+        try {
+            this.handler.process(message, local, localOpMetadata);
+        } catch (error) {
+            throw CreateCorruptionError(error);
+        }
     }
 
     public reSubmit(content: any, localOpMetadata: unknown) {

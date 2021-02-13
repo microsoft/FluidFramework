@@ -38,6 +38,7 @@ export class GenericError extends LoggingError implements IGenericError {
 
 export class DataCorruptionError extends LoggingError implements IErrorBase {
     readonly errorType = ContainerErrorType.dataCorruptionError;
+    readonly errorSubType?: string;
     readonly canRetry = false;
 
     constructor(
@@ -45,6 +46,48 @@ export class DataCorruptionError extends LoggingError implements IErrorBase {
         props: ITelemetryProperties,
     ) {
         super(errorMessage, props);
+    }
+}
+
+/**
+ * Coerce the throwable input into a DataCorruptionError.
+ * @param error - Throwable input to be converted.
+ */
+export function CreateCorruptionError(error: any): DataCorruptionError {
+    if (typeof error === "string") {
+        return new DataCorruptionError(error, {});
+    } else if (!error || Array.isArray(error) || typeof error !== "object") {
+        return new DataCorruptionError(
+            "DataCorruptionError without explicit message (needs review)",
+            { typeof: typeof error },
+        );
+    } else if (error instanceof DataCorruptionError) {
+        return error;
+    } else if (error instanceof LoggingError) {
+        const { errorType: errorSubType } = error as any;
+
+        return new DataCorruptionError(
+            error.message,
+            errorSubType
+                ? {
+                    ...error,
+                    errorSubType,
+                    errorType: ContainerErrorType.dataCorruptionError,
+                }
+                : {
+                    ...error,
+                    errorType: ContainerErrorType.dataCorruptionError,
+                },
+        );
+    } else {
+        // Only get properties we know about.
+        // Grabbing all properties will expose PII in telemetry!
+        const message = messageFromError(error);
+        const { stack } = error;
+
+        return stack
+            ? new DataCorruptionError(message, { stack })
+            : new DataCorruptionError(message, {});
     }
 }
 
