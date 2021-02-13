@@ -258,7 +258,6 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
-    readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
     /**
@@ -267,12 +266,6 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
     readonly attachState: AttachState;
 
     readonly containerRuntime: IContainerRuntimeBase;
-    /**
-     * @deprecated 0.17 Issue #1888 Rename IHostRuntime to IContainerRuntime and refactor usages
-     * Use containerRuntime instead of hostRuntime
-     */
-    readonly hostRuntime: IContainerRuntimeBase;
-    readonly snapshotFn: (message: string) => Promise<void>;
 
     /**
      * @deprecated 0.16 Issue #1635, #3631

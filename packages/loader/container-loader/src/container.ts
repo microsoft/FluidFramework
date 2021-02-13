@@ -1692,7 +1692,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (warning: ContainerWarning) => this.raiseContainerWarning(warning),
             (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
-            async (message) => this.snapshot(message),
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,
             previousRuntimeState,
