@@ -1696,6 +1696,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,
             previousRuntimeState,
+            (dirty: boolean) => { this.emit("dirtyDocument", dirty); },
         );
 
         loader.resolveContainer(this);

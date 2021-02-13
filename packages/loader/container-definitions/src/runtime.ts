@@ -161,6 +161,7 @@ export interface IContainerContext extends IDisposable {
     getLoadedFromVersion(): IVersion | undefined;
 
     createSummary(): ISummaryTree;
+    updateDirtyState(dirty: boolean): void;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";

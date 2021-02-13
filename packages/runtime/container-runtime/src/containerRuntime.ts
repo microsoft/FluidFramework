@@ -982,15 +982,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Save the old state, reset to false, disable event emit
         const oldState = this.dirtyDocument;
         this.dirtyDocument = false;
+
+        assert(this.emitDirtyDocumentEvent);
         this.emitDirtyDocumentEvent = false;
+        let newState: boolean;
 
-        // replay the ops
-        this.pendingStateManager.replayPendingStates();
-
-        // Save the new start and restore the old state, re-enable event emit
-        const newState = this.dirtyDocument;
-        this.dirtyDocument = oldState;
-        this.emitDirtyDocumentEvent = true;
+        try {
+            // replay the ops
+            this.pendingStateManager.replayPendingStates();
+        } finally {
+            // Save the new start and restore the old state, re-enable event emit
+            newState = this.dirtyDocument;
+            this.dirtyDocument = oldState;
+            this.emitDirtyDocumentEvent = true;
+        }
 
         // Officially transition from the old state to the new state.
         this.updateDocumentDirtyState(newState);
@@ -1532,6 +1537,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dirtyDocument = dirty;
         if (this.emitDirtyDocumentEvent) {
             this.emit(dirty ? "dirtyDocument" : "savedDocument");
+            this.context.updateDirtyState(dirty);
         }
     }
 
