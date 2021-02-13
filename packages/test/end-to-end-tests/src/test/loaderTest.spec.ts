@@ -218,4 +218,15 @@ describe("Loader.request", () => {
         assert.strictEqual(sameDataStore1, sameDataStore2,
             "same containers do not return same data store for same request");
     });
+    it("request can handle url with query params", async () => {
+        const url = await container.getAbsoluteUrl("");
+        assert(url);
+
+        const query = `?query1=1&query2=2`;
+        const testUrl = `${url}${query}`;
+        const test = await loader.request({ url: testUrl });
+        assert(test);
+        const error = `unknown request url: /${query}`;
+        assert.strictEqual(test.value, error);
+    });
 });

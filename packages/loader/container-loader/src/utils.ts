@@ -25,12 +25,11 @@ export function parseUrl(url: string): IParsedUrl | undefined {
     if (typeof parsed.pathname !== "string") {
         throw new Error("Failed to parse pathname");
     }
-
+    const query = parsed.search ?? "";
     const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
     const match = regex.exec(parsed.pathname);
-    console.log("hi", match);
     return (match?.length === 3)
-        ? { id: match[1], path: match[2], query:parsed.search, version: parsed.query.version as string }
+        ? { id: match[1], path: match[2], query, version: parsed.query.version as string }
         : undefined;
 }
 
