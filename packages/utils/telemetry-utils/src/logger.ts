@@ -50,33 +50,15 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
-        if (error === null || typeof error !== "object") {
-            event.error = error;
-        } else {
-            // WARNING: Exceptions can contain PII!
-            // For example, XHR will throw object derived from Error that contains config information
-            // for failed request, including all the headers, and thus - user tokens!
-            // Extract only call stack, message, and couple network-related properties form error object
+        const fluidError = wrapAsFluidError(error);
 
-            const errorAsObject = error as {
-                stack?: string;
-                message?: string;
-            };
+        event.stack = fluidError.getSensitiveDebugData().stack;
+        event.error = fluidError.message;
 
-            event.stack = errorAsObject.stack;
-            event.error = errorAsObject.message;
-
-            // Error message can contain PII information.
-            // If we know for sure it does, we have to not log it.
-            if (error.containsPII) {
-                event.error = "Error message was removed as it contained PII";
-            } else if (error.getTelemetryProperties) {
-                const telemetryProps: ITelemetryProperties = error.getTelemetryProperties();
-                for (const key of Object.keys(telemetryProps)) {
-                    if (event[key] === undefined) {
-                        event[key] = telemetryProps[key];
-                    }
-                }
+        const telemetryProps: ITelemetryProperties = fluidError.getFluidTelemetryProps();
+        for (const key of Object.keys(telemetryProps)) {
+            if (event[key] === undefined) {
+                event[key] = telemetryProps[key];
             }
         }
 

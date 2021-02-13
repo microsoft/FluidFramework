@@ -10,30 +10,23 @@ export enum ContainerErrorType {
     /**
      * Some error, most likely an exception caught by runtime and propagated to container as critical error
      */
-    genericError = "genericError",
+    genericError = "container.genericError",
 
     /**
      * Throttling error from server. Server is busy and is asking not to reconnect for some time
      */
-    throttlingError = "throttlingError",
+    throttlingError = "container.throttlingError",
 
     /**
      * Data loss error detected by Container / DeltaManager. Likely points to storage issue.
      */
-    dataCorruptionError = "dataCorruptionError",
+    dataCorruptionError = "container.dataCorruptionError",
 }
 
 /**
  * Base interface for all errors and warnings at container level
  */
-export interface IErrorBase {
-    /** errorType is a union of error types from
-     * - container
-     * - runtime
-     * - drivers
-     */
-    readonly errorType: string;
-    readonly message: string;
+export interface IErrorBase extends IFluidError {
     /** Sequence number when error happened */
     sequenceNumber?: number;
 }

@@ -54,25 +54,5 @@ export class DataCorruptionError extends LoggingError implements IErrorBase {
 export function CreateContainerError(error: any): ICriticalContainerError {
     assert(error !== undefined);
 
-    if (typeof error === "object" && error !== null) {
-        const err = error;
-        if (error.errorType !== undefined && error instanceof LoggingError) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return err;
-        }
-
-        // Only get properties we know about.
-        // Grabbing all properties will expose PII in telemetry!
-        return new LoggingError(
-            messageFromError(error),
-            {
-                errorType: error.errorType ?? ContainerErrorType.genericError,
-                stack: error.stack,
-            },
-        ) as any as IGenericError;
-    } else if (typeof error === "string") {
-        return new GenericError(error, new Error(error));
-    } else {
-        return new GenericError(messageFromError(error), error);
-    }
+    return wrapAsFluidError(error) as ICriticalContainerError;
 }

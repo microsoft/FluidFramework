@@ -80,7 +80,7 @@ export class NonRetryableError<T> extends NetworkErrorBasic<T> {
 /**
  * Throttling error class - used to communicate all throttling errors
  */
-export class ThrottlingError extends LoggingError implements IThrottlingWarning {
+export class ThrottlingError extends FluidError implements IThrottlingWarning {
     readonly errorType = DriverErrorType.throttlingError;
     readonly canRetry = true;
 
@@ -89,7 +89,10 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning 
         readonly retryAfterSeconds: number,
         statusCode?: number,
     ) {
-        super(errorMessage, { statusCode });
+        //* As-is, need to include retryAfterSeconds here since FluidError doesn't
+        //* just pull every property off the object like LoggingError but rather keeps them
+        //* separated in props. Something to consider.
+        super(errorMessage, { retryAfterSeconds, statusCode });
     }
 }
 
