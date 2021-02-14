@@ -30,7 +30,7 @@ import {
     AttachState,
     IThrottlingWarning,
 } from "@fluidframework/container-definitions";
-import { CreateContainerError, GenericError } from "@fluidframework/container-utils";
+import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -776,35 +776,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             return undefined;
         }
 
-        // TODO: Remove support for legacy requestUrl in 0.20
-        const legacyResolver = this.urlResolver as {
-            requestUrl?(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse>;
-
-            getAbsoluteUrl?(
-                resolvedUrl: IResolvedUrl,
-                relativeUrl: string,
-            ): Promise<string>;
-        };
-
-        if (legacyResolver.getAbsoluteUrl !== undefined) {
-            return this.urlResolver.getAbsoluteUrl(
-                this.resolvedUrl,
-                relativeUrl,
-                this._context?.codeDetails);
-        }
-
-        if (legacyResolver.requestUrl !== undefined) {
-            const response = await legacyResolver.requestUrl(
-                this.resolvedUrl,
-                { url: relativeUrl });
-
-            if (response.status === 200) {
-                return response.value as string;
-            }
-            throw new Error(response.value);
-        }
-
-        throw new Error("Url Resolver does not support creating urls");
+        return this.urlResolver.getAbsoluteUrl(
+            this.resolvedUrl,
+            relativeUrl,
+            this._context?.codeDetails);
     }
 
     public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
@@ -1614,13 +1589,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 errorMsg = "messageClientIdShouldHaveLeft";
             }
             if (errorMsg !== undefined) {
-                const error = new GenericError(
+                const error = new DataCorruptionError(
                     errorMsg,
                     {
                         clientId: this._clientId,
                         messageClientId: message.clientId,
                         sequenceNumber: message.sequenceNumber,
                         clientSequenceNumber: message.clientSequenceNumber,
+                        messageTimestamp: message.timestamp,
                     },
                 );
                 this.close(CreateContainerError(error));

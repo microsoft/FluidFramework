@@ -42,7 +42,7 @@ export interface ITestObjectProvider {
     urlResolver: IUrlResolver | oldTypes.IUrlResolver,
     defaultCodeDetails: IFluidCodeDetails | oldTypes.IFluidCodeDetails,
     opProcessingController: OpProcessingController | oldTypes.OpProcessingController,
-    reset(): void | Promise<void>,
+    reset(): void,
     documentId: string,
     driver: ITestDriver;
 }

@@ -20,7 +20,7 @@ This directory contains our reference server implementation. [Routerlicious](./r
 
 [Historian](./historian) provides a REST API to git repositories. The API is similar to that exposed by GitHub but can be used in local development.
 
-[Lambdas](./lambdas) serverless lambda version of Fluid services
+[Lambdas](./routerlicious/packages/lambdas) reusable lambdas for serverless implementation, Routerlicious, and Tinylicious.
 
 [Routerlicious](./routerlicious) composed reference server implementation
 
