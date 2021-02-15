@@ -17,6 +17,7 @@ import {
     IDocumentStorageService,
 } from "@fluidframework/driver-definitions";
 import { canRetryOnError } from "@fluidframework/driver-utils";
+import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
     IErrorTrackingService,
@@ -63,6 +64,15 @@ function isAfdCacheValid(): boolean {
     }
 
     return false;
+}
+
+/**
+ * Clear the AfdCache
+ */
+function clearAfdCache() {
+    if (localStorageAvailable) {
+        localStorage.removeItem(lastAfdConnectionTimeMsKey);
+    }
 }
 
 /**
@@ -251,12 +261,16 @@ export class OdspDocumentService implements IDocumentService {
                 throw new Error("websocket endpoint should be defined");
             }
 
+            const finalSocketToken = webSocketToken ?? (websocketEndpoint.socketToken || null);
+            if (finalSocketToken === null) {
+                throwOdspNetworkError("Push Token is null", fetchTokenErrorCode);
+            }
             try {
                 const connection = await this.connectToDeltaStreamWithRetry(
                     websocketEndpoint.tenantId,
                     websocketEndpoint.id,
                     // Accounts for ODC where websocket token is returned as part of joinsession response payload
-                    webSocketToken ?? (websocketEndpoint.socketToken || null),
+                    finalSocketToken,
                     io,
                     client,
                     websocketEndpoint.deltaStreamSocketUrl,
@@ -386,7 +400,7 @@ export class OdspDocumentService implements IDocumentService {
             } catch (connectionError) {
                 const endTime = performance.now();
                 // Clear cache since it failed
-                localStorage.removeItem(lastAfdConnectionTimeMsKey);
+                clearAfdCache();
                 // Log before throwing
                 const canRetry = canRetryOnError(connectionError);
                 this.logger.sendPerformanceEvent(

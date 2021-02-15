@@ -13,6 +13,11 @@ import {
     NonRetryableError,
     OnlineStatus,
 } from "@fluidframework/driver-utils";
+import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
+import { parseAuthErrorTenant } from "./parseAuthErrorTenant";
+
+// eslint-disable-next-line no-null/no-null
+const nullToUndefined = (a: string | null) => a === null ? undefined : a;
 
 export const offlineFetchFailureStatusCode: number = 709;
 export const fetchFailureStatusCode: number = 710;
@@ -27,6 +32,8 @@ export const fetchTimeoutStatusCode = 713;
 // with the server epoch version, the server throws this error code.
 // This indicates that the file/container has been modified externally.
 export const fluidEpochMismatchError = 409;
+// Error code for when the fetched token is null.
+export const fetchTokenErrorCode = 724;
 
 export enum OdspErrorType {
     /**
@@ -64,6 +71,8 @@ export enum OdspErrorType {
      * does not match the one at the server.
      */
     epochVersionMismatch = "epochVersionMismatch",
+
+    fetchTokenError = "fetchTokenError",
 }
 
 /**
@@ -84,17 +93,19 @@ export function createOdspNetworkError(
     errorMessage: string,
     statusCode: number,
     retryAfterSeconds?: number,
-    claims?: string,
+    response?: Response,
+    responseText?: string,
 ): OdspError {
     let error: OdspError;
-
     switch (statusCode) {
         case 400:
             error = new GenericNetworkError(errorMessage, false, statusCode);
             break;
         case 401:
         case 403:
-            error = new AuthorizationError(errorMessage, claims, statusCode);
+            const claims = response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
+            const tenantId = response?.headers ? parseAuthErrorTenant(response.headers) : undefined;
+            error = new AuthorizationError(errorMessage, claims, tenantId, statusCode);
             break;
         case 404:
             error = new NetworkErrorBasic(
@@ -135,12 +146,25 @@ export function createOdspNetworkError(
         case fetchTimeoutStatusCode:
             error = new NonRetryableError(errorMessage, OdspErrorType.fetchTimeout, statusCode);
             break;
+        case fetchTokenErrorCode:
+            error = new NonRetryableError(errorMessage, OdspErrorType.fetchTokenError, statusCode);
+            break;
         default:
             error = createGenericNetworkError(errorMessage, true, retryAfterSeconds, statusCode);
     }
 
     error.online = OnlineStatus[isOnline()];
 
+    const errorAsAny = error as any;
+
+    errorAsAny.response = responseText;
+    if (response) {
+        errorAsAny.responseType = response.type;
+        if (response.headers) {
+            errorAsAny.sprequestguid = nullToUndefined(response.headers.get("sprequestguid"));
+            errorAsAny.serverEpoch = nullToUndefined(response.headers.get("x-fluid-epoch"));
+        }
+    }
     return error;
 }
 
@@ -151,12 +175,27 @@ export function throwOdspNetworkError(
     errorMessage: string,
     statusCode: number,
     response?: Response,
-) {
+    responseText?: string,
+): never {
     const networkError = createOdspNetworkError(
-        response ? `${errorMessage}, msg = ${response.statusText}, type = ${response.type}` : errorMessage,
+        response && response.statusText !== "" ? `${errorMessage} (${response.statusText})` : errorMessage,
         statusCode,
-        undefined /* retryAfterSeconds */);
+        response ? numberFromHeader(response.headers.get("retry-after")) : undefined, /* retryAfterSeconds */
+        response,
+        responseText);
 
     // eslint-disable-next-line @typescript-eslint/no-throw-literal
     throw networkError;
+}
+
+function numberFromHeader(header: string | null): number | undefined {
+    // eslint-disable-next-line no-null/no-null
+    if (header === null) {
+        return undefined;
+    }
+    const n = Number(header);
+    if (Number.isNaN(n)) {
+        return undefined;
+    }
+    return n;
 }

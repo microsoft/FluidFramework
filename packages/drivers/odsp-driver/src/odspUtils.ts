@@ -10,6 +10,8 @@ import {
     offlineFetchFailureStatusCode,
     fetchFailureStatusCode,
     fetchTimeoutStatusCode,
+    OdspErrorType,
+    throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils";
 import {
     default as fetch,
@@ -19,7 +21,6 @@ import {
 } from "node-fetch";
 import sha from "sha.js";
 import { debug } from "./debug";
-import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 
 /** Parse the given url and return the origin (host name) */
@@ -45,9 +46,11 @@ export async function getWithRetryForTokenRefresh<T>(get: (options: TokenFetchOp
         switch (e.errorType) {
             // If the error is 401 or 403 refresh the token and try once more.
             case DriverErrorType.authorizationError:
-                return get({ refresh: true, claims: e.claims });
+                return get({ refresh: true, claims: e.claims, tenantId: e.tenantId });
             // fetchIncorrectResponse indicates some error on the wire, retry once.
             case DriverErrorType.incorrectServerResponse:
+            // If the token was null, then retry once.
+            case OdspErrorType.fetchTokenError:
                 return get({ refresh: true });
             default:
                 // All code paths (deltas, blobs, trees) already throw exceptions.

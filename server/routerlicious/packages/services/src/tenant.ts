@@ -47,15 +47,15 @@ export class TenantManager implements core.ITenantManager {
             Axios.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`),
             this.getKey(tenantId)]);
 
-        const credentials: ICredentials = {
+        const getCredentials = async (): Promise<ICredentials> => ({
             password: generateToken(tenantId, null, key, null),
             user: tenantId,
-        };
+        });
         const historian = new Historian(
             `${details.data.storage.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`,
             true,
             false,
-            credentials,
+            getCredentials,
             getCorrelationId);
         const gitManager = new GitManager(historian);
         const tenant = new Tenant(details.data, gitManager);

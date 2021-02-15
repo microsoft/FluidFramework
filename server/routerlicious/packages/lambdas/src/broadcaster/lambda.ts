@@ -28,13 +28,22 @@ class BroadcasterBatch {
 
 // Set immediate is not available in all environments, specifically it does not work in a browser.
 // Fallback to set timeout in those cases
-const taskScheduleFunction: (cb: () => void) => void = typeof setImmediate === "function" ? setImmediate : setTimeout;
+let taskScheduleFunction: (cb: () => void) => unknown;
+let clearTaskScheduleTimerFunction: (timer: any) => void;
+
+if (typeof setImmediate === "function") {
+    taskScheduleFunction = setImmediate;
+    clearTaskScheduleTimerFunction = clearImmediate;
+} else {
+    taskScheduleFunction = setTimeout;
+    clearTaskScheduleTimerFunction = clearTimeout;
+}
 
 export class BroadcasterLambda implements IPartitionLambda {
     private pending = new Map<string, BroadcasterBatch>();
-    private pendingOffset: IQueuedMessage;
+    private pendingOffset: IQueuedMessage | undefined;
     private current = new Map<string, BroadcasterBatch>();
-    private isMessageSending: boolean = false;
+    private messageSendingTimerId: unknown | undefined;
 
     constructor(private readonly publisher: IPublisher, protected context: IContext) {
     }
@@ -43,8 +52,8 @@ export class BroadcasterLambda implements IPartitionLambda {
         const boxcar = extractBoxcar(message);
 
         for (const baseMessage of boxcar.contents) {
-            let topic: string;
-            let event: string;
+            let topic: string | undefined;
+            let event: string | undefined;
 
             if (baseMessage.type === SequencedOperationType) {
                 const value = baseMessage as ISequencedOperationMessage;
@@ -74,8 +83,12 @@ export class BroadcasterLambda implements IPartitionLambda {
     public close() {
         this.pending.clear();
         this.current.clear();
+        this.pendingOffset = undefined;
 
-        return;
+        if (this.messageSendingTimerId !== undefined) {
+            clearTaskScheduleTimerFunction(this.messageSendingTimerId);
+            this.messageSendingTimerId = undefined;
+        }
     }
 
     public hasPendingWork() {
@@ -83,23 +96,37 @@ export class BroadcasterLambda implements IPartitionLambda {
     }
 
     private sendPending() {
-        if (this.pending.size === 0 || this.isMessageSending) {
+        if (this.messageSendingTimerId !== undefined) {
+            // a send is in progress
+            return;
+        }
+
+        if (this.pending.size === 0) {
+            // no pending work. checkpoint now if we have a pending offset
+            if (this.pendingOffset) {
+                this.context.checkpoint(this.pendingOffset);
+                this.pendingOffset = undefined;
+            }
             return;
         }
 
         // Invoke the next send after a delay to give IO time to create more batches
-        this.isMessageSending = true;
-        taskScheduleFunction(() => {
+        this.messageSendingTimerId = taskScheduleFunction(() => {
             const batchOffset = this.pendingOffset;
 
             this.current = this.pending;
             this.pending = new Map<string, BroadcasterBatch>();
+            this.pendingOffset = undefined;
 
-            this.isMessageSending = false;
+            this.messageSendingTimerId = undefined;
 
             // Process all the batches + checkpoint
             this.current.forEach((batch, topic) => {
-                this.publisher.to(topic).emit(batch.event, batch.documentId, batch.messages);
+                if (this.publisher.emit) {
+                    this.publisher.emit(topic, batch.event, batch.documentId, batch.messages);
+                } else {
+                    this.publisher.to(topic).emit(batch.event, batch.documentId, batch.messages);
+                }
             });
 
             this.context.checkpoint(batchOffset);

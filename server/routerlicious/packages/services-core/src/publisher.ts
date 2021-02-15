@@ -28,6 +28,12 @@ export interface IPublisher {
     to(topic: string): ITopic;
 
     /**
+     * Used to emit an event to a topic
+     * This will be used in place of "to().emit()" when defined
+     */
+    emit?(topic: string, event: string, ...args: any[]): void;
+
+    /**
      * Closes the publisher
      */
     close(): Promise<void>;

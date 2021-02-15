@@ -44,6 +44,7 @@ import {
     canRetryOnError,
     createWriteError,
     createGenericNetworkError,
+    getRetryDelayFromError,
 } from "@fluidframework/driver-utils";
 import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import { debug } from "./debug";
@@ -61,9 +62,6 @@ const DefaultChunkSize = 16 * 1024;
 
 // This can be anything other than null
 const ImmediateNoOpResponse = "";
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-export const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds;
 
 function getNackReconnectInfo(nackContent: INackContent) {
     const reason = `Nack: ${nackContent.message}`;

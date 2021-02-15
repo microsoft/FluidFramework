@@ -88,6 +88,7 @@ describe("MergeTree", () => {
                 [MergeTreeDeltaType.REMOVE]: 1,
                 [MergeTreeMaintenanceType.SPLIT]: 2,
                 [MergeTreeMaintenanceType.UNLINK]: 1,
+                [MergeTreeMaintenanceType.ACKNOWLEDGED]: 1,
             });
         });
 

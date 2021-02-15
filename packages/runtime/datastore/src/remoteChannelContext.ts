@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, LazyPromise } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import {
     IChannel,
@@ -19,7 +19,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     CreateChildSummarizerNodeFn,
-    gcBlobKey,
     IContextSummarizeResult,
     IFluidDataStoreContext,
     IGarbageCollectionData,
@@ -49,17 +48,6 @@ export class RemoteChannelContext implements IChannelContext {
     };
     private readonly summarizerNode: ISummarizerNodeWithGC;
 
-    /**
-     * This loads the GC details from the base snapshot of this context.
-     */
-    private readonly gcDetailsInInitialSummaryP = new LazyPromise<IGarbageCollectionSummaryDetails>(async () => {
-        if (await this.services.objectStorage.contains(gcBlobKey)) {
-            return readAndParse<IGarbageCollectionSummaryDetails>(this.services.objectStorage, gcBlobKey);
-        } else {
-            return {};
-        }
-    });
-
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -71,6 +59,7 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly registry: ISharedObjectRegistry,
         extraBlobs: Map<string, string> | undefined,
         createSummarizerNode: CreateChildSummarizerNodeFn,
+        gcDetailsInInitialSummary: () => Promise<IGarbageCollectionSummaryDetails>,
         private readonly attachMessageType?: string,
     ) {
         this.services = createServiceEndpoints(
@@ -87,8 +76,8 @@ export class RemoteChannelContext implements IChannelContext {
 
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
-            async () => this.getGCDataInternal(),
-            async () => this.gcDetailsInInitialSummaryP,
+            async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
+            async () => gcDetailsInInitialSummary(),
         );
     }
 
@@ -237,18 +226,20 @@ export class RemoteChannelContext implements IChannelContext {
      * Each node has a set of outbound routes to other GC nodes in the document.
      * If there is no new data in this context since the last summary, previous GC data is used.
      * If there is new data, the GC data is generated again (by calling getGCDataInternal).
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    public async getGCData(): Promise<IGarbageCollectionData> {
-        return this.summarizerNode.getGCData();
+    public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
+        return this.summarizerNode.getGCData(fullGC);
     }
 
     /**
      * Generates the data used for garbage collection. This is called when there is new data since last summary. It
      * loads the context and calls into the channel to get its GC data.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    private async getGCDataInternal(): Promise<IGarbageCollectionData> {
+    private async getGCDataInternal(fullGC: boolean = false): Promise<IGarbageCollectionData> {
         const channel = await this.getChannel();
-        return channel.getGCData();
+        return channel.getGCData(fullGC);
     }
 
     /**

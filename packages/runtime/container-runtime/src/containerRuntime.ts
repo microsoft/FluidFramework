@@ -221,6 +221,10 @@ export interface IContainerRuntimeOptions {
     // Flag that will disable garbage collection if set to true.
     disableGC?: boolean;
 
+    // Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether the node
+    // changed or not.
+    runFullGC?: boolean;
+
     // Override summary configurations
     summaryConfigOverrides?: Partial<ISummaryConfiguration>;
 }
@@ -742,7 +746,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
             (id: string, createParam: CreateChildSummarizerNodeParam) => (
                     summarizeInternal: SummarizeInternalFn,
-                    getGCDataFn: () => Promise<IGarbageCollectionData>,
+                    getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
                     getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
                 ) => this.summarizerNode.createChild(
                     summarizeInternal,
@@ -1398,18 +1402,36 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             if (!this.runtimeOptions.disableGC) {
-                // Get the container's GC data and run GC on the reference graph in it.
-                const gcData = await this.dataStores.getGCData();
-                const { referencedNodeIds } = runGarbageCollection(gcData.gcNodes, [ "/" ], this.logger);
+                const perfEvent = PerformanceEvent.start(summaryLogger, {
+                    eventName: "GarbageCollection",
+                });
 
-                // Update our summarizer node's used routes. Updating used routes in summarizer node before summarizing
-                // is required and asserted by the the summarizer node. We are the root and are always referenced, so
-                // the used routes is only self-route (empty string).
-                this.summarizerNode.updateUsedRoutes([""]);
+                const gcStats: { totalGCNodes?: number; deletedGCNodes?: number } = {};
+                try {
+                    // Get the container's GC data and run GC on the reference graph in it.
+                    const gcData = await this.dataStores.getGCData(this.runtimeOptions.runFullGC === true);
+                    const { referencedNodeIds, deletedNodeIds } = runGarbageCollection(
+                        gcData.gcNodes, [ "/" ],
+                        this.logger,
+                    );
 
-                // Remove this node's route ("/") and notify data stores of routes that are used in it.
-                const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
-                this.dataStores.updateUsedRoutes(usedRoutes);
+                    // Update stats to be reported in the peformance event.
+                    gcStats.deletedGCNodes = deletedNodeIds.length;
+                    gcStats.totalGCNodes = referencedNodeIds.length + gcStats.deletedGCNodes;
+
+                    // Update our summarizer node's used routes. Updating used routes in summarizer node before
+                    // summarizing is required and asserted by the the summarizer node. We are the root and are
+                    // always referenced, so the used routes is only self-route (empty string).
+                    this.summarizerNode.updateUsedRoutes([""]);
+
+                    // Remove this node's route ("/") and notify data stores of routes that are used in it.
+                    const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
+                    this.dataStores.updateUsedRoutes(usedRoutes);
+                } catch (error) {
+                    perfEvent.cancel(gcStats, error);
+                    throw error;
+                }
+                perfEvent.end(gcStats);
             }
 
             const trace = Trace.start();
@@ -1563,6 +1585,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.verifyNotClosed();
 
         let clientSequenceNumber: number = -1;
+        let opMetadataInternal = opMetadata;
 
         if (this.canSendOps()) {
             const serializedContent = JSON.stringify(content);
@@ -1570,8 +1593,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             // If in manual flush mode we will trigger a flush at the next turn break
             if (this.flushMode === FlushMode.Manual && !this.needsFlush) {
-                // eslint-disable-next-line no-param-reassign
-                opMetadata = { ...opMetadata, batch: true };
+                opMetadataInternal = {
+                    ...opMetadata,
+                    batch: true,
+                };
                 this.needsFlush = true;
 
                 // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
@@ -1592,14 +1617,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     type,
                     content,
                     /* batch: */ this._flushMode === FlushMode.Manual,
-                    opMetadata);
+                    opMetadataInternal);
             } else {
                 clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
             }
         }
 
         // Let the PendingStateManager know that a message was submitted.
-        this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, localOpMetadata, opMetadata);
+        this.pendingStateManager.onSubmitMessage(
+            type,
+            clientSequenceNumber,
+            content,
+            localOpMetadata,
+            opMetadataInternal,
+        );
         if (this.isContainerMessageDirtyable(type, content)) {
             this.updateDocumentDirtyState(true);
         }
