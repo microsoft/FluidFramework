@@ -20,7 +20,7 @@ npm install @fluid-experimental/fluid @fluid-experimental/data-objects
 
 KeyValueDataObject will provide you with a fully scaffolded DDS to store your data and subscribe to listen for changes.
 
-Fluid gives you access to methods that will bootstrap a new Fluid container, and we use the `getContainerId` helper method to simplify the creation and sharing of multi-author, Fluid sessions.
+Fluid gives you access to methods that will bootstrap a new Fluid container, and we use the `getContainerId` helper method to simplify the creation and sharing of multi-author Fluid containers.
 
 ```js
 import { KeyValueDataObject } from "@fluid-experimental/data-objects";
