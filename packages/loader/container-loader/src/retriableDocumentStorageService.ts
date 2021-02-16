@@ -124,10 +124,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
                 if (id === undefined) {
                     id = uuid();
                 }
-                // TODO: this check is needed to satisfy the compiler for reasons unknown
-                if (id !== undefined) {
-                    this.deltaManager.emitDelayInfo(id, retryAfter, CreateContainerError(err));
-                }
+                this.deltaManager.emitDelayInfo(id, retryAfter, CreateContainerError(err));
                 await this.delay(retryAfter);
             }
         } while (!success);
