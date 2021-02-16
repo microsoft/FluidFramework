@@ -1,21 +1,33 @@
 import React from 'react';
-import { KeyValueDataObject } from "@fluid-experimental/data-objects";
+import { KeyValueDataObject, KeyValueInstantiationFactory, IKeyValueDataObject } from "@fluid-experimental/data-objects";
 import { Fluid } from '@fluid-experimental/fluid-static';
+import { getContainerId } from './getContainerId';
 
-function useKVPair() {
-    const [dataObject, setDataObject] = React.useState<KeyValueDataObject>();
+
+function useKVPair(id: string) {
+    const [dataObject, setDataObject] = React.useState<IKeyValueDataObject>();
     const [state, setState] = React.useState<{ [key: string]: any }>({});
 
-    // // Connect to container and data object
-    // React.useEffect(() => {
-    //     const { containerId, isNew } = getContainerId();
+    // Connect to container and data object
+    React.useEffect(() => {
+        const { containerId, isNew } = getContainerId();
 
-    //     Fluid.getDataObject<KeyValueDataObject>(
-    //         containerId,
-    //         KeyValueDataObject,
-    //         isNew
-    //     ).then(obj => setDataObject(obj))
-    // }, [])
+        const start = async () => {
+            const fluidDocument = isNew
+                ? await Fluid.createDocument(containerId, [KeyValueInstantiationFactory.registryEntry])
+                : await Fluid.getDocument(containerId, [KeyValueInstantiationFactory.registryEntry]);
+
+            // We'll create the data object when we create the new document.
+            const keyValueDataObject: IKeyValueDataObject = isNew
+                ? await fluidDocument.createDataObject<KeyValueDataObject>(KeyValueInstantiationFactory.type, id)
+                : await fluidDocument.getDataObject<KeyValueDataObject>(id);
+
+            setDataObject(keyValueDataObject);
+        }
+
+        start();
+
+    }, [id])
 
     // set up sync from data object to local state
     React.useEffect(() => {
@@ -31,7 +43,7 @@ function useKVPair() {
 }
 
 function App() {
-    const { state, setState } = useKVPair();
+    const { state, setState } = useKVPair('app');
 
     if (!setState) return <div />;
 
