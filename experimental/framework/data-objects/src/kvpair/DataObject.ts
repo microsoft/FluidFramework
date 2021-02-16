@@ -11,44 +11,72 @@ import { IDirectoryValueChanged, IValueChanged } from "@fluidframework/map";
  * IKeyValueDataObject describes the public API surface for our KeyValue DataObject.
  */
 export interface IKeyValueDataObject extends EventEmitter {
-    /**
-     * Get value at Key
-     */
-    get: (key: string) => any;
+  /**
+   * Get value at Key
+   */
+  get: (key: string) => any;
 
-    /**
-     * Set Value at Key
-     */
-    set: (key: string, value: any) => void;
+  /**
+   * Set Value at Key
+   */
+  set: (key: string, value: any) => void;
 
-    /**
-     * Event on value change
-     */
-    on(event: "changed", listener: (args: IDirectoryValueChanged) => void): this;
+  /**
+   * Event on value change
+   */
+  on(event: "changed", listener: (args: IDirectoryValueChanged) => void): this;
+
+  keys(): string[];
+
+  query(): (test?: string | ((value: string) => boolean)) =>  any | {[key: string]: any}
+
 }
 
 /**
  * The KeyValueDataObject is our data object that implements the IKeyValueDataObject interface.
  */
-export class KeyValueDataObject extends DataObject implements IKeyValueDataObject {
-    /**
-     * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
-     * DataObject, by registering an event listener for changes in data.
-     */
-    protected async hasInitialized() {
-        this.root.on("valueChanged", (changed: IValueChanged) => {
-            this.emit("changed", changed);
-        });
+export class KeyValueDataObject
+  extends DataObject
+  implements IKeyValueDataObject {
+  /**
+   * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
+   * DataObject, by registering an event listener for changes in data.
+   */
+  protected async hasInitialized() {
+    this.root.on("valueChanged", (changed: IValueChanged) => {
+      this.emit("changed", changed);
+    });
+  }
+
+  public set = (key: string, value: any) => {
+    this.root.set(key.toString(), value);
+  };
+
+  public get = (key: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return this.root.get(key.toString());
+  };
+
+  public keys = (): string[] => {
+    return Array.from(this.root.keys());
+  };
+
+  public query = (test?: string | ((value: string) => boolean)): any | {[key: string]: any} => {
+    let keys: string[] = [];
+    if (!test) {
+        keys = this.keys();
+    } else if (typeof test === "string") {
+        keys = [test];
+    } else {
+        keys = this.keys().filter(test);
     }
 
-    public set = (key: string, value: any) => {
-        this.root.set(key, value);
-    };
-
-    public get = (key: string) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.root.get(key);
-    };
+    const newQuery: {[key: string]: any} = {};
+    keys.forEach((element: string) => {
+        newQuery[element] = this.get(element);
+    });
+    return newQuery;
+  };
 }
 
 /**
