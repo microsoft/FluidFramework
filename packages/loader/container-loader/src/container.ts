@@ -185,6 +185,8 @@ export async function waitContainerToCatchUp(container: Container) {
 export class CollabWindowTracker {
     private updateSequenceNumberTimer: ReturnType<typeof setTimeout> | undefined;
 
+    private static readonly NoopFrequency = 2000;
+
     constructor(
         private readonly submit: (type: MessageType, contents: any) => void,
         private readonly activeConnection: () => boolean,
@@ -224,7 +226,7 @@ export class CollabWindowTracker {
                 if (this.activeConnection()) {
                     this.submit(MessageType.NoOp, null);
                 }
-            }, 2000);
+            }, CollabWindowTracker.NoopFrequency);
         }
     }
 
@@ -1398,7 +1400,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     /**
      * Returns true if connection is active, i.e. it's "write" connection and
-     * container runtime was notified about this connection (i.e. we are up-to-date and could send ops)
+     * container runtime was notified about this connection (i.e. we are up-to-date and could send ops).
+     * This happens after client received its own joinOp and thus is in the quorum.
      * If it's not true, runtime is not in position to send ops.
      */
     private activeConnection() {
