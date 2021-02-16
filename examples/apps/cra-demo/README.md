@@ -1,4 +1,4 @@
-# Fluid Consumer Script
+# cra-demo
 This is an experimental example of a completed integration between [`create-react-app`](https://create-react-app.dev/) and Fluid. Below you will find instructions to how to start from `create-react-app` and get to this completed state.
 
 This README is still a work in progress.
