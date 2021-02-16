@@ -1522,7 +1522,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dirtyDocument = dirty;
         if (this.emitDirtyDocumentEvent) {
             this.emit(dirty ? "dirtyDocument" : "savedDocument");
-            this.context.updateDirtyDocumentState(dirty);
+            // back-compat: Loader API added in 0.35 only
+            if (this.context.updateDirtyDocumentState !== undefined) {
+                this.context.updateDirtyDocumentState(dirty);
+            }
         }
     }
 
