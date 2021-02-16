@@ -186,16 +186,8 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         assert.strictEqual(testChannel2.isAttached(), testChannel1.isAttached(),
             "Value for isAttached should persist!!");
 
-        // back-compat for N-2 <= 0.29, remove the else part when N-2 >= 0.30
-        if (testChannel1.summarize && testChannel2.summarize) {
-            assert.strictEqual(JSON.stringify(testChannel2.summarize()), JSON.stringify(testChannel1.summarize()),
-                "Value for summarize should be same!!");
-        } else {
-            assert.strictEqual(
-                JSON.stringify((testChannel2 as SharedMap).snapshot()),
-                JSON.stringify((testChannel1 as SharedMap).snapshot()),
-                "Value for summarize should be same!!");
-        }
+        assert.strictEqual(JSON.stringify(testChannel2.summarize()), JSON.stringify(testChannel1.summarize()),
+            "Value for summarize should be same!!");
     });
 
     it("ReAttach detached container on failed attach", async () => {

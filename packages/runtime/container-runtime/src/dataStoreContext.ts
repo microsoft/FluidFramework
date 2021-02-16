@@ -423,12 +423,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         await this.realize();
         assert(this.channel !== undefined, "Channel should not be undefined when running GC");
 
-        // back-compat - 0.31. Older data store runtimes will not have getGCData API.
-        if (this.channel.getGCData === undefined) {
-            return {
-                gcNodes: {},
-            };
-        }
         return this.channel.getGCData(fullGC);
     }
 
@@ -465,14 +459,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         assert(this.loaded, "Channel should be loaded when updating used routes");
         assert(this.channel !== undefined, "Channel should be present when data store is loaded");
 
-        // back-compat: 0.33 - updateUsedRoutes is added in 0.33. Remove the check here when N >= 0.36.
-        if (this.channel.updateUsedRoutes !== undefined) {
-            // Remove the route to this data store, if it exists.
-            const usedChannelRoutes = this.summarizerNode.usedRoutes.filter(
-                (id: string) => { return id !== "/" && id !== ""; },
-            );
-            this.channel.updateUsedRoutes(usedChannelRoutes);
-        }
+        // Remove the route to this data store, if it exists.
+        const usedChannelRoutes = this.summarizerNode.usedRoutes.filter(
+            (id: string) => { return id !== "/" && id !== ""; },
+        );
+        this.channel.updateUsedRoutes(usedChannelRoutes);
     }
 
     /**
