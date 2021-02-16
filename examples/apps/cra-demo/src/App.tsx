@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import React from "react";
 import { KeyValueDataObject, KeyValueInstantiationFactory, IKeyValueDataObject } from "@fluid-experimental/data-objects";
 import { Fluid } from "@fluid-experimental/fluid-static";
