@@ -715,7 +715,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
             () => this.storage,
-            (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
+            (blobId) => {
+                if (this.attachState === AttachState.Detached) {
+                    this.blobManager.addBlobId(blobId);
+                } else {
+                    this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId });
+                }
+            },
             this.logger,
         );
         this.blobManager.load(context.baseSnapshot?.trees[blobsTreeName]);
@@ -1534,6 +1540,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         opMetadata: Record<string, unknown> | undefined = undefined,
     ): void {
         this.verifyNotClosed();
+
+        // There should be no ops in detached container state!
+        assert(this.attachState !== AttachState.Detached, "sending ops in detached container");
 
         let clientSequenceNumber: number = -1;
         let opMetadataInternal = opMetadata;

@@ -49,7 +49,7 @@ export class BlobManager {
     constructor(
         private readonly routeContext: IFluidHandleContext,
         private readonly getStorage: () => IDocumentStorageService,
-        private readonly sendBlobAttachOp: (blobId: string) => void,
+        private readonly attachBlobCallback: (blobId: string) => void,
         private readonly logger: ITelemetryLogger,
     ) { }
 
@@ -70,7 +70,7 @@ export class BlobManager {
             `${BlobManager.basePath}/${response.id}`,
             this.routeContext,
             async () => this.getStorage().readBlob(response.id),
-            () => this.sendBlobAttachOp(response.id),
+            () => this.attachBlobCallback(response.id),
         );
 
         assert(!this.pendingBlobIds.has(response.id));
