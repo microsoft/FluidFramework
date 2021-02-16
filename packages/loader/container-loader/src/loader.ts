@@ -286,7 +286,7 @@ export class Loader extends EventEmitter implements ILoader {
                 ensureFluidResolvedUrl(container.resolvedUrl);
                 const parsedUrl = parseUrl(container.resolvedUrl.url);
                 if (parsedUrl !== undefined) {
-                    this.containers.set(parsedUrl.id, Promise.resolve(container));
+                    this.addToContainerCache(parsedUrl.id, Promise.resolve(container));
                 }
             });
         }
@@ -352,6 +352,20 @@ export class Loader extends EventEmitter implements ILoader {
         return key;
     }
 
+    private addToContainerCache(key: string, containerP: Promise<Container>) {
+        this.containers.set(key, containerP);
+        containerP.then((container) => {
+            // If the container is closed or becomes closed after we resolve it, remove it from the cache.
+            if (container.closed) {
+                this.containers.delete(key);
+            } else {
+                container.once("closed", () => {
+                    this.containers.delete(key);
+                });
+            }
+        }).catch((error) => { console.log("Error during caching Container on the Loader", error); });
+    }
+
     private async resolveCore(
         request: IRequest,
     ): Promise<{ container: Container; parsed: IParsedUrl }> {
@@ -380,16 +394,8 @@ export class Loader extends EventEmitter implements ILoader {
                         docId,
                         request,
                         resolvedAsFluid);
+                this.addToContainerCache(key, containerP);
                 container = await containerP;
-
-                if (!container.closed) {
-                    // Don't cache already closed containers because won't know when to evict
-                    this.containers.set(key, containerP);
-                    container.once("closed", () => {
-                        // Container clears its own listeners so we don't need to
-                        this.containers.delete(key);
-                    });
-                }
             }
         } else {
             container =
