@@ -7,10 +7,11 @@ import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
-import { IClient, IDocumentMessage, IProcessMessageResult, MessageType } from "@fluidframework/protocol-definitions";
+import { IClient, IDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-internal/test-loader-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { DeltaManager } from "../deltaManager";
+import { CollabWindowTracker } from "../container";
 
 describe("Loader", () => {
     describe("Container Loader", () => {
@@ -22,7 +23,7 @@ describe("Loader", () => {
             let clientSeqNumber = 0;
             let emitter: EventEmitter;
             let seq: number;
-            let intendedResult: IProcessMessageResult;
+            let immediateNoOp: boolean;
             const docId = "docId";
             const submitEvent = "test-submit";
             // Stash the real setTimeout because sinon fake timers will hijack it.
@@ -70,7 +71,7 @@ describe("Loader", () => {
                 seq = 1;
                 logger = DebugLogger.create("fluid:testDeltaManager");
                 emitter = new EventEmitter();
-                intendedResult = {};
+                immediateNoOp = false;
 
                 deltaConnection = new MockDocumentDeltaConnection(
                     "test",
@@ -90,8 +91,14 @@ describe("Loader", () => {
                     false,
                     () => false,
                 );
+
+                const tracker = new CollabWindowTracker(
+                    (type: MessageType, contents: any) => deltaManager.submit(type, contents),
+                    () => true,
+                );
+
                 deltaManager.attachOpHandler(0, 0, 1, {
-                    process: (message) => intendedResult,
+                    process: (message) => tracker.scheduleSequenceNumberUpdate(message, immediateNoOp),
                     processSignal() { },
                 });
             });
@@ -174,7 +181,7 @@ describe("Loader", () => {
                 });
 
                 it("Should immediately update with immediate content", async () => {
-                    intendedResult = { immediateNoOp: true };
+                    immediateNoOp = true;
                     let runCount = 0;
                     await startDeltaManager();
 

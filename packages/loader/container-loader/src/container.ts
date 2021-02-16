@@ -182,6 +182,60 @@ export async function waitContainerToCatchUp(container: Container) {
     });
 }
 
+export class CollabWindowTracker {
+    private updateSequenceNumberTimer: ReturnType<typeof setTimeout> | undefined;
+
+    constructor(
+        private readonly submit: (type: MessageType, contents: any) => void,
+        private readonly activeConnection: () => boolean,
+    ) {}
+    /**
+     * Schedules as ack to the server to update the reference sequence number
+     */
+    public scheduleSequenceNumberUpdate(message: ISequencedDocumentMessage, immediateNoOp: boolean): void {
+        // Exit early for inactive (not in quorum or not writers) clients.
+        // They don't take part in the minimum sequence number calculation.
+        if (!this.activeConnection()) {
+            this.stopSequenceNumberUpdate();
+            return;
+        }
+
+        // While processing a message, an immediate no-op can be requested.
+        // i.e. to expedite approve or commit phase of quorum.
+        if (immediateNoOp) {
+            this.stopSequenceNumberUpdate();
+            this.submit(MessageType.NoOp, ""); // This can be anything other than null
+            return;
+        }
+
+        // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
+        // update, which updates the MSN, then ack the update, etc...).
+        if (message.type === MessageType.NoOp) {
+            return;
+        }
+
+        // We will queue a message to update our reference sequence number upon receiving a server
+        // operation. This allows the server to know our true reference sequence number and be able to
+        // correctly update the minimum sequence number (MSN).
+        if (this.updateSequenceNumberTimer === undefined) {
+            // Clear an update in 2 s
+            this.updateSequenceNumberTimer = setTimeout(() => {
+                this.updateSequenceNumberTimer = undefined;
+                if (this.activeConnection()) {
+                    this.submit(MessageType.NoOp, null);
+                }
+            }, 2000);
+        }
+    }
+
+    public stopSequenceNumberUpdate(): void {
+        if (this.updateSequenceNumberTimer !== undefined) {
+            clearTimeout(this.updateSequenceNumberTimer);
+        }
+        this.updateSequenceNumberTimer = undefined;
+    }
+}
+
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
 
@@ -322,6 +376,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private lastVisible: number | undefined;
 
     private _closed = false;
+
+    private readonly collabWindowTracker = new CollabWindowTracker(
+        (type, contents) => this._deltaManager.submit(type, contents),
+        () => this.activeConnection(),
+    );
 
     public get IFluidRouter(): IFluidRouter { return this; }
 
@@ -519,7 +578,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         this._closed = true;
 
-        this.stopSequenceNumberUpdate();
+        this.collabWindowTracker.stopSequenceNumberUpdate();
         this._deltaManager.close(error);
 
         this._protocolHandler?.close();
@@ -1573,7 +1632,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         this.messageCountAfterDisconnection += 1;
-        this.stopSequenceNumberUpdate();
+        this.collabWindowTracker.stopSequenceNumberUpdate();
         return this._deltaManager.submit(type, contents, batch, metadata);
     }
 
@@ -1613,59 +1672,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Allow the protocol handler to process the message
         const result = this.protocolHandler.processMessage(message, local);
-        this.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
+        this.collabWindowTracker.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
 
         this.emit("op", message);
 
         return result;
-    }
-
-    private updateSequenceNumberTimer: ReturnType<typeof setTimeout> | undefined;
-
-    /**
-     * Schedules as ack to the server to update the reference sequence number
-     */
-    private scheduleSequenceNumberUpdate(message: ISequencedDocumentMessage, immediateNoOp: boolean): void {
-        // Exit early for inactive (not in quorum or not writers) clients.
-        // They don't take part in the minimum sequence number calculation.
-        if (!this.activeConnection()) {
-            this.stopSequenceNumberUpdate();
-            return;
-        }
-
-        // While processing a message, an immediate no-op can be requested.
-        // i.e. to expedite approve or commit phase of quorum.
-        if (immediateNoOp) {
-            this.stopSequenceNumberUpdate();
-            this._deltaManager.submit(MessageType.NoOp, ""); // This can be anything other than null
-            return;
-        }
-
-        // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
-        // update, which updates the MSN, then ack the update, etc...).
-        if (message.type === MessageType.NoOp) {
-            return;
-        }
-
-        // We will queue a message to update our reference sequence number upon receiving a server
-        // operation. This allows the server to know our true reference sequence number and be able to
-        // correctly update the minimum sequence number (MSN).
-        if (this.updateSequenceNumberTimer === undefined) {
-            // Clear an update in 2 s
-            this.updateSequenceNumberTimer = setTimeout(() => {
-                this.updateSequenceNumberTimer = undefined;
-                if (this.activeConnection()) {
-                    this._deltaManager.submit(MessageType.NoOp, null);
-                }
-            }, 2000);
-        }
-    }
-
-    private stopSequenceNumberUpdate(): void {
-        if (this.updateSequenceNumberTimer !== undefined) {
-            clearTimeout(this.updateSequenceNumberTimer);
-        }
-        this.updateSequenceNumberTimer = undefined;
     }
 
     private submitSignal(message: any) {
