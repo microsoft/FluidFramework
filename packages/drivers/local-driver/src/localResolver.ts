@@ -43,7 +43,6 @@ export class LocalResolver implements IUrlResolver {
      */
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const parsedUrl = new URL(request.url);
-        // const fullPath = parsedUrl.pathname.substr(1);
         const fullPath = `${parsedUrl.pathname.substr(1)}${parsedUrl.search}`;
         const documentId = fullPath.split("/")[0];
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];

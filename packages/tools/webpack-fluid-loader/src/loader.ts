@@ -293,16 +293,6 @@ export async function start(
             getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv).catch(() => { });
         });
     }
-    console.log("i'm here");
-
-    // const container3 = await loader1.createDetachedContainer(codeDetails);
-    // const request = await urlResolver.createRequestForCreateNew(documentId);
-    // await container3.attach(request);
-    // const testurl = await container3.getAbsoluteUrl("");
-    let testurl = window.location.href.replace("/doc","");
-    testurl = `${testurl}?query1=1&query2=2`;
-    console.log(testurl);
-    console.log(loader1.request({ url: testurl }));
 }
 
 async function getFluidObjectAndRender(container: Container, url: string, div: HTMLDivElement) {
