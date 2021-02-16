@@ -36,7 +36,6 @@ import {
     IDocumentStorageService,
     IFluidResolvedUrl,
     IResolvedUrl,
-    DriverHeader,
 } from "@fluidframework/driver-definitions";
 import {
     BlobCacheStorageService,
@@ -602,13 +601,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
             assert(!!this.cachedAttachSummary,
                 "Summary should be there either by this attach call or previous attach call!!");
-
-            if (request.headers?.[DriverHeader.createNew] === undefined) {
-                request.headers = {
-                    ...request.headers,
-                    [DriverHeader.createNew]: {},
-                };
-            }
 
             const createNewResolvedUrl = await this.urlResolver.resolve(request);
             ensureFluidResolvedUrl(createNewResolvedUrl);
