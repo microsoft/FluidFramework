@@ -40,7 +40,14 @@ export class ChannelDeltaConnection implements IDeltaConnection {
         try {
             this.handler.process(message, local, localOpMetadata);
         } catch (error) {
-            throw CreateCorruptionError(error);
+            throw CreateCorruptionError(error, {
+                messageClientId: message.clientId,
+                sequenceNumber: message.sequenceNumber,
+                clientSequenceNumber: message.clientSequenceNumber,
+                referenceSequenceNumber: message.referenceSequenceNumber,
+                minimumSequenceNumber: message.minimumSequenceNumber,
+                messageTimestamp: message.timestamp,
+            });
         }
     }
 

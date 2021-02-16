@@ -522,8 +522,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+        this.verifyNotClosed();
+
         try {
-            this.verifyNotClosed();
             switch (message.type) {
                 case DataStoreMessageType.Attach: {
                     const attachMessage = message.contents as IAttachMessage;
@@ -584,7 +585,15 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
             this.emit("op", message);
         } catch (error) {
-            throw CreateCorruptionError(error);
+            throw CreateCorruptionError(error, {
+                clientId: this.clientId,
+                messageClientId: message.clientId,
+                sequenceNumber: message.sequenceNumber,
+                clientSequenceNumber: message.clientSequenceNumber,
+                referenceSequenceNumber: message.referenceSequenceNumber,
+                minimumSequenceNumber: message.minimumSequenceNumber,
+                messageTimestamp: message.timestamp,
+            });
         }
     }
 

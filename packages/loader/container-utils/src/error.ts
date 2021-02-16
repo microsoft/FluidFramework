@@ -53,16 +53,27 @@ export class DataCorruptionError extends LoggingError implements IErrorBase {
  * Coerce the throwable input into a DataCorruptionError.
  * @param error - Throwable input to be converted.
  */
-export function CreateCorruptionError(error: any): DataCorruptionError {
+export function CreateCorruptionError(
+    error: any,
+    info: Partial<{
+        clientId: string,
+        messageClientId: string,
+        sequenceNumber: number,
+        clientSequenceNumber: number,
+        referenceSequenceNumber: number,
+        minimumSequenceNumber: number,
+        messageTimestamp: number,
+    }> = {},
+): DataCorruptionError {
     if (typeof error === "string") {
-        return new DataCorruptionError(error, {});
+        return new DataCorruptionError(error, { ...info });
     } else if (!error || Array.isArray(error) || typeof error !== "object") {
         return new DataCorruptionError(
             "DataCorruptionError without explicit message (needs review)",
-            { typeof: typeof error },
+            { ...info, typeof: typeof error },
         );
     } else if (error instanceof DataCorruptionError) {
-        return error;
+        return Object.assign(error, { ...info, ...error });
     } else if (error instanceof LoggingError) {
         const { errorType: errorSubType } = error as any;
 
@@ -70,11 +81,13 @@ export function CreateCorruptionError(error: any): DataCorruptionError {
             error.message,
             errorSubType
                 ? {
+                    ...info,
                     ...error,
                     errorSubType,
                     errorType: ContainerErrorType.dataCorruptionError,
                 }
                 : {
+                    ...info,
                     ...error,
                     errorType: ContainerErrorType.dataCorruptionError,
                 },
@@ -86,8 +99,8 @@ export function CreateCorruptionError(error: any): DataCorruptionError {
         const { stack } = error;
 
         return stack
-            ? new DataCorruptionError(message, { stack })
-            : new DataCorruptionError(message, {});
+            ? new DataCorruptionError(message, { ...info, stack })
+            : new DataCorruptionError(message, { ...info });
     }
 }
 
