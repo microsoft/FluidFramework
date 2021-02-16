@@ -9,9 +9,9 @@ export class LoaderContainerTracker {
     private readonly containers = new Set<IContainer>();
 
     public add<LoaderType extends ILoader>(loader: LoaderType) {
-        const patch = <T, C extends IContainer>(fn: (...args: T[]) => Promise<C>) => {
+        const patch = <C extends IContainer>(fn: (...args: any[]) => Promise<C>) => {
             const boundFn = fn.bind(loader);
-            return async (...args: T[]) => {
+            return async (...args: any[]) => {
                 const container = await boundFn(...args);
                 this.containers.add(container);
                 return container;
