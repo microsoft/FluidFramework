@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
- import {
+import {
      IDocumentStorageService,
      ISummaryContext,
 } from "@fluidframework/driver-definitions";
- import {
+import {
     ISnapshotTree,
     ISummaryHandle,
     ISummaryTree,
@@ -30,8 +30,14 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 // that can understand compressed format. And only after that flip it.
 function gatesAllowPacking() {
     // Leave override for testing purposes
-    if (typeof localStorage === "object" && localStorage !== null && localStorage.FluidAggregateBlobs === "1") {
-        return true;
+    // eslint-disable-next-line no-null/no-null
+    if (typeof localStorage === "object" && localStorage !== null) {
+        if  (localStorage.FluidAggregateBlobs === "1") {
+            return true;
+        }
+        if  (localStorage.FluidAggregateBlobs === "0") {
+            return false;
+        }
     }
 
     // We are starting disabled.
@@ -161,7 +167,7 @@ class SnapshotExtractorInPlace extends SnapshotExtractor {
  * When summary is written it will find and aggregate small blobs into bigger blobs
  * When snapshot is read, it will unpack aggregated blobs and provide them transparently to caller.
  */
-export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumentStorageService {
+export class BlobAggregationStorage extends SnapshotExtractor implements IDocumentStorageService {
     // Tells data store if it can use incremental summary (i.e. reuse DDSs from previous summary
     // when only one DDS changed).
     // The answer has to be know long before we enable actual packing. The reason for the is the following:
@@ -178,15 +184,15 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
 
     protected virtualBlobs = new Map<string, ArrayBufferLike>();
 
-    static wrap(storage: IDocumentStorageService, logger: ITelemetryLogger) {
-        if (storage instanceof BlobAggregatorStorage) {
+    static wrap(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking = gatesAllowPacking()) {
+        if (storage instanceof BlobAggregationStorage) {
             return storage;
         }
-        // Always create BlobAggregatorStorage even if storage is not asking for packing.
+        // Always create BlobAggregationStorage even if storage is not asking for packing.
         // This is mostly to avoid cases where future changes in policy would result in inability to
         // load old files that were created with aggregation on.
         const minBlobSize = storage.policies?.minBlobSize;
-        return new BlobAggregatorStorage(storage, logger, minBlobSize);
+        return new BlobAggregationStorage(storage, logger, allowPacking, minBlobSize);
     }
 
     static async unpackSnapshot(snapshot: ISnapshotTree) {
@@ -213,6 +219,7 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
     protected constructor(
         private readonly storage: IDocumentStorageService,
         private readonly logger: ITelemetryLogger,
+        private readonly allowPacking: boolean,
         private readonly blobCutOffSize?: number)
     {
         super();
@@ -282,7 +289,7 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
-        const summaryNew = gatesAllowPacking() ? await this.compressSmallBlobs(summary) : summary;
+        const summaryNew = this.allowPacking ? await this.compressSmallBlobs(summary) : summary;
         return this.storage.uploadSummaryWithContext(summaryNew, context);
     }
 
@@ -317,8 +324,9 @@ export class BlobAggregatorStorage extends SnapshotExtractor implements IDocumen
         }
 
         const newSummary: ISummaryTree = {...summary};
-        for (const key of Object.keys(newSummary.tree)) {
-            const obj = newSummary.tree[key];
+        newSummary.tree = { ...newSummary.tree};
+        for (const key of Object.keys(summary.tree)) {
+            const obj = summary.tree[key];
             // Get path relative to root of data store (where we do aggregation)
             const newPath = startingLevel ? key : `${path}/${key}`;
             switch (obj.type) {

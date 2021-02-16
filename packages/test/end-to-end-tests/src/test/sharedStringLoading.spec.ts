@@ -87,7 +87,7 @@ describe("SharedString", () => {
                     mockDs.connectToStorage = async ()=>{
                         const realStorage = await realDs.connectToStorage();
                         const mockstorage = Object.create(realStorage) as IDocumentStorageService;
-                        mockstorage.policies = {
+                        (mockstorage as any).policies = {
                             ...realStorage.policies,
                             caching: LoaderCachingPolicy.NoCaching,
                         };

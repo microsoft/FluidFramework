@@ -80,7 +80,7 @@ export interface IDocumentStorageService {
     /**
      * Policies implemented/instructed by driver.
      */
-    policies?: IDocumentStorageServicePolicies;
+    readonly policies?: IDocumentStorageServicePolicies;
 
     /**
      * Returns the snapshot tree.

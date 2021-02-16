@@ -871,7 +871,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._storageService =
                 new BlobCacheStorageService(this.storageService, blobs);
             // ensure we did not lose that policy in the process of wrapping
-            assert(blobSize === this._storageService.policies?.minBlobSize);
+            assert(blobSize === this._storageService.policies?.minBlobSize, "blob size policy");
         }
         const attributes: IDocumentAttributes = {
             branch: this.id,

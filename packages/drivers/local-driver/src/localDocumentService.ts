@@ -35,8 +35,10 @@ export class LocalDocumentService implements api.IDocumentService {
      * Creates and returns a document storage service for local use.
      */
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
-        return new socketStorage.DocumentStorageService(this.documentId,
-            new GitManager(new TestHistorian(this.localDeltaConnectionServer.testDbFactory.testDatabase)));
+        return new socketStorage.DocumentStorageService(
+            this.documentId,
+            new GitManager(new TestHistorian(this.localDeltaConnectionServer.testDbFactory.testDatabase)),
+            { minBlobSize: 2048 }); // Test blob aggregation.
     }
 
     /**

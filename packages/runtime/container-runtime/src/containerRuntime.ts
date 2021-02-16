@@ -50,6 +50,7 @@ import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver
 import {
     readAndParse,
     readAndParseFromBlobs,
+    BlobAggregationStorage,
 } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import { runGarbageCollection } from "@fluidframework/garbage-collector";
@@ -124,7 +125,6 @@ import {
     IContainerRuntimeMetadata,
     metadataBlobName,
 } from "./snapshot";
-import { BlobAggregatorStorage } from "./blobAggregationStorage";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -493,16 +493,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         let storage = context.storage;
         if (context.baseSnapshot) {
             // This will patch snapshot in place!
-            // If storage is provided, it will wrap storage with BlobAggregatorStorage that can
+            // If storage is provided, it will wrap storage with BlobAggregationStorage that can
             // pack & unpack aggregated blobs.
             // Note that if storage is provided later by loader layer, we will wrap storage in this.storage getter.
-            // BlobAggregatorStorage is smart enough for double-wrapping to be no-op
+            // BlobAggregationStorage is smart enough for double-wrapping to be no-op
             if (context.storage) {
-                const aggrStorage = BlobAggregatorStorage.wrap(context.storage, logger);
+                const aggrStorage = BlobAggregationStorage.wrap(context.storage, logger);
                 await aggrStorage.unpackSnapshot(context.baseSnapshot);
                 storage = aggrStorage;
             } else {
-                await BlobAggregatorStorage.unpackSnapshot(context.baseSnapshot);
+                await BlobAggregationStorage.unpackSnapshot(context.baseSnapshot);
             }
         }
 
@@ -571,8 +571,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // All callers should be fixed, as this API is called in detached state of container when we have
         // no storage and it's passed down the stack without right typing.
         if (!this._storage && this.context.storage) {
-            // Note: BlobAggregatorStorage is smart enough for double-wrapping to be no-op
-            this._storage = BlobAggregatorStorage.wrap(this.context.storage, this.logger);
+            // Note: BlobAggregationStorage is smart enough for double-wrapping to be no-op
+            this._storage = BlobAggregationStorage.wrap(this.context.storage, this.logger);
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this._storage!;
