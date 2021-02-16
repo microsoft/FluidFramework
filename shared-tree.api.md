@@ -287,7 +287,7 @@ export interface OrderedEditSet {
     // (undocumented)
     getEditInSessionAtIndex(index: number): Edit;
     // @internal (undocumented)
-    getEditLogSummary(): EditLogSummary;
+    getEditLogSummary(useHandles?: boolean): EditLogSummary;
     // (undocumented)
     getIdAtIndex(index: number): EditId;
     // (undocumented)
@@ -394,6 +394,8 @@ export class SharedTreeEditor {
 
 // @public
 export enum SharedTreeEvent {
+    // @internal
+    ChunksUploaded = "uploadedChunks",
     EditCommitted = "committedEdit"
 }
 

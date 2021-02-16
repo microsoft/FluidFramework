@@ -55,10 +55,12 @@ export interface OrderedEditSet {
 	tryGetEdit(editId: EditId): Promise<Edit | undefined>;
 
 	/**
-	 * @returns the list of edits that do not have associated blob handles.
+	 * @param useHandles - By default, false. If true, returns handles instead of edit chunks where possible.
+	 * 					   TODO:#49901: This parameter is used for testing and should be removed once format version 0.1.0 is written.
+	 * @returns the summary of this `OrderedEditSet` that can be used to reconstruct the edit set.
 	 * @internal
 	 */
-	getEditLogSummary(): EditLogSummary;
+	getEditLogSummary(useHandles?: boolean): EditLogSummary;
 }
 
 /**
@@ -175,10 +177,14 @@ export class EditLog implements OrderedEditSet {
 
 	/**
 	 * Construct an `EditLog` using the given options.
+	 * @param summary - An edit log summary used to populate the edit log.
+	 * @param serializationHelpers - Helpers for serializing and deserializing edit handles. Required for virtualization support.
 	 */
-	public constructor(options?: EditLogSummary, serializationHelpers?: SerializationHelpers) {
-		const editLogSummary = options || { editIds: [], editChunks: [] };
-		const { editChunks, editIds } = editLogSummary;
+	public constructor(
+		summary: EditLogSummary = { editIds: [], editChunks: [] },
+		serializationHelpers?: SerializationHelpers
+	) {
+		const { editChunks, editIds } = summary;
 
 		this.serializationHelpers = serializationHelpers;
 
@@ -425,9 +431,28 @@ export class EditLog implements OrderedEditSet {
 	}
 
 	/**
-	 * Returns information about the edit log.
+	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.getEditLogSummary}
 	 */
-	public getEditLogSummary(): EditLogSummary {
+	public getEditLogSummary(useHandles = false): EditLogSummary {
+		if (useHandles) {
+			const serializationHelpers = assertNotUndefined(
+				this.serializationHelpers,
+				'Edit logs that store handles should include serialization helpers.'
+			);
+			return {
+				editChunks: this.editChunks.toArray().map(([key, { handle, edits }]) => {
+					if (handle !== undefined) {
+						return {
+							key,
+							chunk: serializationHelpers.serializeHandle(handle),
+						};
+					}
+					return { key, chunk: assertNotUndefined(edits) };
+				}),
+				editIds: this.sequencedEditIds,
+			};
+		}
+
 		// TODO:#49901: When writing format version 0.1.0, change to prefer sending the handle when not undefined.
 		// For now, no chunks are evicted so edits are sent as is to be aggregated during summary write.
 		return {

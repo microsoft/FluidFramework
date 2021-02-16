@@ -10,7 +10,7 @@ import { newEdit, setTrait } from './EditUtilities';
 import { ChangeNode, Edit, Change } from './PersistedTypes';
 import { Snapshot } from './Snapshot';
 import { initialTree } from './InitialTree';
-import { SharedTreeSummary_0_0_2 } from './SummaryBackCompatibility';
+import { readFormatVersion, SharedTreeSummary_0_0_2 } from './SummaryBackCompatibility';
 
 /**
  * Format version for summaries that are written.
@@ -89,6 +89,17 @@ export function fullHistorySummarizer(editLog: OrderedEditSet, currentView: Snap
 		currentTree: currentView.getChangeNodeTree(),
 		sequencedEdits,
 		version: formatVersion,
+	};
+}
+
+/**
+ * Generates a summary with format version 0.1.0. This will prefer handles over edits in edit chunks where possible.
+ */
+export function fullHistorySummarizer_0_1_0(editLog: OrderedEditSet, currentView: Snapshot): SharedTreeSummary {
+	return {
+		currentTree: currentView.getChangeNodeTree(),
+		editHistory: editLog.getEditLogSummary(true),
+		version: readFormatVersion,
 	};
 }
 

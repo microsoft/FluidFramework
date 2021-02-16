@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from '@fluidframework/common-utils';
+import { fromBase64ToUtf8, IsoBuffer } from '@fluidframework/common-utils';
 import { IFluidHandle, IFluidSerializer, ISerializedHandle } from '@fluidframework/core-interfaces';
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from '@fluidframework/protocol-definitions';
 import { IFluidDataStoreRuntime, IChannelStorageService } from '@fluidframework/datastore-definitions';
@@ -12,7 +12,7 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger } from '@fluidframework/telemetry-utils';
 import { assert, fail, SharedTreeTelemetryProperties } from './Common';
-import { EditHandle, EditLog, OrderedEditSet } from './EditLog';
+import { EditHandle, editsPerChunk, EditLog, OrderedEditSet } from './EditLog';
 import {
 	Edit,
 	Delete,
@@ -27,6 +27,7 @@ import {
 	SharedTreeOpType,
 	SharedTreeEditOp,
 	SharedTreeHandleOp,
+	EditWithoutId,
 } from './PersistedTypes';
 import { newEdit } from './EditUtilities';
 import { EditId } from './Identifiers';
@@ -78,6 +79,12 @@ export enum SharedTreeEvent {
 	 * Passed the EditId of the committed edit.
 	 */
 	EditCommitted = 'committedEdit',
+	/**
+	 * Upload has completed for a set of edit chunks.
+	 * This event is used exclusively for testing.
+	 * @internal
+	 */
+	ChunksUploaded = 'uploadedChunks',
 }
 
 // TODO:#48151: Support reference payloads, and use this type to identify them.
@@ -299,6 +306,34 @@ export class SharedTree extends SharedObject {
 	}
 
 	/**
+	 * Uploads the edit chunk and sends the chunk key along with the resulting handle as an op.
+	 */
+	private async uploadEditChunk(edits: EditWithoutId[], chunkKey: number): Promise<void> {
+		const editHandle = await this.runtime.uploadBlob(IsoBuffer.from(JSON.stringify({ edits })));
+		this.submitLocalMessage({
+			editHandle: this.toSerializable(editHandle),
+			chunkKey,
+			type: SharedTreeOpType.Handle,
+		});
+	}
+
+	/**
+	 * Asynchronously uploads edit chunks that have reached the chunk size limit.
+	 */
+	private async initiateEditChunkUpload(): Promise<void> {
+		// Initiate upload of any edit chunks not yet uploaded.
+		const editChunks = this.editLog.getEditLogSummary(true).editChunks;
+		await Promise.all(
+			editChunks.map(async ({ key, chunk }) => {
+				if (Array.isArray(chunk) && chunk.length === editsPerChunk) {
+					await this.uploadEditChunk(chunk, key);
+				}
+			})
+		);
+		this.emit(SharedTreeEvent.ChunksUploaded);
+	}
+
+	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
 	 */
 	public snapshotCore(_serializer: IFluidSerializer): ITree {
@@ -338,6 +373,7 @@ export class SharedTree extends SharedObject {
 			this.editLog.sequenceLocalEdits();
 		}
 
+		void this.initiateEditChunkUpload();
 		return this.summarizer(this.editLog, this.currentView);
 	}
 

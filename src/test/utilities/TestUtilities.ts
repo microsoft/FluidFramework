@@ -4,12 +4,22 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+import { expect } from 'chai';
+import { DataObject } from '@fluidframework/aqueduct';
+import { Container } from '@fluidframework/container-loader';
+import { requestFluidObject } from '@fluidframework/runtime-utils';
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from '@fluidframework/test-runtime-utils';
-import { expect } from 'chai';
+import {
+	ChannelFactoryRegistry,
+	ITestFluidObject,
+	LocalTestObjectProvider,
+	TestContainerRuntimeFactory,
+	TestFluidObjectFactory,
+} from '@fluidframework/test-utils';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
 import { fail } from '../../Common';
@@ -116,6 +126,98 @@ export function setUpTestSharedTree(
 		containerRuntimeFactory: newContainerRuntimeFactory,
 		tree,
 	};
+}
+
+class TestDataObject extends DataObject {
+	public static readonly type = '@fluid-example/test-dataStore';
+	public get _root() {
+		return this.root;
+	}
+}
+
+enum DataObjectFactoryType {
+	Primed, // default
+	Test,
+}
+
+/** Configuration used for the LocalTestObjectProvider created by setUpLocalServerTestSharedTree. */
+export interface ITestContainerConfig {
+	// TestFluidDataObject instead of PrimedDataStore
+	fluidDataObjectType?: DataObjectFactoryType;
+
+	// An array of channel name and DDS factory pairs to create on container creation time
+	registry?: ChannelFactoryRegistry;
+}
+
+/** Objects returned by setUpLocalServerTestSharedTree */
+export interface LocalServerSharedTreeTestingComponents {
+	/** The LocalTestObjectProvider created if one was not set in the options. */
+	localTestObjectProvider: LocalTestObjectProvider<ITestContainerConfig>;
+	/** The SharedTree created and set up. */
+	tree: SharedTree;
+}
+
+/** Options used to customize setUpLocalServerTestSharedTree */
+export interface LocalServerSharedTreeTestingOptions {
+	/**
+	 * Id for the SharedTree to be created.
+	 * If two SharedTrees have the same id and the same localTestObjectProvider,
+	 * they will collaborate (send edits to each other)
+	 */
+	id?: string;
+	/** Node to initialize the SharedTree with. */
+	initialTree?: ChangeNode;
+	/** If set, uses the provider to create the container and create the SharedTree. */
+	localTestObjectProvider?: LocalTestObjectProvider<ITestContainerConfig>;
+	/**
+	 * If not set, full history will be preserved.
+	 */
+	summarizer?: SharedTreeSummarizer;
+	/**
+	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
+	 */
+	setupEditId?: EditId;
+}
+
+/**
+ * Sets up and returns an object of components useful for testing SharedTree with a local server.
+ * Required for tests that involve the uploadBlob API
+ */
+export async function setUpLocalServerTestSharedTree(
+	options: LocalServerSharedTreeTestingOptions
+): Promise<LocalServerSharedTreeTestingComponents> {
+	const { id, initialTree, localTestObjectProvider, setupEditId, summarizer } = options;
+
+	const treeId = id || 'test';
+	const registry: ChannelFactoryRegistry = [[treeId, SharedTree.getFactory()]];
+	const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
+		new TestContainerRuntimeFactory(TestDataObject.type, new TestFluidObjectFactory(registry), {
+			initialSummarizerDelayMs: 0,
+		});
+
+	let provider: LocalTestObjectProvider<ITestContainerConfig>;
+	let container: Container;
+
+	if (localTestObjectProvider !== undefined) {
+		provider = localTestObjectProvider;
+		container = await provider.loadTestContainer();
+	} else {
+		provider = new LocalTestObjectProvider(runtimeFactory);
+		container = (await provider.makeTestContainer()) as Container;
+	}
+
+	const dataObject = await requestFluidObject<ITestFluidObject>(container, 'default');
+	const tree = await dataObject.getSharedObject<SharedTree>(treeId);
+
+	if (initialTree !== undefined && localTestObjectProvider === null) {
+		setTestTree(tree, initialTree, setupEditId);
+	}
+
+	if (summarizer !== undefined) {
+		tree.summarizer = summarizer;
+	}
+
+	return { tree, localTestObjectProvider: provider };
 }
 
 /** Sets testTrait to contain `node`. */
