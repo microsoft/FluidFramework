@@ -4,7 +4,6 @@ import { Fluid } from "@fluid-experimental/fluid-static";
 import { getContainerId } from "./getContainerId";
 
 // useKVPair is an example of a custom hook that returns Fluid backed state and a method to modify that state
-//
 function useKVPair() {
     // KVPair Data Object is stored in state as soon as it is available
     const [dataObject, setDataObject] = React.useState<IKeyValueDataObject>();
