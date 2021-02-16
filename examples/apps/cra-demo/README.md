@@ -1,4 +1,5 @@
 # Fluid Consumer Script
+README is still WIP
 
 ### 1. Install CRA
 
@@ -21,7 +22,7 @@ Fluid gives you access to methods that will bootstrap a new Fluid container, and
 
 ```js
 import { KeyValueDataObject } from "@fluid-experimental/data-objects";
-import { Fluid, getContainerId } from "./fluid";
+import { Fluid } from "@fluid-experimental/fluid-static";
 ```
 
 ### 4. Update the view
