@@ -511,8 +511,8 @@ export class DeltaManager
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         assert(!!(this.handler as any));
 
-        this._inbound.systemResume();
-        this._inboundSignal.systemResume();
+        this._inbound.resume();
+        this._inboundSignal.resume();
 
         // We could have connected to delta stream before getting here
         // If so, it's time to process any accumulated ops
@@ -1134,7 +1134,7 @@ export class DeltaManager
         // state. As requirements change, so should these checks.
         assert(this.messageBuffer.length === 0, "messageBuffer is not empty on new connection");
 
-        this._outbound.systemResume();
+        this._outbound.resume();
 
         connection.on("op", this.opHandler);
         connection.on("signal", this.signalHandler);
@@ -1213,7 +1213,7 @@ export class DeltaManager
         assert(this.messageBuffer.length === 0, "messageBuffer is not empty on disconnect");
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this._outbound.systemPause();
+        this._outbound.pause();
         this._outbound.clear();
         this.emit("disconnect", reason);
 
@@ -1429,8 +1429,6 @@ export class DeltaManager
             message.term = 1;
         }
         this.baseTerm = message.term;
-
-        this.emit("beforeOpProcessing", message);
 
         if (this.handler === undefined) {
             throw new Error("Attempted to process an inbound message without a handler attached");
