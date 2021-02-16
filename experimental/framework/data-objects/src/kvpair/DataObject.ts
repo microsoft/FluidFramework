@@ -26,8 +26,15 @@ export interface IKeyValueDataObject extends EventEmitter {
      */
     on(event: "changed", listener: (args: IDirectoryValueChanged) => void): this;
 
+    /**
+     * Returns all the keys
+     */
     keys(): string[];
 
+    /**
+     * By default, returns an object containing all key value pairs
+     * Filter test function can be passed to limit keys added to object
+     */
     query(): (test?: string | ((value: string) => boolean)) => any | { [key: string]: any }
 }
 
@@ -48,12 +55,12 @@ export class KeyValueDataObject
     }
 
     public set = (key: string, value: any) => {
-        this.root.set(key.toString(), value);
+        this.root.set(key, value);
     };
 
     public get = (key: string) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.root.get(key.toString());
+        return this.root.get(key);
     };
 
     public keys = (): string[] => {
