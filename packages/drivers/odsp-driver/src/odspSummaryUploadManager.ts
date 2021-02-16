@@ -313,7 +313,9 @@ export class OdspSummaryUploadManager {
                         currentPath,
                         expanded);
                     value = result.snapshotTree;
-                    unreferenced = summaryObject.unreferenced;
+                    // Don't send unreferenced flag to SPO yet. This will be enabled once Apps (Bohemia) have finished
+                    // GC work. See - https://github.com/microsoft/FluidFramework/issues/5127
+                    // unreferenced = summaryObject.unreferenced;
                     reusedBlobs += result.reusedBlobs;
                     blobs += result.blobs;
                     break;
@@ -391,7 +393,9 @@ export class OdspSummaryUploadManager {
                             currentPath,
                             true);
                         value = result.snapshotTree;
-                        unreferenced = summaryTreeToExpand.unreferenced;
+                        // Don't send unreferenced flag to SPO yet. This will be enabled once the Apps (Bohemia) have
+                        // finished GC work. See - https://github.com/microsoft/FluidFramework/issues/5127
+                        // unreferenced = summaryTreeToExpand.unreferenced;
                         reusedBlobs += result.reusedBlobs;
                         blobs += result.blobs;
                     } else {
