@@ -56,7 +56,7 @@
     "@fluidframework/core-interfaces": "^0.35.0",
     "@fluidframework/datastore-definitions": "^0.35.0",
     "@fluidframework/merge-tree": "^0.35.0",
-    "@fluidframework/protocol-base": "^0.1019.0-0",
+    "@fluidframework/protocol-base": "*",
     "@fluidframework/protocol-definitions": "^0.1019.0-0",
     "@fluidframework/runtime-utils": "^0.35.0",
     "@fluidframework/shared-object-base": "^0.35.0",

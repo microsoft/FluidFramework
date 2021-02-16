@@ -62,7 +62,7 @@
     "@fluidframework/driver-utils": "^0.35.0",
     "@fluidframework/gitresources": "^0.1019.0-0",
     "@fluidframework/odsp-doclib-utils": "^0.35.0",
-    "@fluidframework/protocol-base": "^0.1019.0-0",
+    "@fluidframework/protocol-base": "*",
     "@fluidframework/protocol-definitions": "^0.1019.0-0",
     "@fluidframework/telemetry-utils": "^0.35.0",
     "abort-controller": "^3.0.0",
