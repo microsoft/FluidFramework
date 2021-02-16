@@ -94,16 +94,6 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         }
     }
 
-    // back-compat: usage removed in 0.33, remove in future versions
-    public async systemPause(): Promise<void> {
-        return this.pause();
-    }
-
-    // back-compat: usage removed in 0.33, remove in future versions
-    public systemResume(): void {
-        this.resume();
-    }
-
     /**
      * There are several actions that may need to kick off delta processing, so we want to guard against
      * accidental reentrancy. ensureProcessing can be called safely to start the processing loop if it is

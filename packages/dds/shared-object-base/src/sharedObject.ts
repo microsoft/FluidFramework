@@ -81,11 +81,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         return this._connected;
     }
 
-    // Back-compat <= 0.28
-    public get url(): string {
-        return this.id;
-    }
-
     protected get serializer(): IFluidSerializer {
         /**
          * During summarize, the SummarySerializer keeps track of IFluidHandles that are serialized. These handles
@@ -273,13 +268,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         }
 
         return gcData;
-    }
-
-    /**
-     * back-compat 0.30 - This is deprecated. summarize() should be used instead.
-     */
-    public snapshot(): ITree {
-        return this.snapshotCore(this.serializer);
     }
 
     /**
