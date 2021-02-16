@@ -319,7 +319,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _resolvedUrl: IResolvedUrl | undefined;
     private cachedAttachSummary: ISummaryTree | undefined;
     private attachInProgress = false;
-    private dirtyDocument = false;
+    private _dirtyDocument = false;
 
     private lastVisible: number | undefined;
 
@@ -429,6 +429,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._audience;
     }
 
+    /**
+     * Returns true if container is dirty.
+     * Which means data loss if container is closed at that same moment
+     * Most likely that happens when there is no network connection to ordering service
+     */
+    public get dirtyDocument() {
+        return this._dirtyDocument;
+    }
+
     private get serviceFactory() {return this.loader.services.documentServiceFactory;}
     private get urlResolver() {return this.loader.services.urlResolver;}
     public get options() { return this.loader.services.options;}
@@ -497,7 +506,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             Promise.resolve().then(() => {
                 switch (event) {
                     case dirtyDocumentEvent:
-                        listener(this.dirtyDocument);
+                        listener(this._dirtyDocument);
                         break;
                     case connectedEventName:
                          if (this.connected) {
@@ -1685,7 +1694,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     ) {
         assert(this._context?.disposed !== false, "Existing context not disposed");
         // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
-        if (this.dirtyDocument) {
+        if (this._dirtyDocument) {
             this.logger.sendErrorEvent({ eventName: "DirtyDocReloadContainer"});
         }
 
@@ -1710,7 +1719,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             Container.version,
             previousRuntimeState,
             (dirty: boolean) => {
-                this.dirtyDocument = dirty;
+                this._dirtyDocument = dirty;
                 this.emit(dirtyDocumentEvent, dirty);
             },
         );
