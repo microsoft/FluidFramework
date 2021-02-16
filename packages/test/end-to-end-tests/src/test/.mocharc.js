@@ -10,10 +10,6 @@ const packageDir = `${__dirname}/../..`;
 const testPackagesDir = `${packageDir}/..`;
 const diRoot = process.env.FLUID_DI_ROOT;
 
-console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-console.log(`${diRoot}`);
-console.log(`${__dirname}`);
-
 const config ={
   "exit": true,
   "recursive": true,
@@ -21,7 +17,7 @@ const config ={
   "require": [
     `${testPackagesDir}/mocha-test-setup`,
     `${testPackagesDir}/test-drivers`,
-    `${diRoot}/@ff-internal/aria-logger`,
+    `${diRoot}/@ff-internal/aria-logger`, //* Only require this if FLUID_DI_ROOT is defined
   ],
   "unhandled-rejections": "strict"
 };

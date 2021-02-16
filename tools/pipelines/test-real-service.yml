@@ -8,7 +8,7 @@ name: $(Build.BuildId)
 parameters:
 - name: buildDirectory
   type: string
-  default: $(Build.SourcesDirectory)
+  default: .
 
 - name: taskBuild
   type: string
@@ -111,11 +111,11 @@ jobs:
 
     # [DI] Install dependency injection package
     - task: Npm@1
-      displayName: '[DI] npm install'
+      displayName: '[DI] npm ci'
       inputs:
         command: 'custom'
         workingDir: ${{ variables.diDir }}
-        customCommand: 'install'
+        customCommand: 'ci'
         customRegistry: 'useNpmrc'
 
     - task: Npm@1
