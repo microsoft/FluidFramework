@@ -82,7 +82,7 @@ class BlobAggregator {
  * Base class that deals with unpacking snapshots (in place) containing aggregated blobs
  * It relies on abstract methods for reads and storing unpacked blobs.
  */
-abstract class SnapshotExtractor {
+export abstract class SnapshotExtractor {
     protected readonly aggregatedBlobName = "__big";
     protected readonly virtualIdPrefix = "__";
 
@@ -305,7 +305,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
     // incremental summary time - we would need to understand handles and parse them. In current design we can skip
     // that step because if data store is reused, the hole sub-tree is reused included aggregated blob embedded into it
     // and that means we can do nothing and be correct!
-    protected async compressSmallBlobs(
+    private async compressSmallBlobs(
         summary: ISummaryTree,
         path = "",
         level = 0,
