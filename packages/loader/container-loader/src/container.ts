@@ -638,8 +638,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 throw new Error("Unable to parse Url");
             }
 
-            this.loader.cacheContainer(this, request, parsedUrl);
-
             const [, docId] = parsedUrl.id.split("/");
             this._id = decodeURI(docId);
 

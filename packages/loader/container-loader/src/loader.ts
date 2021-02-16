@@ -276,10 +276,22 @@ export class Loader extends EventEmitter implements ILoader {
     public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<Container> {
         debug(`Container creating in detached state: ${performance.now()} `);
 
-        return Container.createDetached(
+        const container = await Container.createDetached(
             this,
             codeDetails,
-            );
+        );
+
+        if (this.cachingEnabled) {
+            container.once("attached", () => {
+                ensureFluidResolvedUrl(container.resolvedUrl);
+                const parsedUrl = parseUrl(container.resolvedUrl.url);
+                if (parsedUrl !== undefined) {
+                    this.containers.set(parsedUrl.id, Promise.resolve(container));
+                }
+            });
+        }
+
+        return container;
     }
 
     public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<Container> {
@@ -302,15 +314,6 @@ export class Loader extends EventEmitter implements ILoader {
             const resolved = await this.resolveCore(request);
             return resolved.container.request({ url: resolved.parsed.path });
         });
-    }
-
-    public cacheContainer(container: Container, request: IRequest, parsedUrl: IParsedUrl) {
-        const { canCache } = this.parseHeader(parsedUrl, request);
-
-        if (canCache) {
-            const key = this.getKeyForContainerCache(request, parsedUrl);
-            this.containers.set(key, Promise.resolve(container));
-        }
     }
 
     public async requestWorker(baseUrl: string, request: IRequest): Promise<IResponse> {
@@ -412,8 +415,12 @@ export class Loader extends EventEmitter implements ILoader {
         return { container, parsed };
     }
 
-    private canUseCache(headers: IRequestHeader): boolean {
-        return this.services.options.cache !== false && headers[LoaderHeader.cache] !== false;
+    private get cachingEnabled() {
+        return this.services.options.cache !== false;
+    }
+
+    private canCacheForRequest(headers: IRequestHeader): boolean {
+        return this.cachingEnabled && headers[LoaderHeader.cache] !== false;
     }
 
     private parseHeader(parsed: IParsedUrl, request: IRequest) {
@@ -434,7 +441,7 @@ export class Loader extends EventEmitter implements ILoader {
             request.headers[LoaderHeader.version] = null;
         }
 
-        const canCache = this.canUseCache(request.headers);
+        const canCache = this.canCacheForRequest(request.headers);
         debug(`${canCache} ${request.headers[LoaderHeader.version]}`);
 
         return {
