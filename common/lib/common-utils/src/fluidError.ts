@@ -8,7 +8,6 @@ import {
     ITelemetryProperties,
     ISensitiveDebugData,
     isIFluidError,
-    ITelemetryBaseEvent,
 } from "@fluidframework/common-definitions";
 
 export abstract class FluidError extends Error implements IFluidError {
@@ -40,6 +39,20 @@ export class GenericFluidError extends FluidError {
     public errorType: string = "generic";
 }
 
+export class ExternalFluidError extends FluidError {
+    public errorType: string = "external";
+
+    constructor(err: any) {
+        //* start with promoting err's message, per present behavior, and then pull out in later scoped change
+        super("External Error");
+
+        this.addDetails({}, { innerError: err });
+        if (err.stack !== undefined && err.stack !== "") {
+            this.stack = err.stack;
+        }
+    }
+}
+
 export function wrapAsFluidError(err: any): IFluidError {
     if (isIFluidError(err)) {
         return err;
@@ -48,13 +61,6 @@ export function wrapAsFluidError(err: any): IFluidError {
     // WARNING: Exceptions can contain PII!
     // For example, XHR will throw object derived from Error that contains config information
     // for failed request, including all the headers, and thus - user tokens!
-    // Extract only call stack, message, and couple network-related properties form error object
-
-    //* start with promoting err's message, per present behavior, and then pull out in later scoped change.
-    //* Same with stack above?
-    return new GenericFluidError(
-        "External Error",
-        {},
-        { innerError: err },
-    );
+    // So wrap external errors to protect against logging too much
+    return new ExternalFluidError(err);
 }
