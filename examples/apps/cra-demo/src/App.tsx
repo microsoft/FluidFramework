@@ -4,10 +4,10 @@ import { Fluid } from '@fluid-experimental/fluid-static';
 import { getContainerId } from './getContainerId';
 
 
-function useKVPair(id: string) {
+function useKVPair() {
     const [dataObject, setDataObject] = React.useState<IKeyValueDataObject>();
     const [state, setState] = React.useState<{ [key: string]: any }>({});
-
+    const id = 'app';
     // Connect to container and data object
     React.useEffect(() => {
         const { containerId, isNew } = getContainerId();
@@ -27,7 +27,7 @@ function useKVPair(id: string) {
 
         start();
 
-    }, [id])
+    }, [])
 
     // set up sync from data object to local state
     React.useEffect(() => {
@@ -43,7 +43,7 @@ function useKVPair(id: string) {
 }
 
 function App() {
-    const { state, setState } = useKVPair('app');
+    const { state, setState } = useKVPair();
 
     if (!setState) return <div />;
 
