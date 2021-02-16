@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/cra-demo",
-  "version": "0.1.0",
+  "version": "0.35.0",
   "private": true,
   "dependencies": {
     "@fluid-experimental/data-objects": "^0.35.0",

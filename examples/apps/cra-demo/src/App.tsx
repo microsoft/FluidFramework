@@ -1,13 +1,16 @@
-import React from 'react';
+import React from "react";
 import { KeyValueDataObject, KeyValueInstantiationFactory, IKeyValueDataObject } from "@fluid-experimental/data-objects";
-import { Fluid } from '@fluid-experimental/fluid-static';
-import { getContainerId } from './getContainerId';
+import { Fluid } from "@fluid-experimental/fluid-static";
+import { getContainerId } from "./getContainerId";
 
-
+// useKVPair is an example of a custom hook that returns Fluid backed state and a method to modify that state
+//
 function useKVPair() {
+    // KVPair Data Object is stored in state as soon as it is available
     const [dataObject, setDataObject] = React.useState<IKeyValueDataObject>();
+    // Fluid data will be synced with local state so that changes to Fluid data will cause re-render
     const [state, setState] = React.useState<{ [key: string]: any }>({});
-    const id = 'app';
+    const id = "app";
     // Connect to container and data object
     React.useEffect(() => {
         const { containerId, isNew } = getContainerId();
@@ -29,11 +32,11 @@ function useKVPair() {
 
     }, [])
 
-    // set up sync from data object to local state
+    // set up sync from data object to local state as soon as dataObject is available
     React.useEffect(() => {
         if (dataObject) {
             const updateState = () => setState(dataObject.query());
-            dataObject.on('changed', updateState);
+            dataObject.on("changed", updateState);
             return () => { dataObject.off("change", updateState) }
         }
     }, [dataObject])
@@ -47,7 +50,7 @@ function App() {
 
     if (!setState) return <div />;
 
-    const handleClick = () => setState('date', Date.now().toString());
+    const handleClick = () => setState("date", Date.now().toString());
 
     return (
         <div className="App">
