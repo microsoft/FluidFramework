@@ -150,7 +150,7 @@ export interface IContainerContext extends IDisposable {
 
     getLoadedFromVersion(): IVersion | undefined;
 
-    updateDirtyState(dirty: boolean): void;
+    updateDirtyDocumentState(dirty: boolean): void;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";

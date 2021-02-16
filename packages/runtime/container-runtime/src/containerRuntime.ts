@@ -934,6 +934,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async stop(): Promise<IRuntimeState> {
         this.verifyNotClosed();
 
+        // It is not very clear how reload works with local changes.
+        // First, summarizing code likely does not work (i.e. read - produced unknown result)
+        // in presence of local changes.
+        // On top of that newly reloaded runtime likely would not be dirty, while it has some changes.
+        // And container would assume it's dirty (as there was no notification changing state)
+        if (this.dirtyDocument) {
+            this.logger.sendErrorEvent({ eventName: "DirtyDocReloadRuntime"});
+        }
+
         const snapshot = await this.snapshot();
         const state: IPreviousState = {
             reload: true,
@@ -1513,7 +1522,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dirtyDocument = dirty;
         if (this.emitDirtyDocumentEvent) {
             this.emit(dirty ? "dirtyDocument" : "savedDocument");
-            this.context.updateDirtyState(dirty);
+            this.context.updateDirtyDocumentState(dirty);
         }
     }
 

@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, IDeltaManager } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -20,6 +20,10 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
+import {
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+} from "@fluidframework/protocol-definitions";
 import {
     generateTest,
     ITestObjectProvider,
@@ -52,24 +56,24 @@ function generate(
         afterEach(() => {
             args.reset();
         });
-        let container1: IContainer;
-        let container2: IContainer;
         let dataStore1: ITestFluidObject;
         let dataStore2: ITestFluidObject;
+        let deltaManager2: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
         let sharedMap1: ISharedMap;
         let sharedMap2: ISharedMap;
         let sharedMap3: ISharedMap;
 
         beforeEach(async () => {
             // Create a Container for the first client.
-            container1 = await args.makeTestContainer(testContainerConfig);
+            const container1 = await args.makeTestContainer(testContainerConfig);
             dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
             sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
             // Load the Container that was created by the first client.
-            container2 = await args.loadTestContainer(testContainerConfig);
+            const container2 = await args.loadTestContainer(testContainerConfig) as IContainer;
             dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
             sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+            deltaManager2 = container2.deltaManager;
 
             // Load the Container that was created by the first client.
             const container3 = await args.loadTestContainer(testContainerConfig);
@@ -268,7 +272,7 @@ function generate(
             let waitRejected = false;
             waitAcquireAndComplete(collection2)
                 .catch(() => { waitRejected = true; });
-            container2.deltaManager.close();
+            deltaManager2.close();
 
             await collection1.add("testValue");
 

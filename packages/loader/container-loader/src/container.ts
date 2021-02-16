@@ -99,6 +99,7 @@ import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 const detachedContainerRefSeqNumber = 0;
 
 const connectEventName = "connect";
+const dirtyDocumentEvent = "dirtyDocument";
 
 interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
@@ -318,6 +319,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _resolvedUrl: IResolvedUrl | undefined;
     private cachedAttachSummary: ISummaryTree | undefined;
     private attachInProgress = false;
+    private dirtyDocument = false;
 
     private lastVisible: number | undefined;
 
@@ -493,12 +495,26 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.on("newListener", (event: string, listener: (...args: any[]) => void) => {
             // Fire events on the end of JS turn, giving a chance for caller to be in consistent state.
             Promise.resolve().then(() => {
-                if (event === connectedEventName && this.connected) {
-                    listener(event, this.clientId);
-                } else if (event === disconnectedEventName && !this.connected) {
-                    listener(event);
-                } else if (event === connectEventName && this._connectionState !== ConnectionState.Disconnected) {
-                    listener(event);
+                switch (event) {
+                    case dirtyDocumentEvent:
+                        listener(this.dirtyDocument);
+                        break;
+                    case connectedEventName:
+                         if (this.connected) {
+                            listener(event, this.clientId);
+                         }
+                         break;
+                    case disconnectedEventName:
+                        if (!this.connected) {
+                            listener(event);
+                        }
+                        break;
+                    case connectEventName:
+                        if (this._connectionState !== ConnectionState.Disconnected) {
+                            listener(event);
+                        }
+                        break;
+                    default:
                 }
             }).catch((error) =>  {
                 this.logger.sendErrorEvent({ eventName: "RaiseConnectedEventError" }, error);
@@ -1668,6 +1684,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         previousRuntimeState: IRuntimeState = {},
     ) {
         assert(this._context?.disposed !== false, "Existing context not disposed");
+        // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
+        if (this.dirtyDocument) {
+            this.logger.sendErrorEvent({ eventName: "DirtyDocReloadContainer"});
+        }
+
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
         const loader = new RelativeLoader(this.loader, () => this.originalRequest);
@@ -1688,7 +1709,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,
             previousRuntimeState,
-            (dirty: boolean) => { this.emit("dirtyDocument", dirty); },
+            (dirty: boolean) => {
+                this.dirtyDocument = dirty;
+                this.emit(dirtyDocumentEvent, dirty);
+            },
         );
 
         loader.resolveContainer(this);
