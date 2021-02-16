@@ -460,7 +460,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public get IContainerRuntimeDirtyable() { return this; }
     public get IFluidRouter() { return this; }
 
-    // 0.24 back-compat attachingBeforeSummary
+    // back-compat: Used by loader in <= 0.35
     public readonly runtimeVersion = pkgVersion;
 
     /**
@@ -477,14 +477,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         runtimeOptions?: IContainerRuntimeOptions,
         containerScope: IFluidObject = context.scope,
     ): Promise<ContainerRuntime> {
-        // Back-compat: <= 0.18 loader
-        if (context.deltaManager.lastSequenceNumber === undefined) {
-            Object.defineProperty(context.deltaManager, "lastSequenceNumber", {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                get: () => (context.deltaManager as any).referenceSequenceNumber,
-            });
-        }
-
         const registry = new ContainerRuntimeDataStoreRegistry(registryEntries);
 
         const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
@@ -548,14 +540,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.storage!;
     }
 
-    public get branch(): string {
-        return this.context.branch;
-    }
-
-    public get snapshotFn(): (message: string) => Promise<void> {
-        return this.context.snapshotFn;
-    }
-
     public get reSubmitFn(): (
         type: ContainerMessageType,
         content: any,
@@ -587,11 +571,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public get attachState(): AttachState {
-        if (this.context.attachState !== undefined) {
-            return this.context.attachState;
-        }
-        // 0.21 back-compat isAttached
-        return (this.context as any).isAttached() ? AttachState.Attached : AttachState.Detached;
+        return this.context.attachState;
     }
 
     public nextSummarizerP?: Promise<Summarizer>;
@@ -949,10 +929,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
         const blobsTree = convertToSummaryTree(this.blobManager.snapshot(), false);
         addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
-    }
-
-    public async requestSnapshot(tagMessage: string): Promise<void> {
-        return this.context.requestSnapshot(tagMessage);
     }
 
     public async stop(): Promise<IRuntimeState> {

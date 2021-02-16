@@ -585,11 +585,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // Only take a summary if the container is in detached state, otherwise we could have local changes.
             // In failed attach call, we would already have a summary cached.
             if (this._attachState === AttachState.Detached) {
-                // 0.24 back-compat attachingBeforeSummary
-                if (this.context.runtimeVersion === undefined || this.context.runtimeVersion < "0.25") {
-                    this._attachState = AttachState.Attaching;
-                    this.emit("attaching");
-                }
                 // Get the document state post attach - possibly can just call attach but we need to change the
                 // semantics around what the attach means as far as async code goes.
                 const appSummary: ISummaryTree = this.context.createSummary();
@@ -603,10 +598,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // This should be fired after taking the summary because it is the place where we are
                 // starting to attach the container to storage.
                 // Also, this should only be fired in detached container.
-                if (this.context.runtimeVersion !== undefined && this.context.runtimeVersion >= "0.25") {
-                    this._attachState = AttachState.Attaching;
-                    this.emit("attaching");
-                }
+                this._attachState = AttachState.Attaching;
+                this.emit("attaching");
             }
             assert(!!this.cachedAttachSummary,
                 "Summary should be there either by this attach call or previous attach call!!");
@@ -1164,7 +1157,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             };
         }
 
-        // Back-compat: old docs would have ".attributes" instead of "attributes"
+        // Backward compatibility: old docs would have ".attributes" instead of "attributes"
         const attributesHash = ".protocol" in tree.trees
             ? tree.trees[".protocol"].blobs.attributes
             : tree.blobs[".attributes"];
@@ -1172,7 +1165,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const attributes = storage !== undefined ? await readAndParse<IDocumentAttributes>(storage, attributesHash)
             : readAndParseFromBlobs<IDocumentAttributes>(tree.trees[".protocol"].blobs, attributesHash);
 
-        // Back-compat for older summaries with no term
+        // Backward compatibility for older summaries with no term
         if (attributes.term === undefined) {
             attributes.term = 1;
         }
@@ -1746,7 +1739,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (warning: ContainerWarning) => this.raiseContainerWarning(warning),
             (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
-            async (message) => this.snapshot(message),
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,
             previousRuntimeState,

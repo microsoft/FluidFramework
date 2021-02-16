@@ -77,7 +77,6 @@ export interface IDeltaSender extends IProvideDeltaSender {
 export interface IDeltaManagerEvents extends IEvent {
     (event: "prepareSend", listener: (messageBuffer: any[]) => void);
     (event: "submitOp", listener: (message: IDocumentMessage) => void);
-    (event: "beforeOpProcessing", listener: (message: ISequencedDocumentMessage) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void);
     (event: "allSentOpsAckd", listener: () => void);
     (event: "pong" | "processTime", listener: (latency: number) => void);
