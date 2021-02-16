@@ -1,0 +1,2 @@
+# We don't want to check in a package.json, just the _package.json which the pipeline will rename
+package.json
