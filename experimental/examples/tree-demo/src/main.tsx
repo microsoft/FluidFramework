@@ -9,13 +9,10 @@ import {
 } from "@fluidframework/aqueduct";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import {
-    ChangeType,
     Definition,
     EditNode,
     NodeId,
-    SetValue,
     SharedTree,
-    Snapshot,
     StablePlace,
     TraitLabel,
 } from "@fluid-experimental/tree";
@@ -24,75 +21,15 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Jsonable } from "@fluidframework/datastore-definitions";
+import { IStage, StageView } from "./stage";
+import { collideBubbles, makeBubble, moveBubble } from "./bubble";
 
-interface ITreeDemoViewProps {
-    model: Snapshot;
-}
-
-// Helper for reading scalar values from SharedTree
-function readScalar<T>(snapshot: Snapshot, parent: NodeId, label: string) {
-    const [nodeId] = snapshot.getTrait({ parent, label: label as TraitLabel });
-
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const { base64 } = snapshot.getSnapshotNode(nodeId).payload!;
-
-    return JSON.parse(base64) as T;
-}
-
-// Helper for writing scalar vales to SharedTree
-function writeScalar(tree: SharedTree, parent: NodeId, label: string, value: Jsonable) {
-    const edit: SetValue = {
-        nodeToModify: tree.currentView.getTrait({ parent, label: label as TraitLabel })[0],
-        payload: { base64: JSON.stringify(value) },
-        type: ChangeType.SetValue,
-    };
-    tree.applyEdit(edit);
-}
-
-// Helper for traversing SharedTree nodes
-function ref(snapshot: Snapshot, node: NodeId, ...path: (string | number)[]) {
-    let children: readonly NodeId[] = [];
-
-    for (const label of path) {
-        if (typeof label === "string") {
-            children = snapshot.getTrait({ parent: node, label: label as TraitLabel });
-        } else {
-            // eslint-disable-next-line no-param-reassign
-            node = children[label];
-        }
-    }
-
-    return node;
-}
-
-const TreeDemoView: React.FC<ITreeDemoViewProps> = (props: ITreeDemoViewProps) => {
-    const boxModels = props.model.getTrait({ parent: props.model.root, label: "boxes" as TraitLabel });
-    const boxElements: JSX.Element[] = [];
-
-    for (const boxId of boxModels) {
-        const x = readScalar<number>(props.model, boxId, "x");
-        const y = readScalar<number>(props.model, boxId, "y");
-        const color = readScalar<number>(props.model, boxId, "color");
-        const width = readScalar<number>(props.model, boxId, "width");
-        const height = readScalar<number>(props.model, boxId, "height");
-
-        boxElements.push(<div
-            id={boxId}
-            key={boxId}
-            style={{
-                position: "absolute",
-                top: `${y}px`,
-                left: `${x}px`,
-                background: `${color}`,
-                width: `${width}px`,
-                height: `${height}px`,
-            }}></div>);
-    }
-
-    return (
-        <div>{boxElements}</div>
-    );
+const stage: IStage = {
+    width: 640,
+    height: 480,
 };
+
+const bubbles = new Array(10).fill(undefined).map(() => makeBubble(stage, 26, 4));
 
 export class TreeDemo extends DataObject implements IFluidHTMLView {
     public static get Name() { return "@fluid-experimental/tree-demo"; }
@@ -149,21 +86,28 @@ export class TreeDemo extends DataObject implements IFluidHTMLView {
         return node;
     }
 
-    private readonly doUpdate = () => {
-        const boxId = ref(this.tree.currentView, this.tree.currentView.root, "boxes", 0);
-        // eslint-disable-next-line no-bitwise
-        writeScalar(this.tree, boxId, "y", (Math.random() * 1024) | 0);
-    };
-
     public render(div: HTMLElement) {
-        ReactDOM.render(
-            <div>
-                <button onClick={this.doUpdate}>Click</button>;
-                <div style={{ position: "relative" }}>
-                    <TreeDemoView model={this.tree.currentView} />
-                </div>
-            </div>,
-            div);
+        const renderLoop = () => {
+            ReactDOM.render(
+                <div>
+                    <StageView width={stage.width} height={stage.height} bubbles={bubbles}></StageView>
+                </div>,
+                div);
+
+            requestAnimationFrame(renderLoop);
+
+            for (const bubble of bubbles) {
+                moveBubble(stage, bubble);
+            }
+
+            for (let i = 0; i < bubbles.length; i++) {
+                for (let j = i + 1; j < bubbles.length; j++) {
+                    collideBubbles(bubbles[i], bubbles[j]);
+                }
+            }
+        };
+
+        renderLoop();
     }
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

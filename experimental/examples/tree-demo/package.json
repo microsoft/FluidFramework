@@ -43,6 +43,7 @@
     "@fluidframework/datastore-definitions": "^0.35.0",
     "@fluidframework/map": "^0.35.0",
     "@fluidframework/view-interfaces": "^0.35.0",
+    "best-random": "^1.0.3",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
