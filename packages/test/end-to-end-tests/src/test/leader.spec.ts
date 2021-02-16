@@ -99,6 +99,9 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         // write something to get out of view only mode and take leadership
         dataObject1.root.set("blah", "blah");
 
+        // Make sure we reconnect as a writer and processed the op
+        await args.opProcessingController.process();
+
         const container2 = await args.loadTestContainer() as Container;
         const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 

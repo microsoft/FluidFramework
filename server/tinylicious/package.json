@@ -40,6 +40,7 @@
     "@fluidframework/server-services-shared": "^0.1017.1",
     "@fluidframework/server-services-utils": "^0.1016.0",
     "@fluidframework/server-test-utils": "^0.1017.1",
+    "axios": "^0.21.1",
     "body-parser": "^1.17.1",
     "bytes": "^3.0.0",
     "charwise": "^3.0.1",

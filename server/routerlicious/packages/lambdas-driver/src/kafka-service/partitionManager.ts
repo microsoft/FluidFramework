@@ -67,6 +67,8 @@ export class PartitionManager extends EventEmitter {
         }
 
         this.partitions.clear();
+
+        this.removeAllListeners();
     }
 
     private process(message: IQueuedMessage) {
