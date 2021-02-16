@@ -8,6 +8,8 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { AttachmentTreeEntry } from "@fluidframework/protocol-base";
 import { ISnapshotTree, ITree } from "@fluidframework/protocol-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { assert } from "@fluidframework/common-utils";
 
 /**
  * This class represents blob (long string)
@@ -41,15 +43,18 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 
 export class BlobManager {
     public static readonly basePath = "_blobs";
+    private readonly pendingBlobIds: Set<string> = new Set();
     private readonly blobIds: Set<string> = new Set();
 
     constructor(
         private readonly routeContext: IFluidHandleContext,
         private readonly getStorage: () => IDocumentStorageService,
         private readonly sendBlobAttachOp: (blobId: string) => void,
+        private readonly logger: ITelemetryLogger,
     ) { }
 
     public async getBlob(blobId: string): Promise<IFluidHandle<ArrayBufferLike>> {
+        assert(this.blobIds.has(blobId) || this.pendingBlobIds.has(blobId), "requesting unknown blobs");
         return new BlobHandle(
             `${BlobManager.basePath}/${blobId}`,
             this.routeContext,
@@ -68,11 +73,17 @@ export class BlobManager {
             () => this.sendBlobAttachOp(response.id),
         );
 
+        assert(!this.pendingBlobIds.has(response.id));
+        assert(!this.blobIds.has(response.id));
+        this.pendingBlobIds.add(response.id);
+
         return handle;
     }
 
     public addBlobId(blobId: string) {
+        assert(!this.blobIds.has(blobId));
         this.blobIds.add(blobId);
+        this.pendingBlobIds.delete(blobId);
     }
 
     /**
@@ -90,9 +101,13 @@ export class BlobManager {
      * attachment types returned in snapshot() with blobs.
      */
     public load(blobsTree?: ISnapshotTree): void {
+        let count = 0;
         if (blobsTree) {
-            Object.values(blobsTree.blobs).map((entry) => this.addBlobId(entry));
+            const values = Object.values(blobsTree.blobs);
+            count = values.length;
+            values.map((entry) => this.addBlobId(entry));
         }
+        this.logger.sendTelemetryEvent({ eventName: "ExternalBlobsInSnapshot", count });
     }
 
     public snapshot(): ITree {
