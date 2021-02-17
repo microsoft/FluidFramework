@@ -17,10 +17,8 @@ import { getShareLink } from "./graph";
 import {
     IdentityType,
     isTokenFromCache,
-    SharingLinkScopeFor,
-    SharingLinkTokenFetcher,
-    TokenFetchOptions,
-    tokenFromResponse,
+    SharingLinkTokenFetchOptions,
+    TokenFetcher,
 } from "./tokenFetch";
 
 /**
@@ -31,17 +29,16 @@ import {
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     private readonly logger: ITelemetryLogger;
     private readonly sharingLinkCache = new PromiseCache<string, string>();
-    private readonly getSharingLinkToken:
-        (options: TokenFetchOptions, scopeFor: SharingLinkScopeFor, siteUrl: string) => Promise<string | null>;
+    private readonly getSharingLinkToken: TokenFetcher<SharingLinkTokenFetchOptions>;
     public constructor(
-        tokenFetcher: SharingLinkTokenFetcher,
+        tokenFetcher: TokenFetcher<SharingLinkTokenFetchOptions>,
         private readonly identityType: IdentityType = "Enterprise",
         logger?: ITelemetryBaseLogger,
         private readonly appName?: string,
         private readonly msGraphOrigin?: string,
     ) {
         this.logger = ChildLogger.create(logger, "OdspDriver");
-        this.getSharingLinkToken = this.toInstrumentedSharingLinkTokenFetcher(this.logger, tokenFetcher);
+        this.getSharingLinkToken = this.toInstrumentedTokenFetcher(this.logger, tokenFetcher);
     }
 
     public createCreateNewRequest(
@@ -122,19 +119,17 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         return odspResolvedUrl;
     }
 
-    private toInstrumentedSharingLinkTokenFetcher(
+    private toInstrumentedTokenFetcher(
         logger: ITelemetryLogger,
-        tokenFetcher: SharingLinkTokenFetcher,
-    ): (options: TokenFetchOptions, scopeFor: SharingLinkScopeFor, siteUrl: string) => Promise<string | null> {
-        return async (options: TokenFetchOptions, scopeFor: SharingLinkScopeFor, siteUrl: string) => {
+        tokenFetcher: TokenFetcher<SharingLinkTokenFetchOptions>,
+    ): TokenFetcher<SharingLinkTokenFetchOptions> {
+        return async (options: SharingLinkTokenFetchOptions) => {
             return PerformanceEvent.timedExecAsync(
                 logger,
                 { eventName: "GetSharingLinkToken" },
-                async (event) =>
-                    tokenFetcher(siteUrl, scopeFor, options.refresh, options.claims)
-                .then((tokenResponse) => {
+                async (event) => tokenFetcher(options).then((tokenResponse) => {
                     event.end({ fromCache: isTokenFromCache(tokenResponse) });
-                    return tokenFromResponse(tokenResponse);
+                    return tokenResponse;
                 }));
         };
     }

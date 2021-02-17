@@ -5,7 +5,6 @@
 
 /* eslint-disable no-null/no-null */
 
-import assert from "assert";
 import { RangeTracker } from "@fluidframework/common-utils";
 import { isSystemType } from "@fluidframework/protocol-base";
 import {
@@ -326,9 +325,6 @@ export class DeliLambda implements IPartitionLambda {
                     message.operation.referenceSequenceNumber = sequenceNumber;
                 }
             }
-            assert(
-                message.operation.referenceSequenceNumber >= this.minimumSequenceNumber,
-                `${message.operation.referenceSequenceNumber} >= ${this.minimumSequenceNumber}`);
 
             this.clientSeqManager.upsertClient(
                 message.clientId,

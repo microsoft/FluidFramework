@@ -17,7 +17,6 @@ import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     ISignalMessage,
-    MessageType,
 } from "@fluidframework/protocol-definitions";
 
 /**
@@ -93,11 +92,6 @@ export class DeltaManagerProxy
         return this.deltaManager.lastKnownSeqNumber;
     }
 
-    // Back-compat: <= 0.18
-    public get referenceSequenceNumber(): number {
-        return this.lastSequenceNumber;
-    }
-
     public get initialSequenceNumber(): number {
         return this.deltaManager.initialSequenceNumber;
     }
@@ -151,10 +145,6 @@ export class DeltaManagerProxy
 
     public submitSignal(content: any): void {
         return this.deltaManager.submitSignal(content);
-    }
-
-    public submit(type: MessageType, contents: any, batch: boolean, appData: any): number {
-        return this.deltaManager.submit(type, contents, batch, appData);
     }
 
     public flush(): void {

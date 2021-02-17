@@ -29,6 +29,7 @@ export class Partition extends EventEmitter {
     private lambda: IPartitionLambda;
     private readonly checkpointManager: CheckpointManager;
     private readonly context: Context;
+    private closed = false;
 
     constructor(
         private readonly id: number,
@@ -86,10 +87,16 @@ export class Partition extends EventEmitter {
     }
 
     public process(rawMessage: IQueuedMessage) {
+        if (this.closed) {
+            return;
+        }
+
         this.q.push(rawMessage);
     }
 
     public close(closeType: LambdaCloseType): void {
+        this.closed = true;
+
         // Stop any pending message processing
         this.q.kill();
 
@@ -106,7 +113,7 @@ export class Partition extends EventEmitter {
                 // Lambda never existed - no need to close
             });
 
-        return;
+        this.removeAllListeners();
     }
 
     /**
