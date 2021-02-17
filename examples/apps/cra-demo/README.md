@@ -3,24 +3,24 @@ This is an experimental example of a completed integration between [`create-reac
 
 This README is still a work in progress.
 
-### 1. Install CRA
+### 1. Install Create-React-App with Typescript
 
 ```bash
-npx create-react-app my-app --template typescript
+npx create-react-app my-app-name --template typescript
 ```
 
 ### 2. Install Fluid and Fluid Data Objects
 
 ```bash
 cd my-app-name
-npm install @fluid-experimental/fluid @fluid-experimental/data-objects
+npm install @fluid-experimental/fluid-static @fluid-experimental/data-objects
 ```
 
-### 3. Import KVpair and Fluid
+### 3. Import KVpair and Fluid Static
 
-KeyValueDataObject will provide you with a fully scaffolded DDS to store your data and subscribe to listen for changes.
+KeyValueDataObject will provide you with a fully scaffolded DDS to store your data and subscribe to change events.
 
-Fluid gives you access to methods that will bootstrap a new Fluid container, and we use the `getContainerId` helper method to simplify the creation and sharing of multi-author Fluid containers.
+Fluid gives you access to methods that will bootstrap a new Fluid container.
 
 ```js
 import { KeyValueDataObject } from "@fluid-experimental/data-objects";
@@ -29,22 +29,23 @@ import { Fluid } from "@fluid-experimental/fluid-static";
 
 ### 4. Update the view
 
-In this simple multi-user app, we are going to build a button that, when pressed, shows the current time stamp. This allows co-authors to see the most recent timestamp at which the other authors pressed the button.
+In this simple multi-user app, we are going to build a button that, when pressed, shows the current time stamp. This allows co-authors to see the most recent timestamp at which any author pressed the button.
 
-Remove all of the existing returned markup and replace it as shown below.
+Remove all of the existing Create-React-App returned markup and replace it as shown below.
 
 You can see that this UI requires a `data` object and `setData` functions to work, so we'll add those above and pull them out of a special React function we'll call `useKVPair`.
 
 ```tsx
 function App() {
-  const { data, setData } = useKVPair();
+  const { state, setState } = useKVPair();
+  if (!setState) return <div />;
 
   return (
     <div className="App">
-      <button onClick={() => setData("date", Date.now().toString())}>
+      <button onClick={() => setState("date", Date.now().toString())}>
         click
       </button>
-      {data && <span>{data.date}</span>}
+      <span>{state.date}</span>
     </div>
   );
 }
@@ -57,6 +58,9 @@ Working in React, one of the best ways to abstract complex, reusable functionali
 ```tsx
 const useKVPair = () => {};
 ```
+
+
+and we use the `getContainerId` helper method to simplify the creation and sharing of multi-author Fluid containers.
 
 ## Questions
 
