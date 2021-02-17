@@ -23,7 +23,6 @@ import {
     IContainer,
     IContainerEvents,
     IDeltaManager,
-    LoaderHeader,
     IRuntimeState,
     ICriticalContainerError,
     ContainerWarning,
@@ -238,6 +237,13 @@ export class CollabWindowTracker {
     }
 }
 
+export interface IContainerLoadOptions {
+    canReconnect?: boolean;
+    clientDetailsOverride?: IClientDetails;
+    version?: string | null | undefined;
+    pause?: boolean;
+}
+
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
 
@@ -249,21 +255,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         loader: Loader,
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
+        loadOptions: IContainerLoadOptions,
     ): Promise<Container> {
         const container = new Container(
             loader,
             {
                 containerUrl: request.url,
-                clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
+                clientDetailsOverride: loadOptions.clientDetailsOverride,
                 id: decodeURI(docId),
                 resolvedUrl,
-                canReconnect: !(request.headers?.[LoaderHeader.reconnect] === false),
+                canReconnect: loadOptions.canReconnect,
             });
 
         return PerformanceEvent.timedExecAsync(container.logger, { eventName: "Load" }, async (event) => {
             return new Promise<Container>((res, rej) => {
-                const version = request.headers?.[LoaderHeader.version];
-                const pause = request.headers?.[LoaderHeader.pause];
+                const version = loadOptions.version;
+                const pause = loadOptions.pause;
 
                 const onClosed = (err?: ICriticalContainerError) => {
                     // Depending where error happens, we can be attempting to connect to web socket
@@ -630,13 +637,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public async attach(request: IRequest): Promise<void> {
         assert(this.loaded, "not loaded");
         assert(!this.closed, "closed");
-
-        // LoaderHeader.reconnect when set to false means we are allowing one connection,
-        // but do not allow re-connections. This is not very meaningful for attach process,
-        // plus this._canReconnect is provided to DeltaManager in constructor, so it's a bit too late.
-        // It might be useful to have an option to never connect, i.e. create file and close container,
-        // but that's a new feature to implement, not clear if we want to use same property for that.
-        assert(!(request.headers?.[LoaderHeader.reconnect] === false), "reconnect");
 
         // If container is already attached or attach is in progress, return.
         if (this._attachState === AttachState.Attached || this.attachInProgress) {

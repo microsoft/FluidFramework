@@ -465,6 +465,13 @@ export class Loader extends EventEmitter implements ILoader {
             docId,
             this,
             request,
-            resolved);
+            resolved,
+            {
+                canReconnect: request.headers?.[LoaderHeader.reconnect],
+                clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
+                version: request.headers?.[LoaderHeader.version],
+                pause: request.headers?.[LoaderHeader.pause],
+            },
+        );
     }
 }

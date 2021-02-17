@@ -38,6 +38,13 @@ class WorkerLoader implements ILoader, IFluidRunnable {
             (this as unknown) as Loader,
             request,
             this.resolved,
+            // To be used when taking the updated Container.load signature
+            // {
+            //     canReconnect: request.headers?.[LoaderHeader.reconnect],
+            //     clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
+            //     version: request.headers?.[LoaderHeader.version],
+            //     pause: request.headers?.[LoaderHeader.pause],
+            // },
         );
         this.container = container;
 

@@ -8,6 +8,7 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IGenericError,
     ContainerErrorType,
+    LoaderHeader,
 } from "@fluidframework/container-definitions";
 import { Container, ConnectionState, Loader, ILoaderProps } from "@fluidframework/container-loader";
 import {
@@ -48,7 +49,14 @@ describe("Container", () => {
             "documentId",
             loader,
             testRequest,
-            testResolved);
+            testResolved,
+            {
+                canReconnect: testRequest.headers?.[LoaderHeader.reconnect],
+                clientDetailsOverride: testRequest.headers?.[LoaderHeader.clientDetails],
+                version: testRequest.headers?.[LoaderHeader.version],
+                pause: testRequest.headers?.[LoaderHeader.pause],
+            },
+        );
     }
 
     it("Load container successfully", async () => {
