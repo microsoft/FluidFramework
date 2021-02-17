@@ -60,9 +60,6 @@ const MaxFetchDelaySeconds = 10;
 const MaxBatchDeltas = 2000;
 const DefaultChunkSize = 16 * 1024;
 
-// This can be anything other than null
-const ImmediateNoOpResponse = "";
-
 function getNackReconnectInfo(nackContent: INackContent) {
     const reason = `Nack: ${nackContent.message}`;
     const canRetry = nackContent.code !== 403;
@@ -109,6 +106,8 @@ export class DeltaManager
     IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
     IEventProvider<IDeltaManagerInternalEvents>
 {
+    public get active(): boolean { return this._active(); }
+
     public get disposed() { return this.closed; }
 
     public readonly clientDetails: IClientDetails;
@@ -130,10 +129,6 @@ export class DeltaManager
 
     private pending: ISequencedDocumentMessage[] = [];
     private fetching = false;
-
-    private inQuorum = false;
-
-    private updateSequenceNumberTimer: ReturnType<typeof setTimeout> | undefined;
 
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;
@@ -245,16 +240,6 @@ export class DeltaManager
 
     public get scopes(): string[] | undefined {
         return this.connection?.claims.scopes;
-    }
-
-    public get active(): boolean {
-        const res = this.inQuorum && this.connectionMode === "write";
-        // user can't have r/w connection when user has only read permissions.
-        // That said, connection can be r/w when host called forceReadonly(), as
-        // this is view-only change
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        assert(!(this._readonlyPermissions && res));
-        return res;
     }
 
     public get socketDocumentId(): string | undefined {
@@ -383,6 +368,7 @@ export class DeltaManager
         private client: IClient,
         private readonly logger: ITelemetryLogger,
         reconnectAllowed: boolean,
+        private readonly _active: () => boolean,
     ) {
         super();
 
@@ -476,14 +462,6 @@ export class DeltaManager
         } else if (this.connection !== undefined || this.connectionP !== undefined) {
             this.fetchMissingDeltas("DocumentOpen", this.lastQueuedSequenceNumber);
         }
-    }
-
-    public updateQuorumJoin() {
-        this.inQuorum = true;
-    }
-
-    public updateQuorumLeave() {
-        this.inQuorum = false;
     }
 
     private static detailsFromConnection(connection: IDocumentDeltaConnection): IConnectionDetails {
@@ -659,6 +637,14 @@ export class DeltaManager
         this.messageBuffer = [];
     }
 
+    /**
+     * Submits the given delta returning the client sequence number for the message. Contents is the actual
+     * contents of the message. appData is optional metadata that can be attached to the op by the app.
+     *
+     * If batch is set to true then the submit will be batched - and as a result guaranteed to be ordered sequentially
+     * in the global sequencing space. The batch will be flushed either when flush is called or when a non-batched
+     * op is submitted.
+     */
     public submit(type: MessageType, contents: any, batch = false, metadata?: any): number {
         // TODO need to fail if gets too large
         // const serializedContent = JSON.stringify(this.messageBuffer);
@@ -702,7 +688,6 @@ export class DeltaManager
         };
 
         const outbound = this.createOutboundMessage(type, message);
-        this.stopSequenceNumberUpdate();
         this.emit("submitOp", message);
 
         if (!batch) {
@@ -904,7 +889,6 @@ export class DeltaManager
         }
         this.closed = true;
         this.storageService?.dispose();
-        this.stopSequenceNumberUpdate();
 
         // This raises "disconnect" event if we have active connection.
         this.disconnectFromDeltaStream(error !== undefined ? `${error.message}` : "Container closed");
@@ -1378,8 +1362,7 @@ export class DeltaManager
         if (this.handler === undefined) {
             throw new Error("Attempted to process an inbound message without a handler attached");
         }
-        const result = this.handler.process(message);
-        this.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
+        this.handler.process(message);
 
         const endTime = Date.now();
         this.emit("op", message, endTime - startTime);
@@ -1444,52 +1427,6 @@ export class DeltaManager
             this.pending = [];
             this.enqueueMessages(pendingSorted, telemetryEventSuffix);
         }
-    }
-
-    /**
-     * Schedules as ack to the server to update the reference sequence number
-     */
-    private scheduleSequenceNumberUpdate(message: ISequencedDocumentMessage, immediateNoOp: boolean): void {
-        // Exit early for inactive (not in quorum or not writers) clients.
-        // They don't take part in the minimum sequence number calculation.
-        if (!this.active) {
-            this.stopSequenceNumberUpdate();
-            return;
-        }
-
-        // While processing a message, an immediate no-op can be requested.
-        // i.e. to expedite approve or commit phase of quorum.
-        if (immediateNoOp) {
-            this.stopSequenceNumberUpdate();
-            this.submit(MessageType.NoOp, ImmediateNoOpResponse);
-            return;
-        }
-
-        // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
-        // update, which updates the MSN, then ack the update, etc...).
-        if (message.type === MessageType.NoOp) {
-            return;
-        }
-
-        // We will queue a message to update our reference sequence number upon receiving a server
-        // operation. This allows the server to know our true reference sequence number and be able to
-        // correctly update the minimum sequence number (MSN).
-        if (this.updateSequenceNumberTimer === undefined) {
-            // Clear an update in 2 s
-            this.updateSequenceNumberTimer = setTimeout(() => {
-                this.updateSequenceNumberTimer = undefined;
-                if (this.active) {
-                    this.submit(MessageType.NoOp, null);
-                }
-            }, 2000);
-        }
-    }
-
-    private stopSequenceNumberUpdate(): void {
-        if (this.updateSequenceNumberTimer !== undefined) {
-            clearTimeout(this.updateSequenceNumberTimer);
-        }
-        this.updateSequenceNumberTimer = undefined;
     }
 
     private updateLatestKnownOpSeqNumber(seq: number) {
