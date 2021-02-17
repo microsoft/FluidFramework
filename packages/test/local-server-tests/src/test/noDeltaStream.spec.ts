@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, ILoader } from "@fluidframework/container-definitions";
+import { ReadOnlyType, IContainer, ILoader } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import {
     createLocalResolverCreateNewRequest,
@@ -90,15 +90,15 @@ describe("No Delta Stream", () => {
         assert.strictEqual(container.clientId, "storage-only client", "container.clientId");
         assert.strictEqual(container.existing, true, "container.existing");
         assert.strictEqual(container.readonly, true, "container.readonly");
-        assert.strictEqual(container.storageOnly, true, "container.storageOnly");
         assert.strictEqual(container.readonlyPermissions, true, "container.readonlyPermissions");
+        assert.strictEqual(container.readOnlyType, ReadOnlyType.StorageOnly, "container.storageOnly");
 
         const deltaManager = container.deltaManager as DeltaManager;
         assert.strictEqual(deltaManager.active, false, "deltaManager.active");
         assert.strictEqual(deltaManager.readonly, true, "deltaManager.readonly");
         assert.strictEqual(deltaManager.readonlyPermissions, true, "deltaManager.readonlyPermissions");
         assert.strictEqual(deltaManager.connectionMode, "read", "deltaManager.connectionMode");
-        assert.strictEqual(deltaManager.storageOnly, true, "deltaManager.storageOnly");
+        assert.strictEqual(deltaManager.readOnlyType, ReadOnlyType.StorageOnly, "deltaManager.storageOnly");
 
         const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
         assert.strictEqual(dataObject.runtime.existing, true, "dataObject.runtime.existing");
@@ -106,18 +106,6 @@ describe("No Delta Stream", () => {
         assert.strictEqual(dataObject.runtime.clientId, "storage-only client", "dataObject.runtime.clientId");
 
         assert.strictEqual(dataObject.root.get("test"), "key", "mapKey");
-
-        container.close();
-    });
-
-    it("can't send ops", async () => {
-        const container = await loadContainer(true) as Container;
-        const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-
-        try {
-            dataObject.root.set("asdfasdf", "asfdasdfasdfasdf");
-            assert.fail("no error thrown on set()");
-        } catch (e) { }
 
         container.close();
     });

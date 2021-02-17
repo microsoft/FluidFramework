@@ -16,6 +16,7 @@ import {
 import {
     IDeltaManager,
     IDeltaQueue,
+    ReadOnlyType,
 } from "@fluidframework/container-definitions";
 
 /**
@@ -65,7 +66,7 @@ export class MockDeltaManager extends EventEmitter
     public get disposed() { return undefined; }
 
     public readonly readonly = false;
-    public readonly storageOnly = false;
+    public readOnlyType = ReadOnlyType.NotReadOnly;
     public readonly clientType: string;
     public readonly clientDetails: IClientDetails;
     public get IDeltaSender() { return this; }

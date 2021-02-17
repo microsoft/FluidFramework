@@ -154,11 +154,11 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
      *
      * It is undefined if we have not yet established websocket connection
      * and do not know if user has write access to a file.
+     * @deprecated - use readOnlyType
      */
     readonly readonly?: boolean;
 
-    /** Tells if container is in storage-only mode. In this mode container will not connect to delta stream. */
-    readonly storageOnly?: boolean | undefined;
+    readonly readOnlyType: ReadOnlyType;
 
     /** Terminate the connection to storage */
     close(): void;
@@ -212,4 +212,17 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
      * Returns all the items in the queue as an array. Does not remove them from the queue.
      */
     toArray(): T[];
+}
+
+export enum ReadOnlyType {
+    /** read-only type unknown because connection has not yet been established */
+    Unknown = "unknown",
+    /** write */
+    NotReadOnly = "notReadOnly",
+    /** read-only because client does not have write permissions for document */
+    ReadOnlyPermissions = "readOnlyPermissions",
+    /** read-only because forceReadOnly() was called */
+    ReadOnlyForced = "readOnlyForced",
+    /** read-only with no delta stream connection */
+    StorageOnly = "storageOnly",
 }

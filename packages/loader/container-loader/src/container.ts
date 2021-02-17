@@ -341,17 +341,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     /**
-     * {@inheritDoc DeltaManager.storageOnly}
-     */
-    public get storageOnly() {
-        return this._deltaManager.storageOnly;
-    }
-
-    /**
      * {@inheritDoc DeltaManager.readonlyPermissions}
      */
     public get readonlyPermissions() {
         return this._deltaManager.readonlyPermissions;
+    }
+
+    /**
+     * {@inheritDoc DeltaManager.readOnlyType}
+     */
+    public get readOnlyType() {
+        return this._deltaManager.readOnlyType;
     }
 
     /**
