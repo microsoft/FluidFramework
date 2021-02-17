@@ -106,7 +106,7 @@ jobs:
       displayName: '[DI] Prepare DI package'
       inputs:
         targetType: 'inline'
-        script: 'mv _package.json package.json'
+        script: 'mv _package.json package.json; mv _package-lock.json package-lock.json'
         workingDirectory: ${{ variables.diDir }}
 
     # [DI] Install dependency-injection package
