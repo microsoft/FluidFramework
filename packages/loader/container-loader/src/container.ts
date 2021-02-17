@@ -14,8 +14,8 @@ import {
     IFluidCodeDetails,
     isFluidCodeDetails,
     IFluidRouter,
-    IFluidObject,
     IRequest,
+    IRequestHeader,
     IResponse,
 } from "@fluidframework/core-interfaces";
 import {
@@ -1705,13 +1705,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // are set. Global requests will still go directly to the loader
         const loader = new RelativeLoader(this.loader, () => this.originalRequest);
         const previousCodeDetails = this._context?.codeDetails;
-        const createNextSummarizerFn = async (fromSequenceNumber, executionContext) => {
-            return this.createNextSummarizer(
+        const loadContainerCopyFn = async (additionalHeaders) => {
+            // Load the container copy restricted: uncached and no reconnect
+            return this.loadContainerCopy(
                 this.loader,
                 this.loader.services.urlResolver,
                 this.originalRequest?.url,
-                fromSequenceNumber,
-                executionContext,
+                additionalHeaders,
             );
         };
         this._context = await ContainerContext.createOrLoad(
@@ -1729,7 +1729,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
             (error?: ICriticalContainerError) => this.close(error),
-            createNextSummarizerFn,
+            loadContainerCopyFn,
             Container.version,
             previousRuntimeState,
         );
@@ -1756,42 +1756,28 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.logger.sendErrorEvent({ eventName: "ContainerWarning" }, warning);
     }
 
-    private async createNextSummarizer(
-        // back-compat 0.34 stop passing loader post 0.34 support
+    private async loadContainerCopy(
+        // back-compat 0.35 stop passing loader post 0.35 support
         loader: Loader,
         urlResolver: IUrlResolver,
         baseRequestUrl: string | undefined,
-        fromSequenceNumber: number,
-        // TODO #4912 currently ignored
-        executionContext?: string,
-    ): Promise<IFluidObject> {
+        additionalHeaders: IRequestHeader,
+    ): Promise<IContainer> {
         if (baseRequestUrl === undefined) {
             throw new Error("Base request is not provided");
         }
 
-        // TODO eventually we may wish to spawn an execution context from which to run this
-        const headers = {
-            [LoaderHeader.cache]: false,
-            [LoaderHeader.clientDetails]: {
-                capabilities: { interactive: false },
-                // TODO #4880 refactor this value into a common location
-                type: "summarizer",
-            },
-            [DriverHeader.summarizingClient]: true,
-            [LoaderHeader.reconnect]: false,
-            [LoaderHeader.sequenceNumber]: fromSequenceNumber,
-            [LoaderHeader.executionContext]: executionContext,
-        };
-
+        // TODO #4912 eventually we may wish to spawn an execution context from which to run this
         const containerRequest: IRequest = {
-            headers,
+            headers: {
+                ...additionalHeaders,
+                [LoaderHeader.cache]: false,
+                [LoaderHeader.reconnect]: false,
+            },
             url: baseRequestUrl,
         };
 
-        const summarizerRequest: IRequest = {
-            headers,
-            url: "/_summarizer",
-        };
+        const fromSequenceNumber = additionalHeaders[LoaderHeader.sequenceNumber] ?? -1;
 
         const resolvedAsFluid = await urlResolver.resolve(containerRequest);
         ensureFluidResolvedUrl(resolvedAsFluid);
@@ -1821,13 +1807,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             });
         }
 
-        const response = await container.request(summarizerRequest);
-
-        if (response.status !== 200
-            || (response.mimeType !== "fluid/object" && response.mimeType !== "fluid/component")) {
-            return Promise.reject(new Error("Invalid summarizer route"));
-        }
-
-        return response.value as IFluidObject;
+        return container;
     }
 }

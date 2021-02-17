@@ -8,6 +8,7 @@ import {
     IFluidObject,
     IFluidConfiguration,
     IRequest,
+    IRequestHeader,
     IResponse,
     IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
@@ -27,7 +28,7 @@ import {
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
-import { ILoader, ILoaderOptions } from "./loader";
+import { IContainer, ILoader, ILoaderOptions } from "./loader";
 
 // Represents the attachment state of the entity.
 export enum AttachState {
@@ -127,8 +128,7 @@ export interface IContainerContext extends IDisposable {
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: (error?: ICriticalContainerError) => void;
-    readonly createNextSummarizerFn:
-        (fromSequenceNumber: number, executionContext?: string) => Promise<IFluidObject>,
+    readonly loadContainerCopyFn: (additionalHeaders: IRequestHeader) => Promise<IContainer>,
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
