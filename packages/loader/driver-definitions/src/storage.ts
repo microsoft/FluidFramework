@@ -221,9 +221,18 @@ export enum LoaderCachingPolicy {
     Prefetch,
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface IDocumentServicePolicies {
+}
+
 export interface IDocumentService {
 
     resolvedUrl: IResolvedUrl;
+
+    /**
+     * Policies implemented/instructed by driver.
+     */
+    policies?: IDocumentServicePolicies;
 
     /**
      * Access to storage associated with the document...

@@ -322,7 +322,8 @@ export class DeltaManager
         this.storageService = new RetriableDocumentStorageService(storageService, this, this.logger);
 
         // ensure we did not lose that policy in the process of wrapping
-        assert(storageService.policies?.minBlobSize === this.storageService.policies?.minBlobSize);
+        assert(storageService.policies?.minBlobSize === this.storageService.policies?.minBlobSize,
+            "lost minBlobSize policy");
 
         return this.storageService;
     }

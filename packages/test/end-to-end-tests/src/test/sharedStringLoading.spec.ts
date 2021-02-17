@@ -88,6 +88,10 @@ describe("SharedString", () => {
                     mockDs.connectToStorage = async ()=>{
                         const realStorage = await realDs.connectToStorage();
                         const mockstorage = Object.create(realStorage) as IDocumentStorageService;
+                        (mockstorage as any).policies = {
+                            ...realStorage.policies,
+                            caching: LoaderCachingPolicy.NoCaching,
+                        };
                         mockstorage.readBlob = async (id)=>{
                             const blob = await realStorage.readBlob(id);
                             const blobObj = JSON.parse(bufferToString(blob, "utf8"));
