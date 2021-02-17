@@ -300,11 +300,16 @@ export class DeltaManager
 
         let storageService = await service.connectToStorage();
         // Enable prefetching for the service unless it has a caching policy set otherwise:
-        if (service.policies?.caching !== LoaderCachingPolicy.NoCaching) {
+        if (storageService.policies?.caching !== LoaderCachingPolicy.NoCaching) {
             storageService = new PrefetchDocumentStorageService(storageService);
         }
 
         this.storageService = new RetriableDocumentStorageService(storageService, this, this.logger);
+
+        // ensure we did not lose that policy in the process of wrapping
+        assert(storageService.policies?.minBlobSize === this.storageService.policies?.minBlobSize,
+            "lost minBlobSize policy");
+
         return this.storageService;
     }
 
