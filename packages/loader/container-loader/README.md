@@ -171,11 +171,11 @@ There are two cases when it's true:
 ### `ReadOnlyForced`
 Hosts can also force readonly-mode for a container via calling `Container.forceReadonly(true)`. This can be useful in scenarios like:
 
-- Loss of connectivity, in scenarios where host choses method of preventing user edits over (or in addition to) showing disconnected UX and warning user of potential data loss on closure of container
+- Loss of connectivity, in scenarios where host chooses method of preventing user edits over (or in addition to) showing disconnected UX and warning user of potential data loss on closure of container
 - Special view-only mode in host. For example can be used by hosts for previewing container content in-place with other host content, and leveraging full-screen / separate window experience for editing.
 
 ### `StorageOnly`
 Storage-only mode is a readonly mode in which the container does not connect to the delta stream and is unable to submit or recieve ops. This is useful for viewing a specific version of a document.
 
 ### `NotReadOnly`
-None of the above (Container.forceReadonly was never called or last call was with false), plus it's known that user has write permissions to a file (see below for more details)
+None of the above. Container.forceReadonly() was never called or last call was with false, plus it's known that user has write permissions to a file.
