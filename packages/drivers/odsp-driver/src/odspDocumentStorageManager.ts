@@ -347,6 +347,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         event.end({
                             size: blob.byteLength,
                             waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
+                            cacheControl: res.headers.get("cache-control") ?? "Absent",
                         });
                         return blob;
                     },
