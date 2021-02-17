@@ -40,9 +40,6 @@ packages/drivers/**:
 - tanviraumi
 - znewton
 
-packages/drivers/odsp-driver/**:
-- GaryWilber
-
 packages/framework/**:
 - skylerjokiel
 - ChumpChief
