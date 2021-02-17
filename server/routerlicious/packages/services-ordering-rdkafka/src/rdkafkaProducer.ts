@@ -11,6 +11,7 @@ import {
 	IProducer,
 	PendingBoxcar,
 	MaxBatchSize,
+	IMessage,
 } from "@fluidframework/server-services-core";
 
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
@@ -21,6 +22,7 @@ const kafka = tryImportNodeRdkafka();
 export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
 	enableIdempotence: boolean;
 	pollIntervalMs: number;
+	disableBoxcarBuffering: boolean;
 	additionalOptions?: kafkaTypes.ProducerGlobalConfig;
 	topicConfig?: kafkaTypes.ProducerTopicConfig;
 }
@@ -47,6 +49,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		this.producerOptions = {
 			...options,
 			enableIdempotence: options?.enableIdempotence ?? false,
+			disableBoxcarBuffering: options?.disableBoxcarBuffering ?? false,
 			pollIntervalMs: options?.pollIntervalMs ?? 10,
 		};
 	}
@@ -150,6 +153,46 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	// eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
 	public send(messages: object[], tenantId: string, documentId: string, partitionId?: number): Promise<any> {
 		const key = `${tenantId}/${documentId}`;
+
+		if (this.producerOptions.disableBoxcarBuffering) {
+			const boxcarMessage: IBoxcarMessage = {
+				contents: messages as IMessage[],
+				documentId,
+				tenantId,
+				type: BoxcarType,
+			};
+
+			const message = Buffer.from(JSON.stringify(boxcarMessage));
+
+			return new Promise<void>((resolve, reject) => {
+				try {
+					this.producer.produce(
+						this.topic, // topic
+						partitionId ?? null, // partition id or null for consistent random for keyed messages
+						message, // message
+						documentId, // key
+						undefined, // timestamp
+						(err: any, offset?: number) => {
+							if (err) {
+								reject(err);
+
+								// eslint-disable-next-line @typescript-eslint/no-floating-promises
+								this.handleError(err);
+							} else {
+								resolve();
+								this.emit("produced", boxcarMessage, offset);
+							}
+						},
+					);
+				} catch (ex) {
+					// produce can throw if the outgoing message queue is full
+					reject(ex);
+
+					// eslint-disable-next-line @typescript-eslint/no-floating-promises
+					this.handleError(ex);
+				}
+			});
+		}
 
 		// the latest boxcar
 		let boxcar: PendingBoxcar;

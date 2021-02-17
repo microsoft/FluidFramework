@@ -4,10 +4,10 @@
  */
 
 import * as path from "path";
-import { KafkaResourcesFactory } from "@fluidframework/server-services-ordering-kafkanode";
 
 import { execute } from "./command";
+import { OrderingResourcesFactory } from "./resourcesFactory";
 
 execute(
-    (name: string, lambda: string) => new KafkaResourcesFactory(name, lambda),
+    (name: string, lambda: string) => new OrderingResourcesFactory(name, lambda),
     path.join(__dirname, "../../config/config.json"));
