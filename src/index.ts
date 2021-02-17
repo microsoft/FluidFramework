@@ -65,8 +65,7 @@ export {
 	SnapshotPlace,
 	SnapshotRange,
 } from './Snapshot';
-export { setTrait } from './EditUtilities';
+export { setTrait, newEdit } from './EditUtilities';
 export { LogViewer } from './LogViewer';
 export { Checkout, CheckoutEvent } from './Checkout';
-export { PrefetchingCheckout } from './PrefetchingCheckout';
 export { BasicCheckout } from './BasicCheckout';

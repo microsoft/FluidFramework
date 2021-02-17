@@ -253,6 +253,9 @@ export const Move: {
 };
 
 // @public
+export function newEdit(changes: readonly Change[]): Edit;
+
+// @public
 export interface NodeData {
     readonly definition: Definition;
     readonly identifier: NodeId;
@@ -308,18 +311,6 @@ export interface Payload {
 export type PlaceIndex = number & {
     readonly PlaceIndex: unique symbol;
 };
-
-// @public @sealed
-export class PrefetchingCheckout extends Checkout {
-    // (undocumented)
-    protected handleNewEdit(edit: Edit, view: Snapshot): void;
-    // (undocumented)
-    protected get latestCommittedView(): Snapshot;
-    // (undocumented)
-    static load(tree: SharedTree, prefetchFilter: (node: Definition) => boolean): Promise<PrefetchingCheckout>;
-    // (undocumented)
-    waitForPendingUpdates(): Promise<void>;
-}
 
 // @public
 export function revert(edit: Edit, view: Snapshot): Change[];
