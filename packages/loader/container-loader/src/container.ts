@@ -99,7 +99,7 @@ import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 const detachedContainerRefSeqNumber = 0;
 
 const connectEventName = "connect";
-const dirtyDocumentEvent = "dirtyDocument";
+const dirtyContainerEvent = "dirtyContainer";
 
 interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
@@ -319,7 +319,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _resolvedUrl: IResolvedUrl | undefined;
     private cachedAttachSummary: ISummaryTree | undefined;
     private attachInProgress = false;
-    private _dirtyDocument = false;
+    private _dirtyContainer = false;
 
     private lastVisible: number | undefined;
 
@@ -434,8 +434,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Which means data loss if container is closed at that same moment
      * Most likely that happens when there is no network connection to ordering service
      */
-    public get dirtyDocument() {
-        return this._dirtyDocument;
+    public get dirtyContainer() {
+        return this._dirtyContainer;
     }
 
     private get serviceFactory() {return this.loader.services.documentServiceFactory;}
@@ -505,8 +505,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // Fire events on the end of JS turn, giving a chance for caller to be in consistent state.
             Promise.resolve().then(() => {
                 switch (event) {
-                    case dirtyDocumentEvent:
-                        listener(this._dirtyDocument);
+                    case dirtyContainerEvent:
+                        listener(this._dirtyContainer);
                         break;
                     case connectedEventName:
                          if (this.connected) {
@@ -1694,8 +1694,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     ) {
         assert(this._context?.disposed !== false, "Existing context not disposed");
         // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
-        if (this._dirtyDocument) {
-            this.logger.sendErrorEvent({ eventName: "DirtyDocReloadContainer"});
+        if (this._dirtyContainer) {
+            this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer"});
         }
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
@@ -1719,8 +1719,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             Container.version,
             previousRuntimeState,
             (dirty: boolean) => {
-                this._dirtyDocument = dirty;
-                this.emit(dirtyDocumentEvent, dirty);
+                this._dirtyContainer = dirty;
+                this.emit(dirtyContainerEvent, dirty);
             },
         );
 

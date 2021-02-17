@@ -49,7 +49,7 @@ export interface IProvideContainerRuntime {
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents{
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
     (
-        event: "dirtyDocument" | "disconnected" | "dispose" | "savedDocument",
+        event: "dirtyDocument" | "dirtyContainer" | "disconnected" | "dispose" | "savedDocument" | "savedContainer",
         listener: () => void);
     (event: "connected", listener: (clientId: string) => void);
     (event: "localHelp", listener: (message: IHelpMessage) => void);
@@ -123,7 +123,7 @@ export interface IContainerRuntime extends
      * Returns true of document is dirty, i.e. there are some pending local changes that
      * either were not sent out to delta stream or were not yet acknowledged.
      */
-    isDocumentDirty(): boolean;
+    isDirty(): boolean;
 
     /**
      * Flushes any ops currently being batched to the loader

@@ -3,6 +3,7 @@
 - [get-tinylicious-container and get-session-storage-container moved](#get-tinylicious-container-and-get-session-storage-container-moved)
 - [Moved parseAuthErrorClaims from @fluidframework/odsp-driver to @fluidframework/odsp-doclib-utils](#Moved-parseAuthErrorClaims-from-@fluidframework/odsp-driver-to-@fluidframework/odsp-doclib-utils)
 - [Refactored token fetcher types in odsp-driver](#refactored-token-fetcher-types-in-odsp-driver)
+- [DirtyDocument events and property](#DirtyDocument-events-and-property)
 
 ### Removed-some-api-implementations-from-odsp-driver
 Removed `authorizedFetchWithRetry`, `AuthorizedRequestTokenPolicy`, `AuthorizedFetchProps`, `asyncWithCache`, `asyncWithRetry`,
@@ -14,9 +15,15 @@ The functionality from the packages `@fluidframework/get-tinylicious-container` 
 ### Moved parseAuthErrorClaims from @fluidframework/odsp-driver to @fluidframework/odsp-doclib-utils
 Moved `parseAuthErrorClaims` from `@fluidframework/odsp-driver` to `@fluidframework/odsp-doclib-utils`
 
-## Refactored token fetcher types in odsp-driver
+### Refactored token fetcher types in odsp-driver
 Streamlined interfaces and types used to facilitate access tokens needed by odsp-driver to call ODSP implementation of Fluid services.
 Added support for passing siteUrl when fetching token that is used to establish co-authoring session for Fluid content stored in ODSP file which is hosted in external tenant. This token is used by ODSP ordering service implementation (aka ODSP Push service).
+
+### DirtyDocument events and property
+The following 3 names have been deprecated - please use new names:
+"dirtyDocument" event -> "dirtyContainer" event
+"savedDocument" event -> "savedContainer" event
+isDocumentDirty property -> isDirty property
 
 ## 0.34 Breaking changes
 - [Aqueduct writeBlob() and BlobHandle implementation removed](#Aqueduct-writeBlob-and-BlobHandle-implementation-removed)

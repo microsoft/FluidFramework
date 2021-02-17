@@ -57,24 +57,24 @@ describe("Document Dirty", () => {
     }
 
     /**
-     * Increments clean count when the "savedDocument" event is fired
+     * Increments clean count when the "savedContainer" event is fired
      */
-    function registerSavedDocumentHandler(runtime: IContainerRuntime): void {
-        runtime.on("savedDocument", () => {
+    function registerSavedContainerHandler(runtime: IContainerRuntime): void {
+        runtime.on("savedContainer", () => {
             wasMarkedCleanCount += 1;
-            assert.equal(runtime.isDocumentDirty(), false, "Document is marked clean");
+            assert.equal(runtime.isDirty(), false, "Document is marked clean");
             assert.equal(wasMarkedDirtyCount, wasMarkedCleanCount,
                 "No superfluous transition event, dirty and clean count should match when state is clean");
         });
     }
 
     /**
-     * Increments dirty count when the "dirtyDocument" event is fired
+     * Increments dirty count when the "dirtyContainer" event is fired
      */
-    function registerDirtyDocumentHandler(runtime: IContainerRuntime): void {
-        runtime.on("dirtyDocument", () => {
+    function registerDirtyContainerHandler(runtime: IContainerRuntime): void {
+        runtime.on("dirtyContainer", () => {
             wasMarkedDirtyCount += 1;
-            assert.equal(runtime.isDocumentDirty(), true, "Document is marked dirty");
+            assert.equal(runtime.isDirty(), true, "Document is marked dirty");
             assert.equal(wasMarkedDirtyCount - wasMarkedCleanCount, 1,
                 "No superfluous transition event, dirty should be only one more then clean when state is dirty");
         });
@@ -130,8 +130,8 @@ describe("Document Dirty", () => {
         wasMarkedDirtyCount = 0;
         wasMarkedCleanCount = 0;
 
-        registerSavedDocumentHandler(containerRuntime);
-        registerDirtyDocumentHandler(containerRuntime);
+        registerSavedContainerHandler(containerRuntime);
+        registerDirtyContainerHandler(containerRuntime);
     });
 
     function checkDirtyState(
@@ -139,7 +139,7 @@ describe("Document Dirty", () => {
         expectedDirty: boolean,
         expectedCleanCount: number,
     ) {
-        assert.equal(containerRuntime.isDocumentDirty(), expectedDirty,
+        assert.equal(containerRuntime.isDirty(), expectedDirty,
             `Document dirty state not expected ${when}`);
         assert.equal(wasMarkedCleanCount, expectedCleanCount,
             `Document clean transition count not expected ${when}`);
