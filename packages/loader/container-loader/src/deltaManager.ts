@@ -107,7 +107,7 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
  * or receiving ops. Used in storage-only mode.
  */
 class NoDeltaStream extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection {
-    clientId: string = undefined as any;
+    clientId: string = "storage-only client";
     claims: ITokenClaims = {
         scopes: [ScopeType.DocRead],
     } as any;

@@ -59,7 +59,7 @@ export class LocalDocumentService implements api.IDocumentService {
      */
     public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
         if (this.policies.storageOnly === true) {
-            throw new Error();
+            throw new Error("can't connect to delta stream in storage-only mode");
         }
         if (this.innerDocumentService) {
             return this.innerDocumentService.connectToDeltaStream(client);
