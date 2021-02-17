@@ -119,14 +119,18 @@ class NoDeltaStream extends TypedEventEmitter<IDocumentDeltaConnectionEvents> im
     serviceConfiguration: IClientConfiguration = undefined as any;
     checkpointSequenceNumber?: number | undefined = undefined;
     submit(messages: IDocumentMessage[]): void {
-        const err = new Error("Cannot submit with storage only connection");
-        this.emit("error", err);
-        throw err;
+        this.emit("nack", this.clientId, messages.map((operation) => {
+            return {
+                operation,
+                content: { message: "Cannot submit with storage-only connection", code: 403 },
+            };
+        }));
     }
     submitSignal(message: any): void {
-        const err = new Error("Cannot submitSignal with storage only connection");
-        this.emit("error", err);
-        throw err;
+        this.emit("nack", this.clientId, {
+            operation: message,
+            content: { message: "Cannot submit signal with storage-only connection", code: 403 },
+        });
     }
     close(): void {
     }
