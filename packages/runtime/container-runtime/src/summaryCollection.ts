@@ -286,9 +286,7 @@ export class SummaryCollection {
                     this.maxAckWaitTime !== undefined &&
                     lastOpTimestamp - this.lastSummaryTimestamp >= this.maxAckWaitTime
                 ) {
-                    if (this.pendingAckTimerTimeoutCallback) {
-                        this.pendingAckTimerTimeoutCallback();
-                    }
+                    this.pendingAckTimerTimeoutCallback?.();
                 }
                 return;
             }
