@@ -180,7 +180,7 @@ describe("Odsp Error", () => {
         } },
     } as Response;
 
-    function throwAuthorizationError(errorMessage: string) {
+    function throwAuthorizationErrorWithInsufficientClaims(errorMessage: string) {
         throwOdspNetworkError(
             errorMessage,
             401,
@@ -188,9 +188,9 @@ describe("Odsp Error", () => {
         );
     }
 
-    it("Authorization error first-class properties", async () => {
+    it("Authorization error with insufficient claims first-class properties", async () => {
         try {
-            throwAuthorizationError("TestMessage");
+            throwAuthorizationErrorWithInsufficientClaims("TestMessage");
         } catch (error) {
             assert.equal(error.errorType, DriverErrorType.authorizationError, "errorType should be authorizationError");
             assert.notEqual(error.message.indexOf("TestMessage"), -1,
@@ -204,7 +204,7 @@ describe("Odsp Error", () => {
         }
     });
 
-    it("AuthorizationError errors retries with insufficient claims", async () => {
+    it("Authorization error with insufficient claims results in retry with claims passed in options", async () => {
         const res = await getWithRetryForTokenRefresh(async (options) => {
             if (
                 options.refresh &&
@@ -212,10 +212,58 @@ describe("Odsp Error", () => {
             ) {
                 return 1;
             } else {
-                throwAuthorizationError("some error");
+                throwAuthorizationErrorWithInsufficientClaims("some error");
             }
         });
         assert.equal(res, 1, "did not successfully retried with claims");
+    });
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const testResponseWithRealm = {
+        statusText: "testStatusText",
+        type: "default",
+        headers: { get(name: string): string | null {
+            if (name === "sprequestguid") {
+                return "xxx-xxx";
+            }
+            if (name === "www-authenticate") {
+                return "Bearer realm=\"6c482541-f706-4168-9e58-8e35a9992f58\",client_id=\"00000003-0000-0ff1-ce00-000000000000\",trusted_issuers=\"00000001-0000-0000-c000-000000000000@*,D3776938-3DBA-481F-A652-4BEDFCAB7CD8@*,https://sts.windows.net/*/,00000003-0000-0ff1-ce00-000000000000@90140122-8516-11e1-8eff-49304924019b\",authorization_uri=\"https://login.windows.net/common/oauth2/authorize\"";
+            }
+            return null;
+        } },
+    } as Response;
+
+    function throwAuthorizationErrorWithRealm(errorMessage: string) {
+        throwOdspNetworkError(
+            errorMessage,
+            401,
+            testResponseWithRealm,
+        );
+    }
+
+    it("Authorization error with realm first-class properties", async () => {
+        try {
+            throwAuthorizationErrorWithRealm("TestMessage");
+        } catch (error) {
+            assert.strictEqual(error.errorType, DriverErrorType.authorizationError, "errorType should be authorizationError");
+            assert.notStrictEqual(error.message.indexOf("TestMessage"), -1, "message should contain original message");
+            assert.strictEqual(error.canRetry, false, "canRetry should be false");
+            assert.strictEqual(error.tenantId, "6c482541-f706-4168-9e58-8e35a9992f58", "realm should be extracted from response");
+        }
+    });
+
+    it("Authorization error with realm results in retry and realm passed as tenant id", async () => {
+        const res = await getWithRetryForTokenRefresh(async (options) => {
+            if (
+                options.refresh &&
+                options.tenantId === "6c482541-f706-4168-9e58-8e35a9992f58"
+            ) {
+                return 1;
+            } else {
+                throwAuthorizationErrorWithRealm("some error");
+            }
+        });
+        assert.strictEqual(res, 1, "did not successfully retried with realm passed as tenantId");
     });
 
     it("Check Epoch Mismatch error props", async () => {

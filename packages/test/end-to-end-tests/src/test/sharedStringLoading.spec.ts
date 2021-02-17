@@ -25,6 +25,7 @@ import { NetworkErrorBasic } from "@fluidframework/driver-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { bufferToString } from "@fluidframework/common-utils";
 
 describe("SharedString", () => {
     let driver: ITestDriver;
@@ -84,16 +85,16 @@ describe("SharedString", () => {
                 createDocumentService: async (resolvedUrl,logger) => {
                     const realDs = await realSf.createDocumentService(resolvedUrl, logger);
                     const mockDs = Object.create(realDs) as IDocumentService;
-                    mockDs.policies = {
-                        ... mockDs.policies,
-                        caching: LoaderCachingPolicy.NoCaching,
-                    };
                     mockDs.connectToStorage = async ()=>{
                         const realStorage = await realDs.connectToStorage();
                         const mockstorage = Object.create(realStorage) as IDocumentStorageService;
-                        mockstorage.read = async (id)=>{
-                            const blob = await realStorage.read(id);
-                            const blobObj = JSON.parse(Buffer.from(blob, "Base64").toString());
+                        (mockstorage as any).policies = {
+                            ...realStorage.policies,
+                            caching: LoaderCachingPolicy.NoCaching,
+                        };
+                        mockstorage.readBlob = async (id)=>{
+                            const blob = await realStorage.readBlob(id);
+                            const blobObj = JSON.parse(bufferToString(blob, "utf8"));
                             // throw when trying to load the header blob
                             if (blobObj.headerMetadata !== undefined) {
                                 throw new NetworkErrorBasic(

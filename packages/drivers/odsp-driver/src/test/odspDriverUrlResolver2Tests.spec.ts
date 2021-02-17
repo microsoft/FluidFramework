@@ -10,7 +10,7 @@ import { strict as assert } from "assert";
 import sinon from "sinon";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { OdspDriverUrlResolverForShareLink } from "../odspDriverUrlResolverForShareLink";
-import { SharingLinkScopeFor, SharingLinkTokenFetcher } from "../tokenFetch";
+import { SharingLinkTokenFetchOptions, TokenFetcher } from "../tokenFetch";
 import { getHashedDocumentId } from "../odspUtils";
 import { createOdspUrl } from "../createOdspUrl";
 import * as graphImport from "../graph";
@@ -29,8 +29,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
     let urlResolver: OdspDriverUrlResolverForShareLink;
 
     beforeEach(() => {
-        const shareLinkTokenFetcher: SharingLinkTokenFetcher =
-            async (siteURL: string, scopeFor: SharingLinkScopeFor, refresh: boolean) => "SharingLinkToken";
+        const shareLinkTokenFetcher: TokenFetcher<SharingLinkTokenFetchOptions> = async (options) => "SharingLinkToken";
         urlResolver = new OdspDriverUrlResolverForShareLink(shareLinkTokenFetcher);
     });
 

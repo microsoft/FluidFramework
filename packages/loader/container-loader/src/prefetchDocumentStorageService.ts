@@ -8,9 +8,20 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluidframework/common-utils";
 import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
+import {
+    LoaderCachingPolicy,
+} from "@fluidframework/driver-definitions";
+
 import { debug } from "./debug";
 
 export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {
+    public get policies() {
+        const policies = this.internalStorageService.policies;
+        if (policies) {
+            return { ...policies, caching: LoaderCachingPolicy.NoCaching };
+        }
+    }
+
     // BlobId -> blob prefetchCache cache
     private readonly prefetchCache = new Map<string, Promise<string>>();
     private prefetchEnabled = true;
