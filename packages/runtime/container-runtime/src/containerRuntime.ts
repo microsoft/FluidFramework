@@ -714,14 +714,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
-            () => this.storage,
-            (blobId) => {
-                if (this.attachState === AttachState.Detached) {
-                    this.blobManager.addBlobId(blobId);
-                } else {
-                    this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId });
-                }
+            () => {
+                assert(this.attachState !== AttachState.Detached, "Blobs NYI in detached container mode");
+                return this.storage;
             },
+            (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
             this.logger,
         );
         this.blobManager.load(context.baseSnapshot?.trees[blobsTreeName]);
