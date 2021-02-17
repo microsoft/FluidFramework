@@ -106,7 +106,8 @@ interface ILocalSequencedClient extends ISequencedClient {
 export interface IContainerConfig {
     resolvedUrl?: IResolvedUrl;
     canReconnect?: boolean;
-    originalRequest?: IRequest;
+    containerUrl?: string;
+    clientDetailsOverride?: IClientDetails;
     id?: string;
 }
 
@@ -252,7 +253,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const container = new Container(
             loader,
             {
-                originalRequest: request,
+                containerUrl: request.url,
+                clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
                 id: decodeURI(docId),
                 resolvedUrl,
                 canReconnect: !(request.headers?.[LoaderHeader.reconnect] === false),
@@ -342,7 +344,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private _clientId: string | undefined;
     private _id: string | undefined;
-    private originalRequest: IRequest | undefined;
+    private containerUrl: string | undefined;
+    private readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager;
     private _existing: boolean | undefined;
     private service: IDocumentService | undefined;
@@ -500,7 +503,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._audience = new Audience();
 
         // Initialize from config
-        this.originalRequest = config.originalRequest;
+        this.containerUrl = config.containerUrl;
+        this.clientDetailsOverride = config.clientDetailsOverride;
         this._id = config.id;
         this._resolvedUrl = config.resolvedUrl;
         if (config.canReconnect !== undefined) {
@@ -679,7 +683,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._resolvedUrl = resolvedUrl;
             const url = await this.getAbsoluteUrl("");
             assert(url !== undefined, "Container url undefined");
-            this.originalRequest = { url };
+            this.containerUrl = url;
             const parsedUrl = parseUrl(resolvedUrl.url);
             if (parsedUrl === undefined) {
                 throw new Error("Unable to parse Url");
@@ -1378,11 +1382,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 user: { id: "" },
             };
 
-        // Client info from headers overrides client info from loader options
-        const headerClientDetails = this.originalRequest?.headers?.[LoaderHeader.clientDetails];
-
-        if (headerClientDetails !== undefined) {
-            merge(client.details, headerClientDetails);
+        if (this.clientDetailsOverride !== undefined) {
+            merge(client.details, this.clientDetailsOverride);
         }
 
         return client;
@@ -1728,7 +1729,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this._context?.disposed !== false, "Existing context not disposed");
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
-        const loader = new RelativeLoader(this.loader, () => this.originalRequest);
+        const loader = new RelativeLoader(this.loader, () => this.containerUrl);
         const previousCodeDetails = this._context?.codeDetails;
         this._context = await ContainerContext.createOrLoad(
             this,

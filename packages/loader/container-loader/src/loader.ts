@@ -59,7 +59,7 @@ export class RelativeLoader extends EventEmitter implements ILoader {
      */
     constructor(
         private readonly loader: ILoader,
-        private readonly baseRequest: () => IRequest | undefined,
+        private readonly containerUrl: () => string | undefined,
     ) {
         super();
     }
@@ -77,21 +77,21 @@ export class RelativeLoader extends EventEmitter implements ILoader {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        const baseRequest = this.baseRequest();
+        const containerUrl = this.containerUrl();
         if (request.url.startsWith("/")) {
             if (this.needExecutionContext(request)) {
-                if (baseRequest === undefined) {
-                    throw new Error("Base Request is not provided");
+                if (containerUrl === undefined) {
+                    throw new Error("Container url is not provided");
                 }
-                return (this.loader as Loader).requestWorker(baseRequest.url, request);
+                return (this.loader as Loader).requestWorker(containerUrl, request);
             } else {
                 let container: IContainer;
                 if (canUseCache(request)) {
                     container = await this.containerDeferred.promise;
-                } else if (baseRequest === undefined) {
-                    throw new Error("Base Request is not provided");
+                } else if (containerUrl === undefined) {
+                    throw new Error("Container url is not provided");
                 } else {
-                    container = await this.loader.resolve({ url: baseRequest.url, headers: request.headers });
+                    container = await this.loader.resolve({ url: containerUrl, headers: request.headers });
                 }
                 return container.request(request);
             }
