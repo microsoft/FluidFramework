@@ -10,15 +10,17 @@ const packageDir = `${__dirname}/../..`;
 const testPackagesDir = `${packageDir}/..`;
 const diRoot = process.env.FLUID_DI_ROOT;
 
-const config ={
-  "exit": true,
-  "recursive": true,
-  // "parallel": testDriver === "local",
-  "require": [
+const require = [
     `${testPackagesDir}/mocha-test-setup`,
     `${testPackagesDir}/test-drivers`,
     `${diRoot}/@ff-internal/aria-logger`, //* Only require this if FLUID_DI_ROOT is defined
-  ],
+];
+
+const config = {
+  "exit": true,
+  "recursive": true,
+  // "parallel": testDriver === "local",
+  "require": require,
   "unhandled-rejections": "strict"
 };
 
