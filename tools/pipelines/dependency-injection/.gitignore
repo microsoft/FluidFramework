@@ -1,2 +1,4 @@
-# We don't want to check in a package.json, just the _package.json which the pipeline will rename
+# This isn't a package we want to be found by any typical build procedure, so we don't want these json files checked in.
+# Instead the _ prefixed files will be renamed only during a pipeline run.
 package.json
+package-lock.json
