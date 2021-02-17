@@ -76,7 +76,7 @@ export class RemoteChannelContext implements IChannelContext {
 
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
-            async () => this.getGCDataInternal(),
+            async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
             async () => gcDetailsInInitialSummary(),
         );
     }
@@ -143,7 +143,7 @@ export class RemoteChannelContext implements IChannelContext {
         }
 
         let factory: IChannelFactory | undefined;
-        // this is a back-compat case where
+        // this is a backward compatibility case where
         // the attach message doesn't include
         // the attributes. Since old attach messages
         // will not have attributes we need to keep
@@ -226,18 +226,20 @@ export class RemoteChannelContext implements IChannelContext {
      * Each node has a set of outbound routes to other GC nodes in the document.
      * If there is no new data in this context since the last summary, previous GC data is used.
      * If there is new data, the GC data is generated again (by calling getGCDataInternal).
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    public async getGCData(): Promise<IGarbageCollectionData> {
-        return this.summarizerNode.getGCData();
+    public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
+        return this.summarizerNode.getGCData(fullGC);
     }
 
     /**
      * Generates the data used for garbage collection. This is called when there is new data since last summary. It
      * loads the context and calls into the channel to get its GC data.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    private async getGCDataInternal(): Promise<IGarbageCollectionData> {
+    private async getGCDataInternal(fullGC: boolean = false): Promise<IGarbageCollectionData> {
         const channel = await this.getChannel();
-        return channel.getGCData();
+        return channel.getGCData(fullGC);
     }
 
     /**
@@ -254,9 +256,6 @@ export class RemoteChannelContext implements IChannelContext {
          * Once we have GC at DDS level, this will be updated to use the passed usedRoutes. See -
          * https://github.com/microsoft/FluidFramework/issues/4611
          */
-        // back-compat: 0.33 - updateUsedRoutes is added in 0.33. Remove the check here when N >= 0.36.
-        if (this.summarizerNode.updateUsedRoutes !== undefined) {
-            this.summarizerNode.updateUsedRoutes([""]);
-        }
+        this.summarizerNode.updateUsedRoutes([""]);
     }
 }

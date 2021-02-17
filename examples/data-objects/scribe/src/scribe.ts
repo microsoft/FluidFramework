@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { EventEmitter } from "events";
 import { resolve } from "url";
 import {
@@ -63,7 +65,7 @@ async function downloadRawText(textUrl: string): Promise<string> {
     return result.data;
 }
 
-function updateProgressBar(progressBar: HTMLElement, progress: number) {
+function updateProgressBar(progressBar: HTMLElement, progress: number | undefined) {
     if (progress !== undefined) {
         progressBar.style.width = `${(100 * progress).toFixed(2)}%`;
         if (progress === 1) {
@@ -149,7 +151,7 @@ function handleFiles(
     };
 
     // Read the selected file
-    const file = files.item(0);
+    const file = files.item(0)!;
     reader.readAsText(file);
 }
 
@@ -202,7 +204,7 @@ function initialize(
         inputElement.addEventListener(
             "change",
             () => {
-                handleFiles(createButton, startButton, createDetails, inputElement.files);
+                handleFiles(createButton, startButton, createDetails, inputElement.files!);
             },
             false);
     } else {
@@ -213,7 +215,8 @@ function initialize(
         });
     }
 
-    const documentFactory: IDocumentFactory = context.scope ? context.scope.IDocumentFactory : undefined;
+    const documentFactory: IDocumentFactory | undefined = context.scope ?
+        context.scope.IDocumentFactory : undefined;
     if (documentFactory) {
         createButton.classList.remove("hidden");
     } else {
@@ -232,7 +235,7 @@ function initialize(
             },
             package: `@fluid-example/shared-text@${version}`,
         };
-        const createP = documentFactory.create(details);
+        const createP = documentFactory!.create(details);
         createP.then(
             (createUrl) => {
                 url = createUrl;
@@ -292,7 +295,7 @@ function initialize(
             typeP.then(
                 (time) => {
                     (div.getElementsByClassName("total-time")[0] as HTMLDivElement).innerText =
-                        `Total time: ${(time.time / 1000).toFixed(2)} seconds`;
+                        `Total time: ${(time!.time / 1000).toFixed(2)} seconds`;
                     console.log("Done typing file");
                 },
                 (error) => {
@@ -400,8 +403,8 @@ export class Scribe
     public get IFluidRouter() { return this; }
     public get IFluidHTMLView() { return this; }
 
-    private root: ISharedMap;
-    private div: HTMLDivElement;
+    private root: ISharedMap | undefined;
+    private div: HTMLDivElement | undefined;
 
     constructor(private readonly runtime: IFluidDataStoreRuntime, private readonly context: IFluidDataStoreContext) {
         super();
@@ -420,7 +423,7 @@ export class Scribe
                 this.div,
                 this.context,
                 this.runtime,
-                this.root,
+                this.root!,
                 "https://www.r11s-wu2-ppe.prague.office-int.com/public/literature/resume.txt",
                 50,
                 1,

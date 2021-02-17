@@ -21,6 +21,10 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     beforeEach(()=>{
         args = argsFactory();
     });
+    afterEach(() => {
+        args.reset();
+    });
+
     let firstContainerObject1: TestDataObject;
     let firstContainerObject2: TestDataObject;
     let secondContainerObject1: TestDataObject;
@@ -59,20 +63,15 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         // Verify that the local client's FluidDataObjectRuntime has the correct absolute path.
         const fluidHandleContext11 = firstContainerObject1._runtime.rootRoutingContext;
-        // back-compat for N-2 <= 0.27, remove when N-2 >= 0.28
-        if (fluidHandleContext11) {
-            assert.equal(fluidHandleContext11.absolutePath, absolutePath,
-                "The FluidDataObjectRuntime's path is incorrect");
+        assert.equal(fluidHandleContext11.absolutePath, absolutePath,
+            "The FluidDataObjectRuntime's path is incorrect");
 
-            // Verify that the remote client's FluidDataObjectRuntime has the correct absolute path.
-            const fluidHandleContext12 = secondContainerObject1._runtime.rootRoutingContext;
-            assert.equal(
-                fluidHandleContext12.absolutePath,
-                absolutePath,
-                "The remote FluidDataObjectRuntime's path is incorrect");
-        } else {
-            this.skip();
-        }
+        // Verify that the remote client's FluidDataObjectRuntime has the correct absolute path.
+        const fluidHandleContext12 = secondContainerObject1._runtime.rootRoutingContext;
+        assert.equal(
+            fluidHandleContext12.absolutePath,
+            absolutePath,
+            "The remote FluidDataObjectRuntime's path is incorrect");
     });
 
     it("can store and retrieve a DDS from handle within same data store runtime", async () => {

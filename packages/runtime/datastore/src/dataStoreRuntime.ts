@@ -36,7 +36,6 @@ import {
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
-    ITreeEntry,
     SummaryType,
     ISummaryBlob,
     ISummaryTree,
@@ -142,13 +141,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this._attachState;
     }
 
-    /**
-     * @deprecated - 0.21 back-compat
-     */
-    public get path(): string {
-        return this.id;
-    }
-
     public get absolutePath(): string {
         return generateHandleContextPath(this.id, this.routeContext);
     }
@@ -172,7 +164,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly contexts = new Map<string, IChannelContext>();
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private readonly pendingAttach = new Map<string, IAttachMessage>();
-    private requestHandler: ((request: IRequest) => Promise<IResponse>) | undefined;
     private bindState: BindState;
     // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
     private graphAttachState: AttachState = AttachState.Detached;
@@ -355,20 +346,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
 
         // Otherwise defer to an attached request handler
-        if (this.requestHandler === undefined) {
-            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
-        } else {
-            return this.requestHandler(parser);
-        }
-    }
-
-    /**
-     * @deprecated
-     * Please use mixinRequestHandler() to override default behavior or request()
-     * // back-compat: remove in 0.30+
-     */
-    public registerRequestHandler(handler: (request: IRequest) => Promise<IResponse>) {
-        this.requestHandler = handler;
+        return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
     }
 
     public async getChannel(id: string): Promise<IChannel> {
@@ -475,10 +453,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             return;
         }
         this.bindState = BindState.Binding;
-        // Attach the runtime to the container via this callback
-        // back-compat: remove argument ans cast in 0.30.
-        (this.dataStoreContext as any).bindToContext(this);
-
+        this.dataStoreContext.bindToContext();
         this.bindState = BindState.Bound;
     }
 
@@ -601,13 +576,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         );
     }
 
-    // back-compat for N-2 <= 0.28, remove when N-2 >= 0.29
-    public async snapshotInternal(fullTree: boolean = false): Promise<ITreeEntry[]> {
-        const summaryTree = await this.summarize(fullTree);
-        const tree = convertSummaryTreeToITree(summaryTree.summary);
-        return tree.entries;
-    }
-
     /**
      * Returns the outbound routes of this channel. Currently, all contexts in this channel are considered
      * referenced and are hence outbound. This will change when we have root and non-root channel contexts.
@@ -645,8 +613,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      *    idenfied as belonging to the child.
      * 3. Adds a GC node for this channel to the nodes received from the children. All these nodes together represent
      *    the GC data of this channel.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    public async getGCData(): Promise<IGarbageCollectionData> {
+    public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
         const builder = new GCDataBuilder();
         // Iterate over each channel context and get their GC data.
         await Promise.all(Array.from(this.contexts)
@@ -655,7 +624,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 // graph so any references they might have won't be connected as well.
                 return this.isChannelAttached(contextId);
             }).map(async ([contextId, context]) => {
-                const contextGCData = await context.getGCData();
+                const contextGCData = await context.getGCData(fullGC);
                 // Prefix the child's id to the ids of its GC nodes so they can be identified as belonging to the child.
                 // This also gradually builds the id of each node to be a path from the root.
                 builder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
@@ -731,12 +700,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 const contextSummary = await context.summarize(fullTree, trackState);
                 summaryBuilder.addWithStats(contextId, contextSummary);
 
-                // back-compat 0.31 - Older versions will not have GC data in summary.
-                if (contextSummary.gcData !== undefined) {
-                    // Prefix the child's id to the ids of its GC nodes. This gradually builds the id of each node
-                    // to be a path from the root.
-                    gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
-                }
+                // Prefix the child's id to the ids of its GC nodes. This gradually builds the id of each node
+                // to be a path from the root.
+                gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
             }));
 
         this.updateGCNodes(gcDataBuilder);
@@ -767,12 +733,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         "getAttachSummary should always return a tree");
                     summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
 
-                    // back-compat 0.31 - Older versions will not have GC data in summary.
-                    if (contextSummary.gcData !== undefined) {
-                        // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node
-                        // to be a path from the root.
-                        gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
-                    }
+                    // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node
+                    // to be a path from the root.
+                    gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
                 } else {
                     // If this channel is not yet loaded, then there should be no changes in the snapshot from which
                     // it was created as it is detached container. So just use the previous snapshot.

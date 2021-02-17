@@ -34,7 +34,7 @@ To install your packages you can follow this format: `npm i package-name` if you
 We use the following Fluid packages in this tutorial:
 
 - **@fluidframework/aqueduct**
-- **@fluidframework/get-tinylicious-container**
+- **@fluid-experimental/get-container**
 - **@fluidframework/map**
 - **tinylicious**
   - Note: Tinylicious is only a development dependency, since it is the

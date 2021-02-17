@@ -9,7 +9,11 @@ import child_process from "child_process";
 import commander from "commander";
 import { Loader } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { OdspDocumentServiceFactory, OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
+import {
+    OdspDocumentServiceFactory,
+    OdspDriverUrlResolver,
+    OdspResourceTokenFetchOptions,
+} from "@fluidframework/odsp-driver";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import {
     OdspTokenManager,
@@ -47,21 +51,21 @@ const passwordTokenConfig = (username, password): OdspTokenConfig => ({
 
 function createLoader(loginInfo: IOdspTestLoginInfo) {
     const documentServiceFactory = new OdspDocumentServiceFactory(
-        async (_siteUrl: string, refresh: boolean, _claims?: string) => {
+        async (options: OdspResourceTokenFetchOptions) => {
             const tokens = await odspTokenManager.getOdspTokens(
                 loginInfo.server,
                 getMicrosoftConfiguration(),
                 passwordTokenConfig(loginInfo.username, loginInfo.password),
-                refresh,
+                options.refresh,
             );
             return tokens.accessToken;
         },
-        async (refresh: boolean, _claims?: string) => {
+        async (options: OdspResourceTokenFetchOptions) => {
             const tokens = await odspTokenManager.getPushTokens(
                 loginInfo.server,
                 getMicrosoftConfiguration(),
                 passwordTokenConfig(loginInfo.username, loginInfo.password),
-                refresh,
+                options.refresh,
             );
             return tokens.accessToken;
         },
@@ -232,7 +236,6 @@ async function orchestratorProcess(
         // Log the login page url in case the caller needs to allow consent for this app
         const loginPageUrl =
             getLoginPageUrl(
-                false,
                 loginInfo.server,
                 getMicrosoftConfiguration(),
                 getOdspScope(loginInfo.server),

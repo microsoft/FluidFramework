@@ -10,7 +10,6 @@ import {
     IRequest,
     IRequestHeader,
     IResponse,
-    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -99,9 +98,6 @@ export interface IRuntime extends IDisposable {
      * @param attachState - State of the container.
      */
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
-
-    // 0.24 back-compat attachingBeforeSummary
-    readonly runtimeVersion?: string;
 }
 
 /**
@@ -119,14 +115,11 @@ export interface IContainerContext extends IDisposable {
     readonly configuration: IFluidConfiguration;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
-    readonly codeDetails: IFluidCodeDetails;
     readonly storage: IDocumentStorageService | undefined | null;
     readonly connected: boolean;
-    readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     readonly submitSignalFn: (contents: any) => void;
-    readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: (error?: ICriticalContainerError) => void;
     readonly loadContainerCopyFn: (additionalHeaders: IRequestHeader) => Promise<IContainer>,
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -135,7 +128,6 @@ export interface IContainerContext extends IDisposable {
     readonly loader: ILoader;
     readonly logger: ITelemetryLogger;
     readonly serviceConfiguration: IClientConfiguration | undefined;
-    readonly version: string;
     readonly previousRuntimeState: IRuntimeState;
 
     /**
@@ -144,8 +136,6 @@ export interface IContainerContext extends IDisposable {
     readonly scope: IFluidObject;
 
     raiseContainerWarning(warning: ContainerWarning): void;
-    requestSnapshot(tagMessage: string): Promise<void>;
-    reloadContext(): Promise<void>;
 
     /**
      * Get an absolute url for a provided container-relative request.
@@ -162,7 +152,6 @@ export interface IContainerContext extends IDisposable {
 
     getLoadedFromVersion(): IVersion | undefined;
 
-    createSummary(): ISummaryTree;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";

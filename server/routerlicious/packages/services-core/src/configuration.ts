@@ -29,6 +29,15 @@ export interface IScribeServerConfiguration {
     ignoreStorageException: boolean;
 }
 
+// Document lambda configuration
+export interface IDocumentLambdaServerConfiguration {
+    // Expire document partitions after this long of no activity
+    partitionActivityTimeout: number;
+
+    // How often to check the partitions for inacitivty
+    partitionActivityCheckInterval: number;
+}
+
 /**
  * Key value store of service configuration properties
  */
@@ -45,6 +54,9 @@ export interface IServerConfiguration {
 
     // Scribe lambda configuration
     scribe: IScribeServerConfiguration;
+
+    // Document lambda configuration
+    documentLambda: IDocumentLambdaServerConfiguration;
 
     // Enable adding a traces array to operation messages
     enableTraces: boolean;
@@ -69,5 +81,9 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         generateServiceSummary: true,
         clearCacheAfterServiceSummary: false,
         ignoreStorageException: false,
+    },
+    documentLambda: {
+        partitionActivityTimeout: 10 * 60 * 1000,
+        partitionActivityCheckInterval: 60 * 1000,
     },
 };

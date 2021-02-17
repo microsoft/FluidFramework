@@ -50,16 +50,6 @@ class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         return [];
     }
 
-    // back-compat: usage removed in 0.33, remove in future versions
-    public async systemPause(): Promise<void> {
-        return;
-    }
-
-    // back-compat: usage removed in 0.33, remove in future versions
-    public systemResume(): void {
-        return undefined;
-    }
-
     public dispose() { }
 
     constructor() {
