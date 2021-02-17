@@ -10,7 +10,6 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, performance } from "@fluidframework/common-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
-    LoaderCachingPolicy,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -167,8 +166,6 @@ export class OdspDocumentService implements IDocumentService {
         private readonly epochTracker: EpochTracker,
     ) {
         this.policies = {
-            // By default, ODSP tells the container not to prefetch/cache.
-            caching: LoaderCachingPolicy.NoCaching,
             // load in storage-only mode if a file version is specified
             storageOnly: odspResolvedUrl.fileVersion !== undefined,
         };

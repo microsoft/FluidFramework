@@ -35,7 +35,6 @@ describe("Container Runtime", () => {
             deltaManager.inbound.resume();
             deltaManager.outbound.resume();
             deltaManager.inboundSignal.resume();
-            deltaManager.updateQuorumJoin();
         }
 
         // Function to yield control in the Javascript event loop.
@@ -94,6 +93,7 @@ describe("Container Runtime", () => {
                 client as IClient,
                 DebugLogger.create("fluid:testDeltaManager"),
                 false,
+                () => false,
             );
 
             const emitter = new EventEmitter();

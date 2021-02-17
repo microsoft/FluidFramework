@@ -89,7 +89,7 @@ const testDataObjectFactory = new DataObjectFactory(
 describe("LocalLoader", () => {
     let driver: ITestDriver;
     before(()=>{
-        driver = getFluidTestDriver();
+        driver = getFluidTestDriver() as ITestDriver;
     });
 
     const codeDetails: IFluidCodeDetails = {

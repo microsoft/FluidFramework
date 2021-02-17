@@ -114,7 +114,7 @@ export interface IContainerContext extends IDisposable {
     readonly configuration: IFluidConfiguration;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
-    readonly storage: IDocumentStorageService | undefined | null;
+    readonly storage: IDocumentStorageService | undefined;
     readonly connected: boolean;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;

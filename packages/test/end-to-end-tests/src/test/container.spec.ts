@@ -27,7 +27,7 @@ describe("Container", () => {
     let driver: ITestDriver;
     const loaderContainerTracker = new LoaderContainerTracker();
     beforeEach(()=>{
-        driver = getFluidTestDriver();
+        driver = getFluidTestDriver() as ITestDriver;
     });
     afterEach(() => {
         loaderContainerTracker.reset();

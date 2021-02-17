@@ -9,12 +9,10 @@ import {
     IClientConfiguration,
     IClientDetails,
     IDocumentMessage,
-    IProcessMessageResult,
     ISequencedDocumentMessage,
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
-    MessageType,
 } from "@fluidframework/protocol-definitions";
 
 /**
@@ -46,7 +44,7 @@ export interface IDeltaHandlerStrategy {
     /**
      * Processes the message.
      */
-    process: (message: ISequencedDocumentMessage) => IProcessMessageResult;
+    process: (message: ISequencedDocumentMessage) => void;
 
     /**
      * Processes the signal.
@@ -69,16 +67,6 @@ export interface IProvideDeltaSender {
  * Contract supporting delivery of outbound messages to the server
  */
 export interface IDeltaSender extends IProvideDeltaSender {
-    /**
-     * Submits the given delta returning the client sequence number for the message. Contents is the actual
-     * contents of the message. appData is optional metadata that can be attached to the op by the app.
-     *
-     * If batch is set to true then the submit will be batched - and as a result guaranteed to be ordered sequentially
-     * in the global sequencing space. The batch will be flushed either when flush is called or when a non-batched
-     * op is submitted.
-     */
-    submit(type: MessageType, contents: any, batch: boolean, metadata: any): number;
-
     /**
      * Flush all pending messages through the outbound queue
      */

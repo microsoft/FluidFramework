@@ -18,7 +18,6 @@ import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     ISignalMessage,
-    MessageType,
 } from "@fluidframework/protocol-definitions";
 
 /**
@@ -151,10 +150,6 @@ export class DeltaManagerProxy
 
     public submitSignal(content: any): void {
         return this.deltaManager.submitSignal(content);
-    }
-
-    public submit(type: MessageType, contents: any, batch: boolean, appData: any): number {
-        return this.deltaManager.submit(type, contents, batch, appData);
     }
 
     public flush(): void {
