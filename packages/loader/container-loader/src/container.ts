@@ -102,10 +102,36 @@ interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
 }
 
+export interface IContainerLoadOptions {
+    /**
+     * Disables the Container from reconnecting if false, allows reconnect otherwise.
+     */
+    canReconnect?: boolean;
+    /**
+     * Client details provided in the override will be merged over the default client.
+     */
+    clientDetailsOverride?: IClientDetails;
+    /**
+     * Control whether to load from snapshot or ops.  See IParsedUrl for detailed information.
+     */
+    version?: string | null | undefined;
+    /**
+     * Loads the Container in paused state if true, unpaused otherwise.
+     */
+    pause?: boolean;
+}
+
 export interface IContainerConfig {
     resolvedUrl?: IResolvedUrl;
     canReconnect?: boolean;
+    /**
+     * A url for the Container.  Critically, we expect Loader.resolve using this URL to resolve back to this Container
+     * for purposes of creating a separate Container instance for the summarizer to use.
+     */
     containerUrl?: string;
+    /**
+     * Client details provided in the override will be merged over the default client.
+     */
     clientDetailsOverride?: IClientDetails;
     id?: string;
 }
@@ -235,25 +261,6 @@ export class CollabWindowTracker {
         }
         this.updateSequenceNumberTimer = undefined;
     }
-}
-
-export interface IContainerLoadOptions {
-    /**
-     * Disables the Container from reconnecting if false, allows reconnect otherwise.
-     */
-    canReconnect?: boolean;
-    /**
-     * Client details provided in the override will be merged over the default client.
-     */
-    clientDetailsOverride?: IClientDetails;
-    /**
-     * Control whether to load from snapshot or ops.  See IParsedUrl for detailed information.
-     */
-    version?: string | null | undefined;
-    /**
-     * Loads the Container in paused state if true, unpaused otherwise.
-     */
-    pause?: boolean;
 }
 
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
