@@ -101,7 +101,7 @@ jobs:
         workingFile: ${{ variables.diDir }}/.npmrc
         customEndpoint: 'Office Packages - Readonly'
 
-    # [DI] Prep dependency injection package for install
+    # [DI] Prep dependency-injection package for install
     - task: Bash@3
       displayName: '[DI] Prepare DI package'
       inputs:
@@ -109,7 +109,7 @@ jobs:
         script: 'mv _package.json package.json'
         workingDirectory: ${{ variables.diDir }}
 
-    # [DI] Install dependency injection package
+    # [DI] Install dependency-injection package
     - task: Npm@1
       displayName: '[DI] npm ci'
       inputs:
@@ -117,13 +117,6 @@ jobs:
         workingDir: ${{ variables.diDir }}
         customCommand: 'ci'
         customRegistry: 'useNpmrc'
-
-    - task: Npm@1
-      displayName: '[DI] verify DI package install'
-      inputs:
-        command: 'custom'
-        workingDir: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger
-        customCommand: 'run start'
 
     # Run End-to-end Tests
     - task: Npm@1
