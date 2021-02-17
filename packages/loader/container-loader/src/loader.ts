@@ -316,7 +316,7 @@ export class Loader extends EventEmitter implements ILoader {
         });
     }
 
-    public async requestWorker(baseUrl: string, request: IRequest): Promise<IResponse> {
+    public async requestWorker(containerUrl: string, request: IRequest): Promise<IResponse> {
         // Currently the loader only supports web worker environment. Eventually we will
         // detect environment and bring appropriate loader (e.g., worker_thread for node).
         const supportedEnvironment = "webworker";
@@ -324,17 +324,17 @@ export class Loader extends EventEmitter implements ILoader {
 
         // If the loader does not support any other environment, request falls back to current loader.
         if (proxyLoaderFactory === undefined) {
-            const container = await this.resolve({ url: baseUrl, headers: request.headers });
+            const container = await this.resolve({ url: containerUrl, headers: request.headers });
             return container.request(request);
         } else {
-            const resolved = await this.services.urlResolver.resolve({ url: baseUrl, headers: request.headers });
+            const resolved = await this.services.urlResolver.resolve({ url: containerUrl, headers: request.headers });
             const resolvedAsFluid = resolved as IFluidResolvedUrl;
             const parsed = parseUrl(resolvedAsFluid.url);
             if (parsed === undefined) {
                 return Promise.reject(new Error(`Invalid URL ${resolvedAsFluid.url}`));
             }
             const { fromSequenceNumber } =
-                this.parseHeader(parsed, { url: baseUrl, headers: request.headers });
+                this.parseHeader(parsed, { url: containerUrl, headers: request.headers });
             const proxyLoader = await proxyLoaderFactory.createProxyLoader(
                 parsed.id,
                 this.services.options,

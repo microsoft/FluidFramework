@@ -238,9 +238,21 @@ export class CollabWindowTracker {
 }
 
 export interface IContainerLoadOptions {
+    /**
+     * Disables the Container from reconnecting if false, allows reconnect otherwise.
+     */
     canReconnect?: boolean;
+    /**
+     * Client details provided in the override will be merged over the default client.
+     */
     clientDetailsOverride?: IClientDetails;
+    /**
+     * Control whether to load from snapshot or ops.  See IParsedUrl for detailed information.
+     */
     version?: string | null | undefined;
+    /**
+     * Loads the Container in paused state if true, unpaused otherwise.
+     */
     pause?: boolean;
 }
 
