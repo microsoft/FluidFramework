@@ -189,21 +189,15 @@ export type EditNode = TreeNode<EditNode> | DetachedSequenceId;
 
 // @public
 export enum EditResult {
-    // (undocumented)
     Applied = 2,
-    // (undocumented)
     Invalid = 1,
-    // (undocumented)
     Malformed = 0
 }
 
 // @public
 export enum EditValidationResult {
-    // (undocumented)
     Invalid = 1,
-    // (undocumented)
     Malformed = 0,
-    // (undocumented)
     Valid = 2
 }
 

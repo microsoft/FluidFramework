@@ -390,7 +390,7 @@ export class SharedTree extends SharedObject {
 	private createEditLogFromSummary(summary: SharedTreeSummaryBase): { editLog: EditLog; logViewer: LogViewer } {
 		const convertedSummary = convertSummaryToReadFormat(summary);
 		if (typeof convertedSummary === 'string') {
-			fail(convertedSummary); // TODO: Where does this error propagate?
+			fail(convertedSummary);
 		}
 		const { editHistory, currentTree } = convertedSummary;
 		const currentView = Snapshot.fromTree(currentTree);
@@ -436,7 +436,7 @@ export class SharedTree extends SharedObject {
 		const header = await storage.read(snapshotFileName);
 		const summary = deserialize(fromBase64ToUtf8(header));
 		if (typeof summary === 'string') {
-			fail(summary); // TODO: Where does this error propagate?
+			fail(summary);
 		}
 		this.loadSummary(summary);
 	}

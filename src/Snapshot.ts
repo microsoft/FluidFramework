@@ -463,8 +463,21 @@ export interface NodeInTrait {
  * @public
  */
 export enum EditValidationResult {
+	/**
+	 * The edit contained one or more malformed changes (e.g. was missing required fields such as `id`),
+	 * or contained a sequence of changes that could not possibly be applied sequentially without error
+	 * (e.g. an edit which tries to insert the same detached node twice).
+	 */
 	Malformed,
+	/**
+	 * The edit is well-formed but cannot be applied to the current view, generally because concurrent changes
+	 * caused one or more merge conflicts.
+	 * For example, the edit refers to the `StablePlace` after node `C`, but `C` has since been deleted.
+	 */
 	Invalid,
+	/**
+	 * The edit is well-formed and can be applied to the current view.
+	 */
 	Valid,
 }
 

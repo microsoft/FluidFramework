@@ -323,8 +323,20 @@ export type EditNode = TreeNode<EditNode> | DetachedSequenceId;
  * @public
  */
 export enum EditResult {
+	/**
+	 * The edit contained one or more malformed changes (e.g. was missing required fields such as `id`),
+	 * or contained a sequence of changes that could not possibly be applied sequentially without error
+	 * (e.g. an edit which tries to insert the same detached node twice).
+	 */
 	Malformed,
+	/**
+	 * The edit contained a well-formed sequence of changes that couldn't be applied to the current view,
+	 * generally because concurrent changes caused one or more merge conflicts.
+	 */
 	Invalid,
+	/**
+	 * The edit was applied to the current view successfully.
+	 */
 	Applied,
 }
 
