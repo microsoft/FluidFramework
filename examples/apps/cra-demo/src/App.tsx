@@ -8,58 +8,55 @@ import { KeyValueDataObject, KeyValueInstantiationFactory } from "@fluid-experim
 import { Fluid } from "@fluid-experimental/fluid-static";
 import { getContainerId } from "./getContainerId";
 
+type KVData = { [key: string]: any };
+type SetKVPair = (key: string, value: any) => void;
+
 // useKVPair is an example of a custom hook that returns Fluid backed state and a method to modify that state
-function useKVPair() {
-    // KVPair Data Object is stored in state as soon as it is available
+function useKVPair(): [KVData, SetKVPair | undefined] {
     const [dataObject, setDataObject] = React.useState<KeyValueDataObject>();
-    // Fluid data will be synced with local state so that changes to Fluid data will cause re-render
-    const [state, setState] = React.useState<{ [key: string]: any }>({});
-    const id = "app";
-    // Connect to container and data object
+    const [data, setData] = React.useState<{ [key: string]: any }>({});
+
     React.useEffect(() => {
         const { containerId, isNew } = getContainerId();
 
-        const start = async () => {
+        const load = async () => {
             const fluidDocument = isNew
                 ? await Fluid.createDocument(containerId, [KeyValueInstantiationFactory.registryEntry])
                 : await Fluid.getDocument(containerId, [KeyValueInstantiationFactory.registryEntry]);
 
-            // We'll create the data object when we create the new document.
             const keyValueDataObject: KeyValueDataObject = isNew
-                ? await fluidDocument.createDataObject(KeyValueInstantiationFactory.type, id)
-                : await fluidDocument.getDataObject(id);
+                ? await fluidDocument.createDataObject(KeyValueInstantiationFactory.type, 'kvpairId')
+                : await fluidDocument.getDataObject('kvpairId');
 
             setDataObject(keyValueDataObject);
         }
 
-        start();
+        load();
 
     }, [])
 
-    // set up sync from data object to local state as soon as dataObject is available
     React.useEffect(() => {
         if (dataObject) {
-            const updateState = () => setState(dataObject.query());
-            dataObject.on("changed", updateState);
-            return () => { dataObject.off("change", updateState) }
+            const updateData = () => setData(dataObject.query());
+            dataObject.on("changed", updateData);
+            return () => { dataObject.off("change", updateData) }
         }
-    }, [dataObject])
+    }, [dataObject]);
 
-    // return properties to give access to data and method to modify data
-    return { state, setState: dataObject?.set };
+    return [data, dataObject?.set];
 }
 
 function App() {
-    const { state, setState } = useKVPair();
+    const [data, setPair] = useKVPair();
 
-    if (!setState) return <div />;
+    if (!data || !setPair) return <div />;
 
     return (
         <div className="App">
-            <button onClick={() => setState("date", Date.now().toString())}>
+            <button onClick={() => setPair("date", Date.now().toString())}>
                 click
             </button>
-            <span>{state.date}</span>
+            <span>{data.date}</span>
         </div>
     )
 }
