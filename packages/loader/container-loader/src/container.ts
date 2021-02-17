@@ -36,7 +36,6 @@ import {
     IDocumentStorageService,
     IFluidResolvedUrl,
     IResolvedUrl,
-    DriverHeader,
 } from "@fluidframework/driver-definitions";
 import {
     BlobCacheStorageService,
@@ -182,6 +181,62 @@ export async function waitContainerToCatchUp(container: Container) {
     });
 }
 
+export class CollabWindowTracker {
+    private updateSequenceNumberTimer: ReturnType<typeof setTimeout> | undefined;
+
+    private static readonly NoopFrequency = 2000;
+
+    constructor(
+        private readonly submit: (type: MessageType, contents: any) => void,
+        private readonly activeConnection: () => boolean,
+    ) {}
+    /**
+     * Schedules as ack to the server to update the reference sequence number
+     */
+    public scheduleSequenceNumberUpdate(message: ISequencedDocumentMessage, immediateNoOp: boolean): void {
+        // Exit early for inactive (not in quorum or not writers) clients.
+        // They don't take part in the minimum sequence number calculation.
+        if (!this.activeConnection()) {
+            this.stopSequenceNumberUpdate();
+            return;
+        }
+
+        // While processing a message, an immediate no-op can be requested.
+        // i.e. to expedite approve or commit phase of quorum.
+        if (immediateNoOp) {
+            this.stopSequenceNumberUpdate();
+            this.submit(MessageType.NoOp, ""); // This can be anything other than null
+            return;
+        }
+
+        // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
+        // update, which updates the MSN, then ack the update, etc...).
+        if (message.type === MessageType.NoOp) {
+            return;
+        }
+
+        // We will queue a message to update our reference sequence number upon receiving a server
+        // operation. This allows the server to know our true reference sequence number and be able to
+        // correctly update the minimum sequence number (MSN).
+        if (this.updateSequenceNumberTimer === undefined) {
+            // Clear an update in 2 s
+            this.updateSequenceNumberTimer = setTimeout(() => {
+                this.updateSequenceNumberTimer = undefined;
+                if (this.activeConnection()) {
+                    this.submit(MessageType.NoOp, null);
+                }
+            }, CollabWindowTracker.NoopFrequency);
+        }
+    }
+
+    public stopSequenceNumberUpdate(): void {
+        if (this.updateSequenceNumberTimer !== undefined) {
+            clearTimeout(this.updateSequenceNumberTimer);
+        }
+        this.updateSequenceNumberTimer = undefined;
+    }
+}
+
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
 
@@ -321,6 +376,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private lastVisible: number | undefined;
 
     private _closed = false;
+
+    private readonly collabWindowTracker = new CollabWindowTracker(
+        (type, contents) => this._deltaManager.submit(type, contents),
+        () => this.activeConnection(),
+    );
 
     public get IFluidRouter(): IFluidRouter { return this; }
 
@@ -518,6 +578,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         this._closed = true;
 
+        this.collabWindowTracker.stopSequenceNumberUpdate();
         this._deltaManager.close(error);
 
         this._protocolHandler?.close();
@@ -601,13 +662,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
             assert(!!this.cachedAttachSummary,
                 "Summary should be there either by this attach call or previous attach call!!");
-
-            if (request.headers?.[DriverHeader.createNew] === undefined) {
-                request.headers = {
-                    ...request.headers,
-                    [DriverHeader.createNew]: {},
-                };
-            }
 
             const createNewResolvedUrl = await this.urlResolver.resolve(request);
             ensureFluidResolvedUrl(createNewResolvedUrl);
@@ -1238,12 +1292,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         });
 
-        protocol.quorum.on("removeMember", (clientId) => {
-            if (clientId === this._clientId) {
-                this._deltaManager.updateQuorumLeave();
-            }
-        });
-
         protocol.quorum.on("addProposal",(proposal: IPendingProposal) => {
             if (proposal.key === "code" || proposal.key === "code2") {
                 this.emit("codeDetailsProposed", proposal.value, proposal);
@@ -1342,12 +1390,23 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return client;
     }
 
+    /**
+     * Returns true if connection is active, i.e. it's "write" connection and
+     * container runtime was notified about this connection (i.e. we are up-to-date and could send ops).
+     * This happens after client received its own joinOp and thus is in the quorum.
+     * If it's not true, runtime is not in position to send ops.
+     */
+    private activeConnection() {
+        return this.connectionState === ConnectionState.Connected && this._deltaManager.connectionMode === "write";
+    }
+
     private createDeltaManager() {
-        const deltaManager = new DeltaManager(
+        const deltaManager: DeltaManager = new DeltaManager(
             () => this.service,
             this.client,
             ChildLogger.create(this.subLogger, "DeltaManager"),
             this._canReconnect,
+            () => this.activeConnection(),
         );
 
         deltaManager.on(connectEventName, (details: IConnectionDetails, opsBehind?: number) => {
@@ -1512,7 +1571,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 }
             }
             this._clientId = this.pendingClientId;
-            this._deltaManager.updateQuorumJoin();
         } else if (value === ConnectionState.Disconnected) {
             // Important as we process our own joinSession message through delta request
             this.pendingClientId = undefined;
@@ -1569,6 +1627,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         this.messageCountAfterDisconnection += 1;
+        this.collabWindowTracker.stopSequenceNumberUpdate();
         return this._deltaManager.submit(type, contents, batch, metadata);
     }
 
@@ -1608,6 +1667,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Allow the protocol handler to process the message
         const result = this.protocolHandler.processMessage(message, local);
+        this.collabWindowTracker.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
 
         this.emit("op", message);
 
