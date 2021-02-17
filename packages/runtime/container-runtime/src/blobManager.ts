@@ -22,7 +22,7 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
     public get IFluidHandle(): IFluidHandle { return this; }
 
     public get isAttached(): boolean {
-        return true;
+        return this.attachGraphCallback === undefined;
     }
 
     public readonly absolutePath: string;
@@ -31,9 +31,16 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
         public readonly path: string,
         public readonly routeContext: IFluidHandleContext,
         public get: () => Promise<any>,
-        public attachGraph: () => void,
+        private attachGraphCallback: undefined | (() => void),
     ) {
         this.absolutePath = generateHandleContextPath(path, this.routeContext);
+    }
+
+    public attachGraph() {
+        if (this.attachGraphCallback) {
+            this.attachGraphCallback();
+            this.attachGraphCallback = undefined;
+        }
     }
 
     public bind(handle: IFluidHandle) {
@@ -59,7 +66,7 @@ export class BlobManager {
             `${BlobManager.basePath}/${blobId}`,
             this.routeContext,
             async () => this.getStorage().readBlob(blobId),
-            () => null,
+            undefined,
         );
     }
 
