@@ -157,6 +157,7 @@ Just like in our `dataObject` example, we are going to use React's `useState` to
 This state is shaped like a normal JavaScript object (great for view frameworks), and we'll start with an empty default so that we don't need to worry about an undefined state.
 
 ```tsx
+// inside useKVPair
 const [data, setData] = React.useState<{ [key: string]: any }>({});
 ```
 
@@ -166,6 +167,7 @@ Setting up listeners is a common usecase for `useEffect`, and this is exactly wh
 
 
 ```tsx
+// inside useKVPair
 React.useEffect(() => {
     if (dataObject) {
         const updateData = () => setData(dataObject.query());
