@@ -36,13 +36,7 @@ declare global {
 
 //* Remove
 describe.only("temp", () => {
-    it("temp SHOULD PASS", () => {
-        assert.strictEqual("asdf", "asdf");
-    });
-    it("temp validating DI worked - SHOULD FAIL", () => {
-        assert.strictEqual(otel, "asdf");
-    });
-    it("temp validating DI worked - SHOULD PASS", () => {
+    it("temp validating DI worked", () => {
         assert.strictEqual(otel, "Office.System.Activity");
     });
 });
