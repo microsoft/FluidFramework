@@ -464,7 +464,7 @@ export class Loader extends EventEmitter implements ILoader {
         return Container.load(
             docId,
             this,
-            request,
+            request.url,
             resolved,
             {
                 canReconnect: request.headers?.[LoaderHeader.reconnect],

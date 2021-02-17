@@ -48,7 +48,7 @@ describe("Container", () => {
         return Container.load(
             "documentId",
             loader,
-            testRequest,
+            testRequest.url,
             testResolved,
             {
                 canReconnect: testRequest.headers?.[LoaderHeader.reconnect],

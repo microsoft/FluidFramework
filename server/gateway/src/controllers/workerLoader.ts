@@ -36,7 +36,7 @@ class WorkerLoader implements ILoader, IFluidRunnable {
         const container = await Container.load(
             this.id,
             (this as unknown) as Loader,
-            request,
+            request, // request.url, // To be used when taking the updated Container.load signature
             this.resolved,
             // To be used when taking the updated Container.load signature
             // {

@@ -272,14 +272,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public static async load(
         docId: string,
         loader: Loader,
-        request: IRequest,
+        containerUrl: string,
         resolvedUrl: IFluidResolvedUrl,
         loadOptions: IContainerLoadOptions,
     ): Promise<Container> {
         const container = new Container(
             loader,
             {
-                containerUrl: request.url,
+                containerUrl,
                 clientDetailsOverride: loadOptions.clientDetailsOverride,
                 id: decodeURI(docId),
                 resolvedUrl,
