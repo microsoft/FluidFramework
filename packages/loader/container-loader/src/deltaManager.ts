@@ -14,7 +14,7 @@ import {
     ICriticalContainerError,
     ContainerErrorType,
     IThrottlingWarning,
-    ReadOnlyType,
+    ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import { PerformanceEvent, TelemetryLogger, safeRaiseEvent } from "@fluidframework/telemetry-utils";
@@ -304,7 +304,7 @@ export class DeltaManager
      * or due to host forcing readonly mode for container.
      * It is undefined if we have not yet established websocket connection
      * and do not know if user has write access to a file.
-     * @deprecated - use readOnlyType
+     * @deprecated - use readOnlyInfo
      */
     public get readonly() {
         if (this._forceReadonly) {
@@ -317,24 +317,24 @@ export class DeltaManager
      * Tells if user has no write permissions for file in storage
      * It is undefined if we have not yet established websocket connection
      * and do not know if user has write access to a file.
-     * @deprecated - use readOnlyType
+     * @deprecated - use readOnlyInfo
      */
     public get readonlyPermissions() {
         return this._readonlyPermissions;
     }
 
-    public get readOnlyType(): ReadOnlyType {
-        if (this.connection !== undefined && this.connection instanceof NoDeltaStream) {
-            return ReadOnlyType.StorageOnly;
-        } else if (this._forceReadonly) {
-            return ReadOnlyType.ReadOnlyForced;
+    public get readOnlyInfo(): ReadOnlyInfo {
+        const storageOnly = this.connection !== undefined && this.connection instanceof NoDeltaStream;
+        if (storageOnly || this._forceReadonly || this._readonlyPermissions === true) {
+            return {
+                readonly: true,
+                forced: this._forceReadonly,
+                permissions: this._readonlyPermissions,
+                storageOnly,
+            };
         }
 
-        switch (this._readonlyPermissions) {
-            case true: return ReadOnlyType.ReadOnlyPermissions;
-            case false: return ReadOnlyType.NotReadOnly;
-            default: return ReadOnlyType.Unknown;
-        }
+        return { readonly: this._readonlyPermissions };
     }
 
     /**

@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ReadOnlyType, IContainer, ILoader } from "@fluidframework/container-definitions";
+import { IContainer, ILoader } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import {
     createLocalResolverCreateNewRequest,
@@ -91,14 +91,16 @@ describe("No Delta Stream", () => {
         assert.strictEqual(container.existing, true, "container.existing");
         assert.strictEqual(container.readonly, true, "container.readonly");
         assert.strictEqual(container.readonlyPermissions, true, "container.readonlyPermissions");
-        assert.strictEqual(container.readOnlyType, ReadOnlyType.StorageOnly, "container.storageOnly");
+        assert.ok(container.readOnlyInfo.readonly, "container.storageOnly");
 
         const deltaManager = container.deltaManager as DeltaManager;
         assert.strictEqual(deltaManager.active, false, "deltaManager.active");
         assert.strictEqual(deltaManager.readonly, true, "deltaManager.readonly");
         assert.strictEqual(deltaManager.readonlyPermissions, true, "deltaManager.readonlyPermissions");
         assert.strictEqual(deltaManager.connectionMode, "read", "deltaManager.connectionMode");
-        assert.strictEqual(deltaManager.readOnlyType, ReadOnlyType.StorageOnly, "deltaManager.storageOnly");
+        assert.ok(deltaManager.readOnlyInfo.readonly, "deltaManager.readOnlyInfo.readonly");
+        assert.ok(deltaManager.readOnlyInfo.permissions, "deltaManager.readOnlyInfo.permissions");
+        assert.ok(deltaManager.readOnlyInfo.storageOnly, "deltaManager.readOnlyInfo.storageOnly");
 
         const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
         assert.strictEqual(dataObject.runtime.existing, true, "dataObject.runtime.existing");
