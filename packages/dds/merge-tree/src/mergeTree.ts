@@ -7,6 +7,7 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-shadow, max-len, no-bitwise */
 
 import { assert, Trace } from "@fluidframework/common-utils";
+import { DataCorruptionError } from "@fluidframework/container-utils";
 import * as Base from "./base";
 import * as Collections from "./collections";
 import {
@@ -2226,11 +2227,11 @@ export class MergeTree {
                     { leaf: onLeaf, candidateSegment: newSegment, continuePredicate: continueFrom });
 
                 if (newSegment.parent === undefined) {
-                    throw new Error(`MergeTree insert failed: ${JSON.stringify({
-                        currentSeq: this.collabWindow.currentSeq,
-                        minSeq: this.collabWindow.minSeq,
-                        segSeq: newSegment.seq,
-                    })}`);
+                    throw new DataCorruptionError("MergeTree insert failed", {
+                        referenceSequenceNumber: this.collabWindow.currentSeq,
+                        minimumSequenceNumber: this.collabWindow.minSeq,
+                        sequenceNumber: newSegment.seq,
+                    });
                 }
 
                 this.updateRoot(splitNode);
