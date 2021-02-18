@@ -57,7 +57,6 @@ _global.getFluidTestDriver = (): ITestDriver => {
 
 // can be async or not
 export const mochaGlobalSetup = async function() {
-    console.log(_global.getFluidTestDriver);
     if (_global.getFluidTestDriver === undefined
         || _global.getFluidTestDriver() === undefined) {
         throw new Error("getFluidTestDriver does not exist or did not return a driver");
