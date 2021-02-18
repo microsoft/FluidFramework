@@ -6,7 +6,16 @@
 import React from "react";
 import { KeyValueDataObject, KeyValueInstantiationFactory } from "@fluid-experimental/data-objects";
 import { Fluid } from "@fluid-experimental/fluid-static";
-import { getContainerId } from "./getContainerId";
+
+const getContainerId = (): { containerId: string; isNew: boolean } => {
+    let isNew = false;
+    if (location.hash.length === 0) {
+        isNew = true;
+        location.hash = Date.now().toString();
+    }
+    const containerId = location.hash.substring(1);
+    return { containerId, isNew };
+};
 
 type KVData = { [key: string]: any };
 type SetKVPair = (key: string, value: any) => void;
@@ -53,10 +62,10 @@ function App() {
 
     return (
         <div className="App">
-            <button onClick={() => setPair("date", Date.now().toString())}>
+            <button onClick={() => setPair("time", Date.now().toString())}>
                 click
             </button>
-            <span>{data.date}</span>
+            <span>{data.time}</span>
         </div>
     )
 }

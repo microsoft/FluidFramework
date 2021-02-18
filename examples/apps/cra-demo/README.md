@@ -24,14 +24,32 @@ npm install @fluid-experimental/fluid-static @fluid-experimental/data-objects
 
 ## 3. Import KVpair and Fluid Static
 
-KeyValueDataObject will provide you with a fully scaffolded DDS to store your data and subscribe to change events.
+Fluid gives you access to methods to boostrap a new Fluid container and attach DataObjects to it.
 
-Fluid gives you access to methods that will bootstrap a new Fluid container.
+`KeyValueDataObject` will provide you with a fully scaffolded DDS to store your data and subscribe to change events. The `KeyValueInstantiationFactory` is required by `Fluid` to instantiate the `KeyValueDataObject`.
 
 ```js
-import { KeyValueDataObject } from "@fluid-experimental/data-objects";
 import { Fluid } from "@fluid-experimental/fluid-static";
+import { KeyValueDataObject, KeyValueInstantiationFactory } from "@fluid-experimental/data-objects";
 ```
+
+### 3.a Add the `getContainerId` function
+
+The `Fluid` class requires a seperate create vs load path, so we need a way to determine if we are loading the app for the first time, or if we loading an existing file. The `getContainerId` function is our current method for simulating creating vs loading by looking for a hash in the URL. This is an area we'd like to improve, so for now, paste this code right below your import statments.
+
+```tsx
+const getContainerId = (): { containerId: string; isNew: boolean } => {
+    let isNew = false;
+    if (location.hash.length === 0) {
+        isNew = true;
+        location.hash = Date.now().toString();
+    }
+    const containerId = location.hash.substring(1);
+    return { containerId, isNew };
+};
+```
+
+
 
 ## 4. Update the view
 
@@ -39,7 +57,7 @@ In this simple multi-user app, we are going to build a button that, when pressed
 
 Remove all of the existing Create-React-App returned markup and replace it as shown below.
 
-You can see that this UI requires a `data` object and `setPair` functions to work, so we'll add those above and pull them out of a function we need to write, called `useKVPair`.
+You can see that this UI requires a `data` object and `setPair` functions to work, so we'll add those above and pull them out of a function we need to write, called `useKVPair`. The plan is for `data` to be a simple JavaScript object, where `setPair` sets a key value pair on that object. This allows us to write out `data.time` once the value is set by the button click.
 
 ```tsx
 function App() {
@@ -49,10 +67,10 @@ function App() {
 
   return (
     <div className="App">
-      <button onClick={() => setPair("date", Date.now().toString())}>
+      <button onClick={() => setPair("time", Date.now().toString())}>
         click
       </button>
-      <span>{data.date}</span>
+      <span>{data.time}</span>
     </div>
   );
 }
@@ -90,9 +108,7 @@ const [dataObject, setDataObject] = React.useState<KeyValueDataObject>();
 ```
 
 ### 6.b Create/Load the Fluid document and data object
-Now that we have a setter method, we need to make sure that our create/get flow runs just once, on app load. Here we'll use React's `useEffect` because it allows code to be ran as soon as the component loads, and re-run only when specific values change, which in our case is never.
-
-> `getContainerId` is a helper method to simplify the creation and sharing of multi-author Fluid documents. In the hook below, we use `getContainerId` to determine if we're creating a new document, or loading an existing one.
+Now that we have a setter method, we need to make sure that our create/get flow runs just once, on app load. Here we'll use React's `useEffect` because it allows code to be ran as soon as the component loads, and re-run only when specific values change, which by setting the dependency array to `[]`, means never.
 
 The bulk of this `useEffect` hooks is the async `load` function that starts by getting or creating the `fluidDocument`. The `FluidDocument` class then allows use to get or create one or more data objects. This could be multiple KVPairs, or other DataObjects that you define.
 
@@ -119,7 +135,7 @@ React.useEffect(() => {
 }, [])
 ```
 
-Once the DataObject is returned we assign them to our `dataObject` state variable, and we now have access to all of the KVPair's methods, include `set` which we can pass down as the second value in our return.
+Once the DataObject is returned we assign them to our `dataObject` state variable, and now we have access to all of the KVPair's methods, include `set` which we can pass down as the second value in our return.
 
 Here's our hook so far.
 
@@ -144,7 +160,7 @@ function useKVPair(): [KVData, SetKVPair | undefined] {
 
 ## 7. Syncing our app state with Fluid data
 
-It is possible to avoid syncing data between Fluid and app state, but it can cause as many problems as it solves, so for this demo we will have app state drive our UI updates, and sync Fluid data into our view's state anytime that it changes. The advantages of this approach are:
+It is possible to avoid syncing data between Fluid and app state, but I've found that it can cause as many problems as it solves. So for this demo we will have app state drive our UI updates, and sync Fluid data into our view's state anytime that it changes. The advantages of this approach are:
 
 1. We leverage React's ability to update its UI based on changing state (vs forcing a re-render)
 2. In the real world, view state will often be a subset of the entire Fluid state
