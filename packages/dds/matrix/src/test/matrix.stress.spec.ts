@@ -287,7 +287,7 @@ describe("Matrix", () => {
             async function() {
                 this.timeout(0);    // Disable timeouts for stress loop
 
-                const iterations = 0;
+                let iterations = 0;
                 const start = Date.now();
 
                 // eslint-disable-next-line no-constant-condition
@@ -303,7 +303,7 @@ describe("Matrix", () => {
 
                     // console.log(matrices[0].toString());
                     // eslint-disable-next-line max-len
-                    console.log(`Stress loop: ${iterations} iterations completed - Total Elapsed: ${((Date.now() - start) / 1000).toFixed(2)}s`);
+                    console.log(`Stress loop: ${++iterations} iterations completed - Total Elapsed: ${((Date.now() - start) / 1000).toFixed(2)}s`);
                 }
             },
         );
