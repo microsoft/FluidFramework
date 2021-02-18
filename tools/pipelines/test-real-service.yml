@@ -22,6 +22,11 @@ parameters:
   type: boolean
   default: false
 
+trigger:
+  branches:
+    include:
+    - main
+    - release/*
 pr: none
 
 variables:
