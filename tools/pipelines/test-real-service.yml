@@ -128,6 +128,7 @@ jobs:
         fluid__webpack__tenantId: $(fluid-webpack-tenantId)
         fluid__webpack__tenantSecret: $(fluid-webpack-tenantSecret)
         FLUID_DI_ROOT: ${{ variables.diDir }}/node_modules
+        FLUID_DI_LOGGERPKG: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
       inputs:
         command: 'custom'
         workingDir: packages/test/end-to-end-tests
