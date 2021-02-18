@@ -43,7 +43,7 @@ export class PrimitivesCollection extends DataObject implements IFluidHTMLView {
     public render(div: HTMLElement) {
         const mapCreate = (name: string) => SharedMap.create(this.runtime, name);
         const mapListen = (listener: (changed: IDirectoryValueChanged) => void) => {
-            this.root.on("valueChanged", (changed) => {
+            this.mapDir.on("containedValueChanged", (changed) => {
                 if (changed.path !== this.mapDir.absolutePath) {
                     return;
                 }
