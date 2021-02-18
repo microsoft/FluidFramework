@@ -3,29 +3,29 @@
 ## 0.49.0
 
 * feat: Add demandTree() to TreeNodeHandle
-  * Associated pull request: !28004
+  * Associated pull request: [28004](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28004)
 * chore: Replace usages of `del-cli` with `rimraf`
-  * Associated pull request: !27947
+  * Associated pull request: [27947](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27947)
 * test: Detach of the root should be invalid
-  * Associated pull request: !27943
+  * Associated pull request: [27943](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27943)
 * build: Update dependencies
-  * Associated pull request: !27930
+  * Associated pull request: [27930](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27930)
 * refactor: make createFluidDocumentStore async, and make expensiveValidation internal
-  * Associated pull request: !27170
+  * Associated pull request: [27170](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27170)
 * build: Updated packages to use `version.json` files to track their recorded versions
-  * Associated pull request: !27776
+  * Associated pull request: [27776](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27776)
 
 ## 0.42.0
 
 * feat: SharedTree reads summary format 0.1.0 which supports history virtualization
-  * Associated pull request: !27284
+  * Associated pull request: [27284](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27284)
 * Add missing export
 * refactor: don't use immtuable.js
-  * Associated pull request: !27072
+  * Associated pull request: [27072](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27072)
 * Document key
 * Clean up test
 * fix: type of TreeNodeHandle.node
-  * Associated pull request: !27693
+  * Associated pull request: [27693](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27693)
 * comments about immutability
 * fix lint
 * Rename
@@ -98,17 +98,17 @@
 ## 0.35.0
 
 * feat: Add telemetry properties for all SharedTree events
-  * Associated pull request: !27538
+  * Associated pull request: [27538](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27538)
 * merge: releases/2021.01.4 into master
-  * Associated pull request: !27448
+  * Associated pull request: [27448](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27448)
 * feat: Add TreeNodeHandles
-  * Associated pull request: !27070
+  * Associated pull request: [27070](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27070)
 * merge: Integrate changes from fluidframework
-  * Associated pull request: !27398
+  * Associated pull request: [27398](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27398)
 * merge: releases/2021.01.4 into master
-  * Associated pull request: !27409
+  * Associated pull request: [27409](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27409)
 * fix: Export summarizers
-  * Associated pull request: !27410
+  * Associated pull request: [27410](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27410)
 * Merge commit '93a143f412116b05963422aa3a04a42e62469602' from fluid into integrations/shared-tree
 * Merge branch 'master' into integrations/shared-tree
 * Split 'packages/shared-tree/' into commit '6227d08860d73c64c8b82fa34a3fca58565298c7'
@@ -120,45 +120,45 @@
 ## 0.22.1
 
 * build: update and audit deps
-  * Associated pull request: !27395
+  * Associated pull request: [27395](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27395)
 * feat: Add telemetry for invalid/malformed edits to SharedTree
-  * Associated pull request: !27318
+  * Associated pull request: [27318](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27318)
 * build: Fixed cross-package incremental build for `fluid-document-store`
-  * Associated pull request: !27285
+  * Associated pull request: [27285](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27285)
 * feat: "replace" affordance on FluidDocumentStore
-  * Associated pull request: !27213
+  * Associated pull request: [27213](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27213)
 
 ## 0.19.2
 
 * chore: Add dispose functionality to FluidDocumentStore, Checkout and SharedTree
-  * Associated pull request: !26952
+  * Associated pull request: [26952](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26952)
 * build: update fluid to 0.32.1
-  * Associated pull request: !27217
+  * Associated pull request: [27217](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27217)
 * run api extractor
 * fix lint errors
 * move handler to contstructor
 * chore: Cleanup of shared-tree resulting from development tooling
-  * Associated pull request: !27186
+  * Associated pull request: [27186](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27186)
 * improvement: ensure payloads do not appear as a property when empty
-  * Associated pull request: !27166
+  * Associated pull request: [27166](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27166)
 * chore: Added API documentation generation to the build + misc. tooling cleanup
-  * Associated pull request: !27148
+  * Associated pull request: [27148](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27148)
 * code review updates
 * remove dispose from basiccheckout as it has been added to parent abstract class
 * Squashed 'packages/shared-tree/' changes from 13a0d61e6..fa5bc426b
 * test: Add unit tests for LogViewer
-  * Associated pull request: !26985
+  * Associated pull request: [26985](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26985)
 * improvment: minor forest related code cleanup and normalize package-lock
-  * Associated pull request: !27083
+  * Associated pull request: [27083](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27083)
 * build: Add missing dev dependencies in `fluid-document-store` and `shared-tree`
-  * Associated pull request: !27097
+  * Associated pull request: [27097](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27097)
 * docs: Merged changes from wikiMaster
-  * Associated pull request: !27077
+  * Associated pull request: [27077](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27077)
 * docs: Fixed mermaid syntax
 * merge: merge releases/2021.01.2 into master
-  * Associated pull request: !27067
+  * Associated pull request: [27067](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27067)
 * improvement: invalidate the dependents of all nodes within deleted document subtrees
-  * Associated pull request: !26984
+  * Associated pull request: [26984](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26984)
 
 ## 0.17.1
 
@@ -168,7 +168,7 @@ _Version update only._
 
 * Merged PR 26944: Factor out NodeData
 * fix: Correct shared-tree lint configuration to not pick up Whiteboard settings
-  * Associated pull request: !26987
+  * Associated pull request: [26987](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26987)
 * run API extractor
 * Merge branch 'master' of https://intentional.visualstudio.com/intent/_git/typescript-pipe into user/coclauso/update-fluid-packages
 * ChangeNodeSequence -> TreeNodeSequence
@@ -186,18 +186,18 @@ _Version update only._
 ## 0.14.0
 
 * refactor: Rename core tree types
-  * Associated pull request: !26681
+  * Associated pull request: [26681](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26681)
 * fix: Disable header/header lint rule expecting wrong header format
-  * Associated pull request: !26642
+  * Associated pull request: [26642](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26642)
 * chore: Use copyright headers consistent with Fluid
-  * Associated pull request: !26630
+  * Associated pull request: [26630](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26630)
 * fix: Properly run eslint on source files in shared-tree
-  * Associated pull request: !26617
+  * Associated pull request: [26617](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26617)
 
 ## 0.13.6
 
 * docs: Update README.md
-  * Associated pull request: !26546
+  * Associated pull request: [26546](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26546)
 * Rename Session To Checkout
 * more clarity in PrefetchFilter comment
 * fix comment duplication
@@ -213,14 +213,14 @@ _Version update only._
 * fixes from merge
 * Merge remote-tracking branch 'origin/master' into user/crmacomb/session
 * build: Adopt fluid build conventions in shared-tree
-  * Associated pull request: !26350
+  * Associated pull request: [26350](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26350)
 * Merge remote-tracking branch 'origin/master' into user/crmacomb/session
 * refactor: cleanup delta codepath
-  * Associated pull request: !26499
+  * Associated pull request: [26499](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26499)
 * fix lints
 * Merge remote-tracking branch 'origin/master' into user/crmacomb/session
 * test: flush edits during documentStore tests
-  * Associated pull request: !26356
+  * Associated pull request: [26356](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26356)
 * clarify cancel todo
 * Apply suggestions from code review
 * Merge remote-tracking branch 'origin/master' into user/crmacomb/session
@@ -231,49 +231,49 @@ _Version update only._
 * Merge commit 'b15a962' into user/crmacomb/session
 * Merge commit 'd259fb4' into user/crmacomb/session
 * revert: Revert "Merged PR 26399: version: BREAKING CHANGE Update Fluid Framework packages to 0.30.0"
-  * Associated pull request: !26479
+  * Associated pull request: [26479](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26479)
 * fix: Add unit tests for Transaction
-  * Associated pull request: !26447
+  * Associated pull request: [26447](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26447)
 * feat: full edit group support
-  * Associated pull request: !26300
+  * Associated pull request: [26300](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26300)
 * chore: minor tweaks from onboarding reading
-  * Associated pull request: !26457
+  * Associated pull request: [26457](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26457)
 * fix: Assert against runtime.attachState in saveSummary
-  * Associated pull request: !26459
+  * Associated pull request: [26459](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26459)
 * feat: Introduce more ergonomic change creation & editing APIs
-  * Associated pull request: !26404
+  * Associated pull request: [26404](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26404)
 * version: BREAKING CHANGE Update Fluid Framework packages to 0.30.0
-  * Associated pull request: !26399
+  * Associated pull request: [26399](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26399)
 * refactor: centralize and document all persisted types
-  * Associated pull request: !26334
+  * Associated pull request: [26334](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26334)
 * add cache so walking trees when there are local edits is not super slow
 * Split up session type
 * remove: Remove tooling and configuration for running shared-tree tests in a browser
-  * Associated pull request: !26321
+  * Associated pull request: [26321](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26321)
 * Apply suggestions from code review
 * update api file
 * Merge remote-tracking branch 'origin/master' into user/crmacomb/session
 * refactor: BREAKING CHANGE move non-persisted types out of EditLocation.ts
-  * Associated pull request: !26332
+  * Associated pull request: [26332](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26332)
 * Merge remote-tracking branch 'origin/master' into user/crmacomb/session
 * Apply suggestions from code review
 * refactor: Remove @intentional/framework dependency from shared-tree
-  * Associated pull request: !26316
+  * Associated pull request: [26316](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26316)
 * better comment
 * update framework version to support async document store factories
 * Merge remote-tracking branch 'origin/master' into user/crmacomb/session
 * fix most tests
 * fi: Update framework and test-utilities to 1.118.3
-  * Associated pull request: !26240
+  * Associated pull request: [26240](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26240)
 * Merge remote-tracking branch 'origin/master' into user/crmacomb/session
 * fix: implement transactional edit groups in store
-  * Associated pull request: !26078
+  * Associated pull request: [26078](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26078)
 * remove: Remove support for specifying a TraitLocation's parent via `parentNode`
-  * Associated pull request: !26174
+  * Associated pull request: [26174](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26174)
 * fi: update framework and test-utilities to 1.118.1
-  * Associated pull request: !26175
+  * Associated pull request: [26175](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26175)
 * rename: Rename trait and sibling field of Point
-  * Associated pull request: !26180
+  * Associated pull request: [26180](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26180)
 * more docs
 * fix tests
 * Merge remote-tracking branch 'origin/master' into user/crmacomb/session
@@ -290,7 +290,7 @@ _Version update only._
 * Merge remote-tracking branch 'origin/master' into user/crmacomb/session
 * get tests passing
 * refactor: Support parents being specified as parentNode or parent in EncodedTraitLocation
-  * Associated pull request: !26145
+  * Associated pull request: [26145](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26145)
 * Merged PR 26080: BREAKING CHANGE: feat: implement setValue in SharedTree
 * Add test for failed rebase
 * Merge branch 'user/taylorsw/LongRunningTransactions' of https://intentional.visualstudio.com/intent/_git/whiteboard-collaboration into user/taylorsw/LongRunningTransactions
@@ -298,7 +298,7 @@ _Version update only._
 * PR feedback
 * Merge remote-tracking branch 'origin/master' into user/taylorsw/LongRunningTransactions
 * refactor: BREAKING CHANGE split out getRevisionView
-  * Associated pull request: !26020
+  * Associated pull request: [26020](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26020)
 * Apply suggestions from code review
 * add shared tree expensiveValidation
 * Merge branch 'user/crmacomb/getRevisionView' of https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration into user/crmacomb/getRevisionView
@@ -306,15 +306,15 @@ _Version update only._
 * Apply suggestions from code review
 * dedup some loading logic
 * test: Add more unit tests for EditLog
-  * Associated pull request: !26048
+  * Associated pull request: [26048](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26048)
 * test: Additional EditLog unit tests
-  * Associated pull request: !26027
+  * Associated pull request: [26027](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26027)
 * Add explicit update method
 * fi: update framework and test-utilities to 1.116.1
-  * Associated pull request: !26025
+  * Associated pull request: [26025](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26025)
 * Merge remote-tracking branch 'origin/master' into user/taylorsw/LongRunningTransactions
 * build: update deps
-  * Associated pull request: !26008
+  * Associated pull request: [26008](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26008)
 * refactor: split out getRevisionView
 * better naming
 * support long-running transactions
@@ -323,11 +323,11 @@ _Version update only._
 
 * docs: Update changelog
 * chore: Update to recent versions of Fluid packages
-  * Associated pull request: !25957
+  * Associated pull request: [25957](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25957)
 * refactor: BREAKING CHANGE require local changes to be valid, and refactor RevisionViewEditor into Transaction
-  * Associated pull request: !25907
+  * Associated pull request: [25907](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25907)
 * fix: Support different summarizing schemes
-  * Associated pull request: !25826
+  * Associated pull request: [25826](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25826)
 * Apply suggestions from code review
 * fix tests, and expand docs
 * fix merge
@@ -340,74 +340,74 @@ _Version update only._
 * fix bugs caught by tests
 * fix
 * fi: update framework and test-utilities to 1.114.1
-  * Associated pull request: !25847
+  * Associated pull request: [25847](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25847)
 * refactor: clarify invalidation in SharedTree
 * feat: add constraint support
-  * Associated pull request: !25822
+  * Associated pull request: [25822](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25822)
 * fix: Correctly initialize allEdits map in EditLog constructor
-  * Associated pull request: !25792
+  * Associated pull request: [25792](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25792)
 * refactor: Restrict public API for SharedTree edit history
-  * Associated pull request: !25781
+  * Associated pull request: [25781](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25781)
 * test: Change move and insert edit creation test helper signatures to be more readable
-  * Associated pull request: !25758
+  * Associated pull request: [25758](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25758)
 * refactor: Make Change a discriminated union over the 'type' field
-  * Associated pull request: !25745
+  * Associated pull request: [25745](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25745)
 * fix: Summaries created before attachment sequence local edits
-  * Associated pull request: !25762
+  * Associated pull request: [25762](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25762)
 * refactor: Change list is represented by EditLog
-  * Associated pull request: !25729
+  * Associated pull request: [25729](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25729)
 * fi: update to framework 1.112.2 and schemagen 5.0218822-olympia
-  * Associated pull request: !25680
+  * Associated pull request: [25680](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25680)
 
 ## 0.6.0
 
 * refactor: Cleanup SharedTree state object
-  * Associated pull request: !25656
+  * Associated pull request: [25656](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25656)
 * fix: BREAKING CHANGE create shared-trees in a valid state with a default tree
-  * Associated pull request: !25638
+  * Associated pull request: [25638](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25638)
 * test: Add a test for initialization of SharedTree with an empty edit list
-  * Associated pull request: !25569
+  * Associated pull request: [25569](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25569)
 * fix: fix deleting of subtrees in forest
-  * Associated pull request: !25581
+  * Associated pull request: [25581](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25581)
 * Merge remote-tracking branch 'origin/master' into jennle/test-initialize
 * test: Add test for empty edit list initialization
 * Fix: Fixes SharedTree initialization error in Whiteboard due to logic error
-  * Associated pull request: !25567
+  * Associated pull request: [25567](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25567)
 * refactor: BREAKING CHANGE cleanup Edit types and docs
-  * Associated pull request: !25541
+  * Associated pull request: [25541](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25541)
 * fi: update to framework 1.108.2
-  * Associated pull request: !25511
+  * Associated pull request: [25511](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25511)
 * refactor: BREAKING CHANGE rename whiteboard-collaboration package to shared-tree
-  * Associated pull request: !25482
+  * Associated pull request: [25482](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25482)
 
 ## 0.4.0
 
 * build: update deps and use stable version of framework, adding it as peer
-  * Associated pull request: !25037
+  * Associated pull request: [25037](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25037)
 * docs: add readme to shared tree
-  * Associated pull request: !25012
+  * Associated pull request: [25012](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25012)
 * build: fix up linter settings
-  * Associated pull request: !25000
+  * Associated pull request: [25000](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25000)
 * refactor: Distinguish EditNode from Node
-  * Associated pull request: !25001
+  * Associated pull request: [25001](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/25001)
 * refactor: tag Changes with their type for easier type checking
-  * Associated pull request: !24998
+  * Associated pull request: [24998](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/24998)
 * build: unify tsconfigs
-  * Associated pull request: !24996
+  * Associated pull request: [24996](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/24996)
 * perf: Make Forest immutable
-  * Associated pull request: !24988
+  * Associated pull request: [24988](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/24988)
 * lint
 * Merge remote-tracking branch 'origin/master' into user/neck/removeEditAdvanced
 * small doc fix
 * build: update deps
-  * Associated pull request: !24981
+  * Associated pull request: [24981](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/24981)
 * fix: Add lerna bootstrap to post-install
-  * Associated pull request: !24980
+  * Associated pull request: [24980](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/24980)
 * PR Feedback
 * mend
 * merge
 * fix: RevisionViews may now create build edits that contain detached subtrees
-  * Associated pull request: !24943
+  * Associated pull request: [24943](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/24943)
 * nit
 * refactor
 * Merge branch 'user/neck/resolveDetachedNodes' into user/neck/removeEditAdvanced
@@ -420,18 +420,18 @@ _Version update only._
 ## 0.3.1
 
 * feat: Allow serialization of uninitialized SharedTrees
-  * Associated pull request: !24904
+  * Associated pull request: [24904](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/24904)
 * refactor: Organize state in SharedTree by lifetime
-  * Associated pull request: !24883
+  * Associated pull request: [24883](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/24883)
 * feat: add applyEdit helper to SharedTree
-  * Associated pull request: !24892
+  * Associated pull request: [24892](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/24892)
 * feat: SharedTree includes the current tree view in its summary/snapshot
-  * Associated pull request: !24871
+  * Associated pull request: [24871](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/24871)
 * feat: Added initialTree to summary and added summary tests
-  * Associated pull request: !24806
+  * Associated pull request: [24806](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/24806)
 * fix: Remove references to ChangeStream from SharedTree
-  * Associated pull request: !24865
+  * Associated pull request: [24865](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/24865)
 * ci: Fix publish error due to git changes in npmrc
-  * Associated pull request: !24854
+  * Associated pull request: [24854](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/24854)
 * feat: BREAKING CHANGE Add multi-package support using lerna
-  * Associated pull request: !24756
+  * Associated pull request: [24756](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/24756)
