@@ -457,10 +457,11 @@ export class Loader extends EventEmitter implements ILoader {
     }
 
     private async loadContainer(
-        docId: string,
+        encodedDocId: string,
         request: IRequest,
         resolved: IFluidResolvedUrl,
     ): Promise<Container> {
+        const docId = decodeURI(encodedDocId);
         return Container.load(
             docId,
             this,

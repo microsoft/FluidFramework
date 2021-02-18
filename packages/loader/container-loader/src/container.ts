@@ -281,7 +281,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {
                 containerUrl,
                 clientDetailsOverride: loadOptions.clientDetailsOverride,
-                id: decodeURI(docId),
+                id: docId,
                 resolvedUrl,
                 canReconnect: loadOptions.canReconnect,
             });

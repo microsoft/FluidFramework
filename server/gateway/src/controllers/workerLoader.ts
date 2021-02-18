@@ -34,7 +34,7 @@ class WorkerLoader implements ILoader, IFluidRunnable {
         console.log(`Request inside web worker`);
         console.log(request);
         const container = await Container.load(
-            this.id,
+            decodeURI(this.id),
             (this as unknown) as Loader,
             request, // request.url, // To be used when taking the updated Container.load signature
             this.resolved,
