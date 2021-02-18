@@ -1,5 +1,103 @@
 # Change Log
 
+## 0.55.2
+
+* docs: Update change logs with newest `release-tools`
+  * Associated pull request: [28163](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28163)
+  * Commit: [4302d051af4d80cf964ae37ca25d971391923d15](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/4302d051af4d80cf964ae37ca25d971391923d15)
+* docs: Remove outdated TODOs and add enum member documentation
+  * Associated pull request: [28146](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28146)
+  * Commit: [f69fe933b0ca01cf0ebf1c7c225336c45b61d869](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/f69fe933b0ca01cf0ebf1c7c225336c45b61d869)
+* refactor: BREAKING CHANGE: move PrefetchingCheckout from shared-tree to fluid-document-store
+  * Associated pull request: [28057](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28057)
+  * Commit: [11a95dd4bb4a306f06b8f54fbba120990af93d5f](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/11a95dd4bb4a306f06b8f54fbba120990af93d5f)
+* test: SharedTree history virtualization
+  * Associated pull request: [27710](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27710)
+  * Commit: [a06643ab9c1d1300aa42036cb67029f332d90dec](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/a06643ab9c1d1300aa42036cb67029f332d90dec)
+* refactor: Cleanup payload copy
+  * Associated pull request: [28023](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28023)
+  * Commit: [3949b49227eec6c218b958e913c7d952292ece88](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/3949b49227eec6c218b958e913c7d952292ece88)
+* Fix lint error
+  * Commit: [051838cef240586ca86c250bdf795e150abd3141](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/051838cef240586ca86c250bdf795e150abd3141)
+* Fix set up code
+  * Commit: [4c59cfd3150e2b58a4bb6d6e4c5e834aacd947cf](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/4c59cfd3150e2b58a4bb6d6e4c5e834aacd947cf)
+* Fix file name
+  * Commit: [71a9b928e410dc49115e9d03a52718cbd60d2e48](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/71a9b928e410dc49115e9d03a52718cbd60d2e48)
+* Use catch up function
+  * Commit: [34abba5176ff55100c2a11aac9ecaa77465e45fb](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/34abba5176ff55100c2a11aac9ecaa77465e45fb)
+* Split out summary format tests
+  * Commit: [bc1b092b6e5b5693c895ecee7fc7e10471ace4dd](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/bc1b092b6e5b5693c895ecee7fc7e10471ace4dd)
+* Change payload
+  * Commit: [e07c59f7830afb487336d9505173292b65e7168d](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/e07c59f7830afb487336d9505173292b65e7168d)
+* Merge remote-tracking branch 'origin/master' into jennle/shared-tree-summary-0.1.0-write
+  * Commit: [7835f575a245dfcd080e3bed0a7881806ddcc4ba](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/7835f575a245dfcd080e3bed0a7881806ddcc4ba)
+* Create summary format read and write tests
+  * Commit: [3325191710e9b95555715d9746bbb12317ae4657](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/3325191710e9b95555715d9746bbb12317ae4657)
+* Assertion changes
+  * Commit: [e7fea86eb11375e0a905f5e34a79ba2869aa6594](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/e7fea86eb11375e0a905f5e34a79ba2869aa6594)
+* Remove assert
+  * Commit: [266b5e03c7fa8e5af8ad4ca8551304df055db27b](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/266b5e03c7fa8e5af8ad4ca8551304df055db27b)
+* Fix lint
+  * Commit: [15905bb13ac3ec72fe9b5d2e355de1d0942baade](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/15905bb13ac3ec72fe9b5d2e355de1d0942baade)
+* Test changes
+  * Commit: [02870241385936287319277b8c92d2cd07d47ac1](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/02870241385936287319277b8c92d2cd07d47ac1)
+* Deep compare and rename chunk variables
+  * Commit: [a10a0d4c933cc11604ef0501d6a7094666dc0c8f](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/a10a0d4c933cc11604ef0501d6a7094666dc0c8f)
+* Update api docs
+  * Commit: [911a51f1250cef1f00180ca091ac294148f27771](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/911a51f1250cef1f00180ca091ac294148f27771)
+* Make event internal
+  * Commit: [25f5b179ef50ab0460783719e753d20936f302ff](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/25f5b179ef50ab0460783719e753d20936f302ff)
+* Fix linting
+  * Commit: [98bd54bb888d62e981480acf059e8ca6c0a5532c](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/98bd54bb888d62e981480acf059e8ca6c0a5532c)
+* Document default behavior
+  * Commit: [ad963dbf47a66744307593bccfd0de7c371b1be1](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/ad963dbf47a66744307593bccfd0de7c371b1be1)
+* Merge branch 'jennle/shared-tree-summary-0.1.0-write' of https://intentional.visualstudio.com/intent/_git/typescript-pipe into jennle/shared-tree-summary-0.1.0-write
+  * Commit: [1e4a75906d5dcc46e25056a04b5f5392e1c9f292](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/1e4a75906d5dcc46e25056a04b5f5392e1c9f292)
+* Clean up edit log constructor
+  * Commit: [5dedc9e2ee2b2431268b93e82a40d44903d6a341](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/5dedc9e2ee2b2431268b93e82a40d44903d6a341)
+* Apply suggestions from code review
+  * Commit: [a2b9e2e6488eb47a6a875d4025e9b1aae9c0b75b](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/a2b9e2e6488eb47a6a875d4025e9b1aae9c0b75b)
+* Use default param
+  * Commit: [46f8814156bc255a2ecee3858d4ce577b2a6973c](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/46f8814156bc255a2ecee3858d4ce577b2a6973c)
+* Change parameter and doc
+  * Commit: [2230c6c44065e7ca8a11325d86936b06a426bf41](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/2230c6c44065e7ca8a11325d86936b06a426bf41)
+* Make initiateChunkUpload private
+  * Commit: [1768f4f863dba62133cad395ade9ee066d1ea1d9](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/1768f4f863dba62133cad395ade9ee066d1ea1d9)
+* Mark initiateEditChunkUpload internal
+  * Commit: [1d88c921f873378aa3cdac56f0085561d529bdbf](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/1d88c921f873378aa3cdac56f0085561d529bdbf)
+* Add comments
+  * Commit: [6e467e3f4f811a414d4324203949af77a6037ed0](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/6e467e3f4f811a414d4324203949af77a6037ed0)
+* Fix lint errors
+  * Commit: [64a2e01be9beee5703fbd7059371efbad7453d53](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/64a2e01be9beee5703fbd7059371efbad7453d53)
+* Merge remote-tracking branch 'origin/master' into jennle/shared-tree-summary-0.1.0-write
+  * Commit: [411fcc7acf8ae79332a4e5e3eab6c30f8c8e4e4b](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/411fcc7acf8ae79332a4e5e3eab6c30f8c8e4e4b)
+* Merge branch 'jennle/sharedtree-history-virtualization' into jennle/shared-tree-summary-0.1.0-write
+  * Commit: [4db9d9408c3f25115608ffbb1eb2815bab54fb7d](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/4db9d9408c3f25115608ffbb1eb2815bab54fb7d)
+* Add test
+  * Commit: [0ebe14e4e7af569e88649c939beeb0cc7f0b6a38](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/0ebe14e4e7af569e88649c939beeb0cc7f0b6a38)
+* Merge branch 'jennle/sharedtree-history-virtualization' into jennle/shared-tree-summary-0.1.0-write
+  * Commit: [c2d3f885169f3f96323bb8ed1585d3e91c51bdfe](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/c2d3f885169f3f96323bb8ed1585d3e91c51bdfe)
+* factor out change processing
+  * Commit: [cc9f81378e940c868fe3878e9022f3b3d9bcff4d](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/cc9f81378e940c868fe3878e9022f3b3d9bcff4d)
+* Fix package version
+  * Commit: [23db6b29a6d93d2e438e1b7c00633264af62fd9d](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/23db6b29a6d93d2e438e1b7c00633264af62fd9d)
+* Fix edit log call
+  * Commit: [f8ac70308705a6bd3a1457da70a74a9e5cee22c9](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/f8ac70308705a6bd3a1457da70a74a9e5cee22c9)
+* Merge branch 'jennle/sharedtree-history-virtualization' into jennle/shared-tree-summary-0.1.0-write
+  * Commit: [4230179733b56e412ddc5118f6ab608b3185e5df](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/4230179733b56e412ddc5118f6ab608b3185e5df)
+* fix import
+  * Commit: [03bf8f51bd9f925950e595b7b20d27886a508e65](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/03bf8f51bd9f925950e595b7b20d27886a508e65)
+* Merge branch 'jennle/sharedtree-history-virtualization' into jennle/shared-tree-summary-0.1.0-write
+  * Commit: [3d241d70c89093d4ad3259c28a3453e69a292e35](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/3d241d70c89093d4ad3259c28a3453e69a292e35)
+* Remove extra deps
+  * Commit: [d9244ba25ef3e9f176e17cb55ec0f452d6f8eb4f](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/d9244ba25ef3e9f176e17cb55ec0f452d6f8eb4f)
+* Get test passing
+  * Commit: [7945a12961c36d104718de94ef74d6598ce76d5e](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/7945a12961c36d104718de94ef74d6598ce76d5e)
+* Add chunking
+  * Commit: [0b43b6091ef48444645ab108c2b28092e87f9bf2](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/0b43b6091ef48444645ab108c2b28092e87f9bf2)
+* Add prelim virtualization test
+  * Commit: [17b5cf36c96ead67e3fc536bb1ea95a9863f37ab](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/17b5cf36c96ead67e3fc536bb1ea95a9863f37ab)
+
 ## 0.49.0
 
 * feat: Add demandTree() to TreeNodeHandle
