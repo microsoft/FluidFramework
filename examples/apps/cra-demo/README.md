@@ -35,7 +35,9 @@ import { KeyValueDataObject, KeyValueInstantiationFactory } from "@fluid-experim
 
 ### 3.a Add the `getContainerId` function
 
-The `Fluid` class requires a seperate create vs load path, so we need a way to determine if we are loading the app for the first time, or if we loading an existing file. The `getContainerId` function is our current method for simulating creating vs loading by looking for a hash in the URL. This is an area we'd like to improve, so for now, paste this code right below your import statments.
+The `Fluid` class helps you create or load a Fluid container. As you build your application, you'll eventually track these containers yourself. For now, `getContainerId` function either loads the container identified by the hash in the URL or creates a new container for you.
+
+This is an area we'd like to improve, but, for now, paste this code below your imports.
 
 ```tsx
 const getContainerId = (): { containerId: string; isNew: boolean } => {
