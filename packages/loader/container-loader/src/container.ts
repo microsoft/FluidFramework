@@ -1732,7 +1732,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // are set. Global requests will still go directly to the loader
         const loader = new RelativeLoader(this.loader, () => this.originalRequest);
         const previousCodeDetails = this._context?.codeDetails;
-        const loadContainerCopyFn = async (additionalHeaders) => {
+        const loadContainerCopyFn = async (additionalHeaders: IRequestHeader) => {
             // Load the container copy restricted: uncached and no reconnect
             return this.loadContainerCopy(
                 this.loader,
@@ -1803,8 +1803,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             url: baseRequestUrl,
         };
 
-        const fromSequenceNumber = additionalHeaders[LoaderHeader.sequenceNumber] ?? -1;
-
         const resolvedAsFluid = await urlResolver.resolve(containerRequest);
         ensureFluidResolvedUrl(resolvedAsFluid);
 
@@ -1814,12 +1812,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             return Promise.reject(new Error(`Invalid URL ${resolvedAsFluid.url}`));
         }
 
+        // parseUrl's id is expected to be of format "tenantId/docId"
+        const [, docId] = parsed.id.split("/");
+
         const container = await Container.load(
-            parsed.id,
+            docId,
             loader,
             containerRequest,
             resolvedAsFluid);
 
+        const fromSequenceNumber = additionalHeaders[LoaderHeader.sequenceNumber] ?? -1;
         if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
             await new Promise<void>((resolve, reject) => {
                 function opHandler(message: ISequencedDocumentMessage) {
