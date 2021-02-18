@@ -19,7 +19,7 @@ import {
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { CreateCorruptionError } from "@fluidframework/container-utils";
+import { CreateProcessingError } from "@fluidframework/container-utils";
 import {
     assert,
     Deferred,
@@ -525,6 +525,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this.verifyNotClosed();
 
         try {
+            // catches as data processing error whether or not they come from async pending queues
             switch (message.type) {
                 case DataStoreMessageType.Attach: {
                     const attachMessage = message.contents as IAttachMessage;
@@ -585,7 +586,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
             this.emit("op", message);
         } catch (error) {
-            throw CreateCorruptionError(error, {
+            // eslint-disable-next-line @typescript-eslint/no-throw-literal
+            throw CreateProcessingError(error, {
                 clientId: this.clientId,
                 messageClientId: message.clientId,
                 sequenceNumber: message.sequenceNumber,

@@ -6,18 +6,18 @@
 import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { LoggingError } from "@fluidframework/telemetry-utils";
-import { DataCorruptionError, CreateCorruptionError } from "../error";
+import { CreateProcessingError } from "../error";
 
 describe("Errors", () => {
-    describe("DataCorruptionError coercion", () => {
-        it("Should skip coercion for matching types", () => {
-            const originalError = new DataCorruptionError(
-                "Example error message",
-                {},
-            );
-            const coercedError = CreateCorruptionError(originalError);
+    describe("DataProcessingError coercion", () => {
+        it("Should skip coercion for LoggingErrors", () => {
+            const originalError = new LoggingError("Inherited error message", {
+                errorType: "Demoted error type",
+                otherProperty: "Considered PII-free property",
+            });
+            const coercedError = CreateProcessingError(originalError);
 
-            assert(coercedError === originalError);
+            assert(coercedError as any === originalError);
         });
 
         it("Should not fail coercing malformed inputs", () => {
@@ -32,14 +32,14 @@ describe("Errors", () => {
                 [],
             ];
             const coercedErrors = originalMalformations.map((value) =>
-                CreateCorruptionError(value),
+                CreateProcessingError(value),
             );
 
             assert(
                 coercedErrors.every(
                     (error) =>
                         error.errorType ===
-                        ContainerErrorType.dataCorruptionError,
+                        ContainerErrorType.dataProcessingError,
                 ),
             );
             assert(
@@ -68,7 +68,7 @@ describe("Errors", () => {
 
         it("Should be coercible from a string message", () => {
             const originalMessage = "Example of some thrown string";
-            const coercedError = CreateCorruptionError(originalMessage);
+            const coercedError = CreateProcessingError(originalMessage);
 
             assert(coercedError.message === originalMessage);
         });
@@ -76,39 +76,16 @@ describe("Errors", () => {
         it("Should be coercible from a property object", () => {
             const originalProps = {
                 message: "Inherited error message",
-                errorType: "Overwritten error type",
                 otherProperty: "Presumed PII-full property",
             };
-            const coercedError = CreateCorruptionError(originalProps);
+            const coercedError = CreateProcessingError(originalProps);
 
             assert(coercedError.message === originalProps.message);
             assert(
                 coercedError.errorType ===
-                    ContainerErrorType.dataCorruptionError,
+                    ContainerErrorType.dataProcessingError,
             );
-            assert(coercedError.errorSubType === undefined);
             assert((coercedError as any).otherProperty === undefined);
-        });
-
-        it("Should be coercible from a logging error", () => {
-            const originalError = new LoggingError("Inherited error message", {
-                errorType: "Demoted error type",
-                otherProperty: "Considered PII-free property",
-            });
-            const coercedError = CreateCorruptionError(originalError);
-
-            assert(coercedError.message === originalError.message);
-            assert(
-                coercedError.errorType ===
-                    ContainerErrorType.dataCorruptionError,
-            );
-            assert(
-                coercedError.errorSubType === (originalError as any).errorType,
-            );
-            assert(
-                (coercedError as any).otherProperty ===
-                    (originalError as any).otherProperty,
-            );
         });
     });
 });

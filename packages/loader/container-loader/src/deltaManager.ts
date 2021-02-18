@@ -48,7 +48,7 @@ import {
 } from "@fluidframework/driver-utils";
 import {
     CreateContainerError,
-    CreateCorruptionError,
+    CreateProcessingError,
     DataCorruptionError,
 } from "@fluidframework/container-utils";
 import { debug } from "./debug";
@@ -400,7 +400,7 @@ export class DeltaManager
             });
 
         this._inbound.on("error", (error) => {
-            this.close(CreateCorruptionError(error, {}));
+            this.close(CreateProcessingError(error, {}));
         });
 
         // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained

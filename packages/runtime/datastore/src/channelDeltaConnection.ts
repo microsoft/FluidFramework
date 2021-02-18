@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
-import { CreateCorruptionError } from "@fluidframework/container-utils";
+import { CreateProcessingError } from "@fluidframework/container-utils";
 
 export class ChannelDeltaConnection implements IDeltaConnection {
     private _handler: IDeltaHandler | undefined;
@@ -38,9 +38,11 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 
     public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         try {
+            // catches as data processing error whether or not they come from async pending queues
             this.handler.process(message, local, localOpMetadata);
         } catch (error) {
-            throw CreateCorruptionError(error, {
+            // eslint-disable-next-line @typescript-eslint/no-throw-literal
+            throw CreateProcessingError(error, {
                 messageClientId: message.clientId,
                 sequenceNumber: message.sequenceNumber,
                 clientSequenceNumber: message.clientSequenceNumber,
