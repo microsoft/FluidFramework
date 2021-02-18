@@ -25,7 +25,7 @@ const isValidLoggingError = (error: any): error is LoggingError => {
     return typeof error?.errorType === "string" && error instanceof LoggingError;
 };
 
-const isRegularObject = (value: any): boolean => value !== null || Array.isArray(value) || typeof value !== "object";
+const isRegularObject = (value: any): boolean => value !== null && !Array.isArray(value) && typeof value === "object";
 
 function extractSafeLoggableProperties(error: any) {
     // Only get properties we know about.
