@@ -50,7 +50,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
             "tenantId": 1,
         },
         true);
-  
+
     if (mongoExpireAfterSeconds > 0) {
         await scribeDeltas.createTTLIndex(
             {
