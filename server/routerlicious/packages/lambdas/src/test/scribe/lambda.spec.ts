@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
+// import { IGitManager } from "@fluidframework/server-services-client";
+import { ICreateTreeEntry, ICreateTreeParams, ITree } from "@fluidframework/gitresources";
+import { GitManager } from "@fluidframework/server-services-client";
 import { DefaultServiceConfiguration, ICollection, IDocument, IProducer, ITenantManager, MongoManager } from "@fluidframework/server-services-core";
 import { KafkaMessageFactory, MessageFactory, TestCollection, TestContext, TestDbFactory, TestKafka, TestTenantManager } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import _ from "lodash";
 import nconf from "nconf";
-import { ScribeLambda } from "../../Scribe/lambda";
+import { ScribeLambda } from "../../scribe/lambda";
 import { ScribeLambdaFactory } from "../../scribe/lambdaFactory";
 
 describe("Routerlicious", () => {
@@ -28,6 +31,25 @@ describe("Routerlicious", () => {
             let messageFactory: MessageFactory;
             let kafkaMessageFactory: KafkaMessageFactory;
             let lambda: ScribeLambda;
+            let testGitManager: GitManager;
+            let tree : ITree; 
+
+            function sendOps(num: number): void {
+                for (let i = 0; i < num; i++) {
+                    const message = messageFactory.createSequencedOperation();
+                    lambda.handlerCore(kafkaMessageFactory.sequenceMessage(message, testDocumentId));
+                }
+            }
+
+            async function sendSummarize(num: number): Promise<void> {
+                const summaryMessage = messageFactory.createSummarize(num, tree.sha);
+                lambda.handlerCore(kafkaMessageFactory.sequenceMessage(summaryMessage, testDocumentId));
+
+                await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
+                                    
+                const ackMessage = messageFactory.createSummaryAck(tree.sha);
+                lambda.handlerCore(kafkaMessageFactory.sequenceMessage(ackMessage, testDocumentId));
+            }
 
             beforeEach(async() => {
                 messageFactory = new MessageFactory(testDocumentId, testClientId, testTenantId);
@@ -42,6 +64,14 @@ describe("Routerlicious", () => {
                 testKafka = new TestKafka();
                 testProducer = testKafka.createProducer();
                 testTenantManager = new TestTenantManager();
+                const tenant = await testTenantManager.getTenant(testTenantId);
+                testGitManager = tenant.gitManager as GitManager;
+                const createTreeEntry: ICreateTreeEntry[] = [];
+                const requestBody: ICreateTreeParams = {
+                    tree: createTreeEntry,
+                };
+                tree = await testGitManager.createGitTree(requestBody);
+                testGitManager.addTree(tree);
 
                 let factory = new ScribeLambdaFactory(
                     testMongoManager,
@@ -55,43 +85,51 @@ describe("Routerlicious", () => {
                 const config = (new nconf.Provider({})).defaults({ documentId: testDocumentId, tenantId: testTenantId })
                     .use("memory");
                 lambda = await factory.create(config, testContext) as ScribeLambda;
+                messageFactory.createSequencedOperation();// mock join op.
             });
 
             describe(".handler()", () => {
                 it("op", async () => {
                     const numMessages = 10;
-                    for (let i = 0; i < numMessages; i++) {
-                        const message = messageFactory.createSequencedOperation();
-                        lambda.handlerCore(kafkaMessageFactory.sequenceMessage(message, testDocumentId));
-
-                    }
+                    sendOps(numMessages);
                     await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
 
-                    assert.equal(numMessages, testMessageCollection.collection.length);
+                    assert.equal(numMessages , testMessageCollection.collection.length);
                 });
 
-                // it("summarize", async () => {
-                //     const message = messageFactory.createSummarize();
-                //     message.operation.type = MessageType.Summarize;
-                //     lambda.handlerCore(kafkaMessageFactory.sequenceMessage(message, testDocumentId));
-                    
-                //     await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
-
-                // });
-
-                it("noclient", async () => {
+                it("summarize op should clean up the previous ops store in mongodb", async () => {
                     const numMessages = 10;
-                    for (let i = 0; i < numMessages; i++) {
-                        const message = messageFactory.createSequencedOperation();
-                        lambda.handlerCore(kafkaMessageFactory.sequenceMessage(message, testDocumentId));
+                    sendOps(numMessages);
 
-                    }
+                    await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
+                    
+                    sendSummarize(numMessages);
+
+                    await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
+
+                    assert.equal(testMessageCollection.collection.length, 2);
+                });
+
+                it("noclient op will trigger service to generate summary and won't clean up the previous ops", async () => {
+                    const numMessages = 5;
+                    sendOps(numMessages);
+
+                    await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
+                    
+                    sendSummarize(numMessages);
+                    
+                    await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
+
+                    sendOps(numMessages);
+
+                    await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
+                
                     const message = messageFactory.createNoClient();
                     lambda.handlerCore(kafkaMessageFactory.sequenceMessage(message, testDocumentId));
 
                     await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
 
-                    assert.equal(numMessages, testMessageCollection.collection.length);
+                    assert.equal(testMessageCollection.collection.length, 8);
                 });
             });
         });

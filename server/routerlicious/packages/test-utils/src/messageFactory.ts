@@ -178,8 +178,8 @@ export class MessageFactory {
         return message;
     }
 
-    public createSequencedOperation(): ISequencedOperationMessage {
-        const operation = this.createDocumentMessage(0);
+    public createSequencedOperation(referenceSequenceNumber = 0): ISequencedOperationMessage {
+        const operation = this.createDocumentMessage(referenceSequenceNumber);
         const sequencedOperation: ISequencedDocumentMessage = {
             clientId: this.clientId,
             clientSequenceNumber: operation.clientSequenceNumber,
@@ -205,12 +205,12 @@ export class MessageFactory {
         return message;
     }
 
-    public createSummarize(): ISequencedOperationMessage {
-        const operation = this.createDocumentMessage(0);
+    public createSummarize(referenceSequenceNumber: number,  handle: string): ISequencedOperationMessage {
+        const operation = this.createDocumentMessage(referenceSequenceNumber);
         const sequencedOperation: ISequencedDocumentAugmentedMessage = {
             clientId: this.clientId,
             clientSequenceNumber: operation.clientSequenceNumber,
-            contents: operation.contents,
+            contents: `{"handle": "${handle}" ,"head":null,"message":"","parents":[]}`,
             metadata: operation.metadata,
             minimumSequenceNumber: 0,
             origin: undefined,
@@ -233,21 +233,49 @@ export class MessageFactory {
         return message;
     }
 
-    public createNoClient(): ISequencedOperationMessage {
-        const operation = this.createDocumentMessage(0);
+    public createNoClient(referenceSequenceNumber = 0): ISequencedOperationMessage {
+        const operation = this.createDocumentMessage(referenceSequenceNumber);
         const sequencedOperation: ISequencedDocumentAugmentedMessage = {
             clientId: this.clientId,
             clientSequenceNumber: operation.clientSequenceNumber,
             contents: operation.contents,
             metadata: operation.metadata,
-            minimumSequenceNumber: 0,
+            minimumSequenceNumber: this.sequenceNumber,
             origin: undefined,
-            referenceSequenceNumber: operation.referenceSequenceNumber,
+            referenceSequenceNumber: this.sequenceNumber,
             sequenceNumber: this.sequenceNumber++,
             term: 1,
             timestamp: Date.now(),
             traces: [],
             type: MessageType.NoClient,
+            additionalContent: "",
+        };
+
+        const message: ISequencedOperationMessage = {
+            documentId: this.documentId,
+            operation: sequencedOperation,
+            tenantId: this.tenantId,
+            type: SequencedOperationType,
+        };
+
+        return message;
+    }
+
+    public createSummaryAck(handle: string): ISequencedOperationMessage {
+        const operation = this.createDocumentMessage(0);
+        const sequencedOperation: ISequencedDocumentAugmentedMessage = {
+            clientId: null,
+            clientSequenceNumber: -1,
+            contents: { handle, summaryProposal : { summarySequenceNumber : 1 } },
+            metadata: operation.metadata,
+            minimumSequenceNumber: 0,
+            origin: undefined,
+            referenceSequenceNumber: -1,
+            sequenceNumber: this.sequenceNumber++,
+            term: 1,
+            timestamp: Date.now(),
+            traces: [],
+            type: MessageType.SummaryAck,
             additionalContent: "",
         };
 
