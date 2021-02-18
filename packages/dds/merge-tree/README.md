@@ -81,7 +81,9 @@ MergeTree we do two things:
 
 The 'client' and 'refSeq' become new arguments to our search function:
 
-              (client, refSeq, position) -> (segment, offset)
+```
+(client, refSeq, position) -> (segment, offset)
+```
 
 A segment was inserted and/or removed on the remote client at the time client sent the operation if either:
 
