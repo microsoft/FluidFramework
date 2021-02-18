@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IGenericError,
@@ -25,16 +26,19 @@ const testRequest: IRequest = { url: id };
 
 describe("Container", () => {
     let driver: ITestDriver;
+    let logger: ITelemetryBaseLogger | undefined;
     const loaderContainerTracker = new LoaderContainerTracker();
     beforeEach(()=>{
         driver = getFluidTestDriver();
+        logger = getTestLogger?.();
     });
     afterEach(() => {
         loaderContainerTracker.reset();
     });
     async function loadContainer(props?: Partial<ILoaderProps>) {
         const loader =  new Loader({
-            ... props,
+            ...props,
+            logger,
             urlResolver: props?.urlResolver ?? driver.createUrlResolver(),
             documentServiceFactory :
                 props?.documentServiceFactory ?? driver.createDocumentServiceFactory(),

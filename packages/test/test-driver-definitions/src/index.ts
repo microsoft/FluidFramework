@@ -7,7 +7,7 @@ import { ITestDriver } from "./interfaces";
 
 declare global {
     /**
-     * This function needs to be provided by the environment leverging these defintions, like a mocha test hook.
+     * This function needs to be provided by the environment leveraging these defintions, like a mocha test hook.
      */
     export function getFluidTestDriver(): ITestDriver;
 }
