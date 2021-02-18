@@ -76,20 +76,23 @@ export class MessageFactory {
     constructor(private readonly documentId, private readonly clientId, private readonly tenantId = "test") {
     }
 
-    public createDocumentMessage(referenceSequenceNumber = 0): IDocumentMessage {
+    public createDocumentMessage(type = MessageType.Operation, referenceSequenceNumber = 0): IDocumentMessage {
         const operation: IDocumentMessage = {
             clientSequenceNumber: ++this.clientSequenceNumber,
             contents: null,
             metadata: undefined,
             referenceSequenceNumber,
             traces: [],
-            type: MessageType.Operation,
+            type,
         };
         return operation;
     }
 
-    public create(referenceSequenceNumber = 0, timestamp = Date.now()): IRawOperationMessage {
-        const operation = this.createDocumentMessage(referenceSequenceNumber);
+    public create(
+        type = MessageType.Operation,
+        referenceSequenceNumber = 0,
+        timestamp = Date.now()): IRawOperationMessage {
+        const operation = this.createDocumentMessage(type, referenceSequenceNumber);
         return this.createRawOperation(operation, timestamp, this.clientId);
     }
 
