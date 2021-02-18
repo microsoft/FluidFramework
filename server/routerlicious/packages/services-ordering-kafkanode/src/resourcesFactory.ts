@@ -31,7 +31,7 @@ export class KafkaResources implements IKafkaResources {
 }
 
 export class KafkaResourcesFactory implements IResourcesFactory<KafkaResources> {
-    constructor(private readonly name, private readonly lambdaModule) {
+    constructor(private readonly name: string, private readonly lambdaModule: string) {
     }
 
     public async create(config: Provider): Promise<KafkaResources> {

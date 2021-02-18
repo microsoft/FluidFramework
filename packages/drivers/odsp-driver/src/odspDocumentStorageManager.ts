@@ -386,7 +386,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (blob instanceof ArrayBuffer) {
             return blob;
         }
-        return IsoBuffer.from(blob.content, blob.encoding ?? "utf-8");
+        return IsoBuffer.from(blob.content, blob.encoding ?? "utf-8").buffer;
     }
 
     public async read(blobId: string): Promise<string> {
