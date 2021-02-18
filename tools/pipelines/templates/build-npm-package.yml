@@ -331,7 +331,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              git status | grep -v package.json | grep -v package-lock.json | grep -v packageVersion.ts | grep -v lerna.json | grep -e '^\s' > git_status.log
+              git status | grep -v package.json | grep -v package-lock.json | grep -v packageVersion.ts | grep -v lerna.json | grep -v "(use" | grep -e '^\s' > git_status.log
               if [ `cat git_status.log | wc -l` != "0" ]; then
                 cat git_status.log
                 echo "##vso[task.logissue type=error]Build should not create extraenous files"
