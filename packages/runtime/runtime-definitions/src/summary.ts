@@ -63,6 +63,14 @@ export interface ISummarizerNodeConfig {
     readonly throwOnFailure?: true,
 }
 
+export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
+    /**
+     * True if GC is disabled. If so, don't track GC related state for a summary.
+     * This is propagated to all child nodes.
+     */
+    readonly gcDisabled?: boolean;
+}
+
 export enum CreateSummarizerNodeSource {
     FromSummary,
     FromAttach,
@@ -161,8 +169,8 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
          */
         createParam: CreateChildSummarizerNodeParam,
         /** Optional configuration affecting summarize behavior */
-        config?: ISummarizerNodeConfig,
-        getGCDataFn?: () => Promise<IGarbageCollectionData>,
+        config?: ISummarizerNodeConfigWithGC,
+        getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
         getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
     ): ISummarizerNodeWithGC;
 
@@ -171,8 +179,9 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     /**
      * Returns this node's data that is used for garbage collection. This includes a list of GC nodes that represent
      * this node. Each node has a set of outbound routes to other GC nodes in the document.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    getGCData(): Promise<IGarbageCollectionData>;
+    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
 
     /** Tells whether this node is being referenced in this document or not. Unreferenced node will get GC'd */
     isReferenced(): boolean;

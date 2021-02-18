@@ -67,11 +67,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
     public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger) {
         assert(this.wipSummaryLogger === undefined, "wipSummaryLogger should not be set yet in startSummary");
-
-        assert(
-            this.wipReferenceSequenceNumber === undefined,
-            "Already tracking a summary",
-        );
+        assert(this.wipReferenceSequenceNumber === undefined, "Already tracking a summary");
 
         this.wipSummaryLogger = summaryLogger;
 
@@ -82,6 +78,7 @@ export class SummarizerNode implements IRootSummarizerNode {
     }
 
     public async summarize(fullTree: boolean): Promise<ISummarizeResult> {
+        assert(this.isTrackingInProgress(), "summarize should not be called when not tracking the summary");
         assert(this.wipSummaryLogger !== undefined, "wipSummaryLogger should have been set in startSummary or ctor");
 
         // Try to reuse the tree if unchanged
@@ -474,10 +471,9 @@ export class SummarizerNode implements IRootSummarizerNode {
             this.wipSummaryLogger,
         );
 
-        // If a summary is in progress, update the child's work-in-progress state.
-        if (this.isSummaryInProgress()) {
-            this.updateChildWipState(child);
-        }
+        // There may be additional state that has to be updated in this child. For example, if a summary is being
+        // tracked, the child's summary tracking state needs to be updated too.
+        this.maybeUpdateChildState(child);
 
         this.children.set(id, child);
         return child;
@@ -569,14 +565,22 @@ export class SummarizerNode implements IRootSummarizerNode {
     }
 
     /**
-     * Updates the work-in-progress state of the child if summary is in progress.
-     * @param child - The child node to be updated.
+     * Updates the state of the child if required. For example, if a summary is currently being  tracked, the child's
+     * summary tracking state needs to be updated too.
+     * @param child - The child node whose state is to be updated.
      */
-    protected updateChildWipState(child: SummarizerNode) {
-        child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;
+    protected maybeUpdateChildState(child: SummarizerNode) {
+        // If we are tracking a summary, this child was created after the tracking started. So, we need to update the
+        // child's tracking state as well.
+        if (this.isTrackingInProgress()) {
+            child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;
+        }
     }
 
-    protected isSummaryInProgress(): boolean {
+    /**
+     * Tells whether summary tracking is in progress. True if "startSummary" API is called before summarize.
+     */
+    protected isTrackingInProgress(): boolean {
         return this.wipReferenceSequenceNumber !== undefined;
     }
 }

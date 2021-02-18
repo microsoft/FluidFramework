@@ -8,6 +8,7 @@ module.exports = {
         "@fluidframework/eslint-config-fluid/eslint7"
     ],
     "rules": {
+        "@typescript-eslint/no-shadow": "off",
         "space-before-function-paren": "off", // Off because it conflicts with typescript-formatter
     }
 }

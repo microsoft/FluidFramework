@@ -55,6 +55,18 @@ export interface ISummaryWriter {
 }
 
 /**
+ * Interface to abstract out the storage specific details of pending message retrieval
+ */
+export interface IPendingMessageReader {
+    /**
+     * Read pending messages
+     * @param from Starting sequence number (inclusive)
+     * @param to End sequence number (inclusive)
+     */
+    readMessages(from: number, to: number): Promise<ISequencedDocumentMessage[]>;
+}
+
+/**
  * Interface to abstract out the storage specific details of scribe checkpointing
  */
 export interface ICheckpointManager {

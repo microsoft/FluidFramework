@@ -9,7 +9,7 @@ import { ISocketStorageDiscovery } from "./contracts";
 import { getWithRetryForTokenRefresh, getOrigin } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
 import { TokenFetchOptions } from "./tokenFetch";
-import { EpochTracker, FetchType } from "./epochTracker";
+import { EpochTracker } from "./epochTracker";
 
 /**
  * Makes join session call on SPO to get information about the web socket for a document
@@ -19,7 +19,8 @@ import { EpochTracker, FetchType } from "./epochTracker";
  * @param path - The API path that is relevant to this request
  * @param method - The type of request, such as GET or POST
  * @param logger - A logger to use for this request
- * @param getVroomToken - A function that is able to provide the vroom token for this request
+ * @param getStorageToken - A function that is able to provide the access token for this request
+ * @param epochTracker - fetch wrapper which incorporates epoch logic around joisSession call.
  */
 export async function fetchJoinSession(
     driveId: string,
@@ -34,7 +35,9 @@ export async function fetchJoinSession(
     return getWithRetryForTokenRefresh(async (options) => {
         const token = await getStorageToken(options, "JoinSession");
 
-        const extraProps = options.refresh ? { secondAttempt: 1, hasClaims: !!options.claims } : {};
+        const extraProps = options.refresh
+            ? { secondAttempt: 1, hasClaims: !!options.claims, hasTenantId: !!options.tenantId }
+            : {};
         return PerformanceEvent.timedExecAsync(logger, { eventName: "JoinSession", ...extraProps }, async (event) => {
             // TODO Extract the auth header-vs-query logic out
             const siteOrigin = getOrigin(siteUrl);
@@ -48,7 +51,7 @@ export async function fetchJoinSession(
             const response = await epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
                 `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
                 { method, headers },
-                FetchType.joinSession,
+                "joinSession",
             );
 
             // TODO SPO-specific telemetry

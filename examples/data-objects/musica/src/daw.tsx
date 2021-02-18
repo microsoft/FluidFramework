@@ -296,20 +296,21 @@ export class DAW extends React.Component<DAWProps, DAWState> {
    * Recursively plays through the given song, starting at the given note index.
    */
     private postPlaySong(song: Song, noteIndex: number, loop: boolean) {
+        let _noteIndex = noteIndex;
         if (this.state.stopSong) {
             this.setState({ stopSong: false });
             return;
         }
 
-        if (noteIndex >= song.noteSequence.length) {
+        if (_noteIndex >= song.noteSequence.length) {
             if (!loop) {
                 return;
             }
 
-            noteIndex = 0;
+            _noteIndex = 0;
         }
 
-        const note = song.noteSequence[noteIndex];
+        const note = song.noteSequence[_noteIndex];
         const beatPercentage = Note.getBeatPercentage(note);
         const noteLengthSeconds = (60 / this.state.tempo) * beatPercentage;
         const noteLengthMs = noteLengthSeconds * 1000;
@@ -334,7 +335,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
         }
 
         // Call this method to move to the next note after the current note is finished.
-        setTimeout(() => this.postPlaySong(song, noteIndex + 1, loop), noteLengthMs);
+        setTimeout(() => this.postPlaySong(song, _noteIndex + 1, loop), noteLengthMs);
     }
 
     public render() {

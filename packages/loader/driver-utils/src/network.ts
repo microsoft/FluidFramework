@@ -50,6 +50,7 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
     constructor(
         errorMessage: string,
         readonly claims: string | undefined,
+        readonly tenantId: string | undefined,
         statusCode: number,
     ) {
         super(errorMessage, { statusCode });
@@ -108,7 +109,11 @@ export function createGenericNetworkError(
 }
 
 /**
- * Check if a connection error can be retried.  Unless explicitly disallowed, retry is allowed.
+ * Check if a connection error can be retried.  Unless explicitly allowed, retry is disallowed.
+ * I.e. asserts or unexpected exceptions in our code result in container failure.
  * @param error - The error to inspect for ability to retry
  */
-export const canRetryOnError = (error: any): boolean => error?.canRetry !== false;
+export const canRetryOnError = (error: any): boolean => error?.canRetry === true;
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+export const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds;

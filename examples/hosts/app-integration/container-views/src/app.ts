@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { getTinyliciousContainer } from "@fluid-experimental/get-container";
 import { IFluidObject } from "@fluidframework/core-interfaces";
-import { Container } from "@fluidframework/container-loader";
-import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
+import { IContainer } from "@fluidframework/container-definitions";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
 import { DiceRollerContainerRuntimeFactory } from "./containerCode";
@@ -25,7 +25,7 @@ document.title = documentId;
 
 // In this app, we are assuming our container code is capable of providing a default mountable view.  This is up to
 // how the container code is authored though (e.g. if the container code is data-only and does not bundle views).
-async function mountDefaultFluidObjectFromContainer(container: Container): Promise<void> {
+async function mountDefaultFluidObjectFromContainer(container: IContainer): Promise<void> {
     const div = document.getElementById("content") as HTMLDivElement;
     // For this basic scenario, I'm just requesting the default view.  Nothing stopping me from issuing alternate
     // requests (e.g. for other Fluid objects or views) if I wished.
@@ -71,7 +71,7 @@ async function start(): Promise<void> {
     const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
     await mountDefaultFluidObjectFromContainer(container);
     // Setting "fluidStarted" is just for our test automation
-    // eslint-disable-next-line dot-notation
+    // eslint-disable-next-line @typescript-eslint/dot-notation
     window["fluidStarted"] = true;
 }
 

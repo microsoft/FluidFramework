@@ -13,7 +13,7 @@ export { ui };
 
 export { controls };
 
-// eslint-disable-next-line no-duplicate-imports
+// eslint-disable-next-line @typescript-eslint/no-duplicate-imports
 import { CharacterCodes, Paragraph, Table } from "./text";
 export { CharacterCodes, Paragraph, Table };
 

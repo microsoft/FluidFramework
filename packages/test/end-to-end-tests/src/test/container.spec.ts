@@ -14,11 +14,10 @@ import {
     IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
 import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
-import { LocalCodeLoader, TestObjectProvider } from "@fluidframework/test-utils";
+import { LocalCodeLoader, TestObjectProvider, LoaderContainerTracker } from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-// eslint-disable-next-line import/no-extraneous-dependencies
-import { ITestDriver, LocalServerTestDriver } from "@fluidframework/test-drivers";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { createPrimedDataStoreFactory, createRuntimeFactory, TestDataObject } from "./compatUtils";
 
 const id = "fluid-test://localhost/containerTest";
@@ -26,8 +25,12 @@ const testRequest: IRequest = { url: id };
 
 describe("Container", () => {
     let driver: ITestDriver;
+    const loaderContainerTracker = new LoaderContainerTracker();
     beforeEach(()=>{
-        driver = new LocalServerTestDriver();
+        driver = getFluidTestDriver();
+    });
+    afterEach(() => {
+        loaderContainerTracker.reset();
     });
     async function loadContainer(props?: Partial<ILoaderProps>) {
         const loader =  new Loader({
@@ -37,11 +40,12 @@ describe("Container", () => {
                 props?.documentServiceFactory ?? driver.createDocumentServiceFactory(),
             codeLoader: props?.codeLoader ?? new LocalCodeLoader([]),
         });
+        loaderContainerTracker.add(loader);
 
         const testResolved = await loader.services.urlResolver.resolve(testRequest);
         ensureFluidResolvedUrl(testResolved);
         return Container.load(
-            "tenantId/documentId",
+            "documentId",
             loader,
             testRequest,
             testResolved);

@@ -4,10 +4,10 @@
         "src/test/**/*"
     ],
     "compilerOptions": {
-        "strictNullChecks": false,
         "rootDir": "./src",
         "outDir": "./dist",
-        "composite": true
+        "composite": true,
+        "preserveConstEnums": true
     },
     "include": [
         "src/**/*"

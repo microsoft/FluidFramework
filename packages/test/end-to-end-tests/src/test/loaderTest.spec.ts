@@ -12,10 +12,14 @@ import {
 import { IContainer, ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { LocalResolver } from "@fluidframework/local-driver";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createAndAttachContainer, createLocalLoader, OpProcessingController } from "@fluidframework/test-utils";
+import {
+    createAndAttachContainer,
+    createDocumentId,
+    createLoader,
+    OpProcessingController,
+} from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 class TestSharedDataObject1 extends DataObject {
     public get _root() {
@@ -62,21 +66,22 @@ const testSharedDataObjectFactory2 = new DataObjectFactory(
     []);
 
 describe("Loader.request", () => {
-    const documentId = "loaderRequestTest";
-    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
+    let driver: ITestDriver;
+    before(()=>{
+        driver = getFluidTestDriver();
+    });
+
     const codeDetails: IFluidCodeDetails = {
         package: "loaderRequestTestPackage",
         config: {},
     };
 
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
     let dataStore1: TestSharedDataObject1;
     let dataStore2: TestSharedDataObject2;
     let loader: ILoader;
-    let urlResolver: LocalResolver;
     let opProcessingController: OpProcessingController;
 
-    async function createContainer(): Promise<IContainer> {
+    async function createContainer(documentId: string): Promise<IContainer> {
         const runtimeFactory =
             new ContainerRuntimeFactoryWithDefaultDataStore(
                 testSharedDataObjectFactory1,
@@ -85,16 +90,18 @@ describe("Loader.request", () => {
                     [testSharedDataObjectFactory2.type, Promise.resolve(testSharedDataObjectFactory2)],
                 ],
             );
-        loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
+        loader = createLoader(
+            [[codeDetails, runtimeFactory]],
+            driver.createDocumentServiceFactory(),
+            driver.createUrlResolver(),
+        );
         return createAndAttachContainer(
-            codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
+            codeDetails, loader, driver.createCreateNewRequest(documentId));
     }
-
+    let container: IContainer;
     beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
-        urlResolver = new LocalResolver();
-
-        const container = await createContainer();
+        const documentId = createDocumentId();
+        container = await createContainer(documentId);
         dataStore1 = await requestFluidObject(container, "default");
 
         dataStore2 = await testSharedDataObjectFactory2.createInstance(dataStore1._context.containerRuntime);
@@ -107,9 +114,11 @@ describe("Loader.request", () => {
     });
 
     it("can create the data objects with correct types", async () => {
-        const testUrl1 = `${documentLoadUrl}/${dataStore1.id}`;
+        const testUrl1 = await container.getAbsoluteUrl(dataStore1.handle.absolutePath);
+        assert(testUrl1);
         const testDataStore1 = await requestFluidObject(loader, testUrl1);
-        const testUrl2 = `${documentLoadUrl}/${dataStore2.id}`;
+        const testUrl2 = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
+        assert(testUrl2);
         const testDataStore2 = await requestFluidObject(loader, testUrl2);
 
         assert(testDataStore1 instanceof TestSharedDataObject1, "requestFromLoader returns the wrong type for default");
@@ -117,7 +126,8 @@ describe("Loader.request", () => {
     });
 
     it("can create data object using url with second id, having correct type and id", async () => {
-        const dataStore2Url = `${documentLoadUrl}/${dataStore2.id}`;
+        const dataStore2Url = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
+        assert(dataStore2Url);
         const testDataStore = await requestFluidObject(loader, dataStore2Url);
 
         assert(testDataStore instanceof TestSharedDataObject2, "request returns the wrong type with long url");
@@ -125,7 +135,8 @@ describe("Loader.request", () => {
     });
 
     it("can create data object using url with second id, having distinct value from default", async () => {
-        const url = `${documentLoadUrl}/${dataStore2.id}`;
+        const url = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
+        assert(url);
         const testDataStore = await requestFluidObject<TestSharedDataObject2>(loader, url);
 
         dataStore1._root.set("color", "purple");
@@ -138,7 +149,13 @@ describe("Loader.request", () => {
 
     it("loaded container is paused using loader pause flags", async () => {
         // load the container paused
-        const container2 = await loader.resolve({ url: documentLoadUrl, headers: { [LoaderHeader.pause]: true } });
+        const headers = {
+            [LoaderHeader.cache]: false,
+            [LoaderHeader.pause]: true,
+        };
+        const url = await container.getAbsoluteUrl("");
+        assert(url);
+        const container2 = await loader.resolve({ url, headers });
         opProcessingController.addDeltaManagers(container2.deltaManager);
 
         // create a new data store using the original container
@@ -146,7 +163,7 @@ describe("Loader.request", () => {
         // this binds newDataStore to dataStore1
         dataStore1._root.set("key", newDataStore.handle);
 
-        // the dataStore3 shouldn't exist in container2 yet.
+        // the dataStore3 shouldn't exist in container2 yet (because the loader isn't caching the container)
         try {
             await requestFluidObject(container2, {
                 url: newDataStore.id,
@@ -170,7 +187,35 @@ describe("Loader.request", () => {
         assert(newDataStore2 instanceof TestSharedDataObject2, "requestFromLoader returns the wrong type for object2");
     });
 
-    afterEach(async () => {
-        await deltaConnectionServer.webSocketServer.close();
+    it("caches the loaded container across multiple requests as expected", async () => {
+        const url = await container.getAbsoluteUrl("");
+        assert(url);
+        // load the containers paused
+        const container1 = await loader.resolve({ url, headers: { [LoaderHeader.pause]: true } });
+        opProcessingController.addDeltaManagers(container1.deltaManager);
+        const container2 = await loader.resolve({ url, headers: { [LoaderHeader.pause]: true } });
+
+        assert.strictEqual(container1, container2, "container not cached across multiple loader requests");
+
+        // create a new data store using the original container
+        const newDataStore = await testSharedDataObjectFactory2.createInstance(dataStore1._context.containerRuntime);
+        // this binds newDataStore to dataStore1
+        dataStore1._root.set("key", newDataStore.handle);
+
+        (container1 as Container).resume();
+
+        // Flush all the ops
+        await opProcessingController.process();
+
+        const sameDataStore1 = await requestFluidObject(container1, {
+            url: newDataStore.id,
+            headers: { wait: false },   // data store load default wait to true currently
+        });
+        const sameDataStore2 = await requestFluidObject(container2, {
+            url: newDataStore.id,
+            headers: { wait: false },   // data store load default wait to true currently
+        });
+        assert.strictEqual(sameDataStore1, sameDataStore2,
+            "same containers do not return same data store for same request");
     });
 });

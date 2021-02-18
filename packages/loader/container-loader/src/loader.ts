@@ -9,6 +9,7 @@ import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-d
 import {
     IFluidObject,
     IRequest,
+    IRequestHeader,
     IResponse,
     IFluidRouter,
     IFluidCodeDetails,
@@ -44,11 +45,7 @@ function canUseCache(request: IRequest): boolean {
         return true;
     }
 
-    const noCache =
-        request.headers[LoaderHeader.cache] === false ||
-        request.headers[LoaderHeader.reconnect] === false;
-
-    return !noCache;
+    return request.headers[LoaderHeader.cache] !== false;
 }
 
 export class RelativeLoader extends EventEmitter implements ILoader {
@@ -279,10 +276,22 @@ export class Loader extends EventEmitter implements ILoader {
     public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<Container> {
         debug(`Container creating in detached state: ${performance.now()} `);
 
-        return Container.createDetached(
+        const container = await Container.createDetached(
             this,
             codeDetails,
-            );
+        );
+
+        if (this.cachingEnabled) {
+            container.once("attached", () => {
+                ensureFluidResolvedUrl(container.resolvedUrl);
+                const parsedUrl = parseUrl(container.resolvedUrl.url);
+                if (parsedUrl !== undefined) {
+                    this.addToContainerCache(parsedUrl.id, Promise.resolve(container));
+                }
+            });
+        }
+
+        return container;
     }
 
     public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<Container> {
@@ -305,15 +314,6 @@ export class Loader extends EventEmitter implements ILoader {
             const resolved = await this.resolveCore(request);
             return resolved.container.request({ url: resolved.parsed.path });
         });
-    }
-
-    public cacheContainer(container: Container, request: IRequest, parsedUrl: IParsedUrl) {
-        const { canCache } = this.parseHeader(parsedUrl, request);
-
-        if (canCache) {
-            const key = this.getKeyForContainerCache(request, parsedUrl);
-            this.containers.set(key, Promise.resolve(container));
-        }
     }
 
     public async requestWorker(baseUrl: string, request: IRequest): Promise<IResponse> {
@@ -352,6 +352,20 @@ export class Loader extends EventEmitter implements ILoader {
         return key;
     }
 
+    private addToContainerCache(key: string, containerP: Promise<Container>) {
+        this.containers.set(key, containerP);
+        containerP.then((container) => {
+            // If the container is closed or becomes closed after we resolve it, remove it from the cache.
+            if (container.closed) {
+                this.containers.delete(key);
+            } else {
+                container.once("closed", () => {
+                    this.containers.delete(key);
+                });
+            }
+        }).catch((error) => { console.log("Error during caching Container on the Loader", error); });
+    }
+
     private async resolveCore(
         request: IRequest,
     ): Promise<{ container: Container; parsed: IParsedUrl }> {
@@ -364,10 +378,9 @@ export class Loader extends EventEmitter implements ILoader {
             return Promise.reject(new Error(`Invalid URL ${resolvedAsFluid.url}`));
         }
 
-        request.headers = request.headers ?? {};
+        // parseUrl's id is expected to be of format "tenantId/docId"
+        const [, docId] = parsed.id.split("/");
         const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
-
-        debug(`${canCache} ${request.headers[LoaderHeader.pause]} ${request.headers[LoaderHeader.version]}`);
 
         let container: Container;
         if (canCache) {
@@ -378,16 +391,16 @@ export class Loader extends EventEmitter implements ILoader {
             } else {
                 const containerP =
                     this.loadContainer(
-                        parsed.id,
+                        docId,
                         request,
                         resolvedAsFluid);
-                this.containers.set(key, containerP);
+                this.addToContainerCache(key, containerP);
                 container = await containerP;
             }
         } else {
             container =
                 await this.loadContainer(
-                    parsed.id,
+                    docId,
                     request,
                     resolvedAsFluid);
         }
@@ -408,17 +421,12 @@ export class Loader extends EventEmitter implements ILoader {
         return { container, parsed };
     }
 
-    private canUseCache(request: IRequest): boolean {
-        if (request.headers === undefined) {
-            return true;
-        }
+    private get cachingEnabled() {
+        return this.services.options.cache !== false;
+    }
 
-        const noCache =
-            request.headers[LoaderHeader.cache] === false ||
-            request.headers[LoaderHeader.reconnect] === false ||
-            request.headers[LoaderHeader.pause] === true;
-
-        return !noCache;
+    private canCacheForRequest(headers: IRequestHeader): boolean {
+        return this.cachingEnabled && headers[LoaderHeader.cache] !== false;
     }
 
     private parseHeader(parsed: IParsedUrl, request: IRequest) {
@@ -438,19 +446,23 @@ export class Loader extends EventEmitter implements ILoader {
         if (request.headers[LoaderHeader.version] === "null") {
             request.headers[LoaderHeader.version] = null;
         }
+
+        const canCache = this.canCacheForRequest(request.headers);
+        debug(`${canCache} ${request.headers[LoaderHeader.version]}`);
+
         return {
-            canCache: this.canUseCache(request),
+            canCache,
             fromSequenceNumber,
         };
     }
 
     private async loadContainer(
-        id: string,
+        docId: string,
         request: IRequest,
         resolved: IFluidResolvedUrl,
     ): Promise<Container> {
         return Container.load(
-            id,
+            docId,
             this,
             request,
             resolved);

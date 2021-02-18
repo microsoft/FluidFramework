@@ -34,7 +34,7 @@ function train() {
     function addCorpus(content: string, tree: MergeTree.TST<number>) {
         let count = 0;
         const re = /\b\w+\b/g;
-        let result: RegExpExecArray;
+        let result: RegExpExecArray | null;
         do {
             result = re.exec(content);
             if (result) {

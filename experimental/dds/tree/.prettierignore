@@ -1,0 +1,19 @@
+# Coverage
+.nyc_output
+coverage
+
+# Build output
+dist
+lib
+
+# Dependencies
+node_modules
+
+# Used by API-Extractor
+*.api.md
+_api-extractor-temp/**
+
+# Formatting is not properly enforced in PR gating since `lerna version` uniformizes the file in a previous pipeline step.
+# Since in practice this is likely only a tabs vs spaces issue, this file has just been converted to match the rest of the
+# repository.
+package.json

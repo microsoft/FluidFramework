@@ -30,6 +30,10 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     beforeEach(()=>{
         args = argsFactory();
     });
+    afterEach(() => {
+        args.reset();
+    });
+
     const initialCellValue = "Initial cell value";
     const newCellValue = "A new cell value";
 
@@ -219,5 +223,5 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 };
 
 describe("Cell", () => {
-    generateTest(tests, { tinylicious: true });
+    generateTest(tests);
 });

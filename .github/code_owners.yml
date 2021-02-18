@@ -40,9 +40,6 @@ packages/drivers/**:
 - tanviraumi
 - znewton
 
-packages/drivers/odsp-driver/**:
-- GaryWilber
-
 packages/framework/**:
 - skylerjokiel
 - ChumpChief
@@ -87,13 +84,19 @@ examples/**:
 - skylerjokiel
 - ChumpChief
 
+# experimental
+experimental/dds/tree/**:
+- DLehenbauer
+- taylorsw04
+- CraigMacomber
+- Abe27342
+
 # docs
 docs/**:
 - tylerbutler
-"**/*.md":
+"**/README*.md":
 - tylerbutler
 
 # tools
 tools/**:
 - curtisman
-

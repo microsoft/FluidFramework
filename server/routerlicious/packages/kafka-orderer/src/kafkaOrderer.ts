@@ -37,11 +37,6 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             serviceConfiguration);
     }
 
-    // Back-compat, removal tracked with issue #4346
-    public get parentBranch(): null {
-        return null;
-    }
-
     constructor(
         public readonly existing: boolean,
         private readonly producer: core.IProducer,
