@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { parse } from "url";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
@@ -11,14 +12,15 @@ import {
 } from "@fluidframework/aqueduct";
 import { IContainer, ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequest,
+    IResponse } from "@fluidframework/core-interfaces";
 import {
     createAndAttachContainer,
     createDocumentId,
     createLoader,
     OpProcessingController,
 } from "@fluidframework/test-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 class TestSharedDataObject1 extends DataObject {
@@ -32,6 +34,26 @@ class TestSharedDataObject1 extends DataObject {
 
     public get _context() {
         return this.context;
+    }
+
+    public async request(request: IRequest): Promise<IResponse> {
+        const url = request.url;
+        const parsed = parse(url, true);
+        const requestParser = RequestParser.create({ url: request.url });
+        const itemId = requestParser.pathParts[0];
+        if (itemId === "bigBlobs") {
+            const value = this.root.get<string>(requestParser.pathParts.join("/"));
+            if (value === undefined) {
+                return { mimeType: "text/plain", status: 404, value: `request ${url} not found` };
+            }
+            return { mimeType: "fluid/object", status: 200, value };
+        // eslint-disable-next-line no-null/no-null
+        } else if (parsed.search !== null) {
+            return { mimeType: "fluid/object", status: 200, value : `${parsed.search}` };
+        }
+        else {
+            return super.request(request);
+        }
     }
 }
 
@@ -220,13 +242,10 @@ describe("Loader.request", () => {
     });
     it("request can handle url with query params", async () => {
         const url = await container.getAbsoluteUrl("");
-        assert(url);
 
         const query = `?query1=1&query2=2`;
         const testUrl = `${url}${query}`;
         const test = await loader.request({ url: testUrl });
-        assert(test);
-        const error = `unknown request url: /${query}`;
-        assert.strictEqual(test.value, error);
+        assert.strictEqual(test.value, query, "request did not pass the right query");
     });
 });
