@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import "mocha";
-
 import { IChannelServices, Serializable } from "@fluidframework/datastore-definitions";
 import {
     MockFluidDataStoreRuntime,
@@ -12,7 +10,7 @@ import {
     MockEmptyDeltaConnection,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { SharedMatrix, SharedMatrixFactory } from "../src";
+import { SharedMatrix, SharedMatrixFactory } from "..";
 import { expectSize, setCorners, checkCorners } from "./utils";
 
 const enum Const {
@@ -35,7 +33,7 @@ async function summarize<T extends Serializable>(matrix: SharedMatrix<T>) {
     const matrix2 = new SharedMatrix<T>(dataStoreRuntime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
     await matrix2.load({
         deltaConnection: new MockEmptyDeltaConnection(),
-        objectStorage
+        objectStorage,
     });
 
     // Vet that the 2nd matrix is equivalent to the original.
@@ -44,7 +42,7 @@ async function summarize<T extends Serializable>(matrix: SharedMatrix<T>) {
     return matrix2;
 }
 
-describe("Big Matrix", function () {
+describe("Big Matrix", function() {
     this.timeout(10000);
 
     describe(`Excel-size matrix (${Const.excelMaxRows}x${Const.excelMaxCols})`, () => {
@@ -187,8 +185,8 @@ describe("Big Matrix", function () {
     describe("local client summarize", () => {
         // MergeTree client expects a either no delta manager or a real delta manager with minimumSequenceNumber and
         // lastSequenceNumber to be updated.
-        // Sp, we test summarize with local client because MockFluidDataStoreRuntime has no delta manager and is assigned
-        // one once it is connected.
+        // Sp, we test summarize with local client because MockFluidDataStoreRuntime has no delta manager and is
+        // assigned one once it is connected.
 
         let matrix: SharedMatrix;
 
