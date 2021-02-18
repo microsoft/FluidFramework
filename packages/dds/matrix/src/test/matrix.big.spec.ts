@@ -185,7 +185,7 @@ describe("Big Matrix", function() {
     describe("local client summarize", () => {
         // MergeTree client expects a either no delta manager or a real delta manager with minimumSequenceNumber and
         // lastSequenceNumber to be updated.
-        // Sp, we test summarize with local client because MockFluidDataStoreRuntime has no delta manager and is
+        // So, we test summarize with local client because MockFluidDataStoreRuntime has no delta manager and is
         // assigned one once it is connected.
 
         let matrix: SharedMatrix;
