@@ -24,13 +24,14 @@ import { createPrimedDataStoreFactory, createRuntimeFactory, TestDataObject } fr
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
 
-describe("Container", () => {
+describe("Container asdf", () => {
     let driver: ITestDriver;
     let logger: ITelemetryBaseLogger | undefined;
     const loaderContainerTracker = new LoaderContainerTracker();
     beforeEach(()=>{
         driver = getFluidTestDriver();
         logger = getTestLogger?.();
+        console.log(`getTestLogger: ${getTestLogger}`);
     });
     afterEach(() => {
         loaderContainerTracker.reset();
