@@ -46,7 +46,11 @@ import {
     createGenericNetworkError,
     getRetryDelayFromError,
 } from "@fluidframework/driver-utils";
-import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
+import {
+    CreateContainerError,
+    CreateProcessingError,
+    DataCorruptionError,
+} from "@fluidframework/container-utils";
 import { debug } from "./debug";
 import { DeltaQueue } from "./deltaQueue";
 import { logNetworkFailure, waitForConnectedState } from "./networkUtils";
@@ -387,7 +391,7 @@ export class DeltaManager
             });
 
         this._inbound.on("error", (error) => {
-            this.close(CreateContainerError(error));
+            this.close(CreateProcessingError(error, {}));
         });
 
         // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
