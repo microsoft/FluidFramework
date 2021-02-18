@@ -326,7 +326,7 @@ stages:
               ArtifactName: '_api-extractor-temp'
               publishLocation: 'Container'
 
-        - task: Bash
+        - task: Bash@3
           displayName: Check for extraenous modified files
           inputs:
             targetType: 'inline'
