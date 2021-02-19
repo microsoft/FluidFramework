@@ -5,7 +5,11 @@
 
 import { Uint8ArrayToString } from "@fluidframework/common-utils";
 import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
-import { fetchIncorrectResponse, invalidFileNameStatusCode } from "@fluidframework/odsp-doclib-utils";
+import {
+    fetchIncorrectResponse,
+    invalidFileNameStatusCode,
+    throwOdspNetworkError,
+} from "@fluidframework/odsp-doclib-utils";
 import { getGitType } from "@fluidframework/protocol-base";
 import { SummaryType, ISummaryTree, ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -27,7 +31,6 @@ import {
 } from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
-import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";

@@ -22,8 +22,9 @@ import {
     ISummaryContext,
     IDocumentStorageService,
     DriverErrorType,
+    LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
-import { OdspErrorType } from "@fluidframework/odsp-doclib-utils";
+import { OdspErrorType, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IDocumentStorageGetVersionsResponse,
     IOdspResolvedUrl,
@@ -45,7 +46,6 @@ import {
     persistedCacheValueVersion,
 } from "./odspCache";
 import { getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
-import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
@@ -201,6 +201,23 @@ class BlobCache {
 }
 
 export class OdspDocumentStorageService implements IDocumentStorageService {
+    readonly policies = {
+        // By default, ODSP tells the container not to prefetch/cache.
+        caching: LoaderCachingPolicy.NoCaching,
+
+        // ODSP storage works better if it has less number of blobs / edges
+        // Runtime creating many small blobs results in sub-optimal perf.
+        // 2K seems like the sweat spot:
+        // The smaller the number, less blobs we aggregate. Most storages are very likely to have notion
+        // of minimal "cluster" size, so having small blobs is wasteful
+        // At the same time increasing the limit ensure that more blobs with user content are aggregated,
+        // reducing possibility for de-duping of same blobs (i.e. .attributes rolled into aggregate blob
+        // are not reused across data stores, or even within data store, resulting in duplication of content)
+        // Note that duplication of content should not have significant impact for bytes over wire as
+        // compression of http payload mostly takes care of it, but it does impact storage size and in-memory sizes.
+        minBlobSize: 2048,
+    };
+
     private readonly treesCache: Map<string, ITree> = new Map();
 
     private readonly attributesBlobHandles: Set<string> = new Set();
@@ -369,7 +386,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (blob instanceof ArrayBuffer) {
             return blob;
         }
-        return IsoBuffer.from(blob.content, blob.encoding ?? "utf-8");
+        return IsoBuffer.from(blob.content, blob.encoding ?? "utf-8").buffer;
     }
 
     public async read(blobId: string): Promise<string> {
@@ -482,7 +499,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 if (tokenFetchOptions.refresh) {
                     // This is the most critical code path for boot.
                     // If we get incorrect / expired token first time, that adds up to latency of boot
-                    this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall", hasClaims: !!tokenFetchOptions.claims });
+                    this.logger.sendErrorEvent({
+                        eventName: "TreeLatest_SecondCall",
+                        hasClaims: !!tokenFetchOptions.claims,
+                        hasTenantId: !!tokenFetchOptions.tenantId,
+                    });
                 }
 
                 const hostSnapshotOptions = this.hostPolicy.snapshotOptions;

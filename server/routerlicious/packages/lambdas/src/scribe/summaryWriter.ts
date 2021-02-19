@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-null/no-null */
-
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
     generateServiceProtocolEntries,

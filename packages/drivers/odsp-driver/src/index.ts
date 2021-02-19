@@ -22,7 +22,6 @@ export * from "./odspUrlHelper";
 export * from "./odspError";
 export * from "./createOdspCreateContainerRequest";
 export * from "./tokenFetch";
-export * from "./parseAuthErrorClaims";
 export * from "./epochTracker";
 export * from "./odspDriverUrlResolverForShareLink";
 export * from "./constants";

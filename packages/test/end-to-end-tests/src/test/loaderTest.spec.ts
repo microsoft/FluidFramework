@@ -68,7 +68,7 @@ const testSharedDataObjectFactory2 = new DataObjectFactory(
 describe("Loader.request", () => {
     let driver: ITestDriver;
     before(()=>{
-        driver = getFluidTestDriver();
+        driver = getFluidTestDriver() as ITestDriver;
     });
 
     const codeDetails: IFluidCodeDetails = {
@@ -114,10 +114,10 @@ describe("Loader.request", () => {
     });
 
     it("can create the data objects with correct types", async () => {
-        const testUrl1 = await container.getAbsoluteUrl(dataStore1.url);
+        const testUrl1 = await container.getAbsoluteUrl(dataStore1.handle.absolutePath);
         assert(testUrl1);
         const testDataStore1 = await requestFluidObject(loader, testUrl1);
-        const testUrl2 = await container.getAbsoluteUrl(dataStore2.url);
+        const testUrl2 = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
         assert(testUrl2);
         const testDataStore2 = await requestFluidObject(loader, testUrl2);
 
@@ -126,7 +126,7 @@ describe("Loader.request", () => {
     });
 
     it("can create data object using url with second id, having correct type and id", async () => {
-        const dataStore2Url = await container.getAbsoluteUrl(dataStore2.url);
+        const dataStore2Url = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
         assert(dataStore2Url);
         const testDataStore = await requestFluidObject(loader, dataStore2Url);
 
@@ -135,7 +135,7 @@ describe("Loader.request", () => {
     });
 
     it("can create data object using url with second id, having distinct value from default", async () => {
-        const url = await container.getAbsoluteUrl(dataStore2.url);
+        const url = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
         assert(url);
         const testDataStore = await requestFluidObject<TestSharedDataObject2>(loader, url);
 

@@ -26,8 +26,8 @@
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
     "prettier": "prettier --check \"**/*.{js,json,jsx,md,ts,tsx,yml,yaml}\"",
     "prettier:fix": "prettier --write \"**/*.{js,json,jsx,md,ts,tsx,yml,yaml}\"",
-    "test": "npm run test:mocha",
-    "test:mocha": "nyc --report-dir='./coverage' mocha \"dist/**/*.tests.js\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+    "test": "nyc npm run test:mocha",
+    "test:mocha": "mocha \"dist/**/*.tests.js\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc"
   },

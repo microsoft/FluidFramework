@@ -9,12 +9,10 @@ import {
     IClientConfiguration,
     IClientDetails,
     IDocumentMessage,
-    IProcessMessageResult,
     ISequencedDocumentMessage,
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
-    MessageType,
 } from "@fluidframework/protocol-definitions";
 
 /**
@@ -46,7 +44,7 @@ export interface IDeltaHandlerStrategy {
     /**
      * Processes the message.
      */
-    process: (message: ISequencedDocumentMessage) => IProcessMessageResult;
+    process: (message: ISequencedDocumentMessage) => void;
 
     /**
      * Processes the signal.
@@ -70,16 +68,6 @@ export interface IProvideDeltaSender {
  */
 export interface IDeltaSender extends IProvideDeltaSender {
     /**
-     * Submits the given delta returning the client sequence number for the message. Contents is the actual
-     * contents of the message. appData is optional metadata that can be attached to the op by the app.
-     *
-     * If batch is set to true then the submit will be batched - and as a result guaranteed to be ordered sequentially
-     * in the global sequencing space. The batch will be flushed either when flush is called or when a non-batched
-     * op is submitted.
-     */
-    submit(type: MessageType, contents: any, batch: boolean, metadata: any): number;
-
-    /**
      * Flush all pending messages through the outbound queue
      */
     flush(): void;
@@ -89,7 +77,6 @@ export interface IDeltaSender extends IProvideDeltaSender {
 export interface IDeltaManagerEvents extends IEvent {
     (event: "prepareSend", listener: (messageBuffer: any[]) => void);
     (event: "submitOp", listener: (message: IDocumentMessage) => void);
-    (event: "beforeOpProcessing", listener: (message: ISequencedDocumentMessage) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void);
     (event: "allSentOpsAckd", listener: () => void);
     (event: "pong" | "processTime", listener: (latency: number) => void);
@@ -155,8 +142,11 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
      *
      * It is undefined if we have not yet established websocket connection
      * and do not know if user has write access to a file.
+     * @deprecated - use readOnlyInfo
      */
     readonly readonly?: boolean;
+
+    readonly readOnlyInfo: ReadOnlyInfo;
 
     /** Terminate the connection to storage */
     close(): void;
@@ -211,3 +201,15 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
      */
     toArray(): T[];
 }
+
+export type ReadOnlyInfo = {
+    readonly readonly: false | undefined;
+} | {
+    readonly readonly: true;
+    /** read-only because forceReadOnly() was called */
+    readonly forced: boolean;
+    /** read-only because client does not have write permissions for document */
+    readonly permissions: boolean | undefined;
+    /** read-only with no delta stream connection */
+    readonly storageOnly: boolean;
+};

@@ -11,6 +11,7 @@ import {
     NodeManager,
     ReservationManager,
 } from "@fluidframework/server-memory-orderer";
+import { EventHubProducer } from "@fluidframework/server-services-ordering-eventhub";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
@@ -278,7 +279,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         let eventHubOrdererFactory: KafkaOrdererFactory = null;
         if (config.get("eventHub")) {
-            const eventHubProducer = new services.EventHubProducer(config.get("eventHub:endpoint"), topic);
+            const eventHubProducer = new EventHubProducer(config.get("eventHub:endpoint"), topic);
             eventHubOrdererFactory = new KafkaOrdererFactory(
                 eventHubProducer,
                 maxSendMessageSize,

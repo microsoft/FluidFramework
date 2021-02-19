@@ -48,7 +48,6 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.27.0",
-    "@fluidframework/server-services": "^0.1020.0",
     "@fluidframework/server-services-core": "^0.1020.0",
     "@fluidframework/server-services-utils": "^0.1020.0",
     "async": "^2.6.1",

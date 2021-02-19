@@ -201,13 +201,13 @@ export class ReplayDocumentDeltaConnection
         controller: ReplayController): IDocumentDeltaConnection {
         const connection: IConnected = {
             claims: ReplayDocumentDeltaConnection.claims,
-            clientId: "",
+            clientId: "PseudoClientId",
             existing: true,
             initialMessages: [],
             initialSignals: [],
             initialClients: [],
             maxMessageSize: ReplayDocumentDeltaConnection.ReplayMaxMessageSize,
-            mode: "write",
+            mode: "read",
             // Back-compat, removal tracked with issue #4346
             parentBranch: null,
             serviceConfiguration: {
@@ -236,7 +236,7 @@ export class ReplayDocumentDeltaConnection
 
     private static readonly claims: ITokenClaims = {
         documentId: ReplayDocumentId,
-        scopes: [ScopeType.DocRead, ScopeType.DocWrite],
+        scopes: [ScopeType.DocRead],
         tenantId: "",
         user: {
             id: "",

@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { getShareLink, GraphItemLite, IGraphFetchResponse } from "../graph";
-import { SharingLinkScopeFor, TokenFetchOptions } from "../tokenFetch";
 import { mockFetch, mockFetchMultiple, okResponse } from "./mockFetch";
 
 describe("Tests for Graph fetch", () => {
@@ -15,8 +14,7 @@ describe("Tests for Graph fetch", () => {
     const itemId = "fileId";
     const logger = new TelemetryNullLogger();
     const graphOrigin = "graphOrigin";
-    const shareLinkTokenFetcher = async (option: TokenFetchOptions, scopeFor: SharingLinkScopeFor, siteurl: string) =>
-        "SharingLinkToken";
+    const shareLinkTokenFetcher = async () => "SharingLinkToken";
 
     beforeEach(() => {
     });

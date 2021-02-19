@@ -62,6 +62,7 @@
     "@fluidframework/test-runtime-utils": "^0.35.0",
     "@fluidframework/tinylicious-driver": "^0.35.0",
     "@fluidframework/tool-utils": "^0.35.0",
+    "axios": "^0.21.1",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
