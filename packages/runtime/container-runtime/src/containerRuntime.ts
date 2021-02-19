@@ -1270,7 +1270,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * @deprecated: // back-compat: marked deprecated in 0.35
+     * @deprecated - // back-compat: marked deprecated in 0.35
      * Returns true of document is dirty, i.e. there are some pending local changes that
      * either were not sent out to delta stream or were not yet acknowledged.
      */
