@@ -15,9 +15,22 @@ describe("Errors", () => {
 
             assert(testError.errorType === ContainerErrorType.genericError);
         });
+        it("Should preserve the stack", () => {
+            const originalError = new Error();
+            const testError = CreateContainerError(originalError);
+
+            // eslint-disable-next-line @typescript-eslint/dot-notation
+            assert(testError["stack"] === originalError.stack);
+        });
     });
 
     describe("DataProcessingError coercion", () => {
+        it("Should preserve the stack", () => {
+            const originalError = new Error();
+            const testError = CreateProcessingError(originalError);
+
+            assert((testError as any).stack === originalError.stack);
+        });
         it("Should skip coercion for LoggingErrors", () => {
             const originalError = new LoggingError("Inherited error message", {
                 errorType: "Demoted error type",
