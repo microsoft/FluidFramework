@@ -240,12 +240,13 @@ export class MathView implements IFluidHTMLView, ClientUI.controls.IViewCursor, 
     }
 
     public buildTree(elm: HTMLElement, display?: string) {
+        let _display = display;
         if (this.containerElement !== elm) {
             this.containerElement = elm;
             this.setListeners();
         }
-        if (display === undefined) {
-            display = this.options.display;
+        if (_display === undefined) {
+            _display = this.options.display;
         }
         const mathText = this.instance.getMathText();
         let mathBuffer = mathText;
@@ -256,7 +257,7 @@ export class MathView implements IFluidHTMLView, ClientUI.controls.IViewCursor, 
             mathMarker.mathText = "";
         }
         let rootElement: HTMLElement;
-        if (display === "inline") {
+        if (_display === "inline") {
             rootElement = document.createElement("span");
             rootElement.style.marginLeft = "2px";
             rootElement.style.marginTop = "4px";
@@ -604,14 +605,15 @@ export class MathCollection extends LazyLoadedDataObject<ISharedDirectory> imple
     }
 
     public getInstance(id: string, options = MathInstance.defaultOptions) {
+        let _options = options;
         const endId = endIdPrefix + id;
         const mathMarker = this.combinedMathText.getMarkerFromId(endId) as IMathMarkerInst;
         if (mathMarker !== undefined) {
             if (!mathMarker.mathInstance) {
                 if (mathMarker.properties.componentOptions) {
-                    options = mathMarker.properties.componentOptions;
+                    _options = mathMarker.properties.componentOptions;
                 }
-                mathMarker.mathInstance = new MathInstance(id, this.runtime.objectsRoutingContext, this, options, true);
+                mathMarker.mathInstance = new MathInstance(id, this.runtime.objectsRoutingContext, this, _options, true);
             }
             return mathMarker.mathInstance as MathInstance;
         }

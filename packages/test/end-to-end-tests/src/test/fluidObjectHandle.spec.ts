@@ -16,7 +16,15 @@ import {
     TestDataObject,
 } from "./compatUtils";
 
-const tests = (args: ITestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    beforeEach(()=>{
+        args = argsFactory();
+    });
+    afterEach(() => {
+        args.reset();
+    });
+
     let firstContainerObject1: TestDataObject;
     let firstContainerObject2: TestDataObject;
     let secondContainerObject1: TestDataObject;
@@ -132,5 +140,5 @@ const tests = (args: ITestObjectProvider) => {
 };
 
 describe("FluidObjectHandle", () => {
-    generateTest(tests, { tinylicious: true });
+    generateTest(tests);
 });

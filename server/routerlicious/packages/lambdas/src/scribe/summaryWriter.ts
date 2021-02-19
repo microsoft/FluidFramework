@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-null/no-null */
-
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
     generateServiceProtocolEntries,
@@ -156,9 +154,9 @@ export class SummaryWriter implements ISummaryWriter {
             JSON.stringify(checkpoint));
 
         const [logTailTree, protocolTree, serviceProtocolTree, appSummaryTree] = await Promise.all([
-            this.summaryStorage.createTree({ entries: logTailEntries, id: null }),
-            this.summaryStorage.createTree({ entries: protocolEntries, id: null }),
-            this.summaryStorage.createTree({ entries: serviceProtocolEntries, id: null }),
+            this.summaryStorage.createTree({ entries: logTailEntries }),
+            this.summaryStorage.createTree({ entries: protocolEntries }),
+            this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
             this.summaryStorage.getTree(content.handle, false),
         ]);
 
@@ -251,8 +249,8 @@ export class SummaryWriter implements ISummaryWriter {
         // Fetch the last commit and summary tree. Create new trees with logTail and serviceProtocol.
         const lastCommit = await this.summaryStorage.getCommit(existingRef.object.sha);
         const [logTailTree, serviceProtocolTree, lastSummaryTree] = await Promise.all([
-            this.summaryStorage.createTree({ entries: logTailEntries, id: null }),
-            this.summaryStorage.createTree({ entries: serviceProtocolEntries, id: null }),
+            this.summaryStorage.createTree({ entries: logTailEntries }),
+            this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
             this.summaryStorage.getTree(lastCommit.tree.sha, false),
         ]);
 

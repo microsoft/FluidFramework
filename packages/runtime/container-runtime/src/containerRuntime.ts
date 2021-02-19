@@ -50,6 +50,7 @@ import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver
 import {
     readAndParse,
     readAndParseFromBlobs,
+    BlobAggregationStorage,
 } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import { runGarbageCollection } from "@fluidframework/garbage-collector";
@@ -216,8 +217,12 @@ export interface IContainerRuntimeOptions {
     // Delay before first attempt to spawn summarizing container
     initialSummarizerDelayMs?: number;
 
-    // Flag that enables running garbage collection to delete unused Fluid objects.
-    runGC?: boolean;
+    // Flag that will disable garbage collection if set to true.
+    disableGC?: boolean;
+
+    // Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether the node
+    // changed or not.
+    runFullGC?: boolean;
 
     // Override summary configurations
     summaryConfigOverrides?: Partial<ISummaryConfiguration>;
@@ -455,7 +460,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public get IContainerRuntimeDirtyable() { return this; }
     public get IFluidRouter() { return this; }
 
-    // 0.24 back-compat attachingBeforeSummary
+    // back-compat: Used by loader in <= 0.35
     public readonly runtimeVersion = pkgVersion;
 
     /**
@@ -472,12 +477,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         runtimeOptions?: IContainerRuntimeOptions,
         containerScope: IFluidObject = context.scope,
     ): Promise<ContainerRuntime> {
-        // Back-compat: <= 0.18 loader
-        if (context.deltaManager.lastSequenceNumber === undefined) {
-            Object.defineProperty(context.deltaManager, "lastSequenceNumber", {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                get: () => (context.deltaManager as any).referenceSequenceNumber,
-            });
+        const logger = ChildLogger.create(context.logger, undefined, {
+            runtimeVersion: pkgVersion,
+        });
+
+        let storage = context.storage;
+        if (context.baseSnapshot) {
+            // This will patch snapshot in place!
+            // If storage is provided, it will wrap storage with BlobAggregationStorage that can
+            // pack & unpack aggregated blobs.
+            // Note that if storage is provided later by loader layer, we will wrap storage in this.storage getter.
+            // BlobAggregationStorage is smart enough for double-wrapping to be no-op
+            if (context.storage) {
+                const aggrStorage = BlobAggregationStorage.wrap(context.storage, logger);
+                await aggrStorage.unpackSnapshot(context.baseSnapshot);
+                storage = aggrStorage;
+            } else {
+                await BlobAggregationStorage.unpackSnapshot(context.baseSnapshot);
+            }
         }
 
         const registry = new ContainerRuntimeDataStoreRegistry(registryEntries);
@@ -485,8 +502,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
             const blobId = context.baseSnapshot?.blobs[blobName];
             if (context.baseSnapshot && blobId) {
-                return context.storage ?
-                    readAndParse<T>(context.storage, blobId) :
+                return storage ?
+                    readAndParse<T>(storage, blobId) :
                     readAndParseFromBlobs<T>(context.baseSnapshot.blobs, blobId);
             }
         };
@@ -500,7 +517,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             chunks,
             runtimeOptions,
             containerScope,
-            requestHandler);
+            logger,
+            requestHandler,
+            storage);
 
         // Create all internal data stores if not already existing on storage or loaded a detached
         // container from snapshot(ex. draft mode).
@@ -539,16 +558,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public get storage(): IDocumentStorageService {
+        // This code is plain wrong. It lies that it never returns undefined!!!
+        // All callers should be fixed, as this API is called in detached state of container when we have
+        // no storage and it's passed down the stack without right typing.
+        if (!this._storage && this.context.storage) {
+            // Note: BlobAggregationStorage is smart enough for double-wrapping to be no-op
+            this._storage = BlobAggregationStorage.wrap(this.context.storage, this.logger);
+        }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.context.storage!;
-    }
-
-    public get branch(): string {
-        return this.context.branch;
-    }
-
-    public get snapshotFn(): (message: string) => Promise<void> {
-        return this.context.snapshotFn;
+        return this._storage!;
     }
 
     public get reSubmitFn(): (
@@ -582,11 +600,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public get attachState(): AttachState {
-        if (this.context.attachState !== undefined) {
-            return this.context.attachState;
-        }
-        // 0.21 back-compat isAttached
-        return (this.context as any).isAttached() ? AttachState.Attached : AttachState.Detached;
+        return this.context.attachState;
     }
 
     public nextSummarizerP?: Promise<Summarizer>;
@@ -596,10 +610,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.codeDetails ?? this.getQuorum().get("code") as IFluidCodeDetails;
     }
 
-    // internal logger for ContainerRuntime
+    // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly _logger: ITelemetryLogger;
-    // publicly visible logger, to be used by stores, summarize, etc.
-    public readonly logger: ITelemetryLogger;
     public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
     private latestSummaryAck: ISummaryContext;
@@ -668,10 +680,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private readonly runtimeOptions: IContainerRuntimeOptions = {
             generateSummaries: true,
             enableWorker: false,
-            runGC: true,
         },
         private readonly containerScope: IFluidObject,
+        public readonly logger: ITelemetryLogger,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
+        private _storage?: IDocumentStorageService,
     ) {
         super();
 
@@ -704,10 +717,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
             this.rootRoute);
 
-        this.logger = ChildLogger.create(context.logger, undefined, {
-            runtimeVersion: pkgVersion,
-        });
-
         this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
 
         this.latestSummaryAck = {
@@ -731,10 +740,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // Must set to true to throw on any data stores failure that was too severe to be handled.
                 // We also are not decoding the base summaries at the root.
                 throwOnFailure: true,
+                // If GC is disabled, let the summarizer node know so that it does not track GC state.
+                gcDisabled: this.runtimeOptions.disableGC,
             },
         );
-        // Add self route (empty string) to used routes in the summarizer node as the runtime is always considered used.
-        this.summarizerNode.updateUsedRoutes([""]);
 
         this.dataStores = new DataStores(
             getSnapshotForDataStores(context.baseSnapshot, metadata.snapshotFormatVersion),
@@ -742,7 +751,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
             (id: string, createParam: CreateChildSummarizerNodeParam) => (
                     summarizeInternal: SummarizeInternalFn,
-                    getGCDataFn: () => Promise<IGarbageCollectionData>,
+                    getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
                     getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
                 ) => this.summarizerNode.createChild(
                     summarizeInternal,
@@ -757,7 +766,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.blobManager = new BlobManager(
             this.rootRoute,
             () => this.storage,
+            () => {
+                assert(this.attachState !== AttachState.Detached, "Blobs NYI in detached container mode");
+                return this.storage;
+            },
             (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
+            this.logger,
         );
         this.blobManager.load(context.baseSnapshot?.trees[blobsTreeName]);
 
@@ -911,7 +925,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @deprecated - Use summarize to get summary of the container runtime.
      */
     public async snapshot(): Promise<ITree> {
-        const root: ITree = { entries: await this.dataStores.snapshot(), id: null };
+        const root: ITree = { entries: await this.dataStores.snapshot() };
 
         if (this.chunkMap.size > 0) {
             root.entries.push(new BlobTreeEntry(chunksBlobName, JSON.stringify([...this.chunkMap])));
@@ -927,10 +941,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
         const blobsTree = convertToSummaryTree(this.blobManager.snapshot(), false);
         addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
-    }
-
-    public async requestSnapshot(tagMessage: string): Promise<void> {
-        return this.context.requestSnapshot(tagMessage);
     }
 
     public async stop(): Promise<IRuntimeState> {
@@ -1362,14 +1372,37 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { ...attemptData, reason: "disconnected" };
             }
 
-            if (this.runtimeOptions.runGC) {
-                // Get the container's GC data and run GC on the reference graph in it.
-                const gcData = await this.dataStores.getGCData();
-                const { referencedNodeIds } = runGarbageCollection(gcData.gcNodes, [ "/" ], this.logger);
+            if (!this.runtimeOptions.disableGC) {
+                const perfEvent = PerformanceEvent.start(summaryLogger, {
+                    eventName: "GarbageCollection",
+                });
 
-                // Remove this node's route ("/") and notify data stores of routes that are used in it.
-                const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
-                this.dataStores.updateUsedRoutes(usedRoutes);
+                const gcStats: { totalGCNodes?: number; deletedGCNodes?: number } = {};
+                try {
+                    // Get the container's GC data and run GC on the reference graph in it.
+                    const gcData = await this.dataStores.getGCData(this.runtimeOptions.runFullGC === true);
+                    const { referencedNodeIds, deletedNodeIds } = runGarbageCollection(
+                        gcData.gcNodes, [ "/" ],
+                        this.logger,
+                    );
+
+                    // Update stats to be reported in the peformance event.
+                    gcStats.deletedGCNodes = deletedNodeIds.length;
+                    gcStats.totalGCNodes = referencedNodeIds.length + gcStats.deletedGCNodes;
+
+                    // Update our summarizer node's used routes. Updating used routes in summarizer node before
+                    // summarizing is required and asserted by the the summarizer node. We are the root and are
+                    // always referenced, so the used routes is only self-route (empty string).
+                    this.summarizerNode.updateUsedRoutes([""]);
+
+                    // Remove this node's route ("/") and notify data stores of routes that are used in it.
+                    const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
+                    this.dataStores.updateUsedRoutes(usedRoutes);
+                } catch (error) {
+                    perfEvent.cancel(gcStats, error);
+                    throw error;
+                }
+                perfEvent.end(gcStats);
             }
 
             const trace = Trace.start();
@@ -1522,7 +1555,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ): void {
         this.verifyNotClosed();
 
+        // There should be no ops in detached container state!
+        assert(this.attachState !== AttachState.Detached, "sending ops in detached container");
+
         let clientSequenceNumber: number = -1;
+        let opMetadataInternal = opMetadata;
 
         if (this.canSendOps()) {
             const serializedContent = JSON.stringify(content);
@@ -1530,8 +1567,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             // If in manual flush mode we will trigger a flush at the next turn break
             if (this.flushMode === FlushMode.Manual && !this.needsFlush) {
-                // eslint-disable-next-line no-param-reassign
-                opMetadata = { ...opMetadata, batch: true };
+                opMetadataInternal = {
+                    ...opMetadata,
+                    batch: true,
+                };
                 this.needsFlush = true;
 
                 // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
@@ -1552,14 +1591,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     type,
                     content,
                     /* batch: */ this._flushMode === FlushMode.Manual,
-                    opMetadata);
+                    opMetadataInternal);
             } else {
                 clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
             }
         }
 
         // Let the PendingStateManager know that a message was submitted.
-        this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, localOpMetadata, opMetadata);
+        this.pendingStateManager.onSubmitMessage(
+            type,
+            clientSequenceNumber,
+            content,
+            localOpMetadata,
+            opMetadataInternal,
+        );
         if (this.isContainerMessageDirtyable(type, content)) {
             this.updateDocumentDirtyState(true);
         }

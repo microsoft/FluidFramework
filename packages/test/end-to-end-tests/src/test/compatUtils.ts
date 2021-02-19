@@ -6,7 +6,6 @@
 /* eslint-disable import/no-extraneous-dependencies */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { SharedCell } from "@fluidframework/cell";
 import {
     IContainer,
     ILoader,
@@ -14,15 +13,9 @@ import {
 } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { Ink } from "@fluidframework/ink";
-import { SharedCounter } from "@fluidframework/counter";
-import { SharedDirectory, SharedMap } from "@fluidframework/map";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { ConsensusQueue } from "@fluidframework/ordered-collection";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IClientConfiguration } from "@fluidframework/protocol-definitions";
-import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { SharedString, SparseMatrix } from "@fluidframework/sequence";
 import {
     ChannelFactoryRegistry,
     TestContainerRuntimeFactory,
@@ -30,9 +23,10 @@ import {
     OpProcessingController,
     TestObjectProvider,
 } from "@fluidframework/test-utils";
-import { LocalServerTestDriver, TinyliciousTestDriver } from "@fluidframework/test-drivers";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import * as oldTypes from "./oldVersionTypes";
 import * as old from "./oldVersion";
+import * as old2 from "./oldVersion2";
 
 /* eslint-enable import/no-extraneous-dependencies */
 
@@ -41,19 +35,23 @@ export interface ITestObjectProvider {
      * Used to create a test Container.
      * In generateLocalCompatTest(), this Container and its runtime will be arbitrarily-versioned.
      */
-    makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer | old.IContainer>,
-    loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer | old.IContainer>,
-    makeTestLoader(testContainerConfig?: ITestContainerConfig): ILoader | old.ILoader,
-    documentServiceFactory: IDocumentServiceFactory | old.IDocumentServiceFactory,
-    urlResolver: IUrlResolver | old.IUrlResolver,
-    defaultCodeDetails: IFluidCodeDetails | old.IFluidCodeDetails,
-    opProcessingController: OpProcessingController | old.OpProcessingController,
-
+    makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer | oldTypes.IContainer>,
+    loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer | oldTypes.IContainer>,
+    makeTestLoader(testContainerConfig?: ITestContainerConfig): ILoader | oldTypes.ILoader,
+    documentServiceFactory: IDocumentServiceFactory | oldTypes.IDocumentServiceFactory,
+    urlResolver: IUrlResolver | oldTypes.IUrlResolver,
+    defaultCodeDetails: IFluidCodeDetails | oldTypes.IFluidCodeDetails,
+    opProcessingController: OpProcessingController | oldTypes.OpProcessingController,
+    reset(): void,
+    documentId: string,
+    driver: ITestDriver;
 }
 
 export interface ITestOptions {
     serviceConfiguration?: Partial<IClientConfiguration>,
-    tinylicious?: boolean,
+
+    // The old apis to use if running against an older version
+    oldApis?: oldTypes.OldApi[],
 }
 
 export enum DataObjectFactoryType {
@@ -72,47 +70,10 @@ export interface ITestContainerConfig {
     runtimeOptions?: IContainerRuntimeOptions,
 }
 
-// convert a channel factory registry for TestFluidDataStoreFactory to one with old channel factories
-function convertRegistry(registry: ChannelFactoryRegistry = []): old.ChannelFactoryRegistry {
-    const oldRegistry: [string | undefined, old.IChannelFactory][] = [];
-    for (const [key, factory] of registry) {
-        switch (factory.type) {
-            case SharedMap.getFactory().type:
-                oldRegistry.push([key, old.SharedMap.getFactory()]); break;
-            case SharedString.getFactory().type:
-                oldRegistry.push([key, old.SharedString.getFactory()]); break;
-            case SharedDirectory.getFactory().type:
-                oldRegistry.push([key, old.SharedDirectory.getFactory()]); break;
-            case ConsensusRegisterCollection.getFactory().type:
-                oldRegistry.push([key, old.ConsensusRegisterCollection.getFactory()]); break;
-            case SharedCell.getFactory().type:
-                oldRegistry.push([key, old.SharedCell.getFactory()]); break;
-            case Ink.getFactory().type:
-                oldRegistry.push([key, old.Ink.getFactory()]); break;
-            case SharedMatrix.getFactory().type:
-                oldRegistry.push([key, old.SharedMatrix.getFactory()]); break;
-            case ConsensusQueue.getFactory().type:
-                oldRegistry.push([key, old.ConsensusQueue.getFactory()]); break;
-            case SparseMatrix.getFactory().type:
-                oldRegistry.push([key, old.SparseMatrix.getFactory()]); break;
-            case SharedCounter.getFactory().type:
-                oldRegistry.push([key, old.SharedCounter.getFactory()]); break;
-            default:
-                throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
-        }
-    }
-
-    return oldRegistry;
-}
+export const V1 = "0.1.0";
+export const V2 = "0.2.0";
 
 export class TestDataObject extends DataObject {
-    public static readonly type = "@fluid-example/test-dataStore";
-    public get _context() { return this.context; }
-    public get _runtime() { return this.runtime; }
-    public get _root() { return this.root; }
-}
-
-export class OldTestDataObject extends old.DataObject {
     public static readonly type = "@fluid-example/test-dataStore";
     public get _context() { return this.context; }
     public get _runtime() { return this.runtime; }
@@ -127,40 +88,19 @@ export const createPrimedDataStoreFactory = (registry?: ChannelFactoryRegistry):
         {});
 };
 
-export const createOldPrimedDataStoreFactory =
-    (registry?: ChannelFactoryRegistry): old.IFluidDataStoreFactory => {
-        return new old.DataObjectFactory(
-            OldTestDataObject.type,
-            OldTestDataObject,
-            [...convertRegistry(registry)].map((r) => r[1]),
-            {});
-    };
-
 export const createTestFluidDataStoreFactory = (registry: ChannelFactoryRegistry = []): IFluidDataStoreFactory => {
     return new TestFluidObjectFactory(registry);
 };
 
-export const createOldTestFluidDataStoreFactory = (registry?: ChannelFactoryRegistry): old.IFluidDataStoreFactory => {
-    return new old.TestFluidObjectFactory(convertRegistry(registry));
-};
-
 export const createRuntimeFactory = (
     type: string,
-    dataStoreFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
+    dataStoreFactory: IFluidDataStoreFactory | oldTypes.IFluidDataStoreFactory,
     runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
 ): IRuntimeFactory => {
     return new TestContainerRuntimeFactory(type, dataStoreFactory as IFluidDataStoreFactory, runtimeOptions);
 };
 
-export const createOldRuntimeFactory = (
-    type: string,
-    dataStoreFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
-    runtimeOptions: old.IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
-): old.IRuntimeFactory => {
-    return new old.TestContainerRuntimeFactory(type, dataStoreFactory as old.IFluidDataStoreFactory, runtimeOptions);
-};
-
-function getDataStoreFactory(containerOptions?: ITestContainerConfig) {
+export function getDataStoreFactory(containerOptions?: ITestContainerConfig) {
     switch (containerOptions?.fluidDataObjectType) {
         case undefined:
         case DataObjectFactoryType.Primed:
@@ -172,177 +112,98 @@ function getDataStoreFactory(containerOptions?: ITestContainerConfig) {
     }
 }
 
-function getOldDataStoreFactory(containerOptions?: ITestContainerConfig) {
-    switch (containerOptions?.fluidDataObjectType) {
-        case undefined:
-        case DataObjectFactoryType.Primed:
-            return createOldPrimedDataStoreFactory(containerOptions?.registry);
-        case DataObjectFactoryType.Test:
-            return createOldTestFluidDataStoreFactory(containerOptions?.registry);
-        default:
-            throw new Error("unknown data store factory type");
-    }
-}
-
-export const generateLocalNonCompatTest = (
-    tests: (compatArgs: ITestObjectProvider) => void,
-    options: ITestOptions = {},
+export const generateNonCompatTest = (
+    tests: (compatArgsFactory: () => ITestObjectProvider) => void,
 ) => {
     describe("non-compat", () => {
-        // Run with all current versions
-        const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
-            createRuntimeFactory(
-                TestDataObject.type,
-                getDataStoreFactory(containerOptions),
-                containerOptions?.runtimeOptions,
-            );
-
-        const localDriver = LocalServerTestDriver.createWithOptions(options);
-        const testObjectProvider = new TestObjectProvider(
-            localDriver,
-            runtimeFactory,
-        );
-
-        tests(testObjectProvider);
-
-        afterEach(async () => {
-            localDriver.reset(options);
-            testObjectProvider.reset();
-        });
-    });
-};
-
-export const generateLocalCompatTest = (
-    tests: (compatArgs: ITestObjectProvider) => void,
-    options: ITestOptions = {},
-) => {
-    describe("compat - old loader, new runtime", function() {
-        const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
-            createRuntimeFactory(
-                TestDataObject.type,
-                getDataStoreFactory(containerOptions),
-                containerOptions?.runtimeOptions,
-            ) as any as old.IRuntimeFactory;
-
-        const testObjectProvider = new old.LocalTestObjectProvider(
-            runtimeFactory,
-            options.serviceConfiguration,
-        );
-
-        tests(testObjectProvider);
-
-        afterEach(async function() {
-            await testObjectProvider.reset();
-        });
-    });
-
-    describe("compat - new loader, old runtime", function() {
-        const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
-            createOldRuntimeFactory(
-                OldTestDataObject.type,
-                getOldDataStoreFactory(containerOptions),
-                containerOptions?.runtimeOptions,
-            ) as any as IRuntimeFactory;
-
-        const driver = LocalServerTestDriver.createWithOptions(options);
-        const testObjectProvider = new TestObjectProvider<ITestContainerConfig>(
-            driver,
-            runtimeFactory,
-        );
-
-        tests(testObjectProvider);
-
-        afterEach(async function() {
-            driver.reset(options);
-            testObjectProvider.reset();
-        });
-    });
-
-    describe("compat - new ContainerRuntime, old DataStoreRuntime", function() {
-        const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
-            createRuntimeFactory(
-                OldTestDataObject.type,
-                getOldDataStoreFactory(containerOptions),
-                containerOptions?.runtimeOptions,
-            );
-        const driver = LocalServerTestDriver.createWithOptions(options);
-        driver.reset(options);
-        const testObjectProvider = new TestObjectProvider(
-            driver,
-            runtimeFactory,
-        );
-
-        tests(testObjectProvider);
-
-        afterEach(async function() {
-            driver.reset(options);
-            testObjectProvider.reset();
-        });
-    });
-
-    describe("compat - old ContainerRuntime, new DataStoreRuntime", function() {
-        const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
-            createOldRuntimeFactory(
-                TestDataObject.type,
-                getDataStoreFactory(containerOptions),
-                containerOptions?.runtimeOptions,
-            );
-
-        const testObjectProvider = new old.LocalTestObjectProvider(
-            runtimeFactory,
-            options.serviceConfiguration,
-        );
-
-        tests(testObjectProvider);
-
-        afterEach(async function() {
-            await testObjectProvider.reset();
-        });
-    });
-};
-
-export const generateLocalTest = (
-    tests: (compatArgs: ITestObjectProvider) => void,
-    options: ITestOptions = {},
-) => {
-    describe("local server", () => {
-        generateLocalNonCompatTest(tests, options);
-        generateLocalCompatTest(tests, options);
-    });
-};
-
-const generateTinyliciousTest = (
-    tests: (compatArgs: ITestObjectProvider) => void,
-    options: ITestOptions,
-) => {
-    if (options.tinylicious) {
-        describe("tinylicious", () => {
+        tests(() => {
             // Run with all current versions
             const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
-                createRuntimeFactory(
-                    TestDataObject.type,
-                    getDataStoreFactory(containerOptions),
-                    containerOptions?.runtimeOptions,
-                );
-
-            const testObjectProvider = new TestObjectProvider(
-                new TinyliciousTestDriver(),
+            createRuntimeFactory(
+                TestDataObject.type,
+                getDataStoreFactory(containerOptions),
+                containerOptions?.runtimeOptions,
+            );
+            const driver = getFluidTestDriver();
+            return new TestObjectProvider(
+                driver as any,
                 runtimeFactory,
             );
-
-            tests(testObjectProvider);
-
-            afterEach(async () => {
-                testObjectProvider.reset();
-            });
         });
-    }
+    });
+};
+
+export const generateCompatTest = (
+    tests: (compatArgsFactory: () => ITestObjectProvider, oldApi: oldTypes.OldApi) => void,
+    options: ITestOptions = {},
+) => {
+    // Run against all currently supported versions by default
+    const oldApis = options.oldApis ?? [old, old2];
+    oldApis.forEach((oldApi: oldTypes.OldApi) => {
+        describe("compat - old loader, new runtime", function() {
+            tests(() => {
+                const driver = getFluidTestDriver();
+                return oldApi.createTestObjectProvider(
+                    true, /* oldLoader */
+                    false, /* oldContainerRuntime */
+                    false, /* oldDataStoreRuntime */
+                    TestDataObject.type,
+                    options.serviceConfiguration,
+                    driver as any,
+                );
+            }, oldApi);
+        });
+
+        describe("compat - new loader, old runtime", function() {
+            tests(() => {
+                const driver = getFluidTestDriver();
+                return oldApi.createTestObjectProvider(
+                    false, /* oldLoader */
+                    true, /* oldContainerRuntime */
+                    true, /* oldDataStoreRuntime */
+                    TestDataObject.type,
+                    options.serviceConfiguration,
+                    driver as any,
+                );
+            }, oldApi);
+        });
+
+        describe("compat - new ContainerRuntime, old DataStoreRuntime", function() {
+            tests(() => {
+                const driver = getFluidTestDriver();
+                return oldApi.createTestObjectProvider(
+                    false, /* oldLoader */
+                    false, /* oldContainerRuntime */
+                    true, /* oldDataStoreRuntime */
+                    TestDataObject.type,
+                    options.serviceConfiguration,
+                    driver as any,
+                );
+            }, oldApi);
+        });
+
+        describe("compat - old ContainerRuntime, new DataStoreRuntime", function() {
+            tests(() => {
+                const driver = getFluidTestDriver();
+                return oldApi.createTestObjectProvider(
+                    true, /* oldLoader */
+                    true, /* oldContainerRuntime */
+                    false, /* oldDataStoreRuntime */
+                    TestDataObject.type,
+                    options.serviceConfiguration,
+                    driver as any,
+                );
+            }, oldApi);
+        });
+    });
 };
 
 export const generateTest = (
-    tests: (compatArgs: ITestObjectProvider) => void,
+    tests: (compatArgsFactory: () => ITestObjectProvider) => void,
     options: ITestOptions = {},
 ) => {
-    generateLocalTest(tests, options);
-    generateTinyliciousTest(tests, options);
+    describe("test", () => {
+        generateNonCompatTest(tests);
+        generateCompatTest(tests, options);
+    });
 };

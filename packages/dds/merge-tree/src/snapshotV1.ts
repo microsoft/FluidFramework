@@ -8,7 +8,7 @@ import {
     IFluidHandle,
     IFluidSerializer,
 } from "@fluidframework/core-interfaces";
-import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { assert, bufferToString } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
     FileMode,
@@ -97,7 +97,7 @@ export class SnapshotV1 {
      */
     emit(
         serializer: IFluidSerializer,
-        bind?: IFluidHandle,
+        bind: IFluidHandle,
     ): ITree {
         const chunks: MergeTreeChunkV1[] = [];
         this.header.totalSegmentCount = 0;
@@ -157,7 +157,6 @@ export class SnapshotV1 {
                 },
                 ...entries,
             ],
-            id: null,
         };
 
         return tree;
@@ -186,14 +185,16 @@ export class SnapshotV1 {
             //      there is a pending insert op that will deliver the segment on reconnection.
             //   b) The segment was removed at or below the MSN.  Pending ops can no longer reference this
             //      segment, and therefore we can discard it.
-            if (segment.seq === UnassignedSequenceNumber || segment.removedSeq <= minSeq) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            if (segment.seq === UnassignedSequenceNumber || segment.removedSeq! <= minSeq) {
                 return true;
             }
 
             // Next determine if the snapshot needs to preserve information required for merging the segment
             // (seq, client, etc.)  This information is only needed if the segment is above the MSN (and doesn't
             // have a pending remove.)
-            if ((segment.seq <= minSeq)                                   // Segment is below the MSN, and...
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            if ((segment.seq! <= minSeq)                                   // Segment is below the MSN, and...
                 && (segment.removedSeq === undefined                      // .. Segment has not been removed, or...
                     || segment.removedSeq === UnassignedSequenceNumber)   // .. Removal op to be delivered on reconnect
             ) {
@@ -221,19 +222,22 @@ export class SnapshotV1 {
 
                 const raw: IJSONSegmentWithMergeInfo = { json: segment.toJSONObject() };
                 // If the segment insertion is above the MSN, record the insertion merge info.
-                if (segment.seq > minSeq) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                if (segment.seq! > minSeq) {
                     raw.seq = segment.seq;
-                    raw.client = mergeTree.getLongClientId(segment.clientId);
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    raw.client = mergeTree.getLongClientId!(segment.clientId);
                 }
                 // We have already dispensed with removed segments below the MSN and removed segments with unassigned
                 // sequence numbers.  Any remaining removal info should be preserved.
                 if (segment.removedSeq !== undefined) {
                     assert(segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq > minSeq);
                     raw.removedSeq = segment.removedSeq;
-                    raw.removedClient = mergeTree.getLongClientId(segment.removedClientId);
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    raw.removedClient = mergeTree.getLongClientId!(segment.removedClientId!);
                 }
 
-                // Sanity check that we are preserving either the seq < minSeq or a removed segment's info.
+            // Sanity check that we are preserving either the seq < minSeq or a removed segment's info.
                 assert(raw.seq !== undefined && raw.client !== undefined
                     || raw.removedSeq !== undefined && raw.removedClient !== undefined);
 
@@ -258,7 +262,8 @@ export class SnapshotV1 {
         options: Properties.PropertySet | undefined,
         serializer?: IFluidSerializer,
     ): Promise<MergeTreeChunkV1> {
-        const chunkAsString: string = await storage.read(path);
+        const blob = await storage.readBlob(path);
+        const chunkAsString = bufferToString(blob, "utf8");
         return SnapshotV1.processChunk(path, chunkAsString, logger, options, serializer);
     }
 
@@ -269,8 +274,7 @@ export class SnapshotV1 {
         options: Properties.PropertySet | undefined,
         serializer?: IFluidSerializer,
     ): MergeTreeChunkV1 {
-        const utf8 = fromBase64ToUtf8(chunk);
-        const chunkObj = serializer ? serializer.parse(utf8) : JSON.parse(utf8);
+        const chunkObj = serializer ? serializer.parse(chunk) : JSON.parse(chunk);
         return toLatestVersion(path, chunkObj, logger, options);
     }
 }

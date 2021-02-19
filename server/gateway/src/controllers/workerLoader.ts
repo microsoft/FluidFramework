@@ -38,12 +38,22 @@ class WorkerLoader implements ILoader, IFluidRunnable {
             (this as unknown) as Loader,
             request,
             this.resolved,
+            // To be used when taking the updated Container.load signature
+            // {
+            //     canReconnect: request.headers?.[LoaderHeader.reconnect],
+            //     clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
+            //     containerUrl: request.url,
+            //     docId: decodeURI(this.id),
+            //     resolvedUrl: this.resolved,
+            //     version: request.headers?.[LoaderHeader.version],
+            //     pause: request.headers?.[LoaderHeader.pause],
+            // },
         );
         this.container = container;
 
         // TODO: referenceSequenceNumber -> lastSequenceNumber (when latest loader is picked up)
         if (this.container.deltaManager.lastSequenceNumber <= this.fromSequenceNumber) {
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 const opHandler = (message: ISequencedDocumentMessage) => {
                     if (message.sequenceNumber > this.fromSequenceNumber) {
                         resolve();
@@ -72,7 +82,7 @@ class WorkerLoader implements ILoader, IFluidRunnable {
     }
 
     public async run(...args: any[]): Promise<void> {
-        return this.runnable === undefined ? Promise.reject() : this.runnable.run(...args);
+        return this.runnable === undefined ? Promise.reject(new Error("Not runnable")) : this.runnable.run(...args);
     }
 
     public async stop(reason?: string): Promise<void> {

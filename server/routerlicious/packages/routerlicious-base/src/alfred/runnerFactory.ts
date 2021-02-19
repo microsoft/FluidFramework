@@ -11,6 +11,7 @@ import {
     NodeManager,
     ReservationManager,
 } from "@fluidframework/server-memory-orderer";
+import { EventHubProducer } from "@fluidframework/server-services-ordering-eventhub";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
@@ -89,7 +90,8 @@ export class AlfredResources implements utils.IResources {
         public port: any,
         public documentsCollectionName: string,
         public metricClientConfig: any) {
-        this.webServerFactory = new services.SocketIoWebServerFactory(this.redisConfig);
+        const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
+        this.webServerFactory = new services.SocketIoWebServerFactory(this.redisConfig, socketIoAdapterConfig);
     }
 
     public async dispose(): Promise<void> {
@@ -107,16 +109,18 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const kafkaClientId = config.get("alfred:kafkaClientId");
         const topic = config.get("alfred:topic");
         const metricClientConfig = config.get("metric");
-        const maxKafkaMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
         const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
+        const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
+        const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
         const producer = services.createProducer(
             kafkaLibrary,
             kafkaEndpoint,
             kafkaClientId,
             topic,
-            maxKafkaMessageSize,
             false,
-            kafkaProducerPollIntervalMs);
+            kafkaProducerPollIntervalMs,
+            kafkaNumberOfPartitions,
+            kafkaReplicationFactor);
         const redisConfig = config.get("redis");
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const authEndpoint = config.get("auth:endpoint");
@@ -275,7 +279,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         let eventHubOrdererFactory: KafkaOrdererFactory = null;
         if (config.get("eventHub")) {
-            const eventHubProducer = new services.EventHubProducer(config.get("eventHub:endpoint"), topic);
+            const eventHubProducer = new EventHubProducer(config.get("eventHub:endpoint"), topic);
             eventHubOrdererFactory = new KafkaOrdererFactory(
                 eventHubProducer,
                 maxSendMessageSize,

@@ -148,11 +148,25 @@
                     "Framework-Utils"
                 ]
             },
+            "HostUtils": {
+                "dev": true,
+                "packages": [
+                    "@fluid-experimental/get-container",
+                    "@fluid-experimental/fluid-static"
+                ],
+                "deps": [
+                    "Loader",
+                    "Routerlicious-Driver",
+                    "Server-Libs",
+                    "Test"
+                ]
+            },
             "Runtime": {
                 "packages": [
                     "@fluidframework/agent-scheduler"
                 ],
                 "dirs": [
+                    "experimental/dds/",
                     "packages/dds/",
                     "packages/runtime/"
                 ],
@@ -164,9 +178,12 @@
             },
             "Framework": {
                 "packages": [
-                    "@fluid-internal/client-api"
+                    "@fluid-internal/client-api",
+                    "@fluid-experimental/experimental-fluidframework",
+                    "@fluid-experimental/data-objects"
                 ],
                 "dirs": [
+                    "experimental/framework/",
                     "packages/framework/"
                 ],
                 "deps": [
@@ -179,6 +196,7 @@
                 "dev": true,
                 "dirs": [
                     "examples/",
+                    "experimental/examples/",
                     "packages/agents/"
                 ],
                 "deps": [

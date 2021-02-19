@@ -53,7 +53,7 @@ function getRoomId(room: IRoom) {
 
 const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocketConn`;
 
-const getSubmitOpThrottleId = (clientId: string) => `${clientId}_SubmitOp`;
+const getSubmitOpThrottleId = (clientId: string, tenantId: string) => `${clientId}_${tenantId}_SubmitOp`;
 
 // Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
@@ -109,28 +109,20 @@ function checkThrottle(
         return;
     }
 
-    const messageMetaData = {
-        key: throttleId,
-        weight: 1,
-        event_type: "throttling",
-    };
-
     try {
         throttler.incrementCount(throttleId);
     } catch (e) {
         if (e instanceof core.ThrottlingError) {
-            logger?.info(`Throttled: ${throttleId}`, {
-                messageMetaData: {
-                    ...messageMetaData,
-                    reason: e.message,
-                    retryAfterInSeconds: e.retryAfter,
-                },
-            });
             return e;
         } else {
             logger?.error(
                 `Throttle increment failed: ${safeStringify(e, undefined, 2)}`,
-                { messageMetaData });
+                {
+                    messageMetaData: {
+                        key: throttleId,
+                        eventName: "throttling",
+                    },
+                });
         }
     }
 }
@@ -310,8 +302,6 @@ export function configureWebSocketServices(
                     existing: details.existing,
                     maxMessageSize: connection.maxMessageSize,
                     mode: "write",
-                    // Back-compat, removal tracked with issue #4346
-                    parentBranch: null,
                     serviceConfiguration: {
                         blockSize: connection.serviceConfiguration.blockSize,
                         maxMessageSize: connection.serviceConfiguration.maxMessageSize,
@@ -330,8 +320,6 @@ export function configureWebSocketServices(
                     existing: details.existing,
                     maxMessageSize: 1024, // Readonly client can't send ops.
                     mode: "read",
-                    // Back-compat, removal tracked with issue #4346
-                    parentBranch: null, // Does not matter for now.
                     serviceConfiguration: {
                         blockSize: core.DefaultServiceConfiguration.blockSize,
                         maxMessageSize: core.DefaultServiceConfiguration.maxMessageSize,
@@ -377,20 +365,6 @@ export function configureWebSocketServices(
         socket.on(
             "submitOp",
             (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[]) => {
-                const throttleError = checkThrottle(
-                    submitOpThrottler,
-                    getSubmitOpThrottleId(clientId),
-                    logger);
-                if (throttleError) {
-                    const nackMessage = createNackMessage(
-                        throttleError.code,
-                        NackErrorType.ThrottlingError,
-                        throttleError.message,
-                        throttleError.retryAfter);
-                    socket.emit("nack", "", [nackMessage]);
-                    return;
-                }
-
                 // Verify the user has an orderer connection.
                 if (!connectionsMap.has(clientId)) {
                     let nackMessage: INack;
@@ -406,6 +380,20 @@ export function configureWebSocketServices(
                     socket.emit("nack", "", [nackMessage]);
                 } else {
                     const connection = connectionsMap.get(clientId);
+
+                    const throttleError = checkThrottle(
+                        submitOpThrottler,
+                        getSubmitOpThrottleId(clientId, connection.tenantId),
+                        logger);
+                    if (throttleError) {
+                        const nackMessage = createNackMessage(
+                            throttleError.code,
+                            NackErrorType.ThrottlingError,
+                            throttleError.message,
+                            throttleError.retryAfter);
+                        socket.emit("nack", "", [nackMessage]);
+                        return;
+                    }
 
                     messageBatches.forEach((messageBatch) => {
                         const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];

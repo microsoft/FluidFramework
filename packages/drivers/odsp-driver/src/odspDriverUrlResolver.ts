@@ -19,19 +19,25 @@ import { getHashedDocumentId } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
 import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 
-function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
+function getUrlBase(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
     const siteOrigin = new URL(siteUrl).origin;
-    return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/opStream/snapshots`;
+    const version = fileVersion ? `versions/${fileVersion}/` : "";
+    return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/${version}`;
 }
 
-function getAttachmentPOSTUrl(siteUrl: string, driveId: string, itemId: string) {
-    const siteOrigin = new URL(siteUrl).origin;
-    return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/opStream/attachment`;
+function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
+    const urlBase = getUrlBase(siteUrl, driveId, itemId, fileVersion);
+    return `${urlBase}opStream/snapshots`;
 }
 
-function getAttachmentGETUrl(siteUrl: string, driveId: string, itemId: string) {
-    const siteOrigin = new URL(siteUrl).origin;
-    return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/opStream/attachments`;
+function getAttachmentPOSTUrl(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
+    const urlBase = getUrlBase(siteUrl, driveId, itemId, fileVersion);
+    return `${urlBase}opStream/attachment`;
+}
+
+function getAttachmentGETUrl(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
+    const urlBase = getUrlBase(siteUrl, driveId, itemId, fileVersion);
+    return `${urlBase}opStream/attachments`;
 }
 
 /**
@@ -85,7 +91,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 },
             };
         }
-        const { siteUrl, driveId, itemId, path, containerPackageName } = decodeOdspUrl(request.url);
+        const { siteUrl, driveId, itemId, path, containerPackageName, fileVersion } = decodeOdspUrl(request.url);
         const hashedDocumentId = getHashedDocumentId(driveId, itemId);
         assert(!hashedDocumentId.includes("/"), "Docid should not contain slashes!!");
 
@@ -100,14 +106,14 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             }
         }
 
-        const summarizer = request.headers?.[DriverHeader.summarizingClient];
+        const summarizer = !!request.headers?.[DriverHeader.summarizingClient];
 
         return {
             type: "fluid",
             endpoints: {
-                snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId),
-                attachmentPOSTStorageUrl: getAttachmentPOSTUrl(siteUrl, driveId, itemId),
-                attachmentGETStorageUrl: getAttachmentGETUrl(siteUrl, driveId, itemId),
+                snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId, fileVersion),
+                attachmentPOSTStorageUrl: getAttachmentPOSTUrl(siteUrl, driveId, itemId, fileVersion),
+                attachmentGETStorageUrl: getAttachmentGETUrl(siteUrl, driveId, itemId, fileVersion),
             },
             tokens: {},
             url: documentUrl,
@@ -140,6 +146,9 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         if (packageName) {
             odspUrl += `&containerPackageName=${encodeURIComponent(packageName)}`;
         }
+        if (odspResolvedUrl.fileVersion) {
+            odspUrl += `&fileVersion=${encodeURIComponent(odspResolvedUrl.fileVersion)}`;
+        }
 
         return odspUrl;
     }
@@ -160,6 +169,7 @@ function decodeOdspUrl(url: string): {
     itemId: string;
     path: string;
     containerPackageName?: string;
+    fileVersion?: string;
 } {
     const [siteUrl, queryString] = url.split("?");
 
@@ -169,6 +179,7 @@ function decodeOdspUrl(url: string): {
     const itemId = searchParams.get("itemId");
     const path = searchParams.get("path");
     const containerPackageName = searchParams.get("containerPackageName");
+    const fileVersion = searchParams.get("fileVersion");
 
     if (driveId === null) {
         throw new Error("ODSP URL did not contain a drive id");
@@ -188,5 +199,6 @@ function decodeOdspUrl(url: string): {
         itemId: decodeURIComponent(itemId),
         path: decodeURIComponent(path),
         containerPackageName: containerPackageName ? decodeURIComponent(containerPackageName) : undefined,
+        fileVersion: fileVersion ? decodeURIComponent(fileVersion) : undefined,
     };
 }

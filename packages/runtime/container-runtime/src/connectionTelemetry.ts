@@ -40,8 +40,7 @@ class OpPerfTelemetry {
         this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
         this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
 
-        // Back-compat: <= 0.28: Replace to "op" and remove "beforeOpProcessing" in the future.
-        this.deltaManager.on("beforeOpProcessing", (message) => this.beforeProcessingOp(message));
+        this.deltaManager.on("op", (message) => this.afterProcessingOp(message));
 
         this.deltaManager.on("connect", (details, opsBehind) => {
             this.clientId = details.clientId;
@@ -96,7 +95,7 @@ class OpPerfTelemetry {
         }
     }
 
-    private beforeProcessingOp(message: ISequencedDocumentMessage) {
+    private afterProcessingOp(message: ISequencedDocumentMessage) {
         const sequenceNumber = message.sequenceNumber;
 
         if (sequenceNumber === this.connectionOpSeqNumber) {

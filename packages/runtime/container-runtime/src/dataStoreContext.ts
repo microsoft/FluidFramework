@@ -151,14 +151,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.leader;
     }
 
-    public get snapshotFn(): (message: string) => Promise<void> {
-        return this._containerRuntime.snapshotFn;
-    }
-
-    public get branch(): string {
-        return this._containerRuntime.branch;
-    }
-
     public get loader(): ILoader {
         return this._containerRuntime.loader;
     }
@@ -169,14 +161,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public get isLoaded(): boolean {
         return this.loaded;
-    }
-
-    /**
-     * @deprecated 0.17 Issue #1888 Rename IHostRuntime to IContainerRuntime and refactor usages
-     * Use containerRuntime instead of hostRuntime
-     */
-    public get hostRuntime(): IContainerRuntime {
-        return this._containerRuntime;
     }
 
     public get baseSnapshot(): ISnapshotTree | undefined {
@@ -219,16 +203,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected readonly summarizerNode: ISummarizerNodeWithGC;
     readonly channelRoutingContext: IFluidRoutingContext;
 
-    /**
-        @deprecated Dummy summary tracker for back compat
-        Should be remove in 0.31 and #3243 closed
-    */
-    protected readonly summaryTracker = {
-        createOrGetChild: (key: string, sequenceNumber: number)=>({
-            updateLatestSequenceNumber: (latestSequenceNumber: number)=>{},
-        }),
-    };
-
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
         public readonly id: string,
@@ -262,7 +236,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
-            async () => this.getGCDataInternal(),
+            async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
             async () => this.getInitialGCSummaryDetails(),
         );
 
@@ -466,26 +440,22 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * document.
      * If there is no new data in this data store since the last summary, previous GC data is used.
      * If there is new data, the GC data is generated again (by calling getGCDataInternal).
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    public async getGCData(): Promise<IGarbageCollectionData> {
-        return this.summarizerNode.getGCData();
+    public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
+        return this.summarizerNode.getGCData(fullGC);
     }
 
     /**
      * Generates data used for garbage collection. This is called when there is new data since last summary. It
      * realizes the data store and calls into each channel context to get its GC data.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    private async getGCDataInternal(): Promise<IGarbageCollectionData> {
+    private async getGCDataInternal(fullGC: boolean = false): Promise<IGarbageCollectionData> {
         await this.realize();
         assert(this.channel !== undefined, "Channel should not be undefined when running GC");
 
-        // back-compat - 0.31. Older data store runtimes will not have getGCData API.
-        if (this.channel.getGCData === undefined) {
-            return {
-                gcNodes: {},
-            };
-        }
-        return this.channel.getGCData();
+        return this.channel.getGCData(fullGC);
     }
 
     /**
@@ -521,14 +491,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         assert(this.loaded, "Channel should be loaded when updating used routes");
         assert(this.channel !== undefined, "Channel should be present when data store is loaded");
 
-        // back-compat: 0.33 - updateUsedRoutes is added in 0.33. Remove the check here when N >= 0.36.
-        if (this.channel.updateUsedRoutes !== undefined) {
-            // Remove the route to this data store, if it exists.
-            const usedChannelRoutes = this.summarizerNode.usedRoutes.filter(
-                (id: string) => { return id !== "/" && id !== ""; },
-            );
-            this.channel.updateUsedRoutes(usedChannelRoutes);
-        }
+        // Remove the route to this data store, if it exists.
+        const usedChannelRoutes = this.summarizerNode.usedRoutes.filter(
+            (id: string) => { return id !== "/" && id !== ""; },
+        );
+        this.channel.updateUsedRoutes(usedChannelRoutes);
     }
 
     public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
@@ -655,7 +622,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
-    protected abstract getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
+    public abstract getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
         assert(!!this.channel, "Channel must exist when resubmitting ops");
@@ -672,7 +639,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
         return (
             summarizeInternal: SummarizeInternalFn,
-            getGCDataFn: () => Promise<IGarbageCollectionData>,
+            getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
             getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
         ) => this.summarizerNode.createChild(
             summarizeInternal,
@@ -802,7 +769,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         return this.initialSnapshotDetailsP;
     }
 
-    protected async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
+    public async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
         return this.gcDetailsInInitialSummaryP;
     }
 
@@ -895,7 +862,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         };
     }
 
-    protected async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
+    public async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
         // Local data store does not have initial summary.
         return {};
     }

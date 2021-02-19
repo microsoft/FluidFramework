@@ -54,10 +54,10 @@ async function initializeODSPCore(
   item:   ${itemId}
   docId:  ${docId}`);
 
-    const getStorageTokenStub = async (siteUrl: string, refresh: boolean, _claims?: string) => {
+    const getStorageTokenStub = async (options: odsp.OdspResourceTokenFetchOptions) => {
         return resolveWrapper(
             async (authRequestInfo: IOdspAuthRequestInfo) => {
-                if ((refresh || !authRequestInfo.accessToken) && authRequestInfo.refreshTokenFn) {
+                if ((options.refresh || !authRequestInfo.accessToken) && authRequestInfo.refreshTokenFn) {
                     return authRequestInfo.refreshTokenFn();
                 }
                 return authRequestInfo.accessToken;
@@ -69,7 +69,7 @@ async function initializeODSPCore(
         );
     };
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    const getWebsocketTokenStub = (_refresh: boolean, _claims?: string) => Promise.resolve("");
+    const getWebsocketTokenStub = (_options: odsp.OdspResourceTokenFetchOptions) => Promise.resolve("");
     const odspDocumentServiceFactory = new odsp.OdspDocumentServiceFactory(
         getStorageTokenStub,
         getWebsocketTokenStub);
@@ -118,7 +118,7 @@ async function resolveUrl(url: string): Promise<IResolvedUrl | undefined> {
         new OdspUrlResolver(),
         new FluidAppOdspUrlResolver(),
         // eslint-disable-next-line @typescript-eslint/promise-function-async
-        new RouterliciousUrlResolver(undefined, () => Promise.resolve(paramJWT)),
+        new RouterliciousUrlResolver(undefined, () => Promise.resolve(paramJWT), ""),
     ];
     const resolved = await configurableUrlResolver(resolversList, { url });
     return resolved;

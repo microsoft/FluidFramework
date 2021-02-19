@@ -47,7 +47,7 @@ export function createAnnotateMarkerOp(
  * @returns The annotate op
  */
 export function createAnnotateRangeOp(
-    start: number, end: number, props: PropertySet, combiningOp: ICombiningOp): IMergeTreeAnnotateMsg {
+    start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined): IMergeTreeAnnotateMsg {
     return {
         combiningOp,
         pos1: start,

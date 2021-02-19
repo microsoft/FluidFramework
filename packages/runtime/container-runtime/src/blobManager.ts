@@ -12,6 +12,8 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { AttachmentTreeEntry } from "@fluidframework/protocol-base";
 import { ISnapshotTree, ITree } from "@fluidframework/protocol-definitions";
 import { generateHandleContextPath, FluidRoutingContext } from "@fluidframework/runtime-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { assert } from "@fluidframework/common-utils";
 
 /**
  * This class represents blob (long string)
@@ -24,7 +26,7 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
     public get IFluidHandle(): IFluidHandle { return this; }
 
     public get isAttached(): boolean {
-        return true;
+        return this.attachGraphCallback === undefined;
     }
 
     public readonly absolutePath: string;
@@ -33,9 +35,16 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
         public readonly path: string,
         public readonly routeContext: IFluidRoutingContext,
         public get: () => Promise<any>,
-        public attachGraph: () => void,
+        private attachGraphCallback: undefined | (() => void),
     ) {
         this.absolutePath = generateHandleContextPath(path, this.routeContext);
+    }
+
+    public attachGraph() {
+        if (this.attachGraphCallback) {
+            this.attachGraphCallback();
+            this.attachGraphCallback = undefined;
+        }
     }
 
     public bind(handle: IFluidHandle) {
@@ -46,12 +55,14 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 export class BlobManager {
     public static readonly basePath = "_blobs";
     protected readonly routeContext: IFluidRoutingContext;
+    private readonly pendingBlobIds: Set<string> = new Set();
     private readonly blobIds: Set<string> = new Set();
 
     constructor(
         rootRoute: IFluidRoutingContext,
         private readonly getStorage: () => IDocumentStorageService,
-        private readonly sendBlobAttachOp: (blobId: string) => void)
+        private readonly attachBlobCallback: (blobId: string) => void,
+        private readonly logger: ITelemetryLogger)
     {
         this.routeContext = new FluidRoutingContext(
             "_blobs",
@@ -69,11 +80,12 @@ export class BlobManager {
     }
 
     public async getBlob(blobId: string): Promise<IFluidHandle<ArrayBufferLike>> {
+        assert(this.blobIds.has(blobId) || this.pendingBlobIds.has(blobId), "requesting unknown blobs");
         return new BlobHandle(
             blobId,
             this.routeContext,
             async () => this.getStorage().readBlob(blobId),
-            () => null,
+            undefined,
         );
     }
 
@@ -84,14 +96,20 @@ export class BlobManager {
             response.id,
             this.routeContext,
             async () => this.getStorage().readBlob(response.id),
-            () => this.sendBlobAttachOp(response.id),
+            () => this.attachBlobCallback(response.id),
         );
+
+        assert(!this.pendingBlobIds.has(response.id));
+        assert(!this.blobIds.has(response.id));
+        this.pendingBlobIds.add(response.id);
 
         return handle;
     }
 
     public addBlobId(blobId: string) {
+        assert(!this.blobIds.has(blobId));
         this.blobIds.add(blobId);
+        this.pendingBlobIds.delete(blobId);
     }
 
     /**
@@ -109,13 +127,17 @@ export class BlobManager {
      * attachment types returned in snapshot() with blobs.
      */
     public load(blobsTree?: ISnapshotTree): void {
+        let count = 0;
         if (blobsTree) {
-            Object.values(blobsTree.blobs).map((entry) => this.addBlobId(entry));
+            const values = Object.values(blobsTree.blobs);
+            count = values.length;
+            values.map((entry) => this.addBlobId(entry));
         }
+        this.logger.sendTelemetryEvent({ eventName: "ExternalBlobsInSnapshot", count });
     }
 
     public snapshot(): ITree {
         const entries = [...this.blobIds].map((id) => new AttachmentTreeEntry(id, id));
-        return { entries, id: null };
+        return { entries };
     }
 }

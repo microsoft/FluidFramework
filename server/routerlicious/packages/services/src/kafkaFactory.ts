@@ -4,10 +4,8 @@
  */
 
 import { IConsumer, IProducer } from "@fluidframework/server-services-core";
-import { KafkaNodeConsumer } from "./kafkaNodeConsumer";
-import { KafkaNodeProducer } from "./kafkaNodeProducer";
-import { RdkafkaConsumer } from "./rdkafkaConsumer";
-import { RdkafkaProducer } from "./rdkafkaProducer";
+import { KafkaNodeConsumer, KafkaNodeProducer } from "@fluidframework/server-services-ordering-kafkanode";
+import { RdkafkaConsumer, RdkafkaProducer } from "@fluidframework/server-services-ordering-rdkafka";
 
 export function createConsumer(
     type: string,
@@ -15,10 +13,12 @@ export function createConsumer(
     zookeeperEndPoint: string,
     clientId: string,
     groupId: string,
-    topic: string): IConsumer {
+    topic: string,
+    numberOfPartitions?: number,
+    replicationFactor?: number): IConsumer {
     if (type === "rdkafka") {
         const endpoints = { kafka: [kafkaEndPoint], zooKeeper: [zookeeperEndPoint] };
-        return new RdkafkaConsumer(endpoints, clientId, topic, groupId);
+        return new RdkafkaConsumer(endpoints, clientId, topic, groupId, { numberOfPartitions, replicationFactor });
     }
 
     return new KafkaNodeConsumer({ kafkaHost: kafkaEndPoint }, clientId, groupId, topic, zookeeperEndPoint);
@@ -29,11 +29,16 @@ export function createProducer(
     kafkaEndPoint: string,
     clientId: string,
     topic: string,
-    maxKafkaMessageSize: number,
     enableIdempotence?: boolean,
-    pollIntervalMs?: number): IProducer {
+    pollIntervalMs?: number,
+    numberOfPartitions?: number,
+    replicationFactor?: number): IProducer {
     if (type === "rdkafka") {
-        return new RdkafkaProducer({ kafka: [kafkaEndPoint] }, clientId, topic, enableIdempotence, pollIntervalMs);
+        return new RdkafkaProducer(
+            { kafka: [kafkaEndPoint] },
+            clientId,
+            topic,
+            { enableIdempotence, pollIntervalMs, numberOfPartitions, replicationFactor });
     }
 
     return new KafkaNodeProducer({ kafkaHost: kafkaEndPoint }, clientId, topic);

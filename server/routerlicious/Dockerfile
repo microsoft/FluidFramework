@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:12.19-slim AS base
+FROM node:12.20.1-slim AS base
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
@@ -36,6 +36,10 @@ COPY packages/routerlicious-base/package*.json packages/routerlicious-base/
 COPY packages/services/package*.json packages/services/
 COPY packages/services-client/package*.json packages/services-client/
 COPY packages/services-core/package*.json packages/services-core/
+COPY packages/services-ordering-eventhub/package*.json packages/services-ordering-eventhub/
+COPY packages/services-ordering-kafkanode/package*.json packages/services-ordering-kafkanode/
+COPY packages/services-ordering-rdkafka/package*.json packages/services-ordering-rdkafka/
+COPY packages/services-ordering-zookeeper/package*.json packages/services-ordering-zookeeper/
 COPY packages/services-shared/package*.json packages/services-shared/
 COPY packages/services-utils/package*.json packages/services-utils/
 COPY packages/test-utils/package*.json packages/test-utils/

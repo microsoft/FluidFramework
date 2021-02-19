@@ -17,7 +17,6 @@ module.exports = {
         "no-bitwise": "off",
         "no-case-declarations": "off",
         "no-null/no-null": "off",
-        "no-param-reassign": "off",
         "prefer-arrow/prefer-arrow-functions": "off"
     }
 }

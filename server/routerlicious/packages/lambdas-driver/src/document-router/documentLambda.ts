@@ -9,16 +9,13 @@ import {
     IQueuedMessage,
     IPartitionLambda,
     IPartitionLambdaFactory,
+    LambdaCloseType,
+    IContextErrorData,
+    IDocumentLambdaServerConfiguration,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { DocumentContextManager } from "./contextManager";
 import { DocumentPartition } from "./documentPartition";
-
-// Expire document partitions after 10 minutes of no activity
-const PartitionActivityTimeout = 10 * 60 * 1000;
-
-// How often to check the partitions for inacitivty
-const PartitionActivityCheckInterval = 60 * 1000;
 
 export class DocumentLambda implements IPartitionLambda {
     private readonly documents = new Map<string, DocumentPartition>();
@@ -30,13 +27,14 @@ export class DocumentLambda implements IPartitionLambda {
         private readonly factory: IPartitionLambdaFactory,
         private readonly config: Provider,
         context: IContext,
-        private readonly partitionActivityTimeout = PartitionActivityTimeout,
-        partitionActivityCheckInterval = PartitionActivityCheckInterval) {
+        private readonly documentLambdaServerConfiguration: IDocumentLambdaServerConfiguration) {
         this.contextManager = new DocumentContextManager(context);
-        this.contextManager.on("error", (error, restart) => {
-            context.error(error, restart);
+        this.contextManager.on("error", (error, errorData: IContextErrorData) => {
+            context.error(error, errorData);
         });
-        this.activityCheckTimer = setInterval(this.inactivityCheck.bind(this), partitionActivityCheckInterval);
+        this.activityCheckTimer = setInterval(
+            this.inactivityCheck.bind(this),
+            documentLambdaServerConfiguration.partitionActivityCheckInterval);
     }
 
     public handler(message: IQueuedMessage): void {
@@ -45,7 +43,7 @@ export class DocumentLambda implements IPartitionLambda {
         this.contextManager.setTail(message);
     }
 
-    public close() {
+    public close(closeType: LambdaCloseType) {
         if (this.activityCheckTimer !== undefined) {
             clearInterval(this.activityCheckTimer);
             this.activityCheckTimer = undefined;
@@ -54,7 +52,7 @@ export class DocumentLambda implements IPartitionLambda {
         this.contextManager.close();
 
         for (const [, partition] of this.documents) {
-            partition.close();
+            partition.close(closeType);
         }
 
         this.documents.clear();
@@ -84,7 +82,7 @@ export class DocumentLambda implements IPartitionLambda {
                 boxcar.tenantId,
                 boxcar.documentId,
                 documentContext,
-                this.partitionActivityTimeout);
+                this.documentLambdaServerConfiguration.partitionActivityTimeout);
             this.documents.set(routingKey, document);
         } else {
             document = this.documents.get(routingKey);
@@ -107,7 +105,8 @@ export class DocumentLambda implements IPartitionLambda {
         for (const [routingKey, documentPartition] of documentPartitions) {
             if (documentPartition.isInactive(now)) {
                 // Close and remove the inactive document
-                documentPartition.close();
+                this.contextManager.removeContext(documentPartition.context);
+                documentPartition.close(LambdaCloseType.ActivityTimeout);
                 this.documents.delete(routingKey);
             }
         }

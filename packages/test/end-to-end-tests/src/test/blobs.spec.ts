@@ -11,18 +11,25 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { v4 as uuid } from "uuid";
 import { ReferenceType } from "@fluidframework/merge-tree";
-import { generateLocalNonCompatTest, ITestObjectProvider, ITestContainerConfig, TestDataObject } from "./compatUtils";
+import { generateNonCompatTest, ITestObjectProvider, ITestContainerConfig, TestDataObject } from "./compatUtils";
 
 const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: { initialSummarizerDelayMs: 20, summaryConfigOverrides: { maxOps: 1 } },
     registry: [["sharedString", SharedString.getFactory()]],
 };
 
-const tests = (args: ITestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    beforeEach(()=>{
+        args = argsFactory();
+    });
+    afterEach(() => {
+        args.reset();
+    });
     it("attach sends an op", async function() {
         const container = await args.makeTestContainer(testContainerConfig);
 
-        const blobOpP = new Promise((res, rej) => container.on("op", (op) => {
+        const blobOpP = new Promise<void>((res, rej) => container.on("op", (op) => {
             if (op.contents?.type === ContainerMessageType.BlobAttach) {
                 // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                 op.metadata?.blobId ? res() : rej(new Error("no op metadata"));
@@ -62,7 +69,7 @@ const tests = (args: ITestObjectProvider) => {
 
         // attach blob, wait for blob attach op, then take BlobManager snapshot
         dataStore._root.set("my blob", blob);
-        await new Promise((res, rej) => container1.on("op", (op) => {
+        await new Promise<void>((res, rej) => container1.on("op", (op) => {
             if (op.contents?.type === ContainerMessageType.BlobAttach) {
                 // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                 op.metadata?.blobId ? res() : rej(new Error("no op metadata"));
@@ -71,7 +78,7 @@ const tests = (args: ITestObjectProvider) => {
         const snapshot1 = (container1 as any).context.runtime.blobManager.snapshot();
 
         // wait for summarize, then summary ack so the next container will load from snapshot
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
             let summarized = false;
             container1.on("op", (op) => {
                 if (op.type === "summaryAck") {
@@ -107,7 +114,7 @@ const tests = (args: ITestObjectProvider) => {
             sharedString.insertMarker(0, ReferenceType.Simple, { blob });
 
             // wait for summarize, then summary ack so the next container will load from snapshot
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 let summarized = false;
                 container1.on("op", (op) => {
                     if (op.type === "summaryAck") {
@@ -139,5 +146,5 @@ const tests = (args: ITestObjectProvider) => {
 
 describe("blobs", () => {
     // TODO: add back compat test once N-2 is 0.28
-    generateLocalNonCompatTest(tests);
+    generateNonCompatTest(tests);
 });

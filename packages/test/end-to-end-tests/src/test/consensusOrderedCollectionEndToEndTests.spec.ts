@@ -16,16 +16,8 @@ import {
     waitAcquireAndComplete,
 } from "@fluidframework/ordered-collection";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import {
-    ITestFluidObject,
-    ChannelFactoryRegistry,
-} from "@fluidframework/test-utils";
-import {
-    generateTest,
-    ITestObjectProvider,
-    ITestContainerConfig,
-    DataObjectFactoryType,
-} from "./compatUtils";
+import { ChannelFactoryRegistry, ITestFluidObject } from "@fluidframework/test-utils";
+import { DataObjectFactoryType, generateTest, ITestContainerConfig, ITestObjectProvider } from "./compatUtils";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IFluidDataStoreRuntime, id?: string): T;
@@ -44,7 +36,14 @@ const testContainerConfig: ITestContainerConfig = {
 function generate(
     name: string, ctor: ISharedObjectConstructor<IConsensusOrderedCollection>,
     input: any[], output: any[]) {
-    const tests = (args: ITestObjectProvider) => {
+    const tests = (argsFactory: () => ITestObjectProvider) => {
+        let args: ITestObjectProvider;
+        beforeEach(()=>{
+            args = argsFactory();
+        });
+        afterEach(() => {
+            args.reset();
+        });
         let container1: IContainer;
         let container2: IContainer;
         let dataStore1: ITestFluidObject;
@@ -55,12 +54,12 @@ function generate(
 
         beforeEach(async () => {
             // Create a Container for the first client.
-            container1 = await args.makeTestContainer(testContainerConfig);
+            container1 = await args.makeTestContainer(testContainerConfig) as IContainer;
             dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
             sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
             // Load the Container that was created by the first client.
-            container2 = await args.loadTestContainer(testContainerConfig);
+            container2 = await args.loadTestContainer(testContainerConfig) as IContainer;
             dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
             sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 
@@ -352,7 +351,7 @@ function generate(
     };
 
     describe(name, () => {
-        generateTest(tests, { tinylicious: true });
+        generateTest(tests);
     });
 }
 

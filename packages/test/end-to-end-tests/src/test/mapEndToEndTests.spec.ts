@@ -27,7 +27,15 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (args: ITestObjectProvider) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
+    let args: ITestObjectProvider;
+    beforeEach(()=>{
+        args = argsFactory();
+    });
+    afterEach(() => {
+        args.reset();
+    });
+
     let dataObject1: ITestFluidObject;
     let sharedMap1: ISharedMap;
     let sharedMap2: ISharedMap;
@@ -304,5 +312,5 @@ const tests = (args: ITestObjectProvider) => {
 };
 
 describe("Map", () => {
-    generateTest(tests, { tinylicious: true });
+    generateTest(tests);
 });

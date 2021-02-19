@@ -17,7 +17,6 @@ module.exports = {
         "no-bitwise":"off",
         "no-case-declarations":"off",
         "no-inner-declarations":"off",
-        "no-param-reassign": "off",
         "prefer-arrow/prefer-arrow-functions":"off",
         "prefer-template":"off"
     }
