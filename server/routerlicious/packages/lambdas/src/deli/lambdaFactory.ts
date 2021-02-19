@@ -34,7 +34,7 @@ const FlipTerm = false;
 const getDefaultCheckpooint = (epoch: number): IDeliState => {
     return {
         branchMap: undefined,
-        clients: undefined,
+        clients: [],
         durableSequenceNumber: 0,
         epoch,
         logOffset: -1,
@@ -88,11 +88,13 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             if (dbObject.deli === "") {
                 context.log.info(`Existing document. Fetching checkpoint from summary`, { messageMetaData });
 
-                lastCheckpoint = await this.loadStateFromSummary(tenantId, documentId, gitManager, context.log);
-                if (lastCheckpoint === undefined) {
+                const lastCheckpointFromSummary =
+                    await this.loadStateFromSummary(tenantId, documentId, gitManager, context.log);
+                if (lastCheckpointFromSummary === undefined) {
                     context.log.error(`Summary cannot be fetched`, { messageMetaData });
                     lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
                 } else {
+                    lastCheckpoint = lastCheckpointFromSummary;
                     // Since the document was originated elsewhere or cache was cleared, logOffset info is irrelavant.
                     // Currently the lambda checkpoints only after updating the logOffset so setting this to lower
                     // is okay. Conceptually this is similar to default checkpoint where logOffset is -1. In this case,
@@ -151,7 +153,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         tenantId: string,
         documentId: string,
         gitManager: IGitManager,
-        logger: ILogger): Promise<IDeliState> {
+        logger: ILogger): Promise<IDeliState | undefined> {
         const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
         if (existingRef) {
             try {

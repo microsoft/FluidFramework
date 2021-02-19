@@ -159,7 +159,7 @@ export interface ISequencedDocumentMessage {
     origin?: IBranchOrigin;
 
     // Traces related to the packet.
-    traces: ITrace[];
+    traces?: ITrace[];
 
     // Timestamp when the server ticketed the message
     timestamp: number;
