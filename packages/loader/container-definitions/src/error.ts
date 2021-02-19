@@ -21,6 +21,11 @@ export enum ContainerErrorType {
      * Data loss error detected by Container / DeltaManager. Likely points to storage issue.
      */
     dataCorruptionError = "dataCorruptionError",
+
+    /**
+     * Error encountered when processing an operation. May correlate with data corruption.
+     */
+    dataProcessingError = "dataProcessingError",
 }
 
 /**

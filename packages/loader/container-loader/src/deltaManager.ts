@@ -14,6 +14,7 @@ import {
     ICriticalContainerError,
     ContainerErrorType,
     IThrottlingWarning,
+    ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import { PerformanceEvent, TelemetryLogger, safeRaiseEvent } from "@fluidframework/telemetry-utils";
@@ -23,6 +24,7 @@ import {
     IDocumentDeltaConnection,
     IDocumentStorageService,
     LoaderCachingPolicy,
+    IDocumentDeltaConnectionEvents,
 } from "@fluidframework/driver-definitions";
 import { isSystemType, isSystemMessage } from "@fluidframework/protocol-base";
 import {
@@ -35,7 +37,9 @@ import {
     INack,
     INackContent,
     ISequencedDocumentMessage,
+    ISignalClient,
     ISignalMessage,
+    ITokenClaims,
     ITrace,
     MessageType,
     ScopeType,
@@ -46,7 +50,11 @@ import {
     createGenericNetworkError,
     getRetryDelayFromError,
 } from "@fluidframework/driver-utils";
-import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
+import {
+    CreateContainerError,
+    CreateProcessingError,
+    DataCorruptionError,
+} from "@fluidframework/container-utils";
 import { debug } from "./debug";
 import { DeltaQueue } from "./deltaQueue";
 import { logNetworkFailure, waitForConnectedState } from "./networkUtils";
@@ -94,6 +102,42 @@ export enum ReconnectMode {
 export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
     (event: "throttled", listener: (error: IThrottlingWarning) => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
+}
+
+/**
+ * Implementation of IDocumentDeltaConnection that does not support submitting
+ * or receiving ops. Used in storage-only mode.
+ */
+class NoDeltaStream extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection {
+    clientId: string = "storage-only client";
+    claims: ITokenClaims = {
+        scopes: [ScopeType.DocRead],
+    } as any;
+    mode: ConnectionMode = "read";
+    existing: boolean = true;
+    maxMessageSize: number = 0;
+    version: string = "";
+    initialMessages: ISequencedDocumentMessage[] = [];
+    initialSignals: ISignalMessage[] = [];
+    initialClients: ISignalClient[] = [];
+    serviceConfiguration: IClientConfiguration = undefined as any;
+    checkpointSequenceNumber?: number | undefined = undefined;
+    submit(messages: IDocumentMessage[]): void {
+        this.emit("nack", this.clientId, messages.map((operation) => {
+            return {
+                operation,
+                content: { message: "Cannot submit with storage-only connection", code: 403 },
+            };
+        }));
+    }
+    submitSignal(message: any): void {
+        this.emit("nack", this.clientId, {
+            operation: message,
+            content: { message: "Cannot submit signal with storage-only connection", code: 403 },
+        });
+    }
+    close(): void {
+    }
 }
 
 /**
@@ -264,6 +308,7 @@ export class DeltaManager
      * or due to host forcing readonly mode for container.
      * It is undefined if we have not yet established websocket connection
      * and do not know if user has write access to a file.
+     * @deprecated - use readOnlyInfo
      */
     public get readonly() {
         if (this._forceReadonly) {
@@ -276,9 +321,24 @@ export class DeltaManager
      * Tells if user has no write permissions for file in storage
      * It is undefined if we have not yet established websocket connection
      * and do not know if user has write access to a file.
+     * @deprecated - use readOnlyInfo
      */
     public get readonlyPermissions() {
         return this._readonlyPermissions;
+    }
+
+    public get readOnlyInfo(): ReadOnlyInfo {
+        const storageOnly = this.connection !== undefined && this.connection instanceof NoDeltaStream;
+        if (storageOnly || this._forceReadonly || this._readonlyPermissions === true) {
+            return {
+                readonly: true,
+                forced: this._forceReadonly,
+                permissions: this._readonlyPermissions,
+                storageOnly,
+            };
+        }
+
+        return { readonly: this._readonlyPermissions };
     }
 
     /**
@@ -387,7 +447,7 @@ export class DeltaManager
             });
 
         this._inbound.on("error", (error) => {
-            this.close(CreateContainerError(error));
+            this.close(CreateProcessingError(error, {}));
         });
 
         // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
@@ -542,6 +602,15 @@ export class DeltaManager
         const docService = this.serviceProvider();
         if (docService === undefined) {
             throw new Error("Container is not attached");
+        }
+
+        if (docService.policies?.storageOnly === true) {
+            const connection = new NoDeltaStream();
+            this.connectionP = new Promise((resolve) => {
+                this.setupNewSuccessfulConnection(connection, "read");
+                resolve(connection);
+            });
+            return this.connectionP;
         }
 
         // The promise returned from connectCore will settle with a resolved connection or reject with error

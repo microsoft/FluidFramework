@@ -9,14 +9,21 @@ const testDriver = process.env.FLUID_TEST_DRIVER ? process.env.FLUID_TEST_DRIVER
 const packageDir = `${__dirname}/../..`;
 const testPackagesDir = `${packageDir}/..`;
 
-const config ={
+const requiredModules = [
+    `${testPackagesDir}/mocha-test-setup`, // General mocha setup e.g. suppresses console.log
+    `${testPackagesDir}/test-drivers`, // Inject implementation of getFluidTestDriver, configured via FLUID_TEST_DRIVER
+];
+
+if (process.env.FLUID_DI_ROOT && process.env.FLUID_DI_LOGGERPKG) {
+    // Inject implementation of getTestLogger
+    requiredModules.push(`${process.env.FLUID_DI_ROOT}/${process.env.FLUID_DI_LOGGERPKG}`);
+}
+
+const config = {
   "exit": true,
   "recursive": true,
   // "parallel": testDriver === "local",
-  "require": [
-    `${testPackagesDir}/mocha-test-setup`,
-    `${testPackagesDir}/test-drivers`,
-  ],
+  "require": requiredModules,
   "unhandled-rejections": "strict"
 };
 

@@ -318,12 +318,12 @@ export class DeliLambda implements IPartitionLambda {
             if (message.operation.type !== MessageType.NoOp) {
                 // Rev the sequence number
                 sequenceNumber = this.revSequenceNumber();
-                // We checked earlier for the below case. Why checking again?
-                // Only for directly sent ops (e.g., using REST API). To avoid getting nacked,
-                // We rev the refseq number to current sequence number.
-                if (message.operation.referenceSequenceNumber === -1) {
-                    message.operation.referenceSequenceNumber = sequenceNumber;
-                }
+            }
+
+            // Only for directly sent ops (e.g., using REST API). To avoid getting nacked,
+            // We rev the refseq number to current sequence number.
+            if (message.operation.referenceSequenceNumber === -1) {
+                message.operation.referenceSequenceNumber = sequenceNumber;
             }
 
             this.clientSeqManager.upsertClient(

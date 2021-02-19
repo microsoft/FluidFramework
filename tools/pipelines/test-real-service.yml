@@ -22,6 +22,11 @@ parameters:
   type: boolean
   default: false
 
+trigger:
+  branches:
+    include:
+    - main
+    - release/*
 pr: none
 
 variables:
@@ -33,6 +38,8 @@ variables:
   - template: templates/include-vars.yml
     parameters:
       buildNumberInPatch: true
+  - name: diDir
+    value: '$(Build.SourcesDirectory)/tools/pipelines/dependency-injection'
 
 jobs:
   - job: run
@@ -44,6 +51,26 @@ jobs:
       clean: true
       lfs: ${{ parameters.checkoutSubmodules }}
       submodules: ${{ parameters.checkoutSubmodules }}
+
+    # Print parameters/Vars
+    - task: Bash@3
+      displayName: Print Parameters and Variables
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: |
+          # Show all task group conditions
+
+          echo "
+          Pipeline Parameters:
+            buildDirectory=${{ parameters.buildDirectory }}
+            taskBuild=${{ parameters.taskBuild }}
+            poolBuild=${{ parameters.poolBuild }}
+            checkoutSubmodules=${{ parameters.checkoutSubmodules }}
+
+          Pipeline Variables:
+            diDir=${{ variables.diDir }}
+          "
 
     # Install
     - task: UseNode@1
@@ -66,6 +93,36 @@ jobs:
         workingDir: ${{ parameters.buildDirectory }}
         customCommand: 'run ${{ parameters.taskBuild }}'
 
+    # [DI] Auth to internal feed
+    - task: npmAuthenticate@0
+      displayName: '[DI] npm authenticate (internal feed)'
+      inputs:
+        workingFile: ${{ variables.diDir }}/.npmrc
+
+    # [DI] Auth to Office feed
+    - task: npmAuthenticate@0
+      displayName: '[DI] npm authenticate (office feed)'
+      inputs:
+        workingFile: ${{ variables.diDir }}/.npmrc
+        customEndpoint: 'Office Packages - Readonly'
+
+    # [DI] Prep dependency-injection package for install
+    - task: Bash@3
+      displayName: '[DI] Prepare DI package'
+      inputs:
+        targetType: 'inline'
+        script: 'mv _package.json package.json; mv _package-lock.json package-lock.json'
+        workingDirectory: ${{ variables.diDir }}
+
+    # [DI] Install dependency-injection package
+    - task: Npm@1
+      displayName: '[DI] npm ci'
+      inputs:
+        command: 'custom'
+        workingDir: ${{ variables.diDir }}
+        customCommand: 'ci'
+        customRegistry: 'useNpmrc'
+
     # Run End-to-end Tests
     - task: Npm@1
       displayName: '[end-to-end tests] npm run ci:test:realsvc'
@@ -75,6 +132,8 @@ jobs:
         fluid__webpack__fluidHost: $(fluid-webpack-fluidHost)
         fluid__webpack__tenantId: $(fluid-webpack-tenantId)
         fluid__webpack__tenantSecret: $(fluid-webpack-tenantSecret)
+        FLUID_DI_ROOT: ${{ variables.diDir }}/node_modules
+        FLUID_DI_LOGGERPKG: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
       inputs:
         command: 'custom'
         workingDir: packages/test/end-to-end-tests
