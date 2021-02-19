@@ -167,7 +167,7 @@ export class OdspSummaryUploadManager {
         } else {
             this.previousBlobTreeDedupCaches = { ...this.blobTreeDedupCaches };
         }
-        const { result, blobTreeDedupCachesLatest } = await this.writeSummaryTreeCore(context.ackHandle, tree);
+        const { result, blobTreeDedupCachesLatest } = await this.writeSummaryTreeCore(context.ackHandle, context.referenceSequenceNumber, tree);
         const id = result ? result.id : undefined;
         if (!result || !id) {
             throw new Error(`Failed to write summary tree`);
@@ -179,6 +179,7 @@ export class OdspSummaryUploadManager {
 
     private async writeSummaryTreeCore(
         parentHandle: string | undefined,
+        referenceSequenceNumber: number,
         tree: api.ISummaryTree,
     ): Promise<{
             result: ISnapshotResponse,
@@ -209,6 +210,7 @@ export class OdspSummaryUploadManager {
         const snapshot: ISnapshotRequest = {
             entries: snapshotTree.entries!,
             message: "app",
+            sequenceNumber: referenceSequenceNumber,
             type: SnapshotType.Channel,
         };
 

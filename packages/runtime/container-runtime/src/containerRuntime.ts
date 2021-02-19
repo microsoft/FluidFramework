@@ -616,7 +616,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly _logger: ITelemetryLogger;
     public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
-    private latestSummaryAck: ISummaryContext;
+    private latestSummaryAck: Omit<ISummaryContext, "referenceSequenceNumber">;
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
@@ -1435,7 +1435,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             const handle = await this.storage.uploadSummaryWithContext(
                 summarizeResult.summary,
-                this.latestSummaryAck);
+                { ... this.latestSummaryAck, referenceSequenceNumber: summaryRefSeqNum });
 
             // safe mode refreshes the latest summary ack
             if (safe) {
