@@ -20,7 +20,7 @@ import {
     createLoader,
     OpProcessingController,
 } from "@fluidframework/test-utils";
-import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 class TestSharedDataObject1 extends DataObject {
@@ -36,22 +36,15 @@ class TestSharedDataObject1 extends DataObject {
         return this.context;
     }
 
+    // this is for returning query params in the last test
     public async request(request: IRequest): Promise<IResponse> {
         const url = request.url;
         const parsed = parse(url, true);
-        const requestParser = RequestParser.create({ url: request.url });
-        const itemId = requestParser.pathParts[0];
-        if (itemId === "bigBlobs") {
-            const value = this.root.get<string>(requestParser.pathParts.join("/"));
-            if (value === undefined) {
-                return { mimeType: "text/plain", status: 404, value: `request ${url} not found` };
-            }
-            return { mimeType: "fluid/object", status: 200, value };
         // eslint-disable-next-line no-null/no-null
-        } else if (parsed.search !== null) {
+        if (parsed.search !== null) {
+            // returning query params instead of the data object for testing purposes
             return { mimeType: "fluid/object", status: 200, value : `${parsed.search}` };
-        }
-        else {
+        } else {
             return super.request(request);
         }
     }
@@ -137,10 +130,10 @@ describe("Loader.request", () => {
 
     it("can create the data objects with correct types", async () => {
         const testUrl1 = await container.getAbsoluteUrl(dataStore1.handle.absolutePath);
-        assert(testUrl1);
+        assert(testUrl1,"dataStore1 url is undefined");
         const testDataStore1 = await requestFluidObject(loader, testUrl1);
         const testUrl2 = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
-        assert(testUrl2);
+        assert(testUrl2,"dataStore2 url is undefined");
         const testDataStore2 = await requestFluidObject(loader, testUrl2);
 
         assert(testDataStore1 instanceof TestSharedDataObject1, "requestFromLoader returns the wrong type for default");
@@ -149,7 +142,7 @@ describe("Loader.request", () => {
 
     it("can create data object using url with second id, having correct type and id", async () => {
         const dataStore2Url = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
-        assert(dataStore2Url);
+        assert(dataStore2Url, "dataStore2 url is undefined");
         const testDataStore = await requestFluidObject(loader, dataStore2Url);
 
         assert(testDataStore instanceof TestSharedDataObject2, "request returns the wrong type with long url");
@@ -158,7 +151,7 @@ describe("Loader.request", () => {
 
     it("can create data object using url with second id, having distinct value from default", async () => {
         const url = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
-        assert(url);
+        assert(url, "dataStore2 url is undefined");
         const testDataStore = await requestFluidObject<TestSharedDataObject2>(loader, url);
 
         dataStore1._root.set("color", "purple");
@@ -176,7 +169,7 @@ describe("Loader.request", () => {
             [LoaderHeader.pause]: true,
         };
         const url = await container.getAbsoluteUrl("");
-        assert(url);
+        assert(url,"url is undefined");
         const container2 = await loader.resolve({ url, headers });
         opProcessingController.addDeltaManagers(container2.deltaManager);
 
@@ -211,7 +204,7 @@ describe("Loader.request", () => {
 
     it("caches the loaded container across multiple requests as expected", async () => {
         const url = await container.getAbsoluteUrl("");
-        assert(url);
+        assert(url, "url is undefined");
         // load the containers paused
         const container1 = await loader.resolve({ url, headers: { [LoaderHeader.pause]: true } });
         opProcessingController.addDeltaManagers(container1.deltaManager);
@@ -245,7 +238,7 @@ describe("Loader.request", () => {
 
         const query = `?query1=1&query2=2`;
         const testUrl = `${url}${query}`;
-        const test = await loader.request({ url: testUrl });
-        assert.strictEqual(test.value, query, "request did not pass the right query");
+        const response = await loader.request({ url: testUrl });
+        assert.strictEqual(response.value, query, "request did not pass the right query");
     });
 });
