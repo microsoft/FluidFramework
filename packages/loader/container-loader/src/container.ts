@@ -111,6 +111,9 @@ export interface IContainerLoadOptions {
      * Client details provided in the override will be merged over the default client.
      */
     clientDetailsOverride?: IClientDetails;
+    containerUrl: string;
+    docId: string;
+    resolvedUrl: IFluidResolvedUrl;
     /**
      * Control whether to load from snapshot or ops.  See IParsedUrl for detailed information.
      */
@@ -270,19 +273,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Load an existing container.
      */
     public static async load(
-        docId: string,
         loader: Loader,
-        containerUrl: string,
-        resolvedUrl: IFluidResolvedUrl,
         loadOptions: IContainerLoadOptions,
     ): Promise<Container> {
         const container = new Container(
             loader,
             {
-                containerUrl,
+                containerUrl: loadOptions.containerUrl,
                 clientDetailsOverride: loadOptions.clientDetailsOverride,
-                id: docId,
-                resolvedUrl,
+                id: loadOptions.docId,
+                resolvedUrl: loadOptions.resolvedUrl,
                 canReconnect: loadOptions.canReconnect,
             });
 

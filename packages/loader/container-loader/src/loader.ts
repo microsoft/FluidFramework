@@ -463,13 +463,13 @@ export class Loader extends EventEmitter implements ILoader {
     ): Promise<Container> {
         const docId = decodeURI(encodedDocId);
         return Container.load(
-            docId,
             this,
-            request.url,
-            resolved,
             {
                 canReconnect: request.headers?.[LoaderHeader.reconnect],
                 clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
+                containerUrl: request.url,
+                docId,
+                resolvedUrl: resolved,
                 version: request.headers?.[LoaderHeader.version],
                 pause: request.headers?.[LoaderHeader.pause],
             },

@@ -46,13 +46,13 @@ describe("Container", () => {
         const testResolved = await loader.services.urlResolver.resolve(testRequest);
         ensureFluidResolvedUrl(testResolved);
         return Container.load(
-            "documentId",
             loader,
-            testRequest.url,
-            testResolved,
             {
                 canReconnect: testRequest.headers?.[LoaderHeader.reconnect],
                 clientDetailsOverride: testRequest.headers?.[LoaderHeader.clientDetails],
+                containerUrl: testRequest.url,
+                docId: "documentId",
+                resolvedUrl: testResolved,
                 version: testRequest.headers?.[LoaderHeader.version],
                 pause: testRequest.headers?.[LoaderHeader.pause],
             },

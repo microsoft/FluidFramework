@@ -34,14 +34,17 @@ class WorkerLoader implements ILoader, IFluidRunnable {
         console.log(`Request inside web worker`);
         console.log(request);
         const container = await Container.load(
-            decodeURI(this.id),
+            this.id,
             (this as unknown) as Loader,
-            request, // request.url, // To be used when taking the updated Container.load signature
+            request,
             this.resolved,
             // To be used when taking the updated Container.load signature
             // {
             //     canReconnect: request.headers?.[LoaderHeader.reconnect],
             //     clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
+            //     containerUrl: request.url,
+            //     docId: decodeURI(this.id),
+            //     resolvedUrl: this.resolved,
             //     version: request.headers?.[LoaderHeader.version],
             //     pause: request.headers?.[LoaderHeader.pause],
             // },
