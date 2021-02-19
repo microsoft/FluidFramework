@@ -4,6 +4,7 @@
 - [Moved parseAuthErrorClaims from @fluidframework/odsp-driver to @fluidframework/odsp-doclib-utils](#Moved-parseAuthErrorClaims-from-@fluidframework/odsp-driver-to-@fluidframework/odsp-doclib-utils)
 - [Refactored token fetcher types in odsp-driver](#refactored-token-fetcher-types-in-odsp-driver)
 - [DeltaManager `readonly` and `readOnlyPermissions` properties deprecated](#DeltaManager-`readonly`-and-`readOnlyPermissions`-properties-deprecated)
+- [DirtyDocument events and property](#DirtyDocument-events-and-property)
 
 ### Removed-some-api-implementations-from-odsp-driver
 Removed `authorizedFetchWithRetry`, `AuthorizedRequestTokenPolicy`, `AuthorizedFetchProps`, `asyncWithCache`, `asyncWithRetry`,
@@ -21,6 +22,12 @@ Added support for passing siteUrl when fetching token that is used to establish 
 
 ### DeltaManager `readonly` and `readOnlyPermissions` properties deprecated
 `DeltaManager.readonly`/`Container.readonly` and `DeltaManager.readOnlyPermissions`/`Container.readOnlyPermissions` have been deprecated. Please use `DeltaManager.readOnlyInfo`/`Container.readOnlyInfo` instead, which exposes the same information.
+
+### DirtyDocument events and property
+The following 3 names have been deprecated - please use new names:
+"dirtyDocument" event -> "dirty" event
+"savedDocument" event -> "saved" event
+isDocumentDirty property -> isDirty property
 
 ## 0.34 Breaking changes
 - [Aqueduct writeBlob() and BlobHandle implementation removed](#Aqueduct-writeBlob-and-BlobHandle-implementation-removed)
