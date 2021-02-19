@@ -65,14 +65,16 @@ export class BroadcasterLambda implements IPartitionLambda {
                 event = "nack";
             }
 
-            if (topic) {
+            if (topic && event) {
                 const value = baseMessage as INackMessage | ISequencedOperationMessage;
 
-                if (!this.pending.has(topic)) {
-                    this.pending.set(topic, new BroadcasterBatch(value.documentId, value.tenantId, event));
+                let pendingBatch = this.pending.get(topic);
+                if (!pendingBatch) {
+                    pendingBatch = new BroadcasterBatch(value.documentId, value.tenantId, event);
+                    this.pending.set(topic, pendingBatch);
                 }
 
-                this.pending.get(topic).messages.push(value.operation);
+                pendingBatch.messages.push(value.operation);
             }
         }
 
@@ -129,7 +131,8 @@ export class BroadcasterLambda implements IPartitionLambda {
                 }
             });
 
-            this.context.checkpoint(batchOffset);
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+            this.context.checkpoint(batchOffset as IQueuedMessage);
             this.current.clear();
             this.sendPending();
         });
