@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, IDeltaManager } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -16,20 +16,9 @@ import {
     waitAcquireAndComplete,
 } from "@fluidframework/ordered-collection";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import {
-    ITestFluidObject,
-    ChannelFactoryRegistry,
-} from "@fluidframework/test-utils";
-import {
-    IDocumentMessage,
-    ISequencedDocumentMessage,
-} from "@fluidframework/protocol-definitions";
-import {
-    generateTest,
-    ITestObjectProvider,
-    ITestContainerConfig,
-    DataObjectFactoryType,
-} from "./compatUtils";
+import { ChannelFactoryRegistry, ITestFluidObject } from "@fluidframework/test-utils";
+import { DataObjectFactoryType, generateTest, ITestContainerConfig, ITestObjectProvider } from "./compatUtils";
+import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IFluidDataStoreRuntime, id?: string): T;
@@ -70,7 +59,7 @@ function generate(
             sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
             // Load the Container that was created by the first client.
-            const container2 = await args.loadTestContainer(testContainerConfig) as IContainer;
+            const container2 = await args.loadTestContainer(testContainerConfig);
             dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
             sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
             deltaManager2 = container2.deltaManager;

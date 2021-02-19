@@ -163,6 +163,7 @@ async function createWebLoader(
         const innerDocumentService = await documentServiceFactory.createDocumentService(resolvedUrl);
         documentServiceFactory = new LocalDocumentServiceFactory(
             deltaConns.get(documentId),
+            undefined,
             innerDocumentService);
     }
 

@@ -10,12 +10,12 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, performance } from "@fluidframework/common-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
-    LoaderCachingPolicy,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
     IResolvedUrl,
     IDocumentStorageService,
+    IDocumentServicePolicies,
 } from "@fluidframework/driver-definitions";
 import { canRetryOnError } from "@fluidframework/driver-utils";
 import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
@@ -99,10 +99,7 @@ function writeLocalStorage(key: string, value: string) {
 export class OdspDocumentService implements IDocumentService {
     protected updateUsageOpFrequency = startingUpdateUsageOpFrequency;
 
-    readonly policies = {
-        // By default, ODSP tells the container not to prefetch/cache.
-        caching: LoaderCachingPolicy.NoCaching,
-    };
+    readonly policies: IDocumentServicePolicies;
 
     /**
      * @param getStorageToken - function that can provide the storage token. This is is also referred to as
@@ -168,6 +165,11 @@ export class OdspDocumentService implements IDocumentService {
         hostPolicy: HostStoragePolicy,
         private readonly epochTracker: EpochTracker,
     ) {
+        this.policies = {
+            // load in storage-only mode if a file version is specified
+            storageOnly: odspResolvedUrl.fileVersion !== undefined,
+        };
+
         epochTracker.fileEntry = {
             resolvedUrl: odspResolvedUrl,
             docId: odspResolvedUrl.hashedDocumentId,

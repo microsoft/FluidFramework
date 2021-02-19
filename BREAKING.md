@@ -3,6 +3,7 @@
 - [get-tinylicious-container and get-session-storage-container moved](#get-tinylicious-container-and-get-session-storage-container-moved)
 - [Moved parseAuthErrorClaims from @fluidframework/odsp-driver to @fluidframework/odsp-doclib-utils](#Moved-parseAuthErrorClaims-from-@fluidframework/odsp-driver-to-@fluidframework/odsp-doclib-utils)
 - [Refactored token fetcher types in odsp-driver](#refactored-token-fetcher-types-in-odsp-driver)
+- [DeltaManager `readonly` and `readOnlyPermissions` properties deprecated](#DeltaManager-`readonly`-and-`readOnlyPermissions`-properties-deprecated)
 - [DirtyDocument events and property](#DirtyDocument-events-and-property)
 
 ### Removed-some-api-implementations-from-odsp-driver
@@ -18,6 +19,9 @@ Moved `parseAuthErrorClaims` from `@fluidframework/odsp-driver` to `@fluidframew
 ### Refactored token fetcher types in odsp-driver
 Streamlined interfaces and types used to facilitate access tokens needed by odsp-driver to call ODSP implementation of Fluid services.
 Added support for passing siteUrl when fetching token that is used to establish co-authoring session for Fluid content stored in ODSP file which is hosted in external tenant. This token is used by ODSP ordering service implementation (aka ODSP Push service).
+
+### DeltaManager `readonly` and `readOnlyPermissions` properties deprecated
+`DeltaManager.readonly`/`Container.readonly` and `DeltaManager.readOnlyPermissions`/`Container.readOnlyPermissions` have been deprecated. Please use `DeltaManager.readOnlyInfo`/`Container.readOnlyInfo` instead, which exposes the same information.
 
 ### DirtyDocument events and property
 The following 3 names have been deprecated - please use new names:

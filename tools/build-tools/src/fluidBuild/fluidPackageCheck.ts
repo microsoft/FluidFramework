@@ -158,7 +158,12 @@ export class FluidPackageCheck {
         if (testJestScript) {
             expectedTestScripts.push("npm run test:jest");
         }
-        const expectedTestScript = expectedTestScripts.length > 0 ? expectedTestScripts.join(" && ") : undefined;
+        let expectedTestScript = expectedTestScripts.length > 0 ? expectedTestScripts.join(" && ") : undefined;
+
+        // Allow packages that wants to have coverage by default.
+        if (testScript?.startsWith("nyc ")) {
+            expectedTestScript = `nyc ${expectedTestScript}`;
+        }
 
         if (pkg.monoRepo?.kind === MonoRepoKind.Client && testScript && /^(ts-)?mocha/.test(testScript)) {
             this.logWarn(pkg, `"mocha" in "test" script instead of "test:mocha" script`, fix);
@@ -260,15 +265,16 @@ export class FluidPackageCheck {
                 }
             }
 
+            const splitTestBuild = this.splitTestBuild(pkg, true);
             // build:test should be in build:commonjs if it exists, otherwise, it should be in build:compile
-            if (pkg.getScript("build:test") || this.splitTestBuild(pkg)) {
+            if (pkg.getScript("build:test") || splitTestBuild) {
                 if (pkg.getScript("build:commonjs")) {
                     buildCommonJs.push("build:test");
                     // build common js si not concurrent by default
                 } else {
                     buildCompile.push("build:test");
                     // test is depended on tsc, so we can't do it concurrently for build:compile
-                    concurrentBuildCompile = !this.splitTestBuild(pkg);
+                    concurrentBuildCompile = !splitTestBuild;
                 }
             }
 
@@ -342,7 +348,7 @@ export class FluidPackageCheck {
                 check("prepack", prepack);
             }
 
-            if (this.splitTestBuild(pkg)) {
+            if (splitTestBuild) {
                 if (!existsSync(path.join(this.getTestDir(pkg), "mocha"))) {
                     const expectedBuildTest = "tsc --project ./src/test/tsconfig.json";
                     if (this.checkScript(pkg, "build:test", expectedBuildTest, fix)) {
@@ -394,7 +400,7 @@ export class FluidPackageCheck {
             // TODO: for now, some jest test at the root isn't linted yet
             const eslintScript = pkg.getScript("eslint");
             const hasFormatStylish = eslintScript && eslintScript.search("--format stylish") >= 0;
-            const command = hasFormatStylish? "eslint --format stylish" : "eslint";
+            const command = hasFormatStylish ? "eslint --format stylish" : "eslint";
             const lintOnlySrc = eslintScript === `${command} src`;
             const dirs = !lintOnlySrc && existsSync(path.join(pkg.directory, "tests")) ? "src tests" : "src";
             const expectedEslintScript = `${command} ${dirs}`;
@@ -605,8 +611,31 @@ export class FluidPackageCheck {
         return path.join(pkg.directory, "src", "test");
     }
 
-    public static splitTestBuild(pkg: Package) {
-        return existsSync(path.join(pkg.directory, "tsconfig.json"))
-            && existsSync(path.join(this.getTestDir(pkg), "tsconfig.json"));
+    public static splitTestBuild(pkg: Package, warnNoSource = false) {
+        if (!existsSync(path.join(pkg.directory, "tsconfig.json"))) {
+            // don't split test build if there is no main build
+            return false;
+        }
+        if (!existsSync(path.join(this.getTestDir(pkg), "tsconfig.json"))) {
+            // don't split test build if there is no test build
+            return false;
+        }
+
+        // Only split test build if there is some ts files in the test directory
+        const dirs = [this.getTestDir(pkg)];
+        while (true) {
+            const dir = dirs.pop();
+            if (!dir) {
+                if (warnNoSource) {
+                    this.logWarn(pkg, "src/test/tsconfig.json exists, but no test file detected", false);
+                }
+                return false;
+            }
+            const files = fs.readdirSync(dir, { withFileTypes: true });
+            if (files.some((dirent) => !dirent.isDirectory() && dirent.name.endsWith(".ts"))) {
+                return true;
+            }
+            dirs.push(...files.filter((dirent) => dirent.isDirectory()).map((dirent) => path.join(dir, dirent.name)));
+        }
     }
 };

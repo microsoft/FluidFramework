@@ -189,7 +189,7 @@ export function createTestObjectProvider(
             const oldMakeTestLoader = oldProvider.makeTestLoader.bind(oldProvider);
             oldProvider.makeTestLoader = (testContainerConfig?: unknown) => {
                 const testLoader = oldMakeTestLoader(testContainerConfig);
-                loaderContainerTracker.add(testLoader);
+                loaderContainerTracker.add(testLoader as any);
                 return testLoader;
             };
             const oldReset = oldProvider.reset.bind(oldProvider);
@@ -198,7 +198,7 @@ export function createTestObjectProvider(
                 oldReset();
             };
         }
-        return oldProvider;
+        return oldProvider as ITestObjectProvider;
     } else {
         return new newVer.TestObjectProvider(
             driver, containerFactoryFn as () => newVer.IRuntimeFactory);

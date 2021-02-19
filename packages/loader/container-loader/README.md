@@ -2,15 +2,23 @@
 
 **Topics covered below:**
 
-- [Fluid loader](#Fluid-loader)
-- [Expectations from host implementers](#Expectations-from-host-implementers)
-- [Expectations from container runtime and data store implementers](#Expectations-from-container-runtime-and-data-store-implementers)
-- [Container Lifetime](#Container-lifetime)
-- [Audience](#Audience)
-- [ClientID and client identification](#ClientId-and-client-identification)
-- [Error Handling](#Error-handling)
-- [Connectivity events](#Connectivity-events)
-- [Readonly states](#Readonly-states)
+- [@fluidframework/container-loader](#fluidframeworkcontainer-loader)
+  - [Fluid Loader](#fluid-loader)
+  - [Expectations from host implementers](#expectations-from-host-implementers)
+  - [Expectations from container runtime and data store implementers](#expectations-from-container-runtime-and-data-store-implementers)
+  - [Container Lifetime](#container-lifetime)
+    - [Loading](#loading)
+    - [Connectivity](#connectivity)
+    - [Closure](#closure)
+  - [Audience](#audience)
+  - [ClientID and client identification](#clientid-and-client-identification)
+  - [Error handling](#error-handling)
+  - [Connectivity events](#connectivity-events)
+  - [Readonly states](#readonly-states)
+    - [`readonly`](#readonly)
+    - [`permissions`](#permissions)
+    - [`forced`](#forced)
+    - [`storageOnly`](#storageonly)
 
 **Related topics covered elsewhere:**
 
@@ -145,30 +153,28 @@ Please note that hosts can implement various strategies on how to handle disconn
 It's worth pointing out that being connected does not mean all user edits are preserved on container closure. There is latency in the system, and loader layer does not provide any guarantees here. Not every implementation needs a solution here (games likely do not care), and thus solving this problem is pushed to framework level (i.e. having a data store that can expose `'dirtyDocument'` signal from ContainerRuntime and request route that can return such data store).
 
 ## Readonly states
+User permissions can change over lifetime of Container. They can't change during single connection session (in other words, change in permissions causes disconnect and reconnect). Hosts are advised to recheck this property on every reconnect.
 
-`Container.readonlyPermissions` (and `DeltaManager.readonlyPermissions`) indicates to host if file is writable or not. There are two cases when it's true:
+DeltaManager will emit a `"readonly"` event when transitioning to a read-only state. Readonly events are accessible by data stores and DDSes (through ContainerRuntime.deltaManager). It's expected that data stores adhere to requirements and expose read-only (or rather 'no edit') experiences.
+
+`Container.readOnlyInfo` (and `DeltaManager.readOnlyInfo`) indicates to host if file is writable or not.
+### `readonly`
+one of the following:
+- true: Container is readonly. One or more of the additional properties listed below will be true.
+- undefined: Runtime does not know yet if file is writable or not. Currently we get a signal here only when websocket connection is made to the server.
+- false: Container.forceReadonly() was never called or last call was with false, plus it's known that user has write permissions to a file.
+
+### `permissions`
+There are two cases when it's true:
 
 1. User has no write permissions to to modify this container (which usually maps to file in storage, and lack of write permissions by a given user)
 2. Container was closed, either due to critical error, or due to host closing container. See [Container Lifetime](#Container-lifetime) and [Error Handling](#Error-handling) for more details.
 
-Please note that this property (as well as `readonly` property discussed below) can be `undefined` when runtime does not know yet if file is writable or not. Currently we get a signal here only when websocket connection is made to the server.
-
-User permissions can change over lifetime of Container. They can't change during single connection session (in other words, change in permissions causes disconnect and reconnect). Hosts are advised to recheck this property on every reconnect.
-
-This value is not affected by `Container.forceReadonly` calls discussed below and can be used by hosts to indicate to users if it's possible to edit a file in the absence of readonly state being overridden via `Container.forceReadonly`.
-
+### `forced`
 Hosts can also force readonly-mode for a container via calling `Container.forceReadonly(true)`. This can be useful in scenarios like:
 
-- Loss of connectivity, in scenarios where host choses method of preventing user edits over (or in addition to) showing disconnected UX and warning user of potential data loss on closure of container
+- Loss of connectivity, in scenarios where host chooses method of preventing user edits over (or in addition to) showing disconnected UX and warning user of potential data loss on closure of container
 - Special view-only mode in host. For example can be used by hosts for previewing container content in-place with other host content, and leveraging full-screen / separate window experience for editing.
 
-Container and DeltaManager expose `"readonly"` event and property. It can have 3 states:
-
-- **true**: One of the following is true:
-  - Container.readonlyPermissions === true
-  - Container.forceReadonly(true) was called
-  - Container is closed
-- **false**: None of the above (Container.forceReadonly was never called or last call was with false), plus it's none that user has write permissions to a file (see below for more details)
-- **undefined**: Same as above, but we do not know yet if current user has write access to a file (because there were no successful connection to ordering service yet).
-
-Readonly events are accessible by data stores and DDSes (through ContainerRuntime.deltaManager). It's expected that data stores adhere to requirements and expose read-only (or rather 'no edit') experiences.
+### `storageOnly`
+Storage-only mode is a readonly mode in which the container does not connect to the delta stream and is unable to submit or recieve ops. This is useful for viewing a specific version of a document.

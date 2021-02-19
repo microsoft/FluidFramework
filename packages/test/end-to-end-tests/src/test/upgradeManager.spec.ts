@@ -72,7 +72,7 @@ describe("UpgradeManager (hot-swap)", () => {
     }
 
     beforeEach(async () => {
-        driver = getFluidTestDriver();
+        driver = getFluidTestDriver() as ITestDriver;
         opProcessingController = new OpProcessingController();
     });
 

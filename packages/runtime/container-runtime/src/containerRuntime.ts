@@ -50,6 +50,7 @@ import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver
 import {
     readAndParse,
     readAndParseFromBlobs,
+    BlobAggregationStorage,
 } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import { runGarbageCollection } from "@fluidframework/garbage-collector";
@@ -477,13 +478,33 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         runtimeOptions?: IContainerRuntimeOptions,
         containerScope: IFluidObject = context.scope,
     ): Promise<ContainerRuntime> {
+        const logger = ChildLogger.create(context.logger, undefined, {
+            runtimeVersion: pkgVersion,
+        });
+
+        let storage = context.storage;
+        if (context.baseSnapshot) {
+            // This will patch snapshot in place!
+            // If storage is provided, it will wrap storage with BlobAggregationStorage that can
+            // pack & unpack aggregated blobs.
+            // Note that if storage is provided later by loader layer, we will wrap storage in this.storage getter.
+            // BlobAggregationStorage is smart enough for double-wrapping to be no-op
+            if (context.storage) {
+                const aggrStorage = BlobAggregationStorage.wrap(context.storage, logger);
+                await aggrStorage.unpackSnapshot(context.baseSnapshot);
+                storage = aggrStorage;
+            } else {
+                await BlobAggregationStorage.unpackSnapshot(context.baseSnapshot);
+            }
+        }
+
         const registry = new ContainerRuntimeDataStoreRegistry(registryEntries);
 
         const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
             const blobId = context.baseSnapshot?.blobs[blobName];
             if (context.baseSnapshot && blobId) {
-                return context.storage ?
-                    readAndParse<T>(context.storage, blobId) :
+                return storage ?
+                    readAndParse<T>(storage, blobId) :
                     readAndParseFromBlobs<T>(context.baseSnapshot.blobs, blobId);
             }
         };
@@ -497,7 +518,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             chunks,
             runtimeOptions,
             containerScope,
-            requestHandler);
+            logger,
+            requestHandler,
+            storage);
 
         // Create all internal data stores if not already existing on storage or loaded a detached
         // container from snapshot(ex. draft mode).
@@ -536,8 +559,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public get storage(): IDocumentStorageService {
+        // This code is plain wrong. It lies that it never returns undefined!!!
+        // All callers should be fixed, as this API is called in detached state of container when we have
+        // no storage and it's passed down the stack without right typing.
+        if (!this._storage && this.context.storage) {
+            // Note: BlobAggregationStorage is smart enough for double-wrapping to be no-op
+            this._storage = BlobAggregationStorage.wrap(this.context.storage, this.logger);
+        }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.context.storage!;
+        return this._storage!;
     }
 
     public get reSubmitFn(): (
@@ -582,10 +612,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public readonly IFluidHandleContext: IFluidHandleContext;
 
-    // internal logger for ContainerRuntime
+    // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly _logger: ITelemetryLogger;
-    // publicly visible logger, to be used by stores, summarize, etc.
-    public readonly logger: ITelemetryLogger;
     public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
     private latestSummaryAck: ISummaryContext;
@@ -652,7 +680,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             enableWorker: false,
         },
         private readonly containerScope: IFluidObject,
+        public readonly logger: ITelemetryLogger,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
+        private _storage?: IDocumentStorageService,
     ) {
         super();
 
@@ -661,10 +691,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.IFluidHandleContext = new ContainerFluidHandleContext("", this);
         this.IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
-
-        this.logger = ChildLogger.create(context.logger, undefined, {
-            runtimeVersion: pkgVersion,
-        });
 
         this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
 
@@ -714,8 +740,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
-            () => this.storage,
+            () => {
+                assert(this.attachState !== AttachState.Detached, "Blobs NYI in detached container mode");
+                return this.storage;
+            },
             (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
+            this.logger,
         );
         this.blobManager.load(context.baseSnapshot?.trees[blobsTreeName]);
 
@@ -1563,6 +1593,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         opMetadata: Record<string, unknown> | undefined = undefined,
     ): void {
         this.verifyNotClosed();
+
+        // There should be no ops in detached container state!
+        assert(this.attachState !== AttachState.Detached, "sending ops in detached container");
 
         let clientSequenceNumber: number = -1;
         let opMetadataInternal = opMetadata;
