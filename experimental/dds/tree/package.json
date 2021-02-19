@@ -11,8 +11,6 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "bench": "cd bench && node --expose-gc -r ts-node/register src/index.ts",
-    "bench:profile": "cd bench && tsc && node -r ts-node/register --prof src/index.ts --runInBand && node --prof-process isolate-0x*-v8.log > profile.txt && rm isolate-0x*-v8.log && cat profile.txt",
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:docs": "api-extractor run --local",
@@ -69,7 +67,6 @@
     "nyc": "^15.0.0",
     "prettier": "^2.2.1",
     "rimraf": "^2.6.2",
-    "ts-node": "^7.0.1",
     "typescript": "~4.1.3"
   }
 }
