@@ -158,7 +158,12 @@ export class FluidPackageCheck {
         if (testJestScript) {
             expectedTestScripts.push("npm run test:jest");
         }
-        const expectedTestScript = expectedTestScripts.length > 0 ? expectedTestScripts.join(" && ") : undefined;
+        let expectedTestScript = expectedTestScripts.length > 0 ? expectedTestScripts.join(" && ") : undefined;
+
+        // Allow packages that wants to have coverage by default.
+        if (testScript?.startsWith("nyc ")) {
+            expectedTestScript = `nyc ${expectedTestScript}`;
+        }
 
         if (pkg.monoRepo?.kind === MonoRepoKind.Client && testScript && /^(ts-)?mocha/.test(testScript)) {
             this.logWarn(pkg, `"mocha" in "test" script instead of "test:mocha" script`, fix);

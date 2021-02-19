@@ -4,6 +4,7 @@
  */
 
 import { IMatrixConsumer, IMatrixReader, IMatrixProducer } from "@tiny-calc/nano";
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { DenseVector, RowMajorMatrix } from "@tiny-calc/micro";
 import { Serializable } from "@fluidframework/datastore-definitions";
 
@@ -15,12 +16,12 @@ import { Serializable } from "@fluidframework/datastore-definitions";
  * convenient way to vet that the producer is emitting the correct change notifications.
  */
 export class TestConsumer<T extends Serializable = Serializable> implements IMatrixConsumer<T>, IMatrixReader<T> {
-    private rows: DenseVector<void> = new DenseVector<void>();
-    private cols: DenseVector<void> = new DenseVector<void>();
-    private actual: RowMajorMatrix<T> = new RowMajorMatrix<T>(this.rows, this.cols);
+    private readonly rows: DenseVector<void> = new DenseVector<void>();
+    private readonly cols: DenseVector<void> = new DenseVector<void>();
+    private readonly actual: RowMajorMatrix<T> = new RowMajorMatrix<T>(this.rows, this.cols);
     private readonly expected: IMatrixReader<T>;
 
-    constructor (producer: IMatrixProducer<T>) {
+    constructor(producer: IMatrixProducer<T>) {
         this.expected = producer.openMatrix(this);
 
         this.rows.splice(/* start: */ 0, /* deleteCount: */ 0, /* insertCount: */ this.expected.rowCount);
@@ -33,7 +34,7 @@ export class TestConsumer<T extends Serializable = Serializable> implements IMat
         rowStart = 0,
         colStart = 0,
         rowCount = this.rowCount,
-        colCount = this.colCount
+        colCount = this.colCount,
     ) {
         const rowEnd = rowStart + rowCount;
         const colEnd = colStart + colCount;
@@ -49,7 +50,7 @@ export class TestConsumer<T extends Serializable = Serializable> implements IMat
         rowStart = 0,
         colStart = 0,
         rowCount = this.rowCount,
-        colCount = this.colCount
+        colCount = this.colCount,
     ) {
         this.forEachCell((row, col) => {
             this.actual.setCell(row, col, this.expected.getCell(row, col));
@@ -58,6 +59,7 @@ export class TestConsumer<T extends Serializable = Serializable> implements IMat
 
     public get rowCount() { return this.actual.rowCount; }
     public get colCount() { return this.actual.colCount; }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     public get matrixProducer() { return undefined as any; }
 
     // #region IMatrixConsumer
@@ -69,7 +71,10 @@ export class TestConsumer<T extends Serializable = Serializable> implements IMat
 
     colsChanged(colStart: number, removedCount: number, insertedCount: number): void {
         this.cols.splice(colStart, removedCount, insertedCount);
-        this.updateCells(/* rowStart: */ 0, colStart, /* rowCount: */ this.actual.rowCount, /* colCount: */ insertedCount);
+        this.updateCells(
+            /* rowStart: */ 0, colStart,
+            /* rowCount: */ this.actual.rowCount,
+            /* colCount: */ insertedCount);
     }
 
     cellsChanged(rowStart: number, colStart: number, rowCount: number, colCount: number): void {

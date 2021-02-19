@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import "mocha";
-
 import { strict as assert } from "assert";
 import { Serializable } from "@fluidframework/datastore-definitions";
 import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
@@ -16,10 +14,10 @@ import {
     MockEmptyDeltaConnection,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { SharedMatrix, SharedMatrixFactory } from "../src";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { SharedMatrix, SharedMatrixFactory } from "..";
 import { fill, check, insertFragmented, extract, expectSize } from "./utils";
 import { TestConsumer } from "./testconsumer";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 function createConnectedMatrix(id: string, runtimeFactory: MockContainerRuntimeFactory) {
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
@@ -54,7 +52,9 @@ function createMatrixForReconnection(id: string, runtimeFactory: MockContainerRu
 describe("Matrix", () => {
     describe("local client", () => {
         let matrix: SharedMatrix<number>;
-        let consumer: TestConsumer<undefined | null | number>;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
+
+        // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
+        let consumer: TestConsumer<undefined | null | number>;
 
         // Summarizes the given `SharedMatrix`, loads the summarize into a 2nd SharedMatrix, vets that the two are
         // equivalent, and then returns the 2nd matrix.
@@ -70,21 +70,21 @@ describe("Matrix", () => {
             const matrix2 = new SharedMatrix<T>(dataStoreRuntime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
             await matrix2.load({
                 deltaConnection: new MockEmptyDeltaConnection(),
-                objectStorage
+                objectStorage,
             });
 
             // Vet that the 2nd matrix is equivalent to the original.
             expectSize(matrix2, matrix.rowCount, matrix.colCount);
-            assert.deepEqual(extract(matrix), extract(matrix2), 'Matrix must round-trip through summarize/load.');
+            assert.deepEqual(extract(matrix), extract(matrix2), "Matrix must round-trip through summarize/load.");
 
             return matrix2;
         }
 
-        async function expect<T extends Serializable>(expected: ReadonlyArray<ReadonlyArray<T>>) {
+        async function expect<T extends Serializable>(expected: readonly (readonly T[])[]) {
             const actual = extract(matrix);
             assert.deepEqual(actual, expected, "Matrix must match expected.");
             assert.deepEqual(extract(consumer), actual, "Matrix must notify IMatrixConsumers of all changes.");
-            return await summarize(matrix);
+            return summarize(matrix);
         }
 
         beforeEach(async () => {
@@ -157,7 +157,7 @@ describe("Matrix", () => {
             matrix.setCells(/* row: */ 1, /* col: */ 1, /* colCount: */ 2, [
                 1, 2,
                 3, 4,
-                5
+                5,
             ]);
 
             await expect([
@@ -209,14 +209,14 @@ describe("Matrix", () => {
             matrix.setCell(1, 0, 1);
             await expect([
                 [0],
-                [1]
+                [1],
             ]);
 
             matrix.insertRows(1, 1);
             await expect([
                 [0],
                 [undefined],
-                [1]
+                [1],
             ]);
         });
 
@@ -291,7 +291,7 @@ describe("Matrix", () => {
                     [2, undefined, 3],
                 ]);
             });
-        })
+        });
     });
 
     describe("Connected with two clients", () => {
@@ -333,7 +333,7 @@ describe("Matrix", () => {
         describe("conflict", () => {
             afterEach(async () => {
                 await expect();
-    
+
                 matrix1.closeMatrix(consumer1);
                 matrix2.closeMatrix(consumer2);
             });
@@ -342,7 +342,7 @@ describe("Matrix", () => {
                 matrix1.insertCols(0, 1);
                 matrix1.insertRows(0, 1);
                 await expect([
-                    [undefined]
+                    [undefined],
                 ]);
 
                 matrix1.setCell(0, 0, "1st");
@@ -359,7 +359,7 @@ describe("Matrix", () => {
                 matrix1.insertCols(0, 1);
                 matrix1.insertRows(0, 1);
                 await expect([
-                    [undefined]
+                    [undefined],
                 ]);
 
                 matrix1.setCell(0, 0, "x");
@@ -388,14 +388,14 @@ describe("Matrix", () => {
                 matrix1.setCells(/* row: */ 1, /* col: */ 0, /* colCount: */ 1, ["x"]);
                 await expect([
                     [undefined],
-                    ["x"]
+                    ["x"],
                 ]);
             });
 
             it("insert col conflict", async () => {
                 matrix1.insertRows(0, 1);
                 await expect([
-                    []
+                    [],
                 ]);
 
                 matrix1.insertCols(0, 1);
@@ -606,7 +606,7 @@ describe("Matrix", () => {
                 matrix1.insertCols(0,4);    // rowCount: 1, colCount: 0
                 matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, [0,1,2,3]);
                 await expect([
-                    [0, 1, 2, 3]
+                    [0, 1, 2, 3],
                 ]);
 
                 matrix2.insertCols(1,1);    // rowCount: 1, colCount: 5
@@ -615,7 +615,7 @@ describe("Matrix", () => {
                 matrix1.insertCols(0,1);    // rowCount: 1, colCount: 3
                 matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["B"]);
                 await expect([
-                    ["B", "A", 2, 3]
+                    ["B", "A", 2, 3],
                 ]);
             });
         });
@@ -712,7 +712,7 @@ describe("Matrix", () => {
 
             // Verify that both the matrices have expected content.
             await expect([
-                [undefined]
+                [undefined],
             ]);
 
             // Set a cell in the second shared matrix.
@@ -741,7 +741,7 @@ describe("Matrix", () => {
 
             // Verify that both the matrices have expected content.
             await expect([
-                [undefined]
+                [undefined],
             ]);
 
             // Disconnect the second client.
@@ -764,7 +764,7 @@ describe("Matrix", () => {
             matrix1.insertCols(0,2);
             matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [
                 0, 1,
-                2, 3
+                2, 3,
             ]);
             matrix1.removeRows(1,1);
 
@@ -772,14 +772,14 @@ describe("Matrix", () => {
 
             matrix1.insertRows(0,1);
             matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [
-                28, 49
+                28, 49,
             ]);
 
             containerRuntime1.connected = true;
 
             await expect([
                 [28, 49],
-                [ 0,  1]
+                [ 0,  1],
             ]);
         });
 
@@ -788,12 +788,12 @@ describe("Matrix", () => {
             matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 4);
             matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, [
                 0, 1, 2, 3,
-                4, 5, 6, 7
+                4, 5, 6, 7,
             ]);
 
             matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
             matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, [
-                61, 57, 7, 62
+                61, 57, 7, 62,
             ]);
 
             containerRuntime1.connected = false;

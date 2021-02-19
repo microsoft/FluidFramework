@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import "mocha";
-
 import { strict as assert } from "assert";
 import { Random } from "best-random";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
@@ -14,7 +12,7 @@ import {
     MockContainerRuntimeFactoryForReconnection,
     MockContainerRuntimeForReconnection,
 } from "@fluidframework/test-runtime-utils";
-import { SharedMatrix, SharedMatrixFactory } from "../src";
+import { SharedMatrix, SharedMatrixFactory } from "..";
 import { extract, expectSize } from "./utils";
 
 describe("Matrix", () => {
@@ -66,7 +64,8 @@ describe("Matrix", () => {
          *
          * 'seed' is the 32-bit integer used to seed the PRNG.
          */
-        async function stress(numClients: number, numOps: number, syncProbability: number, disconnectProbability: number, seed: number) {
+        async function stress(numClients: number,
+            numOps: number, syncProbability: number, disconnectProbability: number, seed: number) {
             try {
                 matrices = [];
                 runtimes = [];
@@ -93,9 +92,11 @@ describe("Matrix", () => {
                 const matrix0 = matrices[0];
 
                 // Initialize PRNG with given seed.
+                // eslint-disable-next-line @typescript-eslint/unbound-method
                 const float64 = new Random(seed).float64;
 
                 // Returns a pseudorandom 32b integer in the range [0 .. max).
+                // eslint-disable-next-line no-bitwise
                 const int32 = (max = 0x7FFFFFFF) => (float64() * max) | 0;
 
                 // Returns an array with 'n' random values, each in the range [0 .. 100).
@@ -106,20 +107,23 @@ describe("Matrix", () => {
                 // Invokes 'setCells()' on the matrix w/the given index and logs the command to the trace.
                 const setCells = (matrixIndex: number, row: number, col: number, colCount: number, values: any[]) => {
                     const matrix = matrices[matrixIndex];
+                    // eslint-disable-next-line max-len
                     trace?.push(`matrix${matrixIndex + 1}.setCells(/* row: */ ${row}, /* col: */ ${col}, /* colCount: */ ${colCount}, ${JSON.stringify(values)});    // rowCount: ${matrix.rowCount} colCount: ${matrix.colCount} stride: ${matrix.colCount} length: ${values.length}`);
                     matrix.setCells(row, col, colCount, values);
-                }
+                };
 
                 // Initialize with [0..5] row and [0..5] cols, filling the cells.
                 {
                     const rowCount = int32(5);
                     if (rowCount > 0) {
+                        // eslint-disable-next-line max-len
                         trace?.push(`matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ ${rowCount});    // rowCount: ${matrix0.rowCount}, colCount: ${matrix0.colCount}`);
                         matrix0.insertRows(0, rowCount);
                     }
 
                     const colCount = int32(5);
                     if (colCount > 0) {
+                        // eslint-disable-next-line max-len
                         trace?.push(`matrix1.insertCols(/* colStart: */ 0, /* colCount: */ ${colCount});    // rowCount: ${matrix0.rowCount}, colCount: ${matrix0.colCount}`);
                         matrix0.insertCols(0, colCount);
                     }
@@ -157,6 +161,7 @@ describe("Matrix", () => {
                                     ? int32(rowCount - row - 1) + 1
                                     : 1;
 
+                                // eslint-disable-next-line max-len
                                 trace?.push(`matrix${matrixIndex + 1}.removeRows(/* rowStart: */ ${row}, /* rowCount: */ ${numRemoved});    // rowCount: ${matrix.rowCount - numRemoved}, colCount: ${matrix.colCount}`);
                                 matrix.removeRows(row, numRemoved);
                             }
@@ -171,6 +176,7 @@ describe("Matrix", () => {
                                     ? int32(colCount - col - 1) + 1
                                     : 1;
 
+                                // eslint-disable-next-line max-len
                                 trace?.push(`matrix${matrixIndex + 1}.removeCols(/* colStart: */ ${col}, /* colCount: */ ${numRemoved});    // rowCount: ${matrix.rowCount}, colCount: ${matrix.colCount - numRemoved}`);
                                 matrix.removeCols(col, numRemoved);
                             }
@@ -183,6 +189,7 @@ describe("Matrix", () => {
                                 ? int32(3) + 1
                                 : 1;
 
+                            // eslint-disable-next-line max-len
                             trace?.push(`matrix${matrixIndex + 1}.insertRows(/* rowStart: */ ${row}, /* rowCount: */ ${numInserted});    // rowCount: ${matrix.rowCount + numInserted}, colCount: ${matrix.colCount}`);
                             matrix.insertRows(row, numInserted);
 
@@ -202,6 +209,7 @@ describe("Matrix", () => {
                                 ? int32(3) + 1
                                 : 1;
 
+                            // eslint-disable-next-line max-len
                             trace?.push(`matrix${matrixIndex + 1}.insertCols(/* colStart: */ ${col}, /* colCount: */ ${numInserted});    // rowCount: ${matrix.rowCount}, colCount: ${matrix.colCount + numInserted}`);
                             matrix.insertCols(col, numInserted);
 
@@ -263,13 +271,14 @@ describe("Matrix", () => {
             { numClients: 5, numOps: 200, syncProbability: 0.0, disconnectProbability: 0, seed: 0x2f98736d },
             { numClients: 2, numOps: 200, syncProbability: 0.3, disconnectProbability: 1, seed: 0x84d43a0a },
         ]) {
+            // eslint-disable-next-line max-len
             it(`Stress (numClients=${numClients} numOps=${numOps} syncProbability=${syncProbability} disconnectProbability=${disconnectProbability} seed=0x${seed.toString(16).padStart(8, "0")})`,
                 // Note: Must use 'function' rather than arrow '() => { .. }' in order to set 'this.timeout(..)'
-                async function () {
-                    this.timeout(15000);
+                async function() {
+                    this.timeout(20000);
 
                     await stress(numClients, numOps, syncProbability, disconnectProbability, seed);
-                }
+                },
             );
         }
 
@@ -281,19 +290,22 @@ describe("Matrix", () => {
                 let iterations = 0;
                 const start = Date.now();
 
+                // eslint-disable-next-line no-constant-condition
                 while (true) {
                     await stress(
                         /* numClients: */ 3,
                         /* numOps: */ 10000,
                         /* syncProbability: */ 0.1,
                         /* disconnectProbability: */ 0.01,
-                        /* seed: */ (Math.random() * 0x100000000) >>> 0
+                        // eslint-disable-next-line no-bitwise
+                        /* seed: */ (Math.random() * 0x100000000) >>> 0,
                     );
 
                     // console.log(matrices[0].toString());
-                    console.log(`Stress loop: ${iterations} iterations completed - Total Elapsed: ${((Date.now() - start) / 1000).toFixed(2)}s`)
+                    // eslint-disable-next-line max-len
+                    console.log(`Stress loop: ${++iterations} iterations completed - Total Elapsed: ${((Date.now() - start) / 1000).toFixed(2)}s`);
                 }
-            }
+            },
         );
     });
 });
