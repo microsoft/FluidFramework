@@ -197,7 +197,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
         this.quorum = dataStoreContext.getQuorum();
         this.audience = dataStoreContext.getAudience();
 
-        this.dataStoreRoutingContext = this.dataStoreContext.channelRoutingContext;
+        // back-compat: added in 0.35: this should be unconditional
+        this.dataStoreRoutingContext =
+            this.dataStoreContext.channelRoutingContext ??
+            new FluidRoutingContext(this.id, (this.dataStoreContext.containerRuntime as any).IFluidHandleContext);
+        assert(this.dataStoreRoutingContext !== undefined);
 
         // Supporting legacy URIs: empty request is same as /_custom/ path.
         new TerminatingRoute(

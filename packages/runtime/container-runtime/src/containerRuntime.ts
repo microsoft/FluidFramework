@@ -702,7 +702,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.rootRoute = new FluidRoutingContext("", undefined, undefined, handler);
         this.channelsRoute = new FluidRoutingContext("_channels", this.rootRoute, undefined, handler);
 
-        // back-compat: 0.33 data stores, to be removed in 0.34
+        // back-compat: 0.35 data stores, to be removed in future versions
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const self = this;
         (this as any).IFluidHandleContext = new FluidHandleContext(
