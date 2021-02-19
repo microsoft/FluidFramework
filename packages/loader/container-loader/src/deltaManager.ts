@@ -1474,7 +1474,7 @@ export class DeltaManager
             // This is especially useful when coming out of offline mode or loading from
             // very old cached (by client / driver) snapshot.
             assert(n === fromArg);
-            assert(from > 1);
+            assert(from > 0);
             from--;
         }
 
