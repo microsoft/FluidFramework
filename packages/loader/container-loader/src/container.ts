@@ -28,6 +28,7 @@ import {
     ContainerWarning,
     AttachState,
     IThrottlingWarning,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import {
