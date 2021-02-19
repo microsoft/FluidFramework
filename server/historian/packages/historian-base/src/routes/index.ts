@@ -40,7 +40,7 @@ export function create(
     tenantService: ITenantService,
     cache: ICache,
     throttler: IThrottler,
-    asyncLocalStorage: AsyncLocalStorage<string>): IRoutes {
+    asyncLocalStorage?: AsyncLocalStorage<string>): IRoutes {
     return {
         git: {
             blobs: blobs.create(store, tenantService, cache, throttler, asyncLocalStorage),

@@ -24,7 +24,7 @@ export class HistorianRunner implements utils.IRunner {
         private readonly riddler: ITenantService,
         private readonly cache: ICache,
         private readonly throttler: IThrottler,
-        private readonly asyncLocalStorage: AsyncLocalStorage<string>) {
+        private readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

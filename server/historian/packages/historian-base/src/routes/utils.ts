@@ -38,7 +38,7 @@ export async function createGitService(
     authorization: string,
     tenantService: ITenantService,
     cache: ICache,
-    asyncLocalStorage: AsyncLocalStorage<string>,
+    asyncLocalStorage?: AsyncLocalStorage<string>,
 ): Promise<RestGitService> {
     let token: string = null;
     if (authorization) {

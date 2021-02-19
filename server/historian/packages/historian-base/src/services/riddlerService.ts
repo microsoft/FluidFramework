@@ -18,7 +18,7 @@ export class RiddlerService implements ITenantService {
     constructor(
         private readonly endpoint: string,
         private readonly cache: RedisTenantCache,
-        private readonly asyncLocalStorage: AsyncLocalStorage<string>) {
+        private readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
     }
 
     public async getTenant(tenantId: string, token: string): Promise<ITenantConfig> {

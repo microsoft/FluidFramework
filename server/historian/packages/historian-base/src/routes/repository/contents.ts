@@ -17,7 +17,7 @@ export function create(
     tenantService: ITenantService,
     cache: ICache,
     throttler: IThrottler,
-    asyncLocalStorage: AsyncLocalStorage<string>): Router {
+    asyncLocalStorage?: AsyncLocalStorage<string>): Router {
     const router: Router = Router();
 
     const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {

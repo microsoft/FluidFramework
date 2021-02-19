@@ -22,7 +22,7 @@ export class HistorianResources implements utils.IResources {
         public readonly riddler: historianServices.ITenantService,
         public readonly cache: historianServices.RedisCache,
         public readonly throttler: core.IThrottler,
-        public readonly asyncLocalStorage: AsyncLocalStorage<string>) {
+        public readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
         this.webServerFactory = new services.BasicWebServerFactory();
     }
 

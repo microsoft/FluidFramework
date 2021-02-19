@@ -45,7 +45,7 @@ export class RestGitService {
         private readonly storage: ITenantStorage,
         private readonly cache: ICache,
         private readonly writeToExternalStorage: boolean,
-        private readonly asyncLocalStorage: AsyncLocalStorage<string>) {
+        private readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
         if (storage.credentials) {
             const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
             this.authHeader = `Basic ${token.toString("base64")}`;

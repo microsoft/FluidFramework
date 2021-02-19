@@ -30,7 +30,7 @@ export function create(
     tenantService: ITenantService,
     cache: ICache,
     throttler: IThrottler,
-    asyncLocalStorage: AsyncLocalStorage<string>) {
+    asyncLocalStorage?: AsyncLocalStorage<string>) {
     // Express app configuration
     const app: express.Express = express();
 
