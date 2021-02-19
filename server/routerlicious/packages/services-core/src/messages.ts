@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentMessage, INack, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import {
+    IDocumentMessage,
+    INack,
+    ISequencedDocumentMessage,
+    NackErrorType,
+} from "@fluidframework/protocol-definitions";
 
 // String identifying the raw operation message
 export const RawOperationType: string = "RawOperation";
@@ -145,4 +150,18 @@ export interface IControlMessage {
 export enum ControlMessageType {
     // Instruction sent to update Durable sequence number
     UpdateDSN = "updateDSN",
+
+    // Instruction sent to have deli nack all future messages
+    NackFutureMessages = "nackFutureMessages",
+}
+
+export interface IUpdateDSNControlMessageContents {
+    durableSequenceNumber: number;
+    clearCache: boolean;
+}
+
+export interface INackFutureMessagesMessageContents {
+    code: number;
+    type: NackErrorType;
+    reason: string;
 }
