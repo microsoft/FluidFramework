@@ -83,11 +83,10 @@ export async function getRouterliciousContainer(
     const urlResolver = new SimpleUrlResolver(containerId, config, user);
 
     return getContainer(
-        containerId,
-        createNew,
-        { url: containerId },
         urlResolver,
         documentServiceFactory,
+        containerId,
+        createNew,
         containerRuntimeFactory,
     );
 }

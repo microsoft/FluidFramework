@@ -27,11 +27,10 @@ export async function getTinyliciousContainer(
     const urlResolver = new InsecureTinyliciousUrlResolver();
 
     return getContainer(
-        documentId,
-        createNew,
-        { url: documentId },
         urlResolver,
         documentServiceFactory,
+        documentId,
+        createNew,
         containerRuntimeFactory,
     );
 }
