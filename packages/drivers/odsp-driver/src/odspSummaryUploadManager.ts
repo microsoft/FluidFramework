@@ -28,6 +28,23 @@ import { TokenFetchOptions } from "./tokenFetch";
 
 /* eslint-disable max-len */
 
+// Gate that when flipped, instructs to mark unreferenced nodes as such in the summary sent to SPO.
+function gatesMarkUnreferencedNodes() {
+    // Leave override for testing purposes
+    if (typeof localStorage === "object" && localStorage !== null) {
+        if  (localStorage.FluidMarkUnreferencedNodes === "1") {
+            return true;
+        }
+        if  (localStorage.FluidMarkUnreferencedNodes === "0") {
+            return false;
+        }
+    }
+
+    // We are starting disabled. This will be enabled once Apps (Bohemia) have finished GC work.
+    // See - https://github.com/microsoft/FluidFramework/issues/5127
+    return false;
+}
+
 export interface IDedupCaches {
     // Cache which contains mapping from blob sha to the blob path in summary. Path starts from ".app" or ".protocol"
     blobShaToPath: Map<string, string>,
@@ -271,6 +288,7 @@ export class OdspSummaryUploadManager {
      * @param rootNodeName - Root node name of the summary tree.
      * @param path - Current path of node which is getting evaluated.
      * @param expanded - True if we are currently expanding a handle by a tree stored in the cache.
+     * @param markUnreferencedNodes - True if we should mark unreferenced nodes.
      */
     private async convertSummaryToSnapshotTree(
         parentHandle: string | undefined,
@@ -280,6 +298,7 @@ export class OdspSummaryUploadManager {
         allowHandleExpansion: boolean,
         path: string = "",
         expanded: boolean = false,
+        markUnreferencedNodes: boolean = gatesMarkUnreferencedNodes(),
     ) {
         const snapshotTree: ISnapshotTree = {
             type: "tree",
@@ -313,9 +332,7 @@ export class OdspSummaryUploadManager {
                         currentPath,
                         expanded);
                     value = result.snapshotTree;
-                    // Don't send unreferenced flag to SPO yet. This will be enabled once Apps (Bohemia) have finished
-                    // GC work. See - https://github.com/microsoft/FluidFramework/issues/5127
-                    // unreferenced = summaryObject.unreferenced;
+                    unreferenced = markUnreferencedNodes ? summaryObject.unreferenced : undefined;
                     reusedBlobs += result.reusedBlobs;
                     blobs += result.blobs;
                     break;
@@ -393,9 +410,7 @@ export class OdspSummaryUploadManager {
                             currentPath,
                             true);
                         value = result.snapshotTree;
-                        // Don't send unreferenced flag to SPO yet. This will be enabled once the Apps (Bohemia) have
-                        // finished GC work. See - https://github.com/microsoft/FluidFramework/issues/5127
-                        // unreferenced = summaryTreeToExpand.unreferenced;
+                        unreferenced = markUnreferencedNodes ? summaryTreeToExpand.unreferenced : undefined;
                         reusedBlobs += result.reusedBlobs;
                         blobs += result.blobs;
                     } else {
