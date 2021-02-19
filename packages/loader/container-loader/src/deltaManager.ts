@@ -1424,10 +1424,20 @@ export class DeltaManager
         }
 
         // Watch the minimum sequence number and be ready to update as needed
-        assert(this.minSequenceNumber <= message.minimumSequenceNumber, "msn moves backwards");
+        if (this.minSequenceNumber > message.minimumSequenceNumber) {
+            throw new DataCorruptionError("msn moves backwards", {
+                ...extractLogSafeMessageProperties(message),
+                ...(this.connection && { clientId: this.connection?.clientId}),
+            });
+        }
         this.minSequenceNumber = message.minimumSequenceNumber;
 
-        assert(message.sequenceNumber === this.lastProcessedSequenceNumber + 1, "non-seq seq#");
+        if (message.sequenceNumber !== this.lastProcessedSequenceNumber + 1) {
+            throw new DataCorruptionError("non-seq seq#", {
+                ...extractLogSafeMessageProperties(message),
+                ...(this.connection && { clientId: this.connection?.clientId}),
+            });
+        }
         this.lastProcessedSequenceNumber = message.sequenceNumber;
 
         // Back-compat for older server with no term
@@ -1511,4 +1521,42 @@ export class DeltaManager
             this.lastObservedSeqNumber = seq;
         }
     }
+}
+
+// TODO: move this elsewhere and use it more broadly for DataCorruptionError/DataProcessingError
+function extractLogSafeMessageProperties(message: Partial<ISequencedDocumentMessage>) {
+    const safeProps: Partial<{
+        messageClientId: string,
+        sequenceNumber: number,
+        clientSequenceNumber: number,
+        referenceSequenceNumber: number,
+        minimumSequenceNumber: number,
+        messageTimestamp: number,
+    }> = {};
+
+    if (message.clientId !== undefined) {
+        safeProps.messageClientId = message.clientId;
+    }
+
+    if (message.sequenceNumber !== undefined) {
+        safeProps.sequenceNumber = message.sequenceNumber;
+    }
+
+    if (message.clientSequenceNumber !== undefined) {
+        safeProps.clientSequenceNumber = message.clientSequenceNumber;
+    }
+
+    if (message.referenceSequenceNumber !== undefined) {
+        safeProps.referenceSequenceNumber = message.referenceSequenceNumber;
+    }
+
+    if (message.minimumSequenceNumber !== undefined) {
+        safeProps.minimumSequenceNumber = message.minimumSequenceNumber;
+    }
+
+    if (message.timestamp !== undefined) {
+        safeProps.messageTimestamp = message.timestamp;
+    }
+
+    return safeProps;
 }
