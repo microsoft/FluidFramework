@@ -15,6 +15,13 @@ describe("Errors", () => {
 
             assert(testError.errorType === ContainerErrorType.genericError);
         });
+        it("Should preserve the stack", () => {
+            const originalError = new Error();
+            const testError = CreateContainerError(originalError);
+
+            // eslint-disable-next-line @typescript-eslint/dot-notation
+            assert(testError["stack"] === originalError.stack);
+        });
     });
 
     describe("DataProcessingError coercion", () => {
