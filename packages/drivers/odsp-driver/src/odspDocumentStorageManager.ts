@@ -346,6 +346,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         blob = await res.arrayBuffer();
                         event.end({
                             size: blob.byteLength,
+                            serverRetries: res.headers.get("x-fluid-retries") ?? undefined,
                             waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
                         });
                         return blob;
