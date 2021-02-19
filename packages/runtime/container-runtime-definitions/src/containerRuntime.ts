@@ -128,7 +128,7 @@ export interface IContainerRuntime extends
      * Returns true of document is dirty, i.e. there are some pending local changes that
      * either were not sent out to delta stream or were not yet acknowledged.
      */
-    isDirty(): boolean;
+    readonly isDirty: boolean;
 
     /**
      * Flushes any ops currently being batched to the loader

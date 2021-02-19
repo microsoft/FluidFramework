@@ -39,8 +39,10 @@ describe("Document Dirty", () => {
     let dataObject: ITestFluidObject;
     let containerRuntime: IContainerRuntime;
     let sharedMap: SharedMap;
-    let wasMarkedDirtyCount: number;
-    let wasMarkedCleanCount: number;
+    let wasMarkedDirtyRuntimeCount: number;
+    let wasMarkedCleanRuntimeCount: number;
+    let wasMarkedDirtyContainerCount: number;
+    let wasMarkedCleanContainerCount: number;
 
     /**
      * Waits for the "connected" event from the given container.
@@ -59,11 +61,17 @@ describe("Document Dirty", () => {
     /**
      * Increments clean count when the "saved" event is fired
      */
-    function registerSavedContainerHandler(runtime: IContainerRuntime): void {
-        runtime.on("saved", () => {
-            wasMarkedCleanCount += 1;
-            assert.equal(runtime.isDirty(), false, "Document is marked clean");
-            assert.equal(wasMarkedDirtyCount, wasMarkedCleanCount,
+    function registerSavedContainerHandler(): void {
+        containerRuntime.on("saved", () => {
+            wasMarkedCleanRuntimeCount += 1;
+            assert.equal(containerRuntime.isDirty, false, "Document is marked clean");
+            assert.equal(wasMarkedDirtyRuntimeCount, wasMarkedCleanRuntimeCount,
+                "No superfluous transition event, dirty and clean count should match when state is clean");
+        });
+        container.on("saved", () => {
+            wasMarkedCleanContainerCount += 1;
+            assert.equal(container.isDirty, false, "Document is marked clean");
+            assert.equal(wasMarkedDirtyContainerCount, wasMarkedCleanContainerCount,
                 "No superfluous transition event, dirty and clean count should match when state is clean");
         });
     }
@@ -71,11 +79,18 @@ describe("Document Dirty", () => {
     /**
      * Increments dirty count when the "dirty" event is fired
      */
-    function registerDirtyContainerHandler(runtime: IContainerRuntime): void {
-        runtime.on("dirty", () => {
-            wasMarkedDirtyCount += 1;
-            assert.equal(runtime.isDirty(), true, "Document is marked dirty");
-            assert.equal(wasMarkedDirtyCount - wasMarkedCleanCount, 1,
+    function registerDirtyContainerHandler(): void {
+        containerRuntime.on("dirty", () => {
+            wasMarkedDirtyRuntimeCount += 1;
+            assert.equal(containerRuntime.isDirty, true, "Document is marked dirty");
+            assert.equal(wasMarkedDirtyRuntimeCount - wasMarkedCleanRuntimeCount, 1,
+                "No superfluous transition event, dirty should be only one more then clean when state is dirty");
+        });
+
+        container.on("dirty", () => {
+            wasMarkedDirtyContainerCount += 1;
+            assert.equal(container.isDirty, true, "Document is marked dirty");
+            assert.equal(wasMarkedDirtyContainerCount - wasMarkedCleanContainerCount, 1,
                 "No superfluous transition event, dirty should be only one more then clean when state is dirty");
         });
     }
@@ -127,11 +142,14 @@ describe("Document Dirty", () => {
 
         await opProcessingController.process();
 
-        wasMarkedDirtyCount = 0;
-        wasMarkedCleanCount = 0;
+        wasMarkedDirtyRuntimeCount = 0;
+        wasMarkedCleanRuntimeCount = 0;
+        wasMarkedDirtyContainerCount = 0;
+        // When we initially register for event, container fires that event to notify about current state.
+        wasMarkedCleanContainerCount = -1;
 
-        registerSavedContainerHandler(containerRuntime);
-        registerDirtyContainerHandler(containerRuntime);
+        registerSavedContainerHandler();
+        registerDirtyContainerHandler();
     });
 
     function checkDirtyState(
@@ -139,12 +157,17 @@ describe("Document Dirty", () => {
         expectedDirty: boolean,
         expectedCleanCount: number,
     ) {
-        assert.equal(containerRuntime.isDirty(), expectedDirty,
-            `Document dirty state not expected ${when}`);
-        assert.equal(wasMarkedCleanCount, expectedCleanCount,
-            `Document clean transition count not expected ${when}`);
+        assert.equal(containerRuntime.isDirty, expectedDirty,
+            `Runtime dirty state not expected ${when}`);
+        assert.equal(wasMarkedCleanRuntimeCount, expectedCleanCount,
+            `Runtime clean transition count not expected ${when}`);
+        assert.equal(container.isDirty, expectedDirty,
+            `Container dirty state not expected ${when}`);
+        assert.equal(wasMarkedCleanContainerCount, expectedCleanCount,
+            `Container clean transition count not expected ${when}`);
 
-        // no need to assert about wasMarkedDirtyCount, because we already assert that in the handler.
+        // no need to assert about wasMarkedDirtyRuntimeCount & wasMarkedDirtyContainerCount,
+        // because we already assert that in the handler.
     }
 
     describe("Connected state", () => {

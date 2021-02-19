@@ -98,6 +98,7 @@ const detachedContainerRefSeqNumber = 0;
 
 const connectEventName = "connect";
 const dirtyContainerEvent = "dirty";
+const savedContainerEvent = "saved";
 
 interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
@@ -604,7 +605,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             Promise.resolve().then(() => {
                 switch (event) {
                     case dirtyContainerEvent:
-                        listener(this._dirtyContainer);
+                        if (this._dirtyContainer) {
+                            listener(this._dirtyContainer);
+                        }
+                        break;
+                    case savedContainerEvent:
+                        if (!this._dirtyContainer) {
+                            listener(this._dirtyContainer);
+                        }
                         break;
                     case connectedEventName:
                          if (this.connected) {
@@ -1809,7 +1817,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             previousRuntimeState,
             (dirty: boolean) => {
                 this._dirtyContainer = dirty;
-                this.emit(dirtyContainerEvent, dirty);
+                this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
             },
         );
 

@@ -837,7 +837,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.logger.sendTelemetryEvent({
             eventName: "ContainerRuntimeDisposed",
             category: "generic",
-            isDirty: this.isDirty(),
+            isDirty: this.isDirty,
             lastSequenceNumber: this.deltaManager.lastSequenceNumber,
             attachState: this.attachState,
             message: error?.message,
@@ -1282,7 +1282,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * Returns true of container is dirty, i.e. there are some pending local changes that
      * either were not sent out to delta stream or were not yet acknowledged.
      */
-    public isDirty(): boolean {
+    public get isDirty(): boolean {
         return this.dirtyContainer;
     }
 
