@@ -120,7 +120,7 @@ export interface IContainerRuntime extends
     raiseContainerWarning(warning: ContainerWarning): void;
 
     /**
-     * @deprecated: Please use isDirty()
+     * @deprecated - Please use isDirty()
      */
     isDocumentDirty(): boolean;
 
