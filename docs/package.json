@@ -38,7 +38,7 @@
     "start:win32": "call \"bin/hugo.exe\" server"
   },
   "dependencies": {
-    "@mattetti/custom-api-documenter": "^0.3.3",
+    "@microsoft/api-documenter": "^7.12.7",
     "@tylerbu/bin-installer": "^0.0.2",
     "@tylerbu/hugo-installer": "^1.1.0",
     "concurrently": "^5.2.0",

@@ -67,7 +67,7 @@
     "@fluidframework/eslint-config-fluid": "^0.22.1-0",
     "@fluidframework/mocha-test-setup": "^0.35.0",
     "@fluidframework/test-runtime-utils": "^0.35.0",
-    "@microsoft/api-extractor": "^7.7.2",
+    "@microsoft/api-extractor": "^7.13.1",
     "@types/assert": "^1.5.2",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
