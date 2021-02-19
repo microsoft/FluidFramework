@@ -178,7 +178,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this.registry;
     }
 
-    public get IFluidRouter() {
+    public get IFluidRouter(): IFluidRouter {
         const obj = this.channelRoutingContext;
         return {
             get IFluidRouter() { return this; },
@@ -244,10 +244,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.id,
             _containerRuntime.channelsRoute,
             async () => { await this.realize(); },
-            // back-compat: 0.32
-            // Supporting 0.32 data stores that do not utilize yet proper route registration
+            // back-compat: 0.35
+            // Supporting 0.34 data stores that do not utilize yet proper route registration
             async (request: IRequest) => {
-                const router = (await this.realize()) as any as IFluidRouter;
+                const router = (await this.realize()) as IFluidObject;
                 if (router.IFluidRouter !== undefined) {
                     return router.IFluidRouter.request(request);
                 }

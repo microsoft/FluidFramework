@@ -12,6 +12,7 @@ import {
     IRequest,
     IResponse,
     defaultRoutePath,
+    IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -174,6 +175,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
     private readonly audience: IAudience;
     public readonly logger: ITelemetryLogger;
 
+    // Back-compat: 0.35. To be removed in later versions.
+    public get IFluidRouter(): IFluidRouter {
+        return {
+            get IFluidRouter() { return this; },
+            request: async (request: IRequest) => this.dataStoreRoutingContext.request(request),
+        };
+    }
+
     // A map of child channel context ids to the context's used routes in the initial summary of this data store. This
     // is used to initialize the context with data from the previous summary.
     private readonly initialChannelUsedRoutesP: LazyPromise<Map<string, string[]>>;
@@ -197,11 +206,19 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
         this.quorum = dataStoreContext.getQuorum();
         this.audience = dataStoreContext.getAudience();
 
+        this.dataStoreRoutingContext = this.dataStoreContext.channelRoutingContext;
+
         // back-compat: added in 0.35: this should be unconditional
-        this.dataStoreRoutingContext =
-            this.dataStoreContext.channelRoutingContext ??
-            new FluidRoutingContext(this.id, (this.dataStoreContext.containerRuntime as any).IFluidHandleContext);
-        assert(this.dataStoreRoutingContext !== undefined);
+        if (this.dataStoreRoutingContext === undefined) {
+            this.dataStoreRoutingContext = 
+                new FluidRoutingContext(this.id, {
+                    request: async (request: IRequest) =>
+                        (this.dataStoreContext.containerRuntime as any).IFluidHandleContext.resolveHandle(request),
+                    absolutePath: "",
+                    addRoute: () => {},
+                });
+            assert(this.dataStoreRoutingContext !== undefined);
+        }
 
         // Supporting legacy URIs: empty request is same as /_custom/ path.
         new TerminatingRoute(
@@ -326,7 +343,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
         // Supporting legacy URI format: required to handle old external URIs and handles in old files
         // Note: this may explode if there is ID collision (i.e. id === "_channels" || id === "_custom")
         try {
-            this.dataStoreContext.channelRoutingContext.addRoute(id, route);
+            this.dataStoreRoutingContext.addRoute(id, route);
         } catch (error) {}
     }
 
