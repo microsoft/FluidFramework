@@ -13,10 +13,10 @@ export async function enhanceRequestError(error: any): Promise<never> {
             axiosError.response?.statusText
                 ? `${axiosError.response?.data} (${axiosError.response?.statusText})`
                 : axiosError.response?.data,
-            isStatusRetriable(axiosError.response?.status),
             axiosError.response?.status,
+            isStatusRetriable(axiosError.response?.status, axiosError.response?.data?.retryAfter),
             axiosError.response?.data?.retryAfter
-                ? axiosError.response?.data?.retryAfter * 1000
+                ? axiosError.response?.data?.retryAfter
                 : undefined,
         );
     }

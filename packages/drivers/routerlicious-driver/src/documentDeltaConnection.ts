@@ -17,8 +17,8 @@ const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const errorObjectFromSocketError = (socketError: {[key: string]: any}, handler: string, canRetry: boolean) => {
     return createR11sNetworkError(
         `socket.io: ${handler}: ${socketError.message}`,
-        canRetry,
         socketError.code,
+        canRetry,
         socketError.retryAfter);
 };
 

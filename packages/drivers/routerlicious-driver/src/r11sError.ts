@@ -27,35 +27,48 @@ export type R11sError =
 
 export function createR11sNetworkError(
     errorMessage: string,
-    canRetry?: boolean,
     statusCode?: number,
+    canRetry?: boolean,
     retryAfterSeconds?: number,
 ): R11sError {
     switch (statusCode) {
         case 401:
         case 403:
             return new NetworkErrorBasic(
-                errorMessage, R11sErrorType.authorizationError, canRetry ?? false, statusCode);
+                errorMessage,
+                R11sErrorType.authorizationError,
+                canRetry ?? isStatusRetriable(statusCode, retryAfterSeconds),
+                statusCode);
         case 404:
             return new NetworkErrorBasic(
-                errorMessage, R11sErrorType.fileNotFoundOrAccessDeniedError, canRetry ?? false, statusCode);
+                errorMessage,
+                R11sErrorType.fileNotFoundOrAccessDeniedError,
+                canRetry ?? isStatusRetriable(statusCode, retryAfterSeconds),
+                statusCode);
         case 500:
-            return new GenericNetworkError(errorMessage, canRetry ?? true, statusCode);
+            return new GenericNetworkError(
+                errorMessage,
+                canRetry ?? isStatusRetriable(statusCode, retryAfterSeconds),
+                statusCode);
         default:
-            return createGenericNetworkError(errorMessage, canRetry ?? true, retryAfterSeconds, statusCode);
+            return createGenericNetworkError(
+                errorMessage,
+                canRetry ?? isStatusRetriable(statusCode, retryAfterSeconds),
+                retryAfterSeconds,
+                statusCode);
     }
 }
 
 export function throwR11sNetworkError(
     errorMessage: string,
-    canRetry?: boolean,
     statusCode?: number,
+    canRetry?: boolean,
     retryAfterSeconds?: number,
 ): never {
     const networkError = createR11sNetworkError(
         errorMessage,
-        canRetry,
         statusCode,
+        canRetry,
         retryAfterSeconds);
 
     // eslint-disable-next-line @typescript-eslint/no-throw-literal
@@ -69,8 +82,8 @@ export function isStatusRetriable(statusCode: number | undefined, retryAfterSeco
     if (statusCode === undefined) {
         return true;
     }
-    if (statusCode === 429 && retryAfterSeconds !== undefined) {
-        return true;
+    if (statusCode === 429) {
+        return retryAfterSeconds !== undefined;
     }
-    return ![401, 403].includes(statusCode);
+    return ![401, 403, 404].includes(statusCode);
 }

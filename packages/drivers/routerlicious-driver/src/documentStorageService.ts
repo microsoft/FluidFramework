@@ -29,7 +29,7 @@ import {
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { GitManager } from "@fluidframework/server-services-client";
-import { isStatusRetriable, throwR11sNetworkError } from "./r11sError";
+import { throwR11sNetworkError } from "./r11sError";
 
 /**
  * Document access to underlying storage for routerlicious driver.
@@ -243,7 +243,7 @@ export class DocumentStorageService implements IDocumentStorageService {
         if (typeof error === "number") {
             // RestWrapper handles 1 429 retry but does not pass along retryAfter, and Historian handles 401 retries.
             // Anything else can be retried.
-            throwR11sNetworkError(messageFallback, isStatusRetriable(error), error);
+            throwR11sNetworkError(messageFallback, error);
         }
         // In case response is not available, throw a more generic error
         throwR11sNetworkError(error?.toString() ?? messageFallback);
