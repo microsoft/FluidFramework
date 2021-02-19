@@ -22,7 +22,8 @@ export class Stats {
             this._glitchCount++;
         }
 
-        this._smoothFps = (0.95 * this._smoothFps) + (0.05 * frameFps);
+        const a = 0.75;
+        this._smoothFps = (a * this._smoothFps) + ((1 - a) * frameFps);
     }
 
     public get smoothFps() { return this._smoothFps; }
