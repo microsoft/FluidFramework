@@ -337,7 +337,11 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     describe("Document Dirty State", () => {
         // Verifies that the document dirty state for the given document is as expected.
         function verifyDocumentDirtyState(dataStore: ITestFluidObject, expectedState: boolean) {
-            const dirty = (dataStore.context.containerRuntime as IContainerRuntime).isDirty;
+            let dirty = (dataStore.context.containerRuntime as IContainerRuntime).isDirty;
+            // back-compat: 0.35: remove in future versions
+            if (dirty === undefined) {
+                dirty = (dataStore.context.containerRuntime as IContainerRuntime).isDocumentDirty();
+            }
             assert.equal(dirty, expectedState, "The document dirty state is not as expected");
         }
 
