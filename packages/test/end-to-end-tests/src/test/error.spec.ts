@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import {
     ContainerErrorType,
+    LoaderHeader,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { CreateContainerError } from "@fluidframework/container-utils";
@@ -71,10 +72,17 @@ describe("Errors Types", () => {
 
         try {
             await Container.load(
-                "documentId",
                 loader,
-                testRequest,
-                testResolved);
+                {
+                    canReconnect: testRequest.headers?.[LoaderHeader.reconnect],
+                    clientDetailsOverride: testRequest.headers?.[LoaderHeader.clientDetails],
+                    containerUrl: testRequest.url,
+                    docId: "documentId",
+                    resolvedUrl: testResolved,
+                    version: testRequest.headers?.[LoaderHeader.version],
+                    pause: testRequest.headers?.[LoaderHeader.pause],
+                },
+            );
 
             assert.fail("Error expected");
         } catch (error) {
