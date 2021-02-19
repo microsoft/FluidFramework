@@ -7,11 +7,13 @@ import { IDisposable } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
     IRequest,
+    IRequestHeader,
     IResponse,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
+    IContainer,
     IDeltaManager,
     ContainerWarning,
     ILoader,
@@ -175,6 +177,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public async isRoot(): Promise<boolean> {
         return (await this.getInitialSnapshotDetails()).isRootDataStore;
+    }
+
+    public get loadContainerCopyFn(): (additionalHeaders: IRequestHeader) => Promise<IContainer> {
+        return this._containerRuntime.loadContainerCopyFn;
     }
 
     protected registry: IFluidDataStoreRegistry | undefined;

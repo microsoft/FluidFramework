@@ -12,12 +12,14 @@ import {
     IFluidHandleContext,
     IFluidSerializer,
     IRequest,
+    IRequestHeader,
     IResponse,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IFluidTokenProvider,
+    IContainer,
     IContainerContext,
     IDeltaManager,
     IDeltaSender,
@@ -552,6 +554,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public get closeFn(): (error?: ICriticalContainerError) => void {
         return this.context.closeFn;
+    }
+
+    public get loadContainerCopyFn(): (additionalHeaders: IRequestHeader) => Promise<IContainer> {
+        return this.context.loadContainerCopyFn;
     }
 
     public get loader(): ILoader {

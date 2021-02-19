@@ -433,20 +433,31 @@ export class TaskManager implements ITaskManager {
     }
 
     private async runTask(url: string, worker: boolean) {
-        const request: IRequest = {
-            headers: {
-                [LoaderHeader.cache]: false,
-                [LoaderHeader.clientDetails]: {
-                    capabilities: { interactive: false },
-                    type: "agent",
-                },
-                [LoaderHeader.reconnect]: false,
-                [LoaderHeader.sequenceNumber]: this.context.deltaManager.lastSequenceNumber,
-                [LoaderHeader.executionContext]: worker ? "worker" : undefined,
+        const headers = {
+            [LoaderHeader.cache]: false,
+            [LoaderHeader.clientDetails]: {
+                capabilities: { interactive: false },
+                type: "agent",
             },
+            [LoaderHeader.reconnect]: false,
+            [LoaderHeader.sequenceNumber]: this.context.deltaManager.lastSequenceNumber,
+            [LoaderHeader.executionContext]: worker ? "worker" : undefined,
+        };
+        const request: IRequest = {
+            headers,
             url,
         };
-        const response = await this.runtime.loader.request(request);
+
+        let response: IResponse;
+        // back-compat 0.35: this function is added in 0.36, but the original path
+        // needs to be preserved until 0.35 is no longer supported at this layer
+        if (!this.context.loadContainerCopyFn) {
+            response = await this.runtime.loader.request(request);
+        } else {
+            const containerCopy = await this.context.loadContainerCopyFn(headers);
+            response = await containerCopy.request(request);
+        }
+
         if (response.status !== 200 || response.mimeType !== "fluid/object") {
             return Promise.reject(new Error(`Invalid agent route: ${url}`));
         }
