@@ -39,7 +39,7 @@ import {
     SequencedOperationType,
     IQueuedMessage,
     IUpdateDSNControlMessageContents,
-    INackFutureMessagesMessageContents,
+    INackFutureMessagesControlMessageContents,
 } from "@fluidframework/server-services-core";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
@@ -105,7 +105,7 @@ export class DeliLambda implements IPartitionLambda {
     private canClose = false;
 
     // when set, all messages will be nacked based on the provided info
-    private nackFutureMessages: INackFutureMessagesMessageContents | undefined;
+    private nackFutureMessages: INackFutureMessagesControlMessageContents | undefined;
 
     constructor(
         private readonly context: IContext,
@@ -427,7 +427,7 @@ export class DeliLambda implements IPartitionLambda {
                 }
 
                 case ControlMessageType.NackFutureMessages: {
-                    this.nackFutureMessages = controlMessage.contents as INackFutureMessagesMessageContents;
+                    this.nackFutureMessages = controlMessage.contents as INackFutureMessagesControlMessageContents;
                     break;
                 }
 

@@ -160,7 +160,7 @@ export interface IUpdateDSNControlMessageContents {
     clearCache: boolean;
 }
 
-export interface INackFutureMessagesMessageContents {
+export interface INackFutureMessagesControlMessageContents {
     code: number;
     type: NackErrorType;
     reason: string;
