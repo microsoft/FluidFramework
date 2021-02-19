@@ -24,7 +24,6 @@ import {
     IContainer,
     IContainerEvents,
     IDeltaManager,
-    LoaderHeader,
     IRuntimeState,
     ICriticalContainerError,
     ContainerWarning,
@@ -100,15 +99,47 @@ import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 const detachedContainerRefSeqNumber = 0;
 
 const connectEventName = "connect";
+const dirtyContainerEvent = "dirty";
+const savedContainerEvent = "saved";
 
 interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
 }
 
+export interface IContainerLoadOptions {
+    /**
+     * Disables the Container from reconnecting if false, allows reconnect otherwise.
+     */
+    canReconnect?: boolean;
+    /**
+     * Client details provided in the override will be merged over the default client.
+     */
+    clientDetailsOverride?: IClientDetails;
+    containerUrl: string;
+    docId: string;
+    resolvedUrl: IFluidResolvedUrl;
+    /**
+     * Control whether to load from snapshot or ops.  See IParsedUrl for detailed information.
+     */
+    version?: string | null | undefined;
+    /**
+     * Loads the Container in paused state if true, unpaused otherwise.
+     */
+    pause?: boolean;
+}
+
 export interface IContainerConfig {
     resolvedUrl?: IResolvedUrl;
     canReconnect?: boolean;
-    originalRequest?: IRequest;
+    /**
+     * A url for the Container.  Critically, we expect Loader.resolve using this URL to resolve back to this Container
+     * for purposes of creating a separate Container instance for the summarizer to use.
+     */
+    containerUrl?: string;
+    /**
+     * Client details provided in the override will be merged over the default client.
+     */
+    clientDetailsOverride?: IClientDetails;
     id?: string;
 }
 
@@ -246,24 +277,23 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Load an existing container.
      */
     public static async load(
-        docId: string,
         loader: Loader,
-        request: IRequest,
-        resolvedUrl: IFluidResolvedUrl,
+        loadOptions: IContainerLoadOptions,
     ): Promise<Container> {
         const container = new Container(
             loader,
             {
-                originalRequest: request,
-                id: decodeURI(docId),
-                resolvedUrl,
-                canReconnect: !(request.headers?.[LoaderHeader.reconnect] === false),
+                containerUrl: loadOptions.containerUrl,
+                clientDetailsOverride: loadOptions.clientDetailsOverride,
+                id: loadOptions.docId,
+                resolvedUrl: loadOptions.resolvedUrl,
+                canReconnect: loadOptions.canReconnect,
             });
 
         return PerformanceEvent.timedExecAsync(container.logger, { eventName: "Load" }, async (event) => {
             return new Promise<Container>((res, rej) => {
-                const version = request.headers?.[LoaderHeader.version];
-                const pause = request.headers?.[LoaderHeader.pause];
+                const version = loadOptions.version;
+                const pause = loadOptions.pause;
 
                 const onClosed = (err?: ICriticalContainerError) => {
                     // Depending where error happens, we can be attempting to connect to web socket
@@ -340,11 +370,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         return this._storageService;
     }
-    private blobsCacheStorageService: IDocumentStorageService | undefined;
 
     private _clientId: string | undefined;
     private _id: string | undefined;
-    private originalRequest: IRequest | undefined;
+    private containerUrl: string | undefined;
+    private readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager;
     private _existing: boolean | undefined;
     private service: IDocumentService | undefined;
@@ -375,6 +405,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _resolvedUrl: IResolvedUrl | undefined;
     private cachedAttachSummary: ISummaryTree | undefined;
     private attachInProgress = false;
+    private _dirtyContainer = false;
 
     private lastVisible: number | undefined;
 
@@ -397,6 +428,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     /**
      * {@inheritDoc DeltaManager.readonly}
+     * @deprecated - use readOnlyInfo
      */
     public get readonly() {
         return this._deltaManager.readonly;
@@ -404,9 +436,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     /**
      * {@inheritDoc DeltaManager.readonlyPermissions}
+     * @deprecated - use readOnlyInfo
      */
     public get readonlyPermissions() {
         return this._deltaManager.readonlyPermissions;
+    }
+
+    /**
+     * {@inheritDoc DeltaManager.readOnlyInfo}
+     */
+    public get readOnlyInfo() {
+        return this._deltaManager.readOnlyInfo;
     }
 
     /**
@@ -489,6 +529,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._audience;
     }
 
+    /**
+     * Returns true if container is dirty.
+     * Which means data loss if container is closed at that same moment
+     * Most likely that happens when there is no network connection to ordering service
+     */
+    public get isDirty() {
+        return this._dirtyContainer;
+    }
+
     private get serviceFactory() {return this.loader.services.documentServiceFactory;}
     private get urlResolver() {return this.loader.services.urlResolver;}
     public get options() { return this.loader.services.options;}
@@ -502,7 +551,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._audience = new Audience();
 
         // Initialize from config
-        this.originalRequest = config.originalRequest;
+        this.containerUrl = config.containerUrl;
+        this.clientDetailsOverride = config.clientDetailsOverride;
         this._id = config.id;
         this._resolvedUrl = config.resolvedUrl;
         if (config.canReconnect !== undefined) {
@@ -555,12 +605,33 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.on("newListener", (event: string, listener: (...args: any[]) => void) => {
             // Fire events on the end of JS turn, giving a chance for caller to be in consistent state.
             Promise.resolve().then(() => {
-                if (event === connectedEventName && this.connected) {
-                    listener(event, this.clientId);
-                } else if (event === disconnectedEventName && !this.connected) {
-                    listener(event);
-                } else if (event === connectEventName && this._connectionState !== ConnectionState.Disconnected) {
-                    listener(event);
+                switch (event) {
+                    case dirtyContainerEvent:
+                        if (this._dirtyContainer) {
+                            listener(this._dirtyContainer);
+                        }
+                        break;
+                    case savedContainerEvent:
+                        if (!this._dirtyContainer) {
+                            listener(this._dirtyContainer);
+                        }
+                        break;
+                    case connectedEventName:
+                         if (this.connected) {
+                            listener(event, this.clientId);
+                         }
+                         break;
+                    case disconnectedEventName:
+                        if (!this.connected) {
+                            listener(event);
+                        }
+                        break;
+                    case connectEventName:
+                        if (this._connectionState !== ConnectionState.Disconnected) {
+                            listener(event);
+                        }
+                        break;
+                    default:
                 }
             }).catch((error) =>  {
                 this.logger.sendErrorEvent({ eventName: "RaiseConnectedEventError" }, error);
@@ -629,13 +700,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.loaded, "not loaded");
         assert(!this.closed, "closed");
 
-        // LoaderHeader.reconnect when set to false means we are allowing one connection,
-        // but do not allow re-connections. This is not very meaningful for attach process,
-        // plus this._canReconnect is provided to DeltaManager in constructor, so it's a bit too late.
-        // It might be useful to have an option to never connect, i.e. create file and close container,
-        // but that's a new feature to implement, not clear if we want to use same property for that.
-        assert(!(request.headers?.[LoaderHeader.reconnect] === false), "reconnect");
-
         // If container is already attached or attach is in progress, return.
         if (this._attachState === AttachState.Attached || this.attachInProgress) {
             return;
@@ -681,7 +745,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._resolvedUrl = resolvedUrl;
             const url = await this.getAbsoluteUrl("");
             assert(url !== undefined, "Container url undefined");
-            this.originalRequest = { url };
+            this.containerUrl = url;
             const parsedUrl = parseUrl(resolvedUrl.url);
             if (parsedUrl === undefined) {
                 throw new Error("Unable to parse Url");
@@ -790,7 +854,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public get storage(): IDocumentStorageService | undefined {
-        return this.blobsCacheStorageService ?? this._storageService;
+        return this._storageService;
     }
 
     /**
@@ -915,8 +979,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         if (blobs.size > 0) {
-            this.blobsCacheStorageService =
+            const blobSize = this.storageService.policies?.minBlobSize;
+            this._storageService =
                 new BlobCacheStorageService(this.storageService, blobs);
+            // ensure we did not lose that policy in the process of wrapping
+            assert(blobSize === this._storageService.policies?.minBlobSize, "blob size policy");
         }
         const attributes: IDocumentAttributes = {
             branch: this.id,
@@ -1380,11 +1447,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 user: { id: "" },
             };
 
-        // Client info from headers overrides client info from loader options
-        const headerClientDetails = this.originalRequest?.headers?.[LoaderHeader.clientDetails];
-
-        if (headerClientDetails !== undefined) {
-            merge(client.details, headerClientDetails);
+        if (this.clientDetailsOverride !== undefined) {
+            merge(client.details, this.clientDetailsOverride);
         }
 
         return client;
@@ -1728,9 +1792,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         previousRuntimeState: IRuntimeState = {},
     ) {
         assert(this._context?.disposed !== false, "Existing context not disposed");
+        // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
+        if (this._dirtyContainer) {
+            this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer"});
+        }
+
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
-        const loader = new RelativeLoader(this.loader, () => this.originalRequest);
+        const loader = new RelativeLoader(this.loader, () => this.containerUrl);
         const previousCodeDetails = this._context?.codeDetails;
         const loadContainerCopyFn = async (additionalHeaders: IRequestHeader) => {
             // Load the container copy restricted: uncached and no reconnect
@@ -1758,6 +1827,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             loadContainerCopyFn,
             Container.version,
             previousRuntimeState,
+            (dirty: boolean) => {
+                this._dirtyContainer = dirty;
+                this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
+            },
         );
 
         loader.resolveContainer(this);

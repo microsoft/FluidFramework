@@ -30,7 +30,7 @@ import { bufferToString } from "@fluidframework/common-utils";
 describe("SharedString", () => {
     let driver: ITestDriver;
     before(()=>{
-        driver = getFluidTestDriver();
+        driver = getFluidTestDriver() as ITestDriver;
     });
     it("Failure to Load in Shared String", async ()=>{
         const stringId = "sharedStringKey";
@@ -85,13 +85,13 @@ describe("SharedString", () => {
                 createDocumentService: async (resolvedUrl,logger) => {
                     const realDs = await realSf.createDocumentService(resolvedUrl, logger);
                     const mockDs = Object.create(realDs) as IDocumentService;
-                    mockDs.policies = {
-                        ... mockDs.policies,
-                        caching: LoaderCachingPolicy.NoCaching,
-                    };
                     mockDs.connectToStorage = async ()=>{
                         const realStorage = await realDs.connectToStorage();
                         const mockstorage = Object.create(realStorage) as IDocumentStorageService;
+                        (mockstorage as any).policies = {
+                            ...realStorage.policies,
+                            caching: LoaderCachingPolicy.NoCaching,
+                        };
                         mockstorage.readBlob = async (id)=>{
                             const blob = await realStorage.readBlob(id);
                             const blobObj = JSON.parse(bufferToString(blob, "utf8"));

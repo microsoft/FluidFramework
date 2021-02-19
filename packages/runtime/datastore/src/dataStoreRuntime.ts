@@ -19,6 +19,7 @@ import {
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
+import { CreateProcessingError } from "@fluidframework/container-utils";
 import {
     assert,
     Deferred,
@@ -497,65 +498,80 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
     public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         this.verifyNotClosed();
-        switch (message.type) {
-            case DataStoreMessageType.Attach: {
-                const attachMessage = message.contents as IAttachMessage;
-                const id = attachMessage.id;
 
-                // If a non-local operation then go and create the object
-                // Otherwise mark it as officially attached.
-                if (local) {
-                    assert(this.pendingAttach.has(id), "Unexpected attach (local) channel OP");
-                    this.pendingAttach.delete(id);
-                } else {
-                    assert(!this.contexts.has(id), `Unexpected attach channel OP,
-                        is in pendingAttach set: ${this.pendingAttach.has(id)},
-                        is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContext}`);
+        try {
+            // catches as data processing error whether or not they come from async pending queues
+            switch (message.type) {
+                case DataStoreMessageType.Attach: {
+                    const attachMessage = message.contents as IAttachMessage;
+                    const id = attachMessage.id;
 
-                    const flatBlobs = new Map<string, string>();
-                    const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
-
-                    const remoteChannelContext = new RemoteChannelContext(
-                        this,
-                        this.dataStoreContext,
-                        this.dataStoreContext.storage,
-                        (content, localContentMetadata) => this.submitChannelOp(id, content, localContentMetadata),
-                        (address: string) => this.setChannelDirty(address),
-                        id,
-                        snapshotTree,
-                        this.sharedObjectRegistry,
-                        flatBlobs,
-                        this.dataStoreContext.getCreateChildSummarizerNodeFn(
-                            id,
-                            {
-                                type: CreateSummarizerNodeSource.FromAttach,
-                                sequenceNumber: message.sequenceNumber,
-                                snapshot: attachMessage.snapshot,
-                            },
-                        ),
-                        async () => this.getChannelInitialGCDetails(id),
-                        attachMessage.type);
-
-                    this.contexts.set(id, remoteChannelContext);
-                    if (this.contextsDeferred.has(id)) {
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        this.contextsDeferred.get(id)!.resolve(remoteChannelContext);
+                    // If a non-local operation then go and create the object
+                    // Otherwise mark it as officially attached.
+                    if (local) {
+                        assert(this.pendingAttach.has(id), "Unexpected attach (local) channel OP");
+                        this.pendingAttach.delete(id);
                     } else {
-                        const deferred = new Deferred<IChannelContext>();
-                        deferred.resolve(remoteChannelContext);
-                        this.contextsDeferred.set(id, deferred);
+                        assert(!this.contexts.has(id), `Unexpected attach channel OP,
+                            is in pendingAttach set: ${this.pendingAttach.has(id)},
+                            is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContext}`);
+
+                        const flatBlobs = new Map<string, string>();
+                        const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+
+                        const remoteChannelContext = new RemoteChannelContext(
+                            this,
+                            this.dataStoreContext,
+                            this.dataStoreContext.storage,
+                            (content, localContentMetadata) => this.submitChannelOp(id, content, localContentMetadata),
+                            (address: string) => this.setChannelDirty(address),
+                            id,
+                            snapshotTree,
+                            this.sharedObjectRegistry,
+                            flatBlobs,
+                            this.dataStoreContext.getCreateChildSummarizerNodeFn(
+                                id,
+                                {
+                                    type: CreateSummarizerNodeSource.FromAttach,
+                                    sequenceNumber: message.sequenceNumber,
+                                    snapshot: attachMessage.snapshot,
+                                },
+                            ),
+                            async () => this.getChannelInitialGCDetails(id),
+                            attachMessage.type);
+
+                        this.contexts.set(id, remoteChannelContext);
+                        if (this.contextsDeferred.has(id)) {
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            this.contextsDeferred.get(id)!.resolve(remoteChannelContext);
+                        } else {
+                            const deferred = new Deferred<IChannelContext>();
+                            deferred.resolve(remoteChannelContext);
+                            this.contextsDeferred.set(id, deferred);
+                        }
                     }
+                    break;
                 }
-                break;
+
+                case DataStoreMessageType.ChannelOp:
+                    this.processChannelOp(message, local, localOpMetadata);
+                    break;
+                default:
             }
 
-            case DataStoreMessageType.ChannelOp:
-                this.processChannelOp(message, local, localOpMetadata);
-                break;
-            default:
+            this.emit("op", message);
+        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-throw-literal
+            throw CreateProcessingError(error, {
+                clientId: this.clientId,
+                messageClientId: message.clientId,
+                sequenceNumber: message.sequenceNumber,
+                clientSequenceNumber: message.clientSequenceNumber,
+                referenceSequenceNumber: message.referenceSequenceNumber,
+                minimumSequenceNumber: message.minimumSequenceNumber,
+                messageTimestamp: message.timestamp,
+            });
         }
-
-        this.emit("op", message);
     }
 
     public processSignal(message: IInboundSignalMessage, local: boolean) {
@@ -697,7 +713,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 // (i.e. it has a base mapping) - then we go ahead and summarize
                 return isAttached;
             }).map(async ([contextId, context]) => {
-                const contextSummary = await context.summarize(fullTree, trackState);
+                // If BlobAggregationStorage is engaged, we have to write full summary for data stores
+                // BlobAggregationStorage relies on this behavior, as it aggregates blobs across DDSs.
+                // Not generating full summary will mean data loss, as we will overwrite aggregate blob in new summary,
+                // and any virtual blobs that stayed (for unchanged DDSs) will need aggregate blob in previous summary
+                // that is no longer present in this summary.
+                // This is temporal limitation that can be lifted in future once BlobAggregationStorage becomes smarter.
+                const contextSummary = await context.summarize(true /* fullTree */, trackState);
                 summaryBuilder.addWithStats(contextId, contextSummary);
 
                 // Prefix the child's id to the ids of its GC nodes. This gradually builds the id of each node

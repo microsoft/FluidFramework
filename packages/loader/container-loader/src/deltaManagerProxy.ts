@@ -9,6 +9,7 @@ import {
     IDeltaQueue,
     IDeltaSender,
     IDeltaQueueEvents,
+    ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { EventForwarder } from "@fluidframework/common-utils";
 import {
@@ -122,6 +123,10 @@ export class DeltaManagerProxy
 
     public get readonly(): boolean | undefined {
         return this.deltaManager.readonly;
+    }
+
+    public get readOnlyInfo(): ReadOnlyInfo {
+        return this.deltaManager.readOnlyInfo;
     }
 
     constructor(private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>) {

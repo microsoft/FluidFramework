@@ -8,10 +8,11 @@ import { Package, Packages } from "./npmPackage";
 import { MonoRepo, MonoRepoKind } from "./monoRepo";
 import { getPackageManifest } from "./fluidUtils";
 import { ExecAsyncResult } from "./utils";
+import { isTemplateSpan } from "typescript";
 
 export interface IPackageManifest {
     repoPackages: {
-        [name: string]: string | IFluidRepoPackage | (string | IFluidRepoPackage)[]
+        [name: string]: IFluidRepoPackageEntry;
     },
     generatorName?: string
 }
@@ -21,6 +22,8 @@ export interface IFluidRepoPackage {
     ignoredDirs?: string[]
 }
 
+type IFluidRepoPackageEntry = string | IFluidRepoPackage | (string | IFluidRepoPackage)[];
+
 export class FluidRepo {
     public readonly clientMonoRepo: MonoRepo;
     public readonly serverMonoRepo?: MonoRepo;
@@ -29,21 +32,32 @@ export class FluidRepo {
     constructor(public readonly resolvedRoot: string, services: boolean) {
         const packageManifest = getPackageManifest(resolvedRoot);
 
-        const loadOneEntry = (item: string | IFluidRepoPackage, group: string) => {
-            if (typeof item === "string") {
-                return Packages.loadDir(path.join(resolvedRoot, item), group);
+        // Expand to full IFluidRepoPackage and full path
+        const normalizeEntry = (item: IFluidRepoPackageEntry): IFluidRepoPackage | IFluidRepoPackage[] => {
+            if (Array.isArray(item)) {
+                return item.map(entry => normalizeEntry(entry) as IFluidRepoPackage);
             }
-            return Packages.loadDir(path.join(resolvedRoot, item.directory), group, undefined, item.ignoredDirs);
+            if (typeof item === "string") {
+                return { directory: path.join(resolvedRoot, item), ignoredDirs: undefined };
+            }
+            const directory = path.join(resolvedRoot, item.directory);
+            return { directory, ignoredDirs: item.ignoredDirs?.map(dir => path.join(directory, dir)) };
         }
+        const loadOneEntry = (item: IFluidRepoPackage, group: string) => {
+            return Packages.loadDir(item.directory, group, item.ignoredDirs);
+        }
+
         const loadedPackages: Package[] = [];
         let clientMonoRepo: MonoRepo | undefined;
         for (const group in packageManifest.repoPackages) {
-            const item = packageManifest.repoPackages[group];
+            const item = normalizeEntry(packageManifest.repoPackages[group]);
             if (group === "client") {
-                clientMonoRepo = new MonoRepo(MonoRepoKind.Client, path.join(this.resolvedRoot, item as string));
+                const { directory, ignoredDirs } = item as IFluidRepoPackage;
+                clientMonoRepo = new MonoRepo(MonoRepoKind.Client, directory, ignoredDirs);
                 loadedPackages.push(...clientMonoRepo.packages);
             } else if (group === "server") {
-                this.serverMonoRepo = new MonoRepo(MonoRepoKind.Server, path.join(this.resolvedRoot, item as string));
+                const { directory, ignoredDirs } = item as IFluidRepoPackage;
+                this.serverMonoRepo = new MonoRepo(MonoRepoKind.Server, directory, ignoredDirs);
                 loadedPackages.push(...this.serverMonoRepo.packages);
             } else if (group !== "services" || services) {
                 if (Array.isArray(item)) {

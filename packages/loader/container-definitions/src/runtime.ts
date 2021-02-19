@@ -115,7 +115,7 @@ export interface IContainerContext extends IDisposable {
     readonly configuration: IFluidConfiguration;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
-    readonly storage: IDocumentStorageService | undefined | null;
+    readonly storage: IDocumentStorageService | undefined;
     readonly connected: boolean;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
@@ -152,6 +152,7 @@ export interface IContainerContext extends IDisposable {
 
     getLoadedFromVersion(): IVersion | undefined;
 
+    updateDirtyContainerState(dirty: boolean): void;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";

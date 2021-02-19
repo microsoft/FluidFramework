@@ -52,6 +52,7 @@ import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver
 import {
     readAndParse,
     readAndParseFromBlobs,
+    BlobAggregationStorage,
 } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import { runGarbageCollection } from "@fluidframework/garbage-collector";
@@ -479,13 +480,33 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         runtimeOptions?: IContainerRuntimeOptions,
         containerScope: IFluidObject = context.scope,
     ): Promise<ContainerRuntime> {
+        const logger = ChildLogger.create(context.logger, undefined, {
+            runtimeVersion: pkgVersion,
+        });
+
+        let storage = context.storage;
+        if (context.baseSnapshot) {
+            // This will patch snapshot in place!
+            // If storage is provided, it will wrap storage with BlobAggregationStorage that can
+            // pack & unpack aggregated blobs.
+            // Note that if storage is provided later by loader layer, we will wrap storage in this.storage getter.
+            // BlobAggregationStorage is smart enough for double-wrapping to be no-op
+            if (context.storage) {
+                const aggrStorage = BlobAggregationStorage.wrap(context.storage, logger);
+                await aggrStorage.unpackSnapshot(context.baseSnapshot);
+                storage = aggrStorage;
+            } else {
+                await BlobAggregationStorage.unpackSnapshot(context.baseSnapshot);
+            }
+        }
+
         const registry = new ContainerRuntimeDataStoreRegistry(registryEntries);
 
         const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
             const blobId = context.baseSnapshot?.blobs[blobName];
             if (context.baseSnapshot && blobId) {
-                return context.storage ?
-                    readAndParse<T>(context.storage, blobId) :
+                return storage ?
+                    readAndParse<T>(storage, blobId) :
                     readAndParseFromBlobs<T>(context.baseSnapshot.blobs, blobId);
             }
         };
@@ -499,7 +520,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             chunks,
             runtimeOptions,
             containerScope,
-            requestHandler);
+            logger,
+            requestHandler,
+            storage);
 
         // Create all internal data stores if not already existing on storage or loaded a detached
         // container from snapshot(ex. draft mode).
@@ -538,8 +561,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public get storage(): IDocumentStorageService {
+        // This code is plain wrong. It lies that it never returns undefined!!!
+        // All callers should be fixed, as this API is called in detached state of container when we have
+        // no storage and it's passed down the stack without right typing.
+        if (!this._storage && this.context.storage) {
+            // Note: BlobAggregationStorage is smart enough for double-wrapping to be no-op
+            this._storage = BlobAggregationStorage.wrap(this.context.storage, this.logger);
+        }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.context.storage!;
+        return this._storage!;
     }
 
     public get reSubmitFn(): (
@@ -588,10 +618,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public readonly IFluidHandleContext: IFluidHandleContext;
 
-    // internal logger for ContainerRuntime
+    // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly _logger: ITelemetryLogger;
-    // publicly visible logger, to be used by stores, summarize, etc.
-    public readonly logger: ITelemetryLogger;
     public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
     private latestSummaryAck: ISummaryContext;
@@ -635,7 +663,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
-    private dirtyDocument = false;
+    private dirtyContainer = false;
     private emitDirtyDocumentEvent = true;
     private readonly summarizer: Summarizer;
     private readonly deltaSender: IDeltaSender | undefined;
@@ -658,7 +686,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             enableWorker: false,
         },
         private readonly containerScope: IFluidObject,
+        public readonly logger: ITelemetryLogger,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
+        private _storage?: IDocumentStorageService,
     ) {
         super();
 
@@ -667,10 +697,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.IFluidHandleContext = new ContainerFluidHandleContext("", this);
         this.IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
-
-        this.logger = ChildLogger.create(context.logger, undefined, {
-            runtimeVersion: pkgVersion,
-        });
 
         this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
 
@@ -817,7 +843,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.logger.sendTelemetryEvent({
             eventName: "ContainerRuntimeDisposed",
             category: "generic",
-            isDirty: this.isDocumentDirty(),
+            isDirty: this.isDirty,
             lastSequenceNumber: this.deltaManager.lastSequenceNumber,
             attachState: this.attachState,
             message: error?.message,
@@ -944,6 +970,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async stop(): Promise<IRuntimeState> {
         this.verifyNotClosed();
 
+        // Reload would not work properly with local changes.
+        // First, summarizing code likely does not work (i.e. read - produced unknown result)
+        // in presence of local changes.
+        // On top of that newly reloaded runtime likely would not be dirty, while it has some changes.
+        // And container would assume it's dirty (as there was no notification changing state)
+        if (this.dirtyContainer) {
+            this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadRuntime"});
+        }
+
         const snapshot = await this.snapshot();
         const state: IPreviousState = {
             reload: true,
@@ -966,17 +1001,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // has any effect.
 
         // Save the old state, reset to false, disable event emit
-        const oldState = this.dirtyDocument;
-        this.dirtyDocument = false;
+        const oldState = this.dirtyContainer;
+        this.dirtyContainer = false;
+
+        assert(this.emitDirtyDocumentEvent);
         this.emitDirtyDocumentEvent = false;
+        let newState: boolean;
 
-        // replay the ops
-        this.pendingStateManager.replayPendingStates();
-
-        // Save the new start and restore the old state, re-enable event emit
-        const newState = this.dirtyDocument;
-        this.dirtyDocument = oldState;
-        this.emitDirtyDocumentEvent = true;
+        try {
+            // replay the ops
+            this.pendingStateManager.replayPendingStates();
+        } finally {
+            // Save the new start and restore the old state, re-enable event emit
+            newState = this.dirtyContainer;
+            this.dirtyContainer = oldState;
+            this.emitDirtyDocumentEvent = true;
+        }
 
         // Officially transition from the old state to the new state.
         this.updateDocumentDirtyState(newState);
@@ -1236,17 +1276,26 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
+     * @deprecated - // back-compat: marked deprecated in 0.35
      * Returns true of document is dirty, i.e. there are some pending local changes that
      * either were not sent out to delta stream or were not yet acknowledged.
      */
     public isDocumentDirty(): boolean {
-        return this.dirtyDocument;
+        return this.dirtyContainer;
+    }
+
+    /**
+     * Returns true of container is dirty, i.e. there are some pending local changes that
+     * either were not sent out to delta stream or were not yet acknowledged.
+     */
+    public get isDirty(): boolean {
+        return this.dirtyContainer;
     }
 
     /**
      * Will return true for any message that affect the dirty state of this document
      * This function can be used to filter out any runtime operations that should not be affecting whether or not
-     * the IFluidDataStoreRuntime.isDocumentDirty call returns true/false
+     * the IFluidDataStoreRuntime.isDirty call returns true/false
      * @param type - The type of ContainerRuntime message that is being checked
      * @param contents - The contents of the message that is being verified
      */
@@ -1511,13 +1560,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private updateDocumentDirtyState(dirty: boolean) {
-        if (this.dirtyDocument === dirty) {
+        if (this.dirtyContainer === dirty) {
             return;
         }
 
-        this.dirtyDocument = dirty;
+        this.dirtyContainer = dirty;
         if (this.emitDirtyDocumentEvent) {
+            // back-compat: dirtyDocument & savedDocument deprecated in 0.35.
             this.emit(dirty ? "dirtyDocument" : "savedDocument");
+
+            this.emit(dirty ? "dirty" : "saved");
+            // back-compat: Loader API added in 0.35 only
+            if (this.context.updateDirtyContainerState !== undefined) {
+                this.context.updateDirtyContainerState(dirty);
+            }
         }
     }
 

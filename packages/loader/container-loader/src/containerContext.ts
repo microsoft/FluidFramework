@@ -68,6 +68,7 @@ export class ContainerContext implements IContainerContext {
         loadContainerCopyFn: (additionalHeaders: IRequestHeader) => Promise<IContainer>,
         version: string,
         previousRuntimeState: IRuntimeState,
+        updateDirtyContainerState: (dirty: boolean) => void,
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
             container,
@@ -85,7 +86,8 @@ export class ContainerContext implements IContainerContext {
             closeFn,
             loadContainerCopyFn,
             version,
-            previousRuntimeState);
+            previousRuntimeState,
+            updateDirtyContainerState);
         await context.load();
         return context;
     }
@@ -143,7 +145,7 @@ export class ContainerContext implements IContainerContext {
         return this._baseSnapshot;
     }
 
-    public get storage(): IDocumentStorageService | undefined | null {
+    public get storage(): IDocumentStorageService | undefined {
         return this.container.storage;
     }
 
@@ -193,6 +195,8 @@ export class ContainerContext implements IContainerContext {
         public readonly loadContainerCopyFn: (additionalHeaders: IRequestHeader) => Promise<IContainer>,
         public readonly version: string,
         public readonly previousRuntimeState: IRuntimeState,
+        public readonly updateDirtyContainerState: (dirty: boolean) => void,
+
     ) {
         this.logger = container.subLogger;
         this.attachListener();

@@ -34,7 +34,7 @@ const detachedContainerRefSeqNumber = 0;
 describe(`Dehydrate Rehydrate Container Test`, () => {
     let driver: ITestDriver;
     before(()=>{
-        driver = getFluidTestDriver();
+        driver = getFluidTestDriver() as ITestDriver;
     });
 
     const codeDetails: IFluidCodeDetails = {

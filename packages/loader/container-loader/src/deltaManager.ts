@@ -14,6 +14,7 @@ import {
     ICriticalContainerError,
     ContainerErrorType,
     IThrottlingWarning,
+    ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import { PerformanceEvent, TelemetryLogger, safeRaiseEvent } from "@fluidframework/telemetry-utils";
@@ -23,6 +24,7 @@ import {
     IDocumentDeltaConnection,
     IDocumentStorageService,
     LoaderCachingPolicy,
+    IDocumentDeltaConnectionEvents,
 } from "@fluidframework/driver-definitions";
 import { isSystemType, isSystemMessage } from "@fluidframework/protocol-base";
 import {
@@ -35,7 +37,9 @@ import {
     INack,
     INackContent,
     ISequencedDocumentMessage,
+    ISignalClient,
     ISignalMessage,
+    ITokenClaims,
     ITrace,
     MessageType,
     ScopeType,
@@ -46,7 +50,11 @@ import {
     createGenericNetworkError,
     getRetryDelayFromError,
 } from "@fluidframework/driver-utils";
-import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
+import {
+    CreateContainerError,
+    CreateProcessingError,
+    DataCorruptionError,
+} from "@fluidframework/container-utils";
 import { debug } from "./debug";
 import { DeltaQueue } from "./deltaQueue";
 import { logNetworkFailure, waitForConnectedState } from "./networkUtils";
@@ -94,6 +102,42 @@ export enum ReconnectMode {
 export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
     (event: "throttled", listener: (error: IThrottlingWarning) => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
+}
+
+/**
+ * Implementation of IDocumentDeltaConnection that does not support submitting
+ * or receiving ops. Used in storage-only mode.
+ */
+class NoDeltaStream extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection {
+    clientId: string = "storage-only client";
+    claims: ITokenClaims = {
+        scopes: [ScopeType.DocRead],
+    } as any;
+    mode: ConnectionMode = "read";
+    existing: boolean = true;
+    maxMessageSize: number = 0;
+    version: string = "";
+    initialMessages: ISequencedDocumentMessage[] = [];
+    initialSignals: ISignalMessage[] = [];
+    initialClients: ISignalClient[] = [];
+    serviceConfiguration: IClientConfiguration = undefined as any;
+    checkpointSequenceNumber?: number | undefined = undefined;
+    submit(messages: IDocumentMessage[]): void {
+        this.emit("nack", this.clientId, messages.map((operation) => {
+            return {
+                operation,
+                content: { message: "Cannot submit with storage-only connection", code: 403 },
+            };
+        }));
+    }
+    submitSignal(message: any): void {
+        this.emit("nack", this.clientId, {
+            operation: message,
+            content: { message: "Cannot submit signal with storage-only connection", code: 403 },
+        });
+    }
+    close(): void {
+    }
 }
 
 /**
@@ -264,6 +308,7 @@ export class DeltaManager
      * or due to host forcing readonly mode for container.
      * It is undefined if we have not yet established websocket connection
      * and do not know if user has write access to a file.
+     * @deprecated - use readOnlyInfo
      */
     public get readonly() {
         if (this._forceReadonly) {
@@ -276,9 +321,24 @@ export class DeltaManager
      * Tells if user has no write permissions for file in storage
      * It is undefined if we have not yet established websocket connection
      * and do not know if user has write access to a file.
+     * @deprecated - use readOnlyInfo
      */
     public get readonlyPermissions() {
         return this._readonlyPermissions;
+    }
+
+    public get readOnlyInfo(): ReadOnlyInfo {
+        const storageOnly = this.connection !== undefined && this.connection instanceof NoDeltaStream;
+        if (storageOnly || this._forceReadonly || this._readonlyPermissions === true) {
+            return {
+                readonly: true,
+                forced: this._forceReadonly,
+                permissions: this._readonlyPermissions,
+                storageOnly,
+            };
+        }
+
+        return { readonly: this._readonlyPermissions };
     }
 
     /**
@@ -300,11 +360,16 @@ export class DeltaManager
 
         let storageService = await service.connectToStorage();
         // Enable prefetching for the service unless it has a caching policy set otherwise:
-        if (service.policies?.caching !== LoaderCachingPolicy.NoCaching) {
+        if (storageService.policies?.caching !== LoaderCachingPolicy.NoCaching) {
             storageService = new PrefetchDocumentStorageService(storageService);
         }
 
         this.storageService = new RetriableDocumentStorageService(storageService, this, this.logger);
+
+        // ensure we did not lose that policy in the process of wrapping
+        assert(storageService.policies?.minBlobSize === this.storageService.policies?.minBlobSize,
+            "lost minBlobSize policy");
+
         return this.storageService;
     }
 
@@ -382,7 +447,7 @@ export class DeltaManager
             });
 
         this._inbound.on("error", (error) => {
-            this.close(CreateContainerError(error));
+            this.close(CreateProcessingError(error, {}));
         });
 
         // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
@@ -537,6 +602,15 @@ export class DeltaManager
         const docService = this.serviceProvider();
         if (docService === undefined) {
             throw new Error("Container is not attached");
+        }
+
+        if (docService.policies?.storageOnly === true) {
+            const connection = new NoDeltaStream();
+            this.connectionP = new Promise((resolve) => {
+                this.setupNewSuccessfulConnection(connection, "read");
+                resolve(connection);
+            });
+            return this.connectionP;
         }
 
         // The promise returned from connectCore will settle with a resolved connection or reject with error
@@ -732,15 +806,21 @@ export class DeltaManager
 
         let requests = 0;
         let deltaStorage: IDocumentDeltaStorageService | undefined;
+        let lastSuccessTime: number | undefined;
 
         while (!this.closed) {
             const maxFetchTo = from + MaxBatchDeltas;
             const fetchTo = to === undefined ? maxFetchTo : Math.min(maxFetchTo, to);
 
             let deltasRetrievedLast = 0;
-            let success = true;
             let canRetry = false;
             let retryAfter: number | undefined;
+            let delay: number;
+
+            // Calculate delay for next iteration if request fails or we get no ops.
+            // If request succeeds and returns some ops, we will reset these variables.
+            retry++;
+            delay = retryAfter ?? Math.min(MaxFetchDelaySeconds, MissingFetchDelaySeconds * Math.pow(2, retry));
 
             try {
                 // Connect to the delta storage endpoint
@@ -790,9 +870,39 @@ export class DeltaManager
                 // Attempt to fetch more deltas. If we didn't receive any in the previous call we up our retry
                 // count since something prevented us from seeing those deltas
                 from = lastFetch;
+
+                if (deltasRetrievedLast !== 0) {
+                    // If we are getting some ops, reset all counters.
+                    delay = 0;
+                    retry = 0;
+                    lastSuccessTime = undefined;
+                } else if (lastSuccessTime === undefined) {
+                    lastSuccessTime = Date.now();
+                } else if (Date.now() - lastSuccessTime > 30000) {
+                    // If we are connected and receiving proper responses from server, but can't get any ops back,
+                    // then give up after some time. This likely indicates the issue with ordering service not flushing
+                    // ops to storage quick enough, and possibly waiting for summaries, while summarizer can't get
+                    // current as it can't get ops.
+                    telemetryEvent.cancel({
+                        category: "error",
+                        error: "too many retries",
+                        retry,
+                        requests,
+                        deltasRetrievedTotal,
+                        replayFrom: from,
+                        to,
+                    });
+                    this.close(createGenericNetworkError(
+                        "Failed to retrieve ops from storage: giving up after too many retries",
+                        false /* canRetry */,
+                    ));
+                    return;
+                }
             } catch (origError) {
                 canRetry = canRetry && canRetryOnError(origError);
                 const error = CreateContainerError(origError);
+
+                lastSuccessTime = undefined;
 
                 logNetworkFailure(
                     this.logger,
@@ -801,7 +911,7 @@ export class DeltaManager
                         fetchTo,
                         from,
                         requests,
-                        retry: retry + 1,
+                        retry,
                     },
                     origError);
 
@@ -811,7 +921,6 @@ export class DeltaManager
                     this.close(error);
                     return;
                 }
-                success = false;
                 retryAfter = getRetryDelayFromError(origError);
 
                 if (retryAfter !== undefined && retryAfter >= 0) {
@@ -830,38 +939,6 @@ export class DeltaManager
                 return;
             }
 
-            let delay: number;
-            if (deltasRetrievedLast !== 0) {
-                delay = 0;
-                retry = 0; // start calculating timeout over if we got some ops
-            } else {
-                retry++;
-                delay = retryAfter ?? Math.min(MaxFetchDelaySeconds, MissingFetchDelaySeconds * Math.pow(2, retry));
-
-                // Chances that we will get something from storage after that many retries is zero.
-                // We wait 10 seconds between most of retries, so that's 16 minutes of waiting!
-                // Note - it's very important that we differentiate connected state from possibly disconnected state!
-                // Only bail out if we successfully connected to storage, but there were no ops
-                // One (last) successful connection is sufficient, even if user was disconnected all prior attempts
-                if (success && retry >= 100) {
-                    telemetryEvent.cancel({
-                        category: "error",
-                        error: "too many retries",
-                        retry,
-                        requests,
-                        deltasRetrievedTotal,
-                        replayFrom: from,
-                        to,
-                    });
-                    const closeError = createGenericNetworkError(
-                        "Failed to retrieve ops from storage: giving up after too many retries",
-                        false /* canRetry */,
-                    );
-                    this.close(closeError);
-                    return;
-                }
-            }
-
             telemetryEvent.reportProgress({
                 delay, // seconds
                 deltasRetrievedLast,
@@ -869,7 +946,7 @@ export class DeltaManager
                 replayFrom: from,
                 requests,
                 retry,
-                success,
+                success: lastSuccessTime !== undefined,
             });
 
             await waitForConnectedState(delay * 1000);

@@ -4,7 +4,7 @@
 */
 
 /* eslint-disable @typescript-eslint/ban-types */
-
+// eslint-disable-next-line import/no-extraneous-dependencies
 import sinon from "sinon";
 import * as fetchModule from "node-fetch";
 
