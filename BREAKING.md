@@ -25,8 +25,8 @@ Added support for passing siteUrl when fetching token that is used to establish 
 
 ### DirtyDocument events and property
 The following 3 names have been deprecated - please use new names:
-"dirtyDocument" event -> "dirtyContainer" event
-"savedDocument" event -> "savedContainer" event
+"dirtyDocument" event -> "dirty" event
+"savedDocument" event -> "saved" event
 isDocumentDirty property -> isDirty property
 
 ## 0.34 Breaking changes
