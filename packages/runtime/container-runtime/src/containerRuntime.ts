@@ -964,7 +964,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async stop(): Promise<IRuntimeState> {
         this.verifyNotClosed();
 
-        // It is not very clear how reload works with local changes.
+        // Reload would not work properly with local changes.
         // First, summarizing code likely does not work (i.e. read - produced unknown result)
         // in presence of local changes.
         // On top of that newly reloaded runtime likely would not be dirty, while it has some changes.
@@ -1563,7 +1563,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // back-compat: dirtyDocument & savedDocument deprecated in 0.35.
             this.emit(dirty ? "dirtyDocument" : "savedDocument");
 
-            this.emit(dirty ? "dirtyContainer" : "savedContainer");
+            this.emit(dirty ? "dirty" : "saved");
             // back-compat: Loader API added in 0.35 only
             if (this.context.updateDirtyContainerState !== undefined) {
                 this.context.updateDirtyContainerState(dirty);

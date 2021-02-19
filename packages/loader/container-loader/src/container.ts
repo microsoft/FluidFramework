@@ -97,7 +97,7 @@ import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 const detachedContainerRefSeqNumber = 0;
 
 const connectEventName = "connect";
-const dirtyContainerEvent = "dirtyContainer";
+const dirtyContainerEvent = "dirty";
 
 interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
@@ -531,7 +531,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Which means data loss if container is closed at that same moment
      * Most likely that happens when there is no network connection to ordering service
      */
-    public get dirtyContainer() {
+    public get isDirty() {
         return this._dirtyContainer;
     }
 

@@ -57,10 +57,10 @@ describe("Document Dirty", () => {
     }
 
     /**
-     * Increments clean count when the "savedContainer" event is fired
+     * Increments clean count when the "saved" event is fired
      */
     function registerSavedContainerHandler(runtime: IContainerRuntime): void {
-        runtime.on("savedContainer", () => {
+        runtime.on("saved", () => {
             wasMarkedCleanCount += 1;
             assert.equal(runtime.isDirty(), false, "Document is marked clean");
             assert.equal(wasMarkedDirtyCount, wasMarkedCleanCount,
@@ -69,10 +69,10 @@ describe("Document Dirty", () => {
     }
 
     /**
-     * Increments dirty count when the "dirtyContainer" event is fired
+     * Increments dirty count when the "dirty" event is fired
      */
     function registerDirtyContainerHandler(runtime: IContainerRuntime): void {
-        runtime.on("dirtyContainer", () => {
+        runtime.on("dirty", () => {
             wasMarkedDirtyCount += 1;
             assert.equal(runtime.isDirty(), true, "Document is marked dirty");
             assert.equal(wasMarkedDirtyCount - wasMarkedCleanCount, 1,
