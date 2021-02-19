@@ -17,6 +17,7 @@ export {
     IResponse,
     IProvideFluidRouter,
     IFluidRouter,
+    IFluidRequestHandler,
 } from "./fluidRouter";
 export * from "./handles";
 export * from "./serializer";

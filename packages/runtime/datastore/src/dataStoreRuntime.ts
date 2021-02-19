@@ -7,6 +7,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
     IFluidHandleContext,
+    IFluidRoutingContext,
     IFluidSerializer,
     IRequest,
     IResponse,
@@ -144,6 +145,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
         return this._attachState;
     }
 
+    private readonly dataStoreRoutingContext: IFluidRoutingContext;
     public readonly channelsRoutingContext: IFluidHandleContext;
     public readonly objectsRoutingContext: IFluidHandleContext;
 
@@ -195,24 +197,24 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
         this.quorum = dataStoreContext.getQuorum();
         this.audience = dataStoreContext.getAudience();
 
-        const channelRoutingContext = this.dataStoreContext.channelRoutingContext;
+        this.dataStoreRoutingContext = this.dataStoreContext.channelRoutingContext;
 
         // Supporting legacy URIs: empty request is same as /_custom/ path.
         new TerminatingRoute(
             defaultRoutePath,
-            channelRoutingContext,
+            this.dataStoreRoutingContext,
             async () => requestFluidObject(this, "/"),
         );
 
         this.objectsRoutingContext = new FluidHandleContext(
             this,
-            new FluidRoutingContext("_custom", channelRoutingContext, undefined, this.request.bind(this)));
+            new FluidRoutingContext("_custom", this.dataStoreRoutingContext, undefined, this.request.bind(this)));
 
         this.channelsRoutingContext = new FluidHandleContext(
             this,
-            new FluidRoutingContext("_channels", channelRoutingContext));
+            new FluidRoutingContext("_channels", this.dataStoreRoutingContext));
 
-        this.IFluidSerializer = new FluidSerializer(channelRoutingContext);
+        this.IFluidSerializer = new FluidSerializer(this.dataStoreRoutingContext);
 
         const tree = dataStoreContext.baseSnapshot;
 
@@ -239,7 +241,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
                 // Remove GC node for this data store, if any.
                 delete gcData.gcNodes["/"];
                 // Remove the back route to this data store that was added when generating each child's GC nodes.
-                removeRouteFromAllNodes(gcData.gcNodes, this.absolutePath);
+                removeRouteFromAllNodes(gcData.gcNodes, this.dataStoreRoutingContext.absolutePath);
                 return getChildNodesGCData(gcData);
             }
             return new Map();
@@ -565,7 +567,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
     private getOutboundRoutes(): string[] {
         const outboundRoutes: string[] = [];
         for (const [contextId] of this.contexts) {
-            outboundRoutes.push(`${this.absolutePath}/${contextId}`);
+            outboundRoutes.push(`${this.channelsRoutingContext}/${contextId}`);
         }
         return outboundRoutes;
     }
@@ -579,7 +581,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
     private updateGCNodes(builder: GCDataBuilder) {
         // Add a back route to self in each child's GC nodes. If any child is referenced, then its parent should
         // be considered referenced as well.
-        builder.addRouteToAllNodes(this.absolutePath);
+        builder.addRouteToAllNodes(this.dataStoreRoutingContext.absolutePath);
 
         // Get the outbound routes and add a GC node for this channel.
         builder.addNode("/", this.getOutboundRoutes());

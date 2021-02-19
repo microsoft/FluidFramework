@@ -13,7 +13,6 @@ import {
     IResponse,
     IFluidHandle,
     IFluidRoutingContext,
-    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -606,10 +605,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public nextSummarizerP?: Promise<Summarizer>;
     public nextSummarizerD?: Deferred<Summarizer>;
 
-    public get codeDetails(): IFluidCodeDetails {
-        return this.context.codeDetails ?? this.getQuorum().get("code") as IFluidCodeDetails;
-    }
-
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly _logger: ITelemetryLogger;
     public readonly previousState: IPreviousState;
@@ -765,7 +760,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.blobManager = new BlobManager(
             this.rootRoute,
-            () => this.storage,
             () => {
                 assert(this.attachState !== AttachState.Detached, "Blobs NYI in detached container mode");
                 return this.storage;
