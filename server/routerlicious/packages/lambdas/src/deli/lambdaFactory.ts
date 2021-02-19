@@ -82,11 +82,11 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         // was created within a different tenant.
         // eslint-disable-next-line no-null/no-null
         if (dbObject.deli === undefined || dbObject.deli === null) {
-            context.log.info(`New document. Setting empty deli checkpoint`, { messageMetaData });
+            context.log?.info(`New document. Setting empty deli checkpoint`, { messageMetaData });
             lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
         } else {
             if (dbObject.deli === "") {
-                context.log.info(`Existing document. Fetching checkpoint from summary`, { messageMetaData });
+                context.log?.info(`Existing document. Fetching checkpoint from summary`, { messageMetaData });
 
                 const lastCheckpointFromSummary =
                     await this.loadStateFromSummary(tenantId, documentId, gitManager, context.log);
@@ -101,7 +101,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                     // the sequence number is 'n' rather than '0'.
                     lastCheckpoint.logOffset = -1;
                     lastCheckpoint.epoch = leaderEpoch;
-                    context.log.info(JSON.stringify(lastCheckpoint));
+                    context.log?.info(JSON.stringify(lastCheckpoint));
                 }
             } else {
                 lastCheckpoint = JSON.parse(dbObject.deli);
@@ -165,8 +165,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                     documentId,
                     tenantId,
                 };
-                logger.error(`Error fetching deli state from summary`, { messageMetaData });
-                logger.error(JSON.stringify(exception), { messageMetaData });
+                logger?.error(`Error fetching deli state from summary`, { messageMetaData });
+                logger?.error(JSON.stringify(exception), { messageMetaData });
                 return undefined;
             }
         }
@@ -184,7 +184,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         tenantId: string,
         documentId: string,
         gitManager: IGitManager,
-        logger: ILogger,
+        logger: ILogger | undefined,
         checkpoint: IDeliState,
         leaderEpoch: number): Promise<IDeliState> {
         let newCheckpoint = checkpoint;
@@ -202,11 +202,14 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                 newCheckpoint.logOffset = logOffset;
                 // Now create the summary.
                 await this.createSummaryWithLatestTerm(gitManager, newCheckpoint, documentId);
-                const messageMetaData = {
-                    documentId,
-                    tenantId,
-                };
-                logger.info(`Created a summary on epoch tick`, { messageMetaData });
+                logger?.info(
+                    `Created a summary on epoch tick`,
+                    {
+                        messageMetaData: {
+                            documentId,
+                            tenantId,
+                        },
+                    });
             }
         }
         return newCheckpoint;
