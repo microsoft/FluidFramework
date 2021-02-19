@@ -311,7 +311,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         },
                         "createBlob",
                     );
-                    event.end({ blobId: res.content.id });
+                    event.end({
+                        blobId: res.content.id,
+                        serverRetries: res.headers.get("x-fluid-retries") ?? undefined,
+                        sprequestguid: response.headers.get("sprequestguid") ?? undefined,
+                    });
                     return res;
                 },
             );
@@ -346,7 +350,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         blob = await res.arrayBuffer();
                         event.end({
                             size: blob.byteLength,
+                            serverRetries: res.headers.get("x-fluid-retries") ?? undefined,
                             waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
+                            sprequestguid: res.headers.get("sprequestguid") ?? undefined,
                         });
                         return blob;
                     },
