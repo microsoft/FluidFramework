@@ -390,37 +390,30 @@ export class DeliLambda implements IPartitionLambda {
         } else if (message.operation.type === MessageType.Control) {
             sendType = SendType.Never;
             const controlMessage = systemContent as IControlMessage;
-            switch (controlMessage.type) {
-                case ControlMessageType.UpdateDSN: {
-                    const messageMetaData = {
-                        documentId: this.documentId,
-                        tenantId: this.tenantId,
+            if (controlMessage.type === ControlMessageType.UpdateDSN) {
+                const messageMetaData = {
+                    documentId: this.documentId,
+                    tenantId: this.tenantId,
+                };
+                this.context.log.info(`Update DSN: ${JSON.stringify(controlMessage)}`, { messageMetaData });
+                // TODO: Make specific interface type for controlContents. The schema should be more clear
+                // as we introduce more of these.
+                const controlContent = controlMessage.contents as
+                    {
+                        durableSequenceNumber: number
+                        clearCache: boolean
                     };
-                    this.context.log.info(`Update DSN: ${JSON.stringify(controlMessage)}`, { messageMetaData });
-
-                    const controlContents = controlMessage.contents as IUpdateDSNControlMessageContents;
-                    const dsn = controlContents.durableSequenceNumber;
-                    if (dsn >= this.durableSequenceNumber) {
-                        // Deli cache is only cleared when no clients have joined since last noClient was sent to alfred
-                        if (controlContents.clearCache && this.noActiveClients) {
-                            instruction = InstructionType.ClearCache;
-                            this.canClose = true;
-                            this.context.log.info(`Deli cache will be cleared`, { messageMetaData });
-                        }
-
-                        this.durableSequenceNumber = dsn;
+                const dsn = controlContent.durableSequenceNumber;
+                if (dsn >= this.durableSequenceNumber) {
+                    // Deli cache is only cleared when no clients have joined since last noClient was sent to alfred.
+                    if (controlContent.clearCache && this.noActiveClients) {
+                        instruction = InstructionType.ClearCache;
+                        this.canClose = true;
+                        this.context.log.info(`Deli cache will be cleared`, { messageMetaData });
                     }
 
-                    break;
+                    this.durableSequenceNumber = dsn;
                 }
-
-                case ControlMessageType.NackFutureMessages: {
-                    this.nackFutureMessages = controlMessage.contents as INackFutureMessagesMessageContents;
-                    break;
-                }
-
-                default:
-                // ignore unknown control messages
             }
         }
 
