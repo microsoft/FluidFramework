@@ -5,7 +5,7 @@
 
 import { v4 as uuid } from "uuid";
 import { CreateContainerError } from "@fluidframework/container-utils";
-import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import { IDocumentStorageService, IDocumentStorageServicePolicies, ISummaryContext } from "@fluidframework/driver-definitions";
 import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
 import {
     ICreateBlobResponse,
@@ -28,7 +28,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
     ) {
     }
 
-    public get policies() {
+    public get policies(): IDocumentStorageServicePolicies | undefined {
         return this.internalStorageService.policies;
     }
 

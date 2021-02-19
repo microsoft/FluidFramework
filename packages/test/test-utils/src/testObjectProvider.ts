@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
+import { IContainer } from "@fluidframework/container-definitions";
+import { Container, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
-import { v4 as uuid } from "uuid";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { v4 as uuid } from "uuid";
+import { LoaderContainerTracker } from "./loaderContainerTracker";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
 import { OpProcessingController } from "./opProcessingController";
-import { LoaderContainerTracker } from "./loaderContainerTracker";
 
 const defaultCodeDetails: IFluidCodeDetails = {
     package: "defaultTestPackage",
@@ -98,7 +99,7 @@ export class TestObjectProvider<TestContainerConfigType> {
      * Container loaded is automatically added to the OpProcessingController to manage op flow
      * @param testContainerConfig - optional configuring the test Container
      */
-    public async makeTestContainer(testContainerConfig?: TestContainerConfigType) {
+    public async makeTestContainer(testContainerConfig?: TestContainerConfigType): Promise<IContainer> {
         const loader = this.makeTestLoader(testContainerConfig);
         const container =
             await createAndAttachContainer(
@@ -114,7 +115,7 @@ export class TestObjectProvider<TestContainerConfigType> {
      * Container loaded is automatically added to the OpProcessingController to manage op flow
      * @param testContainerConfig - optional configuring the test Container
      */
-    public async loadTestContainer(testContainerConfig?: TestContainerConfigType) {
+    public async loadTestContainer(testContainerConfig?: TestContainerConfigType): Promise<Container> {
         const loader = this.makeTestLoader(testContainerConfig);
         const container = await loader.resolve({ url: this.driver.createContainerUrl(this.documentId) });
         await waitContainerToCatchUp(container);

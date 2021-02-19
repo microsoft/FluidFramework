@@ -8,7 +8,7 @@ import {
     LocalResolver,
     createLocalResolverCreateNewRequest,
 } from "@fluidframework/local-driver";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { pkgVersion } from "./packageVersion";
 
@@ -17,7 +17,7 @@ export class LocalServerTestDriver implements ITestDriver {
 
     public readonly type = "local";
     public readonly version = pkgVersion;
-    public get server() {return this._server;}
+    public get server(): ILocalDeltaConnectionServer { return this._server; }
 
     createDocumentServiceFactory(): LocalDocumentServiceFactory {
         return new LocalDocumentServiceFactory(this._server);

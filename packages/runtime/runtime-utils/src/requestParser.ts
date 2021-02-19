@@ -51,7 +51,7 @@ export class RequestParser implements IRequest {
         return this.request.url;
     }
 
-    public get headers() {
+    public get headers(): IRequestHeader | undefined {
         return this.request.headers;
     }
 

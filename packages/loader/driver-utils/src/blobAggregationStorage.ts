@@ -5,6 +5,7 @@
 
 import {
      IDocumentStorageService,
+    IDocumentStorageServicePolicies,
      ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import {
@@ -200,7 +201,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         await converter.unpackSnapshotCore(snapshot);
     }
 
-    public get policies() {
+    public get policies(): IDocumentStorageServicePolicies | undefined {
         const policies = this.storage.policies;
         if (policies) {
             return { ...policies, minBlobSize: undefined };
