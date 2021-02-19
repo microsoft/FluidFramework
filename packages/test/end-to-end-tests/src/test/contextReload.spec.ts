@@ -118,7 +118,7 @@ describe("context reload (hot-swap)", function() {
     };
     let driver: ITestDriver;
     before(()=>{
-        driver = getFluidTestDriver();
+        driver = getFluidTestDriver() as ITestDriver;
     });
 
     const tests = function() {

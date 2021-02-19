@@ -39,7 +39,7 @@ function isCodeProposalTestPackage(pkg: unknown): pkg is ICodeProposalTestPackag
 describe("CodeProposal.EndToEnd", () => {
     let driver: ITestDriver;
     before(()=>{
-        driver = getFluidTestDriver();
+        driver = getFluidTestDriver() as ITestDriver;
     });
 
     const packageV1: ICodeProposalTestPackage = {

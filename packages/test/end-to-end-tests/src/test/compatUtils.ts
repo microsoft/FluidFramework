@@ -126,7 +126,7 @@ export const generateNonCompatTest = (
             );
             const driver = getFluidTestDriver();
             return new TestObjectProvider(
-                driver,
+                driver as any,
                 runtimeFactory,
             );
         });
@@ -149,7 +149,7 @@ export const generateCompatTest = (
                     false, /* oldDataStoreRuntime */
                     TestDataObject.type,
                     options.serviceConfiguration,
-                    driver,
+                    driver as any,
                 );
             }, oldApi);
         });
@@ -163,7 +163,7 @@ export const generateCompatTest = (
                     true, /* oldDataStoreRuntime */
                     TestDataObject.type,
                     options.serviceConfiguration,
-                    driver,
+                    driver as any,
                 );
             }, oldApi);
         });
@@ -177,7 +177,7 @@ export const generateCompatTest = (
                     true, /* oldDataStoreRuntime */
                     TestDataObject.type,
                     options.serviceConfiguration,
-                    driver,
+                    driver as any,
                 );
             }, oldApi);
         });
@@ -191,7 +191,7 @@ export const generateCompatTest = (
                     false, /* oldDataStoreRuntime */
                     TestDataObject.type,
                     options.serviceConfiguration,
-                    driver,
+                    driver as any,
                 );
             }, oldApi);
         });

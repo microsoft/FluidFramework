@@ -30,7 +30,7 @@ import { bufferToString } from "@fluidframework/common-utils";
 describe("SharedString", () => {
     let driver: ITestDriver;
     before(()=>{
-        driver = getFluidTestDriver();
+        driver = getFluidTestDriver() as ITestDriver;
     });
     it("Failure to Load in Shared String", async ()=>{
         const stringId = "sharedStringKey";

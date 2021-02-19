@@ -423,6 +423,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     /**
      * {@inheritDoc DeltaManager.readonly}
+     * @deprecated - use readOnlyInfo
      */
     public get readonly() {
         return this._deltaManager.readonly;
@@ -430,9 +431,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     /**
      * {@inheritDoc DeltaManager.readonlyPermissions}
+     * @deprecated - use readOnlyInfo
      */
     public get readonlyPermissions() {
         return this._deltaManager.readonlyPermissions;
+    }
+
+    /**
+     * {@inheritDoc DeltaManager.readOnlyInfo}
+     */
+    public get readOnlyInfo() {
+        return this._deltaManager.readOnlyInfo;
     }
 
     /**

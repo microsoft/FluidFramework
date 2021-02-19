@@ -38,7 +38,7 @@ describe("Errors Types", () => {
     let driver: ITestDriver;
     const loaderContainerTracker = new LoaderContainerTracker();
     before(() => {
-        driver = getFluidTestDriver();
+        driver = getFluidTestDriver() as ITestDriver;
     });
     afterEach(() => {
         loaderContainerTracker.reset();

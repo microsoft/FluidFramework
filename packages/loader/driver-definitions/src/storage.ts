@@ -221,8 +221,11 @@ export enum LoaderCachingPolicy {
     Prefetch,
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IDocumentServicePolicies {
+    /**
+     * Do not connect to delta stream
+     */
+    readonly storageOnly?: boolean;
 }
 
 export interface IDocumentService {

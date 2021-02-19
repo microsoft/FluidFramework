@@ -17,7 +17,7 @@ import {
     DataObjectFactory,
 } from "old-aqueduct2";
 import { SharedCell } from "old-cell2";
-import {  IRuntimeFactory } from "old-container-definitions2";
+import { IRuntimeFactory } from "old-container-definitions2";
 import { Loader } from "old-container-loader2";
 import { IContainerRuntimeOptions } from "old-container-runtime2";
 import { IFluidCodeDetails } from "old-core-interfaces2";
@@ -160,7 +160,7 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
         const container =
             await newVer.createAndAttachContainer(
                 defaultCodeDetails,
-                loader,
+                loader as any,
                 this.urlResolver.createCreateNewRequest(this.documentId));
 
         // TODO: the old version delta manager on the container doesn't do pause/resume count
