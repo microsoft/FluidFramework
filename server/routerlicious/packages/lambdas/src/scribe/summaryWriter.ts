@@ -68,7 +68,7 @@ export class SummaryWriter implements ISummaryWriter {
     /* eslint-disable max-len */
     public async writeClientSummary(
         op: ISequencedDocumentAugmentedMessage,
-        lastSummaryHead: string,
+        lastSummaryHead: string | undefined,
         protocolMinimumSequenceNumber: number,
         protocolSequenceNumber: number,
         quorumSnapshot: IQuorumSnapshot,
@@ -87,15 +87,15 @@ export class SummaryWriter implements ISummaryWriter {
             // the client code just fetches the last summary which should be the same as existingRef sha.
             if (!existingRef ||
                 (lastSummaryHead !== content.head && existingRef.object.sha !== content.head)) {
-                    return {
-                        message: {
-                            errorMessage: `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef ? existingRef.object.sha : "n/a"}".`,
-                            summaryProposal: {
-                                summarySequenceNumber: op.sequenceNumber,
-                            },
+                return {
+                    message: {
+                        errorMessage: `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef ? existingRef.object.sha : "n/a"}".`,
+                        summaryProposal: {
+                            summarySequenceNumber: op.sequenceNumber,
                         },
-                        status: false,
-                    };
+                    },
+                    status: false,
+                };
             }
         } else if (existingRef) {
             return {

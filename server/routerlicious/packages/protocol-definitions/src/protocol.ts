@@ -63,7 +63,7 @@ export interface ITrace {
 
 export interface INack {
     // The operation that was just nacked
-    operation: IDocumentMessage;
+    operation: IDocumentMessage | undefined;
 
     // The sequence number the client needs to catch up to before retrying
     sequenceNumber: number;
@@ -175,7 +175,7 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 
 export interface ISignalMessage {
 
-    clientId: string;
+    clientId: string | null;
 
     content: any;
 }

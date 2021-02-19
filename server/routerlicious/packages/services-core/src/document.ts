@@ -85,7 +85,7 @@ export interface IScribe {
     protocolState: IProtocolState;
 
     // Ref of the last client generated summary
-    lastClientSummaryHead: string;
+    lastClientSummaryHead: string | undefined;
 }
 
 export interface IDocument {
