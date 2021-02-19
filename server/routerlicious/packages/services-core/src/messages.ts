@@ -6,8 +6,8 @@
 import {
     IDocumentMessage,
     INack,
+    INackContent,
     ISequencedDocumentMessage,
-    NackErrorType,
 } from "@fluidframework/protocol-definitions";
 
 // String identifying the raw operation message
@@ -160,8 +160,4 @@ export interface IUpdateDSNControlMessageContents {
     clearCache: boolean;
 }
 
-export interface INackFutureMessagesControlMessageContents {
-    code: number;
-    type: NackErrorType;
-    reason: string;
-}
+export type INackFutureMessagesControlMessageContents = INackContent;

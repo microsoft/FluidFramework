@@ -245,7 +245,8 @@ export class DeliLambda implements IPartitionLambda {
                 message,
                 this.nackFutureMessages.code,
                 this.nackFutureMessages.type,
-                this.nackFutureMessages.reason);
+                this.nackFutureMessages.message,
+                this.nackFutureMessages.retryAfter);
         }
 
         // Check incoming message order. Nack if there is any gap so that the client can resend.
@@ -602,7 +603,8 @@ export class DeliLambda implements IPartitionLambda {
         message: IRawOperationMessage,
         code: number,
         type: NackErrorType,
-        reason: string): ITicketedMessageOutput {
+        reason: string,
+        retryAfter?: number): ITicketedMessageOutput {
         const nackMessage: INackMessage = {
             clientId: message.clientId,
             documentId: this.documentId,
@@ -611,6 +613,7 @@ export class DeliLambda implements IPartitionLambda {
                     code,
                     type,
                     message: reason,
+                    retryAfter,
                 },
                 operation: message.operation,
                 sequenceNumber: this.minimumSequenceNumber,
