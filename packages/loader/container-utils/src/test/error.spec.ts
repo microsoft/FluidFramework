@@ -6,9 +6,17 @@
 import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { LoggingError } from "@fluidframework/telemetry-utils";
-import { CreateProcessingError } from "../error";
+import { CreateContainerError, CreateProcessingError } from "../error";
 
 describe("Errors", () => {
+    describe("GenericError coercion", () => {
+        it("Should have an errorType", () => {
+            const testError = CreateContainerError({});
+
+            assert(testError.errorType === ContainerErrorType.genericError);
+        });
+    });
+
     describe("DataProcessingError coercion", () => {
         it("Should skip coercion for LoggingErrors", () => {
             const originalError = new LoggingError("Inherited error message", {
