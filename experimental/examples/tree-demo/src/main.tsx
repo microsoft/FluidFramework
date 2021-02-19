@@ -9,45 +9,39 @@ import {
 } from "@fluidframework/aqueduct";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import {
-    Definition,
-    EditNode,
-    NodeId,
+    Change,
     SharedTree,
-    StablePlace,
-    TraitLabel,
 } from "@fluid-experimental/tree";
 
 import React from "react";
 import ReactDOM from "react-dom";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Jsonable } from "@fluidframework/datastore-definitions";
 import { IStage, StageView } from "./stage";
-import { collideBubbles, makeBubble, moveBubble } from "./bubble";
+import { ClientManager, BubbleProxy, makeBubble } from "./model";
+import { Stats } from "./stats";
 
 const stage: IStage = {
     width: 640,
     height: 480,
 };
 
-const bubbles = new Array(10).fill(undefined).map(() => makeBubble(stage, 26, 4));
+const stats = new Stats();
+const bubble0 = new BubbleProxy();
+const bubble1 = new BubbleProxy();
 
 export class TreeDemo extends DataObject implements IFluidHTMLView {
     public static get Name() { return "@fluid-experimental/tree-demo"; }
     private maybeTree?: SharedTree = undefined;
+    private maybeClientManager?: ClientManager = undefined;
     public get IFluidHTMLView() { return this; }
+
+    private makeBubble() {
+        return makeBubble(stage, /* radius: */ 10, /* maxSpeed: */ 2);
+    }
 
     protected async initializingFirstTime() {
         this.maybeTree = SharedTree.create(this.runtime);
         this.root.set("tree", this.maybeTree.handle);
-
-        for (let i = 0; i < 3; i++) {
-            this.tree.editor.insert(
-                this.makeBox(/* x: */ i * 120, /* y: */ 0, /* color: */ ["red", "green", "blue"][i]),
-                StablePlace.atEndOf({
-                    parent: this.tree.currentView.root,
-                    label: "boxes" as TraitLabel,
-                }));
-        }
     }
 
     protected async initializingFromExisting() {
@@ -55,63 +49,93 @@ export class TreeDemo extends DataObject implements IFluidHTMLView {
         this.maybeTree = await this.root.get<IFluidHandle<SharedTree>>("tree")!.get();
     }
 
-    private nodeId() { return Math.random().toString(36).slice(2) as NodeId; }
+    protected async hasInitialized() {
+        this.maybeClientManager = new ClientManager(
+            this.tree,
+            new Array(10).fill(undefined).map(() => this.makeBubble()),
+            this.runtime.getAudience(),
+        );
 
-    // Helper for creating Scalar nodes in SharedTree
-    private makeScalar(value: Jsonable) {
-        const node: EditNode = {
-            identifier: this.nodeId(),
-            definition: "scalar" as Definition,
-            traits: {},
-            payload: { base64: JSON.stringify(value) },
-        };
+        this.runtime.once("connected", (...args) => {
+            setInterval(() => {
+                const clientId = this.runtime.clientId;
 
-        return node;
-    }
-
-    // Helper for making SharedTree subtrees representing boxes
-    private makeBox(x: number, y: number, color: string) {
-        const node: EditNode = {
-            identifier: this.nodeId(),
-            definition: "node" as Definition,
-            traits: {
-                x: [ this.makeScalar(x) ],
-                y: [ this.makeScalar(y) ],
-                color: [this.makeScalar(color) ],
-                width: [this.makeScalar(100)],
-                height: [this.makeScalar(100)],
-            },
-        };
-
-        return node;
+                if (clientId !== undefined && clientId !== this.clientManager.getClientId(this.tree.currentView)) {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    this.clientManager.setClientId(this.tree, this.runtime.clientId!);
+                }
+            }, 1000);
+        });
     }
 
     public render(div: HTMLElement) {
+        const formatFloat = (n: number) => Math.round(n * 10) / 10;
+
         const renderLoop = () => {
+            if (stats.smoothFps > 30) {
+                this.clientManager.addBubble(this.tree, this.makeBubble());
+            } else if (stats.smoothFps < 30) {
+                this.clientManager.removeBubble(this.tree);
+            }
+
+            const view = this.tree.currentView;
+            const bubbles = this.clientManager.localBubbles(view);
+
+            const changes: Change[] = [];
+            for (const bubbleId of bubbles) {
+                bubble0.moveTo(view, bubbleId);
+                changes.push(...bubble0.move(stage, view));
+            }
+
+            // Collide local bubbles with selves
+            for (let i = 0; i < bubbles.length; i++) {
+                bubble0.moveTo(view, bubbles[i]);
+                for (let j = i + 1; j < bubbles.length; j++) {
+                    bubble1.moveTo(view, bubbles[j]);
+                    changes.push(...bubble0.collide(bubble1));
+                }
+            }
+
+            let bubbleCount = bubbles.length;
+
+            // Collide local bubbles with remote bubbles
+            this.clientManager.forEachRemoteBubble(view, (remoteBubble) => {
+                bubbleCount++;
+
+                for (const bubbleId of bubbles) {
+                    bubble0.moveTo(view, bubbleId);
+                    changes.push(...bubble0.collide(remoteBubble));
+                }
+            });
+
+            this.tree.applyEdit(...changes);
+
             ReactDOM.render(
-                <div>
-                    <StageView width={stage.width} height={stage.height} bubbles={bubbles}></StageView>
+                <div id="root" style={{ position: "absolute", inset: "0px" }}>
+                    <div>{`${bubbles.length}/${bubbleCount} bubbles @ ${formatFloat(stats.smoothFps)} fps`}</div>
+                    <div>{`Total FPS: ${formatFloat(stats.totalFps)} (Glitches: ${stats.glitchCount})`}</div>
+                    <div>{``}</div>
+                    <StageView
+                        width={stage.width}
+                        height={stage.height}
+                        tree={this.tree.currentView}
+                        mgr={this.clientManager}></StageView>
                 </div>,
                 div);
 
             requestAnimationFrame(renderLoop);
-
-            for (const bubble of bubbles) {
-                moveBubble(stage, bubble);
-            }
-
-            for (let i = 0; i < bubbles.length; i++) {
-                for (let j = i + 1; j < bubbles.length; j++) {
-                    collideBubbles(bubbles[i], bubbles[j]);
-                }
-            }
+            stats.endFrame();
         };
 
+        stats.start();
         renderLoop();
     }
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     private get tree() { return this.maybeTree!; }
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    private get clientManager() { return this.maybeClientManager!; }
 }
 
 /**

@@ -39,11 +39,12 @@
   "dependencies": {
     "@fluid-experimental/tree": "^0.35.0",
     "@fluidframework/aqueduct": "^0.35.0",
+    "@fluidframework/container-definitions": "^0.35.0",
     "@fluidframework/core-interfaces": "^0.35.0",
     "@fluidframework/datastore-definitions": "^0.35.0",
     "@fluidframework/map": "^0.35.0",
     "@fluidframework/view-interfaces": "^0.35.0",
-    "best-random": "^1.0.3",
+    "best-random": "^1.0.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
