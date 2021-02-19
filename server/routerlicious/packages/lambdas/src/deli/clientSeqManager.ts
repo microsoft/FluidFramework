@@ -10,8 +10,7 @@ const SequenceNumberComparer: IComparer<IClientSequenceNumber> = {
     compare: (a, b) => a.referenceSequenceNumber - b.referenceSequenceNumber,
     min: {
         canEvict: true,
-        // eslint-disable-next-line no-null/no-null
-        clientId: null,
+        clientId: undefined,
         clientSequenceNumber: 0,
         lastUpdate: -1,
         nack: false,
@@ -86,7 +85,7 @@ export class ClientSequenceNumberManager {
             return false;
         }
 
-        // Add the client ID to our map if this is the first time we've seen it
+        // Add the client ID to our map since this is the first time we've seen it
         const newNode = this.clientSeqNumbers.add({
             canEvict,
             clientId,

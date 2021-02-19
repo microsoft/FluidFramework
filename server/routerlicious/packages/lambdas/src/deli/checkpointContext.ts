@@ -33,29 +33,27 @@ export class CheckpointContext {
 
         // Write the checkpoint data to MongoDB
         this.pendingUpdateP = this.checkpointCore(checkpoint);
-        if (this.pendingUpdateP !== undefined) {
-            this.pendingUpdateP.then(
-                () => {
-                    this.context.checkpoint(checkpoint.queuedMessage);
-                    this.pendingUpdateP = undefined;
+        this.pendingUpdateP?.then(
+            () => {
+                this.context.checkpoint(checkpoint.queuedMessage);
+                this.pendingUpdateP = undefined;
 
-                    // Trigger another round if there is a pending update
-                    if (this.pendingCheckpoint) {
-                        const pendingCheckpoint = this.pendingCheckpoint;
-                        this.pendingCheckpoint = undefined;
-                        this.checkpoint(pendingCheckpoint);
-                    }
-                },
-                (error) => {
-                    // TODO flag context as error
-                    const messageMetaData = {
-                        documentId: this.id,
-                        tenantId: this.tenantId,
-                    };
-                    this.context.log.error(
-                        `Error writing checkpoint to MongoDB: ${JSON.stringify(error)}`, { messageMetaData });
-                });
-        }
+                // Trigger another round if there is a pending update
+                if (this.pendingCheckpoint) {
+                    const pendingCheckpoint = this.pendingCheckpoint;
+                    this.pendingCheckpoint = undefined;
+                    this.checkpoint(pendingCheckpoint);
+                }
+            },
+            (error) => {
+                // TODO flag context as error
+                const messageMetaData = {
+                    documentId: this.id,
+                    tenantId: this.tenantId,
+                };
+                this.context.log.error(
+                    `Error writing checkpoint to MongoDB: ${JSON.stringify(error)}`, { messageMetaData });
+            });
     }
 
     public close() {

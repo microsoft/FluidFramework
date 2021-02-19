@@ -38,7 +38,7 @@ export interface IDocumentStorage {
 export interface IClientSequenceNumber {
     // Whether or not the client can expire
     canEvict: boolean;
-    clientId: string | null;
+    clientId: string | undefined;
     lastUpdate: number;
     nack: boolean;
     referenceSequenceNumber: number;
@@ -51,7 +51,7 @@ export interface IDeliState {
     branchMap: IRangeTrackerSnapshot | undefined;
 
     // List of connected clients
-    clients: IClientSequenceNumber[];
+    clients: IClientSequenceNumber[] | undefined;
 
     // Durable sequence number at logOffset
     durableSequenceNumber: number;

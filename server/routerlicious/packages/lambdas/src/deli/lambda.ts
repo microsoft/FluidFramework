@@ -38,8 +38,6 @@ import {
     RawOperationType,
     SequencedOperationType,
     IQueuedMessage,
-    IUpdateDSNControlMessageContents,
-    INackFutureMessagesMessageContents,
 } from "@fluidframework/server-services-core";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
@@ -103,9 +101,6 @@ export class DeliLambda implements IPartitionLambda {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     private canClose = false;
-
-    // when set, all messages will be nacked based on the provided info
-    private nackFutureMessages: INackFutureMessagesMessageContents | undefined;
 
     constructor(
         private readonly context: IContext,
@@ -240,15 +235,6 @@ export class DeliLambda implements IPartitionLambda {
         // Update and retrieve the minimum sequence number
         const message = rawMessage as IRawOperationMessage;
         const systemContent = this.extractSystemContent(message);
-
-        // Check if we should nack all messages
-        if (this.nackFutureMessages) {
-            return this.createNackMessage(
-                message,
-                this.nackFutureMessages.code,
-                this.nackFutureMessages.type,
-                this.nackFutureMessages.reason);
-        }
 
         // Check incoming message order. Nack if there is any gap so that the client can resend.
         const messageOrder = this.checkOrder(message);
@@ -482,8 +468,8 @@ export class DeliLambda implements IPartitionLambda {
         systemContent,
     ): ISequencedDocumentMessage {
         const outputMessage: ISequencedDocumentMessage = {
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-            clientId: message.clientId as string,
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            clientId: message.clientId!,
             clientSequenceNumber: message.operation.clientSequenceNumber,
             contents: message.operation.contents,
             metadata: message.operation.metadata,
@@ -607,8 +593,8 @@ export class DeliLambda implements IPartitionLambda {
         type: NackErrorType,
         reason: string): ITicketedMessageOutput {
         const nackMessage: INackMessage = {
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-            clientId: message.clientId as string,
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            clientId: message.clientId!,
             documentId: this.documentId,
             operation: {
                 content: {

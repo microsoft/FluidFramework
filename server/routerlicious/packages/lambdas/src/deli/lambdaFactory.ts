@@ -34,7 +34,7 @@ const FlipTerm = false;
 const getDefaultCheckpooint = (epoch: number): IDeliState => {
     return {
         branchMap: undefined,
-        clients: [],
+        clients: undefined,
         durableSequenceNumber: 0,
         epoch,
         logOffset: -1,

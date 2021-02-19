@@ -131,8 +131,8 @@ export class BroadcasterLambda implements IPartitionLambda {
                 }
             });
 
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-            this.context.checkpoint(batchOffset as IQueuedMessage);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.context.checkpoint(batchOffset!);
             this.current.clear();
             this.sendPending();
         });

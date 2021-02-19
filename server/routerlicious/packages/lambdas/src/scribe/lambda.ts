@@ -377,9 +377,9 @@ export class ScribeLambda extends SequencedLambda {
                 this.pendingP = undefined;
                 this.context.checkpoint(queuedMessage);
 
-                if (this.pendingCheckpointScribe && this.pendingCheckpointOffset) {
-                    const pendingScribe = this.pendingCheckpointScribe;
-                    const pendingOffset = this.pendingCheckpointOffset;
+                const pendingScribe = this.pendingCheckpointScribe;
+                const pendingOffset = this.pendingCheckpointOffset;
+                if (pendingScribe && pendingOffset) {
                     this.pendingCheckpointScribe = undefined;
                     this.pendingCheckpointOffset = undefined;
                     this.checkpointCore(pendingScribe, pendingOffset, clearCache);
