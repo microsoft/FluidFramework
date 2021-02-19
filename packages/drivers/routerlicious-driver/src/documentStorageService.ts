@@ -241,7 +241,7 @@ export class DocumentStorageService implements IDocumentStorageService {
         const messageFallback = "GitManager call failed";
         // GitManager's Historian's RestWrapper only throws status code when response is available
         if (typeof error === "number") {
-            // RestWrapper handles 1 429 retry but does not pass along retryAfter, and Historian handles 401 retries.
+            // RestWrapper handles 429 retries, and Historian handles 401 retries.
             // Anything else can be retried.
             throwR11sNetworkError(messageFallback, error);
         }
