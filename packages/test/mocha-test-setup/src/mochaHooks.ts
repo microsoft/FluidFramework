@@ -5,25 +5,34 @@
 
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 
+const _global: any = global;
+const nullLogger: ITelemetryBufferedLogger = { send: () => {}, flush: () => {} };
+
+// can be async or not
+export const mochaGlobalSetup = function() {
+    // Ensure getTestLogger is defined even if no hook sets it up purposefully
+    if (_global.getTestLogger?.() === undefined) {
+        _global.getTestLogger = (_singleton) => nullLogger;  //* Is it ok to ignore _singleton here?
+    }
+};
+
 const log = console.log;
 const error = console.log;
 export const mochaHooks = {
+    beforeAll() {
+    },
     beforeEach() {
         if (process.env.FLUID_TEST_VERBOSE === undefined) {
             console.log = () => { };
             console.error = () => { };
         }
-
-        const _global: any = global;
-        if (_global.getTestLogger?.() === undefined) {
-            const nullLogger: ITelemetryBufferedLogger = { send: () => {}, flush: () => {} };
-            _global.getTestLogger = () => nullLogger;
-        }
     },
     afterEach() {
         console.log = log;
         console.error = error;
-        //* Todo - Does this work? :P no ...need the same instance...
-        getTestLogger().flush().catch(() => {});
+    },
+    afterAll() {
+        // Flush the logs before
+        getTestLogger(true /* singleton */).flush();
     },
 };

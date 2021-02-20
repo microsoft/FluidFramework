@@ -10,7 +10,7 @@ declare global {
     export function getFluidTestDriver(): ITestDriver;
 
     /** This function may be provided by the environment, like a mocha test hook */
-    export function getTestLogger(): ITelemetryBufferedLogger;
+    export function getTestLogger(singleton?: boolean): ITelemetryBufferedLogger;
 }
 
 export * from "./interfaces";
