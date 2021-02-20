@@ -9,6 +9,7 @@ import {
      ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import {
+    ICreateBlobResponse,
     ISnapshotTree,
     ISummaryHandle,
     ISummaryTree,
@@ -253,7 +254,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 
     // for now we are not optimizing these blobs, with assumption that this API is used only
     // for big blobs (images)
-    public async createBlob(file: ArrayBufferLike) { return this.storage.createBlob(file); }
+    public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> { return this.storage.createBlob(file); }
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
         const tree = await this.storage.getSnapshotTree(version);
