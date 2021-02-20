@@ -12,6 +12,7 @@ import {
     fromUtf8ToBase64,
     IsoBuffer,
     performance,
+    stringToBuffer,
 } from "@fluidframework/common-utils";
 import {
     PerformanceEvent,
@@ -392,7 +393,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (blob instanceof ArrayBuffer) {
             return blob;
         }
-        return IsoBuffer.from(blob.content, blob.encoding ?? "utf-8").buffer;
+        return stringToBuffer(blob.content, blob.encoding ?? "utf8");
     }
 
     public async read(blobId: string): Promise<string> {
