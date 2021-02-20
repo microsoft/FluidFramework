@@ -454,7 +454,12 @@ export class TaskManager implements ITaskManager {
         if (!this.context.loadContainerCopyFn) {
             response = await this.runtime.loader.request(request);
         } else {
-            const containerCopy = await this.context.loadContainerCopyFn(headers);
+            const containerCopy = await this.context.loadContainerCopyFn(
+                headers[LoaderHeader.clientDetails],
+                headers[LoaderHeader.sequenceNumber],
+                false /*summarizingClient*/,
+                headers[LoaderHeader.executionContext],
+            );
             response = await containerCopy.request(request);
         }
 

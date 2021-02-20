@@ -15,7 +15,6 @@ import {
     isFluidCodeDetails,
     IFluidRouter,
     IRequest,
-    IRequestHeader,
     IResponse,
 } from "@fluidframework/core-interfaces";
 import {
@@ -32,6 +31,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import {
+    DriverHeader,
     IDocumentService,
     IDocumentStorageService,
     IFluidResolvedUrl,
@@ -1801,13 +1801,21 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // are set. Global requests will still go directly to the loader
         const loader = new RelativeLoader(this.loader, () => this.containerUrl);
         const previousCodeDetails = this._context?.codeDetails;
-        const loadContainerCopyFn = async (additionalHeaders: IRequestHeader) => {
+        const loadContainerCopyFn = async (
+            clientDetails?: IClientDetails,
+            fromSequenceNumber?: number,
+            summarizingClient?: boolean,
+            executionContext?: string,
+        ) => {
             // Load the container copy restricted: uncached and no reconnect
             return this.loadContainerCopy(
                 this.loader,
                 this.loader.services.urlResolver,
-                this.originalRequest?.url,
-                additionalHeaders,
+                this.containerUrl,
+                clientDetails,
+                fromSequenceNumber,
+                summarizingClient,
+                executionContext,
             );
         };
         this._context = await ContainerContext.createOrLoad(
@@ -1860,18 +1868,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         loader: Loader,
         urlResolver: IUrlResolver,
         baseRequestUrl: string | undefined,
-        additionalHeaders: IRequestHeader,
+        clientDetails?: IClientDetails,
+        fromSequenceNumber?: number,
+        summarizingClient?: boolean,
+        // TODO #4912 eventually we may wish to spawn an execution context from which to run this
+        executionContext?: string,
     ): Promise<IContainer> {
         if (baseRequestUrl === undefined) {
             throw new Error("Base request is not provided");
         }
 
-        // TODO #4912 eventually we may wish to spawn an execution context from which to run this
         const containerRequest: IRequest = {
             headers: {
-                ...additionalHeaders,
-                [LoaderHeader.cache]: false,
-                [LoaderHeader.reconnect]: false,
+                [DriverHeader.summarizingClient]: summarizingClient,
             },
             url: baseRequestUrl,
         };
@@ -1889,16 +1898,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const [, docId] = parsed.id.split("/");
 
         const container = await Container.load(
-            docId,
             loader,
-            containerRequest,
-            resolvedAsFluid);
+            {
+                canReconnect: false,
+                clientDetailsOverride: clientDetails,
+                containerUrl: baseRequestUrl,
+                docId,
+                resolvedUrl: resolvedAsFluid,
+        });
 
-        const fromSequenceNumber = additionalHeaders[LoaderHeader.sequenceNumber] ?? -1;
-        if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
+        const sequenceNumber = fromSequenceNumber ?? -1;
+        if (container.deltaManager.lastSequenceNumber <= sequenceNumber) {
             await new Promise<void>((resolve, reject) => {
                 function opHandler(message: ISequencedDocumentMessage) {
-                    if (message.sequenceNumber > fromSequenceNumber) {
+                    if (message.sequenceNumber > sequenceNumber) {
                         resolve();
                         container.removeListener("op", opHandler);
                     }

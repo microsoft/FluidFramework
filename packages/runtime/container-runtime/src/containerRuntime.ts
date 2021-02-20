@@ -12,7 +12,6 @@ import {
     IFluidHandleContext,
     IFluidSerializer,
     IRequest,
-    IRequestHeader,
     IResponse,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
@@ -586,7 +585,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.closeFn;
     }
 
-    public get loadContainerCopyFn(): (additionalHeaders: IRequestHeader) => Promise<IContainer> {
+    public get loadContainerCopyFn(): (
+        clientDetails?: IClientDetails,
+        fromSequenceNumber?: number,
+        summarizingClient?: boolean,
+        executionContext?: string,
+    ) => Promise<IContainer> {
         return this.context.loadContainerCopyFn;
     }
 

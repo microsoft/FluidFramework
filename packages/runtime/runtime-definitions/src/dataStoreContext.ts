@@ -10,7 +10,6 @@ import {
     IProvideFluidHandleContext,
     IFluidHandle,
     IRequest,
-    IRequestHeader,
     IResponse,
 } from "@fluidframework/core-interfaces";
 import {
@@ -272,7 +271,12 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
     /**
      * Load a restricted copy of the hosting container
      */
-    readonly loadContainerCopyFn: (additionalHeaders: IRequestHeader) => Promise<IContainer>,
+    readonly loadContainerCopyFn: (
+        clientDetails?: IClientDetails,
+        fromSequenceNumber?: number,
+        summarizingClient?: boolean,
+        executionContext?: string,
+    ) => Promise<IContainer>,
 
     /**
      * @deprecated 0.16 Issue #1635, #3631

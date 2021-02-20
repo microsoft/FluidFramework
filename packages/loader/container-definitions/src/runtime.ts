@@ -8,7 +8,6 @@ import {
     IFluidObject,
     IFluidConfiguration,
     IRequest,
-    IRequestHeader,
     IResponse,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -121,7 +120,12 @@ export interface IContainerContext extends IDisposable {
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly closeFn: (error?: ICriticalContainerError) => void;
-    readonly loadContainerCopyFn: (additionalHeaders: IRequestHeader) => Promise<IContainer>,
+    readonly loadContainerCopyFn: (
+        clientDetails?: IClientDetails,
+        fromSequenceNumber?: number,
+        summarizingClient?: boolean,
+        executionContext?: string,
+        ) => Promise<IContainer>,
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
