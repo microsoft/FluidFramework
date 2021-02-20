@@ -79,10 +79,9 @@ export class TreeDemo extends DataObject implements IFluidHTMLView {
     public render(div: HTMLElement) {
         const formatFloat = (n: number) => Math.round(n * 10) / 10;
 
-        const renderLoop = () => {
-            if (stats.smoothFps > 30) {
+            if (this.stats.smoothFps > 31) {
                 this.clientManager.addBubble(this.tree, this.makeBubble());
-            } else if (stats.smoothFps < 30) {
+            } else if (this.stats.smoothFps < 30) {
                 this.clientManager.removeBubble(this.tree);
             }
 
