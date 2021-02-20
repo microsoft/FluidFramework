@@ -56,16 +56,24 @@ export class TreeDemo extends DataObject implements IFluidHTMLView {
             this.runtime.getAudience(),
         );
 
-        this.runtime.once("connected", (...args) => {
+        const onConnected = () => {
+            // Out of paranoia, we periodically check to see if your client Id has changed and
+            // update the tree if it has.
             setInterval(() => {
                 const clientId = this.runtime.clientId;
-
                 if (clientId !== undefined && clientId !== this.clientManager.getClientId(this.tree.currentView)) {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     this.clientManager.setClientId(this.tree, this.runtime.clientId!);
                 }
             }, 1000);
-        });
+        };
+
+        // Wait for connection to begin checking client Id.
+        if (this.runtime.connected) {
+            onConnected();
+        } else {
+            this.runtime.once("connected", onConnected);
+        }
     }
 
     public render(div: HTMLElement) {
