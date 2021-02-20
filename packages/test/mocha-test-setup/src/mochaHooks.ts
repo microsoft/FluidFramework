@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+
 const log = console.log;
 const error = console.log;
 export const mochaHooks = {
@@ -10,6 +12,13 @@ export const mochaHooks = {
         if (process.env.FLUID_TEST_VERBOSE === undefined) {
             console.log = () => { };
             console.error = () => { };
+        }
+
+        const _global: any = global;
+        if (_global.getTestLogger?.() === undefined) {
+            //* Switch to BaseTelemetryNullLogger from common-utils
+            const nullLogger: ITelemetryBaseLogger = { send: () => {} };
+            _global.getTestLogger = () => nullLogger;
         }
     },
     afterEach() {
