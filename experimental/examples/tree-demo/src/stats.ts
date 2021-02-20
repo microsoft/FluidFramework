@@ -8,20 +8,22 @@ export class Stats {
     private _smoothFps = 60;
 
     private startTime = 0;
-    private lastFrameStart = 0;
+    private currentFrameStart = 0;
+    private _lastFrameElapsed = 0;
 
     public start() {
-        this.startTime = Date.now();
+        this.startTime = this.now();
+        this.currentFrameStart = this.now();
     }
 
     public endFrame() {
         this.frameCount++;
 
-        const nextFrameStart = Date.now();
-        const frameElapsed = nextFrameStart - this.lastFrameStart;
-        this.lastFrameStart = nextFrameStart;
+        const nextFrameStart = this.now();
+        this._lastFrameElapsed = nextFrameStart - this.currentFrameStart;
+        this.currentFrameStart = nextFrameStart;
 
-        const frameFps = 1000.0 / frameElapsed;
+        const frameFps = 1000.0 / this._lastFrameElapsed;
         if (frameFps < 24) {
             this._glitchCount++;
         }
@@ -33,8 +35,12 @@ export class Stats {
     public get smoothFps() { return this._smoothFps; }
 
     public get totalFps() {
-        return this.frameCount / ((Date.now() - this.startTime) / 1000.0);
+        return this.frameCount / ((this.now() - this.startTime) / 1000.0);
     }
 
+    public get lastFrameElapsed() { return this._lastFrameElapsed; }
+
     public get glitchCount() { return this._glitchCount; }
+
+    public now() { return Date.now(); }
 }
