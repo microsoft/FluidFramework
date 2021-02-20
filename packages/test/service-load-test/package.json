@@ -57,6 +57,7 @@
     "@fluidframework/core-interfaces": "^0.35.0",
     "@fluidframework/odsp-doclib-utils": "^0.35.0",
     "@fluidframework/odsp-driver": "^0.35.0",
+    "@fluidframework/test-driver-definitions": "^0.35.0",
     "@fluidframework/test-utils": "^0.35.0",
     "@fluidframework/tool-utils": "^0.35.0",
     "commander": "^5.1.0"

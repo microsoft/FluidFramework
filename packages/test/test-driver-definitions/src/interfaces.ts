@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 
@@ -49,4 +50,9 @@ export interface ITestDriver{
      * as the test may not  work against all supported servers if done.
      */
     createContainerUrl(testId: string): string;
+}
+
+//* Todo - Needs a comment... and actually flush may work out to be synchronous... ideally.
+export interface IAsyncTelemetryBaseLogger extends ITelemetryBaseLogger {
+    flush(): Promise<void>;
 }

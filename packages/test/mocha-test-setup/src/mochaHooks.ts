@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { IAsyncTelemetryBaseLogger } from "@fluidframework/test-driver-definitions";
 
 const log = console.log;
 const error = console.log;
@@ -16,13 +16,14 @@ export const mochaHooks = {
 
         const _global: any = global;
         if (_global.getTestLogger?.() === undefined) {
-            //* Switch to BaseTelemetryNullLogger from common-utils
-            const nullLogger: ITelemetryBaseLogger = { send: () => {} };
+            const nullLogger: IAsyncTelemetryBaseLogger = { send: () => {}, flush: async () => {} };
             _global.getTestLogger = () => nullLogger;
         }
     },
     afterEach() {
         console.log = log;
         console.error = error;
+        //* Todo - Does this work? :P no ...need the same instance...
+        getTestLogger().flush().catch(() => {});
     },
 };

@@ -22,6 +22,7 @@ import {
     OdspTokenConfig,
 } from "@fluidframework/tool-utils";
 import { getLoginPageUrl, getOdspScope, getDriveId, IOdspTokens } from "@fluidframework/odsp-doclib-utils";
+import { IAsyncTelemetryBaseLogger } from "@fluidframework/test-driver-definitions";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ITestConfig, ILoadTestConfig, ITestTenant } from "./testConfigFile";
 import { IRunConfig, fluidExport, ILoadTest } from "./loadTestDataStore";
@@ -42,6 +43,9 @@ const codeDetails: IFluidCodeDetails = {
 const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 const urlResolver = new OdspDriverUrlResolver();
 const odspTokenManager = new OdspTokenManager(odspTokensCache);
+
+const nullLogger: IAsyncTelemetryBaseLogger = { send: () => {}, flush: async () => {} };
+let logger: IAsyncTelemetryBaseLogger = nullLogger;
 
 const passwordTokenConfig = (username, password): OdspTokenConfig => ({
     type: "password",
@@ -76,6 +80,7 @@ function createLoader(loginInfo: IOdspTestLoginInfo) {
         urlResolver,
         documentServiceFactory,
         codeLoader,
+        logger,
     });
     return loader;
 }
@@ -106,6 +111,12 @@ async function load(loginInfo: IOdspTestLoginInfo, url: string) {
 }
 
 async function main() {
+    if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {
+        await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+        assert(getTestLogger);
+        logger = getTestLogger();
+    }
+
     commander
         .version("0.0.1")
         .requiredOption("-t, --tenant <tenant>", "Which test tenant info to use from testConfig.json", "fluidCI")
@@ -280,6 +291,12 @@ async function orchestratorProcess(
         p.push(new Promise((resolve) => process.on("close", resolve)));
     }
     await Promise.all(p);
+
+    // There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
+    await(new Promise((res) => { setTimeout(res, 1000); }));
+    // Flush the logs
+    await(logger.flush());
+
     return 0;
 }
 
