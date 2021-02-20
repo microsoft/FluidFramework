@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-extraneous-dependencies */
 export * from "old-container-definitions2";
 export * from "old-core-interfaces2";
 export { IDocumentServiceFactory, IUrlResolver } from "old-driver-definitions2";
@@ -53,7 +52,6 @@ import {
 } from "./compatUtils";
 import * as newVer from "./newVersion";
 
-/* eslint-enable import/no-extraneous-dependencies */
 const defaultCodeDetails: IFluidCodeDetails = {
     package: "defaultTestPackage",
     config: {},
