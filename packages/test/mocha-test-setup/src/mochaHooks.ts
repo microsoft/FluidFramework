@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IAsyncTelemetryBaseLogger } from "@fluidframework/test-driver-definitions";
+import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 
 const log = console.log;
 const error = console.log;
@@ -16,7 +16,7 @@ export const mochaHooks = {
 
         const _global: any = global;
         if (_global.getTestLogger?.() === undefined) {
-            const nullLogger: IAsyncTelemetryBaseLogger = { send: () => {}, flush: async () => {} };
+            const nullLogger: ITelemetryBufferedLogger = { send: () => {}, flush: () => {} };
             _global.getTestLogger = () => nullLogger;
         }
     },

@@ -22,7 +22,7 @@ import {
     OdspTokenConfig,
 } from "@fluidframework/tool-utils";
 import { getLoginPageUrl, getOdspScope, getDriveId, IOdspTokens } from "@fluidframework/odsp-doclib-utils";
-import { IAsyncTelemetryBaseLogger } from "@fluidframework/test-driver-definitions";
+import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ITestConfig, ILoadTestConfig, ITestTenant } from "./testConfigFile";
 import { IRunConfig, fluidExport, ILoadTest } from "./loadTestDataStore";
@@ -44,8 +44,8 @@ const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 const urlResolver = new OdspDriverUrlResolver();
 const odspTokenManager = new OdspTokenManager(odspTokensCache);
 
-const nullLogger: IAsyncTelemetryBaseLogger = { send: () => {}, flush: async () => {} };
-let logger: IAsyncTelemetryBaseLogger = nullLogger;
+const nullLogger: ITelemetryBufferedLogger = { send: () => {}, flush: () => {} };
+let logger: ITelemetryBufferedLogger = nullLogger;
 
 const passwordTokenConfig = (username, password): OdspTokenConfig => ({
     type: "password",
@@ -295,7 +295,7 @@ async function orchestratorProcess(
     // There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
     await(new Promise((res) => { setTimeout(res, 1000); }));
     // Flush the logs
-    await(logger.flush());
+    logger.flush();
 
     return 0;
 }

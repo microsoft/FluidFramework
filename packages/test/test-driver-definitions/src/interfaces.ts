@@ -52,7 +52,10 @@ export interface ITestDriver{
     createContainerUrl(testId: string): string;
 }
 
-//* Todo - Needs a comment... and actually flush may work out to be synchronous... ideally.
-export interface IAsyncTelemetryBaseLogger extends ITelemetryBaseLogger {
-    flush(): Promise<void>;
+/**
+ * Extension of ITelemetryBaseLogger with support for synchronously triggering
+ * a flush of all buffered logs that have not yet been fully processed (e.g. uploaded)
+ */
+export interface ITelemetryBufferedLogger extends ITelemetryBaseLogger {
+    flush(): void;
 }
