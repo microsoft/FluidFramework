@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-extraneous-dependencies */
-
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
     IContainer,
@@ -27,8 +25,6 @@ import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import * as oldTypes from "./oldVersionTypes";
 import * as old from "./oldVersion";
 import * as old2 from "./oldVersion2";
-
-/* eslint-enable import/no-extraneous-dependencies */
 
 export interface ITestObjectProvider {
     /**

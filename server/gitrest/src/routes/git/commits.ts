@@ -16,6 +16,7 @@ export async function createCommit(
     blob: ICreateCommitParams): Promise<ICommit> {
     const date = Date.parse(blob.author.date);
     if (isNaN(date)) {
+        // eslint-disable-next-line prefer-promise-reject-errors
         return Promise.reject("Invalid input");
     }
 
