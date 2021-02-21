@@ -32,10 +32,10 @@ export async function getTinyliciousContainer(
     containerRuntimeFactory: IRuntimeFactory,
     createNew: boolean,
 ): Promise<IContainer> {
-    const tinyliciousService = new TinyliciousService();
+    const service = new TinyliciousService();
 
     return getContainer(
-        tinyliciousService,
+        service,
         documentId,
         containerRuntimeFactory,
         createNew,

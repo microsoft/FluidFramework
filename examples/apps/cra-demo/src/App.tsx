@@ -30,10 +30,10 @@ function useKVPair(): [KVData, SetKVPair | undefined] {
         const { containerId, isNew } = getContainerId();
 
         const load = async () => {
-            const tinyliciousService = new TinyliciousService();
+            const service = new TinyliciousService();
             const fluidDocument = isNew
-                ? await Fluid.createDocument(tinyliciousService, containerId, [KeyValueInstantiationFactory.registryEntry])
-                : await Fluid.getDocument(tinyliciousService, containerId, [KeyValueInstantiationFactory.registryEntry]);
+                ? await Fluid.createDocument(service, containerId, [KeyValueInstantiationFactory.registryEntry])
+                : await Fluid.getDocument(service, containerId, [KeyValueInstantiationFactory.registryEntry]);
 
             const keyValueDataObject: KeyValueDataObject = isNew
                 ? await fluidDocument.createDataObject(KeyValueInstantiationFactory.type, 'kvpairId')

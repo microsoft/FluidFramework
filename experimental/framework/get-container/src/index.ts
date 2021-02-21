@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from "./getRouterliciousContainer";
+export * from "./routerliciousService";
 export * from "./getSessionStorageContainer";
 export * from "./getTinyliciousContainer";
 export * from "./getContainer";
