@@ -64,6 +64,7 @@
     "@fluidframework/driver-utils": "^0.35.0",
     "@fluidframework/protocol-base": "^0.1019.0-0",
     "@fluidframework/protocol-definitions": "^0.1019.0-0",
+    "@fluidframework/runtime-utils": "^0.35.0",
     "@fluidframework/telemetry-utils": "^0.35.0",
     "assert": "^2.0.0",
     "debug": "^4.1.1",

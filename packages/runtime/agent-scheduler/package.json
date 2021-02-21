@@ -54,6 +54,7 @@
     "@fluidframework/map": "^0.35.0",
     "@fluidframework/register-collection": "^0.35.0",
     "@fluidframework/runtime-definitions": "^0.35.0",
+    "@fluidframework/runtime-utils": "^0.35.0",
     "assert": "^2.0.0",
     "debug": "^4.1.1",
     "uuid": "^8.3.1"

@@ -164,16 +164,16 @@ describe("Loader.request", () => {
         dataStore1._root.set("key", newDataStore.handle);
 
         // the dataStore3 shouldn't exist in container2 yet (because the loader isn't caching the container)
+        let success = true;
         try {
             await requestFluidObject(container2, {
                 url: newDataStore.id,
                 headers: { wait: false },   // data store load default wait to true currently
             });
-            assert(false, "Loader pause flags doesn't pause container op processing");
+            success = false;
         } catch (e) {
-            const topFrame: string | undefined = e?.stack.split("\n")[1].trimLeft();
-            assert(topFrame?.startsWith("at DataStores.getDataStore"), "Expected an error in DataStores.getDataStore");
         }
+        assert(!success, "Loader pause flags doesn't pause container op processing");
 
         (container2 as Container).resume();
 
