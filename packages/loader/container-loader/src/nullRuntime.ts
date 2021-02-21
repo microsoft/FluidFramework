@@ -23,7 +23,6 @@ import {
     ITree,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { create404Response } from "@fluidframework/runtime-utils";
 
 export class NullRuntime extends EventEmitter implements IRuntime {
     public get IFluidSerializer(): IFluidSerializer {
@@ -81,7 +80,7 @@ export class NullRuntime extends EventEmitter implements IRuntime {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return create404Response(request);
+        return { status: 404, mimeType: "text/plain", value: "NUllRuntime can't resolve" };
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
