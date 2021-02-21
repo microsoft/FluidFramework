@@ -40,6 +40,7 @@ export class Fluid {
         const document = new FluidDocument(container, true /* createNew */);
         return document;
     }
+
     public static async getDocument(
         getContainerService: IGetContainerService,
         docId: string,
