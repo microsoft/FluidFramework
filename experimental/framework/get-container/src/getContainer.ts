@@ -12,6 +12,11 @@ import {
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
 
+export interface IGetContainerService {
+    documentServiceFactory: IDocumentServiceFactory;
+    urlResolver: IUrlResolver;
+}
+
 export async function getContainer(
     urlResolver: IUrlResolver,
     documentServiceFactory: IDocumentServiceFactory,

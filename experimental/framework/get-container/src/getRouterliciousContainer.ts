@@ -4,12 +4,17 @@
  */
 import { IRuntimeFactory } from "@fluidframework/container-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import {
+    IDocumentServiceFactory,
+    IFluidResolvedUrl,
+    IResolvedUrl,
+    IUrlResolver,
+} from "@fluidframework/driver-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { IUser } from "@fluidframework/protocol-definitions";
 import jwt from "jsonwebtoken";
-import { getContainer } from "./getContainer";
+import { getContainer, IGetContainerService } from "./getContainer";
 
 export interface IRouterliciousConfig {
     orderer: string,
@@ -19,24 +24,21 @@ export interface IRouterliciousConfig {
 }
 
 class SimpleUrlResolver implements IUrlResolver {
-    private readonly token: string;
-
     constructor(
-        readonly containerId: string,
         private readonly config: IRouterliciousConfig,
-        readonly user: IUser,
-    ) {
-        this.token = jwt.sign(
-            {
-                user,
-                documentId: containerId,
-                tenantId: config.tenantId,
-                scopes: ["doc:read", "doc:write", "summary:write"],
-            },
-            config.key);
-    }
+        private readonly user: IUser,
+    ) { }
 
     public async resolve(request: IRequest): Promise<IFluidResolvedUrl> {
+        const containerId = request.url.split("/")[0];
+        const token = jwt.sign(
+            {
+                user: this.user,
+                documentId: containerId,
+                tenantId: this.config.tenantId,
+                scopes: ["doc:read", "doc:write", "summary:write"],
+            },
+            this.config.key);
         const documentUrl = `${this.config.orderer}/${this.config.tenantId}/${request.url}`;
         return Promise.resolve({
             endpoints: {
@@ -44,7 +46,7 @@ class SimpleUrlResolver implements IUrlResolver {
                 ordererUrl: `${this.config.orderer}`,
                 storageUrl: `${this.config.storage}/repos/${this.config.tenantId}`,
             },
-            tokens: { jwt: this.token },
+            tokens: { jwt: token },
             type: "fluid",
             url: documentUrl,
         });
@@ -54,6 +56,22 @@ class SimpleUrlResolver implements IUrlResolver {
             throw Error("Invalid Resolved Url");
         }
         return `${resolvedUrl.url}/${relativeUrl}`;
+    }
+}
+
+export class RouterliciousService implements IGetContainerService {
+    public readonly documentServiceFactory: IDocumentServiceFactory;
+    public readonly urlResolver: IUrlResolver;
+
+    constructor(config: IRouterliciousConfig) {
+        const user = {
+            id: "unique-id",
+            name: "Unique Idee",
+        };
+        const tokenProvider = new InsecureTokenProvider(config.key, user);
+        this.documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
+
+        this.urlResolver = new SimpleUrlResolver(config, user);
     }
 }
 
@@ -72,19 +90,11 @@ export async function getRouterliciousContainer(
     createNew: boolean,
     config: IRouterliciousConfig,
 ) {
-    const user = {
-        id: "unique-id",
-        name: "Unique Idee",
-    };
-
-    const tokenProvider = new InsecureTokenProvider(config.key, user);
-    const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
-
-    const urlResolver = new SimpleUrlResolver(containerId, config, user);
+    const routerliciousService = new RouterliciousService(config);
 
     return getContainer(
-        urlResolver,
-        documentServiceFactory,
+        routerliciousService.urlResolver,
+        routerliciousService.documentServiceFactory,
         containerId,
         createNew,
         containerRuntimeFactory,
