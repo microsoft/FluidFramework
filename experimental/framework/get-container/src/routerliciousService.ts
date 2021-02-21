@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IRuntimeFactory } from "@fluidframework/container-definitions";
+
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IDocumentServiceFactory,
@@ -14,7 +14,7 @@ import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicio
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { IUser } from "@fluidframework/protocol-definitions";
 import jwt from "jsonwebtoken";
-import { getContainer, IGetContainerService } from "./getContainer";
+import { IGetContainerService } from "./getContainer";
 
 export interface IRouterliciousConfig {
     orderer: string,
@@ -73,29 +73,4 @@ export class RouterliciousService implements IGetContainerService {
 
         this.urlResolver = new SimpleUrlResolver(config, user);
     }
-}
-
-/**
- * Connect to an implementation of the Routerlicious service and retrieve a Container with
- * the given ID running the given code.
- *
- * @param containerId - The document id to retrieve or create
- * @param containerRuntimeFactory - The container factory to be loaded in the container
- * @param createNew - Is this a new container
- * @param config
- */
-export async function getRouterliciousContainer(
-    containerId: string,
-    containerRuntimeFactory: IRuntimeFactory,
-    createNew: boolean,
-    config: IRouterliciousConfig,
-) {
-    const routerliciousService = new RouterliciousService(config);
-
-    return getContainer(
-        routerliciousService,
-        containerId,
-        containerRuntimeFactory,
-        createNew,
-    );
 }
