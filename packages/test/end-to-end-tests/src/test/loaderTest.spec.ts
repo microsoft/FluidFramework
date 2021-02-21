@@ -173,7 +173,7 @@ describe("Loader.request", () => {
             success = false;
         } catch (e) {
         }
-        assert(!success, "Loader pause flags doesn't pause container op processing");
+        assert(success, "Loader pause flags doesn't pause container op processing");
 
         (container2 as Container).resume();
 
