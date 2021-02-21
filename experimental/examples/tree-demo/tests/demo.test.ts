@@ -17,8 +17,8 @@ describe("tree-demo", () => {
         await page.waitFor(() => window["fluidStarted"]);
     });
 
-    it("The page loads and there's a button labeled 'Click'", async () => {
+    it("The page loads and displays current FPS", async () => {
         // Validate there is a button that can be clicked
-        await expect(page).toClick("button", { text: "Click" });
+        await expect(page).toMatch("FPS");
     });
 });

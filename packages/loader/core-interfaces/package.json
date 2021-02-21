@@ -29,8 +29,13 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0-0",
+<<<<<<< HEAD
     "@fluidframework/eslint-config-fluid": "^0.22.1-0",
     "@microsoft/api-extractor": "^7.13.1",
+=======
+    "@fluidframework/eslint-config-fluid": "^0.23.0-0",
+    "@microsoft/api-extractor": "^7.7.2",
+>>>>>>> main
     "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",

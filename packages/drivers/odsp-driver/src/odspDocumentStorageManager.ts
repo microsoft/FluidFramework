@@ -12,6 +12,7 @@ import {
     fromUtf8ToBase64,
     IsoBuffer,
     performance,
+    stringToBuffer,
 } from "@fluidframework/common-utils";
 import {
     PerformanceEvent,
@@ -311,7 +312,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         },
                         "createBlob",
                     );
-                    event.end({ blobId: res.content.id });
+                    event.end({
+                        blobId: res.content.id,
+                        serverRetries: res.headers.get("x-fluid-retries") ?? undefined,
+                        sprequestguid: response.headers.get("sprequestguid") ?? undefined,
+                    });
                     return res;
                 },
             );
@@ -346,7 +351,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         blob = await res.arrayBuffer();
                         event.end({
                             size: blob.byteLength,
+                            serverRetries: res.headers.get("x-fluid-retries") ?? undefined,
                             waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
+                            sprequestguid: res.headers.get("sprequestguid") ?? undefined,
                         });
                         return blob;
                     },
@@ -386,7 +393,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (blob instanceof ArrayBuffer) {
             return blob;
         }
-        return IsoBuffer.from(blob.content, blob.encoding ?? "utf-8").buffer;
+        return stringToBuffer(blob.content, blob.encoding ?? "utf8");
     }
 
     public async read(blobId: string): Promise<string> {

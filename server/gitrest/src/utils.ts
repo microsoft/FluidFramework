@@ -126,6 +126,7 @@ export class RepositoryManager {
 
             if (!await exists(directory)) {
                 winston.info(`Repo does not exist ${directory}`);
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject(`Repo does not exist ${directory}`);
             }
 

@@ -37,6 +37,7 @@ export async function createBlob(
     repo: string,
     blob: ICreateBlobParams): Promise<ICreateBlobResponse> {
         if (!blob || !validateBlob(blob.content) || !validateEncoding(blob.encoding)) {
+            // eslint-disable-next-line prefer-promise-reject-errors
             return Promise.reject("Invalid blob");
     }
 

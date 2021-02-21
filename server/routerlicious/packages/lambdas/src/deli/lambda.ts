@@ -38,6 +38,8 @@ import {
     RawOperationType,
     SequencedOperationType,
     IQueuedMessage,
+    IUpdateDSNControlMessageContents,
+    INackFutureMessagesControlMessageContents,
 } from "@fluidframework/server-services-core";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
@@ -101,6 +103,9 @@ export class DeliLambda implements IPartitionLambda {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     private canClose = false;
+
+    // when set, all messages will be nacked based on the provided info
+    private nackFutureMessages: INackFutureMessagesControlMessageContents | undefined;
 
     constructor(
         private readonly context: IContext,
@@ -233,6 +238,16 @@ export class DeliLambda implements IPartitionLambda {
         // Update and retrieve the minimum sequence number
         const message = rawMessage as IRawOperationMessage;
         const systemContent = this.extractSystemContent(message);
+
+        // Check if we should nack all messages
+        if (this.nackFutureMessages) {
+            return this.createNackMessage(
+                message,
+                this.nackFutureMessages.code,
+                this.nackFutureMessages.type,
+                this.nackFutureMessages.message,
+                this.nackFutureMessages.retryAfter);
+        }
 
         // Check incoming message order. Nack if there is any gap so that the client can resend.
         const messageOrder = this.checkOrder(message);
@@ -388,30 +403,37 @@ export class DeliLambda implements IPartitionLambda {
         } else if (message.operation.type === MessageType.Control) {
             sendType = SendType.Never;
             const controlMessage = systemContent as IControlMessage;
-            if (controlMessage.type === ControlMessageType.UpdateDSN) {
-                const messageMetaData = {
-                    documentId: this.documentId,
-                    tenantId: this.tenantId,
-                };
-                this.context.log.info(`Update DSN: ${JSON.stringify(controlMessage)}`, { messageMetaData });
-                // TODO: Make specific interface type for controlContents. The schema should be more clear
-                // as we introduce more of these.
-                const controlContent = controlMessage.contents as
-                    {
-                        durableSequenceNumber: number
-                        clearCache: boolean
+            switch (controlMessage.type) {
+                case ControlMessageType.UpdateDSN: {
+                    const messageMetaData = {
+                        documentId: this.documentId,
+                        tenantId: this.tenantId,
                     };
-                const dsn = controlContent.durableSequenceNumber;
-                if (dsn >= this.durableSequenceNumber) {
-                    // Deli cache is only cleared when no clients have joined since last noClient was sent to alfred.
-                    if (controlContent.clearCache && this.noActiveClients) {
-                        instruction = InstructionType.ClearCache;
-                        this.canClose = true;
-                        this.context.log.info(`Deli cache will be cleared`, { messageMetaData });
+                    this.context.log.info(`Update DSN: ${JSON.stringify(controlMessage)}`, { messageMetaData });
+
+                    const controlContents = controlMessage.contents as IUpdateDSNControlMessageContents;
+                    const dsn = controlContents.durableSequenceNumber;
+                    if (dsn >= this.durableSequenceNumber) {
+                        // Deli cache is only cleared when no clients have joined since last noClient was sent to alfred
+                        if (controlContents.clearCache && this.noActiveClients) {
+                            instruction = InstructionType.ClearCache;
+                            this.canClose = true;
+                            this.context.log.info(`Deli cache will be cleared`, { messageMetaData });
+                        }
+
+                        this.durableSequenceNumber = dsn;
                     }
 
-                    this.durableSequenceNumber = dsn;
+                    break;
                 }
+
+                case ControlMessageType.NackFutureMessages: {
+                    this.nackFutureMessages = controlMessage.contents as INackFutureMessagesControlMessageContents;
+                    break;
+                }
+
+                default:
+                // ignore unknown control messages
             }
         }
 
@@ -581,7 +603,8 @@ export class DeliLambda implements IPartitionLambda {
         message: IRawOperationMessage,
         code: number,
         type: NackErrorType,
-        reason: string): ITicketedMessageOutput {
+        reason: string,
+        retryAfter?: number): ITicketedMessageOutput {
         const nackMessage: INackMessage = {
             clientId: message.clientId,
             documentId: this.documentId,
@@ -590,6 +613,7 @@ export class DeliLambda implements IPartitionLambda {
                     code,
                     type,
                     message: reason,
+                    retryAfter,
                 },
                 operation: message.operation,
                 sequenceNumber: this.minimumSequenceNumber,
