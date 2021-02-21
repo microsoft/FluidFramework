@@ -164,16 +164,16 @@ describe("Loader.request", () => {
         dataStore1._root.set("key", newDataStore.handle);
 
         // the dataStore3 shouldn't exist in container2 yet (because the loader isn't caching the container)
-        let success = false;
+        let success = true;
         try {
             await requestFluidObject(container2, {
                 url: newDataStore.id,
                 headers: { wait: false },   // data store load default wait to true currently
             });
-            success = true;
+            success = false;
         } catch (e) {
         }
-        assert(!success, "Loader pause flags doesn't pause container op processing");
+        assert(success, "Loader pause flags doesn't pause container op processing");
 
         (container2 as Container).resume();
 

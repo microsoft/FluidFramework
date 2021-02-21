@@ -210,10 +210,12 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
 
         // back-compat: added in 0.35: this should be unconditional
         if (this.dataStoreRoutingContext === undefined) {
-            this.dataStoreRoutingContext = 
+            this.dataStoreRoutingContext =
                 new FluidRoutingContext(this.id, {
-                    request: async (request: IRequest) =>
-                        (this.dataStoreContext.containerRuntime as any).IFluidHandleContext.resolveHandle(request),
+                    request: async (request: IRequest) => {
+                        const context = (this.dataStoreContext.containerRuntime as any).IFluidHandleContext;
+                        return context.resolveHandle(request) as Promise<IResponse>;
+                    },
                     absolutePath: "",
                     addRoute: () => {},
                 });
