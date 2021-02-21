@@ -177,9 +177,9 @@ export function createTestObjectProvider(
         throw new Error("Must provide a driver when using the current loader");
     }
     if (oldLoader) {
-        const oldProvider = new TestObjectProvider(
-            driver as any,
-            containerFactoryFn as () => IRuntimeFactory);
+        const oldProvider = new newVer.TestObjectProvider(
+            driver,
+            containerFactoryFn as () => newVer.IRuntimeFactory);
 
         // Remove once the older version support container tracking (for close)
         if (!(TestObjectProvider as any).patchLoader) {
@@ -188,6 +188,14 @@ export function createTestObjectProvider(
             oldProvider.makeTestLoader = (testContainerConfig?: unknown) => {
                 const testLoader = oldMakeTestLoader(testContainerConfig);
                 loaderContainerTracker.add(testLoader as any);
+
+                // Also patch the loader.resolve to deal with url being a Promise from
+                // the new ITestDriver.createcontainerUrl
+                const oldResolve = testLoader.resolve.bind(testLoader);
+                testLoader.resolve = async (request: newVer.IRequest) => {
+                    request.url = await ((request as any).url as Promise<string>);
+                    return oldResolve(request);
+                };
                 return testLoader;
             };
             const oldReset = oldProvider.reset.bind(oldProvider);
