@@ -146,8 +146,8 @@ export class Historian implements IHistorian {
     // There are two scenarios in Historian call a REST, one the first time
     // you apply it. The other is to refresh the auth token after the permission
     // check fails.
-    private async loadOrCreateRestWrapper(isReset:boolean = false): Promise<RestWrapper> {
-        var isFirstCall:boolean = !this.restWrapper;
+    private async loadOrCreateRestWrapper(isReset: boolean = false): Promise<RestWrapper> {
+        const isFirstCall: boolean = !this.restWrapper;
         if (isFirstCall || isReset) {
             this.restWrapper = await this.restWrapperP;
             return this.restWrapper;
