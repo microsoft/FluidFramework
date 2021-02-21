@@ -14,12 +14,10 @@ import {
     getLoginPageUrl,
     TokenRequestCredentials,
 } from "@fluidframework/odsp-doclib-utils";
-import registerDebug from "debug";
 import jwtDecode from "jwt-decode";
+import { debug } from "./debug";
 import { IAsyncCache, loadRC, saveRC, lockRC } from "./fluidToolRC";
 import { serverListenAndHandle, endResponse } from "./httpHelpers";
-
-const debug = registerDebug("fluid:tool-utils");
 
 const odspAuthRedirectPort = 7000;
 const odspAuthRedirectOrigin = `http://localhost:${odspAuthRedirectPort}`;
