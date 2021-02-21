@@ -14,8 +14,12 @@ import {
     getLoginPageUrl,
     TokenRequestCredentials,
 } from "@fluidframework/odsp-doclib-utils";
+import registerDebug from "debug";
+import jwtDecode from "jwt-decode";
 import { IAsyncCache, loadRC, saveRC, lockRC } from "./fluidToolRC";
 import { serverListenAndHandle, endResponse } from "./httpHelpers";
+
+const debug = registerDebug("fluid:tool-utils");
 
 const odspAuthRedirectPort = 7000;
 const odspAuthRedirectOrigin = `http://localhost:${odspAuthRedirectPort}`;
@@ -90,6 +94,24 @@ export class OdspTokenManager {
             forceReauth,
         );
     }
+
+    private static async getTokenFromCache(
+        tokenCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens>,
+        cacheKey: IOdspTokenManagerCacheKey,
+    ) {
+        const tokensFromCache = await tokenCache.get(cacheKey);
+        if (tokensFromCache) {
+            const decodedToken = jwtDecode<any>(tokensFromCache.accessToken);
+            if (decodedToken.exp < new Date().getTime() / 1000) {
+                debug(`Token expired for ${cacheKey.server}${cacheKey.isPush ? "[Push]" : ""}`);
+                return undefined;
+            }
+            debug(`Token reused for ${cacheKey.server}${cacheKey.isPush ? "[Push]" : ""}`);
+            return tokensFromCache;
+        }
+        return undefined;
+    }
+
     private async getTokens(
         isPush: boolean,
         server: string,
@@ -111,7 +133,7 @@ export class OdspTokenManager {
             if (!forceReauth && !forceRefresh) {
                 // check and return if it exists without lock
                 const cacheKey: IOdspTokenManagerCacheKey = { isPush, server };
-                const tokensFromCache = await this.tokenCache.get(cacheKey);
+                const tokensFromCache = await OdspTokenManager.getTokenFromCache(this.tokenCache, cacheKey);
                 if (tokensFromCache) {
                     await this.onTokenRetrievalFromCache(tokenConfig, tokensFromCache);
                     return tokensFromCache;
@@ -134,7 +156,7 @@ export class OdspTokenManager {
         const scope = isPush ? pushScope : getOdspScope(server);
         const cacheKey: IOdspTokenManagerCacheKey = { isPush, server };
         if (!forceReauth && this.tokenCache) {
-            const tokensFromCache = await this.tokenCache.get(cacheKey);
+            const tokensFromCache = await OdspTokenManager.getTokenFromCache(this.tokenCache, cacheKey);
             if (tokensFromCache) {
                 let canReturn = true;
                 if (forceRefresh) {

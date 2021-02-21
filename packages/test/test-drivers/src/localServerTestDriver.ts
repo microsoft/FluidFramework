@@ -29,7 +29,7 @@ export class LocalServerTestDriver implements ITestDriver {
         return createLocalResolverCreateNewRequest(testId);
     }
 
-    createContainerUrl(testId: string): string {
+    async createContainerUrl(testId: string): Promise<string> {
         return `http://localhost/${testId}`;
     }
 }

@@ -196,7 +196,7 @@ export function createTestObjectProvider(
                 oldReset();
             };
         }
-        return oldProvider as ITestObjectProvider;
+        return oldProvider as unknown as  ITestObjectProvider;
     } else {
         return new newVer.TestObjectProvider(
             driver, containerFactoryFn as () => newVer.IRuntimeFactory);
