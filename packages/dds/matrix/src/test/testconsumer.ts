@@ -4,7 +4,6 @@
  */
 
 import { IMatrixConsumer, IMatrixReader, IMatrixProducer } from "@tiny-calc/nano";
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { DenseVector, RowMajorMatrix } from "@tiny-calc/micro";
 import { Serializable } from "@fluidframework/datastore-definitions";
 

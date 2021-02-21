@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-extraneous-dependencies */
 export * from "old-container-definitions";
 export * from "old-core-interfaces";
 export { IDocumentServiceFactory, IUrlResolver } from "old-driver-definitions";
@@ -48,7 +47,6 @@ import {
     V2,
 } from "./compatUtils";
 import * as newVer from "./newVersion";
-/* eslint-enable import/no-extraneous-dependencies */
 
 // A simple old-version dataStore with runtime/root exposed for testing
 // purposes. Used to test compatibility of context reload between

@@ -292,4 +292,6 @@ export interface ISummaryContext {
      * Parent summary acked handle (from summary ack)
      */
     readonly ackHandle: string | undefined;
+
+    readonly referenceSequenceNumber: number;
 }
