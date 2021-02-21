@@ -18,18 +18,17 @@ export interface IGetContainerService {
 }
 
 export async function getContainer(
-    urlResolver: IUrlResolver,
-    documentServiceFactory: IDocumentServiceFactory,
+    getContainerService: IGetContainerService,
     containerId: string,
-    createNew: boolean,
     containerRuntimeFactory: IRuntimeFactory,
+    createNew: boolean,
 ): Promise<Container> {
     const module = { fluidExport: containerRuntimeFactory };
     const codeLoader = { load: async () => module };
 
-    const loader = new Loader ({
-        urlResolver,
-        documentServiceFactory,
+    const loader = new Loader({
+        urlResolver: getContainerService.urlResolver,
+        documentServiceFactory: getContainerService.documentServiceFactory,
         codeLoader,
     });
 

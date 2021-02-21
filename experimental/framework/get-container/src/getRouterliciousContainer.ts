@@ -93,10 +93,9 @@ export async function getRouterliciousContainer(
     const routerliciousService = new RouterliciousService(config);
 
     return getContainer(
-        routerliciousService.urlResolver,
-        routerliciousService.documentServiceFactory,
+        routerliciousService,
         containerId,
-        createNew,
         containerRuntimeFactory,
+        createNew,
     );
 }

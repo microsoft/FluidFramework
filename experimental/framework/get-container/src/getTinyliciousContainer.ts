@@ -35,10 +35,9 @@ export async function getTinyliciousContainer(
     const tinyliciousService = new TinyliciousService();
 
     return getContainer(
-        tinyliciousService.urlResolver,
-        tinyliciousService.documentServiceFactory,
+        tinyliciousService,
         documentId,
-        createNew,
         containerRuntimeFactory,
+        createNew,
     );
 }

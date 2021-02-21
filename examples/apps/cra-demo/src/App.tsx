@@ -6,6 +6,7 @@
 import React from "react";
 import { KeyValueDataObject, KeyValueInstantiationFactory } from "@fluid-experimental/data-objects";
 import { Fluid } from "@fluid-experimental/fluid-static";
+import { TinyliciousService } from "@fluid-experimental/get-container";
 
 const getContainerId = (): { containerId: string; isNew: boolean } => {
     let isNew = false;
@@ -29,9 +30,10 @@ function useKVPair(): [KVData, SetKVPair | undefined] {
         const { containerId, isNew } = getContainerId();
 
         const load = async () => {
+            const tinyliciousService = new TinyliciousService();
             const fluidDocument = isNew
-                ? await Fluid.createDocument(containerId, [KeyValueInstantiationFactory.registryEntry])
-                : await Fluid.getDocument(containerId, [KeyValueInstantiationFactory.registryEntry]);
+                ? await Fluid.createDocument(tinyliciousService, containerId, [KeyValueInstantiationFactory.registryEntry])
+                : await Fluid.getDocument(tinyliciousService, containerId, [KeyValueInstantiationFactory.registryEntry]);
 
             const keyValueDataObject: KeyValueDataObject = isNew
                 ? await fluidDocument.createDataObject(KeyValueInstantiationFactory.type, 'kvpairId')
