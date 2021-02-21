@@ -10,6 +10,7 @@ import {
 import { IEvent } from "@fluidframework/common-definitions";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
 import {
     FluidObjectMap,
@@ -97,7 +98,7 @@ export abstract class SyncedDataObject<
      */
     public get dataProps() {
         return {
-            runtime: this.runtime,
+            runtime: this.runtime as IFluidDataStoreRuntime,
             fluidObjectMap: this.fluidObjectMap,
         };
     }
