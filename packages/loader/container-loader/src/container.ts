@@ -29,6 +29,7 @@ import {
     AttachState,
     IThrottlingWarning,
     ILoaderOptions,
+    ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import {
@@ -444,7 +445,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     /**
      * {@inheritDoc DeltaManager.readOnlyInfo}
      */
-    public get readOnlyInfo() {
+    public get readOnlyInfo(): ReadOnlyInfo {
         return this._deltaManager.readOnlyInfo;
     }
 
