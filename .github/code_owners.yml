@@ -40,9 +40,6 @@ packages/drivers/**:
 - tanviraumi
 - znewton
 
-packages/drivers/odsp-driver/**:
-- GaryWilber
-
 packages/framework/**:
 - skylerjokiel
 - ChumpChief
@@ -81,6 +78,7 @@ server/**:
 - tanviraumi
 - anthony-murphy
 - GaryWilber
+- hedasilv
 
 # examples
 examples/**:

@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/driver-utils",
-  "version": "0.35.0",
+  "version": "0.36.0",
   "description": "Collection of utility functions for Fluid drivers",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -12,7 +12,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
-    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:commonjs": "npm run tsc && npm run build:test",
+    "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
@@ -39,6 +40,7 @@
       "src/test/**/*.ts",
       "dist/test/**/*.js"
     ],
+    "exclude-after-remap": false,
     "include": [
       "src/**/*.ts",
       "dist/**/*.js"
@@ -54,20 +56,20 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.19.1",
     "@fluidframework/common-utils": "^0.27.0",
-    "@fluidframework/core-interfaces": "^0.35.0",
-    "@fluidframework/driver-definitions": "^0.35.0",
+    "@fluidframework/core-interfaces": "^0.36.0",
+    "@fluidframework/driver-definitions": "^0.36.0",
     "@fluidframework/gitresources": "^0.1019.0-0",
     "@fluidframework/protocol-base": "^0.1019.0-0",
     "@fluidframework/protocol-definitions": "^0.1019.0-0",
-    "@fluidframework/telemetry-utils": "^0.35.0",
+    "@fluidframework/telemetry-utils": "^0.36.0",
     "assert": "^2.0.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0-0",
-    "@fluidframework/eslint-config-fluid": "^0.22.1-0",
-    "@fluidframework/mocha-test-setup": "^0.35.0",
-    "@fluidframework/runtime-utils": "^0.35.0",
+    "@fluidframework/eslint-config-fluid": "^0.23.0-0",
+    "@fluidframework/mocha-test-setup": "^0.36.0",
+    "@fluidframework/runtime-utils": "^0.36.0",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/assert": "^1.5.2",
     "@types/mocha": "^5.2.5",
@@ -76,6 +78,7 @@
     "@typescript-eslint/parser": "~4.14.0",
     "concurrently": "^5.2.0",
     "copyfiles": "^2.1.0",
+    "cross-env": "^7.0.2",
     "eslint": "~7.18.0",
     "eslint-plugin-eslint-comments": "~3.2.0",
     "eslint-plugin-import": "~2.22.1",

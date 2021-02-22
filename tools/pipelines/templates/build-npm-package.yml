@@ -326,6 +326,18 @@ stages:
               ArtifactName: '_api-extractor-temp'
               publishLocation: 'Container'
 
+        - task: Bash@3
+          displayName: Check for extraenous modified files
+          inputs:
+            targetType: 'inline'
+            script: |
+              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|\(use' | grep '^\s' > git_status.log
+              if [ `cat git_status.log | wc -l` != "0" ]; then
+                cat git_status.log
+                echo "##vso[task.logissue type=error]Build should not create extraenous files"
+                exit -1;
+              fi
+
       # Job - Component detection
       - ${{ if eq(variables.componentDetection, true) }}:
         - job: CG

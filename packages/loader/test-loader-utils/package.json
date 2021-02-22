@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/test-loader-utils",
-  "version": "0.35.0",
+  "version": "0.36.0",
   "private": true,
   "description": "Mocks and other test utilities for the Fluid Framework Loader",
   "homepage": "https://fluidframework.com",
@@ -27,12 +27,12 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.27.0",
-    "@fluidframework/driver-definitions": "^0.35.0",
+    "@fluidframework/driver-definitions": "^0.36.0",
     "@fluidframework/protocol-definitions": "^0.1019.0-0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0-0",
-    "@fluidframework/eslint-config-fluid": "^0.22.1-0",
+    "@fluidframework/eslint-config-fluid": "^0.23.0-0",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
     "concurrently": "^5.2.0",

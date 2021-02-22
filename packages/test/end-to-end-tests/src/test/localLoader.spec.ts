@@ -89,7 +89,7 @@ const testDataObjectFactory = new DataObjectFactory(
 describe("LocalLoader", () => {
     let driver: ITestDriver;
     before(()=>{
-        driver = getFluidTestDriver();
+        driver = getFluidTestDriver() as unknown as ITestDriver;
     });
 
     const codeDetails: IFluidCodeDetails = {
@@ -113,7 +113,7 @@ describe("LocalLoader", () => {
             [[codeDetails, factory]],
             driver.createDocumentServiceFactory(),
             driver.createUrlResolver());
-        return loader.resolve({ url: driver.createContainerUrl(documentId) });
+        return loader.resolve({ url: await driver.createContainerUrl(documentId) });
     }
 
     describe("1 dataObject", () => {

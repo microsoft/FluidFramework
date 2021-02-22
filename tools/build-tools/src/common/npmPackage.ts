@@ -19,6 +19,7 @@ import {
     readJsonSync,
     existsSync,
     lookUpDirSync,
+    isSameFileOrDir,
 } from "./utils"
 import { MonoRepo } from "./monoRepo";
 import { options } from "../fluidBuild/options";
@@ -248,18 +249,20 @@ export class Packages {
     public constructor(public readonly packages: Package[]) {
     }
 
-    public static loadDir(dir: string, group: string, monoRepo?: MonoRepo, ignoreDirs?: string[]) {
-        const packageJsonFileName = path.join(dir, "package.json");
+    public static loadDir(dirFullPath: string, group: string, ignoredDirFullPaths: string[] | undefined, monoRepo?: MonoRepo, ) {
+        const packageJsonFileName = path.join(dirFullPath, "package.json");
         if (existsSync(packageJsonFileName)) {
             return [new Package(packageJsonFileName, group, monoRepo)];
         }
 
         const packages: Package[] = [];
-        const files = fs.readdirSync(dir, { withFileTypes: true });
+        const files = fs.readdirSync(dirFullPath, { withFileTypes: true });
         files.map((dirent) => {
-            if (dirent.isDirectory() && dirent.name !== "node_modules"
-                && (ignoreDirs === undefined || !ignoreDirs.includes(dirent.name))) {
-                packages.push(...Packages.loadDir(path.join(dir, dirent.name), group, monoRepo));
+            if (dirent.isDirectory() && dirent.name !== "node_modules") {
+                const fullPath = path.join(dirFullPath, dirent.name);
+                if (ignoredDirFullPaths === undefined || !ignoredDirFullPaths.some(name => isSameFileOrDir(name, fullPath))) {
+                    packages.push(...Packages.loadDir(fullPath, group, ignoredDirFullPaths, monoRepo));
+                }
             }
         });
         return packages;
