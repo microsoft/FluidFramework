@@ -40,7 +40,7 @@ import {
     TestFluidObjectFactory,
 } from "old-test-utils2";
 
-import {v4 as uuid} from "uuid";
+import { v4 as uuid } from "uuid";
 import {
     createRuntimeFactory,
     DataObjectFactoryType,
@@ -81,10 +81,10 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
 
     }
 
-    readonly driver: newVer.ITestDriver ={
+    readonly driver: newVer.ITestDriver = {
         type: "local",
         version: "0.33.0",
-        createContainerUrl: (testId)=>`http://localhost${testId}`,
+        createContainerUrl: async (testId)=>`http://localhost${testId}`,
         createCreateNewRequest: (testId)=>this.urlResolver.createCreateNewRequest(testId),
         createDocumentServiceFactory: ()=>this.documentServiceFactory as any as newVer.IDocumentServiceFactory,
         createUrlResolver: ()=>this.urlResolver,

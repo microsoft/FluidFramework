@@ -14,6 +14,8 @@ import {
     getLoginPageUrl,
     TokenRequestCredentials,
 } from "@fluidframework/odsp-doclib-utils";
+import jwtDecode from "jwt-decode";
+import { debug } from "./debug";
 import { IAsyncCache, loadRC, saveRC, lockRC } from "./fluidToolRC";
 import { serverListenAndHandle, endResponse } from "./httpHelpers";
 
@@ -90,6 +92,24 @@ export class OdspTokenManager {
             forceReauth,
         );
     }
+
+    private static async getTokenFromCache(
+        tokenCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens>,
+        cacheKey: IOdspTokenManagerCacheKey,
+    ) {
+        const tokensFromCache = await tokenCache.get(cacheKey);
+        if (tokensFromCache) {
+            const decodedToken = jwtDecode<any>(tokensFromCache.accessToken);
+            if (decodedToken.exp < new Date().getTime() / 1000) {
+                debug(`Token expired for ${cacheKey.server}${cacheKey.isPush ? "[Push]" : ""}`);
+                return undefined;
+            }
+            debug(`Token reused for ${cacheKey.server}${cacheKey.isPush ? "[Push]" : ""}`);
+            return tokensFromCache;
+        }
+        return undefined;
+    }
+
     private async getTokens(
         isPush: boolean,
         server: string,
@@ -111,7 +131,7 @@ export class OdspTokenManager {
             if (!forceReauth && !forceRefresh) {
                 // check and return if it exists without lock
                 const cacheKey: IOdspTokenManagerCacheKey = { isPush, server };
-                const tokensFromCache = await this.tokenCache.get(cacheKey);
+                const tokensFromCache = await OdspTokenManager.getTokenFromCache(this.tokenCache, cacheKey);
                 if (tokensFromCache) {
                     await this.onTokenRetrievalFromCache(tokenConfig, tokensFromCache);
                     return tokensFromCache;
@@ -134,7 +154,7 @@ export class OdspTokenManager {
         const scope = isPush ? pushScope : getOdspScope(server);
         const cacheKey: IOdspTokenManagerCacheKey = { isPush, server };
         if (!forceReauth && this.tokenCache) {
-            const tokensFromCache = await this.tokenCache.get(cacheKey);
+            const tokensFromCache = await OdspTokenManager.getTokenFromCache(this.tokenCache, cacheKey);
             if (tokensFromCache) {
                 let canReturn = true;
                 if (forceRefresh) {
@@ -258,27 +278,35 @@ export class OdspTokenManager {
     }
 }
 
+async function loadAndPatchRC() {
+    const rc = await loadRC();
+    if (rc.tokens && rc.tokens.version === undefined) {
+        // Clean up older versions
+        delete (rc as any).tokens;
+        delete (rc as any).pushTokens;
+    }
+    return rc;
+}
+
 export const odspTokensCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens> = {
     async get(key: IOdspTokenManagerCacheKey): Promise<IOdspTokens | undefined> {
-        const rc = await loadRC();
-        if (key.isPush) {
-            return rc.pushTokens;
-        } else {
-            return rc.tokens && rc.tokens[key.server];
-        }
+        const rc = await loadAndPatchRC();
+        return rc.tokens?.data[key.server][key.isPush ? "storage" : "push"];
     },
     async save(key: IOdspTokenManagerCacheKey, tokens: IOdspTokens): Promise<void> {
-        const rc = await loadRC();
-        if (key.isPush) {
-            rc.pushTokens = tokens;
-        } else {
-            let prevTokens = rc.tokens;
-            if (!prevTokens) {
-                prevTokens = {};
-                rc.tokens = prevTokens;
-            }
-            prevTokens[key.server] = tokens;
+        const rc = await loadAndPatchRC();
+        if (!rc.tokens) {
+            rc.tokens = {
+                version: 1,
+                data: {},
+            };
         }
+        let prevTokens = rc.tokens.data[key.server];
+        if (!prevTokens) {
+            prevTokens = {};
+            rc.tokens.data[key.server] = prevTokens;
+        }
+        prevTokens[key.isPush ? "storage" : "push"] = tokens;
         return saveRC(rc);
     },
     async lock<T>(callback: () => Promise<T>): Promise<T> {
