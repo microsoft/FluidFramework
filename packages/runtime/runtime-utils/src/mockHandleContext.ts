@@ -16,7 +16,7 @@ export class MockHandleContext implements IFluidHandleContext {
         throw new Error("Method not implemented.");
     }
 
-    public async request(request: IRequest) {
+    public async resolveHandle(request: IRequest) {
         return { status: 404, mimeType: "text/plain", value: `Method not implemented.` };
     }
 

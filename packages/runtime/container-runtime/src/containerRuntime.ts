@@ -910,7 +910,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async resolveHandle(request: IRequest): Promise<IResponse> {
-        return this.rootRoute.request(request);
+        return this.rootRoute.resolveHandle(request);
     }
 
     /**

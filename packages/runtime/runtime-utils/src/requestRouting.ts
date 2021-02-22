@@ -9,7 +9,6 @@ import {
     IRequest,
     IResponse,
     IFluidObject,
-    IFluidRequestHandler,
     IFluidRoutingContext,
     defaultRoutePath,
 } from "@fluidframework/core-interfaces";
@@ -21,7 +20,7 @@ import { RequestParser } from "./requestParser";
  * Represents a route in request routing
  */
 export class FluidRoutingContext implements IFluidRoutingContext {
-    protected routes: Map<string, IFluidRequestHandler> = new Map();
+    protected routes: Map<string, IFluidRoutingContext> = new Map();
     public readonly absolutePath: string;
 
     /**
@@ -39,18 +38,18 @@ export class FluidRoutingContext implements IFluidRoutingContext {
         routeContext?.addRoute(path, this);
     }
 
-    public addRoute(path: string, route: IFluidRequestHandler) {
+    public addRoute(path: string, route: IFluidRoutingContext) {
         assert(!this.routes.has(path));
         this.routes.set(path, route);
     }
 
-    public async request(request: IRequest): Promise<IResponse> {
+    public async resolveHandle(request: IRequest): Promise<IResponse> {
         await this.realize();
         const parser = RequestParser.create(request);
         const id = parser.pathParts[0];
         const route = this.routes.get(id ?? defaultRoutePath);
         if (route !== undefined) {
-            return route.request(id === undefined ? parser : parser.createSubRequest(1));
+            return route.resolveHandle(id === undefined ? parser : parser.createSubRequest(1));
         }
         if (this.requestHandler !== undefined) {
             return this.requestHandler(request, id);
@@ -80,7 +79,7 @@ export class TerminatingRoute implements IFluidRoutingContext
         context.addRoute(path, this);
     }
 
-    public async request(request: IRequest): Promise<IResponse> {
+    public async resolveHandle(request: IRequest): Promise<IResponse> {
         if (request.url === "" || request.url === "/") {
             return { status: 200, mimeType: "fluid/object", value: await this.value() };
         }
@@ -131,10 +130,10 @@ export class FluidHandleContext<T extends IFluidLoadableObjectWithContext>
     // IFluidRoutingContext methods
     public get absolutePath() { return this.context.absolutePath; }
     public get routeContext() { return this.context.routeContext; }
-    public async request(request: IRequest) { return this.context.request(request); }
+    public async resolveHandle(request: IRequest) { return this.context.resolveHandle(request); }
 
     // back-compat for 0.35, to satisfy RemoteFluidObjectHandle.get() implementation
-    public async resolveHandle(request: IRequest) { return this.request(request); }
+    public async request(request: IRequest) { return this.resolveHandle(request); }
 
     public addRoute(path: string, route: IFluidRoutingContext) {
         this.context.addRoute(path, route);

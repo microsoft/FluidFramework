@@ -176,7 +176,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
     public get IFluidRouter(): IFluidRouter {
         return {
             get IFluidRouter() { return this; },
-            request: async (request: IRequest) => this.dataStoreRoutingContext.request(request),
+            request: async (request: IRequest) => this.dataStoreRoutingContext.resolveHandle(request),
         };
     }
 
@@ -209,9 +209,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
         if (this.dataStoreRoutingContext === undefined) {
             this.dataStoreRoutingContext =
                 new FluidRoutingContext(this.id, {
-                    request: async (request: IRequest) => {
-                        const context = (this.dataStoreContext.containerRuntime as any).IFluidHandleContext;
-                        return context.resolveHandle(request) as Promise<IResponse>;
+                    resolveHandle: async (request: IRequest) => {
+                        const context: IFluidHandleContext =
+                            (this.dataStoreContext.containerRuntime as any).IFluidHandleContext;
+                        return context.resolveHandle(request);
                     },
                     absolutePath: "",
                     addRoute: () => {},

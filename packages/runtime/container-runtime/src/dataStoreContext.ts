@@ -182,7 +182,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         const obj = this.channelRoutingContext;
         return {
             get IFluidRouter() { return this; },
-            request: async (request: IRequest) => obj.request(request),
+            request: async (request: IRequest) => obj.resolveHandle(request),
         };
     }
 

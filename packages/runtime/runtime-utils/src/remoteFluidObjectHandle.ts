@@ -37,7 +37,7 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
 
     public async get(): Promise<any> {
         if (this.objectP === undefined) {
-            this.objectP = this.routeContext.request({ url: this.absolutePath })
+            this.objectP = this.routeContext.resolveHandle({ url: this.absolutePath })
                 .then<IFluidObject>((response) =>
                     response.mimeType === "fluid/object"
                         ? response.value as IFluidObject

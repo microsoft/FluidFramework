@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidRequestHandler } from "./fluidRouter";
+import { IRequest, IResponse } from "./fluidRouter";
 import { IFluidObject } from "./fluidObject";
 import { IFluidLoadable } from "./fluidLoadable";
 
@@ -15,7 +15,7 @@ export const defaultRoutePath = "";
  * Base interface for IFluidHandleContext.
  * It is used to represent a route in routing, base for an object that implements IFluidHandleContext
  */
-export interface IFluidRoutingContext extends IFluidRequestHandler {
+export interface IFluidRoutingContext  {
     /**
      * The absolute path to the handle context from the root.
      */
@@ -28,6 +28,7 @@ export interface IFluidRoutingContext extends IFluidRequestHandler {
     readonly routeContext?: IFluidRoutingContext;
 
     addRoute(path: string, route: IFluidRoutingContext): void;
+    resolveHandle(request: IRequest): Promise<IResponse>;
 }
 
 /**
