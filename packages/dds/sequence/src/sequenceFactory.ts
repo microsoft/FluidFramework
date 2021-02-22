@@ -28,7 +28,7 @@ export class SharedStringFactory implements IChannelFactory {
         packageVersion: pkgVersion,
     };
 
-    public static segmentFromSpec(spec: any) {
+    public static segmentFromSpec(spec: any): SharedStringSegment {
         const maybeText = MergeTree.TextSegment.fromJSONObject(spec);
         if (maybeText) { return maybeText; }
 
