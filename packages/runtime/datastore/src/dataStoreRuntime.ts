@@ -205,7 +205,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
 
         this.dataStoreRoutingContext = this.dataStoreContext.channelRoutingContext;
 
-        // back-compat: added in 0.35: this should be unconditional
+        // back-compat: added in 0.35: remove in future versions
         if (this.dataStoreRoutingContext === undefined) {
             this.dataStoreRoutingContext =
                 new FluidRoutingContext(this.id, {

@@ -133,7 +133,7 @@ export class FluidHandleContext<T extends IFluidLoadableObjectWithContext>
     public get routeContext() { return this.context.routeContext; }
     public async request(request: IRequest) { return this.context.request(request); }
 
-    // back-compat, to satisfy RemoteFluidObjectHandle.get() implementation
+    // back-compat for 0.35, to satisfy RemoteFluidObjectHandle.get() implementation
     public async resolveHandle(request: IRequest) { return this.request(request); }
 
     public addRoute(path: string, route: IFluidRoutingContext) {
