@@ -91,7 +91,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                 const lastCheckpointFromSummary =
                     await this.loadStateFromSummary(tenantId, documentId, gitManager, context.log);
                 if (lastCheckpointFromSummary === undefined) {
-                    context.log.error(`Summary cannot be fetched`, { messageMetaData });
+                    context.log?.error(`Summary cannot be fetched`, { messageMetaData });
                     lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
                 } else {
                     lastCheckpoint = lastCheckpointFromSummary;
@@ -153,7 +153,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         tenantId: string,
         documentId: string,
         gitManager: IGitManager,
-        logger: ILogger): Promise<IDeliState | undefined> {
+        logger: ILogger | undefined): Promise<IDeliState | undefined> {
         const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
         if (existingRef) {
             try {
