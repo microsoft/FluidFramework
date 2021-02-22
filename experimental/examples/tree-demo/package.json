@@ -46,11 +46,12 @@
     "@fluidframework/view-interfaces": "^0.35.0",
     "best-random": "^1.0.0",
     "react": "^16.10.2",
-    "react-dom": "^16.10.2"
+    "react-dom": "^16.10.2",
+    "use-resize-observer": "^7.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0-0",
-    "@fluidframework/eslint-config-fluid": "^0.22.1-0",
+    "@fluidframework/eslint-config-fluid": "^0.23.0-0",
     "@fluidframework/test-tools": "^0.2.3074",
     "@fluidframework/webpack-fluid-loader": "^0.35.0",
     "@types/expect-puppeteer": "2.2.1",

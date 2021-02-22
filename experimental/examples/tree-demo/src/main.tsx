@@ -16,6 +16,7 @@ import {
 import React from "react";
 import ReactDOM from "react-dom";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import useResizeObserver from "use-resize-observer";
 import { IStage, StageView } from "./stage";
 import { ClientManager, BubbleProxy, makeBubble } from "./model";
 import { Stats } from "./stats";
@@ -25,11 +26,11 @@ const stage: IStage = {
     height: 480,
 };
 
-const stats = new Stats();
-const bubble0 = new BubbleProxy();
-const bubble1 = new BubbleProxy();
-
 export class TreeDemo extends DataObject implements IFluidHTMLView {
+    private readonly stats = new Stats();
+    private readonly bubble0 = new BubbleProxy();
+    private readonly bubble1 = new BubbleProxy();
+
     public static get Name() { return "@fluid-experimental/tree-demo"; }
     private maybeTree?: SharedTree = undefined;
     private maybeClientManager?: ClientManager = undefined;
@@ -56,43 +57,51 @@ export class TreeDemo extends DataObject implements IFluidHTMLView {
             this.runtime.getAudience(),
         );
 
-        this.runtime.once("connected", (...args) => {
+        const onConnected = () => {
+            // Out of paranoia, we periodically check to see if your client Id has changed and
+            // update the tree if it has.
             setInterval(() => {
                 const clientId = this.runtime.clientId;
-
                 if (clientId !== undefined && clientId !== this.clientManager.getClientId(this.tree.currentView)) {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     this.clientManager.setClientId(this.tree, this.runtime.clientId!);
                 }
             }, 1000);
-        });
+        };
+
+        // Wait for connection to begin checking client Id.
+        if (this.runtime.connected) {
+            onConnected();
+        } else {
+            this.runtime.once("connected", onConnected);
+        }
     }
 
     public render(div: HTMLElement) {
         const formatFloat = (n: number) => Math.round(n * 10) / 10;
 
-        const renderLoop = () => {
-            if (stats.smoothFps > 30) {
-                this.clientManager.addBubble(this.tree, this.makeBubble());
-            } else if (stats.smoothFps < 30) {
-                this.clientManager.removeBubble(this.tree);
-            }
-
+        const App = () => {
             const view = this.tree.currentView;
             const bubbles = this.clientManager.localBubbles(view);
 
+            if (this.stats.smoothFps > 31) {
+                this.clientManager.addBubble(this.tree, this.makeBubble());
+            } else if (this.stats.smoothFps < 30) {
+                this.clientManager.removeBubble(this.tree);
+            }
+
             const changes: Change[] = [];
             for (const bubbleId of bubbles) {
-                bubble0.moveTo(view, bubbleId);
-                changes.push(...bubble0.move(stage, view));
+                this.bubble0.moveTo(view, bubbleId);
+                changes.push(...this.bubble0.move(stage, view));
             }
 
             // Collide local bubbles with selves
             for (let i = 0; i < bubbles.length; i++) {
-                bubble0.moveTo(view, bubbles[i]);
+                this.bubble0.moveTo(view, bubbles[i]);
                 for (let j = i + 1; j < bubbles.length; j++) {
-                    bubble1.moveTo(view, bubbles[j]);
-                    changes.push(...bubble0.collide(bubble1));
+                    this.bubble1.moveTo(view, bubbles[j]);
+                    changes.push(...this.bubble0.collide(this.bubble1));
                 }
             }
 
@@ -103,31 +112,45 @@ export class TreeDemo extends DataObject implements IFluidHTMLView {
                 bubbleCount++;
 
                 for (const bubbleId of bubbles) {
-                    bubble0.moveTo(view, bubbleId);
-                    changes.push(...bubble0.collide(remoteBubble));
+                    this.bubble0.moveTo(view, bubbleId);
+                    changes.push(...this.bubble0.collide(remoteBubble));
                 }
             });
 
             this.tree.applyEdit(...changes);
 
-            ReactDOM.render(
-                <div id="root" style={{ position: "absolute", inset: "0px" }}>
-                    <div>{`${bubbles.length}/${bubbleCount} bubbles @ ${formatFloat(stats.smoothFps)} fps`}</div>
-                    <div>{`Total FPS: ${formatFloat(stats.totalFps)} (Glitches: ${stats.glitchCount})`}</div>
-                    <div>{``}</div>
+            // Observe changes to the visible size and update physics accordingly.
+            const { ref } = useResizeObserver<HTMLDivElement>({
+                onResize: ({ width, height }) => {
+                    stage.width = width as number;
+                    stage.height = height as number;
+                },
+            });
+
+            return (
+                <div ref={ref} style={{ position: "absolute", inset: "0px" }}>
+                    <div>{`${bubbles.length}/${bubbleCount} bubbles @ ${
+                        formatFloat(this.stats.smoothFps)} fps (${this.stats.lastFrameElapsed} ms)`}</div>
+                    <div>{`Total FPS: ${formatFloat(this.stats.totalFps)} (Glitches: ${this.stats.glitchCount})`}</div>
                     <StageView
                         width={stage.width}
                         height={stage.height}
                         tree={this.tree.currentView}
                         mgr={this.clientManager}></StageView>
-                </div>,
-                div);
-
-            requestAnimationFrame(renderLoop);
-            stats.endFrame();
+                </div>
+            );
         };
 
-        stats.start();
+        const renderLoop = () => {
+            ReactDOM.render(
+                <div style={{ position: "absolute", inset: "0px" }}>
+                    <App></App>
+                </div>, div);
+            requestAnimationFrame(renderLoop);
+            this.stats.endFrame();
+        };
+
+        this.stats.start();
         renderLoop();
     }
 

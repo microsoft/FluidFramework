@@ -68,7 +68,7 @@ const testSharedDataObjectFactory2 = new DataObjectFactory(
 describe("Loader.request", () => {
     let driver: ITestDriver;
     before(()=>{
-        driver = getFluidTestDriver() as ITestDriver;
+        driver = getFluidTestDriver() as unknown as ITestDriver;
     });
 
     const codeDetails: IFluidCodeDetails = {
