@@ -53,8 +53,7 @@
     "async": "^2.6.1",
     "lodash": "^4.17.21",
     "moniker": "^0.1.2",
-    "nconf": "^0.11.0",
-    "winston": "^3.1.0"
+    "nconf": "^0.11.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0-0",

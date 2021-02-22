@@ -8,9 +8,6 @@
   "author": "Microsoft",
   "sideEffects": false,
   "main": "dist/index.js",
-  "browser": {
-    "winston": false
-  },
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",

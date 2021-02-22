@@ -4,6 +4,7 @@
  */
 
 export * from "./kafkaFactory";
+export * from "./logger";
 export * from "./messageReceiver";
 export * from "./messageSender";
 export * from "./metricClient";
