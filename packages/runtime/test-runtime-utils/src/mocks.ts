@@ -370,10 +370,8 @@ export class MockQuorum implements IQuorum, EventEmitter {
 /**
  * Mock implementation of IRuntime for testing that does nothing
  */
-export class MockFluidDataStoreRuntime extends EventEmitter
-    implements IFluidDataStoreRuntime, IFluidDataStoreChannel {
-    public get IFluidRouter() { return this; }
-
+export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel
+{
     public get objectsRoutingContext(): IFluidHandleContext {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const self = this;

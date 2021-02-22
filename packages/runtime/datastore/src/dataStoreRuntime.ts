@@ -10,7 +10,6 @@ import {
     IFluidRoutingContext,
     IRequest,
     IResponse,
-    defaultRoutePath,
     IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import {
@@ -61,7 +60,6 @@ import {
     FluidHandleContext,
     FluidRoutingContext,
     TerminatingRoute,
-    requestFluidObject,
     convertSummaryTreeToITree,
     SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
@@ -220,13 +218,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
             assert(this.dataStoreRoutingContext !== undefined);
         }
 
-        // Supporting legacy URIs: empty request is same as /_custom/ path.
-        new TerminatingRoute(
-            defaultRoutePath,
-            this.dataStoreRoutingContext,
-            async () => requestFluidObject(this, "/"),
-        );
-
         this.objectsRoutingContext = new FluidHandleContext(
             this,
             new FluidRoutingContext("_custom", this.dataStoreRoutingContext, undefined, this.request.bind(this)));
@@ -342,7 +333,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
         const route = new TerminatingRoute(
             id,
             this.channelsRoutingContext,
-            async () => context.getChannel());
+            async () => { return { status: 200, mimeType: "fluid/object", value: await context.getChannel() }; });
 
         // Supporting legacy URI format: required to handle old external URIs and handles in old files
         // Note: this may explode if there is ID collision (i.e. id === "_channels" || id === "_custom")
@@ -361,6 +352,12 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
         this.removeAllListeners();
     }
 
+    /**
+    * Used only to service custom routes. I.e. channels can not be accessed through this path, unless
+    * custom data object implements such behavior.
+    * Users of this class should overwrite this method, directly or indirectly through mixinRequestHandler.
+     * @param request - request on custom route
+     */
     public async request(request: IRequest): Promise<IResponse> {
         return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
     }

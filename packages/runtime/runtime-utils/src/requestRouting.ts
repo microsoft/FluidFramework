@@ -73,7 +73,7 @@ export class TerminatingRoute implements IFluidRoutingContext
     constructor(
         path: string,
         protected readonly context: IFluidRoutingContext,
-        public readonly value: () => Promise<IFluidObject>,
+        public readonly value: () => Promise<IResponse>,
      ) {
         this.absolutePath = generateHandleContextPath(path, context);
         context.addRoute(path, this);
@@ -81,7 +81,7 @@ export class TerminatingRoute implements IFluidRoutingContext
 
     public async resolveHandle(request: IRequest): Promise<IResponse> {
         if (request.url === "" || request.url === "/") {
-            return { status: 200, mimeType: "fluid/object", value: await this.value() };
+            return this.value();
         }
         return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
     }

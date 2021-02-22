@@ -178,12 +178,18 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this.registry;
     }
 
+    // Note: we could route requests to this.channelRoutingContext.resolveHandle()
+    // This will ensure old behavior, allowing us to requests DDSs, for example.
+    // This does not look correct, given the only way we get here is through creation path, i.e.
+    // data store was created and this router is returned to query custom route only!
+    // For everything else, please use handles!
     public get IFluidRouter(): IFluidRouter {
-        const obj = this.channelRoutingContext;
         return {
             get IFluidRouter() { return this; },
-            request: async (request: IRequest) => obj.resolveHandle(request),
-        };
+            request: async (request: IRequest) => {
+                const runtime = await this.realize();
+                return runtime.request(request);
+            }};
     }
 
     public async isRoot(): Promise<boolean> {
@@ -244,15 +250,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.id,
             _containerRuntime.channelsRoute,
             async () => { await this.realize(); },
-            // back-compat: 0.35
-            // Supporting 0.34 data stores that do not utilize yet proper route registration
-            async (request: IRequest) => {
-                const router = (await this.realize()) as IFluidObject;
-                if (router.IFluidRouter !== undefined) {
-                    return router.IFluidRouter.request(request);
-                }
-                return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
-            });
+            // Supporting legacy URI format:
+            // /dataStoreId -> map to custom empty route "/".
+            // /dataStoreId/custom -> map to custom route "/custom".
+            async (request: IRequest) => (await this.realize()).request(request));
+
         // Supporting legacy URI format: required to handle old external URIs and handles in old files
         // Note: this may explode if there is ID collision (i.e. id === "_channels" || id === "_blobs")
         try {

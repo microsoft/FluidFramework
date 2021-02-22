@@ -215,6 +215,14 @@ export interface IFluidDataStoreChannel extends IDisposable {
      * @param localOpMetadata - The local metadata associated with the original message.
      */
     reSubmit(type: string, content: any, localOpMetadata: unknown);
+
+    /*
+    * IContainerRuntime[Base].*create*DataStore() methods return IFluidRouter.
+    * Requests to it map to calls to this API.
+    * IFluidDataStoreChannel implementation should use it only for custom routes, i.e.
+    * this path should not be used for requesting channels (DDSs)
+    */
+    request(request: IRequest): Promise<IResponse>;
 }
 
 export type CreateChildSummarizerNodeFn = (

@@ -457,7 +457,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 {
     public get IContainerRuntime() { return this; }
     public get IContainerRuntimeDirtyable() { return this; }
-    public get IFluidRouter() { return this; }
 
     // back-compat: Used by loader in <= 0.35
     public readonly runtimeVersion = pkgVersion;

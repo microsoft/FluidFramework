@@ -1,3 +1,15 @@
+## 0.36 Breaking changes
+
+- [Request Routing](#Request-Routing)
+Please pay close attention to this section, as many things changed!
+1. The routes produced by handles are different!
+   - Instead of /\<dataStoreId>/root, handle.absolutePath will have /_channels/\<dataStoreId>/_channels/root. 
+   - Instead of /\<dataStoreId>\[/...], handle.absolutePath will have /_channels/\<dataStoreId>/_custom\[/...]. 
+   - Old routes (and old handles) will continue to work, but they are discouraged. In general, no assumption should be made on structure or shape of internal URIs (that are for handle serialization / de-serialization). Container authors should map external URIs to internal handles + request to custom objects (IFluidObject) that handle resolves to.
+2. APIs like _createDataStoreWithProps, createDataStore, createRootDataStore has been returning IFluidRouter. Client were able to get away with casting returned objects to IFluidDataStoreChannel, this will no longer work. IFluidDataStoreChannel is internal object and there is no way to get to it.
+
+
+
 ## 0.35 Breaking changes
 - [Removed some api implementations from odsp driver](#Removed-some-api-implemenations-from-odsp-driver)
 - [get-tinylicious-container and get-session-storage-container moved](#get-tinylicious-container-and-get-session-storage-container-moved)
