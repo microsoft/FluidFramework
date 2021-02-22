@@ -66,7 +66,7 @@
     "@fluidframework/build-common": "^0.20.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0-0",
     "@fluidframework/mocha-test-setup": "^0.27.0",
-    "@microsoft/api-extractor": "^7.7.7",
+    "@microsoft/api-extractor": "^7.13.2",
     "@types/bytes": "^3.1.0",
     "@types/compression": "0.0.33",
     "@types/cookie-parser": "^1.4.1",
