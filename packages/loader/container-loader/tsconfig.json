@@ -6,8 +6,7 @@
     "compilerOptions": {
         "rootDir": "./src",
         "outDir": "./dist",
-        "composite": true,
-        "noUnusedLocals": false
+        "composite": true
     },
     "include": [
         "src/**/*"
