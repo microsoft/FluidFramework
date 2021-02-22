@@ -28,6 +28,7 @@ export interface ICredentials {
  * Implementation of the IHistorian interface that calls out to a REST interface
  */
 export class Historian implements IHistorian {
+    // If the auth token need refresh after the permission check fails, it is recalled.
     private restWrapperP: Promise<RestWrapper>;
     private restWrapper: RestWrapper;
 
