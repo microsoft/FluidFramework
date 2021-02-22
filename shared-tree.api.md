@@ -78,7 +78,7 @@ export enum ChangeType {
 
 // @public @sealed
 export abstract class Checkout extends EventEmitterWithErrorHandling implements IDisposable {
-    protected constructor(tree: SharedTree, currentView: Snapshot, onEditCommitted: any);
+    protected constructor(tree: SharedTree, currentView: Snapshot, onEditCommitted: EditCommittedHandler);
     abortEdit(): void;
     applyChanges(...changes: Change[]): void;
     applyEdit(...changes: Change[]): EditId;
@@ -167,6 +167,9 @@ export interface Edit extends EditBase {
 export interface EditBase {
     readonly changes: readonly Change[];
 }
+
+// @public
+export type EditCommittedHandler = (id: EditId) => void;
 
 // @public
 export type EditId = UuidString & {

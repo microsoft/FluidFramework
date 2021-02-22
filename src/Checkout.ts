@@ -11,10 +11,10 @@ import { Change, Edit, EditResult } from './PersistedTypes';
 import { newEdit } from './EditUtilities';
 import { EditValidationResult, Snapshot } from './Snapshot';
 import { Transaction } from './Transaction';
-import { SharedTree, SharedTreeEvent } from './SharedTree';
+import { EditCommittedHandler, SharedTree, SharedTreeEvent } from './SharedTree';
 
 /**
- * An event emitted by a `Checkout` to indicate a state change
+ * An event emitted by a `Checkout` to indicate a state change.
  * @public
  */
 export enum CheckoutEvent {
@@ -35,6 +35,9 @@ export enum CheckoutEvent {
  * Specifically no sequenced edits will arrive during an ongoing edit (to implement snapshot isolation):
  * they will be applied asynchronously some time after the ongoing edit is ended.
  *
+ * Events emitted by `Checkout` are documented in {@link CheckoutEvent}.
+ * Exceptions thrown during event handling will be emitted as error events, which are automatically surfaced as error events on the
+ * `SharedTree` used at construction time.
  * @public
  * @sealed
  */
@@ -56,7 +59,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 	/**
 	 * A handler for 'committedEdit' SharedTreeEvent
 	 */
-	private readonly editCommittedHandler;
+	private readonly editCommittedHandler: EditCommittedHandler;
 
 	/**
 	 * The shared tree this checkout views/edits.
@@ -74,7 +77,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 
 	public disposed: boolean = false;
 
-	protected constructor(tree: SharedTree, currentView: Snapshot, onEditCommitted: any) {
+	protected constructor(tree: SharedTree, currentView: Snapshot, onEditCommitted: EditCommittedHandler) {
 		super();
 		this.tree = tree;
 		this.previousView = currentView;
@@ -82,6 +85,9 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 
 		// If there is an ongoing edit, emitChange will no-op, which is fine.
 		this.tree.on(SharedTreeEvent.EditCommitted, this.editCommittedHandler);
+		this.on('error', (error: unknown) => {
+			this.tree.emit('error', error);
+		});
 	}
 
 	/**

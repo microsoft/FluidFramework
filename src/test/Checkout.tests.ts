@@ -158,6 +158,23 @@ export function checkoutTests(
 			expect(() => checkout.getEditStatus()).throws();
 		});
 
+		it('Surfaces error events to SharedTree', async () => {
+			const { checkout, tree } = await setUpTestCheckout();
+			const message = 'Simulated unexpected error in ViewChange event handler';
+			checkout.on(CheckoutEvent.ViewChange, () => {
+				throw Error(message);
+			});
+			let treeErrorHandlerWasCalled = false;
+			tree.on('error', (error) => {
+				treeErrorHandlerWasCalled = true;
+				expect(error).to.have.property('message').that.equals(message);
+			});
+
+			// This could alternatively actually cause a ViewChange via application of an edit.
+			checkout.emit(CheckoutEvent.ViewChange, { changed: [], added: [], removed: [] });
+			expect(treeErrorHandlerWasCalled).equals(true);
+		});
+
 		it('exposes the current edit status in the face of valid edits', async () => {
 			const { checkout } = await setUpTestCheckout({ initialTree: simpleTestTree });
 

@@ -76,7 +76,7 @@ export enum SharedTreeEvent {
 	 * 	1. A locally generated edit is added to the log.
 	 * 	2. A remotely generated edit is added to the log.
 	 * Note that, for locally generated edits, this event will not be emitted again when that edit is sequenced.
-	 * Passed the EditId of the committed edit.
+	 * Passed the EditId of the committed edit, i.e. supports callbacks of type {@link EditCommittedHandler}.
 	 */
 	EditCommitted = 'committedEdit',
 	/**
@@ -86,6 +86,11 @@ export enum SharedTreeEvent {
 	 */
 	ChunksUploaded = 'uploadedChunks',
 }
+
+/**
+ * Expected type for a handler of the `EditCommitted` event.
+ */
+export type EditCommittedHandler = (id: EditId) => void;
 
 // TODO:#48151: Support reference payloads, and use this type to identify them.
 /**
