@@ -145,8 +145,10 @@ export class Historian implements IHistorian {
     }
 
     private async createRestWrapper(): Promise<RestWrapper> {
+        this.restWrapper = undefined;
         const queryString: { token?; disableCache?} = {};
         let cacheBust = false;
+
         if (this.disableCache && this.historianApi) {
             queryString.disableCache = this.disableCache;
         } else if (this.disableCache) {
