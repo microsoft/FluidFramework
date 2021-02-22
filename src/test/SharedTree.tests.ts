@@ -411,7 +411,6 @@ describe('SharedTree', () => {
 			containerRuntimeFactory.processAllMessages();
 
 			let edit;
-
 			assertNoDelta(tree, () => {
 				const build = Change.build([], 0 as DetachedSequenceId);
 				edit = newEdit([build]);
