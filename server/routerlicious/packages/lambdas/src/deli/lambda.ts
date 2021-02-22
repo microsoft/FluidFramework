@@ -413,7 +413,7 @@ export class DeliLambda implements IPartitionLambda {
                         messageMetaData: {
                             documentId: this.documentId,
                             tenantId: this.tenantId,
-                        }
+                        },
                     });
 
                     const controlContents = controlMessage.contents as IUpdateDSNControlMessageContents;
@@ -427,7 +427,7 @@ export class DeliLambda implements IPartitionLambda {
                                 messageMetaData: {
                                     documentId: this.documentId,
                                     tenantId: this.tenantId,
-                                }
+                                },
                             });
                         }
 
