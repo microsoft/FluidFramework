@@ -262,6 +262,7 @@ export function checkoutTests(
 			const { checkout, tree } = await setUpTestCheckout();
 			checkout.openEdit();
 			const editId = checkout.closeEdit();
+			await checkout.waitForPendingUpdates();
 			expect(tree.edits.length).equals(1);
 			expect(tree.edits.tryGetEdit(editId)).is.not.undefined;
 		});
@@ -298,6 +299,7 @@ export function checkoutTests(
 			checkout.applyChanges(Delete.create(StableRange.only(left)));
 			checkout.applyChanges(Delete.create(StableRange.only(right)));
 			checkout.closeEdit();
+			await checkout.waitForPendingUpdates();
 			expect(changeCount).equals(2);
 		});
 
@@ -333,6 +335,8 @@ export function checkoutTests(
 			expect(tree.equals(secondTree)).to.be.true;
 			checkout.closeEdit();
 			secondCheckout.closeEdit();
+			await checkout.waitForPendingUpdates();
+			await secondCheckout.waitForPendingUpdates();
 			containerRuntimeFactory.processAllMessages();
 			expect(tree.equals(secondTree)).to.be.true;
 			await checkout.waitForPendingUpdates();
@@ -357,6 +361,7 @@ export function checkoutTests(
 			// Concurrently, the second client deletes the right node. This will not conflict with the operation performed
 			// on the left trait on the first client.
 			secondCheckout.applyEdit(Delete.create(StableRange.only(right)));
+			await secondCheckout.waitForPendingUpdates();
 
 			// Deliver the remote change. Since there will not be any conflicts, the result should merge locally and both trait
 			// modifications should be reflected in the current view.
@@ -385,6 +390,7 @@ export function checkoutTests(
 			expect(rightTrait.length).equals(0);
 
 			checkout.closeEdit();
+			await checkout.waitForPendingUpdates();
 			containerRuntimeFactory.processAllMessages();
 
 			expect(tree.equals(secondTree)).to.be.true;
@@ -406,6 +412,7 @@ export function checkoutTests(
 
 			// Concurrently, the second client deletes the right node. This will conflict with the move operation by the first client.
 			secondCheckout.applyEdit(Delete.create(StableRange.only(right)));
+			await secondCheckout.waitForPendingUpdates();
 
 			containerRuntimeFactory.processAllMessages();
 			await checkout.waitForPendingUpdates();
