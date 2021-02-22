@@ -4,10 +4,6 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
-
-
-
         {
             "type": "node",
             "request": "attach",
@@ -264,7 +260,6 @@
                 "--no-timeouts",
                 "--exit",
                 "../../dist/test/${fileBasenameNoExtension}.js", ],
-            "env": { "FLUID_TEST_VERBOSE": 1, },
             "cwd": "${fileDirname}",
             "outFiles": ["${fileDirname}/../../dist/**/*.js"],
         }
