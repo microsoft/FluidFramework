@@ -29,7 +29,7 @@ const passwordTokenConfig = (username, password): OdspTokenConfig => ({
     password,
 });
 
-interface IOdspTestLoginInfo {
+export interface IOdspTestLoginInfo {
     server: string;
     username: string;
     password: string;
