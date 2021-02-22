@@ -27,6 +27,7 @@ describe("canvas", () => {
         await page.mouse.down();
         await page.mouse.move(126, 19);
         await page.mouse.up();
+        await page.waitFor(() => window["FluidLoader"].isSynchronized());
 
         // compare canvases
         const result = await page.evaluate(() => {
@@ -37,14 +38,22 @@ describe("canvas", () => {
             const height = Math.min(...canvases.map((c) => c.height));
 
             const imgs = canvases.map((c) => c.getContext("2d").getImageData(0, 0, width, height).data);
-
-            if (imgs[0].length === 0 || imgs[1].length === 0 || imgs[0].some((e, i) => imgs[1][i] !== e)) {
-                return false;
-            } else {
-                return true;
+            if (imgs[0].length == 0) {
+                return "Canvas 1 doesn't have any pixels";
             }
+            if (imgs[1].length == 0) {
+                return "Canvas 2 doesn't have any pixels";
+            }
+
+            const diff: { index: number, value1: number, value2: number }[] = [];
+            imgs[0].forEach((value, index) => {
+                if (imgs[1][index] !== value) {
+                    diff.push({index, value1: value, value2: imgs[1][index]});
+                }
+            });
+            return diff;
         });
 
-        expect(result).toEqual(true);
+        expect(result).toEqual([]);
     });
 });
