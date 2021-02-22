@@ -11,7 +11,11 @@ import {
     Uint8ArrayToString,
     unreachableCase,
 } from "@fluidframework/common-utils";
-import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+    IDocumentStorageService,
+    ISummaryContext,
+    IDocumentStorageServicePolicies,
+ } from "@fluidframework/driver-definitions";
 import * as resources from "@fluidframework/gitresources";
 import { buildHierarchy, getGitType, getGitMode } from "@fluidframework/protocol-base";
 import {
@@ -43,7 +47,10 @@ export class DocumentStorageService implements IDocumentStorageService {
         return this._logTailSha;
     }
 
-    constructor(public readonly id: string, public manager: gitStorage.GitManager) {
+    constructor(
+        public readonly id: string,
+        public manager: gitStorage.GitManager,
+        public readonly policies?: IDocumentStorageServicePolicies) {
     }
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTreeEx | null> {

@@ -68,7 +68,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0-0",
-    "@fluidframework/eslint-config-fluid": "^0.22.1-0",
+    "@fluidframework/eslint-config-fluid": "^0.23.0-0",
     "@fluidframework/server-test-utils": "^0.1020.0",
     "@types/async": "^2.0.50",
     "@types/json-stringify-safe": "^5.0.0",

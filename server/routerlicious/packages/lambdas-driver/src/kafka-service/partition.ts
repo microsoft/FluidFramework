@@ -26,9 +26,10 @@ import { Context } from "./context";
 export class Partition extends EventEmitter {
     private q: AsyncQueue<IQueuedMessage>;
     private readonly lambdaP: Promise<IPartitionLambda>;
-    private lambda: IPartitionLambda;
+    private lambda: IPartitionLambda | undefined;
     private readonly checkpointManager: CheckpointManager;
     private readonly context: Context;
+    private closed = false;
 
     constructor(
         private readonly id: number,
@@ -54,7 +55,8 @@ export class Partition extends EventEmitter {
         this.q = queue(
             (message: IQueuedMessage, callback) => {
                 try {
-                    this.lambda.handler(message);
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    this.lambda!.handler(message);
                     callback();
                 } catch (error) {
                     callback(error);
@@ -86,10 +88,16 @@ export class Partition extends EventEmitter {
     }
 
     public process(rawMessage: IQueuedMessage) {
+        if (this.closed) {
+            return;
+        }
+
         this.q.push(rawMessage);
     }
 
     public close(closeType: LambdaCloseType): void {
+        this.closed = true;
+
         // Stop any pending message processing
         this.q.kill();
 
@@ -106,7 +114,7 @@ export class Partition extends EventEmitter {
                 // Lambda never existed - no need to close
             });
 
-        return;
+        this.removeAllListeners();
     }
 
     /**

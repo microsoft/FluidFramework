@@ -19,9 +19,11 @@ import {
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
+import { CreateProcessingError } from "@fluidframework/container-utils";
 import {
     assert,
     Deferred,
+    LazyPromise,
     TypedEventEmitter,
     unreachableCase,
 } from "@fluidframework/common-utils";
@@ -35,7 +37,6 @@ import {
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
-    ITreeEntry,
     SummaryType,
     ISummaryBlob,
     ISummaryTree,
@@ -48,6 +49,7 @@ import {
     IFluidDataStoreContext,
     IFluidDataStoreChannel,
     IGarbageCollectionData,
+    IGarbageCollectionSummaryDetails,
     IInboundSignalMessage,
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
@@ -66,7 +68,13 @@ import {
     IChannelFactory,
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
-import {  GCDataBuilder, getChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
+import {
+    cloneGCData,
+    GCDataBuilder,
+    getChildNodesGCData,
+    getChildNodesUsedRoutes,
+    removeRouteFromAllNodes,
+} from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
@@ -134,13 +142,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this._attachState;
     }
 
-    /**
-     * @deprecated - 0.21 back-compat
-     */
-    public get path(): string {
-        return this.id;
-    }
-
     public get absolutePath(): string {
         return generateHandleContextPath(this.id, this.routeContext);
     }
@@ -164,7 +165,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly contexts = new Map<string, IChannelContext>();
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private readonly pendingAttach = new Map<string, IAttachMessage>();
-    private requestHandler: ((request: IRequest) => Promise<IResponse>) | undefined;
     private bindState: BindState;
     // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
     private graphAttachState: AttachState = AttachState.Detached;
@@ -183,6 +183,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly audience: IAudience;
     public readonly logger: ITelemetryLogger;
 
+    // A map of child channel context ids to the context's used routes in the initial summary of this data store. This
+    // is used to initialize the context with data from the previous summary.
+    private readonly initialChannelUsedRoutesP: LazyPromise<Map<string, string[]>>;
+
+    // A map of child channel context ids to the channel context's GC data in the initial summary of this data store.
+    // This is used to initialize the context with data from the previous summary.
+    private readonly initialChannelGCDataP: LazyPromise<Map<string, IGarbageCollectionData>>;
+
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
@@ -199,6 +207,35 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this.audience = dataStoreContext.getAudience();
 
         const tree = dataStoreContext.baseSnapshot;
+
+        this.initialChannelUsedRoutesP = new LazyPromise(async () => {
+            // back-compat: 0.35.0. getInitialGCSummaryDetails is added to IFluidDataStoreContext in 0.35.0. Remove
+            // undefined check when N > 0.36.0.
+            const gcDetailsInInitialSummary = await this.dataStoreContext.getInitialGCSummaryDetails?.();
+            if (gcDetailsInInitialSummary?.usedRoutes !== undefined) {
+                // Remove the route to this data store, if it exists.
+                const usedRoutes = gcDetailsInInitialSummary.usedRoutes.filter(
+                    (id: string) => { return id !== "/" && id !== ""; },
+                );
+                return getChildNodesUsedRoutes(usedRoutes);
+            }
+            return new Map();
+        });
+
+        this.initialChannelGCDataP = new LazyPromise(async () => {
+            // back-compat: 0.35.0. getInitialGCSummaryDetails is added to IFluidDataStoreContext in 0.35.0. Remove
+            // undefined check when N > 0.36.0.
+            const gcDetailsInInitialSummary = await this.dataStoreContext.getInitialGCSummaryDetails?.();
+            if (gcDetailsInInitialSummary?.gcData !== undefined) {
+                const gcData = cloneGCData(gcDetailsInInitialSummary.gcData);
+                // Remove GC node for this data store, if any.
+                delete gcData.gcNodes["/"];
+                // Remove the back route to this data store that was added when generating each child's GC nodes.
+                removeRouteFromAllNodes(gcData.gcNodes, this.absolutePath);
+                return getChildNodesGCData(gcData);
+            }
+            return new Map();
+        });
 
         // Must always receive the data store type inside of the attributes
         if (tree?.trees !== undefined) {
@@ -246,7 +283,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         this.dataStoreContext.getCreateChildSummarizerNodeFn(
                             path,
                             { type: CreateSummarizerNodeSource.FromSummary },
-                        ));
+                        ),
+                        async () => this.getChannelInitialGCDetails(path));
                 }
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
@@ -309,20 +347,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
 
         // Otherwise defer to an attached request handler
-        if (this.requestHandler === undefined) {
-            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
-        } else {
-            return this.requestHandler(parser);
-        }
-    }
-
-    /**
-     * @deprecated
-     * Please use mixinRequestHandler() to override default behavior or request()
-     * // back-compat: remove in 0.30+
-     */
-    public registerRequestHandler(handler: (request: IRequest) => Promise<IResponse>) {
-        this.requestHandler = handler;
+        return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
     }
 
     public async getChannel(id: string): Promise<IChannel> {
@@ -429,10 +454,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             return;
         }
         this.bindState = BindState.Binding;
-        // Attach the runtime to the container via this callback
-        // back-compat: remove argument ans cast in 0.30.
-        (this.dataStoreContext as any).bindToContext(this);
-
+        this.dataStoreContext.bindToContext();
         this.bindState = BindState.Bound;
     }
 
@@ -476,64 +498,80 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
     public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         this.verifyNotClosed();
-        switch (message.type) {
-            case DataStoreMessageType.Attach: {
-                const attachMessage = message.contents as IAttachMessage;
-                const id = attachMessage.id;
 
-                // If a non-local operation then go and create the object
-                // Otherwise mark it as officially attached.
-                if (local) {
-                    assert(this.pendingAttach.has(id), "Unexpected attach (local) channel OP");
-                    this.pendingAttach.delete(id);
-                } else {
-                    assert(!this.contexts.has(id), `Unexpected attach channel OP,
-                        is in pendingAttach set: ${this.pendingAttach.has(id)},
-                        is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContext}`);
+        try {
+            // catches as data processing error whether or not they come from async pending queues
+            switch (message.type) {
+                case DataStoreMessageType.Attach: {
+                    const attachMessage = message.contents as IAttachMessage;
+                    const id = attachMessage.id;
 
-                    const flatBlobs = new Map<string, string>();
-                    const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
-
-                    const remoteChannelContext = new RemoteChannelContext(
-                        this,
-                        this.dataStoreContext,
-                        this.dataStoreContext.storage,
-                        (content, localContentMetadata) => this.submitChannelOp(id, content, localContentMetadata),
-                        (address: string) => this.setChannelDirty(address),
-                        id,
-                        snapshotTree,
-                        this.sharedObjectRegistry,
-                        flatBlobs,
-                        this.dataStoreContext.getCreateChildSummarizerNodeFn(
-                            id,
-                            {
-                                type: CreateSummarizerNodeSource.FromAttach,
-                                sequenceNumber: message.sequenceNumber,
-                                snapshot: attachMessage.snapshot,
-                            },
-                        ),
-                        attachMessage.type);
-
-                    this.contexts.set(id, remoteChannelContext);
-                    if (this.contextsDeferred.has(id)) {
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        this.contextsDeferred.get(id)!.resolve(remoteChannelContext);
+                    // If a non-local operation then go and create the object
+                    // Otherwise mark it as officially attached.
+                    if (local) {
+                        assert(this.pendingAttach.has(id), "Unexpected attach (local) channel OP");
+                        this.pendingAttach.delete(id);
                     } else {
-                        const deferred = new Deferred<IChannelContext>();
-                        deferred.resolve(remoteChannelContext);
-                        this.contextsDeferred.set(id, deferred);
+                        assert(!this.contexts.has(id), `Unexpected attach channel OP,
+                            is in pendingAttach set: ${this.pendingAttach.has(id)},
+                            is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContext}`);
+
+                        const flatBlobs = new Map<string, string>();
+                        const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+
+                        const remoteChannelContext = new RemoteChannelContext(
+                            this,
+                            this.dataStoreContext,
+                            this.dataStoreContext.storage,
+                            (content, localContentMetadata) => this.submitChannelOp(id, content, localContentMetadata),
+                            (address: string) => this.setChannelDirty(address),
+                            id,
+                            snapshotTree,
+                            this.sharedObjectRegistry,
+                            flatBlobs,
+                            this.dataStoreContext.getCreateChildSummarizerNodeFn(
+                                id,
+                                {
+                                    type: CreateSummarizerNodeSource.FromAttach,
+                                    sequenceNumber: message.sequenceNumber,
+                                    snapshot: attachMessage.snapshot,
+                                },
+                            ),
+                            async () => this.getChannelInitialGCDetails(id),
+                            attachMessage.type);
+
+                        this.contexts.set(id, remoteChannelContext);
+                        if (this.contextsDeferred.has(id)) {
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            this.contextsDeferred.get(id)!.resolve(remoteChannelContext);
+                        } else {
+                            const deferred = new Deferred<IChannelContext>();
+                            deferred.resolve(remoteChannelContext);
+                            this.contextsDeferred.set(id, deferred);
+                        }
                     }
+                    break;
                 }
-                break;
+
+                case DataStoreMessageType.ChannelOp:
+                    this.processChannelOp(message, local, localOpMetadata);
+                    break;
+                default:
             }
 
-            case DataStoreMessageType.ChannelOp:
-                this.processChannelOp(message, local, localOpMetadata);
-                break;
-            default:
+            this.emit("op", message);
+        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-throw-literal
+            throw CreateProcessingError(error, {
+                clientId: this.clientId,
+                messageClientId: message.clientId,
+                sequenceNumber: message.sequenceNumber,
+                clientSequenceNumber: message.clientSequenceNumber,
+                referenceSequenceNumber: message.referenceSequenceNumber,
+                minimumSequenceNumber: message.minimumSequenceNumber,
+                messageTimestamp: message.timestamp,
+            });
         }
-
-        this.emit("op", message);
     }
 
     public processSignal(message: IInboundSignalMessage, local: boolean) {
@@ -552,13 +590,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             // Removed when attach op is broadcast
             && !this.pendingAttach.has(id)
         );
-    }
-
-    // back-compat for N-2 <= 0.28, remove when N-2 >= 0.29
-    public async snapshotInternal(fullTree: boolean = false): Promise<ITreeEntry[]> {
-        const summaryTree = await this.summarize(fullTree);
-        const tree = convertSummaryTreeToITree(summaryTree.summary);
-        return tree.entries;
     }
 
     /**
@@ -598,8 +629,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      *    idenfied as belonging to the child.
      * 3. Adds a GC node for this channel to the nodes received from the children. All these nodes together represent
      *    the GC data of this channel.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    public async getGCData(): Promise<IGarbageCollectionData> {
+    public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
         const builder = new GCDataBuilder();
         // Iterate over each channel context and get their GC data.
         await Promise.all(Array.from(this.contexts)
@@ -608,7 +640,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 // graph so any references they might have won't be connected as well.
                 return this.isChannelAttached(contextId);
             }).map(async ([contextId, context]) => {
-                const contextGCData = await context.getGCData();
+                const contextGCData = await context.getGCData(fullGC);
                 // Prefix the child's id to the ids of its GC nodes so they can be identified as belonging to the child.
                 // This also gradually builds the id of each node to be a path from the root.
                 builder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
@@ -639,6 +671,30 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     /**
+     * Returns the GC details in initial summary for the channel with the given id. The initial summary of the data
+     * store contains the GC details of all the child channel contexts that were created before the summary was taken.
+     * We find the GC details belonging to the given channel context and return it.
+     * @param channelId - The id of the channel context that is asked for the initial GC details.
+     * @returns the requested channel's GC details in the initial summary.
+     */
+    private async getChannelInitialGCDetails(channelId: string): Promise<IGarbageCollectionSummaryDetails> {
+        const channelInitialUsedRoutes = await this.initialChannelUsedRoutesP;
+        const channelInitialGCData = await this.initialChannelGCDataP;
+
+        let channelUsedRoutes = channelInitialUsedRoutes.get(channelId);
+        // Currently, channel context's are always considered used. So, it there is no used route for it, we still
+        // need to mark it as used. Add self-route (empty string) to the channel context's used routes.
+        if (channelUsedRoutes === undefined || channelUsedRoutes.length === 0) {
+            channelUsedRoutes = [""];
+        }
+
+        return {
+            usedRoutes: channelUsedRoutes,
+            gcData: channelInitialGCData.get(channelId),
+        };
+    }
+
+    /**
      * Returns a summary at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
@@ -657,15 +713,18 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 // (i.e. it has a base mapping) - then we go ahead and summarize
                 return isAttached;
             }).map(async ([contextId, context]) => {
-                const contextSummary = await context.summarize(fullTree, trackState);
+                // If BlobAggregationStorage is engaged, we have to write full summary for data stores
+                // BlobAggregationStorage relies on this behavior, as it aggregates blobs across DDSs.
+                // Not generating full summary will mean data loss, as we will overwrite aggregate blob in new summary,
+                // and any virtual blobs that stayed (for unchanged DDSs) will need aggregate blob in previous summary
+                // that is no longer present in this summary.
+                // This is temporal limitation that can be lifted in future once BlobAggregationStorage becomes smarter.
+                const contextSummary = await context.summarize(true /* fullTree */, trackState);
                 summaryBuilder.addWithStats(contextId, contextSummary);
 
-                // back-compat 0.31 - Older versions will not have GC data in summary.
-                if (contextSummary.gcData !== undefined) {
-                    // Prefix the child's id to the ids of its GC nodes. This gradually builds the id of each node
-                    // to be a path from the root.
-                    gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
-                }
+                // Prefix the child's id to the ids of its GC nodes. This gradually builds the id of each node
+                // to be a path from the root.
+                gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
             }));
 
         this.updateGCNodes(gcDataBuilder);
@@ -696,12 +755,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         "getAttachSummary should always return a tree");
                     summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
 
-                    // back-compat 0.31 - Older versions will not have GC data in summary.
-                    if (contextSummary.gcData !== undefined) {
-                        // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node
-                        // to be a path from the root.
-                        gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
-                    }
+                    // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node
+                    // to be a path from the root.
+                    gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
                 } else {
                     // If this channel is not yet loaded, then there should be no changes in the snapshot from which
                     // it was created as it is detached container. So just use the previous snapshot.

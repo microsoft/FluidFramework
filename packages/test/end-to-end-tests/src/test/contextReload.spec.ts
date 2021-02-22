@@ -22,6 +22,7 @@ import {
     LocalCodeLoader,
     OpProcessingController,
     timeoutPromise,
+    LoaderContainerTracker,
 } from "@fluidframework/test-utils";
 import { Loader } from "@fluidframework/container-loader";
 import { V1, V2 } from "./compatUtils";
@@ -60,6 +61,7 @@ describe("context reload (hot-swap)", function() {
     let containerError = false;
     let dataStoreV1: TestDataStoreV1;
     let opProcessingController: OpProcessingController;
+    const loaderContainerTracker = new LoaderContainerTracker();
     const codeDetails = (version: string): oldTypes.IFluidCodeDetails => {
         return {
             package: { name: TestDataStore.type, version, fluid:{}},
@@ -88,6 +90,7 @@ describe("context reload (hot-swap)", function() {
             urlResolver: driver.createUrlResolver(),
             documentServiceFactory: driver.createDocumentServiceFactory(),
         });
+        loaderContainerTracker.add(loader);
         return createAndAttachContainer(
             defaultCodeDetails,
             loader,
@@ -101,7 +104,8 @@ describe("context reload (hot-swap)", function() {
             urlResolver: driver.createUrlResolver(),
             documentServiceFactory: driver.createDocumentServiceFactory(),
         });
-        return loader.resolve({ url: driver.createContainerUrl(documentId) });
+        loaderContainerTracker.add(loader);
+        return loader.resolve({ url: await driver.createContainerUrl(documentId) });
     }
 
     const createRuntimeFactory = (dataStore): IRuntimeFactory => {
@@ -114,7 +118,7 @@ describe("context reload (hot-swap)", function() {
     };
     let driver: ITestDriver;
     before(()=>{
-        driver = getFluidTestDriver();
+        driver = getFluidTestDriver() as unknown as ITestDriver;
     });
 
     const tests = function() {
@@ -128,6 +132,7 @@ describe("context reload (hot-swap)", function() {
 
         afterEach(async function() {
             assert.strictEqual(containerError, false, "container error");
+            loaderContainerTracker.reset();
         });
 
         it("is followed by an immediate summary", async function() {
@@ -271,6 +276,7 @@ describe("context reload (hot-swap)", function() {
             describe("old loader, new runtime", () => {
                 beforeEach(async function() {
                     const documentId = createDocumentId();
+                    // TODO: this is not creating the old loader
                     container = await createContainer(
                         [
                             [codeDetails(V1), oldApi.createOldRuntimeFactory(oldApi.OldTestDataObjectV1)],

@@ -113,12 +113,14 @@ export class ForemanLambda extends SequencedLambda {
         // Figure out the queue for each task and populate the map.
         const queueTaskMap = new Map<string, string[]>();
         for (const task of tasks) {
-            if (this.taskQueueMap.has(task)) {
-                const queue = this.taskQueueMap.get(task);
-                if (!queueTaskMap.has(queue)) {
-                    queueTaskMap.set(queue, []);
+            const queue = this.taskQueueMap.get(task);
+            if (queue) {
+                let queueTasks = queueTaskMap.get(queue);
+                if (!queueTasks) {
+                    queueTasks = [];
+                    queueTaskMap.set(queue, queueTasks);
                 }
-                queueTaskMap.get(queue).push(task);
+                queueTasks.push(task);
             }
         }
         return queueTaskMap;

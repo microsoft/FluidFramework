@@ -38,7 +38,7 @@ export interface ISummaryReader {
 export interface ISummaryWriter {
     writeClientSummary(
         op: ISequencedDocumentAugmentedMessage,
-        lastSummaryHead: string,
+        lastSummaryHead: string | undefined,
         protocolMinimumSequenceNumber: number,
         protocolSequenceNumber: number,
         quorumSnapshot: IQuorumSnapshot,

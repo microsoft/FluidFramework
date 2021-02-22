@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-extraneous-dependencies */
 export * from "old-container-definitions";
 export * from "old-core-interfaces";
 export { IDocumentServiceFactory, IUrlResolver } from "old-driver-definitions";
@@ -36,6 +35,7 @@ import {
     TestFluidObjectFactory,
     TestObjectProvider,
 } from "old-test-utils";
+import { LoaderContainerTracker } from "@fluidframework/test-utils";
 
 import {
     createRuntimeFactory,
@@ -47,7 +47,6 @@ import {
     V2,
 } from "./compatUtils";
 import * as newVer from "./newVersion";
-/* eslint-enable import/no-extraneous-dependencies */
 
 // A simple old-version dataStore with runtime/root exposed for testing
 // purposes. Used to test compatibility of context reload between
@@ -74,16 +73,16 @@ export class OldTestDataObjectV2 extends OldTestDataObject {
 }
 
 const registryMapping = {
-    [newVer.SharedMap.getFactory().type]                    : SharedMap.getFactory(),
-    [newVer.SharedString.getFactory().type]                 : SharedString.getFactory(),
-    [newVer.SharedDirectory.getFactory().type]              : SharedDirectory.getFactory(),
-    [newVer.ConsensusRegisterCollection.getFactory().type]  : ConsensusRegisterCollection.getFactory(),
-    [newVer.SharedCell.getFactory().type]                   : SharedCell.getFactory(),
-    [newVer.Ink.getFactory().type]                          : Ink.getFactory(),
-    [newVer.SharedMatrix.getFactory().type]                 : SharedMatrix.getFactory(),
-    [newVer.ConsensusQueue.getFactory().type]               : ConsensusQueue.getFactory(),
-    [newVer.SparseMatrix.getFactory().type]                 : SparseMatrix.getFactory(),
-    [newVer.SharedCounter.getFactory().type]                : SharedCounter.getFactory(),
+    [newVer.SharedMap.getFactory().type]: SharedMap.getFactory(),
+    [newVer.SharedString.getFactory().type]: SharedString.getFactory(),
+    [newVer.SharedDirectory.getFactory().type]: SharedDirectory.getFactory(),
+    [newVer.ConsensusRegisterCollection.getFactory().type]: ConsensusRegisterCollection.getFactory(),
+    [newVer.SharedCell.getFactory().type]: SharedCell.getFactory(),
+    [newVer.Ink.getFactory().type]: Ink.getFactory(),
+    [newVer.SharedMatrix.getFactory().type]: SharedMatrix.getFactory(),
+    [newVer.ConsensusQueue.getFactory().type]: ConsensusQueue.getFactory(),
+    [newVer.SparseMatrix.getFactory().type]: SparseMatrix.getFactory(),
+    [newVer.SharedCounter.getFactory().type]: SharedCounter.getFactory(),
 };
 
 // convert a channel factory registry for TestFluidDataStoreFactory to one with old channel factories
@@ -178,9 +177,34 @@ export function createTestObjectProvider(
         throw new Error("Must provide a driver when using the current loader");
     }
     if (oldLoader) {
-        return new TestObjectProvider(
-            driver as any,
-            containerFactoryFn as () => IRuntimeFactory);
+        const oldProvider = new newVer.TestObjectProvider(
+            driver,
+            containerFactoryFn as () => newVer.IRuntimeFactory);
+
+        // Remove once the older version support container tracking (for close)
+        if (!(TestObjectProvider as any).patchLoader) {
+            const loaderContainerTracker = new LoaderContainerTracker();
+            const oldMakeTestLoader = oldProvider.makeTestLoader.bind(oldProvider);
+            oldProvider.makeTestLoader = (testContainerConfig?: unknown) => {
+                const testLoader = oldMakeTestLoader(testContainerConfig);
+                loaderContainerTracker.add(testLoader as any);
+
+                // Also patch the loader.resolve to deal with url being a Promise from
+                // the new ITestDriver.createcontainerUrl
+                const oldResolve = testLoader.resolve.bind(testLoader);
+                testLoader.resolve = async (request: newVer.IRequest) => {
+                    request.url = await ((request as any).url as Promise<string>);
+                    return oldResolve(request);
+                };
+                return testLoader;
+            };
+            const oldReset = oldProvider.reset.bind(oldProvider);
+            oldProvider.reset = () => {
+                loaderContainerTracker.reset();
+                oldReset();
+            };
+        }
+        return oldProvider as unknown as  ITestObjectProvider;
     } else {
         return new newVer.TestObjectProvider(
             driver, containerFactoryFn as () => newVer.IRuntimeFactory);

@@ -93,6 +93,7 @@ export interface IContainerEvents extends IEvent {
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
+    (event: "dirty" | "saved", listener: (dirty: boolean) => void);
 }
 
 /**
@@ -130,6 +131,13 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * Returns true if the container has been closed, otherwise false
      */
     readonly closed: boolean;
+
+    /**
+     * Returns true if the container is dirty, i.e. there are user changes that has not been saved
+     * Closing container in this state results in data loss for user.
+     * Container usually gets into this situation due to loss of connectivity.
+     */
+    readonly isDirty: boolean;
 
     /**
      * Closes the container

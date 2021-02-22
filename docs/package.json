@@ -48,7 +48,7 @@
     "markdown-magic": "^1.0.0",
     "markdown-magic-package-scripts": "^1.2.1",
     "rimraf": "^2.6.2",
-    "run-script-os": "^1.0.7",
+    "run-script-os": "^1.1.5",
     "shelljs": "^0.8.4"
   }
 }

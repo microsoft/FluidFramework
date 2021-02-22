@@ -48,7 +48,6 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.27.0",
-    "@fluidframework/server-services": "^0.1020.0",
     "@fluidframework/server-services-core": "^0.1020.0",
     "@fluidframework/server-services-utils": "^0.1020.0",
     "async": "^2.6.1",
@@ -59,7 +58,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0-0",
-    "@fluidframework/eslint-config-fluid": "^0.22.1-0",
+    "@fluidframework/eslint-config-fluid": "^0.23.0-0",
     "@fluidframework/server-test-utils": "^0.1020.0",
     "@types/async": "^2.0.50",
     "@types/lodash": "^4.14.118",

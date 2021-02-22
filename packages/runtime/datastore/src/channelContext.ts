@@ -7,11 +7,9 @@ import { IChannel } from "@fluidframework/datastore-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
-    gcBlobKey,
     IChannelSummarizeResult,
     IContextSummarizeResult,
     IGarbageCollectionData,
-    IGarbageCollectionSummaryDetails,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
@@ -33,8 +31,9 @@ export interface IChannelContext {
     /**
      * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context
      * including any of its children. Each node has a set of outbound routes to other GC nodes in the document.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    getGCData(): Promise<IGarbageCollectionData>;
+    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
 
     /**
      * After GC has run, called to notify this context of routes that are used in it. These are used for the following:
@@ -76,13 +75,5 @@ export function summarizeChannel(
 
     // Add the channel attributes to the returned result.
     addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
-
-    // Add GC details to the summary.
-    const gcDetails: IGarbageCollectionSummaryDetails = {
-        usedRoutes: [""],
-        gcData: summarizeResult.gcData,
-    };
-    addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
-
     return summarizeResult;
 }

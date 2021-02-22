@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-extraneous-dependencies */
-
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
     IContainer,
@@ -28,8 +26,6 @@ import * as oldTypes from "./oldVersionTypes";
 import * as old from "./oldVersion";
 import * as old2 from "./oldVersion2";
 
-/* eslint-enable import/no-extraneous-dependencies */
-
 export interface ITestObjectProvider {
     /**
      * Used to create a test Container.
@@ -42,7 +38,7 @@ export interface ITestObjectProvider {
     urlResolver: IUrlResolver | oldTypes.IUrlResolver,
     defaultCodeDetails: IFluidCodeDetails | oldTypes.IFluidCodeDetails,
     opProcessingController: OpProcessingController | oldTypes.OpProcessingController,
-    reset(): void | Promise<void>,
+    reset(): void,
     documentId: string,
     driver: ITestDriver;
 }
@@ -126,7 +122,7 @@ export const generateNonCompatTest = (
             );
             const driver = getFluidTestDriver();
             return new TestObjectProvider(
-                driver,
+                driver as any,
                 runtimeFactory,
             );
         });
@@ -149,7 +145,7 @@ export const generateCompatTest = (
                     false, /* oldDataStoreRuntime */
                     TestDataObject.type,
                     options.serviceConfiguration,
-                    driver,
+                    driver as any,
                 );
             }, oldApi);
         });
@@ -163,7 +159,7 @@ export const generateCompatTest = (
                     true, /* oldDataStoreRuntime */
                     TestDataObject.type,
                     options.serviceConfiguration,
-                    driver,
+                    driver as any,
                 );
             }, oldApi);
         });
@@ -177,7 +173,7 @@ export const generateCompatTest = (
                     true, /* oldDataStoreRuntime */
                     TestDataObject.type,
                     options.serviceConfiguration,
-                    driver,
+                    driver as any,
                 );
             }, oldApi);
         });
@@ -191,7 +187,7 @@ export const generateCompatTest = (
                     false, /* oldDataStoreRuntime */
                     TestDataObject.type,
                     options.serviceConfiguration,
-                    driver,
+                    driver as any,
                 );
             }, oldApi);
         });

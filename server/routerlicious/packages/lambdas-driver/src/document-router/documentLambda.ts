@@ -11,16 +11,11 @@ import {
     IPartitionLambdaFactory,
     LambdaCloseType,
     IContextErrorData,
+    IDocumentLambdaServerConfiguration,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { DocumentContextManager } from "./contextManager";
 import { DocumentPartition } from "./documentPartition";
-
-// Expire document partitions after 10 minutes of no activity
-const PartitionActivityTimeout = 10 * 60 * 1000;
-
-// How often to check the partitions for inacitivty
-const PartitionActivityCheckInterval = 60 * 1000;
 
 export class DocumentLambda implements IPartitionLambda {
     private readonly documents = new Map<string, DocumentPartition>();
@@ -32,13 +27,14 @@ export class DocumentLambda implements IPartitionLambda {
         private readonly factory: IPartitionLambdaFactory,
         private readonly config: Provider,
         context: IContext,
-        private readonly partitionActivityTimeout = PartitionActivityTimeout,
-        partitionActivityCheckInterval = PartitionActivityCheckInterval) {
+        private readonly documentLambdaServerConfiguration: IDocumentLambdaServerConfiguration) {
         this.contextManager = new DocumentContextManager(context);
         this.contextManager.on("error", (error, errorData: IContextErrorData) => {
             context.error(error, errorData);
         });
-        this.activityCheckTimer = setInterval(this.inactivityCheck.bind(this), partitionActivityCheckInterval);
+        this.activityCheckTimer = setInterval(
+            this.inactivityCheck.bind(this),
+            documentLambdaServerConfiguration.partitionActivityCheckInterval);
     }
 
     public handler(message: IQueuedMessage): void {
@@ -75,8 +71,8 @@ export class DocumentLambda implements IPartitionLambda {
         const routingKey = `${boxcar.tenantId}/${boxcar.documentId}`;
 
         // Create or update the DocumentPartition
-        let document: DocumentPartition;
-        if (!this.documents.has(routingKey)) {
+        let document = this.documents.get(routingKey);
+        if (!document) {
             // Create a new context and begin tracking it
             const documentContext = this.contextManager.createContext(message);
 
@@ -86,10 +82,9 @@ export class DocumentLambda implements IPartitionLambda {
                 boxcar.tenantId,
                 boxcar.documentId,
                 documentContext,
-                this.partitionActivityTimeout);
+                this.documentLambdaServerConfiguration.partitionActivityTimeout);
             this.documents.set(routingKey, document);
         } else {
-            document = this.documents.get(routingKey);
             // SetHead assumes it will always receive increasing offsets. So we need to split the creation case
             // from the update case.
             document.context.setHead(message);
@@ -109,6 +104,7 @@ export class DocumentLambda implements IPartitionLambda {
         for (const [routingKey, documentPartition] of documentPartitions) {
             if (documentPartition.isInactive(now)) {
                 // Close and remove the inactive document
+                this.contextManager.removeContext(documentPartition.context);
                 documentPartition.close(LambdaCloseType.ActivityTimeout);
                 this.documents.delete(routingKey);
             }

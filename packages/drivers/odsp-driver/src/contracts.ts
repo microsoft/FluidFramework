@@ -44,6 +44,8 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
         // This may be used for preloading the container package when loading Fluid content.
         containerPackageName?: string
     }
+
+    fileVersion?: string;
 }
 
 /**
@@ -133,8 +135,7 @@ export enum SnapshotType {
 export interface ISnapshotRequest {
     type: SnapshotType;
     message: string;
-    // Server only looks at it when the Snapshot type is "container".
-    sequenceNumber?: number;
+    sequenceNumber: number;
     entries: SnapshotTreeEntry[];
 }
 
@@ -279,6 +280,7 @@ export interface OdspFluidDataStoreLocator {
     dataStorePath: string;
     appName?: string;
     containerPackageName?: string;
+    fileVersion?: string;
 }
 
 export enum SharingLinkHeader {

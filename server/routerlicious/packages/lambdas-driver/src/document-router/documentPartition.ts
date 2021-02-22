@@ -19,10 +19,10 @@ import { DocumentContext } from "./documentContext";
 export class DocumentPartition {
     private readonly q: AsyncQueue<IQueuedMessage>;
     private readonly lambdaP: Promise<IPartitionLambda>;
-    private lambda: IPartitionLambda;
+    private lambda: IPartitionLambda | undefined;
     private corrupt = false;
     private closed = false;
-    private activityTimeoutTime: number;
+    private activityTimeoutTime: number | undefined;
 
     constructor(
         factory: IPartitionLambdaFactory,
@@ -44,7 +44,8 @@ export class DocumentPartition {
                 // Winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
                 try {
                     if (!this.corrupt) {
-                        this.lambda.handler(message);
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        this.lambda!.handler(message);
                     } else {
                         // Until we can dead letter - simply checkpoint as handled
                         this.context.checkpoint(message);
@@ -117,7 +118,7 @@ export class DocumentPartition {
     }
 
     public isInactive(now: number = Date.now()) {
-        return now > this.activityTimeoutTime;
+        return !this.context.hasPendingWork() && this.activityTimeoutTime && now > this.activityTimeoutTime;
     }
 
     private updateActivityTime() {

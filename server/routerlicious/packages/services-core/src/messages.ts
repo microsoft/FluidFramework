@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentMessage, INack, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import {
+    IDocumentMessage,
+    INack,
+    INackContent,
+    ISequencedDocumentMessage,
+} from "@fluidframework/protocol-definitions";
 
 // String identifying the raw operation message
 export const RawOperationType: string = "RawOperation";
@@ -55,7 +60,7 @@ export interface IObjectMessage extends IMessage {
     documentId: string;
 
     // The client who submitted the message
-    clientId: string;
+    clientId: string | null;
 
     // The time the server received the message, in milliseconds elapsed since
     // 1 January 1970 00:00:00 UTC, with leap seconds ignored.
@@ -112,6 +117,10 @@ export interface INackMessage extends ITicketedMessage {
 
     // The details of the nack
     operation: INack;
+
+    // The time the server created the message, in milliseconds elapsed since
+    // 1 January 1970 00:00:00 UTC, with leap seconds ignored.
+    timestamp: number;
 }
 
 /**
@@ -141,4 +150,14 @@ export interface IControlMessage {
 export enum ControlMessageType {
     // Instruction sent to update Durable sequence number
     UpdateDSN = "updateDSN",
+
+    // Instruction sent to have deli nack all future messages
+    NackFutureMessages = "nackFutureMessages",
 }
+
+export interface IUpdateDSNControlMessageContents {
+    durableSequenceNumber: number;
+    clearCache: boolean;
+}
+
+export type INackFutureMessagesControlMessageContents = INackContent;

@@ -313,14 +313,15 @@ export class GridView {
     }
 
     private moveInputByOffset(e: KeyboardEvent, rowOffset: number, colOffset: number) {
+        let _colOffset = colOffset;
         // Allow the left/right arrow keys to move the caret inside the inputBox until the caret
         // is in the first/last character position.  Then move the inputBox.
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         if ((e.target === this.inputBox) && this.inputBox.selectionStart! >= 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const x = this.inputBox.selectionStart! + colOffset;
+            const x = this.inputBox.selectionStart! + _colOffset;
             if (0 <= x && x <= this.inputBox.value.length) {
-                colOffset = 0;
+                _colOffset = 0;
                 if (rowOffset === 0) {
                     return;
                 }
@@ -392,17 +393,18 @@ export class GridView {
     }
 
     private getTdFromRowCol(row: number, col: number) {
-        row -= this.startRow;
+        let _row = row;
+        _row -= this.startRow;
 
         // Column heading are outside the <tbody> in <thead>, and therefore we do not need
         // to make adjustments when indexing into children.
         const rows = this.tbody.children;
-        if (row < 0 || row >= rows.length) {
+        if (_row < 0 || _row >= rows.length) {
             return undefined;
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const cols = rows.item(row)!.children;
+        const cols = rows.item(_row)!.children;
 
         // Row headings are inside the <tbody>, therefore we need to adjust our column
         // index by +/-1 to skip them.
@@ -461,12 +463,13 @@ export class GridView {
     }
 
     private numberToColumnLetter(index: number): string {
-        let colString = String.fromCharCode((index % 26) + 65);
-        index = index / 26;
+        let _index = index;
+        let colString = String.fromCharCode((_index % 26) + 65);
+        _index = _index / 26;
 
-        while (index >= 1) {
-            colString = String.fromCharCode((index % 26) + 64) + colString;
-            index = index / 26;
+        while (_index >= 1) {
+            colString = String.fromCharCode((_index % 26) + 64) + colString;
+            _index = _index / 26;
         }
 
         return colString;

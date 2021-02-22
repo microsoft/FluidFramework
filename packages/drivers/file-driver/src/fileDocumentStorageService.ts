@@ -4,7 +4,7 @@
  */
 
 import fs from "fs";
-import { assert, fromBase64ToUtf8, stringToBuffer } from "@fluidframework/common-utils";
+import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
@@ -303,9 +303,10 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
             }
 
             for (const blobName of Object.keys(snapshotTree.blobs)) {
-                const contents = await this.read(snapshotTree.blobs[blobName]);
+                const buffer = await this.readBlob(snapshotTree.blobs[blobName]);
+                const contents = bufferToString(buffer, "utf8");
                 const blob: api.IBlob = {
-                    contents: fromBase64ToUtf8(contents), // Decode for readability
+                    contents,
                     encoding: "utf-8",
                 };
                 tree.entries.push({

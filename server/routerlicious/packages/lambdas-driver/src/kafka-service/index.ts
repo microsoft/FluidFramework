@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./resourcesFactory";
-export * from "./runnerFactory";
 export * from "./partitionManager";
+export * from "./runner";
+export * from "./runnerFactory";

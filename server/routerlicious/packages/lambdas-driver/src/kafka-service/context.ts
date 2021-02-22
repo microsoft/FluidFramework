@@ -48,5 +48,7 @@ export class Context extends EventEmitter implements IContext {
      */
     public close(): void {
         this.closed = true;
+
+        this.removeAllListeners();
     }
 }

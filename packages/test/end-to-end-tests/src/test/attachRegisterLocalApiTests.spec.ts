@@ -14,6 +14,7 @@ import {
     TestFluidObjectFactory,
     TestFluidObject,
     createDocumentId,
+    LoaderContainerTracker,
 } from "@fluidframework/test-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
@@ -24,7 +25,7 @@ import { ITestDriver } from "@fluidframework/test-driver-definitions";
 describe(`Attach/Bind Api Tests For Attached Container`, () => {
     let driver: ITestDriver;
     before(()=>{
-        driver = getFluidTestDriver();
+        driver = getFluidTestDriver() as unknown as ITestDriver;
     });
 
     const codeDetails: IFluidCodeDetails = {
@@ -36,6 +37,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
 
     let request: IRequest;
     let loader: Loader;
+    const loaderContainerTracker = new LoaderContainerTracker();
 
     const createTestStatementForAttachedDetached = (name: string, attached: boolean) =>
         `${name} should be ${attached ? "Attached" : "Detached"}`;
@@ -69,11 +71,13 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         ]);
         const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const documentServiceFactory = driver.createDocumentServiceFactory();
-        return new Loader({
+        const testLoader = new Loader({
             urlResolver,
             documentServiceFactory,
             codeLoader,
         });
+        loaderContainerTracker.add(testLoader);
+        return testLoader;
     }
 
     beforeEach(async () => {
@@ -81,6 +85,10 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         const urlResolver = driver.createUrlResolver();
         request = driver.createCreateNewRequest(documentId);
         loader = createTestLoader(urlResolver);
+    });
+
+    afterEach(() => {
+        loaderContainerTracker.reset();
     });
 
     it("Attaching dataStore should not attach unregistered DDS", async () => {

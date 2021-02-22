@@ -22,7 +22,11 @@ parameters:
   type: boolean
   default: false
 
-trigger: none
+trigger:
+  branches:
+    include:
+    - main
+    - release/*
 pr: none
 
 variables:
@@ -34,6 +38,8 @@ variables:
   - template: templates/include-vars.yml
     parameters:
       buildNumberInPatch: true
+  - name: diDir
+    value: '$(Build.SourcesDirectory)/tools/pipelines/dependency-injection'
 
 jobs:
   - job: run
@@ -45,6 +51,26 @@ jobs:
       clean: true
       lfs: ${{ parameters.checkoutSubmodules }}
       submodules: ${{ parameters.checkoutSubmodules }}
+
+    # Print parameters/Vars
+    - task: Bash@3
+      displayName: Print Parameters and Variables
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: |
+          # Show all task group conditions
+
+          echo "
+          Pipeline Parameters:
+            buildDirectory=${{ parameters.buildDirectory }}
+            taskBuild=${{ parameters.taskBuild }}
+            poolBuild=${{ parameters.poolBuild }}
+            checkoutSubmodules=${{ parameters.checkoutSubmodules }}
+
+          Pipeline Variables:
+            diDir=${{ variables.diDir }}
+          "
 
     # Install
     - task: UseNode@1
@@ -67,22 +93,56 @@ jobs:
         workingDir: ${{ parameters.buildDirectory }}
         customCommand: 'run ${{ parameters.taskBuild }}'
 
+    # [DI] Auth to internal feed
+    - task: npmAuthenticate@0
+      displayName: '[DI] npm authenticate (internal feed)'
+      inputs:
+        workingFile: ${{ variables.diDir }}/.npmrc
+
+    # [DI] Auth to Office feed
+    - task: npmAuthenticate@0
+      displayName: '[DI] npm authenticate (office feed)'
+      inputs:
+        workingFile: ${{ variables.diDir }}/.npmrc
+        customEndpoint: 'Office Packages - Readonly'
+
+    # [DI] Prep dependency-injection package for install
+    - task: Bash@3
+      displayName: '[DI] Prepare DI package'
+      inputs:
+        targetType: 'inline'
+        script: 'mv _package.json package.json; mv _package-lock.json package-lock.json'
+        workingDirectory: ${{ variables.diDir }}
+
+    # [DI] Install dependency-injection package
+    - task: Npm@1
+      displayName: '[DI] npm ci'
+      inputs:
+        command: 'custom'
+        workingDir: ${{ variables.diDir }}
+        customCommand: 'ci'
+        customRegistry: 'useNpmrc'
+
     # Run End-to-end Tests
     - task: Npm@1
       displayName: '[end-to-end tests] npm run ci:test:realsvc'
+      continueOnError: true
       env:
         fluid__webpack__bearerSecret: $(fluid-webpack-bearerSecret)
         fluid__webpack__fluidHost: $(fluid-webpack-fluidHost)
         fluid__webpack__tenantId: $(fluid-webpack-tenantId)
         fluid__webpack__tenantSecret: $(fluid-webpack-tenantSecret)
+        FLUID_DI_ROOT: ${{ variables.diDir }}/node_modules
+        FLUID_DI_LOGGERPKG: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
       inputs:
         command: 'custom'
         workingDir: packages/test/end-to-end-tests
-        customCommand: 'run ci:test:realsvc' # This script ends with 'exit 0' so this task should never fail
+        customCommand: 'run ci:test:realsvc'
 
     # Run Stress Tests
     - task: Npm@1
       displayName: '[stress tests] npm run start'
+      continueOnError: true
       env:
         login__microsoft__clientId: $(login-microsoft-clientId)
         login__microsoft__secret: $(login-microsoft-secret)
@@ -91,6 +151,14 @@ jobs:
         command: 'custom'
         workingDir: packages/test/service-load-test
         customCommand: 'run start'
+
+    # Run Copy Test Results
+    - task: Npm@1
+      displayName: npm run test:copyresults'
+      inputs:
+        command: 'custom'
+        workingDir: ${{ parameters.buildDirectory }}
+        customCommand: 'run test:copyresults'
 
     # Upload results
     - task: PublishTestResults@2

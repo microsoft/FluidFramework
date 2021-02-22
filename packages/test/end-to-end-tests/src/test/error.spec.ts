@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import {
     ContainerErrorType,
+    LoaderHeader,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { CreateContainerError } from "@fluidframework/container-utils";
@@ -24,7 +25,7 @@ import {
     OdspErrorType,
 } from "@fluidframework/odsp-doclib-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
-import { createDocumentId, LocalCodeLoader } from "@fluidframework/test-utils";
+import { createDocumentId, LocalCodeLoader, LoaderContainerTracker } from "@fluidframework/test-utils";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 describe("Errors Types", () => {
@@ -35,15 +36,19 @@ describe("Errors Types", () => {
     let codeLoader: LocalCodeLoader;
     let loader: Loader;
     let driver: ITestDriver;
-    before(()=>{
-        driver = getFluidTestDriver();
+    const loaderContainerTracker = new LoaderContainerTracker();
+    before(() => {
+        driver = getFluidTestDriver() as unknown as ITestDriver;
+    });
+    afterEach(() => {
+        loaderContainerTracker.reset();
     });
 
     it("GeneralError Test", async () => {
         const id = createDocumentId();
         // Setup
         urlResolver = driver.createUrlResolver();
-        testRequest = { url:driver.createContainerUrl(id) };
+        testRequest = { url: await driver.createContainerUrl(id) };
         testResolved =
             await urlResolver.resolve(testRequest) as IFluidResolvedUrl;
         documentServiceFactory = driver.createDocumentServiceFactory();
@@ -63,13 +68,21 @@ describe("Errors Types", () => {
             documentServiceFactory: mockFactory,
             codeLoader,
         });
+        loaderContainerTracker.add(loader);
 
         try {
             await Container.load(
-                "tenantId/documentId",
                 loader,
-                testRequest,
-                testResolved);
+                {
+                    canReconnect: testRequest.headers?.[LoaderHeader.reconnect],
+                    clientDetailsOverride: testRequest.headers?.[LoaderHeader.clientDetails],
+                    containerUrl: testRequest.url,
+                    docId: "documentId",
+                    resolvedUrl: testResolved,
+                    version: testRequest.headers?.[LoaderHeader.version],
+                    pause: testRequest.headers?.[LoaderHeader.pause],
+                },
+            );
 
             assert.fail("Error expected");
         } catch (error) {

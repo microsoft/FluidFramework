@@ -28,6 +28,9 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         await ensureConnected(container1);
     });
+    afterEach(() => {
+        args.reset();
+    });
 
     it("Create and load", async () => {
         // after detach create, we are in view only mode
@@ -44,6 +47,11 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         // Currently, we load a container in write mode from the start. See issue #3304.
         // Once that is fix, this needs to change
         assert(container2.deltaManager.active);
+        if (!dataObject2.context.leader) {
+            await timeoutPromise((resolve) => {
+                dataObject2.context.once("leader", () => { resolve(); });
+            });
+        }
         assert(dataObject2.context.leader);
     });
 
@@ -95,6 +103,9 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     it("Events on close", async () => {
         // write something to get out of view only mode and take leadership
         dataObject1.root.set("blah", "blah");
+
+        // Make sure we reconnect as a writer and processed the op
+        await args.opProcessingController.process();
 
         const container2 = await args.loadTestContainer() as Container;
         const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");

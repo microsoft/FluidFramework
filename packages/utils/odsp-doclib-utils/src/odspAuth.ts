@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getSharepointTenant } from "./odspDocLibUtils";
+import { getAadTenant } from "./odspDocLibUtils";
 import { throwOdspNetworkError } from "./odspErrorUtils";
 import { unauthPostAsync } from "./odspRequest";
 
@@ -46,18 +46,16 @@ export const getOdspScope = (server: string) => `offline_access https://${server
 export const pushScope = "offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
 
 export function getFetchTokenUrl(server: string): string {
-    return `https://login.microsoftonline.com/${getSharepointTenant(server)}/oauth2/v2.0/token`;
+    return `https://login.microsoftonline.com/${getAadTenant(server)}/oauth2/v2.0/token`;
 }
 
 export function getLoginPageUrl(
-    isPush: boolean,
     server: string,
     clientConfig: IClientConfig,
     scope: string,
     odspAuthRedirectUri: string,
 ) {
-    const tenant = isPush ? "organizations" : getSharepointTenant(server);
-    return `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize?`
+    return `https://login.microsoftonline.com/${getAadTenant(server)}/oauth2/v2.0/authorize?`
         + `client_id=${clientConfig.clientId}`
         + `&scope=${scope}`
         + `&response_type=code`

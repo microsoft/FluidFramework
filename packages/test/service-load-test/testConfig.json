@@ -15,10 +15,10 @@
     },
     "profiles": {
         "ci": {
-            "opRatePerMin": 30,
+            "opRatePerMin": 10,
             "progressIntervalMs": 15000,
-            "numClients": 240,
-            "totalSendCount": 10000,
+            "numClients": 120,
+            "totalSendCount": 1000,
             "readWriteCycleMs": 30000
         },
         "full": {
