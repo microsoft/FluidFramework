@@ -4,6 +4,7 @@
  */
 
 import Axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
+import safeStringify from "json-stringify-safe";
 import { isStatusRetriable, throwR11sNetworkError } from "./r11sError";
 
 export async function enhanceRequestError(error: any): Promise<never> {
@@ -20,7 +21,7 @@ export async function enhanceRequestError(error: any): Promise<never> {
                 : undefined,
         );
     }
-    throwR11sNetworkError(`${error}`);
+    throwR11sNetworkError(`Request failed with unknown error: ${safeStringify(error)}`);
 }
 
 /**

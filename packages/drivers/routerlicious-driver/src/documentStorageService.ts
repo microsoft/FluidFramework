@@ -29,6 +29,7 @@ import {
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { GitManager } from "@fluidframework/server-services-client";
+import safeStringify from "json-stringify-safe";
 import { throwR11sNetworkError } from "./r11sError";
 
 /**
@@ -246,6 +247,6 @@ export class DocumentStorageService implements IDocumentStorageService {
             throwR11sNetworkError(messageFallback, error);
         }
         // In case response is not available, throw a more generic error
-        throwR11sNetworkError(error?.toString() ?? messageFallback);
+        throwR11sNetworkError(error !== undefined ? safeStringify(error) : messageFallback);
     }
 }
