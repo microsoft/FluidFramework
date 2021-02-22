@@ -1463,7 +1463,7 @@ export class DeltaManager
             return;
         }
 
-        assert(fromArg === this.lastQueuedSequenceNumber);
+        assert(fromArg === this.lastQueuedSequenceNumber, "from arg");
         let from = fromArg;
 
         const n = this.previouslyProcessedMessage?.sequenceNumber;
@@ -1473,8 +1473,8 @@ export class DeltaManager
             // Knowing about this mechanism, we could ask for op we already observed to increase validation.
             // This is especially useful when coming out of offline mode or loading from
             // very old cached (by client / driver) snapshot.
-            assert(n === fromArg);
-            assert(from > 0);
+            assert(n === fromArg, "previouslyProcessedMessage");
+            assert(from > 0, "not positive");
             from--;
         }
 
