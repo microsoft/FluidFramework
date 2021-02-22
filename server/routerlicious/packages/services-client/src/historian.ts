@@ -143,18 +143,6 @@ export class Historian implements IHistorian {
         };
     }
 
-    // There are two scenarios in Historian call a REST, one the first time
-    // you apply it. The other is to refresh the auth token after the permission
-    // check fails.
-    private async loadOrCreateRestWrapper(isReset: boolean = false): Promise<RestWrapper> {
-        const isFirstCall: boolean = !this.restWrapper;
-        if (isFirstCall || isReset) {
-            this.restWrapper = await this.restWrapperP;
-            return this.restWrapper;
-        }
-        return this.restWrapper;
-    }
-
     private async createRestWrapper(): Promise<RestWrapper> {
         const queryString: { token?; disableCache?} = {};
         let cacheBust = false;
@@ -175,18 +163,20 @@ export class Historian implements IHistorian {
             headers["x-correlation-id"] = this.getCorrelationId() || uuid.v4();
         }
 
-        return new RestWrapper(this.endpoint, headers, queryString, cacheBust);
+        this.restWrapper = new RestWrapper(this.endpoint, headers, queryString, cacheBust);
+
+        return this.restWrapper;
     }
 
     private async restCallWithAuthRetry<T>(restCall: (restWrapper: RestWrapper) => Promise<T>): Promise<T> {
-        let restWrapper = await this.loadOrCreateRestWrapper();
+        let restWrapper = this.restWrapper ?? await this.restWrapperP;
         if (this.getCredentials === undefined) {
             return restCall(restWrapper);
         }
         return restCall(restWrapper).catch(async (error) => {
             if (error === 401 || error?.response?.status === 401) {
                 this.restWrapperP = this.createRestWrapper();
-                restWrapper = await this.loadOrCreateRestWrapper(true);
+                restWrapper = await this.restWrapperP;
                 return restCall(restWrapper);
             }
             return Promise.reject(error);
