@@ -1,8 +1,26 @@
 {
-    "server": "a830edad9050849829E20060408.sharepoint.com",
-    "driveId": "b!o96WcQ93ck-dT5tlJfA7yZNP3Z9aM69JjJI6U4ASSXmZLLDGFcMBSqJ3iB3y04h0",
-    "username": "user0@a830edad9050849829E20060408.onmicrosoft.com",
+    "tenants": {
+        "fluidCI": {
+            "server": "a830edad9050849830E21012616.sharepoint.com",
+            "username": "user0@a830edad9050849830E21012616.onmicrosoft.com"
+        },
+        "0312": {
+            "server": "a830edad9050849829J20060312.sharepoint.com",
+            "username": "user0@a830edad9050849829J20060312.onmicrosoft.com"
+        },
+        "2616-my": {
+            "server": "a830edad9050849830E21012616-my.sharepoint.com",
+            "username": "user0@a830edad9050849830E21012616.onmicrosoft.com"
+        }
+    },
     "profiles": {
+        "ci": {
+            "opRatePerMin": 30,
+            "progressIntervalMs": 15000,
+            "numClients": 240,
+            "totalSendCount": 10000,
+            "readWriteCycleMs": 30000
+        },
         "full": {
             "opRatePerMin": 30,
             "progressIntervalMs": 15000,

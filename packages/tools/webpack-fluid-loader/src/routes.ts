@@ -28,6 +28,7 @@ let odspAuthLock: Promise<void> | undefined;
 const getThisOrigin = (options: RouteOptions): string => `http://localhost:${options.port}`;
 
 export const before = async (app: express.Application) => {
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     app.get("/getclientsidewebparts", async (req, res) => res.send(await createManifestResponse()));
     app.get("/", (req, res) => res.redirect(`/new`));
 };
@@ -152,6 +153,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         };
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     app.get("/odspLogin", async (req, res) => {
         if (options.mode !== "spo-df" && options.mode !== "spo") {
             res.write("Mode must be spo or spo-df to login to ODSP.");
@@ -170,6 +172,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         );
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     app.get("/pushLogin", async (req, res) => {
         if (options.mode !== "spo-df" && options.mode !== "spo") {
             res.write("Mode must be spo or spo-df to login to Push.");
@@ -217,6 +220,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
      * For urls of format - http://localhost:8080/doc/<id>.
      * This is when user is trying to load an existing document. We try to load a Container with `id` as documentId.
      */
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     app.get("/doc/:id*", async (req, res) => {
         const ready = await isReady(req, res);
         if (ready) {
@@ -230,6 +234,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
      * For other `ids`, we treat this as the user trying to load an existing document. We redirect to
      * http://localhost:8080/doc/<id>.
      */
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     app.get("/:id*", async (req, res) => {
         // Ignore favicon.ico urls.
         if (req.url === "/favicon.ico") {

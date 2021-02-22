@@ -14,16 +14,14 @@ describe("ChannelStorageService", () => {
         const tree: ISnapshotTree = {
             blobs: {},
             commits: {},
-            // eslint-disable-next-line no-null/no-null
-            id: null,
             trees: {},
         };
         const storage: Pick<IDocumentStorageService, "read" | "readBlob"> = {
             read: async (id: string) => {
-                assert.fail();
+                throw new Error("not implemented");
             },
             readBlob: async (id: string) => {
-                assert.fail();
+                throw new Error("not implemented");
             },
         };
         const ss = new ChannelStorageService(tree, storage);
@@ -38,8 +36,6 @@ describe("ChannelStorageService", () => {
                 foo: "bar",
             },
             commits: {},
-            // eslint-disable-next-line no-null/no-null
-            id: null,
             trees: {},
         };
         const storage: Pick<IDocumentStorageService, "read" | "readBlob"> = {
@@ -55,23 +51,19 @@ describe("ChannelStorageService", () => {
         assert.strictEqual(await ss.contains("foo"), true);
         assert.deepStrictEqual(await ss.list(""), ["foo"]);
         assert.strictEqual(await ss.read("foo"), "bar");
-        assert.deepStrictEqual(await ss.readBlob("foo"), stringToBuffer("bar", "utf8"));
+        assert.deepStrictEqual(await ss.readBlob("foo"), stringToBuffer("bar", "base64"));
     });
 
     it("Nested Blob", async () => {
         const tree: ISnapshotTree = {
             blobs: {},
             commits: {},
-            // eslint-disable-next-line no-null/no-null
-            id: null,
             trees: {
                 nested: {
                     blobs: {
                         foo: "bar",
                     },
                     commits: {},
-                    // eslint-disable-next-line no-null/no-null
-                    id: null,
                     trees: {},
                 },
             },
@@ -89,6 +81,6 @@ describe("ChannelStorageService", () => {
         assert.strictEqual(await ss.contains("nested/foo"), true);
         assert.deepStrictEqual(await ss.list("nested/"), ["foo"]);
         assert.strictEqual(await ss.read("nested/foo"), "bar");
-        assert.deepStrictEqual(await ss.readBlob("nested/foo"), stringToBuffer("bar", "utf8"));
+        assert.deepStrictEqual(await ss.readBlob("nested/foo"), stringToBuffer("bar", "base64"));
     });
 });

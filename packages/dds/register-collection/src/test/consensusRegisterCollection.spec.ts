@@ -6,11 +6,12 @@
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
-    FileMode,
     ISummaryBlob,
     ITree,
-    TreeEntry,
 } from "@fluidframework/protocol-definitions";
+import {
+    BlobTreeEntry,
+} from "@fluidframework/protocol-base";
 import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
 import {
     MockContainerRuntimeFactory,
@@ -127,18 +128,8 @@ describe("ConsensusRegisterCollection", () => {
             });
             const buildTree = (serialized: string) => ({
                 entries: [
-                    {
-                        mode: FileMode.File,
-                        path: snapshotFileName,
-                        type: TreeEntry.Blob,
-                        value: {
-                            contents: serialized,
-                            encoding: "utf-8",
-                        },
-                    },
+                    new BlobTreeEntry(snapshotFileName, serialized),
                 ],
-                // eslint-disable-next-line no-null/no-null
-                id: null,
             });
 
             it("summarize", async () => {

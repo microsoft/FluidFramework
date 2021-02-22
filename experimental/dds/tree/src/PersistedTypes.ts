@@ -524,6 +524,8 @@ export const Change = {
 
 	clearPayload: (nodeToModify: NodeId): SetValue => ({
 		nodeToModify,
+		// Rationale: 'undefined' is reserved for future use (see 'SetPayload' interface above.)
+		// eslint-disable-next-line no-null/no-null
 		payload: null,
 		type: ChangeType.SetValue,
 	}),

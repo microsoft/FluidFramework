@@ -10,7 +10,7 @@ import { taskSchedulerId } from "@fluidframework/container-runtime";
 import { IAgentScheduler } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { generateTest, ITestObjectProvider, TestDataObject } from "./compatUtils";
-import * as old from "./oldVersion";
+import * as oldTypes from "./oldVersionTypes";
 
 const tests = (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
@@ -18,7 +18,6 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         args = argsFactory();
     });
     const leader = "leader";
-
     describe("Single client", () => {
         let scheduler: IAgentScheduler;
 
@@ -32,7 +31,10 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
             dataObject._root.set("tempKey", "tempValue");
-            await args.opProcessingController.process();
+
+            while (!container.deltaManager.active) {
+                await args.opProcessingController.process();
+            }
         });
 
         it("No tasks initially", async () => {
@@ -90,8 +92,8 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     });
 
     describe("Multiple clients", () => {
-        let container1: IContainer | old.IContainer;
-        let container2: IContainer | old.IContainer;
+        let container1: IContainer | oldTypes.IContainer;
+        let container2: IContainer | oldTypes.IContainer;
         let scheduler1: IAgentScheduler;
         let scheduler2: IAgentScheduler;
 
@@ -105,8 +107,9 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
             dataObject1._root.set("tempKey1", "tempValue1");
-            await args.opProcessingController.process();
-
+            while (!container1.deltaManager.active) {
+                await args.opProcessingController.process();
+            }
             // Load existing Container for the second document.
             container2 = await args.loadTestContainer();
             scheduler2 = await requestFluidObject<TaskManager>(container2, taskSchedulerId)
@@ -116,7 +119,9 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
             dataObject2._root.set("tempKey2", "tempValue2");
-            await args.opProcessingController.process();
+            while (!container2.deltaManager.active) {
+                await args.opProcessingController.process();
+            }
         });
 
         it("No tasks initially", async () => {

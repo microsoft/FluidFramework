@@ -198,7 +198,8 @@ export class MergeTreeTextHelper {
         if (TextSegment.is(segment)) {
             if (MergeTree.traceGatherText) {
                 console.log(
-                    `@cli ${this.mergeTree.getLongClientId(this.mergeTree.collabWindow.clientId)} ` +
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    `@cli ${this.mergeTree.getLongClientId!(this.mergeTree.collabWindow.clientId)} ` +
                     `gather seg seq ${segment.seq} rseq ${segment.removedSeq} text ${segment.text}`);
             }
             let beginTags = "";

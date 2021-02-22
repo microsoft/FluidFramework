@@ -34,7 +34,7 @@ export interface IFileSnapshot {
 
 export class FileSnapshotReader extends ReadDocumentStorageServiceBase implements IDocumentStorageService {
     // IVersion.treeId used to communicate between getVersions() & getSnapshotTree() calls to indicate IVersion is ours.
-    private static readonly FileStorageVersionTreeId = "FileStorageTreeId";
+    protected static readonly FileStorageVersionTreeId = "FileStorageTreeId";
 
     protected docId?: string;
     protected docTree: ISnapshotTree;

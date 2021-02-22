@@ -205,7 +205,8 @@ export class PermutationVector extends Client {
             return undefined;
         }
 
-        return this.getPosition(segment) + offset;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this.getPosition(segment) + offset!;
     }
 
     public handleToPosition(handle: Handle, localSeq = this.mergeTree.collabWindow.localSeq) {
@@ -277,7 +278,6 @@ export class PermutationVector extends Client {
                 },
                 serializeBlob(handle, SnapshotPath.handleTable, this.handleTable.snapshot(), serializer),
             ],
-            id: null,   // eslint-disable-line no-null/no-null
         };
     }
 
