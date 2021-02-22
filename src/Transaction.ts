@@ -254,6 +254,8 @@ export class Transaction {
 		const node = this.view.getSnapshotNode(change.nodeToModify);
 		const { payload } = change;
 		const newNode = { ...node };
+		// Rationale: 'undefined' is reserved for future use (see 'SetPayload' interface defn.)
+		// eslint-disable-next-line no-null/no-null
 		if (payload === null) {
 			delete newNode.payload;
 		} else {

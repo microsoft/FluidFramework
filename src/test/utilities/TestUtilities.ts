@@ -101,12 +101,12 @@ export function setUpTestSharedTree(
 	}
 
 	// Enable expensiveValidation
-	const tree = new SharedTree(componentRuntime, id || 'testSharedTree', true);
+	const tree = new SharedTree(componentRuntime, id ?? 'testSharedTree', true);
 	tree.summarizer = options.summarizer ?? fullHistorySummarizer;
 
 	const newContainerRuntimeFactory = containerRuntimeFactory || new MockContainerRuntimeFactory();
 
-	if (localMode) {
+	if (localMode === true) {
 		componentRuntime.local = true;
 	} else {
 		const containerRuntime = newContainerRuntimeFactory.createContainerRuntime(componentRuntime);
