@@ -43,7 +43,12 @@ import {
     IChannelStorageService,
     IChannelServices,
 } from "@fluidframework/datastore-definitions";
-import { FluidSerializer, getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
+import {
+    FluidHandleContext,
+    getNormalizedObjectStoragePathParts,
+    mergeStats,
+    FluidRoutingContext,
+} from "@fluidframework/runtime-utils";
 import {
     IChannelSummarizeResult,
     IFluidDataStoreChannel,
@@ -369,14 +374,19 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     implements IFluidDataStoreRuntime, IFluidDataStoreChannel {
     public get IFluidRouter() { return this; }
 
-    public readonly IFluidSerializer = new FluidSerializer(this.channelsRoutingContext);
-
     public get objectsRoutingContext(): IFluidHandleContext {
-        throw new Error("Not implemented");
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const self = this;
+        return new FluidHandleContext(
+            {
+                get attachState() { return self.attachState; },
+                attachGraph: () => {},
+            },
+            new FluidRoutingContext(`${this.id}`));
     }
 
     public get channelsRoutingContext(): IFluidHandleContext {
-        throw new Error("Not implemented");
+        return this.objectsRoutingContext;
     }
 
     public readonly documentId: string;
@@ -384,7 +394,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public readonly existing: boolean;
     public options: ILoaderOptions = {};
     public clientId: string | undefined = uuid();
-    public readonly path = "";
     public readonly connected = true;
     public readonly leader: boolean;
     public deltaManager = new MockDeltaManager();
@@ -417,19 +426,11 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return null;
     }
 
-    public get isAttached(): boolean {
-        return !this.local;
-    }
-
     public get attachState(): AttachState {
         return this.local ? AttachState.Detached : AttachState.Attached;
     }
 
     public bindChannel(channel: IChannel): void {
-        return;
-    }
-
-    public attachGraph(): void {
         return;
     }
 
@@ -446,14 +447,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     }
 
     public getAudience(): IAudience {
-        return null;
-    }
-
-    public save(message: string) {
-        return;
-    }
-
-    public async close(): Promise<void> {
         return null;
     }
 
@@ -478,10 +471,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     }
 
     public processSignal(message: any, local: boolean) {
-        return;
-    }
-
-    public updateMinSequenceNumber(value: number): void {
         return;
     }
 

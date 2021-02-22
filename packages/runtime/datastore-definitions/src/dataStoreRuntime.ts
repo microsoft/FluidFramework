@@ -6,7 +6,6 @@
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandleContext,
-    IFluidSerializer,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
@@ -44,8 +43,6 @@ export interface IFluidDataStoreRuntime extends
     Partial<IProvideFluidDataStoreRegistry> {
 
     readonly id: string;
-
-    readonly IFluidSerializer: IFluidSerializer;
 
     readonly channelsRoutingContext: IFluidHandleContext;
     readonly objectsRoutingContext: IFluidHandleContext;

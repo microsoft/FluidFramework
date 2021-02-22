@@ -59,7 +59,10 @@ export const defaultRouteRequestHandler = (defaultRootId: string) => {
         const parser = RequestParser.create(request);
         if (parser.pathParts.length === 0) {
             const router = await runtime.getRootDataStore(defaultRootId);
-            return router.request(request);
+            // adding leading slash
+            return router.request({
+                url: `/${parser.query}`,
+                headers: request.headers });
         }
         return undefined; // continue search
     };

@@ -8,7 +8,6 @@ import {
     IFluidHandle,
     IFluidHandleContext,
     IFluidRoutingContext,
-    IFluidSerializer,
     IRequest,
     IResponse,
     defaultRoutePath,
@@ -64,7 +63,6 @@ import {
     TerminatingRoute,
     requestFluidObject,
     convertSummaryTreeToITree,
-    FluidSerializer,
     SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
 import {
@@ -150,12 +148,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
     public readonly channelsRoutingContext: IFluidHandleContext;
     public readonly objectsRoutingContext: IFluidHandleContext;
 
-    public readonly IFluidSerializer: IFluidSerializer;
-
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
     private readonly contexts = new Map<string, IChannelContext>();
+    private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private bindState: BindState;
     // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
@@ -236,8 +233,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
         this.channelsRoutingContext = new FluidHandleContext(
             this,
             new FluidRoutingContext("_channels", this.dataStoreRoutingContext));
-
-        this.IFluidSerializer = new FluidSerializer(this.dataStoreRoutingContext);
 
         const tree = dataStoreContext.baseSnapshot;
 
@@ -335,6 +330,12 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
     }
 
     protected addChannel(id: string, context: IChannelContext) {
+        if (!this.contextsDeferred.has(id)) {
+            this.contextsDeferred.set(id, new Deferred<IChannelContext>());
+        }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.contextsDeferred.get(id)!.resolve(context);
+
         this.contexts.set(id, context);
 
         const route = new TerminatingRoute(
@@ -372,6 +373,26 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
         }
         const channel = await context.getChannel();
         return channel;
+    }
+
+    /**
+     * @deprecated - please use getChannel() instead, use it only to solve backward compatibility issues.
+     * This API is similar to getChannel(), but it will wait for channel to be created if it's not there.
+     * Please note that the wait could be infinite (i.e. deadlock!) if such channel never materializes.
+     * As such, it's not recommended to use this API, it's here only to help with backward compatibility,
+     * i.e. cases where (in the past) we were attaching data stores too soon, before DDSs were created
+     * @param id - channel ID
+     */
+    public async waitChannel(id: string): Promise<IChannel> {
+        this.verifyNotClosed();
+
+        if (!this.contextsDeferred.has(id)) {
+            this.contextsDeferred.set(id, new Deferred<IChannelContext>());
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const context = await this.contextsDeferred.get(id)!.promise;
+        return context.getChannel();
     }
 
     public createChannel(id: string = uuid(), type: string): IChannel {
