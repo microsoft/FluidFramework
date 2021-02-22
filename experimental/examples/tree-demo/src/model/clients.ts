@@ -70,10 +70,9 @@ export class ClientProxy {
     }
 }
 
-const clientProxy = new ClientProxy();
-const bubbleProxy = new BubbleProxy();
-
 export class ClientManager {
+    private readonly clientProxy = new ClientProxy();
+    private readonly bubbleProxy = new BubbleProxy();
     private readonly myClientNodeId: NodeId;
 
     constructor(
@@ -93,13 +92,13 @@ export class ClientManager {
     }
 
     public getClientId(tree: Snapshot) {
-        clientProxy.moveTo(tree, this.myClientNodeId);
-        return clientProxy.clientId;
+        this.clientProxy.moveTo(tree, this.myClientNodeId);
+        return this.clientProxy.clientId;
     }
 
     public setClientId(tree: SharedTree, clientId: string) {
-        clientProxy.moveTo(tree.currentView, this.myClientNodeId);
-        tree.applyEdit(clientProxy.setClientId(clientId));
+        this.clientProxy.moveTo(tree.currentView, this.myClientNodeId);
+        tree.applyEdit(this.clientProxy.setClientId(clientId));
     }
 
     public forEachClient(view: Snapshot, callback: (client: ClientProxy, local: boolean, nodeId: NodeId) => void) {
@@ -107,38 +106,40 @@ export class ClientManager {
         const clients = view.getTrait({ parent: view.root, label: "clients" as TraitLabel });
 
         for (const clientNodeId of clients) {
-            clientProxy.moveTo(view, clientNodeId);
+            this.clientProxy.moveTo(view, clientNodeId);
             if (clientNodeId === this.myClientNodeId) {
-                callback(clientProxy, /* local: */ true, clientNodeId);
-            } else if (members.has(clientProxy.clientId)) {
-                callback(clientProxy, /* local: */ false, clientNodeId);
+                callback(this.clientProxy, /* local: */ true, clientNodeId);
+            } else if (members.has(this.clientProxy.clientId)) {
+                callback(this.clientProxy, /* local: */ false, clientNodeId);
+            } else {
+                console.log(`Skipped: ${this.clientProxy.clientId}`);
             }
         }
     }
 
     public localBubbles(view: Snapshot): readonly NodeId[] {
-        clientProxy.moveTo(view, this.myClientNodeId);
-        return clientProxy.bubbles;
+        this.clientProxy.moveTo(view, this.myClientNodeId);
+        return this.clientProxy.bubbles;
     }
 
     public forEachRemoteBubble(view: Snapshot, callback: (bubble: BubbleProxy) => void) {
         this.forEachClient(view, (client, local) => {
             if (!local) {
                 for (const bubbleId of client.bubbles) {
-                    bubbleProxy.moveTo(view, bubbleId);
-                    callback(bubbleProxy);
+                    this.bubbleProxy.moveTo(view, bubbleId);
+                    callback(this.bubbleProxy);
                 }
             }
         });
     }
 
     public addBubble(tree: SharedTree, bubble: EditNode) {
-        clientProxy.moveTo(tree.currentView, this.myClientNodeId);
-        clientProxy.addBubble(tree, bubble);
+        this.clientProxy.moveTo(tree.currentView, this.myClientNodeId);
+        this.clientProxy.addBubble(tree, bubble);
     }
 
     public removeBubble(tree: SharedTree) {
-        clientProxy.moveTo(tree.currentView, this.myClientNodeId);
-        clientProxy.removeBubble(tree);
+        this.clientProxy.moveTo(tree.currentView, this.myClientNodeId);
+        this.clientProxy.removeBubble(tree);
     }
 }

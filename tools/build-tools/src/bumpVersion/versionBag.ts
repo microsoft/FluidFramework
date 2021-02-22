@@ -13,7 +13,7 @@ export class VersionBag {
     public add(pkg: Package, version: string) {
         const existing = this.internalAdd(pkg, version);
         if (existing) {
-            fatal(`Inconsistent version for ${name} ${version} && ${existing}`);
+            fatal(`Inconsistent version for ${pkg.name} ${version} && ${existing}`);
         }
     }
     protected internalAdd(pkg: Package, version: string, override: boolean = false) {
