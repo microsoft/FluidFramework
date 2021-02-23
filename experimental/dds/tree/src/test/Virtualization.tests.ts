@@ -2,7 +2,7 @@
 
 import { expect } from 'chai';
 import { ISerializedHandle } from '@fluidframework/core-interfaces';
-import { LocalTestObjectProvider } from '@fluidframework/test-utils';
+import { TestObjectProvider } from '@fluidframework/test-utils';
 import { editsPerChunk } from '../EditLog';
 import { newEdit, setTrait } from '../EditUtilities';
 import { Edit, EditWithoutId } from '../PersistedTypes';
@@ -18,7 +18,7 @@ import {
 
 describe('SharedTree history virtualization', () => {
 	let sharedTree: SharedTree;
-	let localTestObjectProvider: LocalTestObjectProvider<ITestContainerConfig>;
+	let localTestObjectProvider: TestObjectProvider<ITestContainerConfig>;
 
 	beforeEach(async () => {
 		const testingComponents = await setUpLocalServerTestSharedTree({ summarizer: fullHistorySummarizer_0_1_0 });
