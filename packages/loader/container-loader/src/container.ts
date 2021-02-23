@@ -741,7 +741,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             const resolvedUrl = this.service.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
             this._resolvedUrl = resolvedUrl;
-            const url = await this.getAbsoluteUrl("");
+            const url = await this.urlResolver.getAbsoluteUrl(
+                resolvedUrl,
+                "",
+                this._context?.codeDetails,
+            );
             assert(url !== undefined, "Container url undefined");
             this.containerUrl = url;
             const parsedUrl = parseUrl(resolvedUrl.url);
