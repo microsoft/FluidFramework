@@ -209,10 +209,6 @@ export async function setUpLocalServerTestSharedTree(
 	const dataObject = await requestFluidObject<ITestFluidObject>(container, 'default');
 	const tree = await dataObject.getSharedObject<SharedTree>(treeId);
 
-	if (initialTree !== undefined && localTestObjectProvider === null) {
-		setTestTree(tree, initialTree, setupEditId);
-	}
-
 	if (summarizer !== undefined) {
 		tree.summarizer = summarizer;
 	}
