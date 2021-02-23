@@ -54,7 +54,9 @@ function useKVPair(): [KVData, SetKVPair | undefined] {
         }
     }, [dataObject]);
 
-    return [data, dataObject?.set];
+    const setPair = dataObject?.set;
+
+    return [data, setPair];
 }
 
 function App() {
