@@ -99,7 +99,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         dataObject2map2 = await dataObject2.getSharedObject<SharedMap>(map2Id);
 
         await waitForCleanContainers(dataObject1, dataObject2);
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
     });
 
     describe("Local ops batch metadata verification", () => {
@@ -122,7 +122,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
-                await args.opProcessingController.process();
+                await args.ensureSynchronized();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 4, "Incorrect number of messages received on local client");
@@ -139,7 +139,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
-                await args.opProcessingController.process();
+                await args.ensureSynchronized();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 1, "Incorrect number of messages received on local client");
@@ -166,7 +166,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
-                await args.opProcessingController.process();
+                await args.ensureSynchronized();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 4, "Incorrect number of messages received on local client");
@@ -191,7 +191,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
-                await args.opProcessingController.process();
+                await args.ensureSynchronized();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 0, "Incorrect number of messages received on local client");
@@ -216,7 +216,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
-                await args.opProcessingController.process();
+                await args.ensureSynchronized();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 4, "Incorrect number of messages received on local client");
@@ -243,7 +243,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
                 (dataObject1.context.containerRuntime as IContainerRuntime).flush();
 
                 // Wait for the ops to get processed by both the containers.
-                await args.opProcessingController.process();
+                await args.ensureSynchronized();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 4, "Incorrect number of messages received on local client");
@@ -264,7 +264,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
                 dataObject2.context.containerRuntime.setFlushMode(FlushMode.Automatic);
 
                 // Wait for the ops to get processed by both the containers.
-                await args.opProcessingController.process();
+                await args.ensureSynchronized();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 1, "Incorrect number of messages received on local client");
@@ -309,7 +309,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
                 dataObject2.context.containerRuntime.setFlushMode(FlushMode.Automatic);
 
                 // Wait for the ops to get processed by both the containers.
-                await args.opProcessingController.process();
+                await args.ensureSynchronized();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 6, "Incorrect number of messages received on local client");
@@ -356,7 +356,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await args.opProcessingController.process();
+                await args.ensureSynchronized();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(dataObject1, false);
@@ -374,7 +374,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await args.opProcessingController.process();
+                await args.ensureSynchronized();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(dataObject1, false);
@@ -396,7 +396,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await args.opProcessingController.process();
+                await args.ensureSynchronized();
 
                 // Check that the document dirty state is cleaned after the ops are processed.
                 // Verify that the document dirty state is cleaned after the ops are processed.
@@ -425,7 +425,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await args.opProcessingController.process();
+                await args.ensureSynchronized();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(dataObject1, false);
@@ -443,7 +443,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await args.opProcessingController.process();
+                await args.ensureSynchronized();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(dataObject1, false);
@@ -462,7 +462,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await args.opProcessingController.process();
+                await args.ensureSynchronized();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(dataObject1, false);
@@ -483,7 +483,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await args.opProcessingController.process();
+                await args.ensureSynchronized();
 
                 // Check that the document dirty state is cleaned after the ops are processed.
                 // Verify that the document dirty state is cleaned after the ops are processed.
@@ -514,7 +514,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await args.opProcessingController.process();
+                await args.ensureSynchronized();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(dataObject1, false);
