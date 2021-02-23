@@ -863,7 +863,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public raiseContainerWarning(warning: ContainerWarning) {
         // Some "warning" events come from outside the container and are logged
         // elsewhere (e.g. summarizing container). We shouldn't log these here.
-        if ((warning as any).logged !== true) {
+        if (warning.logged !== true) {
             this.logContainerError(warning);
         }
         this.emit("warning", warning);
