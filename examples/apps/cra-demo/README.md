@@ -169,9 +169,9 @@ function useKVPair(): [KVData, SetKVPair | undefined] {
 
 It is possible to avoid syncing data between Fluid and app state, but I've found that it can cause as many problems as it solves. So for this demo we will have app state drive our UI updates, and sync Fluid data into our view's state any time that it changes. The advantages of this approach are:
 
-1. We leverage React's ability to update its UI based on changing state (vs forcing a re-render)
-2. In the real world, view state will often be a subset of the entire Fluid state
-3. A MVC/MVP approach will require Fluid data (as the app database) to be translated into queries passed into views anyway
+1. We leverage React's ability to update its UI based on changing state (vs forcing a re-render).
+2. In the real world, view state will often be a subset of the entire Fluid state.
+3. A MVC/MVP approach will require Fluid data (as the app database) to be translated into queries passed into views anyway.
 
 ### 7.a Create a place to store our KVPair data
 
