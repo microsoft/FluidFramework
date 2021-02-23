@@ -154,14 +154,6 @@ const loadedChunkCacheSize = Number.POSITIVE_INFINITY;
 export type EditAddedHandler = (edit: Edit, isLocal: boolean) => void;
 
 /**
- * Event fired when an edit is added to an `EditLog`.
- * @param edit - The edit that was added to the log
- * @param isLocal - true iff this edit was generated locally
- * @internal
- */
-export type EditAddedHandler = (edit: Edit, isLocal: boolean) => void;
-
-/**
  * The edit history log for SharedTree.
  * Contains only completed edits (no in-progress edits).
  * Ordered first by locality (acked or local), then by time of insertion.
