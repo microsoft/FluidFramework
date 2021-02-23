@@ -192,7 +192,7 @@ async function orchestratorProcess(
     const url = args.testId ?? await initialize(testDriver);
 
     const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
-    console.log(`Connecting to ${args.testId ? "existing" : "new"} Container targeting dataStore with URL:\n${url}`);
+    console.log(`Connecting to ${args.testId ? "existing" : "new"} Container targeting with testId:\n${testId }`);
     console.log(`Authenticated as user: ${loginInfo.username}`);
     console.log(`Selected test profile: ${profile.name}`);
     console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
