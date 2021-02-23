@@ -36,14 +36,15 @@ class TestSharedDataObject1 extends DataObject {
         return this.context;
     }
 
-    // this is for returning query params in the last test
+    // Returns query params (if any) in the request.
+    // Used in tests that verify query params work correctly with loader.request
     public async request(request: IRequest): Promise<IResponse> {
         const url = request.url;
         const parsed = parse(url, true);
         // eslint-disable-next-line no-null/no-null
         if (parsed.search !== null) {
             // returning query params instead of the data object for testing purposes
-            return { mimeType: "fluid/object", status: 200, value : `${parsed.search}` };
+            return { mimeType: "text/plain", status: 200, value : `${parsed.search}` };
         } else {
             return super.request(request);
         }
@@ -169,7 +170,7 @@ describe("Loader.request", () => {
             [LoaderHeader.pause]: true,
         };
         const url = await container.getAbsoluteUrl("");
-        assert(url,"url is undefined");
+        assert(url, "url is undefined");
         const container2 = await loader.resolve({ url, headers });
         opProcessingController.addDeltaManagers(container2.deltaManager);
 
@@ -233,12 +234,13 @@ describe("Loader.request", () => {
         assert.strictEqual(sameDataStore1, sameDataStore2,
             "same containers do not return same data store for same request");
     });
-    it("request can handle url with query params", async () => {
+    it("can handle url with query params", async () => {
         const url = await container.getAbsoluteUrl("");
+        assert(url, "url is undefined");
 
         const query = `?query1=1&query2=2`;
         const testUrl = `${url}${query}`;
         const response = await loader.request({ url: testUrl });
-        assert.strictEqual(response.value, query, "request did not pass the right query");
+        assert.strictEqual(response.value, query, "request did not pass the right query to the data store");
     });
 });
