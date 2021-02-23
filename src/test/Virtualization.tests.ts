@@ -26,6 +26,10 @@ describe('SharedTree history virtualization', () => {
 		localTestObjectProvider = testingComponents.localTestObjectProvider;
 	});
 
+	afterEach(async () => {
+		await localTestObjectProvider.reset();
+	});
+
 	// Adds edits to sharedTree1 to make up the specified number of chunks.
 	const processNewEditChunks = async (numberOfChunks = 1) => {
 		const expectedEdits: Edit[] = [];

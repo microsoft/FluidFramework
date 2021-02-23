@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { resolve, join } from 'path';
 import { v5 as uuidv5 } from 'uuid';
 import { assert, expect } from 'chai';
 import { LocalTestObjectProvider } from '@fluidframework/test-utils';
@@ -24,8 +25,9 @@ import {
 
 describe('Summary format', () => {
 	const uuidNamespace = '44864298-500e-4cf8-9f44-a249e5b3a286';
-	// This path can't be found by the mocha test explorer but is found by `npm test`
-	const summaryFilesPath = 'src/test/summary-files/';
+	// This accounts for this file being executed after compilation. If many tests want to leverage resources, we should unify
+	// resource path logic to a single place.
+	const summaryFilesPath = resolve(__dirname, '../../src/test/summary-files/');
 	const setupEditId = '9406d301-7449-48a5-b2ea-9be637b0c6e4' as EditId;
 
 	let expectedTree: SharedTree;
@@ -41,8 +43,12 @@ describe('Summary format', () => {
 		localTestObjectProvider = testingComponents.localTestObjectProvider;
 	});
 
+	afterEach(async () => {
+		await localTestObjectProvider.reset();
+	});
+
 	const validateSummaryRead = (fileName: string): void => {
-		const serializeSummary = fs.readFileSync(`${summaryFilesPath}${fileName}.json`, 'utf8');
+		const serializeSummary = fs.readFileSync(join(summaryFilesPath, `${fileName}.json`), 'utf8');
 		const summary = deserialize(serializeSummary);
 
 		const { tree } = setUpTestSharedTree();

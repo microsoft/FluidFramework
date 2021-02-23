@@ -181,7 +181,9 @@ export interface LocalServerSharedTreeTestingOptions {
 
 /**
  * Sets up and returns an object of components useful for testing SharedTree with a local server.
- * Required for tests that involve the uploadBlob API
+ * Required for tests that involve the uploadBlob API.
+ *
+ * If using this method, be sure to clean up server state by calling `reset` on the TestObjectProvider.
  */
 export async function setUpLocalServerTestSharedTree(
 	options: LocalServerSharedTreeTestingOptions

@@ -28,7 +28,7 @@
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"test": "npm run test:mocha",
-		"test:mocha": "nyc --report-dir='./coverage' mocha \"dist/**/*.tests.js\" --config ../../.mocharc.js",
+		"test:mocha": "nyc --report-dir='./coverage' mocha \"dist/**/*.tests.js\" --exit --config ../../.mocharc.js",
 		"tsc": "tsc --pretty"
 	},
 	"dependencies": {
