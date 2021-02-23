@@ -6,7 +6,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { expect } from 'chai';
 import { DataObject } from '@fluidframework/aqueduct';
-import { Container } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
 import {
 	MockContainerRuntimeFactory,
@@ -21,6 +20,7 @@ import {
 	TestFluidObjectFactory,
 } from '@fluidframework/test-utils';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { IContainer } from '@fluidframework/container-definitions';
 import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
 import { fail } from '../../Common';
 import { ChangeNode, NodeData, TraitLocation } from '../../PersistedTypes';
@@ -195,15 +195,13 @@ export async function setUpLocalServerTestSharedTree(
 			initialSummarizerDelayMs: 0,
 		});
 
-	let provider: LocalTestObjectProvider<ITestContainerConfig>;
-	let container: Container;
+	let container: IContainer;
 
 	if (localTestObjectProvider !== undefined) {
 		provider = localTestObjectProvider;
 		container = await provider.loadTestContainer();
 	} else {
-		provider = new LocalTestObjectProvider(runtimeFactory);
-		container = (await provider.makeTestContainer()) as Container;
+		container = (await provider.makeTestContainer());
 	}
 
 	const dataObject = await requestFluidObject<ITestFluidObject>(container, 'default');
