@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-extraneous-dependencies */
 export * from "old-container-definitions2";
 export * from "old-core-interfaces2";
 export { IDocumentServiceFactory, IUrlResolver } from "old-driver-definitions2";
@@ -17,7 +16,7 @@ import {
     DataObjectFactory,
 } from "old-aqueduct2";
 import { SharedCell } from "old-cell2";
-import {  IRuntimeFactory } from "old-container-definitions2";
+import { IRuntimeFactory } from "old-container-definitions2";
 import { Loader } from "old-container-loader2";
 import { IContainerRuntimeOptions } from "old-container-runtime2";
 import { IFluidCodeDetails } from "old-core-interfaces2";
@@ -41,7 +40,7 @@ import {
     TestFluidObjectFactory,
 } from "old-test-utils2";
 
-import {v4 as uuid} from "uuid";
+import { v4 as uuid } from "uuid";
 import {
     createRuntimeFactory,
     DataObjectFactoryType,
@@ -53,7 +52,6 @@ import {
 } from "./compatUtils";
 import * as newVer from "./newVersion";
 
-/* eslint-enable import/no-extraneous-dependencies */
 const defaultCodeDetails: IFluidCodeDetails = {
     package: "defaultTestPackage",
     config: {},
@@ -83,10 +81,10 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
 
     }
 
-    readonly driver: newVer.ITestDriver ={
+    readonly driver: newVer.ITestDriver = {
         type: "local",
         version: "0.33.0",
-        createContainerUrl: (testId)=>`http://localhost${testId}`,
+        createContainerUrl: async (testId)=>`http://localhost${testId}`,
         createCreateNewRequest: (testId)=>this.urlResolver.createCreateNewRequest(testId),
         createDocumentServiceFactory: ()=>this.documentServiceFactory as any as newVer.IDocumentServiceFactory,
         createUrlResolver: ()=>this.urlResolver,
@@ -160,7 +158,7 @@ export class LocalTestObjectProvider<TestContainerConfigType> {
         const container =
             await newVer.createAndAttachContainer(
                 defaultCodeDetails,
-                loader,
+                loader as any,
                 this.urlResolver.createCreateNewRequest(this.documentId));
 
         // TODO: the old version delta manager on the container doesn't do pause/resume count

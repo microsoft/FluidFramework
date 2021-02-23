@@ -28,6 +28,7 @@ export class LocalDocumentService implements api.IDocumentService {
         private readonly tenantId: string,
         private readonly documentId: string,
         private readonly documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>,
+        public readonly policies: api.IDocumentServicePolicies = {},
         private readonly innerDocumentService?: api.IDocumentService,
     ) { }
 
@@ -59,6 +60,9 @@ export class LocalDocumentService implements api.IDocumentService {
      * @param client - client data
      */
     public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
+        if (this.policies.storageOnly === true) {
+            throw new Error("can't connect to delta stream in storage-only mode");
+        }
         if (this.innerDocumentService) {
             return this.innerDocumentService.connectToDeltaStream(client);
         }
@@ -110,6 +114,7 @@ export function createLocalDocumentService(
     tenantId: string,
     documentId: string,
     documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>,
+    policies?: api.IDocumentServicePolicies,
     innerDocumentService?: api.IDocumentService): api.IDocumentService {
     return new LocalDocumentService(
         resolvedUrl,
@@ -118,6 +123,7 @@ export function createLocalDocumentService(
         tenantId,
         documentId,
         documentDeltaConnectionsMap,
+        policies,
         innerDocumentService,
     );
 }

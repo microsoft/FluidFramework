@@ -10,8 +10,8 @@ import { IConsumer, IQueuedMessage } from "@fluidframework/server-services-core"
 export class CheckpointManager {
     private checkpointing = false;
     private closed = false;
-    private commitedCheckpoint: IQueuedMessage;
-    private lastCheckpoint: IQueuedMessage;
+    private commitedCheckpoint: IQueuedMessage | undefined;
+    private lastCheckpoint: IQueuedMessage | undefined;
     private pendingCheckpoint: Deferred<void> | undefined;
     private error: any;
 
@@ -63,7 +63,7 @@ export class CheckpointManager {
 
                 // Trigger another checkpoint round if the offset has moved since the checkpoint finished and
                 // resolve any pending checkpoints to it.
-                if (this.lastCheckpoint !== this.commitedCheckpoint) {
+                if (this.lastCheckpoint && this.lastCheckpoint !== this.commitedCheckpoint) {
                     assert(this.pendingCheckpoint, "Differing offsets will always result in pendingCheckpoint");
                     const nextCheckpointP = this.checkpoint(this.lastCheckpoint);
                     this.pendingCheckpoint.resolve(nextCheckpointP);

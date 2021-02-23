@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-extraneous-dependencies */
 export {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
@@ -38,4 +37,3 @@ export {
     TestFluidObjectFactory,
     TestObjectProvider,
 } from "@fluidframework/test-utils";
-/* eslint-enable import/no-extraneous-dependencies */

@@ -221,8 +221,11 @@ export enum LoaderCachingPolicy {
     Prefetch,
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IDocumentServicePolicies {
+    /**
+     * Do not connect to delta stream
+     */
+    readonly storageOnly?: boolean;
 }
 
 export interface IDocumentService {
@@ -289,4 +292,6 @@ export interface ISummaryContext {
      * Parent summary acked handle (from summary ack)
      */
     readonly ackHandle: string | undefined;
+
+    readonly referenceSequenceNumber: number;
 }

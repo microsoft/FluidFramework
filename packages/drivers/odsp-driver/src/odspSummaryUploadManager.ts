@@ -28,6 +28,23 @@ import { TokenFetchOptions } from "./tokenFetch";
 
 /* eslint-disable max-len */
 
+// Gate that when flipped, instructs to mark unreferenced nodes as such in the summary sent to SPO.
+function gatesMarkUnreferencedNodes() {
+    // Leave override for testing purposes
+    if (typeof localStorage === "object" && localStorage !== null) {
+        if  (localStorage.FluidMarkUnreferencedNodes === "1") {
+            return true;
+        }
+        if  (localStorage.FluidMarkUnreferencedNodes === "0") {
+            return false;
+        }
+    }
+
+    // We are starting disabled. This will be enabled once Apps (Bohemia) have finished GC work.
+    // See - https://github.com/microsoft/FluidFramework/issues/5127
+    return false;
+}
+
 export interface IDedupCaches {
     // Cache which contains mapping from blob sha to the blob path in summary. Path starts from ".app" or ".protocol"
     blobShaToPath: Map<string, string>,
@@ -167,7 +184,7 @@ export class OdspSummaryUploadManager {
         } else {
             this.previousBlobTreeDedupCaches = { ...this.blobTreeDedupCaches };
         }
-        const { result, blobTreeDedupCachesLatest } = await this.writeSummaryTreeCore(context.ackHandle, tree);
+        const { result, blobTreeDedupCachesLatest } = await this.writeSummaryTreeCore(context.ackHandle, context.referenceSequenceNumber, tree);
         const id = result ? result.id : undefined;
         if (!result || !id) {
             throw new Error(`Failed to write summary tree`);
@@ -179,6 +196,7 @@ export class OdspSummaryUploadManager {
 
     private async writeSummaryTreeCore(
         parentHandle: string | undefined,
+        referenceSequenceNumber: number,
         tree: api.ISummaryTree,
     ): Promise<{
             result: ISnapshotResponse,
@@ -209,6 +227,7 @@ export class OdspSummaryUploadManager {
         const snapshot: ISnapshotRequest = {
             entries: snapshotTree.entries!,
             message: "app",
+            sequenceNumber: referenceSequenceNumber,
             type: SnapshotType.Channel,
         };
 
@@ -271,6 +290,7 @@ export class OdspSummaryUploadManager {
      * @param rootNodeName - Root node name of the summary tree.
      * @param path - Current path of node which is getting evaluated.
      * @param expanded - True if we are currently expanding a handle by a tree stored in the cache.
+     * @param markUnreferencedNodes - True if we should mark unreferenced nodes.
      */
     private async convertSummaryToSnapshotTree(
         parentHandle: string | undefined,
@@ -280,6 +300,7 @@ export class OdspSummaryUploadManager {
         allowHandleExpansion: boolean,
         path: string = "",
         expanded: boolean = false,
+        markUnreferencedNodes: boolean = gatesMarkUnreferencedNodes(),
     ) {
         const snapshotTree: ISnapshotTree = {
             type: "tree",
@@ -313,7 +334,7 @@ export class OdspSummaryUploadManager {
                         currentPath,
                         expanded);
                     value = result.snapshotTree;
-                    unreferenced = summaryObject.unreferenced;
+                    unreferenced = markUnreferencedNodes ? summaryObject.unreferenced : undefined;
                     reusedBlobs += result.reusedBlobs;
                     blobs += result.blobs;
                     break;
@@ -391,7 +412,7 @@ export class OdspSummaryUploadManager {
                             currentPath,
                             true);
                         value = result.snapshotTree;
-                        unreferenced = summaryTreeToExpand.unreferenced;
+                        unreferenced = markUnreferencedNodes ? summaryTreeToExpand.unreferenced : undefined;
                         reusedBlobs += result.reusedBlobs;
                         blobs += result.blobs;
                     } else {

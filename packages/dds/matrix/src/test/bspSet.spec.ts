@@ -22,8 +22,8 @@ import {
     meets,
     pair,
     Pair,
-} from "../src/bspSet";
-import { Ivl, ivlMeets, ivlCompare, ivlMeetsOrTouches, ivlJoin, ivlExcept } from "../src/split";
+} from "../bspSet";
+import { Ivl, ivlMeets, ivlCompare, ivlMeetsOrTouches, ivlJoin, ivlExcept } from "../split";
 
 /** Represents a half-open 2D rectangle [xa,xb) x [ya,yb) */
 type Rect2D = [Ivl, Ivl];

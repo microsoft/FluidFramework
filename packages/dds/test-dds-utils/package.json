@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/test-dds-utils",
-  "version": "0.35.0",
+  "version": "0.36.0",
   "private": true,
   "description": "Fluid DDS test utilities",
   "homepage": "https://fluidframework.com",
@@ -14,7 +14,6 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "npm run tsc",
-    "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
@@ -47,12 +46,12 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/shared-object-base": "^0.35.0",
+    "@fluidframework/shared-object-base": "^0.36.0",
     "assert": "^2.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0-0",
-    "@fluidframework/eslint-config-fluid": "^0.22.1-0",
+    "@fluidframework/eslint-config-fluid": "^0.23.0-0",
     "@types/assert": "^1.5.2",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",

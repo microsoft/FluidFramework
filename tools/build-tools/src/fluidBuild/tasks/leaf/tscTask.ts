@@ -67,14 +67,14 @@ export class TscTask extends LeafTask {
         if (config?.projectReferences) {
             // TODO: make less assumptions
             if (config.projectReferences.length !== 1) {
-                throw new Error("Only one project references is supported");
+                throw new Error(`${this.node.pkg.nameColored}: Only one project references is supported`);
             }
             if (!isSameFileOrDir(config.projectReferences[0].path, this.node.pkg.directory)) {
-                throw new Error("Only package root project is supported for project references");
+                throw new Error(`${this.node.pkg.nameColored}: Only package root project is supported for project references`);
             }
             this._projectReference = this.addChildTask(dependentTasks, this.node, "tsc") as TscTask | undefined;
             if (!this._projectReference) {
-                throw new Error("tsc not found for project reference");
+                throw new Error(`${this.node.pkg.nameColored}: tsc not found for project reference`);
             }
             this.logVerboseDependency(this.node, "tsc");
         }
@@ -365,9 +365,9 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
         const tscTask = this.addChildTask(dependentTasks, this.node, "tsc", options);
         if (!tscTask) {
             if (options) {
-                throw new Error(`Unable to find tsc task matching ${options.tsConfig} for dependent task ${this.command}`);
+                throw new Error(`${this.node.pkg.nameColored}: Unable to find tsc task matching ${options.tsConfig} for dependent task ${this.command}`);
             } else {
-                throw new Error(`Unable to find tsc task for dependent task ${this.command}`);
+                throw new Error(`${this.node.pkg.nameColored}: Unable to find tsc task for dependent task ${this.command}`);
             }
         }
         this.tscTasks.push(tscTask as TscTask);

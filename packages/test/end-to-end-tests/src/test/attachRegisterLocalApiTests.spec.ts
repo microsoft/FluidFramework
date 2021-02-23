@@ -25,7 +25,7 @@ import { ITestDriver } from "@fluidframework/test-driver-definitions";
 describe(`Attach/Bind Api Tests For Attached Container`, () => {
     let driver: ITestDriver;
     before(()=>{
-        driver = getFluidTestDriver();
+        driver = getFluidTestDriver() as unknown as ITestDriver;
     });
 
     const codeDetails: IFluidCodeDetails = {
