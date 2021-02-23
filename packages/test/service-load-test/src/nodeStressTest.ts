@@ -9,19 +9,9 @@ import child_process from "child_process";
 import commander from "commander";
 import { Loader } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import {
-    OdspDocumentServiceFactory,
-    OdspDriverUrlResolver,
-    OdspResourceTokenFetchOptions,
-} from "@fluidframework/odsp-driver";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
-import {
-    OdspTokenManager,
-    odspTokensCache,
-    getMicrosoftConfiguration,
-    OdspTokenConfig,
-} from "@fluidframework/tool-utils";
-import { getLoginPageUrl, getOdspScope, getDriveId, IOdspTokens } from "@fluidframework/odsp-doclib-utils";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { OdspTestDriver } from "@fluidframework/test-drivers";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ITestConfig, ILoadTestConfig, ITestTenant } from "./testConfigFile";
 import { IRunConfig, fluidExport, ILoadTest } from "./loadTestDataStore";
@@ -32,6 +22,7 @@ interface IOdspTestLoginInfo {
     server: string;
     username: string;
     password: string;
+    driveId: string;
 }
 
 const codeDetails: IFluidCodeDetails = {
@@ -40,67 +31,35 @@ const codeDetails: IFluidCodeDetails = {
 };
 
 const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
-const urlResolver = new OdspDriverUrlResolver();
-const odspTokenManager = new OdspTokenManager(odspTokensCache);
 
-const passwordTokenConfig = (username, password): OdspTokenConfig => ({
-    type: "password",
-    username,
-    password,
-});
-
-function createLoader(loginInfo: IOdspTestLoginInfo) {
-    const documentServiceFactory = new OdspDocumentServiceFactory(
-        async (options: OdspResourceTokenFetchOptions) => {
-            const tokens = await odspTokenManager.getOdspTokens(
-                loginInfo.server,
-                getMicrosoftConfiguration(),
-                passwordTokenConfig(loginInfo.username, loginInfo.password),
-                options.refresh,
-            );
-            return tokens.accessToken;
-        },
-        async (options: OdspResourceTokenFetchOptions) => {
-            const tokens = await odspTokenManager.getPushTokens(
-                loginInfo.server,
-                getMicrosoftConfiguration(),
-                passwordTokenConfig(loginInfo.username, loginInfo.password),
-                options.refresh,
-            );
-            return tokens.accessToken;
-        },
-    );
-
+function createLoader(testDriver: ITestDriver) {
     // Construct the loader
     const loader = new Loader({
-        urlResolver,
-        documentServiceFactory,
+        urlResolver: testDriver.createUrlResolver(),
+        documentServiceFactory: testDriver.createDocumentServiceFactory(),
         codeLoader,
     });
     return loader;
 }
 
-async function initialize(driveId: string, loginInfo: IOdspTestLoginInfo) {
-    const loader = createLoader(loginInfo);
+async function initialize(testDriver: ITestDriver) {
+    const loader = createLoader(testDriver);
     const container = await loader.createDetachedContainer(codeDetails);
     container.on("error", (error) => {
         console.log(error);
         process.exit(-1);
     });
-    const siteUrl = `https://${loginInfo.server}`;
-    const request = urlResolver.createCreateNewRequest(siteUrl, driveId, "/test", "test");
+    const testId = Date.now().toString();
+    const request = testDriver.createCreateNewRequest(testId);
     await container.attach(request);
-    const dataStoreUrl = await container.getAbsoluteUrl("/");
-    assert(dataStoreUrl);
-
     container.close();
 
-    return dataStoreUrl;
+    return testId;
 }
 
-async function load(loginInfo: IOdspTestLoginInfo, url: string) {
-    const loader = createLoader(loginInfo);
-    const respond = await loader.request({ url });
+async function load(testDriver: ITestDriver, testId: string) {
+    const loader = createLoader(testDriver);
+    const respond = await loader.request({ url: await testDriver.createContainerUrl(testId) });
     // TODO: Error checking
     return respond.value as ILoadTest;
 }
@@ -110,15 +69,15 @@ async function main() {
         .version("0.0.1")
         .requiredOption("-t, --tenant <tenant>", "Which test tenant info to use from testConfig.json", "fluidCI")
         .requiredOption("-p, --profile <profile>", "Which test profile to use from testConfig.json", "ci")
-        .option("-u, --url <url>", "Load an existing data store rather than creating new")
-        .option("-r, --runId <runId>", "run a child process with the given id. Requires --url option.")
+        .option("-id, --testId <testId>", "Load an existing data store rather than creating new")
+        .option("-r, --runId <runId>", "run a child process with the given id. Requires --testId option.")
         .option("-d, --debug", "Debug child processes via --inspect-brk")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .parse(process.argv);
 
     const tenantArg: string = commander.tenant;
     const profileArg: string = commander.profile;
-    const url: string | undefined = commander.url;
+    const testId: string | undefined = commander.testId;
     const runId: number | undefined = commander.runId === undefined ? undefined : parseInt(commander.runId, 10);
     const debug: true | undefined = commander.debug;
     const log: string | undefined = commander.log;
@@ -151,7 +110,8 @@ async function main() {
         console.error(e);
         process.exit(-1);
     }
-    const loginInfo: IOdspTestLoginInfo = { server: tenant.server, username: tenant.username, password };
+    const loginInfo: IOdspTestLoginInfo = {
+        server: tenant.server, username: tenant.username, password, driveId: tenant.driveId };
 
     const profile: ILoadTestConfig | undefined = config.profiles[profileArg];
     if (profile === undefined) {
@@ -166,11 +126,11 @@ async function main() {
     let result: number;
     // When runId is specified (with url), kick off a single test runner and exit when it's finished
     if (runId !== undefined) {
-        if (url === undefined) {
-            console.error("Missing --url argument needed to run child process");
+        if (testId === undefined) {
+            console.error("Missing --testId argument needed to run child process");
             process.exit(-1);
         }
-        result = await runnerProcess(loginInfo, profile, runId, url);
+        result = await runnerProcess(loginInfo, profile, runId, testId);
         process.exit(result);
     }
 
@@ -178,7 +138,7 @@ async function main() {
     result = await orchestratorProcess(
         { ...loginInfo, tenantFriendlyName: tenantArg },
         { ...profile, name: profileArg },
-        { url, debug });
+        { testId, debug });
     process.exit(result);
 }
 
@@ -189,14 +149,17 @@ async function runnerProcess(
     loginInfo: IOdspTestLoginInfo,
     profile: ILoadTestConfig,
     runId: number,
-    url: string,
+    testId: string,
 ): Promise<number> {
     try {
         const runConfig: IRunConfig = {
             runId,
             testConfig: profile,
         };
-        const stressTest = await load(loginInfo, url);
+
+        const testDriver = createTestDriver(loginInfo);
+
+        const stressTest = await load(testDriver, testId);
         await stressTest.run(runConfig);
         console.log(`${runId.toString().padStart(3)}> exit`);
         return 0;
@@ -207,55 +170,29 @@ async function runnerProcess(
     }
 }
 
+const createTestDriver = (loginInfo: IOdspTestLoginInfo) =>
+    OdspTestDriver.create(
+        loginInfo.username,
+        loginInfo.password,
+        loginInfo.server,
+        loginInfo.driveId,
+        "stress");
+
 /**
  * Implementation of the orchestrator process. Returns the return code to exit the process with.
  */
 async function orchestratorProcess(
     loginInfo: IOdspTestLoginInfo & { tenantFriendlyName: string },
     profile: ILoadTestConfig & { name: string },
-    args: { url?: string, debug?: true },
+    args: { testId?: string, debug?: true },
 ): Promise<number> {
-    let odspTokens: IOdspTokens;
-    try {
-        // Ensure fresh tokens here so the test runners have them cached
-        odspTokens = await odspTokenManager.getOdspTokens(
-            loginInfo.server,
-            getMicrosoftConfiguration(),
-            passwordTokenConfig(loginInfo.username, loginInfo.password),
-            undefined /* forceRefresh */,
-            true /* forceReauth */,
-        );
-        await odspTokenManager.getPushTokens(
-            loginInfo.server,
-            getMicrosoftConfiguration(),
-            passwordTokenConfig(loginInfo.username, loginInfo.password),
-            undefined /* forceRefresh */,
-            true /* forceReauth */,
-        );
-    } catch (ex) {
-        // Log the login page url in case the caller needs to allow consent for this app
-        const loginPageUrl =
-            getLoginPageUrl(
-                loginInfo.server,
-                getMicrosoftConfiguration(),
-                getOdspScope(loginInfo.server),
-                "http://localhost:7000/auth/callback",
-            );
-
-        console.log("You may need to allow consent for this app. Re-run the tool after allowing consent.");
-        console.log(`Go here allow the app: ${loginPageUrl}\n`);
-
-        throw ex;
-    }
-
-    // Automatically determine driveId based on the server and user
-    const driveId = await getDriveId(loginInfo.server, "", undefined, { accessToken: odspTokens.accessToken });
+    const testDriver = createTestDriver(loginInfo);
 
     // Create a new file if a url wasn't provided
-    const url = args.url ?? await initialize(driveId, loginInfo);
+    const url = args.testId ?? await initialize(testDriver);
 
     const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
-    console.log(`Connecting to ${args.url ? "existing" : "new"} Container targeting dataStore with URL:\n${url}`);
+    console.log(`Connecting to ${args.testId ? "existing" : "new"} Container targeting dataStore with URL:\n${url}`);
     console.log(`Authenticated as user: ${loginInfo.username}`);
     console.log(`Selected test profile: ${profile.name}`);
     console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
@@ -267,7 +204,7 @@ async function orchestratorProcess(
             "--tenant", loginInfo.tenantFriendlyName,
             "--profile", profile.name,
             "--runId", i.toString(),
-            "--url", url];
+            "--testId", url];
         if (args.debug) {
             const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
             childArgs.unshift(`--inspect-brk=${debugPort}`);
