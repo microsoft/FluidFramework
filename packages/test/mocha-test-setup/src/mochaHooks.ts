@@ -31,8 +31,10 @@ export const mochaHooks = {
         console.log = log;
         console.error = error;
     },
-    afterAll() {
-        // Flush the logs before
+    async afterAll() {
+        // Flush the logs before exiting
         getTestLogger(true /* singleton */).flush();
+        // Apparently it takes some time after the sync call returns to actually get the data off the box
+        await (new Promise((res) => { setTimeout(res, 1000); }));
     },
 };

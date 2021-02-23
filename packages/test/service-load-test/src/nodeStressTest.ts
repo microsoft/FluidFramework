@@ -182,14 +182,22 @@ async function main() {
             process.exit(-1);
         }
         result = await runnerProcess(loginInfo, profile, runId, url);
-        process.exit(result);
+    }
+    else {
+        // When runId is not specified, this is the orchestrator process which will spawn child test runners.
+        result = await orchestratorProcess(
+            { ...loginInfo, tenantFriendlyName: tenantArg },
+            { ...profile, name: profileArg },
+            { url, debug });
     }
 
-    // When runId is not specified, this is the orchestrator process which will spawn child test runners.
-    result = await orchestratorProcess(
-        { ...loginInfo, tenantFriendlyName: tenantArg },
-        { ...profile, name: profileArg },
-        { url, debug });
+    // There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
+    await(new Promise((res) => { setTimeout(res, 1000); }));
+    // Flush the logs
+    logger.flush();
+    // Apparently it takes some time after the sync call returns to actually get the data off the box
+    await (new Promise((res) => { setTimeout(res, 1000); }));
+
     process.exit(result);
 }
 
@@ -291,12 +299,6 @@ async function orchestratorProcess(
         p.push(new Promise((resolve) => process.on("close", resolve)));
     }
     await Promise.all(p);
-
-    // There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
-    await(new Promise((res) => { setTimeout(res, 1000); }));
-    // Flush the logs
-    logger.flush();
-
     return 0;
 }
 
