@@ -98,6 +98,8 @@ export abstract class SyncedDataObject<
      */
     public get dataProps() {
         return {
+            // The return type is defined explicitly here to prevent TypeScript from generating dynamic imports
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
             runtime: this.runtime as IFluidDataStoreRuntime,
             fluidObjectMap: this.fluidObjectMap,
         };

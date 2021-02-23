@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { performance } from "@fluidframework/common-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
-import { IDocumentStorageService, IDocumentStorageServicePolicies, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+    IDocumentStorageService,
+    IDocumentStorageServicePolicies,
+    ISummaryContext,
+} from "@fluidframework/driver-definitions";
 import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
 import {
     ICreateBlobResponse,
@@ -15,8 +20,7 @@ import {
     ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { performance } from "@fluidframework/common-utils";
+import { v4 as uuid } from "uuid";
 import { DeltaManager } from "./deltaManager";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService {
