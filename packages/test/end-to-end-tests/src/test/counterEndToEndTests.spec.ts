@@ -53,7 +53,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
         sharedCounter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
     });
 
     function verifyCounterValue(counter: ISharedCounter, expectedValue, index: number) {
@@ -85,10 +85,10 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         it("can increment and decrement the value in 3 containers correctly", async () => {
             sharedCounter2.increment(7);
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             verifyCounterValues(7, 7, 7);
             sharedCounter3.increment(-20);
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             verifyCounterValues(-13, -13, -13);
         });
 
@@ -132,7 +132,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
                 // do the increment
                 incrementer.increment(incrementAmount);
-                await args.opProcessingController.process();
+                await args.ensureSynchronized();
 
                 // event count is correct
                 assert.equal(eventCount1, expectedEventCount);
