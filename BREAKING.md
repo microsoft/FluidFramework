@@ -1,14 +1,21 @@
 ## 0.36 Breaking changes
 
 - [Request Routing](#Request-Routing)
+
+### Request Routing
 Please pay close attention to this section, as many things changed!
 1. The routes produced by handles are different!
-   - Instead of /\<dataStoreId>/root, handle.absolutePath will have /_channels/\<dataStoreId>/_channels/root. 
-   - Instead of /\<dataStoreId>\[/...], handle.absolutePath will have /_channels/\<dataStoreId>/_custom\[/...]. 
+   - Instead of `/\<dataStoreId>/root`, handle.absolutePath will have `/_channels/\<dataStoreId>/_channels/root`.
+   - Instead of `/\<dataStoreId>\[/...]`, handle.absolutePath will have `/_channels/\<dataStoreId>/_custom\[/...]`. 
    - Old routes (and old handles) will continue to work, but they are discouraged. In general, no assumption should be made on structure or shape of internal URIs (that are for handle serialization / de-serialization). Container authors should map external URIs to internal handles + request to custom objects (IFluidObject) that handle resolves to.
-2. APIs like _createDataStoreWithProps, createDataStore, createRootDataStore has been returning IFluidRouter. Client were able to get away with casting returned objects to IFluidDataStoreChannel, this will no longer work. IFluidDataStoreChannel is internal object and there is no way to get to it.
-
-
+2. APIs like `_createDataStoreWithProps`, `createDataStore`, `createRootDataStore` has been returning `IFluidRouter` for a while. Callers were able to get away with casting returned objects to `IFluidDataStoreChannel`, this will no longer work, as object returned is not runtime object. IFluidDataStoreChannel is internal object and there is no way to get to it.
+   - If you need to get to data store runtime, implement a request route on your custom object (like DataObject) that returns data store.
+   - You can no longer get to channels (DDSs) using this IFluidRouter object - see next point on limitations.
+3. There is no way to request a DDS by doing FluidDataStoreRuntime.request() - this path is only for custom routes (i.e. requesting objects that live off data store, like DataObject).
+   - If you need to expose a DDS from data store, your custom object needs to expose it through some custom route.
+4. `FluidDataStoreRuntime.getChannel()` no longer waits (indefinitely) for channel to appear. If channel is not there, request fails.
+   - same applies for requests that are targeting DDSs
+   - `FluidDataStoreRuntime.waitChannel()` is added to support such scenarios, though this API is marked deprecated and ideally should not be used.
 
 ## 0.35 Breaking changes
 - [Removed some api implementations from odsp driver](#Removed-some-api-implemenations-from-odsp-driver)

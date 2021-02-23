@@ -7,10 +7,6 @@ import { IRequest, IResponse } from "./fluidRouter";
 import { IFluidObject } from "./fluidObject";
 import { IFluidLoadable } from "./fluidLoadable";
 
-// Default path - route setup for this path will be taken if request is empty
-// Should be empty, to match "" in generateHandleContextPath()
-export const defaultRoutePath = "";
-
 /**
  * Base interface for IFluidHandleContext.
  * It is used to represent a route in routing, base for an object that implements IFluidHandleContext
