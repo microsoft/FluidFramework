@@ -1,21 +1,4 @@
 {
-    "tenants": {
-        "fluidCI": {
-            "server": "a830edad9050849830E21012616.sharepoint.com",
-            "username": "user0@a830edad9050849830E21012616.onmicrosoft.com",
-            "driveId": "b!QCFuA7c4lkyyaLILLMpbk7Bw9Z25KodLvvftM-0_QKLPJ3jc0INtQ7lDjeG5p58z"
-        },
-        "0312": {
-            "server": "a830edad9050849829J20060312.sharepoint.com",
-            "username": "user0@a830edad9050849829J20060312.onmicrosoft.com",
-            "driveId": "b!Uz0BCJxJ9EyBWBkGFWGNMvUWz37yPERFoKy-dUZxNPnzxSBsh4bpT5bsj4H50PPm"
-        },
-        "2616-my": {
-            "server": "a830edad9050849830E21012616-my.sharepoint.com",
-            "username": "user0@a830edad9050849830E21012616.onmicrosoft.com",
-            "driveId": "b!jZbtfEwJr0GQkFyoBAwxXRSMoVVP7EBEm6j3iUVumVAYeTnrD6dFSa6mgM7mBWr1"
-        }
-    },
     "profiles": {
         "ci": {
             "opRatePerMin": 10,
