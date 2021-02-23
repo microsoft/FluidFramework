@@ -150,7 +150,7 @@ export class CachingLogViewer implements LogViewer {
 			const edit = await this.log.getEditAtIndex(i);
 			const editingResult = new Transaction(currentSnapshot).applyChanges(edit.changes).close();
 			if (editingResult.result === EditResult.Applied) {
-				currentSnapshot = editingResult.snapshot;
+				currentSnapshot = editingResult.after;
 			}
 
 			// Revision is the result of the edit being applied.
@@ -179,7 +179,7 @@ export class CachingLogViewer implements LogViewer {
 			const edit = this.log.getEditInSessionAtIndex(i);
 			const editingResult = new Transaction(currentSnapshot).applyChanges(edit.changes).close();
 			if (editingResult.result === EditResult.Applied) {
-				currentSnapshot = editingResult.snapshot;
+				currentSnapshot = editingResult.after;
 			}
 
 			// Revision is the result of the edit being applied.
