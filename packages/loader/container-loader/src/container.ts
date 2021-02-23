@@ -917,7 +917,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.deltaManager.inbound.pause(),
             this.deltaManager.inboundSignal.pause()]);
 
-        if ((await this.context.satisfies(codeDetails) === true) && this.hasNullRuntime() === false) {
+        if ((await this.context.satisfies(codeDetails) === true) && !this.hasNullRuntime()) {
             this.deltaManager.inbound.resume();
             this.deltaManager.inboundSignal.resume();
             return;
