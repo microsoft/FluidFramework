@@ -48,6 +48,26 @@ export function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapsho
     return normalizedSnapshot;
 }
 
+/**
+ * The packageVersion of the snapshot could be different from the reference snapshot. Replace all package
+ * package versions with X before we compare them. This is how it will looks like:
+ * Before replace - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
+ * After replace  - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
+ */
+const packageVersionRegex = /\\"packageversion\\":\\".+\\"/gi;
+const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X\\\"";
+
+const normalize = (snapshot: IFileSnapshot) =>
+    JSON.parse(
+        JSON.stringify(snapshot, undefined, 2)
+            .replace(packageVersionRegex, packageVersionPlaceholder)
+            // We changed routing in 0.36, old ops & snapshots use old schema.
+            // Snapshots regeneration does not solve it, as handles are not adjusted to new schema on read/write cycle.
+            // Replace new usage to old schema to make it possible to compare snapshots
+            .replace(/\/_channels/g, "")
+            .replace(/\/_custom/g, ""),
+    ) as IFileSnapshot;
+
 export function compareWithReferenceSnapshot(
     snapshot: IFileSnapshot,
     referenceSnapshotFilename: string,
@@ -57,21 +77,8 @@ export function compareWithReferenceSnapshot(
     const referenceSnapshotString = fs.readFileSync(`${referenceSnapshotFilename}.json`, "utf-8");
     const referenceSnapshot = getNormalizedFileSnapshot(JSON.parse(referenceSnapshotString));
 
-    /**
-     * The packageVersion of the snapshot could be different from the reference snapshot. Replace all package
-     * package versions with X before we compare them. This is how it will looks like:
-     * Before replace - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
-     * After replace  - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
-     */
-    const packageVersionRegex = /\\"packageversion\\":\\".+\\"/gi;
-    const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X\\\"";
-
-    const normalizedSnapshot = JSON.parse(
-        JSON.stringify(snapshot, undefined, 2).replace(packageVersionRegex, packageVersionPlaceholder),
-    );
-    const normalizedReferenceSnapshot = JSON.parse(
-        JSON.stringify(referenceSnapshot, undefined, 2).replace(packageVersionRegex, packageVersionPlaceholder),
-    );
+    const normalizedSnapshot = normalize(snapshot);
+    const normalizedReferenceSnapshot = normalize(referenceSnapshot);
 
     // Put the assert in a try catch block, so that we can report errors, if any.
     try {

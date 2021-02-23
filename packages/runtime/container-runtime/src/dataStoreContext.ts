@@ -10,7 +10,6 @@ import {
     IFluidHandle,
     IFluidRouter,
     IFluidRoutingContext,
-    IProvideFluidRouter,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -251,15 +250,15 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             _containerRuntime.rootRoute.addRoute(this.id, this.channelRoutingContext);
         } catch (error) {}
 
-        // Only allow asking data store for custom routes, i.e. do not route to this.channelRoutingContext.resolveHandle()
-        // as this will expose channels (DDSs), which should not be exposed directly (only if custom routes decides to
-        // expose them)
+        // Only allow asking data store for custom routes, i.e. do not route to
+        // this.channelRoutingContext.resolveHandle() as this will expose channels (DDSs), which should not
+        // be exposed directly (only if custom routes decides to expose them)
         this.IFluidRouter = {
             get IFluidRouter() { return this; },
             request: async (request: IRequest) => {
                 const runtime = await this.realize();
                 return runtime.request(request);
-            };
+            }};
     }
 
     public dispose(): void {

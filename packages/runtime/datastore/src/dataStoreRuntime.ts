@@ -615,7 +615,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
     private getOutboundRoutes(): string[] {
         const outboundRoutes: string[] = [];
         for (const [contextId] of this.contexts) {
-            outboundRoutes.push(`${this.channelsRoutingContext}/${contextId}`);
+            outboundRoutes.push(`${this.channelsRoutingContext.absolutePath}/${contextId}`);
         }
         return outboundRoutes;
     }
