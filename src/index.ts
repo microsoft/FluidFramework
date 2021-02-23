@@ -4,9 +4,8 @@
  */
 
 /**
- * \@intentional/shared-tree
- *
  * Libraries related to whiteboard collaboration using FluidFramework
+ *
  * @packageDocumentation
  */
 
