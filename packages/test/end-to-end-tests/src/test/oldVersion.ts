@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-extraneous-dependencies */
 export * from "old-container-definitions";
 export * from "old-core-interfaces";
 export { IDocumentServiceFactory, IUrlResolver } from "old-driver-definitions";
@@ -48,7 +47,6 @@ import {
     V2,
 } from "./compatUtils";
 import * as newVer from "./newVersion";
-/* eslint-enable import/no-extraneous-dependencies */
 
 // A simple old-version dataStore with runtime/root exposed for testing
 // purposes. Used to test compatibility of context reload between
@@ -179,9 +177,9 @@ export function createTestObjectProvider(
         throw new Error("Must provide a driver when using the current loader");
     }
     if (oldLoader) {
-        const oldProvider = new TestObjectProvider(
-            driver as any,
-            containerFactoryFn as () => IRuntimeFactory);
+        const oldProvider = new newVer.TestObjectProvider(
+            driver,
+            containerFactoryFn as () => newVer.IRuntimeFactory);
 
         // Remove once the older version support container tracking (for close)
         if (!(TestObjectProvider as any).patchLoader) {
@@ -189,7 +187,15 @@ export function createTestObjectProvider(
             const oldMakeTestLoader = oldProvider.makeTestLoader.bind(oldProvider);
             oldProvider.makeTestLoader = (testContainerConfig?: unknown) => {
                 const testLoader = oldMakeTestLoader(testContainerConfig);
-                loaderContainerTracker.add(testLoader);
+                loaderContainerTracker.add(testLoader as any);
+
+                // Also patch the loader.resolve to deal with url being a Promise from
+                // the new ITestDriver.createcontainerUrl
+                const oldResolve = testLoader.resolve.bind(testLoader);
+                testLoader.resolve = async (request: newVer.IRequest) => {
+                    request.url = await ((request as any).url as Promise<string>);
+                    return oldResolve(request);
+                };
                 return testLoader;
             };
             const oldReset = oldProvider.reset.bind(oldProvider);
@@ -198,7 +204,7 @@ export function createTestObjectProvider(
                 oldReset();
             };
         }
-        return oldProvider;
+        return oldProvider as unknown as  ITestObjectProvider;
     } else {
         return new newVer.TestObjectProvider(
             driver, containerFactoryFn as () => newVer.IRuntimeFactory);

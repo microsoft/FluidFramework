@@ -4,62 +4,70 @@
  */
 
 import React from "react";
-import { KeyValueDataObject, KeyValueInstantiationFactory, IKeyValueDataObject } from "@fluid-experimental/data-objects";
+import { KeyValueDataObject, KeyValueInstantiationFactory } from "@fluid-experimental/data-objects";
 import { Fluid } from "@fluid-experimental/fluid-static";
-import { getContainerId } from "./getContainerId";
+import { TinyliciousService } from "@fluid-experimental/get-container";
+
+const getContainerId = (): { containerId: string; isNew: boolean } => {
+    let isNew = false;
+    if (location.hash.length === 0) {
+        isNew = true;
+        location.hash = Date.now().toString();
+    }
+    const containerId = location.hash.substring(1);
+    return { containerId, isNew };
+};
+
+type KVData = { [key: string]: any };
+type SetKVPair = (key: string, value: any) => void;
 
 // useKVPair is an example of a custom hook that returns Fluid backed state and a method to modify that state
-function useKVPair() {
-    // KVPair Data Object is stored in state as soon as it is available
-    const [dataObject, setDataObject] = React.useState<IKeyValueDataObject>();
-    // Fluid data will be synced with local state so that changes to Fluid data will cause re-render
-    const [state, setState] = React.useState<{ [key: string]: any }>({});
-    const id = "app";
-    // Connect to container and data object
+function useKVPair(): [KVData, SetKVPair | undefined] {
+    const [dataObject, setDataObject] = React.useState<KeyValueDataObject>();
+    const [data, setData] = React.useState<{ [key: string]: any }>({});
+
     React.useEffect(() => {
         const { containerId, isNew } = getContainerId();
 
-        const start = async () => {
+        const load = async () => {
+            const service = new TinyliciousService();
             const fluidDocument = isNew
-                ? await Fluid.createDocument(containerId, [KeyValueInstantiationFactory.registryEntry])
-                : await Fluid.getDocument(containerId, [KeyValueInstantiationFactory.registryEntry]);
+                ? await Fluid.createDocument(service, containerId, [KeyValueInstantiationFactory.registryEntry])
+                : await Fluid.getDocument(service, containerId, [KeyValueInstantiationFactory.registryEntry]);
 
-            // We'll create the data object when we create the new document.
-            const keyValueDataObject: IKeyValueDataObject = isNew
-                ? await fluidDocument.createDataObject<KeyValueDataObject>(KeyValueInstantiationFactory.type, id)
-                : await fluidDocument.getDataObject<KeyValueDataObject>(id);
+            const keyValueDataObject: KeyValueDataObject = isNew
+                ? await fluidDocument.createDataObject(KeyValueInstantiationFactory.type, 'kvpairId')
+                : await fluidDocument.getDataObject('kvpairId');
 
             setDataObject(keyValueDataObject);
         }
 
-        start();
+        load();
 
     }, [])
 
-    // set up sync from data object to local state as soon as dataObject is available
     React.useEffect(() => {
         if (dataObject) {
-            const updateState = () => setState(dataObject.query());
-            dataObject.on("changed", updateState);
-            return () => { dataObject.off("change", updateState) }
+            const updateData = () => setData(dataObject.query());
+            dataObject.on("changed", updateData);
+            return () => { dataObject.off("change", updateData) }
         }
-    }, [dataObject])
+    }, [dataObject]);
 
-    // return properties to give access to data and method to modify data
-    return { state, setState: dataObject?.set };
+    return [data, dataObject?.set];
 }
 
 function App() {
-    const { state, setState } = useKVPair();
+    const [data, setPair] = useKVPair();
 
-    if (!setState) return <div />;
-
-    const handleClick = () => setState("date", Date.now().toString());
+    if (!data || !setPair) return <div />;
 
     return (
         <div className="App">
-            <button onClick={handleClick} > click </button>
-            <span>{state.date}</span>
+            <button onClick={() => setPair("time", Date.now().toString())}>
+                click
+            </button>
+            <span>{data.time}</span>
         </div>
     )
 }

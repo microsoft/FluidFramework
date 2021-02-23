@@ -47,6 +47,11 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         // Currently, we load a container in write mode from the start. See issue #3304.
         // Once that is fix, this needs to change
         assert(container2.deltaManager.active);
+        if (!dataObject2.context.leader) {
+            await timeoutPromise((resolve) => {
+                dataObject2.context.once("leader", () => { resolve(); });
+            });
+        }
         assert(dataObject2.context.leader);
     });
 

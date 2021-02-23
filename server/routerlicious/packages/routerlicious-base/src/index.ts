@@ -4,5 +4,6 @@
  */
 
 export * from "./alfred";
+export * from "./ordering";
 export * from "./riddler";
 export * from "./utils";

@@ -21,7 +21,7 @@ import {
     IFluidHandle,
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import { IDeltaManager, IErrorBase } from "@fluidframework/container-definitions";
+import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     IDocumentMessage,
@@ -71,11 +71,8 @@ export interface ISummarizerInternalsProvider {
 
 const summarizingError = "summarizingError";
 
-export interface ISummarizingWarning extends IErrorBase {
+export interface ISummarizingWarning extends ContainerWarning {
     readonly errorType: "summarizingError";
-    /**
-     * Whether this error has already been logged. Used to avoid logging errors twice.
-     */
     readonly logged: boolean;
 }
 
@@ -258,6 +255,7 @@ export class RunningSummarizer implements IDisposable {
         firstAck: ISummaryAttempt,
         immediateSummary: boolean,
         raiseSummarizingError: (description: string) => void,
+        summaryCollection: SummaryCollection,
     ): Promise<RunningSummarizer> {
         const summarizer = new RunningSummarizer(
             clientId,
@@ -269,7 +267,8 @@ export class RunningSummarizer implements IDisposable {
             lastOpSeqNumber,
             firstAck,
             immediateSummary,
-            raiseSummarizingError);
+            raiseSummarizingError,
+            summaryCollection);
 
         await summarizer.waitStart();
 
@@ -305,6 +304,7 @@ export class RunningSummarizer implements IDisposable {
         firstAck: ISummaryAttempt,
         private immediateSummary: boolean = false,
         private readonly raiseSummarizingError: (description: string) => void,
+        summaryCollection: SummaryCollection,
     ) {
         this.logger = new ChildLogger(baseLogger, "Running", undefined, { summaryGenTag: () => this.summarizeCount });
 
@@ -336,6 +336,17 @@ export class RunningSummarizer implements IDisposable {
                     timePending: Date.now() - this.heuristics.lastAttempted.summaryTime,
                 });
             });
+        // back-compat 0.34 noSetPendingAckTimerTimeoutCallback
+        summaryCollection.setPendingAckTimerTimeoutCallback?.(maxAckWaitTime, () => {
+            if (this.pendingAckTimer.hasTimer) {
+                this.logger.sendTelemetryEvent({
+                    eventName: "MissingSummaryAckFoundByOps",
+                    refSequenceNumber: this.heuristics.lastAttempted.refSequenceNumber,
+                    summarySequenceNumber: this.heuristics.lastAttempted.summarySequenceNumber,
+                });
+                this.pendingAckTimer.clear();
+            }
+        });
     }
 
     public dispose(): void {
@@ -771,6 +782,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                     this.emit("summarizingError", createSummarizingWarning(`Summarizer: ${description}`, true));
                 }
             },
+            this.summaryCollection,
         );
         this.runningSummarizer = runningSummarizer;
 
