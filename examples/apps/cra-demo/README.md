@@ -140,7 +140,7 @@ React.useEffect(() => {
 }, [])
 ```
 
-Once the DataObject is returned we assign it to our `dataObject` state variable, and now we have access to all of the KVPair's methods, including `set` which we pass down as the setPair function.
+Once the DataObject is returned we assign it to our `dataObject` state variable, and now we have access to all of the KVPair's methods, including `set` which we pass down as the `setPair` function.
 
 Here's our hook so far.
 
