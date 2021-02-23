@@ -38,7 +38,7 @@ describe("Errors Types", () => {
     let driver: ITestDriver;
     const loaderContainerTracker = new LoaderContainerTracker();
     before(() => {
-        driver = getFluidTestDriver() as ITestDriver;
+        driver = getFluidTestDriver() as unknown as ITestDriver;
     });
     afterEach(() => {
         loaderContainerTracker.reset();
@@ -48,7 +48,7 @@ describe("Errors Types", () => {
         const id = createDocumentId();
         // Setup
         urlResolver = driver.createUrlResolver();
-        testRequest = { url: driver.createContainerUrl(id) };
+        testRequest = { url: await driver.createContainerUrl(id) };
         testResolved =
             await urlResolver.resolve(testRequest) as IFluidResolvedUrl;
         documentServiceFactory = driver.createDocumentServiceFactory();

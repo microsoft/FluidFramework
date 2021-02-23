@@ -34,7 +34,7 @@ const detachedContainerRefSeqNumber = 0;
 describe(`Dehydrate Rehydrate Container Test`, () => {
     let driver: ITestDriver;
     before(()=>{
-        driver = getFluidTestDriver() as ITestDriver;
+        driver = getFluidTestDriver() as unknown as ITestDriver;
     });
 
     const codeDetails: IFluidCodeDetails = {
@@ -366,7 +366,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         assert(rehydratedContainer.resolvedUrl);
         const requestUrl2 = await urlResolver2.getAbsoluteUrl(rehydratedContainer.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
-        opProcessingController.addDeltaManagers(rehydratedContainer.deltaManager);
+        opProcessingController.addDeltaManagers(container2.deltaManager);
 
         // Get the sharedString1 from dataStore2 in rehydrated container.
         const responseBefore = await rehydratedContainer.request({ url: `/${dataStore2.context.id}` });

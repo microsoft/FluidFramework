@@ -38,6 +38,7 @@ async function createTag(
     tag: ICreateTagParams): Promise<ITag> {
     const date = Date.parse(tag.tagger.date);
     if (isNaN(date)) {
+        // eslint-disable-next-line prefer-promise-reject-errors
         return Promise.reject("Invalid input");
     }
 

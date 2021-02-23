@@ -27,8 +27,14 @@ const testRequest: IRequest = { url: id };
 describe("Container", () => {
     let driver: ITestDriver;
     const loaderContainerTracker = new LoaderContainerTracker();
-    beforeEach(()=>{
-        driver = getFluidTestDriver() as ITestDriver;
+    before(function() {
+        driver = getFluidTestDriver() as unknown as ITestDriver;
+
+        // TODO: Convert these to mocked unit test. These are all API tests and doesn't
+        // need the service.  For new disable the tests other then local driver
+        if (driver.type !== "local") {
+            this.skip();
+        }
     });
     afterEach(() => {
         loaderContainerTracker.reset();

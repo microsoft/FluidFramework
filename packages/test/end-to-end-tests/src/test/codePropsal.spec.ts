@@ -39,7 +39,7 @@ function isCodeProposalTestPackage(pkg: unknown): pkg is ICodeProposalTestPackag
 describe("CodeProposal.EndToEnd", () => {
     let driver: ITestDriver;
     before(()=>{
-        driver = getFluidTestDriver() as ITestDriver;
+        driver = getFluidTestDriver() as unknown as ITestDriver;
     });
 
     const packageV1: ICodeProposalTestPackage = {
@@ -99,7 +99,7 @@ describe("CodeProposal.EndToEnd", () => {
 
     async function loadContainer(documentId: string): Promise<IContainer> {
         const loader = createLoader();
-        return loader.resolve({ url: driver.createContainerUrl(documentId) });
+        return loader.resolve({ url: await driver.createContainerUrl(documentId) });
     }
 
     let containers: IContainer[];

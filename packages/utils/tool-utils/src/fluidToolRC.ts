@@ -19,8 +19,15 @@ export interface IAsyncCache<TKey, TValue> {
 }
 
 export interface IResources {
-    tokens?: { [key: string]: IOdspTokens };
-    pushTokens?: IOdspTokens;
+    tokens?: {
+        version?: number;
+        data: {
+            [key: string]: {
+                storage?: IOdspTokens,
+                push?: IOdspTokens
+            }
+        }
+    }
 }
 
 const getRCFileName = () => path.join(os.homedir(), ".fluidtoolrc");

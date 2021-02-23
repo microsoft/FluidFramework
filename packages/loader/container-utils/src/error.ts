@@ -46,7 +46,7 @@ function extractLogSafeErrorProperties(error: any) {
         }
 
         if (typeof stack === "string") {
-            safeProps.stack = errorType;
+            safeProps.stack = stack;
         }
     }
 

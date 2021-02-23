@@ -116,7 +116,7 @@ export class TestObjectProvider<TestContainerConfigType> {
      */
     public async loadTestContainer(testContainerConfig?: TestContainerConfigType) {
         const loader = this.makeTestLoader(testContainerConfig);
-        const container = await loader.resolve({ url: this.driver.createContainerUrl(this.documentId) });
+        const container = await loader.resolve({ url: await this.driver.createContainerUrl(this.documentId) });
         await waitContainerToCatchUp(container);
         this.opProcessingController.addDeltaManagers(container.deltaManager);
         return container;
