@@ -275,7 +275,6 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
         clientDetails?: IClientDetails,
         fromSequenceNumber?: number,
         summarizingClient?: boolean,
-        executionContext?: string,
     ) => Promise<IContainer>,
 
     /**

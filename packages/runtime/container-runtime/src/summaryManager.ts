@@ -450,7 +450,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 headers[LoaderHeader.clientDetails],
                 headers[LoaderHeader.sequenceNumber],
                 true /* summarizingClient */,
-                headers[LoaderHeader.executionContext],
             );
             response = await containerCopy.request(request);
         }

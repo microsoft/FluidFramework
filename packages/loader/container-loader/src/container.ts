@@ -1805,7 +1805,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             clientDetails?: IClientDetails,
             fromSequenceNumber?: number,
             summarizingClient?: boolean,
-            executionContext?: string,
         ) => {
             // Load the container copy restricted: uncached and no reconnect
             return this.loadContainerCopy(
@@ -1815,7 +1814,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 clientDetails,
                 fromSequenceNumber,
                 summarizingClient,
-                executionContext,
             );
         };
         this._context = await ContainerContext.createOrLoad(
@@ -1871,8 +1869,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         clientDetails?: IClientDetails,
         fromSequenceNumber?: number,
         summarizingClient?: boolean,
-        // TODO #4912 eventually we may wish to spawn an execution context from which to run this
-        executionContext?: string,
     ): Promise<IContainer> {
         if (baseRequestUrl === undefined) {
             throw new Error("Base request is not provided");

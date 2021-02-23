@@ -458,7 +458,6 @@ export class TaskManager implements ITaskManager {
                 headers[LoaderHeader.clientDetails],
                 headers[LoaderHeader.sequenceNumber],
                 false /* summarizingClient */,
-                headers[LoaderHeader.executionContext],
             );
             response = await containerCopy.request(request);
         }

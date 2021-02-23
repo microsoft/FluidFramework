@@ -183,7 +183,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         clientDetails?: IClientDetails,
         fromSequenceNumber?: number,
         summarizingClient?: boolean,
-        executionContext?: string,
     ) => Promise<IContainer> {
         return this._containerRuntime.loadContainerCopyFn;
     }

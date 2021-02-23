@@ -589,7 +589,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         clientDetails?: IClientDetails,
         fromSequenceNumber?: number,
         summarizingClient?: boolean,
-        executionContext?: string,
     ) => Promise<IContainer> {
         return this.context.loadContainerCopyFn;
     }

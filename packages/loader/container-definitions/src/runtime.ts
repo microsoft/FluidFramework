@@ -124,7 +124,6 @@ export interface IContainerContext extends IDisposable {
         clientDetails?: IClientDetails,
         fromSequenceNumber?: number,
         summarizingClient?: boolean,
-        executionContext?: string,
         ) => Promise<IContainer>,
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly quorum: IQuorum;
