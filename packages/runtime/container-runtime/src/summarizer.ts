@@ -21,7 +21,7 @@ import {
     IFluidHandle,
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import { IDeltaManager, IErrorBase } from "@fluidframework/container-definitions";
+import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     IDocumentMessage,
@@ -71,11 +71,8 @@ export interface ISummarizerInternalsProvider {
 
 const summarizingError = "summarizingError";
 
-export interface ISummarizingWarning extends IErrorBase {
+export interface ISummarizingWarning extends ContainerWarning {
     readonly errorType: "summarizingError";
-    /**
-     * Whether this error has already been logged. Used to avoid logging errors twice.
-     */
     readonly logged: boolean;
 }
 

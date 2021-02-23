@@ -60,7 +60,7 @@ export interface IObjectMessage extends IMessage {
     documentId: string;
 
     // The client who submitted the message
-    clientId: string;
+    clientId: string | null;
 
     // The time the server received the message, in milliseconds elapsed since
     // 1 January 1970 00:00:00 UTC, with leap seconds ignored.

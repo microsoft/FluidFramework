@@ -78,14 +78,14 @@ export class PartitionManager extends EventEmitter {
             return;
         }
 
-        if (!this.partitions.has(message.partition)) {
+        const partition = this.partitions.get(message.partition);
+        if (!partition) {
             this.emit(
                 "error",
                 `Received message for untracked partition ${message.topic}:${message.partition}@${message.offset}`);
             return;
         }
 
-        const partition = this.partitions.get(message.partition);
         partition.process(message);
     }
 
