@@ -182,7 +182,7 @@ export class MessageFactory {
     }
 
     public createSequencedOperation(referenceSequenceNumber = 0): ISequencedOperationMessage {
-        const operation = this.createDocumentMessage(referenceSequenceNumber);
+        const operation = this.createDocumentMessage(MessageType.Operation, referenceSequenceNumber);
         const sequencedOperation: ISequencedDocumentMessage = {
             clientId: this.clientId,
             clientSequenceNumber: operation.clientSequenceNumber,
@@ -209,7 +209,7 @@ export class MessageFactory {
     }
 
     public createSummarize(referenceSequenceNumber: number,  handle: string): ISequencedOperationMessage {
-        const operation = this.createDocumentMessage(referenceSequenceNumber);
+        const operation = this.createDocumentMessage(MessageType.Summarize, referenceSequenceNumber);
         const sequencedOperation: ISequencedDocumentAugmentedMessage = {
             clientId: this.clientId,
             clientSequenceNumber: operation.clientSequenceNumber,
@@ -222,7 +222,7 @@ export class MessageFactory {
             term: 1,
             timestamp: Date.now(),
             traces: [],
-            type: MessageType.Summarize,
+            type: operation.type,
             additionalContent: "",
         };
 
@@ -237,7 +237,7 @@ export class MessageFactory {
     }
 
     public createNoClient(referenceSequenceNumber = 0): ISequencedOperationMessage {
-        const operation = this.createDocumentMessage(referenceSequenceNumber);
+        const operation = this.createDocumentMessage(MessageType.NoClient, referenceSequenceNumber);
         const sequencedOperation: ISequencedDocumentAugmentedMessage = {
             clientId: this.clientId,
             clientSequenceNumber: operation.clientSequenceNumber,
@@ -250,7 +250,7 @@ export class MessageFactory {
             term: 1,
             timestamp: Date.now(),
             traces: [],
-            type: MessageType.NoClient,
+            type: operation.type,
             additionalContent: "",
         };
 
@@ -265,7 +265,7 @@ export class MessageFactory {
     }
 
     public createSummaryAck(handle: string): ISequencedOperationMessage {
-        const operation = this.createDocumentMessage(0);
+        const operation = this.createDocumentMessage(MessageType.SummaryAck, 0);
         const sequencedOperation: ISequencedDocumentAugmentedMessage = {
             clientId: null,
             clientSequenceNumber: -1,
@@ -278,7 +278,7 @@ export class MessageFactory {
             term: 1,
             timestamp: Date.now(),
             traces: [],
-            type: MessageType.SummaryAck,
+            type: operation.type,
             additionalContent: "",
         };
 
