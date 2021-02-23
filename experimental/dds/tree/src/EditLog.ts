@@ -95,7 +95,7 @@ interface SerializationHelpers {
 	/** JSON serializes a handle that corresponds to an uploaded edit chunk. */
 	serializeHandle: (handle: EditHandle) => ISerializedHandle;
 
-	/** Deserializes a JSON serialized handle into a fluid handle that can be used to retrieve uploaded blobs.  */
+	/** Deserializes a JSON serialized handle into an IFluidHandle that can be used to retrieve uploaded blobs.  */
 	deserializeHandle: (serializedHandle: ISerializedHandle) => EditHandle;
 }
 

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { EditLog } from './EditLog';
 import { ChangeNode, Edit } from './PersistedTypes';
 import { ErrorString, SharedTreeSummary, SharedTreeSummaryBase } from './Summary';
