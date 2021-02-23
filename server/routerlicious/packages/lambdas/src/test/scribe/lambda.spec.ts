@@ -41,8 +41,8 @@ describe("Routerlicious", () => {
                 }
             }
 
-            async function sendSummarize(num: number): Promise<void> {
-                const summaryMessage = messageFactory.createSummarize(num, tree.sha);
+            async function sendSummarize(referenceSequenceNumber: number): Promise<void> {
+                const summaryMessage = messageFactory.createSummarize(referenceSequenceNumber, tree.sha);
                 lambda.handlerCore(kafkaMessageFactory.sequenceMessage(summaryMessage, testDocumentId));
 
                 await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
@@ -89,7 +89,7 @@ describe("Routerlicious", () => {
             });
 
             describe(".handler()", () => {
-                it("op", async () => {
+                it("Ops should be stored in mongodb", async () => {
                     const numMessages = 10;
                     sendOps(numMessages);
                     await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
@@ -97,7 +97,7 @@ describe("Routerlicious", () => {
                     assert.equal(numMessages , testMessageCollection.collection.length);
                 });
 
-                it("summarize op should clean up the previous ops store in mongodb", async () => {
+                it("Summarize Ops should clean up the previous ops store in mongodb", async () => {
                     const numMessages = 10;
                     sendOps(numMessages);
 
@@ -110,7 +110,7 @@ describe("Routerlicious", () => {
                     assert.equal(testMessageCollection.collection.length, 2);
                 });
 
-                it("noclient op will trigger service to generate summary and won't clean up the previous ops", async () => {
+                it("NoClient Ops will trigger service to generate summary and won't clean up the previous ops", async () => {
                     const numMessages = 5;
                     sendOps(numMessages);
 
