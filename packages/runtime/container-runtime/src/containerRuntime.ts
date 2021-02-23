@@ -109,7 +109,7 @@ import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
-import { ISummarizerRuntime, ISummarizerInternalsProvider, Summarizer } from "./summarizer";
+import { ISummarizerRuntime, ISummarizerInternalsProvider, Summarizer, IGenerateSummaryOptions } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
@@ -1309,27 +1309,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.submitSignalFn(envelope);
     }
 
-    /**
-     * Returns a summary of the runtime at the current sequence number.
-     * @param fullTree - true to bypass optimizations and force a full summary tree.
-     * @param trackState - This tells whether we should track state from this summary.
-     */
-    private async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IChannelSummarizeResult> {
-        const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
-        assert(summarizeResult.summary.type === SummaryType.Tree,
-            "Container Runtime's summarize should always return a tree");
-        return summarizeResult as IChannelSummarizeResult;
-    }
-
-    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
-        const summarizeResult = await this.dataStores.summarize(fullTree, trackState);
-        this.addContainerBlobsToSummary(summarizeResult);
-        return {
-            ...summarizeResult,
-            id: "",
-        };
-    }
-
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
         if (attachState === AttachState.Attaching) {
             assert(this.attachState === AttachState.Attaching,
@@ -1356,17 +1335,77 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.getAbsoluteUrl(relativeUrl);
     }
 
-    /** Implementation of ISummarizerInternalsProvider.generateSummary */
-    public async generateSummary(
-        fullTree: boolean = false,
-        safe: boolean = false,
+    public async collectGarbage(logger: ITelemetryLogger) {
+        await PerformanceEvent.timedExecAsync(logger, { eventName: "GarbageCollection" }, async (event) => {
+            const gcStats: { totalGCNodes?: number; deletedGCNodes?: number } = {};
+            try {
+                // Get the container's GC data and run GC on the reference graph in it.
+                const gcData = await this.dataStores.getGCData(this.runtimeOptions.runFullGC === true);
+                const { referencedNodeIds, deletedNodeIds } = runGarbageCollection(
+                    gcData.gcNodes, [ "/" ],
+                    this.logger,
+                );
+
+                // Update stats to be reported in the peformance event.
+                gcStats.deletedGCNodes = deletedNodeIds.length;
+                gcStats.totalGCNodes = referencedNodeIds.length + gcStats.deletedGCNodes;
+
+                // Update our summarizer node's used routes. Updating used routes in summarizer node before
+                // summarizing is required and asserted by the the summarizer node. We are the root and are
+                // always referenced, so the used routes is only self-route (empty string).
+                this.summarizerNode.updateUsedRoutes([""]);
+
+                // Remove this node's route ("/") and notify data stores of routes that are used in it.
+                const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
+                this.dataStores.updateUsedRoutes(usedRoutes);
+            } catch (error) {
+                event.cancel(gcStats, error);
+                throw error;
+            }
+            event.end(gcStats);
+        });
+    }
+
+    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
+        const summarizeResult = await this.dataStores.summarize(fullTree, trackState);
+        this.addContainerBlobsToSummary(summarizeResult);
+        return {
+            ...summarizeResult,
+            id: "",
+        };
+    }
+
+    /**
+     * Returns a summary of the runtime at the current sequence number.
+     */
+    public async summarize(options: {
+        /** True to run garbage collection before summarizing */
+        runGc: boolean,
+        /** True to generate the full tree with no handle reuse optimizations */
+        fullTree: boolean,
+        /** True to track the state for this summary in the SummarizerNodes */
+        trackState: boolean,
+        /** Logger to use for correlated summary events */
         summaryLogger: ITelemetryLogger,
-    ): Promise<GenerateSummaryData | undefined> {
+    }): Promise<IChannelSummarizeResult> {
+        if (options.runGc) {
+            await this.collectGarbage(options.summaryLogger);
+        }
+
+        const summarizeResult = await this.summarizerNode.summarize(options.fullTree, options.trackState);
+        assert(summarizeResult.summary.type === SummaryType.Tree,
+            "Container Runtime's summarize should always return a tree");
+
+        return summarizeResult as IChannelSummarizeResult;
+    }
+
+    /** Implementation of ISummarizerInternalsProvider.generateSummary */
+    public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData | undefined> {
         const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
         const message =
             `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 
-        this.summarizerNode.startSummary(summaryRefSeqNum, summaryLogger);
+        this.summarizerNode.startSummary(summaryRefSeqNum, options.summaryLogger);
 
         try {
             await this.deltaManager.inbound.pause();
@@ -1381,41 +1420,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { ...attemptData, reason: "disconnected" };
             }
 
-            if (!this.runtimeOptions.disableGC) {
-                const perfEvent = PerformanceEvent.start(summaryLogger, {
-                    eventName: "GarbageCollection",
-                });
-
-                const gcStats: { totalGCNodes?: number; deletedGCNodes?: number } = {};
-                try {
-                    // Get the container's GC data and run GC on the reference graph in it.
-                    const gcData = await this.dataStores.getGCData(this.runtimeOptions.runFullGC === true);
-                    const { referencedNodeIds, deletedNodeIds } = runGarbageCollection(
-                        gcData.gcNodes, [ "/" ],
-                        this.logger,
-                    );
-
-                    // Update stats to be reported in the peformance event.
-                    gcStats.deletedGCNodes = deletedNodeIds.length;
-                    gcStats.totalGCNodes = referencedNodeIds.length + gcStats.deletedGCNodes;
-
-                    // Update our summarizer node's used routes. Updating used routes in summarizer node before
-                    // summarizing is required and asserted by the the summarizer node. We are the root and are
-                    // always referenced, so the used routes is only self-route (empty string).
-                    this.summarizerNode.updateUsedRoutes([""]);
-
-                    // Remove this node's route ("/") and notify data stores of routes that are used in it.
-                    const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
-                    this.dataStores.updateUsedRoutes(usedRoutes);
-                } catch (error) {
-                    perfEvent.cancel(gcStats, error);
-                    throw error;
-                }
-                perfEvent.end(gcStats);
-            }
-
             const trace = Trace.start();
-            const summarizeResult = await this.summarize(fullTree || safe, true /* trackState */);
+            const summarizeResult = await this.summarize({
+                runGc: !this.runtimeOptions.disableGC,
+                fullTree: options.fullTree,
+                trackState: true,
+                summaryLogger: options.summaryLogger,
+            });
 
             const generateData: IGeneratedSummaryData = {
                 summaryStats: summarizeResult.stats,
@@ -1437,13 +1448,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 summarizeResult.summary,
                 this.latestSummaryAck);
 
-            // safe mode refreshes the latest summary ack
-            if (safe) {
+            if (options.refreshLatestAck) {
                 const version = await this.getVersionFromStorage(this.id);
                 await this.refreshLatestSummaryAck(
                     undefined,
                     version.id,
-                    new ChildLogger(summaryLogger, undefined, { safeSummary: true }),
+                    new ChildLogger(options.summaryLogger, undefined, { safeSummary: true }),
                     version,
                 );
             }
