@@ -10,7 +10,6 @@ import {
     IResponse,
     IFluidObject,
     IFluidRoutingContext,
-    defaultRoutePath,
 } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
 import { generateHandleContextPath } from "./dataStoreHandleContextUtils";
@@ -47,9 +46,11 @@ export class FluidRoutingContext implements IFluidRoutingContext {
         await this.realize();
         const parser = RequestParser.create(request);
         const id = parser.pathParts[0];
-        const route = this.routes.get(id ?? defaultRoutePath);
-        if (route !== undefined) {
-            return route.resolveHandle(id === undefined ? parser : parser.createSubRequest(1));
+        if (id !== undefined) {
+            const route = this.routes.get(id);
+            if (route !== undefined) {
+                return route.resolveHandle(parser.createSubRequest(1));
+            }
         }
         if (this.requestHandler !== undefined) {
             return this.requestHandler(request, id);

@@ -178,11 +178,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this.registry;
     }
 
-    // Note: we could route requests to this.channelRoutingContext.resolveHandle()
-    // This will ensure old behavior, allowing us to requests DDSs, for example.
-    // This does not look correct, given the only way we get here is through creation path, i.e.
-    // data store was created and this router is returned to query custom route only!
-    // For everything else, please use handles!
+    // Only allow asking data store for custom routes, i.e. do not route to this.channelRoutingContext.resolveHandle()
+    // as this will expose channels (DDSs), which should not be exposed directly (only if custom routes decides to
+    // expose them)
     public get IFluidRouter(): IFluidRouter {
         return {
             get IFluidRouter() { return this; },
@@ -207,6 +205,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
+
+    // Routing context for `/_channels/{this.id}`
     readonly channelRoutingContext: IFluidRoutingContext;
 
     constructor(
@@ -251,8 +251,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             _containerRuntime.channelsRoute,
             async () => { await this.realize(); },
             // Supporting legacy URI format:
-            // /dataStoreId -> map to custom empty route "/".
-            // /dataStoreId/custom -> map to custom route "/custom".
+            // /<dataStoreId>[/custom] -> map to custom route "/custom".
             async (request: IRequest) => (await this.realize()).request(request));
 
         // Supporting legacy URI format: required to handle old external URIs and handles in old files

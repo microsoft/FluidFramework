@@ -142,8 +142,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime {
         return this._attachState;
     }
 
+    // Routing context for /_channels/<DataStoreId>.
+    // It's same as this.dataStoreContext.channelRoutingContext
     private readonly dataStoreRoutingContext: IFluidRoutingContext;
+    // Routing context for /_channels/<DataStoreId>/_channels
+    // Represents routing for channels (DDSs)
     public readonly channelsRoutingContext: IFluidHandleContext;
+    // Routing context for /_channels/<DataStoreId>/_custom
+    // Represents custom object routing (i.e. example - DataObject routing)
     public readonly objectsRoutingContext: IFluidHandleContext;
 
     private _disposed = false;

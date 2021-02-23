@@ -41,7 +41,7 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
                 .then<IFluidObject>((response) =>
                     response.mimeType === "fluid/object"
                         ? response.value as IFluidObject
-                        : Promise.reject(new Error(`Path not found: ${this.absolutePath}`)));
+                        : Promise.reject(new Error(`Can't resolve handle: ${this.absolutePath}: ${response.value}`)));
         }
 
         return this.objectP;

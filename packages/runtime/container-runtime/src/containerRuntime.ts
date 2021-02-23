@@ -649,7 +649,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
+    // Routing context for "/" route
     public readonly rootRoute: IFluidRoutingContext;
+    // Routing context for "/_channels" route
     public readonly channelsRoute: IFluidRoutingContext;
 
     private dirtyContainer = false;
@@ -1177,9 +1179,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    public async createDataStore(pkg: string | string[]): Promise<IFluidRouter>
-    {
-        return this._createDataStore(pkg, false);
+    public async createDataStore(pkg: string | string[]): Promise<IFluidRouter> {
+        return this._createDataStore(pkg, false /* isRoot */);
     }
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {

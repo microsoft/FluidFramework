@@ -90,7 +90,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     request(request: IRequest): Promise<IResponse>;
 
     /**
-     * Internal resolution of requests, used to resolve handles
+     * Internal resolution of handles
      */
     resolveHandle(request: IRequest): Promise<IResponse>;
 
@@ -287,6 +287,7 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
 
     /**
      * Context for handle resolution, represents a route to a data store
+     * I.e. "/_channels/<DataStoreId>" route
      */
     readonly channelRoutingContext: IFluidRoutingContext;
 

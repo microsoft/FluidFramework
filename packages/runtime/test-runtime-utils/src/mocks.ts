@@ -372,20 +372,15 @@ export class MockQuorum implements IQuorum, EventEmitter {
  */
 export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel
 {
-    public get objectsRoutingContext(): IFluidHandleContext {
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
-        const self = this;
-        return new FluidHandleContext(
-            {
-                get attachState() { return self.attachState; },
-                attachGraph: () => {},
-            },
-            new FluidRoutingContext(`${this.id}`));
+    public constructor() {
+        super();
+        const rootContext = new FluidRoutingContext(`${this.id}`);
+        this.objectsRoutingContext = new FluidHandleContext(this, new FluidRoutingContext("custom", rootContext));
+        this.channelsRoutingContext = new FluidHandleContext(this, new FluidRoutingContext("channels", rootContext));
     }
 
-    public get channelsRoutingContext(): IFluidHandleContext {
-        return this.objectsRoutingContext;
-    }
+    public readonly objectsRoutingContext: IFluidHandleContext;
+    public readonly channelsRoutingContext: IFluidHandleContext;
 
     public readonly documentId: string;
     public readonly id: string = uuid();
@@ -429,6 +424,10 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     }
 
     public bindChannel(channel: IChannel): void {
+        return;
+    }
+
+    public attachGraph(): void {
         return;
     }
 
