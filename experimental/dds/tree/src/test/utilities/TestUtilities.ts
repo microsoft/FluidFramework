@@ -188,7 +188,7 @@ export async function setUpLocalServerTestSharedTree(
 ): Promise<LocalServerSharedTreeTestingComponents> {
 	const { id, initialTree, localTestObjectProvider, setupEditId, summarizer } = options;
 
-	const treeId = id || 'test';
+	const treeId = id ?? 'test';
 	const registry: ChannelFactoryRegistry = [[treeId, SharedTree.getFactory()]];
 	const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
 		new TestContainerRuntimeFactory(TestDataObject.type, new TestFluidObjectFactory(registry), {
