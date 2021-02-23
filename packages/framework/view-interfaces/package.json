@@ -30,7 +30,7 @@
     "@fluidframework/core-interfaces": "^0.35.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.20.0-0",
+    "@fluidframework/build-common": "^0.20.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/react": "^16.9.15",
