@@ -124,7 +124,7 @@ async function main() {
     }
 
     let result: number;
-    // When runId is specified (with url), kick off a single test runner and exit when it's finished
+    // When runId is specified (with testId), kick off a single test runner and exit when it's finished
     if (runId !== undefined) {
         if (testId === undefined) {
             console.error("Missing --testId argument needed to run child process");
@@ -188,8 +188,8 @@ async function orchestratorProcess(
 ): Promise<number> {
     const testDriver = createTestDriver(loginInfo);
 
-    // Create a new file if a url wasn't provided
-    const url = args.testId ?? await initialize(testDriver);
+    // Create a new file if a testId wasn't provided
+    const testId = args.testId ?? await initialize(testDriver);
 
     const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
     console.log(`Connecting to ${args.testId ? "existing" : "new"} Container targeting with testId:\n${testId }`);
@@ -204,7 +204,7 @@ async function orchestratorProcess(
             "--tenant", loginInfo.tenantFriendlyName,
             "--profile", profile.name,
             "--runId", i.toString(),
-            "--testId", url];
+            "--testId", testId];
         if (args.debug) {
             const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
             childArgs.unshift(`--inspect-brk=${debugPort}`);
