@@ -6,7 +6,7 @@
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 
 const _global: any = global;
-const nullLogger: ITelemetryBufferedLogger = { send: () => {}, flush: () => {} };
+const nullLogger: ITelemetryBufferedLogger = { send: () => {}, flush: async () => {} };
 
 // can be async or not
 export const mochaGlobalSetup = function() {
@@ -33,8 +33,6 @@ export const mochaHooks = {
     },
     async afterAll() {
         // Flush the logs before exiting
-        getTestLogger(true /* singleton */).flush();
-        // Apparently it takes some time after the sync call returns to actually get the data off the box
-        await (new Promise((res) => { setTimeout(res, 1000); }));
+        await getTestLogger(true /* singleton */).flush();
     },
 };

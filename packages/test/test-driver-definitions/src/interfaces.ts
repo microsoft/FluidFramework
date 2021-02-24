@@ -53,9 +53,9 @@ export interface ITestDriver{
 }
 
 /**
- * Extension of ITelemetryBaseLogger with support for synchronously triggering
- * a flush of all buffered logs that have not yet been fully processed (e.g. uploaded)
+ * Extension of ITelemetryBaseLogger with support for flushing
+ * all buffered logs that have not yet been fully processed (e.g. uploaded)
  */
 export interface ITelemetryBufferedLogger extends ITelemetryBaseLogger {
-    flush(): void;
+    flush(): Promise<void>;
 }

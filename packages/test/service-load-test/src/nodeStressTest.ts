@@ -44,7 +44,7 @@ const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 const urlResolver = new OdspDriverUrlResolver();
 const odspTokenManager = new OdspTokenManager(odspTokensCache);
 
-const nullLogger: ITelemetryBufferedLogger = { send: () => {}, flush: () => {} };
+const nullLogger: ITelemetryBufferedLogger = { send: () => {}, flush: async () => {} };
 let logger: ITelemetryBufferedLogger = nullLogger;
 
 const passwordTokenConfig = (username, password): OdspTokenConfig => ({
@@ -194,9 +194,7 @@ async function main() {
     // There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
     await(new Promise((res) => { setTimeout(res, 1000); }));
     // Flush the logs
-    logger.flush();
-    // Apparently it takes some time after the sync call returns to actually get the data off the box
-    await (new Promise((res) => { setTimeout(res, 1000); }));
+    await logger.flush();
 
     process.exit(result);
 }
