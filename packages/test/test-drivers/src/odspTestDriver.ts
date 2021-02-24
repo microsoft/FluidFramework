@@ -9,10 +9,10 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import {
     OdspDocumentServiceFactory,
-    OdspDriverUrlResolver,
     createOdspCreateContainerRequest,
     OdspResourceTokenFetchOptions,
-    IOdspResolvedUrl,
+    createOdspUrl,
+    OdspDriverUrlResolver,
 } from "@fluidframework/odsp-driver";
 import {
     OdspTokenConfig,
@@ -114,7 +114,6 @@ export class OdspTestDriver implements ITestDriver {
 
     public readonly type = "odsp";
     public readonly version = pkgVersion;
-    private readonly urlResolver = new OdspDriverUrlResolver();
     private constructor(
         private readonly odspTokenManager: OdspTokenManager,
         private readonly config: Readonly<IOdspTestDriverConfig>) { }
@@ -131,23 +130,12 @@ export class OdspTestDriver implements ITestDriver {
             },
             false,
             this.config.driveId);
-        const resolvedUrl: IOdspResolvedUrl = {
-            type: "fluid",
+
+        return createOdspUrl(
             siteUrl,
-            driveId: driveItem.drive,
-            itemId: driveItem.item,
-            url: "",
-            hashedDocumentId: "",
-            endpoints: {
-                snapshotStorageUrl: "",
-                attachmentGETStorageUrl: "",
-                attachmentPOSTStorageUrl: "",
-            },
-            tokens: {},
-            fileName: "",
-            summarizer: false,
-        };
-        return this.urlResolver.getAbsoluteUrl(resolvedUrl, "");
+            driveItem.drive,
+            driveItem.item,
+            "/");
     }
 
     createDocumentServiceFactory(): IDocumentServiceFactory {
@@ -171,7 +159,7 @@ export class OdspTestDriver implements ITestDriver {
         return tokens.accessToken;
     }
     createUrlResolver(): IUrlResolver {
-        return this.urlResolver;
+        return new OdspDriverUrlResolver();
     }
     createCreateNewRequest(testId: string): IRequest {
         return createOdspCreateContainerRequest(
