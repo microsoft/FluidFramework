@@ -34,7 +34,7 @@ if(process.env.FLUID_TEST_REPORT === "1"){
   config["reporter"] = `xunit`;
   config["reporter-options"] = [
     // give the report file a unique name based on driver config
-    `output=${packageDir}/nyc/${testDriver}-junit-report.xml`
+    `output=${packageDir}/nyc/${testDriver}-junit-report.xml`,
     `suiteName="e2e - ${testDriver}"`
   ];
 }
