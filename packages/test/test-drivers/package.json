@@ -24,7 +24,6 @@
     "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "setupConfig":"npm run tsc && node dist/setupconfig.js",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"

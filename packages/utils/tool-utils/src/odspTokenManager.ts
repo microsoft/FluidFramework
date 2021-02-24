@@ -291,7 +291,11 @@ async function loadAndPatchRC() {
 export const odspTokensCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens> = {
     async get(key: IOdspTokenManagerCacheKey): Promise<IOdspTokens | undefined> {
         const rc = await loadAndPatchRC();
-        return rc.tokens?.data[key.server][key.isPush ? "storage" : "push"];
+        for(const server of Object.keys(rc.tokens?.data ?? {})) {
+            if(server.toLocaleLowerCase() === key.server.toLocaleLowerCase()) {
+                return rc.tokens?.data[server][key.isPush ? "storage" : "push"];
+            }
+        }
     },
     async save(key: IOdspTokenManagerCacheKey, tokens: IOdspTokens): Promise<void> {
         const rc = await loadAndPatchRC();

@@ -72,7 +72,7 @@ export class OdspTestDriver implements ITestDriver {
             loginConfig.server,
             "",
             undefined,
-            { accessToken: await this.getStorageToken({ siteUrl, refresh: true }, odspTokenManager, tokenConfig) });
+            { accessToken: await this.getStorageToken({ siteUrl, refresh: false }, odspTokenManager, tokenConfig) });
 
         const driverConfig: IOdspTestDriverConfig = {
             ... tokenConfig,
