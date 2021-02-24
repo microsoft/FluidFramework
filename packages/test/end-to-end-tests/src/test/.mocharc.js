@@ -22,8 +22,6 @@ if (process.env.FLUID_DI_ROOT && process.env.FLUID_DI_LOGGERPKG) {
 const config = {
   "exit": true,
   "recursive": true,
-  // Turn on parallel only on local for now
-  "parallel": testDriver === "local",
   "require": requiredModules,
   "unhandled-rejections": "strict"
 };
@@ -33,16 +31,11 @@ if(process.env.FLUID_TEST_TIMEOUT !== undefined){
 }
 
 if(process.env.FLUID_TEST_REPORT === "1"){
-  config["reporter"] = `mocha-junit-reporter`;
+  config["reporter"] = `xunit`;
   config["reporter-options"] = [
     // give the report file a unique name based on driver config
-    `mochaFile=${packageDir}/nyc/${testDriver}-junit-report.xml`
+    `output=${packageDir}/nyc/${testDriver}-junit-report.xml`
   ];
-
-  // mocha-junit-reporter doesn't support --parallel yet
-  // https://github.com/michaelleeallen/mocha-junit-reporter/issues/140
-  // That means the CI doesn't get the speed up.
-  config["parallel"] = false;
 }
 
 module.exports = config
