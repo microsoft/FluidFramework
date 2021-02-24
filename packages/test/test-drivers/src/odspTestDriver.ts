@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+import os from "os";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import {
@@ -43,7 +44,7 @@ interface IOdspTestDriverConfig extends TokenConfig{
 }
 
 export class OdspTestDriver implements ITestDriver {
-    public static async createFromEnv() {
+    public static async createFromEnv(directory?: string) {
         const loginAccounts = process.env.login__odsp__test__accounts;
         assert(loginAccounts !== undefined, "Missing login__odsp__test__accounts");
         // Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
@@ -58,10 +59,10 @@ export class OdspTestDriver implements ITestDriver {
                         password: passwords[username],
                         server,
                     },
-                    new Date().toISOString().replace(/:/g, "."),
+                    directory ?? "/",
                 );
-            }catch{
-
+            }catch(err) {
+                console.log(err);
             }
         }
         throw new Error("No Valid Credentails in Environment");
@@ -80,15 +81,19 @@ export class OdspTestDriver implements ITestDriver {
             undefined,
             { accessToken: await this.getStorageToken({ siteUrl, refresh: false }, odspTokenManager, tokenConfig) });
 
-        const driverConfig: IOdspTestDriverConfig = {
-            ... tokenConfig,
-            directory,
-            driveId,
-        };
+        const directoryParts = [directory];
 
         if (process.env.BUILD_BUILD_ID !== undefined) {
-            driverConfig.directory = `${process.env.BUILD_BUILD_ID}/${driverConfig.directory}`;
+            directoryParts.unshift(process.env.BUILD_BUILD_ID);
+        }else{
+            directoryParts.unshift(os.hostname());
         }
+
+        const driverConfig: IOdspTestDriverConfig = {
+            ... tokenConfig,
+            directory: directoryParts.join("/"),
+            driveId,
+        };
 
         return new OdspTestDriver(
             odspTokenManager,

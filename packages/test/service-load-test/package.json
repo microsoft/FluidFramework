@@ -21,6 +21,7 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "debug": "node --inspect-brk ./dist/nodeStressTest.js --debug",
     "debug:mini": "node --inspect-brk ./dist/nodeStressTest.js --debug --profile mini",
+    "debug:runner": "node ./dist/nodeStressTest.js --debug --profile debug",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",

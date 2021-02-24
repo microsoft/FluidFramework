@@ -51,7 +51,8 @@ async function initialize(testDriver: ITestDriver) {
 
 async function load(testDriver: ITestDriver, testId: string) {
     const loader = createLoader(testDriver);
-    const respond = await loader.request({ url: await testDriver.createContainerUrl(testId) });
+    const url =  await testDriver.createContainerUrl(testId);
+    const respond = await loader.request({ url });
     // TODO: Error checking
     return respond.value as ILoadTest;
 }

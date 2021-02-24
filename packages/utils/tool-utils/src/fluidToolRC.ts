@@ -54,7 +54,6 @@ export async function saveRC(rc: IResources) {
     return writeFile(getRCFileName(), Buffer.from(content, "utf8"));
 }
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export async function lockRC<T>(callback: () => Promise<T>) {
     let locked = false;
     do{
