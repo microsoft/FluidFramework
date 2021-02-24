@@ -53,6 +53,11 @@ async function load(testDriver: ITestDriver, testId: string) {
     const loader = createLoader(testDriver);
     const url =  await testDriver.createContainerUrl(testId);
     const respond = await loader.request({ url });
+
+    if(respond.status !== 200) {
+        throw new Error(`Failed to request load test datastore:\n${JSON.stringify(respond)}`);
+    }
+
     // TODO: Error checking
     return respond.value as ILoadTest;
 }
