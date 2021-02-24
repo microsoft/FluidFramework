@@ -11,6 +11,7 @@ import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { createFluidTestDriver } from "@fluidframework/test-drivers";
+import { requestFluidObject } from "../../../runtime/datastore/node_modules/@fluidframework/runtime-utils/dist";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ITestConfig, ILoadTestConfig } from "./testConfigFile";
 import { IRunConfig, fluidExport, ILoadTest } from "./loadTestDataStore";
@@ -52,14 +53,8 @@ async function initialize(testDriver: ITestDriver) {
 async function load(testDriver: ITestDriver, testId: string) {
     const loader = createLoader(testDriver);
     const url =  await testDriver.createContainerUrl(testId);
-    const respond = await loader.request({ url });
-
-    if(respond.status !== 200) {
-        throw new Error(`Failed to request load test datastore:\n${JSON.stringify(respond)}`);
-    }
-
-    // TODO: Error checking
-    return respond.value as ILoadTest;
+    const container = await loader.resolve({ url });
+    return requestFluidObject<ILoadTest>(container,"/");
 }
 
 const createTestDriver =
