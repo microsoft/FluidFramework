@@ -114,10 +114,10 @@ export function getDataStoreFactory(containerOptions?: ITestContainerConfig) {
 }
 
 export const generateNonCompatTest = (
-    tests: (compatArgsFactory: () => Promise<ITestObjectProvider>) => void,
+    tests: (compatArgsFactory: () => ITestObjectProvider) => void,
 ) => {
     describe("non-compat", () => {
-        tests(async () => {
+        tests(() => {
             // Run with all current versions
             const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
             createRuntimeFactory(
@@ -125,8 +125,7 @@ export const generateNonCompatTest = (
                 getDataStoreFactory(containerOptions),
                 containerOptions?.runtimeOptions,
             );
-            // eslint-disable-next-line @typescript-eslint/await-thenable
-            const driver = await getFluidTestDriver();
+            const driver = getFluidTestDriver();
             return new TestObjectProvider(
                 Loader,
                 driver as any,
@@ -137,16 +136,15 @@ export const generateNonCompatTest = (
 };
 
 export const generateCompatTest = (
-    tests: (compatArgsFactory: () => Promise<ITestObjectProvider>, oldApi: oldTypes.OldApi) => void,
+    tests: (compatArgsFactory: () => ITestObjectProvider, oldApi: oldTypes.OldApi) => void,
     options: ITestOptions = {},
 ) => {
     // Run against all currently supported versions by default
     const oldApis = options.oldApis ?? [old, old2];
     oldApis.forEach((oldApi: oldTypes.OldApi) => {
         describe(`compat ${oldApi.versionString} - old loader, new runtime`, function() {
-            tests(async () => {
-                // eslint-disable-next-line @typescript-eslint/await-thenable
-                const driver = await getFluidTestDriver();
+            tests(() => {
+                const driver = getFluidTestDriver();
                 return oldApi.createTestObjectProvider(
                     true, /* oldLoader */
                     false, /* oldContainerRuntime */
@@ -159,9 +157,8 @@ export const generateCompatTest = (
         });
 
         describe(`compat ${oldApi.versionString} - new loader, old runtime`, function() {
-            tests(async () => {
-                // eslint-disable-next-line @typescript-eslint/await-thenable
-                const driver = await getFluidTestDriver();
+            tests(() => {
+                const driver = getFluidTestDriver();
                 return oldApi.createTestObjectProvider(
                     false, /* oldLoader */
                     true, /* oldContainerRuntime */
@@ -174,9 +171,8 @@ export const generateCompatTest = (
         });
 
         describe(`compat ${oldApi.versionString} - new ContainerRuntime, old DataStoreRuntime`, function() {
-            tests(async () => {
-                // eslint-disable-next-line @typescript-eslint/await-thenable
-                const driver = await getFluidTestDriver();
+            tests(() => {
+                const driver = getFluidTestDriver();
                 return oldApi.createTestObjectProvider(
                     false, /* oldLoader */
                     false, /* oldContainerRuntime */
@@ -189,9 +185,8 @@ export const generateCompatTest = (
         });
 
         describe(`compat ${oldApi.versionString} - old ContainerRuntime, new DataStoreRuntime`, function() {
-            tests(async () => {
-                // eslint-disable-next-line @typescript-eslint/await-thenable
-                const driver = await getFluidTestDriver();
+            tests(() => {
+                const driver = getFluidTestDriver();
                 return oldApi.createTestObjectProvider(
                     true, /* oldLoader */
                     true, /* oldContainerRuntime */
@@ -206,7 +201,7 @@ export const generateCompatTest = (
 };
 
 export const generateTest = (
-    tests: (compatArgsFactory: () => Promise<ITestObjectProvider>) => void,
+    tests: (compatArgsFactory: () => ITestObjectProvider) => void,
     options: ITestOptions = {},
 ) => {
     describe("test", () => {

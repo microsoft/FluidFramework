@@ -72,8 +72,7 @@ describe("UpgradeManager (hot-swap)", () => {
     }
 
     beforeEach(async () => {
-        // eslint-disable-next-line @typescript-eslint/await-thenable
-        driver = await getFluidTestDriver() as unknown as ITestDriver;
+        driver = getFluidTestDriver() as unknown as ITestDriver;
         opProcessingController = new OpProcessingController();
     });
 

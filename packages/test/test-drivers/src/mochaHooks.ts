@@ -7,24 +7,17 @@ import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-defini
 import { createFluidTestDriver } from "./factory";
 
 const envVar = "FLUID_TEST_DRIVER";
-const fluidTestDriverType = process.env[envVar]?.toLocaleLowerCase() as TestDriverTypes | undefined | "";
-let fluidTestDriver: ITestDriver | undefined;
 const _global = global as any;
-_global.getFluidTestDriver = async (): Promise<ITestDriver> => {
-    if (fluidTestDriver === undefined) {
-        if(fluidTestDriverType === "" || fluidTestDriverType === undefined) {
-            fluidTestDriver = await createFluidTestDriver("local");
-        }else{
-            fluidTestDriver = await createFluidTestDriver(fluidTestDriverType);
-        }
-    }
-    return fluidTestDriver;
-};
 
 // can be async or not
 export const mochaGlobalSetup = async function() {
-    if (_global.getFluidTestDriver === undefined
-        || _global.getFluidTestDriver() === undefined) {
-        throw new Error("getFluidTestDriver does not exist or did not return a driver");
-    }
+    const fluidTestDriverType = process.env[envVar]?.toLocaleLowerCase() as TestDriverTypes | undefined | "";
+    const fluidTestDriver =
+        fluidTestDriverType === "" || fluidTestDriverType === undefined
+        ? await createFluidTestDriver("local")
+        : await createFluidTestDriver(fluidTestDriverType);
+
+    _global.getFluidTestDriver = (): ITestDriver => {
+        return fluidTestDriver;
+    };
 };

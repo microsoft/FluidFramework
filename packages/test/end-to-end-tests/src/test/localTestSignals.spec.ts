@@ -32,13 +32,13 @@ const waitForSignal =
                             errorMsg: `Singaller[${index}] Timeout`,
                         })));
 
-const tests = (argsFactory: () => Promise<ITestObjectProvider>) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;
 
     beforeEach(async () => {
-        args = await argsFactory();
+        args = argsFactory();
         const container1 = await args.makeTestContainer(testContainerConfig) as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 

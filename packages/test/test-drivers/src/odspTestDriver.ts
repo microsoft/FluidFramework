@@ -62,17 +62,17 @@ export class OdspTestDriver implements ITestDriver {
     }
 
     public static  async create(loginConfig: IOdspTestLoginInfo, directory: string) {
-        const odspTokenManager = new OdspTokenManager(odspTokensCache);
         const tokenConfig: TokenConfig = {
             ... loginConfig,
             ...getMicrosoftConfiguration(),
         };
-        const siteUrl = `https://${loginConfig.server}`;
+        const odspTokenManager = new OdspTokenManager(odspTokensCache);
+        const siteUrl = `https://${tokenConfig.server}`;
         const driveId = await getDriveId(
             loginConfig.server,
             "",
             undefined,
-            { accessToken: await this.getStorageToken({ siteUrl, refresh: false }, odspTokenManager, tokenConfig) });
+            { accessToken: await this.getStorageToken({ siteUrl, refresh: true }, odspTokenManager, tokenConfig) });
 
         const driverConfig: IOdspTestDriverConfig = {
             ... tokenConfig,

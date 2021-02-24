@@ -117,9 +117,8 @@ describe("context reload (hot-swap)", function() {
         );
     };
     let driver: ITestDriver;
-    before(async ()=>{
-        // eslint-disable-next-line @typescript-eslint/await-thenable
-        driver = await getFluidTestDriver() as unknown as ITestDriver;
+    before(()=>{
+        driver = getFluidTestDriver() as unknown as ITestDriver;
     });
 
     const tests = function() {

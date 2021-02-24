@@ -83,9 +83,8 @@ const testSharedDataObjectFactory2 = new DataObjectFactory(
 
 describe("Loader.request", () => {
     let driver: ITestDriver;
-    before(async ()=>{
-        // eslint-disable-next-line @typescript-eslint/await-thenable
-        driver = await getFluidTestDriver() as unknown as ITestDriver;
+    before(()=>{
+        driver = getFluidTestDriver() as unknown as ITestDriver;
     });
 
     const codeDetails: IFluidCodeDetails = {

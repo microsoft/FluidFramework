@@ -88,9 +88,8 @@ const testDataObjectFactory = new DataObjectFactory(
 
 describe("LocalLoader", () => {
     let driver: ITestDriver;
-    before(async ()=>{
-        // eslint-disable-next-line @typescript-eslint/await-thenable
-        driver = await getFluidTestDriver() as unknown as ITestDriver;
+    before(()=>{
+        driver = getFluidTestDriver() as unknown as ITestDriver;
     });
 
     const codeDetails: IFluidCodeDetails = {

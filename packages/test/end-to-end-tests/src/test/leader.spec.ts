@@ -18,12 +18,12 @@ async function ensureConnected(container: Container) {
     }
 }
 
-const tests = (argsFactory: () => Promise<ITestObjectProvider>) => {
+const tests = (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     let container1: Container;
     let dataObject1: ITestFluidObject;
     beforeEach(async () => {
-        args = await argsFactory();
+        args = argsFactory();
         container1 = await args.makeTestContainer() as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         await ensureConnected(container1);

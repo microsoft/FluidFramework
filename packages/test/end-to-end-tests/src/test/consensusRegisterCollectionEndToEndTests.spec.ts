@@ -39,10 +39,10 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {
-    const tests = (argsFactory: () => Promise<ITestObjectProvider>) => {
+    const tests = (argsFactory: () => ITestObjectProvider) => {
         let args: ITestObjectProvider;
-        beforeEach(async ()=>{
-            args = await argsFactory();
+        beforeEach(()=>{
+            args = argsFactory();
         });
         afterEach(() => {
             args.reset();
