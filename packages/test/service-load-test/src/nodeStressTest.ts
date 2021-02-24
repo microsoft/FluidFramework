@@ -44,8 +44,7 @@ const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 const urlResolver = new OdspDriverUrlResolver();
 const odspTokenManager = new OdspTokenManager(odspTokensCache);
 
-const nullLogger: ITelemetryBufferedLogger = { send: () => {}, flush: async () => {} };
-let logger: ITelemetryBufferedLogger = nullLogger;
+let logger: ITelemetryBufferedLogger = { send: () => {}, flush: async () => {} };;
 
 const passwordTokenConfig = (username, password): OdspTokenConfig => ({
     type: "password",

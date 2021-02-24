@@ -30,7 +30,7 @@ describe("Container", () => {
     const loaderContainerTracker = new LoaderContainerTracker();
     beforeEach(()=>{
         driver = getFluidTestDriver();
-        logger = getTestLogger(true /* singleton */);
+        logger = getTestLogger();
     });
     afterEach(() => {
         loaderContainerTracker.reset();

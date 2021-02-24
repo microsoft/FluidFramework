@@ -12,7 +12,7 @@ const nullLogger: ITelemetryBufferedLogger = { send: () => {}, flush: async () =
 export const mochaGlobalSetup = function() {
     // Ensure getTestLogger is defined even if no hook sets it up purposefully
     if (_global.getTestLogger?.() === undefined) {
-        _global.getTestLogger = (_singleton) => nullLogger;  //* Is it ok to ignore _singleton here?
+        _global.getTestLogger = () => nullLogger;
     }
 };
 
@@ -33,6 +33,7 @@ export const mochaHooks = {
     },
     async afterAll() {
         // Flush the logs before exiting
-        await getTestLogger(true /* singleton */).flush();
+        const logger: ITelemetryBufferedLogger = getTestLogger();
+        await logger.flush();
     },
 };
