@@ -449,7 +449,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             const containerCopy = await this.context.loadContainerCopyFn(
                 headers[LoaderHeader.clientDetails],
                 headers[LoaderHeader.sequenceNumber],
-                true /* summarizingClient */,
             );
             response = await containerCopy.request(request);
         }

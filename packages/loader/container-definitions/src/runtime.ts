@@ -123,7 +123,6 @@ export interface IContainerContext extends IDisposable {
     readonly loadContainerCopyFn: (
         clientDetails?: IClientDetails,
         fromSequenceNumber?: number,
-        summarizingClient?: boolean,
         ) => Promise<IContainer>,
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly quorum: IQuorum;

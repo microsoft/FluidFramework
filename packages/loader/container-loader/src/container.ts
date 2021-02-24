@@ -31,7 +31,6 @@ import {
 } from "@fluidframework/container-definitions";
 import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import {
-    DriverHeader,
     IDocumentService,
     IDocumentStorageService,
     IFluidResolvedUrl,
@@ -1804,7 +1803,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const loadContainerCopyFn = async (
             clientDetails?: IClientDetails,
             fromSequenceNumber?: number,
-            summarizingClient?: boolean,
         ) => {
             // Load the container copy restricted: uncached and no reconnect
             return this.loadContainerCopy(
@@ -1813,7 +1811,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this.containerUrl,
                 clientDetails,
                 fromSequenceNumber,
-                summarizingClient,
             );
         };
         this._context = await ContainerContext.createOrLoad(
@@ -1868,20 +1865,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         baseRequestUrl: string | undefined,
         clientDetails?: IClientDetails,
         fromSequenceNumber?: number,
-        summarizingClient?: boolean,
     ): Promise<IContainer> {
         if (baseRequestUrl === undefined) {
             throw new Error("Base request is not provided");
         }
 
-        const containerRequest: IRequest = {
-            headers: {
-                [DriverHeader.summarizingClient]: summarizingClient,
-            },
-            url: baseRequestUrl,
-        };
-
-        const resolvedAsFluid = await urlResolver.resolve(containerRequest);
+        const resolvedAsFluid = await urlResolver.resolve({ url: baseRequestUrl });
         ensureFluidResolvedUrl(resolvedAsFluid);
 
         // Parse URL into data stores

@@ -67,7 +67,6 @@ export class ContainerContext implements IContainerContext {
         loadContainerCopyFn: (
             clientDetails?: IClientDetails,
             fromSequenceNumber?: number,
-            summarizingClient?: boolean,
             ) => Promise<IContainer>,
         version: string,
         previousRuntimeState: IRuntimeState,
@@ -198,7 +197,6 @@ export class ContainerContext implements IContainerContext {
         public readonly loadContainerCopyFn: (
             clientDetails?: IClientDetails,
             fromSequenceNumber?: number,
-            summarizingClient?: boolean,
             ) => Promise<IContainer>,
         public readonly version: string,
         public readonly previousRuntimeState: IRuntimeState,
