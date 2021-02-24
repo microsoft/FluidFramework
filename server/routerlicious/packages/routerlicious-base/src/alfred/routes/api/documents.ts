@@ -50,32 +50,32 @@ export function create(
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             // Tenant and document
-        const tenantId = getParam(request.params, "tenantId");
-        const id = request.body.id;
+            const tenantId = getParam(request.params, "tenantId");
+            const id = request.body.id;
 
-        // Summary information
-        const summary = request.body.summary;
+            // Summary information
+            const summary = request.body.summary;
 
-        // Protocol state
-        const sequenceNumber = request.body.sequenceNumber;
-        const values = request.body.values;
+            // Protocol state
+            const sequenceNumber = request.body.sequenceNumber;
+            const values = request.body.values;
 
-        const createP = storage.createDocument(
-            tenantId,
-            id,
-            summary,
-            sequenceNumber,
-            1,
-            values);
+            const createP = storage.createDocument(
+                tenantId,
+                id,
+                summary,
+                sequenceNumber,
+                1,
+                values);
 
-        createP.then(
-            () => {
-                response.status(201).json(id);
-            },
-            (error) => {
-                response.status(400).json(error);
-            });
-    });
+            createP.then(
+                () => {
+                    response.status(201).json(id);
+                },
+                (error) => {
+                    response.status(400).json(error);
+                });
+        });
 
     return router;
 }
