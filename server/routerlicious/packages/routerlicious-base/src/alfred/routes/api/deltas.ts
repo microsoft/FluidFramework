@@ -12,8 +12,8 @@ import {
     IThrottler,
     MongoManager,
 } from "@fluidframework/server-services-core";
-import { throttle, IThrottleMiddlewareOptions } from "@fluidframework/server-services-utils";
-import { Router } from "express";
+import { verifyStorageToken, throttle, IThrottleMiddlewareOptions } from "@fluidframework/server-services-utils";
+import {  Router } from "express";
 import { Provider } from "nconf";
 import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
@@ -192,6 +192,7 @@ export function create(
      */
     router.get(
         ["/v1/:tenantId?/:id", "/:tenantId?/:id/v1"],
+        verifyStorageToken(tenantManager, config),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const from = stringToSequenceNumber(request.query.from);
@@ -223,6 +224,7 @@ export function create(
      */
     router.get(
         "/raw/:tenantId?/:id",
+        verifyStorageToken(tenantManager, config),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
@@ -249,6 +251,7 @@ export function create(
      */
     router.get(
         "/:tenantId?/:id",
+        verifyStorageToken(tenantManager, config),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const from = stringToSequenceNumber(request.query.from);
