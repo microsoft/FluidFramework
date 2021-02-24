@@ -54,7 +54,7 @@
     "jsonwebtoken": "^8.4.0",
     "level": "^6.0.1",
     "level-sublevel": "6.6.4",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "morgan": "^1.8.1",
     "nconf": "^0.11.0",
     "semver": "^6.3.0",

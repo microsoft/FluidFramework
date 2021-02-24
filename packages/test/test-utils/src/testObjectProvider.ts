@@ -37,11 +37,13 @@ export class TestObjectProvider<TestContainerConfigType> {
      * and factory for TestFluidObject
      */
     constructor(
+        public readonly LoaderConstructor: typeof Loader,
         public readonly driver: ITestDriver,
         private readonly createFluidEntryPoint: (testContainerConfig?: TestContainerConfigType) => fluidEntryPoint,
     ) {
 
     }
+
     get documentServiceFactory() {
         if (!this._documentServiceFactory) {
             this._documentServiceFactory = this.driver.createDocumentServiceFactory();
@@ -76,7 +78,7 @@ export class TestObjectProvider<TestContainerConfigType> {
 
     private createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>) {
         const codeLoader = new LocalCodeLoader(packageEntries);
-        return new Loader({
+        return new this.LoaderConstructor({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
@@ -129,5 +131,10 @@ export class TestObjectProvider<TestContainerConfigType> {
         this._urlResolver = undefined;
         this._opProcessingController = undefined;
         this._documentId = undefined;
+    }
+
+    public async ensureSynchronized() {
+        await this.opProcessingController.process();
+        return this._loaderContainerTracker.ensureSynchronized();
     }
 }

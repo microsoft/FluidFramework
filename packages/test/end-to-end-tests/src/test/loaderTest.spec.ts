@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { parse } from "url";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
@@ -11,7 +12,8 @@ import {
 } from "@fluidframework/aqueduct";
 import { IContainer, ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequest,
+    IResponse } from "@fluidframework/core-interfaces";
 import {
     createAndAttachContainer,
     createDocumentId,
@@ -32,6 +34,20 @@ class TestSharedDataObject1 extends DataObject {
 
     public get _context() {
         return this.context;
+    }
+
+    // Returns query params (if any) in the request.
+    // Used in tests that verify query params work correctly with loader.request
+    public async request(request: IRequest): Promise<IResponse> {
+        const url = request.url;
+        const parsed = parse(url, true);
+        // eslint-disable-next-line no-null/no-null
+        if (parsed.search !== null) {
+            // returning query params instead of the data object for testing purposes
+            return { mimeType: "text/plain", status: 200, value : `${parsed.search}` };
+        } else {
+            return super.request(request);
+        }
     }
 }
 
@@ -115,10 +131,10 @@ describe("Loader.request", () => {
 
     it("can create the data objects with correct types", async () => {
         const testUrl1 = await container.getAbsoluteUrl(dataStore1.handle.absolutePath);
-        assert(testUrl1);
+        assert(testUrl1,"dataStore1 url is undefined");
         const testDataStore1 = await requestFluidObject(loader, testUrl1);
         const testUrl2 = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
-        assert(testUrl2);
+        assert(testUrl2,"dataStore2 url is undefined");
         const testDataStore2 = await requestFluidObject(loader, testUrl2);
 
         assert(testDataStore1 instanceof TestSharedDataObject1, "requestFromLoader returns the wrong type for default");
@@ -127,7 +143,7 @@ describe("Loader.request", () => {
 
     it("can create data object using url with second id, having correct type and id", async () => {
         const dataStore2Url = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
-        assert(dataStore2Url);
+        assert(dataStore2Url, "dataStore2 url is undefined");
         const testDataStore = await requestFluidObject(loader, dataStore2Url);
 
         assert(testDataStore instanceof TestSharedDataObject2, "request returns the wrong type with long url");
@@ -136,7 +152,7 @@ describe("Loader.request", () => {
 
     it("can create data object using url with second id, having distinct value from default", async () => {
         const url = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
-        assert(url);
+        assert(url, "dataStore2 url is undefined");
         const testDataStore = await requestFluidObject<TestSharedDataObject2>(loader, url);
 
         dataStore1._root.set("color", "purple");
@@ -154,7 +170,7 @@ describe("Loader.request", () => {
             [LoaderHeader.pause]: true,
         };
         const url = await container.getAbsoluteUrl("");
-        assert(url);
+        assert(url, "url is undefined");
         const container2 = await loader.resolve({ url, headers });
         opProcessingController.addDeltaManagers(container2.deltaManager);
 
@@ -189,7 +205,7 @@ describe("Loader.request", () => {
 
     it("caches the loaded container across multiple requests as expected", async () => {
         const url = await container.getAbsoluteUrl("");
-        assert(url);
+        assert(url, "url is undefined");
         // load the containers paused
         const container1 = await loader.resolve({ url, headers: { [LoaderHeader.pause]: true } });
         opProcessingController.addDeltaManagers(container1.deltaManager);
@@ -217,5 +233,14 @@ describe("Loader.request", () => {
         });
         assert.strictEqual(sameDataStore1, sameDataStore2,
             "same containers do not return same data store for same request");
+    });
+    it("can handle url with query params", async () => {
+        const url = await container.getAbsoluteUrl("");
+        assert(url, "url is undefined");
+
+        const query = `?query1=1&query2=2`;
+        const testUrl = `${url}${query}`;
+        const response = await loader.request({ url: testUrl });
+        assert.strictEqual(response.value, query, "request did not pass the right query to the data store");
     });
 });

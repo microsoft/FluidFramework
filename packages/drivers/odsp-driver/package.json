@@ -68,7 +68,7 @@
     "abort-controller": "^3.0.0",
     "assert": "^2.0.0",
     "debug": "^4.1.1",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "node-fetch": "^2.6.1",
     "sha.js": "^2.4.11",
     "socket.io-client": "^2.1.1",

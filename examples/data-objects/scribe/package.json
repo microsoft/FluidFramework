@@ -53,7 +53,7 @@
     "axios": "^0.21.1",
     "bootstrap": "^3.3.7",
     "css-loader": "^1.0.0",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "style-loader": "^1.0.0",
     "url-loader": "^2.1.0"
   },
