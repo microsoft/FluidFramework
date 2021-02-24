@@ -39,7 +39,7 @@ export class Context extends EventEmitter implements IContext {
         this.emit("error", error, errorData);
     }
 
-    public get log(): ILogger {
+    public get log(): ILogger | undefined {
         return winston;
     }
 
