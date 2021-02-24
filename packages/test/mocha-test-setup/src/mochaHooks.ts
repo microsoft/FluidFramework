@@ -10,6 +10,7 @@ const nullLogger: ITelemetryBufferedLogger = { send: () => {}, flush: async () =
 
 // can be async or not
 export const mochaGlobalSetup = function() {
+    // WARNING: May have unexpected results in parallel mode.  See https://mochajs.org/#global-fixtures
     // Ensure getTestLogger is defined even if no hook sets it up purposefully
     if (_global.getTestLogger?.() === undefined) {
         _global.getTestLogger = () => nullLogger;

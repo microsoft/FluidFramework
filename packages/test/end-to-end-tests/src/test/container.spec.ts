@@ -30,8 +30,8 @@ describe("Container", () => {
     let logger: ITelemetryBaseLogger | undefined;
     const loaderContainerTracker = new LoaderContainerTracker();
     before(function() {
-        logger = getTestLogger();
         driver = getFluidTestDriver() as unknown as ITestDriver;
+        logger = getTestLogger();
 
         // TODO: Convert these to mocked unit test. These are all API tests and doesn't
         // need the service.  For new disable the tests other than local driver
