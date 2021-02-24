@@ -21,7 +21,7 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "test": "mocha --recursive dist/test --unhandled-rejections=strict",
-    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
+    "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
