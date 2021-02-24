@@ -49,7 +49,7 @@ export interface ITestDriver{
      * type, this should only be done it absolutely necessary for complex scenarios
      * as the test may not  work against all supported servers if done.
      */
-    createContainerUrl(testId: string): string;
+    createContainerUrl(testId: string): Promise<string>;
 }
 
 /**

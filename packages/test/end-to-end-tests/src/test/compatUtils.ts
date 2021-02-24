@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-extraneous-dependencies */
-
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
     IContainer,
     ILoader,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
+import { Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
@@ -28,8 +27,6 @@ import * as oldTypes from "./oldVersionTypes";
 import * as old from "./oldVersion";
 import * as old2 from "./oldVersion2";
 
-/* eslint-enable import/no-extraneous-dependencies */
-
 export interface ITestObjectProvider {
     /**
      * Used to create a test Container.
@@ -42,9 +39,13 @@ export interface ITestObjectProvider {
     urlResolver: IUrlResolver | oldTypes.IUrlResolver,
     defaultCodeDetails: IFluidCodeDetails | oldTypes.IFluidCodeDetails,
     opProcessingController: OpProcessingController | oldTypes.OpProcessingController,
+
+    ensureSynchronized(): Promise<void>;
     reset(): void,
+
     documentId: string,
     driver: ITestDriver;
+
 }
 
 export interface ITestOptions {
@@ -126,7 +127,8 @@ export const generateNonCompatTest = (
             );
             const driver = getFluidTestDriver();
             return new TestObjectProvider(
-                driver,
+                Loader,
+                driver as any,
                 runtimeFactory,
             );
         });
@@ -140,7 +142,7 @@ export const generateCompatTest = (
     // Run against all currently supported versions by default
     const oldApis = options.oldApis ?? [old, old2];
     oldApis.forEach((oldApi: oldTypes.OldApi) => {
-        describe("compat - old loader, new runtime", function() {
+        describe(`compat ${oldApi.versionString} - old loader, new runtime`, function() {
             tests(() => {
                 const driver = getFluidTestDriver();
                 return oldApi.createTestObjectProvider(
@@ -149,12 +151,12 @@ export const generateCompatTest = (
                     false, /* oldDataStoreRuntime */
                     TestDataObject.type,
                     options.serviceConfiguration,
-                    driver,
+                    driver as any,
                 );
             }, oldApi);
         });
 
-        describe("compat - new loader, old runtime", function() {
+        describe(`compat ${oldApi.versionString} - new loader, old runtime`, function() {
             tests(() => {
                 const driver = getFluidTestDriver();
                 return oldApi.createTestObjectProvider(
@@ -163,12 +165,12 @@ export const generateCompatTest = (
                     true, /* oldDataStoreRuntime */
                     TestDataObject.type,
                     options.serviceConfiguration,
-                    driver,
+                    driver as any,
                 );
             }, oldApi);
         });
 
-        describe("compat - new ContainerRuntime, old DataStoreRuntime", function() {
+        describe(`compat ${oldApi.versionString} - new ContainerRuntime, old DataStoreRuntime`, function() {
             tests(() => {
                 const driver = getFluidTestDriver();
                 return oldApi.createTestObjectProvider(
@@ -177,12 +179,12 @@ export const generateCompatTest = (
                     true, /* oldDataStoreRuntime */
                     TestDataObject.type,
                     options.serviceConfiguration,
-                    driver,
+                    driver as any,
                 );
             }, oldApi);
         });
 
-        describe("compat - old ContainerRuntime, new DataStoreRuntime", function() {
+        describe(`compat ${oldApi.versionString} - old ContainerRuntime, new DataStoreRuntime`, function() {
             tests(() => {
                 const driver = getFluidTestDriver();
                 return oldApi.createTestObjectProvider(
@@ -191,7 +193,7 @@ export const generateCompatTest = (
                     false, /* oldDataStoreRuntime */
                     TestDataObject.type,
                     options.serviceConfiguration,
-                    driver,
+                    driver as any,
                 );
             }, oldApi);
         });

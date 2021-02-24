@@ -73,12 +73,12 @@
     "assert": "^2.0.0",
     "base64-js": "^1.3.1",
     "events": "^3.1.0",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "sha.js": "^2.4.11"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0-0",
-    "@fluidframework/eslint-config-fluid": "^0.22.1-0",
+    "@fluidframework/eslint-config-fluid": "^0.23.0-0",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/assert": "^1.5.2",
     "@types/base64-js": "^1.3.0",

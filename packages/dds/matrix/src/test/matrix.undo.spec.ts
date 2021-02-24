@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import "mocha";
-
 import { strict as assert } from "assert";
 import { Serializable } from "@fluidframework/datastore-definitions";
 import {
@@ -13,7 +11,7 @@ import {
     MockStorage,
     MockContainerRuntimeFactory,
 } from "@fluidframework/test-runtime-utils";
-import { SharedMatrix, SharedMatrixFactory } from "../src";
+import { SharedMatrix, SharedMatrixFactory } from "..";
 import { extract, expectSize } from "./utils";
 import { TestConsumer } from "./testconsumer";
 import { UndoRedoStackManager } from "./undoRedoStackManager";
@@ -22,9 +20,10 @@ describe("Matrix", () => {
     describe("undo/redo", () => {
         let dataStoreRuntime: MockFluidDataStoreRuntime;
         let matrix1: SharedMatrix<number>;
-        let consumer1: TestConsumer<undefined | null | number>;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
+        // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
+        let consumer1: TestConsumer<undefined | null | number>;
         let undo1: UndoRedoStackManager;
-        let expect: <T extends Serializable>(expected: ReadonlyArray<ReadonlyArray<T>>) => Promise<void>;
+        let expect: <T extends Serializable>(expected: readonly (readonly T[])[]) => Promise<void>;
 
         function singleClientTests() {
             it("undo/redo setCell", async () => {
@@ -120,7 +119,7 @@ describe("Matrix", () => {
                 matrix1.removeRows(/* rowStart: */ 0, /* rowCount: */ 1);
                 undo1.closeCurrentOperation();
                 await expect([
-                    [2, 3]
+                    [2, 3],
                 ]);
 
                 undo1.undoOperation();
@@ -131,7 +130,7 @@ describe("Matrix", () => {
 
                 undo1.redoOperation();
                 await expect([
-                    [2, 3]
+                    [2, 3],
                 ]);
             });
 
@@ -151,7 +150,7 @@ describe("Matrix", () => {
                 matrix1.removeRows(/* rowStart: */ 1, /* rowCount: */ 1);
                 undo1.closeCurrentOperation();
                 await expect([
-                    [0, 1]
+                    [0, 1],
                 ]);
 
                 undo1.undoOperation();
@@ -162,7 +161,7 @@ describe("Matrix", () => {
 
                 undo1.redoOperation();
                 await expect([
-                    [0, 1]
+                    [0, 1],
                 ]);
             });
 
@@ -253,21 +252,21 @@ describe("Matrix", () => {
 
                 matrix1.insertCols(/* start: */ 0, /* count: */ 2);
                 matrix1.setCells(/* rowStart: */ 0, /* colStart: */ 0, /* colCount: */ 2, [
-                    0, 1
-                ])
+                    0, 1,
+                ]);
                 undo1.closeCurrentOperation();
 
                 await expect([
-                    [0, 1]
-                ])
+                    [0, 1],
+                ]);
 
                 undo1.undoOperation();
                 expectSize(matrix1, /* rowCount */ 1, /* colCount: */ 0);
 
                 undo1.redoOperation();
                 await expect([
-                    [0, 1]
-                ])
+                    [0, 1],
+                ]);
             });
 
             it("undo/redo removeCol", async () => {
@@ -446,10 +445,11 @@ describe("Matrix", () => {
                 dataStoreRuntime.local = true;
 
                 // Load the summary into a newly created 2nd SharedMatrix.
-                const matrix2 = new SharedMatrix<T>(dataStoreRuntime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
+                const matrix2 = new SharedMatrix<T>(dataStoreRuntime, `load(${matrix.id})`,
+                    SharedMatrixFactory.Attributes);
                 await matrix2.load({
                     deltaConnection: new MockEmptyDeltaConnection(),
-                    objectStorage
+                    objectStorage,
                 });
 
                 // Vet that the 2nd matrix is equivalent to the original.
@@ -460,18 +460,19 @@ describe("Matrix", () => {
                 //      (See https://github.com/microsoft/FluidFramework/issues/3950)
                 //
                 // expectSize(matrix2, matrix.rowCount, matrix.colCount);
-                // assert.deepEqual(extract(matrix), extract(matrix2), 'Matrix must round-trip through summarize/load.');
+                // assert.deepEqual(extract(matrix), extract(matrix2),
+                //      'Matrix must round-trip through summarize/load.');
 
                 return matrix2;
             }
 
             before(() => {
-                expect = async <T extends Serializable>(expected: ReadonlyArray<ReadonlyArray<T>>) => {
+                expect = async <T extends Serializable>(expected: readonly (readonly T[])[]) => {
                     const actual = extract(matrix1);
                     assert.deepEqual(actual, expected, "Matrix must match expected.");
                     assert.deepEqual(extract(consumer1), actual, "Matrix must notify IMatrixConsumers of all changes.");
-                }
-            })
+                };
+            });
 
             beforeEach(async () => {
                 dataStoreRuntime = new MockFluidDataStoreRuntime();
@@ -491,7 +492,8 @@ describe("Matrix", () => {
                 await summarize(await summarize(matrix1));
 
                 // Ensure that IMatrixConsumer observed all changes to matrix.
-                assert.deepEqual(extract(consumer1), extract(matrix1), "Matrix must notify IMatrixConsumers of all changes.");
+                assert.deepEqual(extract(consumer1), extract(matrix1),
+                    "Matrix must notify IMatrixConsumers of all changes.");
 
                 // Sanity check that removing the consumer stops change notifications.
                 matrix1.closeMatrix(consumer1);
@@ -522,7 +524,8 @@ describe("Matrix", () => {
                     }
 
                     for (const consumer of [consumer1, consumer2]) {
-                        assert.deepEqual(extract(consumer), actual1, "Matrix must notify IMatrixConsumers of all changes.");
+                        assert.deepEqual(extract(consumer), actual1,
+                            "Matrix must notify IMatrixConsumers of all changes.");
                     }
                 };
             });
@@ -621,7 +624,7 @@ describe("Matrix", () => {
 
                 undo1.undoOperation();
                 await expect([
-                    []
+                    [],
                 ]);
 
                 undo1.redoOperation();

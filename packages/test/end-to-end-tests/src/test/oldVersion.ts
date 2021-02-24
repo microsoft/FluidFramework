@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-extraneous-dependencies */
 export * from "old-container-definitions";
 export * from "old-core-interfaces";
 export { IDocumentServiceFactory, IUrlResolver } from "old-driver-definitions";
 export { LocalResolver } from "old-local-driver";
 export { IFluidDataStoreFactory } from "old-runtime-definitions";
 export { OpProcessingController } from "old-test-utils";
+export const versionString = "N-1";
 
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
@@ -34,9 +34,8 @@ import {
     createLocalLoader,
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
-    TestObjectProvider,
 } from "old-test-utils";
-import { LoaderContainerTracker } from "@fluidframework/test-utils";
+import { Loader } from "old-container-loader";
 
 import {
     createRuntimeFactory,
@@ -48,7 +47,6 @@ import {
     V2,
 } from "./compatUtils";
 import * as newVer from "./newVersion";
-/* eslint-enable import/no-extraneous-dependencies */
 
 // A simple old-version dataStore with runtime/root exposed for testing
 // purposes. Used to test compatibility of context reload between
@@ -178,29 +176,9 @@ export function createTestObjectProvider(
     if (driver === undefined) {
         throw new Error("Must provide a driver when using the current loader");
     }
-    if (oldLoader) {
-        const oldProvider = new TestObjectProvider(
-            driver as any,
-            containerFactoryFn as () => IRuntimeFactory);
 
-        // Remove once the older version support container tracking (for close)
-        if (!(TestObjectProvider as any).patchLoader) {
-            const loaderContainerTracker = new LoaderContainerTracker();
-            const oldMakeTestLoader = oldProvider.makeTestLoader.bind(oldProvider);
-            oldProvider.makeTestLoader = (testContainerConfig?: unknown) => {
-                const testLoader = oldMakeTestLoader(testContainerConfig);
-                loaderContainerTracker.add(testLoader);
-                return testLoader;
-            };
-            const oldReset = oldProvider.reset.bind(oldProvider);
-            oldProvider.reset = () => {
-                loaderContainerTracker.reset();
-                oldReset();
-            };
-        }
-        return oldProvider;
-    } else {
-        return new newVer.TestObjectProvider(
-            driver, containerFactoryFn as () => newVer.IRuntimeFactory);
-    }
+    return new newVer.TestObjectProvider(
+        oldLoader ? Loader as unknown as typeof newVer.Loader : newVer.Loader,
+        driver,
+        containerFactoryFn as () => newVer.IRuntimeFactory);
 }

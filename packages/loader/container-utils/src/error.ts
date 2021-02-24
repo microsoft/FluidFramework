@@ -25,9 +25,12 @@ const isValidLoggingError = (error: any): error is LoggingError => {
     return typeof error?.errorType === "string" && error instanceof LoggingError;
 };
 
-const isRegularObject = (value: any): boolean => value !== null && !Array.isArray(value) && typeof value === "object";
+const isRegularObject = (value: any): boolean => {
+    return value !== null && !Array.isArray(value) && typeof value === "object";
+};
 
-function extractSafeLoggableProperties(error: any) {
+// TODO: move this elsewhere and use in TelemetryLogger.prepareErrorObject
+function extractLogSafeErrorProperties(error: any) {
     // Only get properties we know about.
     // Grabbing all properties will expose PII in telemetry!
     const message = messageFromError(error);
@@ -43,7 +46,7 @@ function extractSafeLoggableProperties(error: any) {
         }
 
         if (typeof stack === "string") {
-            safeProps.stack = errorType;
+            safeProps.stack = stack;
         }
     }
 
@@ -110,7 +113,7 @@ export function CreateProcessingError(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return error as any;
     } else {
-        const safeProps = extractSafeLoggableProperties(error);
+        const safeProps = extractLogSafeErrorProperties(error);
 
         return new DataProcessingError(safeProps.message, {
             ...info,
@@ -134,11 +137,16 @@ export function CreateContainerError(error: any): ICriticalContainerError {
             return err;
         }
 
-        const safeProps = extractSafeLoggableProperties(error);
-        return (new LoggingError(
-            safeProps.message,
-            safeProps,
-        ) as any) as IGenericError;
+        const {
+            message,
+            stack,
+            errorType = `${error.errorType ?? ContainerErrorType.genericError}`,
+        } = extractLogSafeErrorProperties(error);
+
+        return (new LoggingError(message, {
+            errorType,
+            stack,
+        }) as any) as IGenericError;
     } else if (typeof error === "string") {
         return new GenericError(error, new Error(error));
     } else {

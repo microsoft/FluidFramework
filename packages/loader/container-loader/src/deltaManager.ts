@@ -14,6 +14,7 @@ import {
     ICriticalContainerError,
     ContainerErrorType,
     IThrottlingWarning,
+    ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import { PerformanceEvent, TelemetryLogger, safeRaiseEvent } from "@fluidframework/telemetry-utils";
@@ -23,6 +24,7 @@ import {
     IDocumentDeltaConnection,
     IDocumentStorageService,
     LoaderCachingPolicy,
+    IDocumentDeltaConnectionEvents,
 } from "@fluidframework/driver-definitions";
 import { isSystemType, isSystemMessage } from "@fluidframework/protocol-base";
 import {
@@ -35,7 +37,9 @@ import {
     INack,
     INackContent,
     ISequencedDocumentMessage,
+    ISignalClient,
     ISignalMessage,
+    ITokenClaims,
     ITrace,
     MessageType,
     ScopeType,
@@ -98,6 +102,42 @@ export enum ReconnectMode {
 export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
     (event: "throttled", listener: (error: IThrottlingWarning) => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
+}
+
+/**
+ * Implementation of IDocumentDeltaConnection that does not support submitting
+ * or receiving ops. Used in storage-only mode.
+ */
+class NoDeltaStream extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection {
+    clientId: string = "storage-only client";
+    claims: ITokenClaims = {
+        scopes: [ScopeType.DocRead],
+    } as any;
+    mode: ConnectionMode = "read";
+    existing: boolean = true;
+    maxMessageSize: number = 0;
+    version: string = "";
+    initialMessages: ISequencedDocumentMessage[] = [];
+    initialSignals: ISignalMessage[] = [];
+    initialClients: ISignalClient[] = [];
+    serviceConfiguration: IClientConfiguration = undefined as any;
+    checkpointSequenceNumber?: number | undefined = undefined;
+    submit(messages: IDocumentMessage[]): void {
+        this.emit("nack", this.clientId, messages.map((operation) => {
+            return {
+                operation,
+                content: { message: "Cannot submit with storage-only connection", code: 403 },
+            };
+        }));
+    }
+    submitSignal(message: any): void {
+        this.emit("nack", this.clientId, {
+            operation: message,
+            content: { message: "Cannot submit signal with storage-only connection", code: 403 },
+        });
+    }
+    close(): void {
+    }
 }
 
 /**
@@ -268,6 +308,7 @@ export class DeltaManager
      * or due to host forcing readonly mode for container.
      * It is undefined if we have not yet established websocket connection
      * and do not know if user has write access to a file.
+     * @deprecated - use readOnlyInfo
      */
     public get readonly() {
         if (this._forceReadonly) {
@@ -280,9 +321,24 @@ export class DeltaManager
      * Tells if user has no write permissions for file in storage
      * It is undefined if we have not yet established websocket connection
      * and do not know if user has write access to a file.
+     * @deprecated - use readOnlyInfo
      */
     public get readonlyPermissions() {
         return this._readonlyPermissions;
+    }
+
+    public get readOnlyInfo(): ReadOnlyInfo {
+        const storageOnly = this.connection !== undefined && this.connection instanceof NoDeltaStream;
+        if (storageOnly || this._forceReadonly || this._readonlyPermissions === true) {
+            return {
+                readonly: true,
+                forced: this._forceReadonly,
+                permissions: this._readonlyPermissions,
+                storageOnly,
+            };
+        }
+
+        return { readonly: this._readonlyPermissions };
     }
 
     /**
@@ -546,6 +602,15 @@ export class DeltaManager
         const docService = this.serviceProvider();
         if (docService === undefined) {
             throw new Error("Container is not attached");
+        }
+
+        if (docService.policies?.storageOnly === true) {
+            const connection = new NoDeltaStream();
+            this.connectionP = new Promise((resolve) => {
+                this.setupNewSuccessfulConnection(connection, "read");
+                resolve(connection);
+            });
+            return this.connectionP;
         }
 
         // The promise returned from connectCore will settle with a resolved connection or reject with error
@@ -1225,8 +1290,9 @@ export class DeltaManager
     // We only extract the most obvious fields that are sufficient (with high probability) to detect sequence number
     // reuse.
     // Also payload goes to telemetry, so no PII, including content!!
+    // Note: It's possible for a duplicate op to be broadcasted and have everything the same except the timestamp.
     private comparableMessagePayload(m: ISequencedDocumentMessage) {
-        return `${m.clientId}-${m.type}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}`;
+        return `${m.clientId}-${m.type}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
     }
 
     private enqueueMessages(
@@ -1250,6 +1316,9 @@ export class DeltaManager
         if (messages.length > 0) {
             this.updateLatestKnownOpSeqNumber(messages[messages.length - 1].sequenceNumber);
         }
+
+        const n = this.previouslyProcessedMessage?.sequenceNumber;
+        assert(n === undefined || n === this.lastQueuedSequenceNumber);
 
         for (const message of messages) {
             // Check that the messages are arriving in the expected order
@@ -1383,7 +1452,7 @@ export class DeltaManager
     /**
      * Retrieves the missing deltas between the given sequence numbers
      */
-    private fetchMissingDeltas(telemetryEventSuffix: string, from: number, to?: number) {
+    private fetchMissingDeltas(telemetryEventSuffix: string, fromArg: number, to?: number) {
         // Exit out early if we're already fetching deltas
         if (this.fetching) {
             return;
@@ -1392,6 +1461,21 @@ export class DeltaManager
         if (this.closed) {
             this.logger.sendTelemetryEvent({ eventName: "fetchMissingDeltasClosedConnection" });
             return;
+        }
+
+        assert(fromArg === this.lastQueuedSequenceNumber, "from arg");
+        let from = fromArg;
+
+        const n = this.previouslyProcessedMessage?.sequenceNumber;
+        if (n !== undefined) {
+            // If we already processed at least one op, then we have this.previouslyProcessedMessage populated
+            // and can use it to validate that we are operating on same file, i.e. it was not overwritten.
+            // Knowing about this mechanism, we could ask for op we already observed to increase validation.
+            // This is especially useful when coming out of offline mode or loading from
+            // very old cached (by client / driver) snapshot.
+            assert(n === fromArg, "previouslyProcessedMessage");
+            assert(from > 0, "not positive");
+            from--;
         }
 
         this.fetching = true;

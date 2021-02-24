@@ -15,9 +15,9 @@ import {
     project,
     forEachProduct,
     meetsProduct,
-} from "../src/productSet";
-import { createFromKey, empty, dense } from "../src/bspSet";
-import { Ivl, boundedParetoSetOperations } from "../src/split";
+} from "../productSet";
+import { createFromKey, empty, dense } from "../bspSet";
+import { Ivl, boundedParetoSetOperations } from "../split";
 
 describe("Product-set tests", () => {
     const anyValue: Ivl = [0, 1000];

@@ -20,7 +20,7 @@ import {
     IDocumentServiceFactory,
     IDocumentStorageService,
     LoaderCachingPolicy,
- } from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions";
 import { NetworkErrorBasic } from "@fluidframework/driver-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
@@ -29,10 +29,10 @@ import { bufferToString } from "@fluidframework/common-utils";
 
 describe("SharedString", () => {
     let driver: ITestDriver;
-    before(()=>{
-        driver = getFluidTestDriver();
+    before(() => {
+        driver = getFluidTestDriver() as unknown as ITestDriver;
     });
-    it("Failure to Load in Shared String", async ()=>{
+    it("Failure to Load in Shared String", async () => {
         const stringId = "sharedStringKey";
         const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
         const fluidExport: SupportedExportInterfaces = {
@@ -54,7 +54,7 @@ describe("SharedString", () => {
 
             const container = await loader.createDetachedContainer(codeDetails);
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-            const sharedString  = await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
+            const sharedString = await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
             assert(sharedString);
             sharedString.insertText(0, text);
 
@@ -72,9 +72,9 @@ describe("SharedString", () => {
                 codeLoader,
             });
 
-            const container = await loader.resolve(driver.createCreateNewRequest(documentId));
+            const container = await loader.resolve({ url: await driver.createContainerUrl(documentId) });
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-            const sharedString  = await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
+            const sharedString = await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
             assert(sharedString);
             assert.strictEqual(sharedString.getText(0), text);
         }
@@ -82,17 +82,17 @@ describe("SharedString", () => {
             const realSf: IDocumentServiceFactory = driver.createDocumentServiceFactory();
             const documentServiceFactory: IDocumentServiceFactory = {
                 ...realSf,
-                createDocumentService: async (resolvedUrl,logger) => {
+                createDocumentService: async (resolvedUrl, logger) => {
                     const realDs = await realSf.createDocumentService(resolvedUrl, logger);
                     const mockDs = Object.create(realDs) as IDocumentService;
-                    mockDs.connectToStorage = async ()=>{
+                    mockDs.connectToStorage = async () => {
                         const realStorage = await realDs.connectToStorage();
                         const mockstorage = Object.create(realStorage) as IDocumentStorageService;
                         (mockstorage as any).policies = {
                             ...realStorage.policies,
                             caching: LoaderCachingPolicy.NoCaching,
                         };
-                        mockstorage.readBlob = async (id)=>{
+                        mockstorage.readBlob = async (id) => {
                             const blob = await realStorage.readBlob(id);
                             const blobObj = JSON.parse(bufferToString(blob, "utf8"));
                             // throw when trying to load the header blob
@@ -121,17 +121,17 @@ describe("SharedString", () => {
                 codeLoader,
             });
 
-            const container = await loader.resolve(driver.createCreateNewRequest(documentId));
+            const container = await loader.resolve({ url: await driver.createContainerUrl(documentId) });
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
 
             try {
                 await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
                 assert.fail("expected failure");
-            } catch {}
+            } catch { }
         }
     });
 
-    it("Text operations successfully round trip on detached create", async ()=>{
+    it("Text operations successfully round trip on detached create", async () => {
         const stringId = "sharedStringKey";
         const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
         const fluidExport: SupportedExportInterfaces = {
@@ -154,7 +154,7 @@ describe("SharedString", () => {
 
             const container = await loader.createDetachedContainer(codeDetails);
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-            const sharedString  = await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
+            const sharedString = await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
             assert(sharedString);
 
             for (let i = 0; i < 10; i++) {
@@ -165,7 +165,7 @@ describe("SharedString", () => {
                     sharedString.createPositionReference(segInfo.segment, segInfo.offset, ReferenceType.SlideOnRemove),
                     new TextSegment(text));
 
-                sharedString.removeRange(0,5);
+                sharedString.removeRange(0, 5);
 
                 const length = sharedString.getLength();
                 sharedString.replaceText(length - 5, length, text);
@@ -186,9 +186,9 @@ describe("SharedString", () => {
                 codeLoader,
             });
 
-            const container = await loader.resolve(driver.createCreateNewRequest(documentId));
+            const container = await loader.resolve({ url: await driver.createContainerUrl(documentId) });
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-            const sharedString  = await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
+            const sharedString = await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
             assert(sharedString);
             assert.strictEqual(sharedString.getText(), initialText);
         }

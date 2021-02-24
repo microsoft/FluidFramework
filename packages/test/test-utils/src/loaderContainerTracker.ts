@@ -31,4 +31,30 @@ export class LoaderContainerTracker {
         }
         this.containers.clear();
     }
+
+    public async ensureSynchronized() {
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            const containers = Array.from(this.containers.values());
+            const openedContainers = containers.filter((c) => !c.closed);
+            if (openedContainers.length === 0) { return; }
+
+            const dirtyContainers = openedContainers.filter((c) => c.isDirty);
+            if (dirtyContainers.length !== 0) {
+                await Promise.all(dirtyContainers.map(async (c) => new Promise((res) => c.once("saved", res))));
+                // Loop back and check again if we are dirty.
+                continue;
+            }
+            // Check to see if all the container has process the same number of ops.
+            const seqNum = openedContainers[0].deltaManager.lastSequenceNumber;
+            if (openedContainers.every((c) => c.deltaManager.lastSequenceNumber === seqNum)) {
+                // done, we are in sync
+                return;
+            }
+            // yield
+            await new Promise<void>((res) => {
+                setTimeout(res, 0);
+            });
+        }
+    }
 }

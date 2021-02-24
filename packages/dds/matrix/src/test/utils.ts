@@ -6,14 +6,15 @@
 import { strict as assert } from "assert";
 import { IMatrixProducer, IMatrixReader, IMatrixConsumer, IMatrixWriter } from "@tiny-calc/nano";
 import { Serializable } from "@fluidframework/datastore-definitions";
-import { SharedMatrix } from "../src";
+import { SharedMatrix } from "..";
 
 export type IMatrix<T> = IMatrixReader<T> & IMatrixWriter<T>;
 
 class NullMatrixConsumer implements IMatrixConsumer<any> {
     rowsChanged(rowStart: number, removedCount: number, insertedCount: number, producer: IMatrixProducer<any>): void {}
     colsChanged(colStart: number, removedCount: number, insertedCount: number, producer: IMatrixProducer<any>): void {}
-    cellsChanged(rowStart: number, colStart: number, rowCount: number, colCount: number, producer: IMatrixProducer<any>): void {}
+    cellsChanged(rowStart: number, colStart: number, rowCount: number, colCount: number,
+         producer: IMatrixProducer<any>): void {}
 }
 
 const nullConsumer = new NullMatrixConsumer();
@@ -27,7 +28,7 @@ export function fill<T extends IMatrix<U>, U>(
     colStart = 0,
     rowCount = matrix.rowCount - rowStart,
     colCount = matrix.colCount - colStart,
-    value = (row: number, col: number) => row * rowCount + col
+    value = (row: number, col: number) => row * rowCount + col,
 ): T {
     const rowEnd = rowStart + rowCount;
     const colEnd = colStart + colCount;
@@ -71,7 +72,8 @@ export function check<T extends IMatrix<U>, U>(
     colStart = 0,
     rowCount = matrix.rowCount - rowStart,
     colCount = matrix.colCount - colStart,
-    value = (row: number, col: number): U => row * rowCount + col as any
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    value = (row: number, col: number): U => row * rowCount + col as any,
 ): T {
     const rowEnd = rowStart + rowCount;
     const colEnd = colStart + colCount;
@@ -91,7 +93,8 @@ export function checkValue<T extends IMatrix<U>, U>(
     c: number,
     rowStart = 0,
     rowCount = matrix.rowCount - rowStart,
-    value = (row: number, col: number) => row * rowCount + col as any
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    value = (row: number, col: number) => row * rowCount + col as any,
 ) {
     assert.equal(test, value(r, c));
 }
@@ -116,30 +119,28 @@ function withReader<TCells, TResult>(
  * Extracts the contents of the given `matrix` as a jagged 2D array.  This is convenient for
  * comparing matrices via `assert.deepEqual()`.
  */
-export function extract<T extends Serializable>(
+export const extract = <T extends Serializable>(
     matrix: IMatrixReader<T> | IMatrixProducer<T>,
     rowStart = 0,
     colStart = 0,
     rowCount?: number,
     colCount?: number,
-) {
-    return withReader(matrix, (reader) => {
-        rowCount = rowCount ?? reader.rowCount - rowStart;
-        colCount = colCount ?? reader.colCount - colStart;
+) => withReader(matrix, (reader) => {
+        const _rowCount = rowCount ?? reader.rowCount - rowStart;
+        const _colCount = colCount ?? reader.colCount - colStart;
 
         const rows: T[][] = [];
-        for (let r = rowStart; r < rowStart + rowCount; r++) {
+        for (let r = rowStart; r < rowStart + _rowCount; r++) {
             const row: T[] = [];
             rows.push(row);
 
-            for (let c = colStart; c < colStart + colCount; c++) {
+            for (let c = colStart; c < colStart + _colCount; c++) {
                 row.push(reader.getCell(r, c));
             }
         }
 
         return rows;
     });
-}
 
 /**
  * Asserts that given `matrix` has the specified dimensions.  This is useful for distinguishing
@@ -166,16 +167,20 @@ export function expectSize<T extends Serializable>(
 export function insertFragmented(matrix: SharedMatrix, rowCount: number, colCount: number) {
     for (let r = 0; r < rowCount; r++) {
         matrix.insertRows(
+            // eslint-disable-next-line no-bitwise
             (r & 1) === 0
                 ? matrix.rowCount
+                // eslint-disable-next-line no-bitwise
                 : r >> 1,
             1);
     }
 
     for (let c = 0; c < colCount; c++) {
         matrix.insertCols(
+            // eslint-disable-next-line no-bitwise
             (c & 1) === 0
                 ? matrix.colCount
+                // eslint-disable-next-line no-bitwise
                 : c >> 1,
             1);
     }

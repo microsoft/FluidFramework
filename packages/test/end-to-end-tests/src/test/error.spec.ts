@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import {
     ContainerErrorType,
+    LoaderHeader,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { CreateContainerError } from "@fluidframework/container-utils";
@@ -37,7 +38,7 @@ describe("Errors Types", () => {
     let driver: ITestDriver;
     const loaderContainerTracker = new LoaderContainerTracker();
     before(() => {
-        driver = getFluidTestDriver();
+        driver = getFluidTestDriver() as unknown as ITestDriver;
     });
     afterEach(() => {
         loaderContainerTracker.reset();
@@ -47,7 +48,7 @@ describe("Errors Types", () => {
         const id = createDocumentId();
         // Setup
         urlResolver = driver.createUrlResolver();
-        testRequest = { url: driver.createContainerUrl(id) };
+        testRequest = { url: await driver.createContainerUrl(id) };
         testResolved =
             await urlResolver.resolve(testRequest) as IFluidResolvedUrl;
         documentServiceFactory = driver.createDocumentServiceFactory();
@@ -71,10 +72,17 @@ describe("Errors Types", () => {
 
         try {
             await Container.load(
-                "documentId",
                 loader,
-                testRequest,
-                testResolved);
+                {
+                    canReconnect: testRequest.headers?.[LoaderHeader.reconnect],
+                    clientDetailsOverride: testRequest.headers?.[LoaderHeader.clientDetails],
+                    containerUrl: testRequest.url,
+                    docId: "documentId",
+                    resolvedUrl: testResolved,
+                    version: testRequest.headers?.[LoaderHeader.version],
+                    pause: testRequest.headers?.[LoaderHeader.pause],
+                },
+            );
 
             assert.fail("Error expected");
         } catch (error) {

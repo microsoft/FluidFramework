@@ -8,7 +8,7 @@
 //       for undo.
 
 import { EventEmitter } from "events";
-import { IRevertible } from "../src/types";
+import { IRevertible } from "../types";
 
 enum UndoRedoMode { None, Redo, Undo }
 

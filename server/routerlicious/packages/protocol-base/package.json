@@ -57,11 +57,11 @@
     "@fluidframework/gitresources": "^0.1020.0",
     "@fluidframework/protocol-definitions": "^0.1020.0",
     "assert": "^2.0.0",
-    "lodash": "^4.17.19"
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0-0",
-    "@fluidframework/eslint-config-fluid": "^0.22.1-0",
+    "@fluidframework/eslint-config-fluid": "^0.23.0-0",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/assert": "^1.5.1",
     "@types/lodash": "^4.14.118",

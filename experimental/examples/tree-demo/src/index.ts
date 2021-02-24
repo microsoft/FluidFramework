@@ -8,7 +8,6 @@ import {
 } from "@fluidframework/aqueduct";
 
 import { TreeDemo, TreeDemoInstantiationFactory } from "./main";
-
 export { TreeDemo, TreeDemoInstantiationFactory } from "./main";
 
 /**
