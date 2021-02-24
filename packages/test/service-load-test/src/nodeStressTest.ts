@@ -11,7 +11,7 @@ import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { createFluidTestDriver } from "@fluidframework/test-drivers";
-import { requestFluidObject } from "../../../runtime/datastore/node_modules/@fluidframework/runtime-utils/dist";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ITestConfig, ILoadTestConfig } from "./testConfigFile";
 import { IRunConfig, fluidExport, ILoadTest } from "./loadTestDataStore";
