@@ -236,7 +236,7 @@ async function getFileDefaultUrl(
                 const token = await getToken({ ...options, siteUrl, type: "OneDrive" });
                 const { url, headers } = getUrlAndHeadersWithAuth(
                     `${siteUrl}/_api/web/GetFileByUrl(@a1)/ListItemAllFields/GetSharingInformation?@a1=${
-                        encodeURIComponent(graphItem.webDavUrl)
+                        encodeURIComponent(`'${graphItem.webDavUrl}'`)
                     }`, tokenFromResponse(token));
                 const requestInit = {
                     method: "POST",
