@@ -262,6 +262,7 @@ export function checkoutTests(
 			const { checkout, tree } = await setUpTestCheckout();
 			checkout.openEdit();
 			const editId = checkout.closeEdit();
+			await checkout.waitForPendingUpdates();
 			expect(tree.edits.length).equals(1);
 			expect(tree.edits.tryGetEdit(editId)).is.not.undefined;
 		});
@@ -298,7 +299,33 @@ export function checkoutTests(
 			checkout.applyChanges(Delete.create(StableRange.only(left)));
 			checkout.applyChanges(Delete.create(StableRange.only(right)));
 			checkout.closeEdit();
+			await checkout.waitForPendingUpdates();
 			expect(changeCount).equals(2);
+		});
+
+		it('emits EditCommitted event synchronously for edits', async () => {
+			const { checkout } = await setUpTestCheckout();
+			let changeCount = 0;
+			checkout.on(CheckoutEvent.EditCommitted, () => {
+				changeCount += 1;
+			});
+			expect(changeCount).equals(0);
+			checkout.applyEdit();
+			expect(changeCount).greaterThan(0); // Duplicate events are allowed for CheckoutEvent.EditCommitted in this case.
+		});
+
+		it('emits EditCommitted events for edits directly on tree', async () => {
+			const { checkout } = await setUpTestCheckout();
+			let changeCount = 0;
+			checkout.on(CheckoutEvent.EditCommitted, () => {
+				changeCount += 1;
+			});
+			expect(changeCount).equals(0);
+			checkout.tree.applyEdit();
+			// Since this edit is not actually required to be visible synchronously, wait for it to be included in checkout:
+			// event currently allowed to occur anywhere in this time window.
+			await checkout.waitForPendingUpdates();
+			expect(changeCount).equals(1);
 		});
 
 		const treeOptions = { initialTree: simpleTestTree, localMode: false };
@@ -306,6 +333,31 @@ export function checkoutTests(
 			id: 'secondTestSharedTree',
 			localMode: false,
 		};
+
+		it('emits EditCommitted events for remote edits', async () => {
+			const { containerRuntimeFactory, tree } = setUpTestSharedTree({ ...treeOptions });
+
+			const { tree: secondTree } = setUpTestSharedTree({
+				containerRuntimeFactory,
+				...secondTreeOptions,
+			});
+
+			containerRuntimeFactory.processAllMessages();
+			const checkout = await checkoutFactory(tree);
+
+			let changeCount = 0;
+			checkout.on(CheckoutEvent.EditCommitted, () => {
+				changeCount += 1;
+			});
+
+			secondTree.applyEdit();
+			expect(changeCount).equals(0);
+			containerRuntimeFactory.processAllMessages();
+			// Since this edit is not actually required to be visible synchronously, wait for it to be included in checkout:
+			// event currently allowed to occur anywhere in this time window.
+			await checkout.waitForPendingUpdates();
+			expect(changeCount).equals(1);
+		});
 
 		it('connected state with a remote SharedTree equates correctly during edits', async () => {
 			// Invalid edits are allowed here because this test creates edits concurrently in two trees,
@@ -333,6 +385,8 @@ export function checkoutTests(
 			expect(tree.equals(secondTree)).to.be.true;
 			checkout.closeEdit();
 			secondCheckout.closeEdit();
+			await checkout.waitForPendingUpdates();
+			await secondCheckout.waitForPendingUpdates();
 			containerRuntimeFactory.processAllMessages();
 			expect(tree.equals(secondTree)).to.be.true;
 			await checkout.waitForPendingUpdates();
@@ -357,6 +411,7 @@ export function checkoutTests(
 			// Concurrently, the second client deletes the right node. This will not conflict with the operation performed
 			// on the left trait on the first client.
 			secondCheckout.applyEdit(Delete.create(StableRange.only(right)));
+			await secondCheckout.waitForPendingUpdates();
 
 			// Deliver the remote change. Since there will not be any conflicts, the result should merge locally and both trait
 			// modifications should be reflected in the current view.
@@ -385,6 +440,7 @@ export function checkoutTests(
 			expect(rightTrait.length).equals(0);
 
 			checkout.closeEdit();
+			await checkout.waitForPendingUpdates();
 			containerRuntimeFactory.processAllMessages();
 
 			expect(tree.equals(secondTree)).to.be.true;
@@ -406,6 +462,7 @@ export function checkoutTests(
 
 			// Concurrently, the second client deletes the right node. This will conflict with the move operation by the first client.
 			secondCheckout.applyEdit(Delete.create(StableRange.only(right)));
+			await secondCheckout.waitForPendingUpdates();
 
 			containerRuntimeFactory.processAllMessages();
 			await checkout.waitForPendingUpdates();

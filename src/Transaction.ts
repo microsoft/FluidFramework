@@ -21,8 +21,8 @@ import {
 import { EditValidationResult, SnapshotNode, Snapshot } from './Snapshot';
 
 export type EditingResult =
-	| { result: EditResult.Invalid | EditResult.Malformed; changes: readonly Change[] }
-	| { result: EditResult.Applied; changes: readonly Change[]; snapshot: Snapshot };
+	| { result: EditResult.Invalid | EditResult.Malformed; changes: readonly Change[]; before: Snapshot }
+	| { result: EditResult.Applied; changes: readonly Change[]; before: Snapshot; after: Snapshot };
 
 /**
  * A mutable transaction for applying sequences of changes to a Snapshot.
@@ -38,6 +38,7 @@ export type EditingResult =
  * the results from `close` must be used to actually submit an `Edit`.
  */
 export class Transaction {
+	private readonly before: Snapshot;
 	private _view: Snapshot;
 	private _result: EditResult = EditResult.Applied;
 	private readonly changes: Change[] = [];
@@ -50,6 +51,7 @@ export class Transaction {
 	 */
 	public constructor(view: Snapshot) {
 		this._view = view;
+		this.before = view;
 	}
 
 	/** The most up-to-date `Snapshot` for this edit. This is the state of the tree after all changes applied so far. */
@@ -74,13 +76,15 @@ export class Transaction {
 		if (this.result === EditResult.Applied) {
 			return {
 				result: EditResult.Applied,
-				snapshot: this._view,
+				before: this.before,
+				after: this._view,
 				changes: this.changes,
 			};
 		}
 		return {
 			result: this.result,
 			changes: this.changes,
+			before: this.before,
 		};
 	}
 

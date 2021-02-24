@@ -23,6 +23,22 @@ export enum CheckoutEvent {
 	 * Passed `NodeId[]` of all nodes changed since the last ViewChange event.
 	 */
 	ViewChange = 'viewChange',
+	/**
+	 * An edit has been added.
+	 * This happens when either:
+	 *
+	 * - A locally generated edit has been created in this Checkout.
+	 * - A locally generated edit had been added to SharedTree (might be from another Checkout, or added directly to the tree).
+	 * - A remotely generated edit is added to the log.
+	 *
+	 * Passed the EditId of the committed edit, i.e. supports callbacks of type {@link EditCommittedHandler}.
+	 *
+	 * Note that, for locally generated edits, this event will not be emitted again when that edit is sequenced,
+	 * however it may be emitted for both of the first two cases above.
+	 * Additionally be aware that currently events for the second and third cases may occur before those edits are actually visible in the
+	 * checkout (depends on the implementation).
+	 */
+	EditCommitted = 'committedEdit',
 }
 
 /**
@@ -131,7 +147,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 		assert(editingResult.result === EditResult.Applied, 'Locally constructed edits must be well-formed and valid');
 		const edit = newEdit(editingResult.changes);
 
-		this.handleNewEdit(edit, editingResult.snapshot);
+		this.handleNewEdit(edit, editingResult.before, editingResult.after);
 
 		return edit.id;
 	}
@@ -140,7 +156,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 	 * Take any needed action between when an edit is completed.
 	 * Usually this will include submitting it to a SharedTree.
 	 */
-	protected abstract handleNewEdit(edit: Edit, view: Snapshot): void;
+	protected abstract handleNewEdit(edit: Edit, before: Snapshot, after: Snapshot): void;
 
 	/**
 	 * Applies the supplied changes to the tree and emits a change event.
@@ -220,6 +236,24 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 		// TODO: could this ever be anything other than 'Applied'
 		// TODO: shouldn't this be an EditValidationResult since 'Applied' does not indicate the edit has been applied?
 		return currentEdit.result;
+	}
+
+	/**
+	 * @param id - an edit added during the current session.
+	 *
+	 * @returns the edit with the specified `id`, and a snapshot just before applying the edit.
+	 * The returned snapshot may be the exact version that the exit was made against, or it may have additional remote edits included.
+	 *
+	 * This requires that the edit was added during the current session as this guarantees its available synchronously.
+	 *
+	 * Override this in Checkouts that may have edits which are not included in tree.edits.
+	 */
+	public getEditAndSnapshotBeforeInSession(id: EditId): { edit: Edit; before: Snapshot } {
+		const editIndex = this.tree.edits.getIndexOfId(id);
+		return {
+			edit: this.tree.edits.getEditInSessionAtIndex(editIndex),
+			before: this.tree.logViewer.getSnapshotInSession(editIndex),
+		};
 	}
 
 	/**

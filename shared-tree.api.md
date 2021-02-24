@@ -24,7 +24,7 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 export class BasicCheckout extends Checkout {
     constructor(tree: SharedTree);
     // (undocumented)
-    protected handleNewEdit(edit: Edit, view: Snapshot): void;
+    protected handleNewEdit(edit: Edit, before: Snapshot, after: Snapshot): void;
     // (undocumented)
     protected get latestCommittedView(): Snapshot;
     // (undocumented)
@@ -90,8 +90,13 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
     disposed: boolean;
     protected emitChange(): void;
     // (undocumented)
+    getEditAndSnapshotBeforeInSession(id: EditId): {
+        edit: Edit;
+        before: Snapshot;
+    };
+    // (undocumented)
     getEditStatus(): EditResult;
-    protected abstract handleNewEdit(edit: Edit, view: Snapshot): void;
+    protected abstract handleNewEdit(edit: Edit, before: Snapshot, after: Snapshot): void;
     // @internal (undocumented)
     hasOpenEdit(): boolean;
     protected abstract readonly latestCommittedView: Snapshot;
@@ -104,6 +109,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 
 // @public
 export enum CheckoutEvent {
+    EditCommitted = "committedEdit",
     ViewChange = "viewChange"
 }
 
@@ -310,7 +316,7 @@ export type PlaceIndex = number & {
 };
 
 // @public
-export function revert(edit: Edit, view: Snapshot): Change[];
+export function revert(edit: Edit, before: Snapshot): Change[];
 
 // @public
 export type SerializedChunk = ISerializedHandle | EditWithoutId[];
