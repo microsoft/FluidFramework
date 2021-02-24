@@ -41,7 +41,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         const container2 = await args.loadTestContainer() as Container;
         await ensureConnected(container2);
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
         const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
         // Currently, we load a container in write mode from the start. See issue #3304.
@@ -79,7 +79,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         // write something to get out of view only mode and take leadership
         dataObject1.root.set("blah", "blah");
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         checkExpected(config);
         assert(dataObject1.context.leader);
@@ -88,13 +88,13 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     it("force read only", async () => {
         // write something to get out of view only mode and take leadership
         dataObject1.root.set("blah", "blah");
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         const config = { dataObject: dataObject1, name: "dataObject1", leader: false, notleader: true };
         setupListener(config);
 
         container1.forceReadonly(true);
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         checkExpected(config);
         assert(!dataObject1.context.leader);
@@ -105,7 +105,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         dataObject1.root.set("blah", "blah");
 
         // Make sure we reconnect as a writer and processed the op
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         const container2 = await args.loadTestContainer() as Container;
         const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
@@ -113,7 +113,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         // Currently, we load a container in write mode from the start. See issue #3304.
         // Once that is fix, this needs to change
         await ensureConnected(container2);
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         assert(dataObject1.context.leader);
         assert(!dataObject2.context.leader);
@@ -125,7 +125,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         container1.close();
 
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         checkExpected(config1);
         checkExpected(config2);
@@ -136,7 +136,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     it("Concurrent update", async () => {
         // write something to get out of view only mode and take leadership
         dataObject1.root.set("blah", "blah");
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
         assert(dataObject1.context.leader);
 
         const container2 = await args.loadTestContainer() as Container;
@@ -148,7 +148,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         // Currently, we load a container in write mode from the start. See issue #3304.
         // Once that is fix, this needs to change
         await Promise.all([ensureConnected(container2), ensureConnected(container3)]);
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         assert(dataObject1.context.leader);
         assert(!dataObject2.context.leader);
@@ -174,7 +174,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         config2.leader = true;
         config3.leader = true;
 
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
         assert((dataObject2.context.leader || dataObject3.context.leader) &&
             (!dataObject2.context.leader || !dataObject3.context.leader),
             "only one container should be the leader");

@@ -46,7 +46,13 @@ export interface IErrorBase {
 /**
  * Represents warnings raised on container.
  */
-export type ContainerWarning = IErrorBase;
+export interface ContainerWarning extends IErrorBase {
+    /**
+     * Whether this error has already been logged. Used to avoid logging errors twice.
+     * Default is false.
+     */
+    logged?: boolean;
+}
 
 /**
  * Represents errors raised on container.
