@@ -22,7 +22,6 @@ import {
 import { getDriveId, getDriveItemByRootFileName, IClientConfig } from "@fluidframework/odsp-doclib-utils";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { pkgVersion } from "./packageVersion";
-import { IOdspTestConfigEntry, IOdspTestLoginInfo, loadConfig } from "./config";
 
 const passwordTokenConfig = (username, password): OdspTokenConfig => ({
     type: "password",
@@ -30,84 +29,86 @@ const passwordTokenConfig = (username, password): OdspTokenConfig => ({
     password,
 });
 
-export interface IOdspTestDriverConfig extends IClientConfig, IOdspTestLoginInfo {
-    directory: string;
+export interface IOdspTestLoginInfo {
+    server: string;
+    username: string;
+    password: string;
 }
 
-export async function setupOdspConfig(config: IOdspTestConfigEntry) {
-    const loginAccounts = process.env.login__odsp__test__accounts;
-    assert(loginAccounts !== undefined, "Missing login__odsp__test__accounts");
-    // Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
-    const passwords: { [user: string]: string } = JSON.parse(loginAccounts);
+type TokenConfig = IOdspTestLoginInfo & IClientConfig;
 
-    const tenants = config.tenants;
-
-    if(Object.keys(passwords) !==
-        Object.keys(tenants).map((t)=>tenants[t]?.username)) {
-        console.log("we should have a password for every tenant");
-    }
-
-    const odspTokenManager = new OdspTokenManager(odspTokensCache);
-
-    for(const loginName of Object.keys(tenants)) {
-        const loginInfo: IOdspTestLoginInfo | undefined = tenants[loginName];
-        assert(loginInfo, `No Login: ${loginName}`);
-
-        const password = passwords[loginInfo.username];
-
-        const odspTokens = await odspTokenManager.getOdspTokens(
-            loginInfo.server,
-            getMicrosoftConfiguration(),
-            passwordTokenConfig(loginInfo.username, password),
-            undefined /* forceRefresh */,
-            true /* forceReauth */,
-        );
-        loginInfo.driveId =  await getDriveId(loginInfo.server, "", undefined, { accessToken: odspTokens.accessToken });
-    }
+interface IOdspTestDriverConfig extends TokenConfig{
+    directory: string;
+    driveId: string;
 }
 
 export class OdspTestDriver implements ITestDriver {
-    public static createFromEnv() {
+    public static async createFromEnv() {
         const loginAccounts = process.env.login__odsp__test__accounts;
         assert(loginAccounts !== undefined, "Missing login__odsp__test__accounts");
         // Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
         const passwords: { [user: string]: string } = JSON.parse(loginAccounts);
 
-        const config = loadConfig();
-        const tenant = config.odsp.tenants[Object.keys(config.odsp.tenants)[0]];
-        assert(tenant);
-
-        return this.create(
-            tenant.username,
-            passwords[tenant.username],
-            tenant.server,
-            tenant.driveId,
+        const username = Object.keys(passwords)[0];
+        const emailServer = username.substr(username.indexOf("@") + 1);
+        const server = `${emailServer.substr(0, emailServer.indexOf("."))}.sharepoint.com`;
+        return this.create({
+                username,
+                password: passwords[username],
+                server,
+            },
             new Date().toISOString().replace(/:/g, "."),
         );
     }
 
-    public static create(username: string, password: string, server: string, driveId: string, directory: string) {
-        const config: IOdspTestDriverConfig = {
-            username,
-            password,
-            server,
-            directory,
+    public static  async create(loginConfig: IOdspTestLoginInfo, directory: string) {
+        const odspTokenManager = new OdspTokenManager(odspTokensCache);
+        const tokenConfig: TokenConfig = {
+            ... loginConfig,
             ...getMicrosoftConfiguration(),
+        };
+        const siteUrl = `https://${loginConfig.server}`;
+        const driveId = await getDriveId(
+            loginConfig.server,
+            "",
+            undefined,
+            { accessToken: await this.getStorageToken({ siteUrl, refresh: false }, odspTokenManager, tokenConfig) });
+
+        const driverConfig: IOdspTestDriverConfig = {
+            ... tokenConfig,
+            directory,
             driveId,
         };
 
         if (process.env.BUILD_BUILD_ID !== undefined) {
-            config.directory = `${process.env.BUILD_BUILD_ID}/${config.directory}`;
+            driverConfig.directory = `${process.env.BUILD_BUILD_ID}/${driverConfig.directory}`;
         }
 
-        return new OdspTestDriver(config);
+        return new OdspTestDriver(
+            odspTokenManager,
+            driverConfig);
+    }
+
+    private static async getStorageToken(
+        options: OdspResourceTokenFetchOptions,
+        odspTokenManager: OdspTokenManager,
+        config: IOdspTestLoginInfo & IClientConfig) {
+        // This function can handle token request for any multiple sites. Where the test driver is for a specific site.
+        const tokens = await odspTokenManager.getOdspTokens(
+            new URL(options.siteUrl).hostname,
+            config,
+            passwordTokenConfig(config.username, config.password),
+            options.refresh,
+        );
+        return tokens.accessToken;
     }
 
     public readonly type = "odsp";
     public readonly version = pkgVersion;
-    private readonly odspTokenManager = new OdspTokenManager(odspTokensCache);
     private readonly urlResolver = new OdspDriverUrlResolver();
-    constructor(private readonly config: Readonly<IOdspTestDriverConfig>) { }
+    private constructor(
+        private readonly odspTokenManager: OdspTokenManager,
+        private readonly config: Readonly<IOdspTestDriverConfig>) { }
 
     async createContainerUrl(testId: string): Promise<string> {
         const siteUrl = `https://${this.config.server}`;
@@ -148,14 +149,7 @@ export class OdspTestDriver implements ITestDriver {
     }
 
     private async getStorageToken(options: OdspResourceTokenFetchOptions) {
-        // This function can handle token request for any multiple sites. Where the test driver is for a specific site.
-        const tokens = await this.odspTokenManager.getOdspTokens(
-            new URL(options.siteUrl).hostname,
-            this.config,
-            passwordTokenConfig(this.config.username, this.config.password),
-            options.refresh,
-        );
-        return tokens.accessToken;
+        return OdspTestDriver.getStorageToken(options, this.odspTokenManager, this.config);
     }
     private async getPushToken(options: OdspResourceTokenFetchOptions) {
         const tokens = await this.odspTokenManager.getPushTokens(

@@ -21,7 +21,7 @@ function setKeepAlive() {
     Axios.defaults.httpAgent = new http.Agent({ keepAlive: true });
 }
 
-export function createFluidTestDriver(fluidTestDriverType: TestDriverTypes) {
+export async function createFluidTestDriver(fluidTestDriverType: TestDriverTypes) {
     switch (fluidTestDriverType.toLocaleLowerCase()) {
         case "local":
             return new LocalServerTestDriver();

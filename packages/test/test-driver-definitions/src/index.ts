@@ -9,7 +9,7 @@ declare global {
     /**
      * This function needs to be provided by the environment leverging these defintions, like a mocha test hook.
      */
-    export function getFluidTestDriver(): ITestDriver;
+    export function getFluidTestDriver(): Promise<ITestDriver> | ITestDriver;
 }
 
 export * from "./interfaces";

@@ -10,12 +10,12 @@ const envVar = "FLUID_TEST_DRIVER";
 const fluidTestDriverType = process.env[envVar]?.toLocaleLowerCase() as TestDriverTypes | undefined | "";
 let fluidTestDriver: ITestDriver | undefined;
 const _global = global as any;
-_global.getFluidTestDriver = (): ITestDriver => {
+_global.getFluidTestDriver = async (): Promise<ITestDriver> => {
     if (fluidTestDriver === undefined) {
         if(fluidTestDriverType === "" || fluidTestDriverType === undefined) {
-            fluidTestDriver = createFluidTestDriver("local");
+            fluidTestDriver = await createFluidTestDriver("local");
         }else{
-            fluidTestDriver = createFluidTestDriver(fluidTestDriverType);
+            fluidTestDriver = await createFluidTestDriver(fluidTestDriverType);
         }
     }
     return fluidTestDriver;

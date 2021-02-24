@@ -24,8 +24,9 @@ import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 describe(`Attach/Bind Api Tests For Attached Container`, () => {
     let driver: ITestDriver;
-    before(()=>{
-        driver = getFluidTestDriver() as unknown as ITestDriver;
+    before(async ()=>{
+        // eslint-disable-next-line @typescript-eslint/await-thenable
+        driver = await getFluidTestDriver() as unknown as ITestDriver;
     });
 
     const codeDetails: IFluidCodeDetails = {

@@ -37,8 +37,9 @@ describe("Errors Types", () => {
     let loader: Loader;
     let driver: ITestDriver;
     const loaderContainerTracker = new LoaderContainerTracker();
-    before(() => {
-        driver = getFluidTestDriver() as unknown as ITestDriver;
+    before(async () => {
+        // eslint-disable-next-line @typescript-eslint/await-thenable
+        driver = await getFluidTestDriver() as unknown as ITestDriver;
     });
     afterEach(() => {
         loaderContainerTracker.reset();

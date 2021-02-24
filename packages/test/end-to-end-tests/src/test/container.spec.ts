@@ -27,8 +27,9 @@ const testRequest: IRequest = { url: id };
 describe("Container", () => {
     let driver: ITestDriver;
     const loaderContainerTracker = new LoaderContainerTracker();
-    before(function() {
-        driver = getFluidTestDriver() as unknown as ITestDriver;
+    before(async function() {
+        // eslint-disable-next-line @typescript-eslint/await-thenable
+        driver = await getFluidTestDriver() as unknown as ITestDriver;
 
         // TODO: Convert these to mocked unit test. These are all API tests and doesn't
         // need the service.  For new disable the tests other then local driver

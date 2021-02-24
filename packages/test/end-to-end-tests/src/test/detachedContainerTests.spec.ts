@@ -62,7 +62,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+const tests = (argsFactory: () => Promise<ITestObjectProvider>) => {
     let args: ITestObjectProvider;
     let request: IRequest;
     let loader: Loader;
@@ -77,7 +77,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     });
 
     beforeEach(async () => {
-        args = argsFactory();
+        args = await argsFactory();
         request  = args.driver.createCreateNewRequest(args.documentId);
         loader = args.makeTestLoader(testContainerConfig) as Loader;
     });
@@ -610,14 +610,15 @@ describe("Detached Container", () => {
     generateTest(tests);
 
     // non compat test
-    generateNonCompatTest((argsFactory: () => ITestObjectProvider) => {
+    generateNonCompatTest((argsFactory: () => Promise<ITestObjectProvider>) => {
         let args: ITestObjectProvider;
         let request: IRequest;
         let loader: Loader;
 
         beforeEach(async () => {
-            args = argsFactory();
-            request = (args.driver ?? getFluidTestDriver()).createCreateNewRequest(args.documentId);
+            args = await argsFactory();
+            // eslint-disable-next-line @typescript-eslint/await-thenable
+            request = (args.driver ?? await getFluidTestDriver()).createCreateNewRequest(args.documentId);
             loader = args.makeTestLoader(testContainerConfig) as Loader;
         });
 

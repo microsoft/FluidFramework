@@ -38,8 +38,9 @@ function isCodeProposalTestPackage(pkg: unknown): pkg is ICodeProposalTestPackag
 
 describe("CodeProposal.EndToEnd", () => {
     let driver: ITestDriver;
-    before(()=>{
-        driver = getFluidTestDriver() as unknown as ITestDriver;
+    before(async ()=>{
+        // eslint-disable-next-line @typescript-eslint/await-thenable
+        driver = await getFluidTestDriver() as unknown as ITestDriver;
     });
 
     const packageV1: ICodeProposalTestPackage = {

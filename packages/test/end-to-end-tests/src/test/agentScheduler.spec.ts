@@ -13,11 +13,11 @@ import { timeoutPromise, defaultTimeoutDurationMs } from "@fluidframework/test-u
 import { generateTest, ITestObjectProvider, TestDataObject } from "./compatUtils";
 import * as oldTypes from "./oldVersionTypes";
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+const tests = (argsFactory: () => Promise<ITestObjectProvider>) => {
     let leaderTimeout = defaultTimeoutDurationMs;
     let args: ITestObjectProvider;
-    beforeEach(() => {
-        args = argsFactory();
+    beforeEach(async () => {
+        args = await argsFactory();
         leaderTimeout = args.driver.type === "odsp" ? 5000 : defaultTimeoutDurationMs;
     });
     afterEach(() => {

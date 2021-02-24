@@ -127,7 +127,7 @@ async function runnerProcess(
             testConfig: profile,
         };
 
-        const testDriver = createFluidTestDriver(driver);
+        const testDriver = await createFluidTestDriver(driver);
 
         const stressTest = await load(testDriver, testId);
         await stressTest.run(runConfig);
@@ -148,7 +148,7 @@ async function orchestratorProcess(
     profile: ILoadTestConfig & { name: string },
     args: { testId?: string, debug?: true },
 ): Promise<number> {
-    const testDriver = createFluidTestDriver();
+    const testDriver = await createFluidTestDriver(driver);
 
     // Create a new file if a testId wasn't provided
     const testId = args.testId ?? await initialize(testDriver);
