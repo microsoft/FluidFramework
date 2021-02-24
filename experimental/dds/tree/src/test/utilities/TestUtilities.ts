@@ -21,6 +21,7 @@ import {
 } from '@fluidframework/test-utils';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
+import { Loader } from '@fluidframework/container-loader';
 import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
 import { fail } from '../../Common';
 import { ChangeNode, NodeData, TraitLocation } from '../../PersistedTypes';
@@ -202,7 +203,7 @@ export async function setUpLocalServerTestSharedTree(
 		provider = localTestObjectProvider;
 		container = await provider.loadTestContainer();
 	} else {
-		provider = new TestObjectProvider(getFluidTestDriver(), runtimeFactory);
+		provider = new TestObjectProvider(Loader, getFluidTestDriver(), runtimeFactory);
 		container = await provider.makeTestContainer();
 	}
 
