@@ -49,16 +49,22 @@ export class OdspTestDriver implements ITestDriver {
         // Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
         const passwords: { [user: string]: string } = JSON.parse(loginAccounts);
 
-        const username = Object.keys(passwords)[0];
-        const emailServer = username.substr(username.indexOf("@") + 1);
-        const server = `${emailServer.substr(0, emailServer.indexOf("."))}.sharepoint.com`;
-        return this.create({
-                username,
-                password: passwords[username],
-                server,
-            },
-            new Date().toISOString().replace(/:/g, "."),
-        );
+        for(const username of Object.keys(passwords)) {
+            try{
+                const emailServer = username.substr(username.indexOf("@") + 1);
+                const server = `${emailServer.substr(0, emailServer.indexOf("."))}.sharepoint.com`;
+                return this.create({
+                        username,
+                        password: passwords[username],
+                        server,
+                    },
+                    new Date().toISOString().replace(/:/g, "."),
+                );
+            }catch{
+
+            }
+        }
+        throw new Error("No Valid Credentails in Environment");
     }
 
     public static  async create(loginConfig: IOdspTestLoginInfo, directory: string) {

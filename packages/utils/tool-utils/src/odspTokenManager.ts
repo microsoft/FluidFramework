@@ -313,12 +313,5 @@ export const odspTokensCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens
         prevTokens[key.isPush ? "storage" : "push"] = tokens;
         return saveRC(rc);
     },
-    async lock<T>(callback: () => Promise<T>): Promise<T> {
-        const release = await lockRC();
-        try {
-            return await callback();
-        } finally {
-            await release();
-        }
-    },
+    lock: async <T>(callback: () => Promise<T>): Promise<T> => lockRC<T>(callback),
 };

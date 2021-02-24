@@ -9,7 +9,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import util from "util";
-import { lock } from "proper-lockfile";
+import { lock, unlock } from "proper-lockfile";
 import { IOdspTokens } from "@fluidframework/odsp-doclib-utils";
 
 export interface IAsyncCache<TKey, TValue> {
@@ -55,7 +55,19 @@ export async function saveRC(rc: IResources) {
 }
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export async function lockRC() {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return lock(getRCFileName(), { realpath: false });
+export async function lockRC<T>(callback: () => Promise<T>) {
+    let locked = false;
+    do{
+        try{
+            await lock(getRCFileName(), { realpath: false });
+            locked = true;
+        }catch{
+            await new Promise((resolve)=>setTimeout(resolve, 0));
+         }
+    }while(!locked);
+    try{
+        return await callback();
+    }finally{
+        await unlock(getRCFileName(), { realpath: false });
+    }
 }
