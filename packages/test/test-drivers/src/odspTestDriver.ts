@@ -44,31 +44,29 @@ interface IOdspTestDriverConfig extends TokenConfig{
 }
 
 export class OdspTestDriver implements ITestDriver {
-    public static async createFromEnv(directory?: string) {
+    public static async createFromEnv(
+        config?: {directory?: string, username?: string},
+    ) {
         const loginAccounts = process.env.login__odsp__test__accounts;
         assert(loginAccounts !== undefined, "Missing login__odsp__test__accounts");
         // Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
         const passwords: { [user: string]: string } = JSON.parse(loginAccounts);
+        const username = config?.username ?? Object.keys(passwords)[0];
+        assert(passwords[username], `No password for username: ${username}`);
 
-        for(const username of Object.keys(passwords)) {
-            try{
-                const emailServer = username.substr(username.indexOf("@") + 1);
-                const server = `${emailServer.substr(0, emailServer.indexOf("."))}.sharepoint.com`;
-                return this.create({
-                        username,
-                        password: passwords[username],
-                        server,
-                    },
-                    directory ?? "/",
-                );
-            }catch(err) {
-                console.log(err);
-            }
-        }
-        throw new Error("No Valid Credentails in Environment");
+        const emailServer = username.substr(username.indexOf("@") + 1);
+        const server = `${emailServer.substr(0, emailServer.indexOf("."))}.sharepoint.com`;
+
+        return this.create({
+                username,
+                password: passwords[username],
+                server,
+            },
+            config?.directory ?? "",
+        );
     }
 
-    public static  async create(loginConfig: IOdspTestLoginInfo, directory: string) {
+    public static  async create(loginConfig: IOdspTestLoginInfo, directory: string = "") {
         const tokenConfig: TokenConfig = {
             ... loginConfig,
             ...getMicrosoftConfiguration(),
@@ -84,9 +82,9 @@ export class OdspTestDriver implements ITestDriver {
         const directoryParts = [directory];
 
         if (process.env.BUILD_BUILD_ID !== undefined) {
-            directoryParts.unshift(process.env.BUILD_BUILD_ID);
+            directoryParts.push(process.env.BUILD_BUILD_ID);
         }else{
-            directoryParts.unshift(os.hostname());
+            directoryParts.push(os.hostname());
         }
 
         const driverConfig: IOdspTestDriverConfig = {

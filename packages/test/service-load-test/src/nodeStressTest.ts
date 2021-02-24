@@ -57,6 +57,13 @@ async function load(testDriver: ITestDriver, testId: string) {
     return respond.value as ILoadTest;
 }
 
+const createTestDriver =
+    async (driver: TestDriverTypes) => createFluidTestDriver(driver,{
+        odsp: {
+            directory: "stress",
+        },
+    });
+
 async function main() {
     commander
         .version("0.0.1")
@@ -128,7 +135,7 @@ async function runnerProcess(
             testConfig: profile,
         };
 
-        const testDriver = await createFluidTestDriver(driver);
+        const testDriver = await createTestDriver(driver);
 
         const stressTest = await load(testDriver, testId);
         await stressTest.run(runConfig);
@@ -149,7 +156,7 @@ async function orchestratorProcess(
     profile: ILoadTestConfig & { name: string },
     args: { testId?: string, debug?: true },
 ): Promise<number> {
-    const testDriver = await createFluidTestDriver(driver);
+    const testDriver = await createTestDriver(driver);
 
     // Create a new file if a testId wasn't provided
     const testId = args.testId ?? await initialize(testDriver);

@@ -21,7 +21,14 @@ function setKeepAlive() {
     Axios.defaults.httpAgent = new http.Agent({ keepAlive: true });
 }
 
-export async function createFluidTestDriver(fluidTestDriverType: TestDriverTypes) {
+type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => any> =
+    T extends (config: infer P, ...args: any[]) => any ? P : never;
+
+export async function createFluidTestDriver(
+    fluidTestDriverType: TestDriverTypes,
+    config?: {
+        odsp?: CreateFromEnvConfigParam<typeof OdspTestDriver.createFromEnv>,
+    }) {
     switch (fluidTestDriverType.toLocaleLowerCase()) {
         case "local":
             return new LocalServerTestDriver();
@@ -35,7 +42,7 @@ export async function createFluidTestDriver(fluidTestDriverType: TestDriverTypes
             return RouterliciousTestDriver.createFromEnv();
 
         case "odsp":
-            return OdspTestDriver.createFromEnv();
+            return OdspTestDriver.createFromEnv(config?.odsp);
 
         default:
             throw new Error(`No Fluid test driver registered for type "${fluidTestDriverType}"`);
