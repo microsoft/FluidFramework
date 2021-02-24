@@ -21,7 +21,7 @@ function setKeepAlive() {
     Axios.defaults.httpAgent = new http.Agent({ keepAlive: true });
 }
 
-type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => any> =
+export type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => any> =
     T extends (config: infer P, ...args: any[]) => any ? P : never;
 
 export async function createFluidTestDriver(
