@@ -36,6 +36,14 @@ describe('Summary format', () => {
 	let expectedTree: SharedTree;
 	let localTestObjectProvider: TestObjectProvider<ITestContainerConfig>;
 
+	// eslint-disable-next-line @typescript-eslint/space-before-function-paren
+	before(function () {
+		const driver = getFluidTestDriver();
+		if (driver.type !== 'local') {
+			this.skip();
+		}
+	});
+
 	// Resets the tree before each test
 	beforeEach(async () => {
 		const testingComponents = await setUpLocalServerTestSharedTree({

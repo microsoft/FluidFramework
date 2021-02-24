@@ -23,6 +23,14 @@ describe('SharedTree history virtualization', () => {
 	let sharedTree: SharedTree;
 	let localTestObjectProvider: TestObjectProvider<ITestContainerConfig>;
 
+	// eslint-disable-next-line @typescript-eslint/space-before-function-paren
+	before(function () {
+		const driver = getFluidTestDriver();
+		if (driver.type !== 'local') {
+			this.skip();
+		}
+	});
+
 	beforeEach(async () => {
 		const testingComponents = await setUpLocalServerTestSharedTree({ summarizer: fullHistorySummarizer_0_1_0 });
 		sharedTree = testingComponents.tree;
