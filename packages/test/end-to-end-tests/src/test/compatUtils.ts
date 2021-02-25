@@ -32,13 +32,13 @@ export interface ITestObjectProvider {
      * Used to create a test Container.
      * In generateLocalCompatTest(), this Container and its runtime will be arbitrarily-versioned.
      */
-    makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer | oldTypes.IContainer>,
-    loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer | oldTypes.IContainer>,
-    makeTestLoader(testContainerConfig?: ITestContainerConfig): ILoader | oldTypes.ILoader,
-    documentServiceFactory: IDocumentServiceFactory | oldTypes.IDocumentServiceFactory,
-    urlResolver: IUrlResolver | oldTypes.IUrlResolver,
-    defaultCodeDetails: IFluidCodeDetails | oldTypes.IFluidCodeDetails,
-    opProcessingController: OpProcessingController | oldTypes.OpProcessingController,
+    makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
+    loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
+    makeTestLoader(testContainerConfig?: ITestContainerConfig): ILoader,
+    documentServiceFactory: IDocumentServiceFactory,
+    urlResolver: IUrlResolver,
+    defaultCodeDetails: IFluidCodeDetails,
+    opProcessingController: OpProcessingController,
 
     ensureSynchronized(): Promise<void>;
     reset(): void,
@@ -81,7 +81,7 @@ export class TestDataObject extends DataObject {
     public get _root() { return this.root; }
 }
 
-export const createPrimedDataStoreFactory = (registry?: ChannelFactoryRegistry): IFluidDataStoreFactory => {
+const createPrimedDataStoreFactory = (registry?: ChannelFactoryRegistry): IFluidDataStoreFactory => {
     return new DataObjectFactory(
         TestDataObject.type,
         TestDataObject,
@@ -89,7 +89,7 @@ export const createPrimedDataStoreFactory = (registry?: ChannelFactoryRegistry):
         {});
 };
 
-export const createTestFluidDataStoreFactory = (registry: ChannelFactoryRegistry = []): IFluidDataStoreFactory => {
+const createTestFluidDataStoreFactory = (registry: ChannelFactoryRegistry = []): IFluidDataStoreFactory => {
     return new TestFluidObjectFactory(registry);
 };
 
@@ -113,24 +113,29 @@ export function getDataStoreFactory(containerOptions?: ITestContainerConfig) {
     }
 }
 
+export function createTestObjectProvider(
+    type: string,
+    driver: ITestDriver,
+    LoaderConstructor = Loader,
+    createRuntimeFactoryFn = createRuntimeFactory,
+    getDataStoreFactoryFn = getDataStoreFactory,
+): ITestObjectProvider {
+    const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
+        const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
+        return createRuntimeFactoryFn(type, dataStoreFactory, containerOptions?.runtimeOptions);
+    };
+
+    return new TestObjectProvider(LoaderConstructor, driver, containerFactoryFn);
+}
+
 export const generateNonCompatTest = (
     tests: (compatArgsFactory: () => ITestObjectProvider) => void,
 ) => {
     describe("non-compat", () => {
         tests(() => {
-            // Run with all current versions
-            const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
-            createRuntimeFactory(
-                TestDataObject.type,
-                getDataStoreFactory(containerOptions),
-                containerOptions?.runtimeOptions,
-            );
+             // Run with all current versions
             const driver = getFluidTestDriver();
-            return new TestObjectProvider(
-                Loader,
-                driver as any,
-                runtimeFactory,
-            );
+            return createTestObjectProvider(TestDataObject.type, driver as any);
         });
     });
 };
@@ -145,13 +150,10 @@ export const generateCompatTest = (
         describe(`compat ${oldApi.versionString} - old loader, new runtime`, function() {
             tests(() => {
                 const driver = getFluidTestDriver();
-                return oldApi.createTestObjectProvider(
-                    true, /* oldLoader */
-                    false, /* oldContainerRuntime */
-                    false, /* oldDataStoreRuntime */
+                return createTestObjectProvider(
                     TestDataObject.type,
-                    options.serviceConfiguration,
                     driver as any,
+                    oldApi.Loader as any,
                 );
             }, oldApi);
         });
@@ -159,13 +161,12 @@ export const generateCompatTest = (
         describe(`compat ${oldApi.versionString} - new loader, old runtime`, function() {
             tests(() => {
                 const driver = getFluidTestDriver();
-                return oldApi.createTestObjectProvider(
-                    false, /* oldLoader */
-                    true, /* oldContainerRuntime */
-                    true, /* oldDataStoreRuntime */
+                return createTestObjectProvider(
                     TestDataObject.type,
-                    options.serviceConfiguration,
                     driver as any,
+                    Loader,
+                    oldApi.createRuntimeFactory as any,
+                    oldApi.getDataStoreFactory as any,
                 );
             }, oldApi);
         });
@@ -173,13 +174,12 @@ export const generateCompatTest = (
         describe(`compat ${oldApi.versionString} - new ContainerRuntime, old DataStoreRuntime`, function() {
             tests(() => {
                 const driver = getFluidTestDriver();
-                return oldApi.createTestObjectProvider(
-                    false, /* oldLoader */
-                    false, /* oldContainerRuntime */
-                    true, /* oldDataStoreRuntime */
+                return createTestObjectProvider(
                     TestDataObject.type,
-                    options.serviceConfiguration,
                     driver as any,
+                    Loader,
+                    createRuntimeFactory,
+                    oldApi.getDataStoreFactory as any,
                 );
             }, oldApi);
         });
@@ -187,13 +187,12 @@ export const generateCompatTest = (
         describe(`compat ${oldApi.versionString} - old ContainerRuntime, new DataStoreRuntime`, function() {
             tests(() => {
                 const driver = getFluidTestDriver();
-                return oldApi.createTestObjectProvider(
-                    true, /* oldLoader */
-                    true, /* oldContainerRuntime */
-                    false, /* oldDataStoreRuntime */
+                return createTestObjectProvider(
                     TestDataObject.type,
-                    options.serviceConfiguration,
                     driver as any,
+                    oldApi.Loader as any,
+                    oldApi.createRuntimeFactory as any,
+                    getDataStoreFactory,
                 );
             }, oldApi);
         });
