@@ -48,6 +48,9 @@
     ],
     "temp-directory": "nyc/.nyc_output"
   },
+  "dependencies": {
+    "@fluidframework/test-driver-definitions": "^0.36.0"
+  },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0-0",
