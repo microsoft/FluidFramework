@@ -45,7 +45,7 @@ interface IOdspTestDriverConfig extends TokenConfig{
 
 export class OdspTestDriver implements ITestDriver {
     public static async createFromEnv(
-        config?: {directory?: string, username?: string},
+        config?: {directory?: string, username?: string, useTokenCache?: true},
     ) {
         const loginAccounts = process.env.login__odsp__test__accounts;
         assert(loginAccounts !== undefined, "Missing login__odsp__test__accounts");
@@ -66,12 +66,12 @@ export class OdspTestDriver implements ITestDriver {
         );
     }
 
-    public static  async create(loginConfig: IOdspTestLoginInfo, directory: string = "") {
+    public static  async create(loginConfig: IOdspTestLoginInfo, directory: string = "", useTokenCache?: true) {
         const tokenConfig: TokenConfig = {
             ... loginConfig,
             ...getMicrosoftConfiguration(),
         };
-        const odspTokenManager = new OdspTokenManager(odspTokensCache);
+        const odspTokenManager = new OdspTokenManager(useTokenCache === true ? odspTokensCache : undefined);
         const siteUrl = `https://${tokenConfig.server}`;
         const driveId = await getDriveId(
             loginConfig.server,
