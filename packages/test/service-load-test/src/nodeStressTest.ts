@@ -9,7 +9,7 @@ import commander from "commander";
 import { Loader } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
-import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { ITestDriver, TestDriverTypes, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import { createFluidTestDriver } from "@fluidframework/test-drivers";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { pkgName, pkgVersion } from "./packageVersion";
@@ -17,6 +17,12 @@ import { ITestConfig, ILoadTestConfig } from "./testConfigFile";
 import { IRunConfig, fluidExport, ILoadTest } from "./loadTestDataStore";
 
 const packageName = `${pkgName}@${pkgVersion}`;
+
+// Provide default implementation of getTestLogger since it's declared as always defined
+const nullLogger: ITelemetryBufferedLogger = { send: () => {}, flush: async () => {} };
+(global as any).getTestLogger = () => nullLogger;
+
+let logger: ITelemetryBufferedLogger = getTestLogger();
 
 const codeDetails: IFluidCodeDetails = {
     package: packageName,
@@ -31,6 +37,7 @@ function createLoader(testDriver: ITestDriver) {
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
         codeLoader,
+        logger,
     });
     return loader;
 }
@@ -65,6 +72,12 @@ const createTestDriver =
     });
 
 async function main() {
+    if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {
+        await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+        logger = getTestLogger();
+        assert(logger, "Expected getTestLogger to return something");
+    }
+
     commander
         .version("0.0.1")
         .requiredOption("-d, --driver <driver>", "Which test driver info to use", "odsp")
@@ -109,14 +122,20 @@ async function main() {
             process.exit(-1);
         }
         result = await runnerProcess(driver, profile, runId, testId);
-        process.exit(result);
+    }
+    else {
+        // When runId is not specified, this is the orchestrator process which will spawn child test runners.
+        result = await orchestratorProcess(
+            driver,
+            { ...profile, name: profileArg },
+            { testId, debug });
     }
 
-    // When runId is not specified, this is the orchestrator process which will spawn child test runners.
-    result = await orchestratorProcess(
-        driver,
-        { ...profile, name: profileArg },
-        { testId, debug });
+    // There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
+    await(new Promise((res) => { setTimeout(res, 1000); }));
+    // Flush the logs
+    await logger.flush();
+
     process.exit(result);
 }
 

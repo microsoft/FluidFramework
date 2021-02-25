@@ -17,5 +17,4 @@ export type ILoader = old.ILoader | old2.ILoader;
 export type IRuntimeFactory = old.IRuntimeFactory | old2.IRuntimeFactory;
 export type IUrlResolver = old.IUrlResolver | old2.IUrlResolver;
 export type LocalResolver = old.LocalResolver | old2.LocalResolver;
-export type OldTestDataObject = old.OldTestDataObject | old2.OldTestDataObject;
 export type OpProcessingController = old.OpProcessingController | old2.OpProcessingController;
