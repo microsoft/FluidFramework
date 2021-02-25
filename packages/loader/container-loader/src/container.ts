@@ -158,6 +158,23 @@ export enum ConnectionState {
     Connected,
 }
 
+// Gate that when flipped, instructs to return an error if the resource being requested has been deleted.
+function gatesErrorOnDeletedResourceRequest() {
+    // Leave override for testing purposes
+    if (typeof localStorage === "object" && localStorage !== null) {
+        if  (localStorage.FluidErrorOnDeletedResourceRequest === "1") {
+            return true;
+        }
+        if  (localStorage.FluidErrorOnDeletedResourceRequest === "0") {
+            return false;
+        }
+    }
+
+    // We are starting disabled. This will be enabled once Apps (Bohemia) have finished GC work.
+    // See - https://github.com/microsoft/FluidFramework/issues/5127
+    return false;
+}
+
 /**
  * Waits until container connects to delta storage and gets up-to-date
  * Useful when resolving URIs and hitting 404, due to container being loaded from (stale) snapshot and not being
@@ -776,9 +793,23 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    public async request(path: IRequest): Promise<IResponse> {
+    public async request(request: IRequest): Promise<IResponse> {
+        /**
+         * For external requests coming from Loader layer, add a header that will enable returning an error if the
+         * resource being requested has been deleted because it is unreferenced.
+         *
+         * This is used to handle scenario where a resource shared with an external app is deleted and hence GC'd.
+         * The error returned signals the app to take appropriate action for deleted content.
+         */
+        if (gatesErrorOnDeletedResourceRequest()) {
+            request.headers = request.headers ?? {};
+            if (request.headers.errorOnResourceDeleted === undefined) {
+                request.headers.errorOnResourceDeleted = true;
+            }
+        }
+
         return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
-            return this.context.request(path);
+            return this.context.request(request);
         });
     }
 

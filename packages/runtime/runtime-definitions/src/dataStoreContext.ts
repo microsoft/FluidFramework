@@ -347,6 +347,11 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
      * and its children with the GC details from the previous summary.
      */
     getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
+
+    /**
+     * Tells whether the data store is referenced as per the initial summary when it was loaded.
+     */
+    isReferencedInInitialSummary(): Promise<boolean>;
 }
 
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {

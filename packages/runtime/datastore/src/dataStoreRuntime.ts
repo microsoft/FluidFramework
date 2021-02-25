@@ -346,6 +346,19 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             }
         }
 
+        /**
+         * If the request has "errorOnResourceDeleted" header, we need to return an error if the data store being
+         * requested has been deleted.
+         *
+         * This is used to handle scenario where a data store shared with an external app is deleted and hence GC'd.
+         * The error returned signals the app to take appropriate action for deleted content.
+         */
+        if (request.headers?.errorOnResourceDeleted === true) {
+            if (!(await this.dataStoreContext.isReferencedInInitialSummary())) {
+                return { status: 410, mimeType: "text/plain", value: `${request.url} is on longer available` };
+            }
+        }
+
         // Otherwise defer to an attached request handler
         return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
     }

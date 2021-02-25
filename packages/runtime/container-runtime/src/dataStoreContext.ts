@@ -467,6 +467,22 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     /**
+     * Tells whether the data store is referenced as per the initial summary when it was loaded.
+     * This is used to handle scenario where a data store shared with an external app is deleted and hence GC'd.
+     * If the external app tries to load this data store after it has been deleted from the original app, we detect
+     * it and return an error.
+     */
+    public async isReferencedInInitialSummary(): Promise<boolean> {
+        const initialUsedRoutes = (await this.getInitialGCSummaryDetails()).usedRoutes;
+        // If initial used routes are not available, the document is loaded from an old snapshot format. Return the
+        // data stores as referenced in that case. Otherwise, if the used routes has a self-route, it is referenced.
+        if (initialUsedRoutes === undefined || initialUsedRoutes.includes("/") || initialUsedRoutes.includes("")) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * @deprecated 0.18.Should call request on the runtime directly
      */
     public async request(request: IRequest): Promise<IResponse> {
