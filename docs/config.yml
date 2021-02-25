@@ -10,7 +10,7 @@ permalinks:
   post: "/:year/:month/:day/:title"
 
 params:
-  appInsightKey: "8baf6e9c-253e-4207-82e5-94778984c28e"
+  # appInsightKey: ""  # This is provided by the build system as an env variable
   customCSS: ["css/fluid.css", "css/tango.css"]
   dateform: "Jan 2, 2006"
   dateformNum: "2006-01-02"
