@@ -18,7 +18,11 @@ import { IRunConfig, fluidExport, ILoadTest } from "./loadTestDataStore";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
-let logger: ITelemetryBufferedLogger = { send: () => {}, flush: async () => {} };
+// Provide default implementation of getTestLogger since it's declared as always defined
+const nullLogger: ITelemetryBufferedLogger = { send: () => {}, flush: async () => {} };
+(global as any).getTestLogger = () => nullLogger;
+
+let logger: ITelemetryBufferedLogger = getTestLogger();
 
 interface IOdspTestLoginInfo {
     server: string;
@@ -62,16 +66,16 @@ async function initialize(testDriver: ITestDriver) {
 
 async function load(testDriver: ITestDriver, testId: string) {
     const loader = createLoader(testDriver);
-    const respond = await loader.request({ url: await testDriver.createContainerUrl(testId) });
-    // TODO: Error checking
-    return respond.value as ILoadTest;
+    const url =  await testDriver.createContainerUrl(testId);
+    const container = await loader.resolve({ url });
+    return container.request({ url: "/" }).then((response) => response.value as ILoadTest);
 }
 
 async function main() {
     if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {
         await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
-        assert(getTestLogger);
         logger = getTestLogger();
+        assert(logger, "Expected getTestLogger to return something");
     }
 
     commander
