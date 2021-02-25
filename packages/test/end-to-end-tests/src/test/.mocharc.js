@@ -14,15 +14,14 @@ const requiredModules = [
     `${testPackagesDir}/test-drivers`, // Inject implementation of getFluidTestDriver, configured via FLUID_TEST_DRIVER
 ];
 
-if (process.env.FLUID_DI_ROOT && process.env.FLUID_DI_LOGGERPKG) {
+if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {
     // Inject implementation of getTestLogger
-    requiredModules.push(`${process.env.FLUID_DI_ROOT}/${process.env.FLUID_DI_LOGGERPKG}`);
+    requiredModules.push(process.env.FLUID_TEST_LOGGER_PKG_PATH);
 }
 
 const config = {
   "exit": true,
   "recursive": true,
-  // "parallel": testDriver === "local",
   "require": requiredModules,
   "unhandled-rejections": "strict"
 };
@@ -32,10 +31,11 @@ if(process.env.FLUID_TEST_TIMEOUT !== undefined){
 }
 
 if(process.env.FLUID_TEST_REPORT === "1"){
-  config["reporter"] = `mocha-junit-reporter`;
+  config["reporter"] = `xunit`;
   config["reporter-options"] = [
     // give the report file a unique name based on driver config
-    `mochaFile=${packageDir}/nyc/${testDriver}-junit-report.xml`
+    `output=${packageDir}/nyc/${testDriver}-junit-report.xml`,
+    `suiteName="e2e - ${testDriver}"`
   ];
 }
 

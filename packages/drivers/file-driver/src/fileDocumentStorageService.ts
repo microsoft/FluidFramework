@@ -48,9 +48,9 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
                 return null;
             }
             rootTree = true;
-            filename = `${this.path}/${this.versionName}/tree.json`;
+            filename = `${this.path}/${this.versionName}/decoded/tree.json`;
         } else {
-            filename = `${this.path}/${this.versionName}/${version.id}.json`;
+            filename = `${this.path}/${this.versionName}/decoded/${version.id}.json`;
         }
 
         if (!fs.existsSync(filename)) {

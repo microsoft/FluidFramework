@@ -126,7 +126,11 @@ async function prep(allowPacking: boolean, blobSizeLimit: number | undefined) {
         new TelemetryNullLogger(),
         allowPacking);
 
-    await aggregator.uploadSummaryWithContext(summaryTree, {proposalHandle: undefined, ackHandle: undefined});
+    await aggregator.uploadSummaryWithContext(summaryTree, {
+        proposalHandle: undefined,
+        ackHandle: undefined,
+        referenceSequenceNumber: 5,
+    });
 
     const snapshot = await aggregator.getSnapshotTree();
     assert(!!snapshot);

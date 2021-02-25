@@ -28,7 +28,9 @@ export interface ICredentials {
  * Implementation of the IHistorian interface that calls out to a REST interface
  */
 export class Historian implements IHistorian {
+    // If the auth token need refresh after the permission check fails, it is recalled.
     private restWrapperP: Promise<RestWrapper>;
+    private restWrapper: RestWrapper;
 
     constructor(
         public endpoint: string,
@@ -143,8 +145,10 @@ export class Historian implements IHistorian {
     }
 
     private async createRestWrapper(): Promise<RestWrapper> {
+        this.restWrapper = undefined;
         const queryString: { token?; disableCache?} = {};
         let cacheBust = false;
+
         if (this.disableCache && this.historianApi) {
             queryString.disableCache = this.disableCache;
         } else if (this.disableCache) {
@@ -162,11 +166,13 @@ export class Historian implements IHistorian {
             headers["x-correlation-id"] = this.getCorrelationId() || uuid.v4();
         }
 
-        return new RestWrapper(this.endpoint, headers, queryString, cacheBust);
+        this.restWrapper = new RestWrapper(this.endpoint, headers, queryString, cacheBust);
+
+        return this.restWrapper;
     }
 
     private async restCallWithAuthRetry<T>(restCall: (restWrapper: RestWrapper) => Promise<T>): Promise<T> {
-        let restWrapper = await this.restWrapperP;
+        let restWrapper = this.restWrapper ?? await this.restWrapperP;
         if (this.getCredentials === undefined) {
             return restCall(restWrapper);
         }

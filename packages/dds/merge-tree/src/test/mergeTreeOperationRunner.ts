@@ -4,7 +4,6 @@
  */
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-// eslint-disable-next-line import/no-extraneous-dependencies
 import random from "random-js";
 import { LocalReference } from "../localReference";
 import { IMergeTreeOp, MergeTreeDeltaType } from "../ops";

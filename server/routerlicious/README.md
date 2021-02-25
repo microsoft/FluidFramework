@@ -89,7 +89,7 @@ or
 
 ### Standalone
 
-You can also just run the service directly with Docker. You'll need to connect to our container registry to start.
+You can also just run the service directly with Docker.
 
 Docker Compose is used to run the service locally. To start up an instance of the service simply run the following two commands.
 

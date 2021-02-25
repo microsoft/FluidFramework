@@ -243,6 +243,7 @@ export async function loadContainer(
             ["@fluid-example/table-document/TableDocument", Promise.resolve(chaincode)],
             ["LastEditedComponent", Promise.resolve(chaincode)],
             ["OfficeRootComponent", Promise.resolve(chaincode)],
+            ["OneNoteRootComponentType", Promise.resolve(chaincode)],
         ]);
 
     // Make sure any package (string[]) is resolved as well.

@@ -12,6 +12,7 @@ import {
     fromUtf8ToBase64,
     IsoBuffer,
     performance,
+    stringToBuffer,
 } from "@fluidframework/common-utils";
 import {
     PerformanceEvent,
@@ -311,7 +312,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         },
                         "createBlob",
                     );
-                    event.end({ blobId: res.content.id });
+                    event.end({
+                        blobId: res.content.id,
+                        serverRetries: res.headers.get("x-fluid-retries") ?? undefined,
+                        sprequestguid: res.headers.get("sprequestguid") ?? undefined,
+                    });
                     return res;
                 },
             );
@@ -344,10 +349,22 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     async (event) => {
                         const res = await this.epochTracker.fetchResponse(url, { headers }, "blob");
                         blob = await res.arrayBuffer();
+                        const sprequestguid = res.headers.get("sprequestguid") ?? undefined;
                         event.end({
                             size: blob.byteLength,
+                            serverRetries: res.headers.get("x-fluid-retries") ?? undefined,
                             waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
+                            sprequestguid,
                         });
+                        const cacheControl = res.headers.get("cache-control") ?? undefined;
+                        if (cacheControl === undefined || !(cacheControl.includes("private") || cacheControl.includes("public"))) {
+                            this.logger.sendErrorEvent({
+                                eventName: "NonCacheableBlob",
+                                cacheControl,
+                                blobId,
+                                sprequestguid,
+                            });
+                        }
                         return blob;
                     },
                 );
@@ -386,7 +403,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (blob instanceof ArrayBuffer) {
             return blob;
         }
-        return IsoBuffer.from(blob.content, blob.encoding ?? "utf-8").buffer;
+        return stringToBuffer(blob.content, blob.encoding ?? "utf8");
     }
 
     public async read(blobId: string): Promise<string> {

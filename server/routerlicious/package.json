@@ -49,7 +49,7 @@
     "test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
     "test:coverage": "nyc npm run test:report",
     "test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.js\" --exit",
-    "test:report": "lerna run test --stream --no-bail --no-sort -- -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
+    "test:report": "lerna run test --stream --no-bail --no-sort -- -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "tsc": "lerna run tsc --stream",
     "tsfmt": "lerna run tsfmt:fix --no-sort --stream --no-bail",
     "tsfmt:fix": "lerna run tsfmt:fix --no-sort --stream --no-bail",
@@ -72,7 +72,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.16318",
+    "@fluidframework/build-tools": "^0.2.16657",
     "@microsoft/api-documenter": "^7.4.6",
     "@microsoft/api-extractor": "^7.7.2",
     "concurrently": "^5.2.0",

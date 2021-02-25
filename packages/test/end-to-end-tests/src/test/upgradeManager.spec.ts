@@ -68,11 +68,11 @@ describe("UpgradeManager (hot-swap)", () => {
             options: { hotSwapContext: true },
         });
 
-        return loader.resolve({ url: driver.createContainerUrl(documentId) });
+        return loader.resolve({ url: await driver.createContainerUrl(documentId) });
     }
 
     beforeEach(async () => {
-        driver = getFluidTestDriver() as ITestDriver;
+        driver = getFluidTestDriver() as unknown as ITestDriver;
         opProcessingController = new OpProcessingController();
     });
 
