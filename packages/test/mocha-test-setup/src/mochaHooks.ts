@@ -11,12 +11,13 @@ const nullLogger: ITelemetryBufferedLogger = { send: () => {}, flush: async () =
 const log = console.log;
 const error = console.log;
 export const mochaHooks = {
-    beforeEach() {
-        // Ensure getTestLogger is defined if no hook has set it up purposefully yet
+    beforeAll() {
+        // Ensure getTestLogger is defined
         if (_global.getTestLogger?.() === undefined) {
             _global.getTestLogger = () => nullLogger;
         }
-
+    },
+    beforeEach() {
         // Suppress console.log if not verbose mode
         if (process.env.FLUID_TEST_VERBOSE === undefined) {
             console.log = () => { };
