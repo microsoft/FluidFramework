@@ -67,7 +67,7 @@ const createTestDriver =
 async function main() {
     commander
         .version("0.0.1")
-        .requiredOption("-d, --driver <driver>", "Which test driver info to use", "odsp")
+        .requiredOption("-d, --driver <driver>", "Which test driver info to use", "odsp").choices(["local", "tinylicious", "routerlicious", "odsp"])
         .requiredOption("-p, --profile <profile>", "Which test profile to use from testConfig.json", "ci")
         .option("-id, --testId <testId>", "Load an existing data store rather than creating new")
         .option("-r, --runId <runId>", "run a child process with the given id. Requires --testId option.")
