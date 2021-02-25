@@ -38,8 +38,6 @@ import {
 import {
     DataObjectFactoryType,
     ITestContainerConfig,
-    V1,
-    V2,
 } from "./compatUtils";
 import * as newVer from "./newVersion";
 
@@ -51,20 +49,6 @@ export class OldTestDataObject extends DataObject {
     public get _context() { return this.context; }
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
-}
-
-export class OldTestDataObjectV1 extends OldTestDataObject {
-    public static readonly version = V1;
-    public readonly version = V1;
-}
-
-export class OldTestDataObjectV2 extends OldTestDataObject {
-    public static readonly version = V2;
-    public readonly version = V2;
-    public static readonly testKey = "version2";
-    protected async hasInitialized() {
-        this.root.set(OldTestDataObjectV2.testKey, true);
-    }
 }
 
 const registryMapping = {
