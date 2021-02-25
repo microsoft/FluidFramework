@@ -31,6 +31,7 @@ export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
 
 /**
  * Convert base64 or utf8 string to array buffer
+ * @param encoding - input string's encoding
  */
 export const stringToBuffer = (input: string, encoding: string): ArrayBufferLike =>
     IsoBuffer.from(input, encoding).buffer;
@@ -39,6 +40,7 @@ export const stringToBuffer = (input: string, encoding: string): ArrayBufferLike
  * Convert binary blob to string format
  *
  * @param blob - the binary blob
+ * @param encoding - output string's encoding
  * @returns the blob in string format
  */
 export const bufferToString = (blob: ArrayBufferLike, encoding: string): string =>

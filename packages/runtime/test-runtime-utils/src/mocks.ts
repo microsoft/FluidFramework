@@ -6,7 +6,6 @@
 import { EventEmitter } from "events";
 import {
     assert,
-    fromUtf8ToBase64,
     stringToBuffer,
 } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -581,12 +580,6 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
  */
 export class MockObjectStorageService implements IChannelStorageService {
     public constructor(private readonly contents: { [key: string]: string }) {
-    }
-    public async read(path: string): Promise<string> {
-        const content = this.contents[path];
-        // Do we have such blob?
-        assert(content !== undefined);
-        return fromUtf8ToBase64(content);
     }
 
     public async readBlob(path: string): Promise<ArrayBufferLike> {

@@ -22,15 +22,6 @@ export class BlobCacheStorageService extends DocumentStorageServiceProxy {
         return this.internalStorageService.policies;
     }
 
-    public async read(id: string): Promise<string> {
-        const blob = this.blobs.get(id);
-        if (blob !== undefined) {
-            return blob;
-        }
-
-        return this.internalStorageService.read(id);
-    }
-
     public async readBlob(id: string): Promise<ArrayBufferLike> {
         const blob = this.blobs.get(id);
         if (blob !== undefined) {

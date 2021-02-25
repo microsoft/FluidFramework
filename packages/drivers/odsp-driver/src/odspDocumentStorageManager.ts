@@ -9,7 +9,6 @@ import { v4 as uuid } from "uuid";
 import {
     assert,
     fromBase64ToUtf8,
-    fromUtf8ToBase64,
     IsoBuffer,
     performance,
     stringToBuffer,
@@ -404,25 +403,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             return blob;
         }
         return stringToBuffer(blob.content, blob.encoding ?? "utf8");
-    }
-
-    public async read(blobId: string): Promise<string> {
-        return this.readWithEncodingOutput(blobId, "base64");
-    }
-
-    private async readWithEncodingOutput(blobId: string, outputFormat: "base64" | "string"): Promise<string> {
-        const blob = await this.readBlobCore(blobId);
-
-        if (blob instanceof ArrayBuffer) {
-            return IsoBuffer.from(blob).toString(outputFormat === "base64" ? "base64" : "utf8");
-        }
-        if (outputFormat === blob.encoding || (outputFormat === "string" && blob.encoding === undefined))  {
-            return blob.content;
-        } else if (outputFormat === "base64") {
-            return fromUtf8ToBase64(blob.content);
-        } else {
-            return fromBase64ToUtf8(blob.content);
-        }
     }
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
