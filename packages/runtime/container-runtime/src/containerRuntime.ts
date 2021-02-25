@@ -1458,11 +1458,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 );
             }
 
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const parent = this.latestSummaryAck.ackHandle!;
+            const parent = this.latestSummaryAck.ackHandle;
             const summaryMessage: ISummaryContent = {
                 handle,
-                head: parent,
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                head: parent!,
                 message,
                 parents: parent ? [parent] : [],
             };
