@@ -13,7 +13,7 @@ import * as api from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IBlob,
-    ISnapshotRequest,
+    IOdspSummaryPayload,
     ISnapshotResponse,
     ISnapshotTree,
     ISnapshotTreeBaseEntry,
@@ -127,7 +127,7 @@ export class OdspSummaryUploadManager {
                 hash = await hashFile(
                     blobValue instanceof ArrayBuffer ?
                         IsoBuffer.from(blobValue) :
-                            IsoBuffer.from(blobValue.content, blobValue.encoding ?? "utf-8"),
+                        IsoBuffer.from(blobValue.content, blobValue.encoding ?? "utf-8"),
                 );
                 this.blobTreeDedupCaches.blobShaToPath.set(hash, fullBlobPath);
             }
@@ -224,7 +224,7 @@ export class OdspSummaryUploadManager {
             "",
             false,
         );
-        const snapshot: ISnapshotRequest = {
+        const snapshot: IOdspSummaryPayload = {
             entries: snapshotTree.entries!,
             message: "app",
             sequenceNumber: referenceSequenceNumber,

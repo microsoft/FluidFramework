@@ -93,6 +93,9 @@ export interface IDocumentStorageService {
     getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
 
     /**
+     * @deprecated - please use readBlob
+     * // back-compat: all client code switched to readBlob() usage in 0.36.
+     * Remove all implementations in coouple versions
      * Reads the object with the given ID, returns content in base64
      */
     read(id: string): Promise<string>;
@@ -107,7 +110,10 @@ export interface IDocumentStorageService {
      */
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
 
-    readBlob(id: string): Promise<ArrayBufferLike>;
+    /*
+    * Reads the object with the given ID
+    */
+   readBlob(id: string): Promise<ArrayBufferLike>;
 
     /**
      * Uploads a summary tree to storage using the given context for reference of previous summary handle.

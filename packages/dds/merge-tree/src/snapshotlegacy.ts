@@ -50,9 +50,9 @@ export class SnapshotLegacy {
 
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
     // Please note that this number has no direct relationship to anything other than size of raw text (characters).
-    // As we produce json for the blob (and then encode into base64 and send over the wire compressed), this number
+    // As we produce json for the blob (and then send over the wire compressed), this number
     // is really hard to correlate with any actual metric that matters (like bytes over the wire).
-    // For test with small number of chunks it would be closer to blob size (before base64 encoding),
+    // For test with small number of chunks it would be closer to blob size,
     // for very chunky text, blob size can easily be 4x-8x of that number.
     public static readonly sizeOfFirstChunk: number = 10000;
 

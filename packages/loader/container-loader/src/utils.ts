@@ -4,7 +4,7 @@
  */
 
 import { parse } from "url";
-import { fromUtf8ToBase64, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { fromUtf8ToBase64, bufferToString } from "@fluidframework/common-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
 
@@ -54,9 +54,9 @@ function convertProtocolAndAppSummaryToSnapshotTreeCore(
             case SummaryType.Blob: {
                 const blobId = uuid();
                 treeNode.blobs[key] = blobId;
-                const content = typeof summaryObject.content === "string" ?
-                    summaryObject.content : Uint8ArrayToString(summaryObject.content, "base64");
-                treeNode.blobs[blobId] = fromUtf8ToBase64(content);
+                treeNode.blobs[blobId] = typeof summaryObject.content === "string" ?
+                    fromUtf8ToBase64(summaryObject.content) :
+                    bufferToString(summaryObject.content, "base64");
                 break;
             }
             case SummaryType.Handle:

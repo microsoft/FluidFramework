@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, IsoBuffer } from "@fluidframework/common-utils";
+import { assert, stringToBuffer, bufferToString } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import {
     FileMode,
@@ -25,15 +25,17 @@ function flattenCore(
 
         if (treeEntry.type === TreeEntry.Blob) {
             const blob = treeEntry.value;
-            const buffer = IsoBuffer.from(blob.contents, blob.encoding);
             const id = uuid();
-            blobMap.set(id, buffer.toString("base64"));
-
+            if (blob.encoding === "base64") {
+                blobMap.set(id, blob.contents);
+            } else {
+                blobMap.set(id, bufferToString(stringToBuffer(blob.contents, blob.encoding), "base64"));
+            }
             const entry: git.ITreeEntry = {
                 mode: FileMode[treeEntry.mode],
                 path: subPath,
                 sha: id,
-                size: buffer.length,
+                size: 0,
                 type: "blob",
                 url: "",
             };

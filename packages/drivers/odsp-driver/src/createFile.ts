@@ -21,7 +21,7 @@ import {
     SnapshotTreeEntry,
     SnapshotType,
     ICreateFileResponse,
-    ISnapshotRequest,
+    IOdspSummaryPayload,
 } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
@@ -120,7 +120,7 @@ function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
         },
     };
     const snapshotTree = convertSummaryToSnapshotTreeForCreateNew(convertedCreateNewSummary);
-    const snapshot: ISnapshotRequest = {
+    const snapshot: IOdspSummaryPayload = {
         entries: snapshotTree.entries ?? [],
         message: "app",
         sequenceNumber: documentAttributes.sequenceNumber,

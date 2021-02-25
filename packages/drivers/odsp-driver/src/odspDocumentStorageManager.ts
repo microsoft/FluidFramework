@@ -10,9 +10,9 @@ import {
     assert,
     fromBase64ToUtf8,
     fromUtf8ToBase64,
-    IsoBuffer,
     performance,
     stringToBuffer,
+    bufferToString,
 } from "@fluidframework/common-utils";
 import {
     PerformanceEvent,
@@ -288,7 +288,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return "";
     }
 
-    public async createBlob(file: Uint8Array): Promise<api.ICreateBlobResponse> {
+    public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
         this.checkAttachmentPOSTUrl();
 
         const response = await getWithRetryForTokenRefresh(async (options) => {
@@ -300,7 +300,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.logger,
                 {
                     eventName: "createBlob",
-                    size: file.length,
+                    size: file.byteLength,
                 },
                 async (event) => {
                     const res = await this.epochTracker.fetchAndParseAsJSON<api.ICreateBlobResponse>(
@@ -380,7 +380,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         // this prevents issues when generating summaries
         let documentAttributes: api.IDocumentAttributes;
         if (blob instanceof ArrayBuffer) {
-            documentAttributes = JSON.parse(IsoBuffer.from(blob).toString("utf8"));
+            documentAttributes = JSON.parse(bufferToString(blob, "utf8"));
         } else {
             documentAttributes = JSON.parse(blob.encoding === "base64" ? fromBase64ToUtf8(blob.content) : blob.content);
         }
@@ -414,7 +414,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         const blob = await this.readBlobCore(blobId);
 
         if (blob instanceof ArrayBuffer) {
-            return IsoBuffer.from(blob).toString(outputFormat === "base64" ? "base64" : "utf8");
+            return bufferToString(blob, outputFormat === "base64" ? "base64" : "utf8");
         }
         if (outputFormat === blob.encoding || (outputFormat === "string" && blob.encoding === undefined))  {
             return blob.content;

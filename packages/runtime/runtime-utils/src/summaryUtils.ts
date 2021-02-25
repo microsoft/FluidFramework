@@ -9,6 +9,7 @@ import {
     IsoBuffer,
     Uint8ArrayToString,
     unreachableCase,
+    stringToBuffer,
 } from "@fluidframework/common-utils";
 import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
@@ -46,7 +47,7 @@ export function mergeStats(...stats: ISummaryStats[]): ISummaryStats {
 
 export function getBlobSize(content: ISummaryBlob["content"]): number {
     if (typeof content === "string") {
-        return IsoBuffer.from(content, "utf8").byteLength;
+        return stringToBuffer(content, "utf8").byteLength;
     } else {
         return content.byteLength;
     }
