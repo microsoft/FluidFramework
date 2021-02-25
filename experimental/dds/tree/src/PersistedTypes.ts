@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ISerializedHandle } from '@fluidframework/core-interfaces';
+
 // All types imported into this file inherit the requirements documented below.
 // These imports are ok because they consist only of type aliases for primitive types,
 // and thus have no impact on serialization as long as the primitive type they are an alias for does not change.
@@ -39,17 +41,35 @@ import { assertNotUndefined, assert } from './Common';
  */
 
 /**
- * A collection of changes to the tree that are applied atomically. If any individual change fails to apply,
- * the entire Edit will fail to apply.
+ * A collection of changes to the tree that are applied atomically along with a unique identifier for the edit.
+ * If any individual change fails to apply, the entire Edit will fail to apply.
  * @public
  */
-export interface Edit {
+export interface Edit extends EditBase {
 	/**
 	 * Unique identifier for this edit. Must never be reused.
 	 * Used for referencing and de-duplicating edits.
 	 */
 	readonly id: EditId;
+}
 
+/**
+ * A collection of changes to the tree that are applied atomically. If any individual change fails to apply,
+ * the entire Edit will fail to apply.
+ * @public
+ */
+export interface EditWithoutId extends EditBase {
+	/**
+	 * Used to explicitly state that EditWithoutId cannot contain an id and prevents type Edit from being assigned to type EditWithoutId.
+	 */
+	readonly id?: never;
+}
+
+/**
+ * The information included in an edit.
+ * @public
+ */
+export interface EditBase {
 	/**
 	 * Actual changes to apply.
 	 * Applied in order as part of a single transaction.
@@ -303,8 +323,20 @@ export type EditNode = TreeNode<EditNode> | DetachedSequenceId;
  * @public
  */
 export enum EditResult {
+	/**
+	 * The edit contained one or more malformed changes (e.g. was missing required fields such as `id`),
+	 * or contained a sequence of changes that could not possibly be applied sequentially without error
+	 * (e.g. an edit which tries to insert the same detached node twice).
+	 */
 	Malformed,
+	/**
+	 * The edit contained a well-formed sequence of changes that couldn't be applied to the current view,
+	 * generally because concurrent changes caused one or more merge conflicts.
+	 */
 	Invalid,
+	/**
+	 * The edit was applied to the current view successfully.
+	 */
 	Applied,
 }
 
@@ -556,3 +588,36 @@ export const Move = {
 		return [detach, Change.insert(assertNotUndefined(detach.destination), destination)];
 	},
 };
+
+/**
+ * Types of ops handled by SharedTree.
+ */
+export enum SharedTreeOpType {
+	Edit,
+	Handle,
+}
+
+/**
+ * Requirements for SharedTree ops.
+ */
+export interface SharedTreeOp {
+	type: SharedTreeOpType;
+}
+
+/**
+ * A SharedTree op that includes edit information.
+ */
+export interface SharedTreeEditOp extends SharedTreeOp {
+	edit: Edit;
+}
+
+/**
+ * A SharedTree op that includes edit handle information.
+ * The handle corresponds to an edit chunk in the edit log.
+ */
+export interface SharedTreeHandleOp extends SharedTreeOp {
+	/** The handled to an uploaded edit chunk. */
+	editHandle: ISerializedHandle;
+	/** The index of the first edit in the chunk that corresponds to the handle. */
+	chunkKey: number;
+}

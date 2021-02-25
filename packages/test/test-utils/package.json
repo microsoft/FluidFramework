@@ -92,7 +92,6 @@
     "eslint-plugin-react": "~7.22.0",
     "eslint-plugin-unicorn": "~26.0.1",
     "mocha": "^8.1.1",
-    "mocha-junit-reporter": "^1.18.0",
     "nyc": "^15.0.0",
     "random-js": "^1.0.8",
     "rimraf": "^2.6.2",

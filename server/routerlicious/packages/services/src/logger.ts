@@ -5,6 +5,7 @@
 
 import { debug } from "debug";
 import * as winston from "winston";
+import * as nconf from "nconf";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import Transport = require("winston-transport");
 
@@ -20,18 +21,23 @@ export interface IWinstonConfig {
 /**
  * Configures the default behavior of the Winston logger based on the provided config
  */
-export function configureLogging(config: IWinstonConfig) {
-    const formatters = [winston.format.label({ label: config.label })];
+export function configureLogging(configOrPath: nconf.Provider | string) {
+    // eslint-disable-next-line max-len
+    const config = typeof configOrPath === "string" ? nconf.argv().env({ separator: "__", parseValues: true }).file(configOrPath).use("memory") : configOrPath;
 
-    if (config.colorize) {
+    const winstonConfig = config.get("logger");
+
+    const formatters = [winston.format.label({ label: winstonConfig.label })];
+
+    if (winstonConfig.colorize) {
         formatters.push(winston.format.colorize());
     }
 
-    if (config.timestamp) {
+    if (winstonConfig.timestamp) {
         formatters.push(winston.format.timestamp());
     }
 
-    if (config.json) {
+    if (winstonConfig.json) {
         formatters.push(winston.format.json());
     } else {
         formatters.push(winston.format.simple());
@@ -42,12 +48,12 @@ export function configureLogging(config: IWinstonConfig) {
         transports: [
             new winston.transports.Console({
                 handleExceptions: true,
-                level: config.level,
+                level: winstonConfig.level,
             }),
         ],
     });
-    if (config.additionalTransportList) {
-        for (const transport of config.additionalTransportList) {
+    if (winstonConfig.additionalTransportList) {
+        for (const transport of winstonConfig.additionalTransportList) {
             winston.add(transport);
         }
     }

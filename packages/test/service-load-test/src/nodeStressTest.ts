@@ -10,13 +10,19 @@ import commander from "commander";
 import { Loader } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { ITestDriver, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import { OdspTestDriver } from "@fluidframework/test-drivers";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ITestConfig, ILoadTestConfig, ITestTenant } from "./testConfigFile";
 import { IRunConfig, fluidExport, ILoadTest } from "./loadTestDataStore";
 
 const packageName = `${pkgName}@${pkgVersion}`;
+
+// Provide default implementation of getTestLogger since it's declared as always defined
+const nullLogger: ITelemetryBufferedLogger = { send: () => {}, flush: async () => {} };
+(global as any).getTestLogger = () => nullLogger;
+
+let logger: ITelemetryBufferedLogger = getTestLogger();
 
 interface IOdspTestLoginInfo {
     server: string;
@@ -38,6 +44,7 @@ function createLoader(testDriver: ITestDriver) {
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
         codeLoader,
+        logger,
     });
     return loader;
 }
@@ -59,12 +66,18 @@ async function initialize(testDriver: ITestDriver) {
 
 async function load(testDriver: ITestDriver, testId: string) {
     const loader = createLoader(testDriver);
-    const respond = await loader.request({ url: await testDriver.createContainerUrl(testId) });
-    // TODO: Error checking
-    return respond.value as ILoadTest;
+    const url =  await testDriver.createContainerUrl(testId);
+    const container = await loader.resolve({ url });
+    return container.request({ url: "/" }).then((response) => response.value as ILoadTest);
 }
 
 async function main() {
+    if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {
+        await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+        logger = getTestLogger();
+        assert(logger, "Expected getTestLogger to return something");
+    }
+
     commander
         .version("0.0.1")
         .requiredOption("-t, --tenant <tenant>", "Which test tenant info to use from testConfig.json", "fluidCI")
@@ -131,14 +144,20 @@ async function main() {
             process.exit(-1);
         }
         result = await runnerProcess(loginInfo, profile, runId, testId);
-        process.exit(result);
+    }
+    else {
+        // When runId is not specified, this is the orchestrator process which will spawn child test runners.
+        result = await orchestratorProcess(
+            { ...loginInfo, tenantFriendlyName: tenantArg },
+            { ...profile, name: profileArg },
+            { testId, debug });
     }
 
-    // When runId is not specified, this is the orchestrator process which will spawn child test runners.
-    result = await orchestratorProcess(
-        { ...loginInfo, tenantFriendlyName: tenantArg },
-        { ...profile, name: profileArg },
-        { testId, debug });
+    // There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
+    await(new Promise((res) => { setTimeout(res, 1000); }));
+    // Flush the logs
+    await logger.flush();
+
     process.exit(result);
 }
 
