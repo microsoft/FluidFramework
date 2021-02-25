@@ -81,7 +81,7 @@ export class TestDataObject extends DataObject {
     public get _root() { return this.root; }
 }
 
-export const createPrimedDataStoreFactory = (registry?: ChannelFactoryRegistry): IFluidDataStoreFactory => {
+const createPrimedDataStoreFactory = (registry?: ChannelFactoryRegistry): IFluidDataStoreFactory => {
     return new DataObjectFactory(
         TestDataObject.type,
         TestDataObject,
@@ -89,7 +89,7 @@ export const createPrimedDataStoreFactory = (registry?: ChannelFactoryRegistry):
         {});
 };
 
-export const createTestFluidDataStoreFactory = (registry: ChannelFactoryRegistry = []): IFluidDataStoreFactory => {
+const createTestFluidDataStoreFactory = (registry: ChannelFactoryRegistry = []): IFluidDataStoreFactory => {
     return new TestFluidObjectFactory(registry);
 };
 
