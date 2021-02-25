@@ -114,28 +114,35 @@ export class OdspTestDriver implements ITestDriver {
 
     public readonly type = "odsp";
     public readonly version = pkgVersion;
+    private readonly testIdToUrl = new Map<string, string>();
     private constructor(
         private readonly odspTokenManager: OdspTokenManager,
         private readonly config: Readonly<IOdspTestDriverConfig>) { }
 
     async createContainerUrl(testId: string): Promise<string> {
-        const siteUrl = `https://${this.config.server}`;
-        const driveItem = await getDriveItemByRootFileName(
-            this.config.server,
-            undefined,
-            `/${this.config.directory}/${testId}.fluid`,
-            {
-                accessToken: await this.getStorageToken({ siteUrl, refresh: false }),
-                refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: true }),
-            },
-            false,
-            this.config.driveId);
+        if(!this.testIdToUrl.has(testId)) {
+            const siteUrl = `https://${this.config.server}`;
+            const driveItem = await getDriveItemByRootFileName(
+                this.config.server,
+                undefined,
+                `/${this.config.directory}/${testId}.fluid`,
+                {
+                    accessToken: await this.getStorageToken({ siteUrl, refresh: false }),
+                    refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: false }),
+                },
+                false,
+                this.config.driveId);
 
-        return createOdspUrl(
-            siteUrl,
-            driveItem.drive,
-            driveItem.item,
-            "/");
+            this.testIdToUrl.set(
+                testId,
+                createOdspUrl(
+                    siteUrl,
+                    driveItem.drive,
+                    driveItem.item,
+                    "/"));
+        }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this.testIdToUrl.get(testId)!;
     }
 
     createDocumentServiceFactory(): IDocumentServiceFactory {
