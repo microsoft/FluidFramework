@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { performance } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
@@ -21,7 +22,7 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
         private ops: ISequencedDeltaOpMessage[] | undefined,
         private readonly getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
         private readonly epochTracker: EpochTracker,
-        private readonly logger?: ITelemetryLogger,
+        private readonly logger: ITelemetryLogger,
     ) {
     }
 
@@ -48,23 +49,25 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
 
             const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, storageToken);
 
+            const start = performance.now();
+
             const response = await this.epochTracker
                 .fetchAndParseAsJSON<IDeltaStorageGetResponse>(url, { headers }, "ops");
             const deltaStorageResponse = response.content;
-            if (this.logger) {
-                this.logger.sendTelemetryEvent({
-                    eventName: "DeltaStorageOpsFetch",
-                    headers: Object.keys(headers).length !== 0 ? true : undefined,
-                    sprequestguid: response.headers.get("sprequestguid"),
-                    sprequestduration: response.headers.get("sprequestduration"),
-                });
-            }
             let messages: ISequencedDocumentMessage[];
             if (deltaStorageResponse.value.length > 0 && "op" in deltaStorageResponse.value[0]) {
                 messages = (deltaStorageResponse.value as ISequencedDeltaOpMessage[]).map((operation) => operation.op);
             } else {
                 messages = deltaStorageResponse.value as ISequencedDocumentMessage[];
             }
+
+            this.logger.sendTelemetryEvent({
+                eventName: "DeltaStorageOpsFetch",
+                headers: Object.keys(headers).length !== 0 ? true : undefined,
+                count: messages.length,
+                duration: performance.now() - start,
+                ...response.commonSpoHeaders,
+            });
 
             // It is assumed that server always returns all the ops that it has in the range that was requested.
             // This may change in the future, if so, we need to adjust and receive "end" value from server in such case.

@@ -54,9 +54,11 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
+    "@fluidframework/common-definitions": "^0.19.1",
     "@fluidframework/common-utils": "^0.27.0",
     "@fluidframework/driver-definitions": "^0.36.0",
     "@fluidframework/driver-utils": "^0.36.0",
+    "@fluidframework/telemetry-utils": "^0.36.0",
     "node-fetch": "^2.6.1"
   },
   "devDependencies": {

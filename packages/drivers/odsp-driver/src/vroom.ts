@@ -55,10 +55,7 @@ export async function fetchJoinSession(
             );
 
             // TODO SPO-specific telemetry
-            event.end({
-                sprequestguid: response.headers.get("sprequestguid"),
-                sprequestduration: response.headers.get("sprequestduration"),
-            });
+            event.end(response.commonSpoHeaders);
 
             if (response.content.runtimeTenantId && !response.content.tenantId) {
                 response.content.tenantId = response.content.runtimeTenantId;

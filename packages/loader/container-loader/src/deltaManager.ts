@@ -86,7 +86,7 @@ function createReconnectError(prefix: string, err: any) {
 export interface IConnectionArgs {
     mode?: ConnectionMode;
     fetchOpsFromStorage?: boolean;
-    reason?: string;
+    reason: string;
 }
 
 export enum ReconnectMode {
@@ -415,7 +415,7 @@ export class DeltaManager
             safeRaiseEvent(this, this.logger, "readonly", this.readonly);
             if (reconnect) {
                 // reconnect if we disconnected from before.
-                this.triggerConnect({ mode: "read", fetchOpsFromStorage: false });
+                this.triggerConnect({ reason: "forceReadonly", mode: "read", fetchOpsFromStorage: false });
             }
         }
     }
@@ -543,7 +543,7 @@ export class DeltaManager
         };
     }
 
-    public async connect(args: IConnectionArgs = {}): Promise<IConnectionDetails> {
+    public async connect(args: IConnectionArgs): Promise<IConnectionDetails> {
         const connection = await this.connectCore(args);
         return DeltaManager.detailsFromConnection(connection);
     }
@@ -563,7 +563,7 @@ export class DeltaManager
         });
     }
 
-    private async connectCore(args: IConnectionArgs = {}): Promise<IDocumentDeltaConnection> {
+    private async connectCore(args: IConnectionArgs): Promise<IDocumentDeltaConnection> {
         if (this.connection !== undefined) {
             return this.connection;
         }
@@ -596,7 +596,7 @@ export class DeltaManager
         // See comment at the end of setupNewSuccessfulConnection()
         this.logger.debugAssert(this.handler !== undefined || fetchOpsFromStorage); // on boot, always fetch ops!
         if (fetchOpsFromStorage && this.handler !== undefined) {
-            this.fetchMissingDeltas(args.reason ?? "DocumentOpen", this.lastQueuedSequenceNumber);
+            this.fetchMissingDeltas(args.reason, this.lastQueuedSequenceNumber);
         }
 
         const docService = this.serviceProvider();
@@ -1154,9 +1154,10 @@ export class DeltaManager
         this._hasCheckpointSequenceNumber = false;
 
         // Some storages may provide checkpointSequenceNumber to identify how far client is behind.
-        if (connection.checkpointSequenceNumber !== undefined) {
+        const checkpointSequenceNumber = connection.checkpointSequenceNumber;
+        if (checkpointSequenceNumber !== undefined) {
             this._hasCheckpointSequenceNumber = true;
-            this.updateLatestKnownOpSeqNumber(connection.checkpointSequenceNumber);
+            this.updateLatestKnownOpSeqNumber(checkpointSequenceNumber);
         }
 
         // Update knowledge of how far we are behind, before raising "connect" event
@@ -1178,13 +1179,22 @@ export class DeltaManager
         this.processInitialMessages(
             initialMessages,
             connection.initialSignals ?? [],
-            this.connectFirstConnection);
+            this.connectFirstConnection ? "InitialOps" : "ReconnectOps");
 
-        // if we have some op on the wire (or will have a "join" op for ourselves for r/w connection), then client
-        // can detect it has a gap and fetch missing ops. However if we are connecting as view-only, then there
-        // is no good signal to realize if client is behind. Thus we have to hit storage to see if any ops are there.
-        if (this.handler !== undefined && connection.mode !== "write" && initialMessages.length === 0) {
-            this.fetchMissingDeltas("Reconnect", this.lastQueuedSequenceNumber);
+        // If we got some initial ops, then we know the gep and call above fetched ops to fill it.
+        // Same is true for "write" mode even if we have no ops - we will get self "join" ops very very soon.
+        // However if we are connecting as view-only, then there is no good signal to realize if client is behind.
+        // Thus we have to hit storage to see if any ops are there.
+        if (initialMessages.length === 0) {
+            if (checkpointSequenceNumber !== undefined) {
+                // We know how far we are behind (roughly). If it's non-zero gap, fetch ops right away.
+                if (checkpointSequenceNumber > this.lastQueuedSequenceNumber) {
+                    this.fetchMissingDeltas("AfterConnection", this.lastQueuedSequenceNumber);
+                }
+            // we do not know the gap, and we will not learn about it if socket is quite - have to ask.
+            } else if (connection.mode !== "write") {
+                this.fetchMissingDeltas("AfterConnection", this.lastQueuedSequenceNumber);
+            }
         }
 
         this.connectFirstConnection = false;
@@ -1267,17 +1277,17 @@ export class DeltaManager
                 await waitForConnectedState(delay * 1000);
             }
 
-            this.triggerConnect({ mode: requestedMode, fetchOpsFromStorage: false });
+            this.triggerConnect({ reason: "reconnect", mode: requestedMode, fetchOpsFromStorage: false });
         }
     }
 
     private processInitialMessages(
         messages: ISequencedDocumentMessage[],
         signals: ISignalMessage[],
-        firstConnection: boolean,
+        reason: string,
     ): void {
         if (messages.length > 0) {
-            this.catchUp(messages, firstConnection ? "InitialOps" : "ReconnectOps");
+            this.catchUp(messages, reason);
         }
         for (const signal of signals) {
             this._inboundSignal.push(signal);

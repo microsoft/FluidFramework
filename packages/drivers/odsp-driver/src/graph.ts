@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PromiseCache } from "@fluidframework/common-utils";
-import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
+import {
+    canRetryOnError,
+    getRetryDelayFromError,
+} from "@fluidframework/driver-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { fetchAndParseAsJSONHelper, fetchHelper, getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
+import { fetchAndParseAsJSONHelper, getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
 import {
     IdentityType,
     SharingLinkTokenFetchOptions,
@@ -33,31 +36,6 @@ function slashTerminatedOriginOrEmptyString(origin: string | undefined) {
         : `${origin}/`
         : "";
 }
-
-const getSPOAndGraphRequestIdsFromResponse = async (headers: Map<string, string>) => {
-    interface LoggingHeader {
-        headerName: string;
-        logName: string;
-    }
-    // We rename headers so that otel doesn't scrub them away. Otel doesn't allow
-    // certain characters in headers including '-'
-    const headersToLog: LoggingHeader[] = [
-        { headerName: "sprequestguid", logName: "spRequestGuid" },
-        { headerName: "request-id", logName: "requestId" },
-        { headerName: "client-request-id", logName: "clientRequestId" },
-        { headerName: "x-msedge-ref", logName: "xMsedgeRef" },
-    ];
-    const additionalProps: ITelemetryProperties = {};
-    if (headers) {
-        headersToLog.forEach((header) => {
-            const headerValue = headers.get(header.headerName);
-            if (headerValue !== undefined) {
-                additionalProps[header.logName] = headerValue;
-            }
-        });
-    }
-    return additionalProps;
-};
 
 /**
  * returns a promise that resolves after timeMs
@@ -179,8 +157,7 @@ async function graphFetch(
                 return res;
             },
         );
-        const additionalProps = await getSPOAndGraphRequestIdsFromResponse(odspResponse.headers);
-        event.end({ ...additionalProps, tries });
+        event.end({ ...odspResponse.commonSpoHeaders, tries });
         return odspResponse;
     });
     return response;
@@ -224,13 +201,12 @@ async function getFileDefaultUrl(
         return graphItem.webUrl;
     }
 
-    let tries = 0;
-    let additionalProps;
     // ODSP link requires extra call to return link that is resistant to file being renamed or moved to different folder
     const response = await PerformanceEvent.timedExecAsync(
         logger,
         { eventName: "odspFetchResponse", requestName: "getFileDefaultUrl" },
         async (event) => {
+            let tries = 0;
             const odspResponse = await getWithRetryForTokenRefresh(async (options) => {
                 tries++;
                 const token = await getToken({ ...options, siteUrl, type: "OneDrive" });
@@ -246,13 +222,10 @@ async function getFileDefaultUrl(
                         ...headers,
                     },
                 };
-                const res = await fetchHelper(url, requestInit);
-                additionalProps = await getSPOAndGraphRequestIdsFromResponse(new Map(res.headers));
-                const text = JSON.parse(await res.text());
-                return text?.d?.directUrl as string;
+                return fetchAndParseAsJSONHelper<any>(url, requestInit);
             });
-            event.end({ ...additionalProps, tries });
-            return odspResponse;
+            event.end({ ...odspResponse.commonSpoHeaders, tries });
+            return odspResponse.content?.d?.directUrl as string;
         },
     );
 

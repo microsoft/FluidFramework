@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { isOnline, OnlineStatus } from "@fluidframework/driver-utils";
 import {
@@ -12,16 +13,18 @@ import {
     fetchTimeoutStatusCode,
     OdspErrorType,
     throwOdspNetworkError,
+    getSPOAndGraphRequestIdsFromResponse,
 } from "@fluidframework/odsp-doclib-utils";
 import {
     default as fetch,
     RequestInfo as FetchRequestInfo,
     RequestInit as FetchRequestInit,
-    Headers as FetchHeaders,
+    Headers,
 } from "node-fetch";
 import sha from "sha.js";
 import { debug } from "./debug";
 import { TokenFetchOptions } from "./tokenFetch";
+import { RateLimiter } from "./rateLimiter";
 
 /** Parse the given url and return the origin (host name) */
 export const getOrigin = (url: string) => new URL(url).origin;
@@ -29,10 +32,19 @@ export const getOrigin = (url: string) => new URL(url).origin;
 export interface IOdspResponse<T> {
     content: T;
     headers: Map<string, string>;
+    commonSpoHeaders: ITelemetryProperties;
 }
 
 export function getHashedDocumentId(driveId: string, itemId: string): string {
     return encodeURIComponent(new sha.sha256().update(`${driveId}_${itemId}`).digest("base64"));
+}
+
+function headersToMap(headers: Headers) {
+    const newHeaders = new Map<string, string>();
+    for (const [key, value] of headers.entries()) {
+        newHeaders.set(key, value);
+    }
+    return newHeaders;
 }
 
 /**
@@ -66,7 +78,11 @@ export async function getWithRetryForTokenRefresh<T>(get: (options: TokenFetchOp
 export async function fetchHelper(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
-): Promise<Response> {
+): Promise<{
+    response: Response,
+    headers: Map<string, string>,
+    commonSpoHeaders: ITelemetryProperties,
+}> {
     // Node-fetch and dom have conflicting typing, force them to work by casting for now
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return fetch(requestInfo as FetchRequestInfo, requestInit as FetchRequestInit).then(async (fetchResponse) => {
@@ -80,7 +96,13 @@ export async function fetchHelper(
             throwOdspNetworkError(
                 `Error ${response.status}`, response.status, response, await response.text());
         }
-        return response;
+
+        const headers = headersToMap(response.headers);
+        return {
+            response,
+            headers,
+            commonSpoHeaders: getSPOAndGraphRequestIdsFromResponse(headers),
+        };
     }, (error) => {
         // While we do not know for sure whether computer is offline, this error is not actionable and
         // is pretty good indicator we are offline. Treating it as offline scenario will make it
@@ -105,11 +127,35 @@ export async function fetchHelper(
  * @param requestInfo - fetch requestInfo, can be a string
  * @param requestInit - fetch requestInit
  */
+export async function fetchArray(
+    requestInfo: RequestInfo,
+    requestInit: RequestInit | undefined,
+    rateLimiter: RateLimiter,
+) {
+    const { response, headers, commonSpoHeaders } = await rateLimiter.schedule(
+        async () => fetchHelper(requestInfo, requestInit),
+    );
+
+    const arrayBuffer = await response.arrayBuffer();
+    commonSpoHeaders.bodySize = arrayBuffer.byteLength;
+    const res = {
+        headers,
+        arrayBuffer,
+        commonSpoHeaders,
+    };
+    return res;
+}
+
+/**
+ * A utility function to fetch and parse as JSON with support for retries
+ * @param requestInfo - fetch requestInfo, can be a string
+ * @param requestInit - fetch requestInit
+ */
 export async function fetchAndParseAsJSONHelper<T>(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<T>> {
-    const response = await fetchHelper(requestInfo, requestInit);
+    const { response, headers, commonSpoHeaders } = await fetchHelper(requestInfo, requestInit);
     // JSON.parse() can fail and message (that goes into telemetry) would container full request URI, including
     // tokens... It fails for me with "Unexpected end of JSON input" quite often - an attempt to download big file
     // (many ops) almost always ends up with this error - I'd guess 1% of op request end up here... It always
@@ -117,13 +163,11 @@ export async function fetchAndParseAsJSONHelper<T>(
     try {
         const text = await response.text();
 
-        const newHeaders = new FetchHeaders({ "body-size": text.length.toString() });
-        for (const [key, value] of response.headers.entries()) {
-            newHeaders.set(key, value);
-        }
+        commonSpoHeaders.bodySize = text.length;
         const res = {
-            headers: newHeaders,
+            headers,
             content: JSON.parse(text),
+            commonSpoHeaders,
         };
         return res;
     } catch (e) {

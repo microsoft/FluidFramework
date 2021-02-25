@@ -16,7 +16,6 @@ import {
 } from "@fluidframework/common-utils";
 import {
     PerformanceEvent,
-    TelemetryLogger,
 } from "@fluidframework/telemetry-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import {
@@ -314,8 +313,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     );
                     event.end({
                         blobId: res.content.id,
-                        serverRetries: res.headers.get("x-fluid-retries") ?? undefined,
-                        sprequestguid: response.headers.get("sprequestguid") ?? undefined,
+                        ...res.commonSpoHeaders,
                     });
                     return res;
                 },
@@ -348,24 +346,20 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     },
                     async (event) => {
                         const res = await this.epochTracker.fetchResponse(url, { headers }, "blob");
-                        blob = await res.arrayBuffer();
-                        const sprequestguid = res.headers.get("sprequestguid") ?? undefined;
                         event.end({
-                            size: blob.byteLength,
-                            serverRetries: res.headers.get("x-fluid-retries") ?? undefined,
                             waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
-                            sprequestguid,
+                            ...res.commonSpoHeaders,
                         });
-                        const cacheControl = res.headers.get("cache-control") ?? undefined;
+                        const cacheControl = res.headers.get("cache-control");
                         if (cacheControl === undefined || !(cacheControl.includes("private") || cacheControl.includes("public"))) {
                             this.logger.sendErrorEvent({
                                 eventName: "NonCacheableBlob",
                                 cacheControl,
                                 blobId,
-                                sprequestguid,
+                                ...res.commonSpoHeaders,
                             });
                         }
-                        return blob;
+                        return res.arrayBuffer;
                     },
                 );
             });
@@ -739,7 +733,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             let reqStToRespEndTime: number | undefined; // responseEnd - requestStart
             let networkTime: number | undefined; // responseEnd - startTime
             const spReqDuration = response.headers.get("sprequestduration");
-            const msEdge = response.headers.get("x-msedge-ref"); // To track Azure Front Door information of which the request came in at
 
             // getEntriesByType is only available in browser performance object
             const resources1 = performance.getEntriesByType?.("resource") ?? [];
@@ -766,7 +759,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
             const { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize } = this.evalBlobsAndTrees(snapshot);
             const clientTime = networkTime ? overallTime - networkTime : undefined;
-            const isAfd = msEdge !== undefined;
 
             assert(this._snapshotCacheEntry === undefined);
             this._snapshotCacheEntry = {
@@ -807,8 +799,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 seqNumber,
                 ops: snapshot.ops?.length ?? 0,
                 headers: Object.keys(headers).length !== 0 ? true : undefined,
-                sprequestguid: response.headers.get("sprequestguid"),
-                sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
                 redirecttime: redirectTime,
                 dnsLookuptime: dnstime,
                 responsenetworkTime: responseTime,
@@ -819,10 +809,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 overalltime: overallTime,
                 networktime: networkTime,
                 clienttime: clientTime,
-                msedge: msEdge,
-                isafd: isAfd,
-                contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
-                bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
+                ...response.commonSpoHeaders,
             });
             return snapshot;
         });

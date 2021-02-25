@@ -9,7 +9,7 @@ import { fluidEpochMismatchError, OdspErrorType, throwOdspNetworkError } from "@
 import { ThrottlingError } from "@fluidframework/driver-utils";
 import { IConnected } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { fetchAndParseAsJSONHelper, fetchHelper, IOdspResponse } from "./odspUtils";
+import { fetchAndParseAsJSONHelper, fetchArray, IOdspResponse } from "./odspUtils";
 import { ICacheEntry, IFileEntry, LocalPersistentCacheAdapter } from "./odspCache";
 import { RateLimiter } from "./rateLimiter";
 
@@ -93,7 +93,7 @@ export class EpochTracker {
     ): Promise<IOdspResponse<T>> {
         // Add epoch in fetch request.
         const request = this.addEpochInRequest(url, fetchOptions, addInBody);
-        let epochFromResponse: string | null | undefined;
+        let epochFromResponse: string | undefined;
         try {
             const response = await this.rateLimiter.schedule(
                 async () => fetchAndParseAsJSONHelper<T>(request.url, request.fetchOptions),
@@ -124,13 +124,13 @@ export class EpochTracker {
         fetchOptions: {[index: string]: any},
         fetchType: FetchType,
         addInBody: boolean = false,
-    ): Promise<Response> {
+    ) {
         // Add epoch in fetch request.
         const request = this.addEpochInRequest(url, fetchOptions, addInBody);
-        let epochFromResponse: string | null | undefined;
+        let epochFromResponse: string | undefined;
         try {
             const response = await this.rateLimiter.schedule(
-                async () => fetchHelper(request.url, request.fetchOptions),
+                async () => fetchArray(request.url, request.fetchOptions, this.rateLimiter),
             );
             epochFromResponse = response.headers.get("x-fluid-epoch");
             this.validateEpochFromResponse(epochFromResponse, fetchType);
@@ -183,12 +183,12 @@ export class EpochTracker {
     }
 
     protected validateEpochFromResponse(
-        epochFromResponse: string | undefined | null,
+        epochFromResponse: string | undefined,
         fetchType: FetchType,
         fromCache: boolean = false,
     ) {
         this.checkForEpochErrorCore(epochFromResponse);
-        if (epochFromResponse) {
+        if (epochFromResponse !== undefined) {
             if (this._fluidEpoch === undefined) {
                 this.logger.sendTelemetryEvent(
                     {
@@ -248,7 +248,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
     private readonly treesLatestDeferral = new Deferred<void>();
 
     protected validateEpochFromResponse(
-        epochFromResponse: string | undefined | null,
+        epochFromResponse: string | undefined,
         fetchType: FetchType,
         fromCache: boolean = false,
     ) {
