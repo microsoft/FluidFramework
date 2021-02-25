@@ -182,5 +182,5 @@ jobs:
         testResultsFormat: 'JUnit'
         testResultsFiles: '**/*junit-report.xml'
         searchFolder: ${{ parameters.buildDirectory }}/nyc
-        mergeTestResults: true
+        mergeTestResults: false
       condition: succeededOrFailed()

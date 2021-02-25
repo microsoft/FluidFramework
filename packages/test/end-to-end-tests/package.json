@@ -32,7 +32,8 @@
     "test:realsvc:routerlicious": "cross-env FLUID_TEST_DRIVER=routerlicious FLUID_TEST_TIMEOUT=30000  npm run test:realsvc:run",
     "test:realsvc:routerlicious:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc:routerlicious",
     "test:realsvc:run": "mocha dist/test --config src/test/.mocharc.js",
-    "test:realsvc:tinylicious": "cross-env FLUID_TEST_DRIVER=tinylicious start-server-and-test start:tinylicious:test 3000 test:realsvc:run",
+    "test:realsvc:tinylicious": "cross-env FLUID_TEST_DRIVER=tinylicious start-server-and-test start:tinylicious:test 3000 test:realsvc:tinylicious:run",
+    "test:realsvc:tinylicious:run": "npm run test:realsvc:run -- --parallel --jobs 2",
     "test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { DocumentContext } from "../../document-router/documentContext";
-import { TestKafka } from "@fluidframework/server-test-utils";
+import { DebugLogger, TestKafka } from "@fluidframework/server-test-utils";
 import { IContextErrorData } from "@fluidframework/server-services-core";
 
 function validateException(fn: () => void) {
@@ -24,7 +24,7 @@ describe("document-router", () => {
         let contextTailOffset = TestKafka.createdQueuedMessage(-1);
 
         beforeEach(async () => {
-            testContext = new DocumentContext(offset0, () => contextTailOffset);
+            testContext = new DocumentContext(offset0, DebugLogger.create("fluid-server:TestDocumentContext"), () => contextTailOffset);
         });
 
         describe(".setHead", () => {

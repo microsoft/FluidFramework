@@ -9,6 +9,7 @@ export { IDocumentServiceFactory, IUrlResolver } from "old-driver-definitions";
 export { LocalResolver } from "old-local-driver";
 export { IFluidDataStoreFactory } from "old-runtime-definitions";
 export { OpProcessingController } from "old-test-utils";
+export { Loader } from "old-container-loader";
 export const versionString = "N-1";
 
 import {
@@ -17,7 +18,7 @@ import {
     DataObjectFactory,
 } from "old-aqueduct";
 import { SharedCell } from "old-cell";
-import { IContainer, IRuntimeFactory } from "old-container-definitions";
+import { IRuntimeFactory } from "old-container-definitions";
 import { IContainerRuntimeOptions } from "old-container-runtime";
 import { SharedCounter } from "old-counter";
 import { IChannelFactory } from "old-datastore-definitions";
@@ -30,18 +31,12 @@ import { IFluidDataStoreFactory } from "old-runtime-definitions";
 import { SharedString, SparseMatrix } from "old-sequence";
 import {
     ChannelFactoryRegistry,
-    createAndAttachContainer,
-    createLocalLoader,
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
 } from "old-test-utils";
-import { Loader } from "old-container-loader";
 
 import {
-    createRuntimeFactory,
     DataObjectFactoryType,
-    getDataStoreFactory,
-    ITestObjectProvider,
     ITestContainerConfig,
     V1,
     V2,
@@ -115,7 +110,7 @@ const createOldTestFluidDataStoreFactory = (
     return new TestFluidObjectFactory(convertRegistry(registry));
 };
 
-function getOldDataStoreFactory(containerOptions?: ITestContainerConfig) {
+export function getDataStoreFactory(containerOptions?: ITestContainerConfig) {
     switch (containerOptions?.fluidDataObjectType) {
         case undefined:
         case DataObjectFactoryType.Primed:
@@ -127,7 +122,7 @@ function getOldDataStoreFactory(containerOptions?: ITestContainerConfig) {
     }
 }
 
-const createOldTestRuntimeFactory = (
+export const createRuntimeFactory = (
     type: string,
     dataStoreFactory: newVer.IFluidDataStoreFactory | IFluidDataStoreFactory,
     runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
@@ -142,43 +137,4 @@ export function createOldRuntimeFactory(dataStore): IRuntimeFactory {
         factory,
         [[type, Promise.resolve(new DataObjectFactory(type, dataStore, [], {}))]],
     );
-}
-
-export async function createOldContainer(
-    documentId,
-    packageEntries,
-    server,
-    urlResolver,
-    codeDetails,
-): Promise<IContainer> {
-    const loader = createLocalLoader(packageEntries, server, urlResolver, { hotSwapContext: true });
-    return createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
-}
-
-export function createTestObjectProvider(
-    oldLoader: boolean,
-    oldContainerRuntime: boolean,
-    oldDataStoreRuntime: boolean,
-    type: string,
-    serviceConfiguration?: Partial<newVer.IClientConfiguration>,
-    driver?: newVer.ITestDriver,
-): ITestObjectProvider {
-    const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
-        const dataStoreFactory = oldDataStoreRuntime
-            ? getOldDataStoreFactory(containerOptions)
-            : getDataStoreFactory(containerOptions);
-
-        return oldContainerRuntime
-            ? createOldTestRuntimeFactory(type, dataStoreFactory, containerOptions?.runtimeOptions)
-            : createRuntimeFactory(type, dataStoreFactory, containerOptions?.runtimeOptions);
-    };
-
-    if (driver === undefined) {
-        throw new Error("Must provide a driver when using the current loader");
-    }
-
-    return new newVer.TestObjectProvider(
-        oldLoader ? Loader as unknown as typeof newVer.Loader : newVer.Loader,
-        driver,
-        containerFactoryFn as () => newVer.IRuntimeFactory);
 }
