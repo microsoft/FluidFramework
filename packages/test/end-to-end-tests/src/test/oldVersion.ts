@@ -9,6 +9,7 @@ export { IDocumentServiceFactory, IUrlResolver } from "old-driver-definitions";
 export { LocalResolver } from "old-local-driver";
 export { IFluidDataStoreFactory } from "old-runtime-definitions";
 export { OpProcessingController } from "old-test-utils";
+export { Loader } from "old-container-loader";
 export const versionString = "N-1";
 
 import {
