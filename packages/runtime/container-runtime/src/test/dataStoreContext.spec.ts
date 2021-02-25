@@ -661,6 +661,111 @@ describe("Data Store Context Tests", () => {
                 assert.strictEqual(
                     dataStoreSummarizerNode?.isReferenced(), true, "Data store should now be referenced");
             });
+
+            it("should return initially referenced as per GC details in initial summary", async () => {
+                dataStoreAttributes = {
+                    pkg: "TestDataStore1",
+                    snapshotFormatVersion: undefined,
+                };
+                const gcDetails: IGarbageCollectionSummaryDetails = {
+                    usedRoutes: [""], // Self-route in initial summary to make it referenced.
+                };
+                const attributesBuffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
+                const gcDetailsBuffer = IsoBuffer.from(JSON.stringify(gcDetails), "utf-8");
+                const blobCache = new Map<string, string>([
+                    ["fluidDataStoreAttributes", attributesBuffer.toString("base64")],
+                    ["gcDetails", gcDetailsBuffer.toString("base64")],
+                ]);
+                const snapshotTree: ISnapshotTree = {
+                    id: "dummy",
+                    blobs: {
+                        [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
+                        [gcBlobKey]: "gcDetails",
+                    },
+                    commits: {},
+                    trees: {},
+                };
+
+                remotedDataStoreContext = new RemotedFluidDataStoreContext(
+                    dataStoreId,
+                    snapshotTree,
+                    containerRuntime,
+                    new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                    scope,
+                    createSummarizerNodeFn,
+                );
+
+                const initiallyReferenced = await remotedDataStoreContext.isReferencedInInitialSummary();
+                assert.strictEqual(initiallyReferenced, true, "Data store should be initially referenced");
+            });
+
+            it("should return initially unreferenced as per GC details in initial summary", async () => {
+                dataStoreAttributes = {
+                    pkg: "TestDataStore1",
+                    snapshotFormatVersion: undefined,
+                };
+                const gcDetails: IGarbageCollectionSummaryDetails = {
+                    usedRoutes: [], // No routes in initial summary to make it unreferenced.
+                };
+                const attributesBuffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
+                const gcDetailsBuffer = IsoBuffer.from(JSON.stringify(gcDetails), "utf-8");
+                const blobCache = new Map<string, string>([
+                    ["fluidDataStoreAttributes", attributesBuffer.toString("base64")],
+                    ["gcDetails", gcDetailsBuffer.toString("base64")],
+                ]);
+                const snapshotTree: ISnapshotTree = {
+                    id: "dummy",
+                    blobs: {
+                        [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
+                        [gcBlobKey]: "gcDetails",
+                    },
+                    commits: {},
+                    trees: {},
+                };
+
+                remotedDataStoreContext = new RemotedFluidDataStoreContext(
+                    dataStoreId,
+                    snapshotTree,
+                    containerRuntime,
+                    new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                    scope,
+                    createSummarizerNodeFn,
+                );
+
+                const initiallyReferenced = await remotedDataStoreContext.isReferencedInInitialSummary();
+                assert.strictEqual(initiallyReferenced, false, "Data store should be initially unreferenced");
+            });
+
+            it("should return initially referenced with no GC details in initial summary", async () => {
+                dataStoreAttributes = {
+                    pkg: "TestDataStore1",
+                    snapshotFormatVersion: undefined,
+                };
+                const attributesBuffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
+                const blobCache = new Map<string, string>([
+                    ["fluidDataStoreAttributes", attributesBuffer.toString("base64")],
+                ]);
+                const snapshotTree: ISnapshotTree = {
+                    id: "dummy",
+                    blobs: {
+                        [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
+                    },
+                    commits: {},
+                    trees: {},
+                };
+
+                remotedDataStoreContext = new RemotedFluidDataStoreContext(
+                    dataStoreId,
+                    snapshotTree,
+                    containerRuntime,
+                    new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                    scope,
+                    createSummarizerNodeFn,
+                );
+
+                const initiallyReferenced = await remotedDataStoreContext.isReferencedInInitialSummary();
+                assert.strictEqual(initiallyReferenced, true, "Data store should be initially referenced");
+            });
         });
     });
 });

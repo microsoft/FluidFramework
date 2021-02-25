@@ -354,7 +354,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
          * The error returned signals the app to take appropriate action for deleted content.
          */
         if (request.headers?.errorOnResourceDeleted === true) {
-            if (!(await this.dataStoreContext.isReferencedInInitialSummary())) {
+            // back-compat: 0.36.0. isReferencedInInitialSummary is added to IFluidDataStoreContext in 0.36.0. Remove
+            // undefined check when N >= 0.38.0.
+            const referenced = await this.dataStoreContext.isReferencedInInitialSummary?.();
+            if (referenced === false) {
                 return { status: 410, mimeType: "text/plain", value: `${request.url} is on longer available` };
             }
         }
