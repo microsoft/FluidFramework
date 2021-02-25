@@ -52,6 +52,16 @@ describe('Forest', () => {
 		expect(sameDeep).deep.equals({ changed: [], added: [], removed: [] });
 	});
 
+	it('equality is correct', () => {
+		const modified = twoNode.replace(leaf, []);
+
+		expect(oneNode.equals(emptyForest)).false;
+		expect(emptyForest.equals(oneNode)).false;
+		expect(twoNode.equals(twoNode)).true;
+		expect(twoNode.equals(modified)).false;
+		expect(twoNode.equals(modified, compareArrays)).true;
+	});
+
 	it('merge with empty works', () => {
 		const merge1 = emptyForest.mergeWith(twoNode, () => fail());
 		const merge2 = twoNode.mergeWith(emptyForest, () => fail());

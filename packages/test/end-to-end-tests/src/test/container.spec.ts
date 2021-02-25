@@ -19,7 +19,7 @@ import { LocalCodeLoader, TestObjectProvider, LoaderContainerTracker } from "@fl
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestDriver, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
-import { createPrimedDataStoreFactory, createRuntimeFactory, TestDataObject } from "./compatUtils";
+import { getDataStoreFactory, createRuntimeFactory, TestDataObject } from "./compatUtils";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
@@ -46,7 +46,7 @@ describe("Container", () => {
             ...props,
             logger,
             urlResolver: props?.urlResolver ?? driver.createUrlResolver(),
-            documentServiceFactory :
+            documentServiceFactory:
                 props?.documentServiceFactory ?? driver.createDocumentServiceFactory(),
             codeLoader: props?.codeLoader ?? new LocalCodeLoader([]),
         });
@@ -206,7 +206,7 @@ describe("Container", () => {
     it("Delta manager receives readonly event when calling container.forceReadonly()", async () => {
         const runtimeFactory = (_?: unknown) => createRuntimeFactory(
             TestDataObject.type,
-            createPrimedDataStoreFactory());
+            getDataStoreFactory());
 
         const localTestObjectProvider = new TestObjectProvider(
             Loader,

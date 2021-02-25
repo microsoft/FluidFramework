@@ -98,12 +98,14 @@ export class ForemanLambda extends SequencedLambda {
                         type: "tasks:start",
                     },
                 );
-                const messageMetaData = {
-                    documentId: docId,
-                    tenantId,
-                };
-                this.context.log.info(
-                    `Request to ${queueName}: ${clientId}:${JSON.stringify(tasks)}`, { messageMetaData });
+                this.context.log?.info(
+                    `Request to ${queueName}: ${clientId}:${JSON.stringify(tasks)}`,
+                    {
+                        messageMetaData: {
+                            documentId: docId,
+                            tenantId,
+                        },
+                    });
             }
         }
     }
