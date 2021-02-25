@@ -102,7 +102,8 @@ export class OdspTestDriver implements ITestDriver {
     private static async getStorageToken(
         options: OdspResourceTokenFetchOptions,
         odspTokenManager: OdspTokenManager,
-        config: IOdspTestLoginInfo & IClientConfig) {
+        config: IOdspTestLoginInfo & IClientConfig,
+    ) {
         // This function can handle token request for any multiple sites. Where the test driver is for a specific site.
         const tokens = await odspTokenManager.getOdspTokens(
             new URL(options.siteUrl).hostname,
