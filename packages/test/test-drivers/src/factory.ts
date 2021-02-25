@@ -6,6 +6,7 @@
 import http from "http";
 import Axios from "axios";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { unreachableCase } from "@fluidframework/common-utils";
 import { LocalServerTestDriver } from "./localServerTestDriver";
 import { TinyliciousTestDriver } from "./tinyliciousTestDriver";
 import { RouterliciousTestDriver } from "./routerliciousTestDriver";
@@ -22,14 +23,14 @@ function setKeepAlive() {
 }
 
 export type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => any> =
-    T extends (config: infer P, ...args: any[]) => any ? P : never;
+    T extends (config: infer P, ...args: any) => any ? P : never;
 
 export async function createFluidTestDriver(
     fluidTestDriverType: TestDriverTypes,
     config?: {
         odsp?: CreateFromEnvConfigParam<typeof OdspTestDriver.createFromEnv>,
     }) {
-    switch (fluidTestDriverType.toLocaleLowerCase()) {
+    switch (fluidTestDriverType) {
         case "local":
             return new LocalServerTestDriver();
 
@@ -45,6 +46,6 @@ export async function createFluidTestDriver(
             return OdspTestDriver.createFromEnv(config?.odsp);
 
         default:
-            throw new Error(`No Fluid test driver registered for type "${fluidTestDriverType}"`);
+            unreachableCase(fluidTestDriverType, `No Fluid test driver registered for type "${fluidTestDriverType}"`);
     }
 }
