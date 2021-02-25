@@ -42,17 +42,17 @@ There are several npm scripts in [package.json](./package.json) to make it quick
 
 ### Options
 
-#### --tenant, -t
+#### --driver, -d
 
-Specifies which test tenant info to use from [testConfig.json](./testConfig.json). Defaults to **fluidCI**.
+Specifies which test driver to use: odsp, routerlicious, tinylicious. The config for the drivers is pulled from the environment. See [Test Driver](../test-drivers/README.md).
 
 #### --profile, -p
 
 Specifies which test profile to use from [testConfig.json](./testConfig.json). Defaults to **ci**.
 
-#### --url, -u
+#### --testId, -id
 
-If present, the test will load an existing data store (at the given url) rather than creating a new container and data store.
+If present, the test will load an existing data store for the given test id rather than creating a new container and data store.
 (Required when `--runId` is provided)
 
 #### --runId, -r
@@ -60,7 +60,7 @@ If present, the test will load an existing data store (at the given url) rather 
 If present, launch in Test Runner mode with the given runId (to distinguish from other concurrent test runners).
 `--url` is required, since the test runner needs to know which data store to connect to.
 
-#### --debug, -d
+#### --debug, -dbg
 
 Launches each test runner with `--inspect-brk` and a unique Node debugging port. (Not compatible with `--runId`)
 
