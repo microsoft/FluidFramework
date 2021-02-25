@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import { resolve, join } from 'path';
 import { v5 as uuidv5 } from 'uuid';
 import { assert, expect } from 'chai';
-import { LocalTestObjectProvider } from '@fluidframework/test-utils';
+import { TestObjectProvider } from '@fluidframework/test-utils';
 import { Change, StablePlace } from '../PersistedTypes';
 import { DetachedSequenceId, EditId, NodeId } from '../Identifiers';
 import { newEdit } from '../EditUtilities';
@@ -31,7 +31,7 @@ describe('Summary format', () => {
 	const setupEditId = '9406d301-7449-48a5-b2ea-9be637b0c6e4' as EditId;
 
 	let expectedTree: SharedTree;
-	let localTestObjectProvider: LocalTestObjectProvider<ITestContainerConfig>;
+	let localTestObjectProvider: TestObjectProvider<ITestContainerConfig>;
 
 	// Resets the tree before each test
 	beforeEach(async () => {
@@ -40,11 +40,11 @@ describe('Summary format', () => {
 			setupEditId,
 		});
 		expectedTree = testingComponents.tree;
-		localTestObjectProvider = testingComponents.localTestObjectProvider;
+		localTestObjectProvider = testingComponents.testObjectProvider;
 	});
 
 	afterEach(async () => {
-		await localTestObjectProvider.reset();
+		localTestObjectProvider.reset();
 	});
 
 	const validateSummaryRead = (fileName: string): void => {

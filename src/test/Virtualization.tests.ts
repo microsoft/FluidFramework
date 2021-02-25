@@ -2,7 +2,7 @@
 
 import { expect } from 'chai';
 import { ISerializedHandle } from '@fluidframework/core-interfaces';
-import { LocalTestObjectProvider } from '@fluidframework/test-utils';
+import { TestObjectProvider } from '@fluidframework/test-utils';
 import { editsPerChunk } from '../EditLog';
 import { newEdit, setTrait } from '../EditUtilities';
 import { Edit, EditWithoutId } from '../PersistedTypes';
@@ -18,16 +18,16 @@ import {
 
 describe('SharedTree history virtualization', () => {
 	let sharedTree: SharedTree;
-	let localTestObjectProvider: LocalTestObjectProvider<ITestContainerConfig>;
+	let testObjectProvider: TestObjectProvider<ITestContainerConfig>;
 
 	beforeEach(async () => {
 		const testingComponents = await setUpLocalServerTestSharedTree({ summarizer: fullHistorySummarizer_0_1_0 });
 		sharedTree = testingComponents.tree;
-		localTestObjectProvider = testingComponents.localTestObjectProvider;
+		testObjectProvider = testingComponents.testObjectProvider;
 	});
 
 	afterEach(async () => {
-		await localTestObjectProvider.reset();
+		testObjectProvider.reset();
 	});
 
 	// Adds edits to sharedTree1 to make up the specified number of chunks.
@@ -42,7 +42,7 @@ describe('SharedTree history virtualization', () => {
 		}
 
 		// Wait for the ops to to be submitted and processed across the containers.
-		await localTestObjectProvider.opProcessingController.process();
+		await testObjectProvider.opProcessingController.process();
 
 		// Initiate the edit upload
 		sharedTree.saveSummary();
@@ -51,7 +51,7 @@ describe('SharedTree history virtualization', () => {
 		await new Promise((resolve) => sharedTree.once(SharedTreeEvent.ChunksUploaded, resolve));
 
 		// Wait for the handle op to be processed.
-		await localTestObjectProvider.opProcessingController.process();
+		await testObjectProvider.opProcessingController.process();
 
 		return expectedEdits;
 	};
@@ -62,7 +62,7 @@ describe('SharedTree history virtualization', () => {
 		const summary = sharedTree.saveSummary();
 
 		// Load a second tree using the summary
-		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({ localTestObjectProvider });
+		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({ testObjectProvider });
 
 		sharedTree2.loadSummary(summary);
 
@@ -75,7 +75,7 @@ describe('SharedTree history virtualization', () => {
 		sharedTree.processLocalEdit(edit);
 
 		// Wait for the op to to be submitted and processed across the containers.
-		await localTestObjectProvider.opProcessingController.process();
+		await testObjectProvider.opProcessingController.process();
 
 		// Initiate edit upload
 		sharedTree.saveSummary();
@@ -84,7 +84,7 @@ describe('SharedTree history virtualization', () => {
 		await new Promise((resolve) => sharedTree.once(SharedTreeEvent.ChunksUploaded, resolve));
 
 		// Wait for any handle ops to be processed.
-		await localTestObjectProvider.opProcessingController.process();
+		await testObjectProvider.opProcessingController.process();
 
 		const { editHistory } = sharedTree.saveSummary() as SharedTreeSummary;
 		const { editChunks } = assertNotUndefined(editHistory);
@@ -107,7 +107,7 @@ describe('SharedTree history virtualization', () => {
 		}
 
 		// Wait for the ops to to be submitted and processed across the containers.
-		await localTestObjectProvider.opProcessingController.process();
+		await testObjectProvider.opProcessingController.process();
 
 		// Initiate edit upload
 		sharedTree.saveSummary();
@@ -116,7 +116,7 @@ describe('SharedTree history virtualization', () => {
 		await new Promise((resolve) => sharedTree.once(SharedTreeEvent.ChunksUploaded, resolve));
 
 		// Wait for the handle op to be processed.
-		await localTestObjectProvider.opProcessingController.process();
+		await testObjectProvider.opProcessingController.process();
 
 		const { editHistory } = sharedTree.saveSummary() as SharedTreeSummary;
 		const { editChunks } = assertNotUndefined(editHistory);
@@ -142,11 +142,11 @@ describe('SharedTree history virtualization', () => {
 
 	it('sends handle ops to connected clients when chunks are uploaded', async () => {
 		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({
-			localTestObjectProvider,
+			testObjectProvider,
 			summarizer: fullHistorySummarizer_0_1_0,
 		});
 		const { tree: sharedTree3 } = await setUpLocalServerTestSharedTree({
-			localTestObjectProvider,
+			testObjectProvider,
 			summarizer: fullHistorySummarizer_0_1_0,
 		});
 

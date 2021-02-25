@@ -354,7 +354,7 @@ export class SharedTree extends SharedObject {
 					},
 				},
 			],
-			id: null,
+			id: undefined,
 		};
 
 		return tree;
