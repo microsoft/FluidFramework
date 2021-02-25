@@ -123,6 +123,7 @@ jobs:
         customCommand: 'ci'
         customRegistry: 'useNpmrc'
 
+    # end-to-end tests routerlicious
     - task: Npm@1
       displayName: '[end-to-end tests] npm run test:realsvc:routerlicious:report'
       continueOnError: true
@@ -139,6 +140,7 @@ jobs:
         workingDir: packages/test/end-to-end-tests
         customCommand: 'run test:realsvc:routerlicious:report'
 
+    # end-to-end tests odsp
     - task: Npm@1
       displayName: '[end-to-end tests] npm run test:realsvc:odsp:report'
       continueOnError: true

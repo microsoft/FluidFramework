@@ -10,24 +10,23 @@ const envVar = "FLUID_TEST_DRIVER";
 const _global = global as any;
 let fluidTestDriver: ITestDriver;
 _global.getFluidTestDriver = (): ITestDriver => {
+    if(fluidTestDriver === undefined) {
+        throw new Error("Not test driver created. Make sure this mocha hook is configured.");
+    }
     return fluidTestDriver;
 };
-// can be async or not
-export async function mochaGlobalSetup() {
-    const fluidTestDriverType = process.env[envVar]?.toLocaleLowerCase() as TestDriverTypes | undefined | "";
-    if(fluidTestDriver === undefined) {
-        fluidTestDriver = await createFluidTestDriver(
-            fluidTestDriverType === "" || fluidTestDriverType === undefined ? "local" : fluidTestDriverType);
-    }
-
-    if (_global.getFluidTestDriver === undefined
-        || _global.getFluidTestDriver() === undefined) {
-        throw new Error("getFluidTestDriver does not exist or did not return a driver");
-    }
-}
 
 export const mochaHooks = {
     async beforeAll() {
-        await mochaGlobalSetup();
+        const fluidTestDriverType = process.env[envVar]?.toLocaleLowerCase() as TestDriverTypes | undefined | "";
+        if(fluidTestDriver === undefined) {
+            fluidTestDriver = await createFluidTestDriver(
+                fluidTestDriverType === "" || fluidTestDriverType === undefined ? "local" : fluidTestDriverType);
+        }
+
+        if (_global.getFluidTestDriver === undefined
+            || _global.getFluidTestDriver() === undefined) {
+            throw new Error("getFluidTestDriver does not exist or did not return a driver");
+        }
     },
 };

@@ -81,6 +81,7 @@ export class OdspTestDriver implements ITestDriver {
 
         const directoryParts = [directory];
 
+        // if we are in a azure dev ops build use the build id in the dir path
         if (process.env.BUILD_BUILD_ID !== undefined) {
             directoryParts.push(process.env.BUILD_BUILD_ID);
         }else{
