@@ -12,12 +12,12 @@ import {
     IThrottler,
     MongoManager,
 } from "@fluidframework/server-services-core";
-import { verifyStorageToken, throttle, IThrottleMiddlewareOptions } from "@fluidframework/server-services-utils";
-import {  Router } from "express";
+import { verifyStorageToken, throttle, IThrottleMiddlewareOptions, getParam } from "@fluidframework/server-services-utils";
+import { Router } from "express";
 import { Provider } from "nconf";
 import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { getParam, Constants } from "../../../utils";
+import { Constants } from "../../../utils";
 
 export async function getDeltas(
     mongoManager: MongoManager,

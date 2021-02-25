@@ -96,30 +96,30 @@ export function verifyStorageToken(tenantManager: ITenantManager, config: Provid
         const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
         const authorizationHeader = request.header("Authorization");
         if (!authorizationHeader) {
-            return res.status(401).json("Authorization header is missing.");
+            return res.status(401).send("Authorization header is missing.");
         }
         const regex = /Basic (.+)/;
         const tokenMatch = regex.exec(authorizationHeader);
         if (!tokenMatch || !tokenMatch[1]) {
-            return res.status(401).json("Missing access token.");
+            return res.status(401).send("Missing access token.");
         }
         const token = tokenMatch[1];
         const tenantId = getParam(request.params, "tenantId");
         const documentId = getParam(request.params, "id") || request.body.id;
         if (!tenantId || !documentId) {
-            return res.status(401).json("TenantId or DocumentId is missing in the access token.");
+            return res.status(401).send("TenantId or DocumentId is missing in the access token.");
         }
         const claims = validateTokenClaims(token, documentId, tenantId, maxTokenLifetimeSec, isTokenExpiryEnabled);
         if (!claims) {
-            return res.status(401).json("Invalid access token.");
+            return res.status(401).send("Invalid access token.");
         }
         tenantManager.verifyToken(claims.tenantId, token)
-        .then(() => {
-            next();
-        })
-        .catch((error) => {
-            return res.status(401).json(error);
-        });
+            .then(() => {
+                next();
+            })
+            .catch((error) => {
+                return res.status(401).json(error);
+            });
     };
 }
 

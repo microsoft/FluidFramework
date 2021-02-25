@@ -12,7 +12,7 @@ import { MongoDatabaseManager, MongoManager } from "@fluidframework/server-servi
 import * as alfredApp from "../../alfred/app";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import * as jwt from "jsonwebtoken";
+import { generateToken } from "@fluidframework/server-services-utils";
 
 const nodeCollectionName = "testNodes";
 const documentsCollectionName = "testDocuments";
@@ -39,25 +39,6 @@ const defaultProvider = new nconf.Provider({}).defaults({
         blobStorageUrl: "http://localhost:3001"
     }
 });
-
-function getSignedToken(
-    tenantId: string,
-    documentId: string,
-    tenantKey: string,): string {
-    const now = Math.round((new Date()).getTime() / 1000);
-    const lifetime= 60 * 60;
-    return jwt.sign(
-        {
-            documentId,
-            scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-            tenantId,
-            user: null,
-            iat: now,
-            exp: now + lifetime,
-            ver: "1.0",
-        },
-        tenantKey);
-}
 
 describe("Routerlicious", () => {
     describe("Alfred", () => {
@@ -92,8 +73,9 @@ describe("Routerlicious", () => {
                 appTenant1,
                 appTenant2,
             ];
-            const tenantToken1 =`Basic ${getSignedToken(appTenant1.id, document1._id ,appTenant1.key)}`;
-            const tenantToken2 =`Basic ${getSignedToken(appTenant2.id, document1._id ,appTenant2.key)}`;
+            const scopes= [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite]
+            const tenantToken1 =`Basic ${generateToken(appTenant1.id, document1._id, appTenant1.key, scopes)}`;
+            const tenantToken2 =`Basic ${generateToken(appTenant2.id, document1._id, appTenant2.key, scopes)}`;
             const defaultProducer = new TestProducer(new TestKafka());
             let app: express.Application;
             let supertest: request.SuperTest<request.Test>;
@@ -116,16 +98,16 @@ describe("Routerlicious", () => {
                     for (let i = 0; i < limit; i++) {
                         // we're not interested in making the requests succeed with 200s, so just assert that not 429
                         await supertest[method](url)
-                        .set('Authorization', token)
-                        .send(body)
-                        .expect((res) => {
-                            assert.notStrictEqual(res.status, 429);
-                        });
+                            .set('Authorization', token)
+                            .send(body)
+                            .expect((res) => {
+                                assert.notStrictEqual(res.status, 429);
+                            });
                     };
                     await supertest[method](url)
-                    .set('Authorization', token)
-                    .send(body)
-                    .expect(429);
+                        .set('Authorization', token)
+                        .send(body)
+                        .expect(429);
                 };
 
                 describe("/api/v1", () => {
@@ -145,8 +127,8 @@ describe("Routerlicious", () => {
                         await assertThrottle(`/documents/${appTenant2.id}/${document1._id}`, tenantToken2, null);
                         await assertThrottle(`/documents/${appTenant1.id}/${document1._id}`, tenantToken1, null);
                         await supertest.get(`/documents/${appTenant1.id}/${document1._id}`)
-                        .set('Authorization', tenantToken1)
-                        .expect(429);
+                            .set('Authorization', tenantToken1)
+                            .expect(429);
                     });
                     it("/:tenantId", async () => {
                         await assertThrottle(`/documents/${appTenant1.id}`, tenantToken1, {id: document1._id}, "post");
@@ -158,29 +140,29 @@ describe("Routerlicious", () => {
                         await assertThrottle(`/deltas/raw/${appTenant2.id}/${document1._id}`, tenantToken2, null);
                         await assertThrottle(`/deltas/raw/${appTenant1.id}/${document1._id}`, tenantToken1, null);
                         await supertest.get(`/deltas/raw/${appTenant1.id}/${document1._id}`)
-                        .set('Authorization', tenantToken1)
-                        .expect(429);
+                            .set('Authorization', tenantToken1)
+                            .expect(429);
                     });
                     it("/:tenantId/:id", async () => {
                         await assertThrottle(`/deltas/${appTenant2.id}/${document1._id}`, tenantToken2, null);
                         await assertThrottle(`/deltas/${appTenant1.id}/${document1._id}`, tenantToken1, null);
                         await supertest.get(`/deltas/${appTenant1.id}/${document1._id}`)
-                        .set('Authorization', tenantToken1)
-                        .expect(429);
+                            .set('Authorization', tenantToken1)
+                            .expect(429);
                     });
                     it("/v1/:tenantId/:id", async () => {
                         await assertThrottle(`/deltas/v1/${appTenant2.id}/${document1._id}`, tenantToken2, null);
                         await assertThrottle(`/deltas/v1/${appTenant1.id}/${document1._id}`, tenantToken1, null);
                         await supertest.get(`/deltas/v1/${appTenant1.id}/${document1._id}`)
-                        .set('Authorization', tenantToken1)
-                        .expect(429);
+                            .set('Authorization', tenantToken1)
+                            .expect(429);
                     });
                     it("/:tenantId/:id/v1", async () => {
                         await assertThrottle(`/deltas/${appTenant2.id}/${document1._id}/v1`, tenantToken2, null);
                         await assertThrottle(`/deltas/${appTenant1.id}/${document1._id}/v1`, tenantToken1, null);
                         await supertest.get(`/deltas/${appTenant1.id}/${document1._id}/v1`)
-                        .set('Authorization', tenantToken1)
-                        .expect(429);
+                            .set('Authorization', tenantToken1)
+                            .expect(429);
                     });
                 });
             });
@@ -203,44 +185,44 @@ describe("Routerlicious", () => {
                 describe("/documents", () => {
                     it("/:tenantId/:id", async () => {
                         await supertest.get(`/documents/${appTenant1.id}/${document1._id}`)
-                        .set('Authorization', tenantToken1)
-                        .expect(200);
+                            .set('Authorization', tenantToken1)
+                            .expect(200);
                     });
                     it("/:tenantId/:id-invalidToken", async () => {
                         await supertest.get(`/documents/${appTenant1.id}/${document1._id}`)
-                        .expect(401);
+                            .expect(401);
                     });
                     it("/:tenantId", async () => {
                         await supertest.post(`/documents/${appTenant1.id}`)
-                        .set('Authorization', tenantToken1)
-                        .send({id: document1._id})
-                        .expect((res) => {
-                            assert.notStrictEqual(res.status, 401);
-                        });
+                            .set('Authorization', tenantToken1)
+                            .send({id: document1._id})
+                            .expect((res) => {
+                                assert.notStrictEqual(res.status, 401);
+                            });
                     });
                     it("/:tenantId-invalidtoken", async () => {
                         await supertest.post(`/documents/${appTenant1.id}`)
-                        .send({id: document1._id})
-                        .expect(401);
+                            .send({id: document1._id})
+                            .expect(401);
                     });
                 });
 
                 describe("/deltas-invalidToken", () => {
                     it("/raw/:tenantId/:id", async () => {
                         await supertest.get(`/deltas/raw/${appTenant2.id}/${document1._id}`)
-                        .expect(401);
+                            .expect(401);
                     });
                     it("/:tenantId/:id", async () => {
                         await supertest.get(`/deltas/${appTenant2.id}/${document1._id}`)
-                        .expect(401);
+                            .expect(401);
                     });
                     it("/v1/:tenantId/:id", async () => {
                         await supertest.get(`/deltas/v1/${appTenant2.id}/${document1._id}`)
-                        .expect(401);
+                            .expect(401);
                     });
                     it("/:tenantId/:id/v1", async () => {
                         await supertest.get(`/deltas/${appTenant2.id}/${document1._id}/v1`)
-                        .expect(401);
+                            .expect(401);
                     });
                 });
             });

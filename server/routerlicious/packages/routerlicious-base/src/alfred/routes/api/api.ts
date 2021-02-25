@@ -7,13 +7,13 @@ import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
 import * as core from "@fluidframework/server-services-core";
-import { validateTokenClaims, throttle, IThrottleMiddlewareOptions } from "@fluidframework/server-services-utils";
+import { validateTokenClaims, throttle, IThrottleMiddlewareOptions, getParam } from "@fluidframework/server-services-utils";
 import { Request, Response, Router } from "express";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import requestAPI from "request";
 import winston from "winston";
-import { getParam, Constants } from "../../../utils";
+import { Constants } from "../../../utils";
 import {
     craftClientJoinMessage,
     craftClientLeaveMessage,
