@@ -4,7 +4,7 @@
  */
 
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { assert, TelemetryNullLogger, stringToBuffer } from "@fluidframework/common-utils";
+import { assert, TelemetryNullLogger, stringToBuffer, bufferToString } from "@fluidframework/common-utils";
 import { ISummaryTree, SummaryType, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { BlobAggregationStorage } from "../blobAggregationStorage";
@@ -143,10 +143,11 @@ async function prep(allowPacking: boolean, blobSizeLimit: number | undefined) {
     assert (service.flattenedTree["dataStore1/channel1/blob4"] !== undefined);
     assert (service.flattenedTree["dataStore2/channel2/blob5"] !== undefined);
 
-    assert(await service.readBlob("dataStore1/blob2") === stringToBuffer("small string 2", "utf8"));
-    assert(await service.readBlob("dataStore1/blob3") ===
-        stringToBuffer("not very small string - exceeding 40 bytes limit for sure", "utf8"));
-    assert(await service.readBlob("dataStore1/channel1/blob4") === stringToBuffer("small string again", "utf8"));
+    assert(bufferToString(await service.readBlob("dataStore1/blob2"),"utf8") === "small string 2", "blob2 failed");
+    assert(bufferToString(await service.readBlob("dataStore1/blob3"),"utf8") ===
+        "not very small string - exceeding 40 bytes limit for sure", "blob3 failed");
+    assert(bufferToString(await service.readBlob("dataStore1/channel1/blob4"),"utf8") === "small string again"
+        ,"blob4 failed");
 
     return { service, storage, snapshot};
 }
