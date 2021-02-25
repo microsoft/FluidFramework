@@ -25,7 +25,6 @@ import {
     LoaderContainerTracker,
 } from "@fluidframework/test-utils";
 import { Loader } from "@fluidframework/container-loader";
-import { V1, V2 } from "./compatUtils";
 import * as oldTypes from "./oldVersionTypes";
 import * as old from "./oldVersion";
 import * as old2 from "./oldVersion2";
@@ -40,6 +39,8 @@ abstract class TestDataStore extends DataObject {
     public get _root() { return this.root; }
 }
 
+const V1 = "0.1.0";
+const V2 = "0.2.0";
 class TestDataStoreV1 extends TestDataStore {
     public static readonly version = V1;
     public readonly version = V1;
@@ -277,12 +278,16 @@ describe("context reload (hot-swap)", function() {
     oldApis.forEach((oldApi: oldTypes.OldApi) => {
         describe("compat", () => {
             describe("old loader, new runtime", () => {
+                class OldTestDataObjectV1 extends oldApi.OldTestDataObject {
+                    public static readonly version = V1;
+                    public readonly version = V1;
+                }
+
                 beforeEach(async function() {
                     const documentId = createDocumentId();
-                    // TODO: this is not creating the old loader
                     container = await createContainer(
                         [
-                            [codeDetails(V1), oldApi.createOldRuntimeFactory(oldApi.OldTestDataObjectV1)],
+                            [codeDetails(V1), oldApi.createOldRuntimeFactory(OldTestDataObjectV1)],
                             [codeDetails(V2), createRuntimeFactory(TestDataStoreV2)],
                         ],
                         documentId,
@@ -297,10 +302,19 @@ describe("context reload (hot-swap)", function() {
                 tests();
             });
             describe("new loader, old runtime", () => {
+                class OldTestDataObjectV2 extends oldApi.OldTestDataObject {
+                    public static readonly version = V2;
+                    public readonly version = V2;
+                    public static readonly testKey = "version2";
+                    protected async hasInitialized() {
+                        (this as any).root.set(OldTestDataObjectV2.testKey, true);
+                    }
+                }
+
                 beforeEach(async function() {
                     container = await createContainer([
                         [codeDetails(V1), createRuntimeFactory(TestDataStoreV1)],
-                        [codeDetails(V2), oldApi.createOldRuntimeFactory(oldApi.OldTestDataObjectV2)],
+                        [codeDetails(V2), oldApi.createOldRuntimeFactory(OldTestDataObjectV2)],
                     ],
                         createDocumentId());
                     dataStoreV1 = await requestFluidObject<TestDataStoreV1>(container, "default");
