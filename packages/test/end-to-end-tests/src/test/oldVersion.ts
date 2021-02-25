@@ -17,7 +17,7 @@ import {
     DataObjectFactory,
 } from "old-aqueduct";
 import { SharedCell } from "old-cell";
-import { IContainer, IRuntimeFactory } from "old-container-definitions";
+import { IRuntimeFactory } from "old-container-definitions";
 import { IContainerRuntimeOptions } from "old-container-runtime";
 import { SharedCounter } from "old-counter";
 import { IChannelFactory } from "old-datastore-definitions";
@@ -30,8 +30,6 @@ import { IFluidDataStoreFactory } from "old-runtime-definitions";
 import { SharedString, SparseMatrix } from "old-sequence";
 import {
     ChannelFactoryRegistry,
-    createAndAttachContainer,
-    createLocalLoader,
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
 } from "old-test-utils";
@@ -142,17 +140,6 @@ export function createOldRuntimeFactory(dataStore): IRuntimeFactory {
         factory,
         [[type, Promise.resolve(new DataObjectFactory(type, dataStore, [], {}))]],
     );
-}
-
-export async function createOldContainer(
-    documentId,
-    packageEntries,
-    server,
-    urlResolver,
-    codeDetails,
-): Promise<IContainer> {
-    const loader = createLocalLoader(packageEntries, server, urlResolver, { hotSwapContext: true });
-    return createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
 }
 
 export function createTestObjectProvider(

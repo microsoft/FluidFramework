@@ -32,13 +32,13 @@ export interface ITestObjectProvider {
      * Used to create a test Container.
      * In generateLocalCompatTest(), this Container and its runtime will be arbitrarily-versioned.
      */
-    makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer | oldTypes.IContainer>,
-    loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer | oldTypes.IContainer>,
-    makeTestLoader(testContainerConfig?: ITestContainerConfig): ILoader | oldTypes.ILoader,
-    documentServiceFactory: IDocumentServiceFactory | oldTypes.IDocumentServiceFactory,
-    urlResolver: IUrlResolver | oldTypes.IUrlResolver,
-    defaultCodeDetails: IFluidCodeDetails | oldTypes.IFluidCodeDetails,
-    opProcessingController: OpProcessingController | oldTypes.OpProcessingController,
+    makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
+    loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
+    makeTestLoader(testContainerConfig?: ITestContainerConfig): ILoader,
+    documentServiceFactory: IDocumentServiceFactory,
+    urlResolver: IUrlResolver,
+    defaultCodeDetails: IFluidCodeDetails,
+    opProcessingController: OpProcessingController,
 
     ensureSynchronized(): Promise<void>;
     reset(): void,
