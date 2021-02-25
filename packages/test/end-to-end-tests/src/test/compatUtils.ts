@@ -71,8 +71,6 @@ export interface ITestContainerConfig {
     runtimeOptions?: IContainerRuntimeOptions,
 }
 
-
-
 export class TestDataObject extends DataObject {
     public static readonly type = "@fluid-example/test-dataStore";
     public get _context() { return this.context; }
