@@ -25,7 +25,7 @@ export function create(
     };
 
     router.get(
-        "/:tenantId?/:id",
+        "/:tenantId/:id",
         verifyStorageToken(tenantManager, config),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {

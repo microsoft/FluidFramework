@@ -113,12 +113,13 @@ export function verifyStorageToken(tenantManager: ITenantManager, config: Provid
         if (!claims) {
             return res.status(401).json("Invalid access token.");
         }
-        console.log(`token to verify: ${token}`);
-        tenantManager.verifyToken(claims.tenantId, token).catch((error) => {
+        tenantManager.verifyToken(claims.tenantId, token)
+        .then(() => {
+            next();
+        })
+        .catch((error) => {
             return res.status(401).json(error);
         });
-
-        next();
     };
 }
 

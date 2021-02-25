@@ -191,7 +191,7 @@ export function create(
      * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
      */
     router.get(
-        ["/v1/:tenantId?/:id", "/:tenantId?/:id/v1"],
+        ["/v1/:tenantId/:id", "/:tenantId/:id/v1"],
         verifyStorageToken(tenantManager, config),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
@@ -223,7 +223,7 @@ export function create(
      * Retrieves raw (unsequenced) deltas for the given document.
      */
     router.get(
-        "/raw/:tenantId?/:id",
+        "/raw/:tenantId/:id",
         verifyStorageToken(tenantManager, config),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
@@ -250,7 +250,7 @@ export function create(
      * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
      */
     router.get(
-        "/:tenantId?/:id",
+        "/:tenantId/:id",
         verifyStorageToken(tenantManager, config),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
