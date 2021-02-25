@@ -5,13 +5,12 @@
 
 import { EventEmitter } from "events";
 import { IContext, IQueuedMessage, ILogger, IContextErrorData } from "@fluidframework/server-services-core";
-import * as winston from "winston";
 import { CheckpointManager } from "./checkpointManager";
 
 export class Context extends EventEmitter implements IContext {
     private closed = false;
 
-    constructor(private readonly checkpointManager: CheckpointManager) {
+    constructor(private readonly checkpointManager: CheckpointManager, public readonly log: ILogger | undefined) {
         super();
     }
 
@@ -37,10 +36,6 @@ export class Context extends EventEmitter implements IContext {
      */
     public error(error: any, errorData: IContextErrorData) {
         this.emit("error", error, errorData);
-    }
-
-    public get log(): ILogger {
-        return winston;
     }
 
     /**

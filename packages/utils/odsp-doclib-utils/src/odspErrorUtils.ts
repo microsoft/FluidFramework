@@ -96,7 +96,7 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
     // We rename headers so that otel doesn't scrub them away. Otel doesn't allow
     // certain characters in headers including '-'
     const headersToLog: LoggingHeader[] = [
-        { headerName: "sprequestguid", logName: "spRequestGuid" },
+        { headerName: "sprequestguid", logName: "sprequestguid" },
         { headerName: "request-id", logName: "requestId" },
         { headerName: "client-request-id", logName: "clientRequestId" },
         { headerName: "x-msedge-ref", logName: "xMsedgeRef" },
@@ -105,7 +105,7 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
     const additionalProps: ITelemetryProperties = {
         sprequestduration: TelemetryLogger.numberFromString(headers.get("sprequestduration")),
         contentsize: TelemetryLogger.numberFromString(headers.get("content-length")),
-        isafd: headers["X-Fluid-Retries"] !== undefined,
+        isAfd: headers["X-Fluid-Retries"] !== undefined,
     };
     headersToLog.forEach((header) => {
         const headerValue = headers.get(header.headerName);
