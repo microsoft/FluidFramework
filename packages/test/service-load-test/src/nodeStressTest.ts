@@ -5,6 +5,7 @@
 
 import fs from "fs";
 import child_process from "child_process";
+import assert from "assert";
 import commander from "commander";
 import { Loader } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
