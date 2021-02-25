@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IGenericError,
@@ -19,7 +18,7 @@ import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
 import { LocalCodeLoader, TestObjectProvider, LoaderContainerTracker } from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { ITestDriver, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import { createPrimedDataStoreFactory, createRuntimeFactory, TestDataObject } from "./compatUtils";
 
 const id = "fluid-test://localhost/containerTest";
@@ -27,7 +26,7 @@ const testRequest: IRequest = { url: id };
 
 describe("Container", () => {
     let driver: ITestDriver;
-    let logger: ITelemetryBaseLogger | undefined;
+    let logger: ITelemetryBufferedLogger;
     const loaderContainerTracker = new LoaderContainerTracker();
     before(function() {
         driver = getFluidTestDriver() as unknown as ITestDriver;

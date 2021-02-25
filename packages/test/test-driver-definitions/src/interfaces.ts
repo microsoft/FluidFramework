@@ -57,5 +57,9 @@ export interface ITestDriver{
  * all buffered logs that have not yet been fully processed (e.g. uploaded)
  */
 export interface ITelemetryBufferedLogger extends ITelemetryBaseLogger {
+    /**
+     * Flush any underlying buffer of events that have been sent so far
+     * but not yet fully processed - e.g. uploaded to a log ingestion service.
+     */
     flush(): Promise<void>;
 }
