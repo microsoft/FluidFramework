@@ -8,21 +8,16 @@ import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definition
 const _global: any = global;
 const nullLogger: ITelemetryBufferedLogger = { send: () => {}, flush: async () => {} };
 
-// can be async or not
-export const mochaGlobalSetup = function() {
-    // WARNING: May have unexpected results in parallel mode.  See https://mochajs.org/#global-fixtures
-    // Ensure getTestLogger is defined even if no hook sets it up purposefully
-    if (_global.getTestLogger?.() === undefined) {
-        _global.getTestLogger = () => nullLogger;
-    }
-};
-
 const log = console.log;
 const error = console.log;
 export const mochaHooks = {
-    beforeAll() {
-    },
     beforeEach() {
+        // Ensure getTestLogger is defined if no hook has set it up purposefully yet
+        if (_global.getTestLogger?.() === undefined) {
+            _global.getTestLogger = () => nullLogger;
+        }
+
+        // Suppress console.log if not verbose mode
         if (process.env.FLUID_TEST_VERBOSE === undefined) {
             console.log = () => { };
             console.error = () => { };
@@ -31,10 +26,5 @@ export const mochaHooks = {
     afterEach() {
         console.log = log;
         console.error = error;
-    },
-    async afterAll() {
-        // Flush the logs before exiting
-        const logger: ITelemetryBufferedLogger = getTestLogger();
-        await logger.flush();
     },
 };
