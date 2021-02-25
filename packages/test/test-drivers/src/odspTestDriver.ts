@@ -95,7 +95,8 @@ export class OdspTestDriver implements ITestDriver {
 
         return new OdspTestDriver(
             odspTokenManager,
-            driverConfig);
+            driverConfig,
+        );
     }
 
     private static async getStorageToken(
