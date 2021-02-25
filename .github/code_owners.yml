@@ -69,7 +69,7 @@ packages/utils/telemtry-utils/**:
 - markfields
 - vladsud
 - wes-carlson
-packages/utils/tools-utils/**:
+packages/utils/tool-utils/**:
 - markfields
 - curtisman
 
