@@ -1,5 +1,35 @@
 # Change Log
 
+## 0.60.2
+
+* build: BREAKING CHANGE update fluid packages to version 0.34.1
+  * Associated pull request: [28269](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28269)
+  * Commit: [466a8bb115301bbc65b1b10f88fc0fbd75aa90c8](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/466a8bb115301bbc65b1b10f88fc0fbd75aa90c8)
+* refactor: prepare PrefetchingCheckout so async outbound Edit processing will be posible
+  * Associated pull request: [28309](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28309)
+  * Commit: [f00b25caa726a0bcf94055357bf5e02cc79bcdab](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/f00b25caa726a0bcf94055357bf5e02cc79bcdab)
+* add EditCommitted tests
+  * Commit: [73004086181b24b0f9d87e1401e944fce9ff99d4](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/73004086181b24b0f9d87e1401e944fce9ff99d4)
+* fix: Resolve issues with LocalTestObjectProvider tests
+  * Associated pull request: [28326](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28326)
+  * Commit: [71fbc8b2b3af91a976a9259cc94e9fe57efdc2ed](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/71fbc8b2b3af91a976a9259cc94e9fe57efdc2ed)
+* docs: Update package docs formatting for package name
+  * Associated pull request: [28299](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28299)
+  * Commit: [272d535ae1d3919727860de9b34b4d1c16b5f4e3](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/272d535ae1d3919727860de9b34b4d1c16b5f4e3)
+* fix undo/redo for prefetching checkout
+  * Commit: [29171ced2240f8393ad9a10c9f3085ada80889c4](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/29171ced2240f8393ad9a10c9f3085ada80889c4)
+* inital support. broken undo
+  * Commit: [9b4663581c0eac252f60f714e80b5fa5142c5024](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/9b4663581c0eac252f60f714e80b5fa5142c5024)
+* improvement: Propagate error events on Checkout to SharedTree
+  * Associated pull request: [28238](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28238)
+  * Commit: [09b417d44183e405662bbedf63e7086b04c9e277](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/09b417d44183e405662bbedf63e7086b04c9e277)
+* build: Add missing dev dependency on `copyfiles`
+  * Associated pull request: [28243](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28243)
+  * Commit: [731b0c8c10c0a3e5722bfbcb5b8d5c4af21a06b1](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/731b0c8c10c0a3e5722bfbcb5b8d5c4af21a06b1)
+* fix: Listen for the correct event in a checkout test
+  * Associated pull request: [28239](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28239)
+  * Commit: [2a9b525e9ccdb05296e0ece874aaf901fdae35e0](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/2a9b525e9ccdb05296e0ece874aaf901fdae35e0)
+
 ## 0.55.2
 
 * docs: Update change logs with newest `release-tools`
