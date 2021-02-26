@@ -5,14 +5,10 @@
 
 msRestAzure = require('ms-rest-azure');
 keyVault = require('azure-keyvault');
+rcTools = require('@fluidframework/tool-utils');
 const { exec } = require('child_process');
 
-(async () => {
-    credentials = await msRestAzure.interactiveLogin();
-    const keyVaultClient = new keyVault.KeyVaultClient(credentials);
-    const vaultUri = "https://" + "prague-key-vault" + ".vault.azure.net/";
-
-    console.log("Getting secrets...");
+async function getKeys(keyVaultClient, rc, vaultUri) {
     const secretList = await keyVaultClient.getSecrets(vaultUri);
     for (const secret of secretList) {
         if (secret.attributes.enabled) {
@@ -21,10 +17,11 @@ const { exec } = require('child_process');
                 const envName = secretName.split('-').join('__'); // secret name can't contain underscores
                 console.log(`Setting environment variable ${envName}...`);
                 setEnv(envName, response.value);
+                rc[envName] = response.value;
             });
         }
     }
-})();
+}
 
 function setEnv(name, value) {
     const shell = process.env.SHELL ? process.env.SHELL.split('/').pop() : null;
@@ -38,7 +35,7 @@ function setEnv(name, value) {
             return exec(`${setString} && echo '${setString}' >> ~/.zshrc`, stdResponse);
         case "fish":
             return exec(`set -xU '${name}' '${value}'`, {"shell": process.env.SHELL}, stdResponse);
-        default: //windows
+        default: // windows
             const escapedValue = value.split('"').join('\\"');
             return exec(`setx ${name} "${escapedValue}"`, stdResponse);
     }
@@ -47,3 +44,20 @@ function setEnv(name, value) {
 function stdResponse(err, stdout, stderr) {
     console.log(err ? err : (stderr || stdout) ? stderr + stdout : "done");
 }
+
+(async () => {
+    const credentialsP = msRestAzure.interactiveLogin();
+    const rcP = rcTools.loadRC();
+    const [credentials, rc] = await Promise.all([credentialsP, rcP]);
+    const client = new keyVault.KeyVaultClient(credentials);
+    console.log("Getting secrets...");
+
+    await getKeys(client, rc, "https://prague-key-vault.vault.azure.net/");
+
+    try {
+        await getKeys(client, rc, "https://ff-internal-dev-secrets.vault.azure.net/");
+    } catch (e) {
+        console.log("Couldn't get secrets from FF internal keyvault. If you need access make sure you are in the relevant security group.")
+    }
+    await rcTools.saveRC(rc);
+})();
