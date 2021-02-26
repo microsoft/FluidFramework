@@ -4,11 +4,21 @@
  */
 
 import { expect } from 'chai';
-import { SharedTree, SharedTreeEvent } from '../SharedTree';
-import { Delete, EditResult, Insert, Move, StableRange, StablePlace, Side } from '../PersistedTypes';
-import { Checkout, CheckoutEvent } from '../Checkout';
-import { setTrait } from '../EditUtilities';
-import { EditValidationResult } from '../Snapshot';
+import {
+	setTrait,
+	Delete,
+	EditResult,
+	Insert,
+	Move,
+	StableRange,
+	StablePlace,
+	Side,
+	EditValidationResult,
+	SharedTree,
+	SharedTreeEvent,
+	Checkout,
+	CheckoutEvent,
+} from '../index';
 import {
 	left,
 	leftTraitLocation,
@@ -32,6 +42,26 @@ export function checkoutTests(
 	): Promise<{ checkout: Checkout; tree: SharedTree }> {
 		const { tree } = setUpTestSharedTree(options);
 		return { checkout: await checkoutFactory(tree), tree };
+	}
+
+	/**
+	 * Counts the number of times invalidation occurs while performing `action`.
+	 * @param action Action to perform
+	 * @param options Options object used to construct the initial SharedTree
+	 */
+	async function countInvalidations(
+		action: (checkout: Checkout) => void,
+		options: SharedTreeTestingOptions = { localMode: true }
+	): Promise<number> {
+		const { checkout } = await setUpTestCheckout(options);
+
+		let invalidations = 0;
+		checkout.on(CheckoutEvent.ViewChange, () => {
+			invalidations++;
+		});
+
+		action(checkout);
+		return invalidations;
 	}
 
 	return describe(suiteName, () => {
@@ -204,15 +234,10 @@ export function checkoutTests(
 		});
 
 		it('does not invalidate in response to an empty edit', async () => {
-			const { checkout } = await setUpTestCheckout();
-
-			let invalidations = 0;
-			checkout.on(SharedTreeEvent.EditCommitted, () => {
-				invalidations++;
+			const invalidations = await countInvalidations((checkout) => {
+				checkout.openEdit();
+				checkout.closeEdit();
 			});
-
-			checkout.openEdit();
-			checkout.closeEdit();
 			expect(invalidations).equals(0);
 		});
 
@@ -225,14 +250,12 @@ export function checkoutTests(
 		});
 
 		it('will emit invalidation messages in response to changes', async () => {
-			const { checkout } = await setUpTestCheckout({ initialTree: simpleTestTree });
-
-			let invalidations = 0;
-			checkout.on(CheckoutEvent.ViewChange, () => {
-				invalidations++;
-			});
-
-			checkout.applyEdit(Delete.create(StableRange.only(left)));
+			const invalidations = await countInvalidations(
+				(checkout) => {
+					checkout.applyEdit(Delete.create(StableRange.only(left)));
+				},
+				{ initialTree: simpleTestTree }
+			);
 			expect(invalidations).equals(1);
 		});
 

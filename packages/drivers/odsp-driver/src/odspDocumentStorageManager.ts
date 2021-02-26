@@ -315,7 +315,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     event.end({
                         blobId: res.content.id,
                         serverRetries: res.headers.get("x-fluid-retries") ?? undefined,
-                        sprequestguid: response.headers.get("sprequestguid") ?? undefined,
+                        sprequestguid: res.headers.get("sprequestguid") ?? undefined,
                     });
                     return res;
                 },

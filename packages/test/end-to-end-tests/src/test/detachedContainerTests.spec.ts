@@ -192,6 +192,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
     it("ReAttach detached container on failed attach", async () => {
         const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         const oldFunc = args.documentServiceFactory.createContainer;
         args.documentServiceFactory.createContainer = (a, b, c) => { throw new Error("Test Error"); };
         let failedOnce = false;

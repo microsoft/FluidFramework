@@ -42,7 +42,9 @@ export class NodeIdGenerator {
 	private nextId = 0;
 
 	public new(): NodeId {
-		return String(this.nextId++) as NodeId;
+		// Prefix 'i' to avoid 'sorted-btree' default comparator issues with mixed string/numeric keys
+		// (See https://github.com/qwertie/btree-typescript/pull/15)
+		return `i${this.nextId++}` as NodeId;
 	}
 }
 
