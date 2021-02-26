@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Change, SharedTree } from "@fluid-experimental/tree";
 import React, { useEffect, useState } from "react";
 import useResizeObserver from "use-resize-observer";
 import { AppState } from "../state";
@@ -12,15 +11,11 @@ import { Stats } from "../stats";
 import { StageView } from "./stage";
 
 const formatFloat = (n: number) => Math.round(n * 10) / 10;
-
 interface IAppProps {
-    tree: SharedTree;
     app: AppState;
 }
 
 function move(bubble: IBubble, width: number, height: number) {
-    const changes: Change[] = [];
-
     let { x, y } = bubble;
     const { vx, vy, r } = bubble;
 
@@ -39,8 +34,6 @@ function move(bubble: IBubble, width: number, height: number) {
     } else if (vy > 0 && y > (height - r)) {
         bubble.vy = -vy;
     }
-
-    return changes;
 }
 
 function collide(left: IBubble, right: IBubble): void {
@@ -76,7 +69,7 @@ function collide(left: IBubble, right: IBubble): void {
     right.vy = rvy + dy * impulse;
 }
 
-export const AppView: React.FC<IAppProps> = ({ tree, app }: IAppProps) => {
+export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
     const [stats] = useState<Stats>(new Stats());
     const [size, onResize] = useState<{ width?: number, height?: number }>({ width: 640, height: 480 });
     const [, setFrame] = useState<number>(0);
@@ -135,7 +128,7 @@ export const AppView: React.FC<IAppProps> = ({ tree, app }: IAppProps) => {
             <div>{`${app.localBubbles.length}/${bubbleCount} bubbles @${
                 formatFloat(stats.smoothFps)} fps (${stats.lastFrameElapsed} ms)`}</div>
             <div>{`Total FPS: ${formatFloat(stats.totalFps)} (Glitches: ${stats.glitchCount})`}</div>
-            <StageView tree={tree} app={app}></StageView>
+            <StageView app={app}></StageView>
         </div>
     );
 };

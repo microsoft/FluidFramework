@@ -65,7 +65,7 @@ export class TreeDemo extends DataObject implements IFluidHTMLView {
     }
 
     public render(div: HTMLElement) {
-        ReactDOM.render(<AppView tree={this.tree} app={this.clientManager}></AppView>, div);
+        ReactDOM.render(<AppView app={this.clientManager}></AppView>, div);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

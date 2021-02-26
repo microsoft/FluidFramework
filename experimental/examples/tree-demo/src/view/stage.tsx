@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { SharedTree } from "@fluid-experimental/tree";
 import React from "react";
 import { AppState } from "../state";
 import { BubbleView } from "./bubble";
@@ -14,11 +13,10 @@ export interface IStage {
 }
 
 export interface IStageProps {
-    tree: SharedTree;
     app: AppState;
 }
 
-export const StageView: React.FC<IStageProps> = ({ tree, app }: IStageProps) => {
+export const StageView: React.FC<IStageProps> = ({ app }: IStageProps) => {
     const groups: JSX.Element[] = [];
 
     for (const client of app.clients) {
