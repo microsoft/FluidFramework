@@ -81,7 +81,7 @@
     "@types/redis": "^2.8.8",
     "@types/sinon": "^9.0.9",
     "@types/socket.io": "^2.1.1",
-    "@types/uuid": "3.4.3",
+    "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
     "concurrently": "^5.2.0",
