@@ -12,6 +12,7 @@ import { LocalResolver } from "@fluidframework/local-driver";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SummaryType } from "@fluidframework/protocol-definitions";
+import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedObjectSequence } from "@fluidframework/sequence";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -91,22 +92,31 @@ describe("Summaries", () => {
 
         // Validate stats
         assert(stats.handleNodeCount === 0, "Expecting no handles for first summary.");
-        // .component and .attributes blobs
-        assert(stats.blobNodeCount >= 2, `Stats expected at least 2 blob nodes, but had ${stats.blobNodeCount}.`);
-        // root node, default data store, and default root dds
-        assert(stats.treeNodeCount >= 3, `Stats expected at least 3 tree nodes, but had ${stats.treeNodeCount}.`);
+        // .metadata, .component, and .attributes blobs
+        assert(stats.blobNodeCount >= 3, `Stats expected at least 2 blob nodes, but had ${stats.blobNodeCount}.`);
+        // root node, data store .channels, default data store, dds .channels, and default root dds
+        assert(stats.treeNodeCount >= 5, `Stats expected at least 3 tree nodes, but had ${stats.treeNodeCount}.`);
 
         // Validate summary
         assert(!summary.unreferenced, "Root summary should be referenced.");
-        const defaultDataStoreNode = summary.tree[defaultDataStoreId];
+
+        assert(summary.tree[".metadata"]?.type === SummaryType.Blob, "Expected .metadata blob in summary root.");
+
+        const channelsTree = summary.tree[channelsTreeName];
+        assert(channelsTree?.type === SummaryType.Tree, "Expected .channels tree in summary root.");
+
+        const defaultDataStoreNode = channelsTree.tree[defaultDataStoreId];
         assert(defaultDataStoreNode?.type === SummaryType.Tree, "Expected default data store tree in summary.");
         assert(!defaultDataStoreNode.unreferenced, "Default data store should be referenced.");
-        assert(defaultDataStoreNode.tree[".component"].type === SummaryType.Blob,
+        assert(defaultDataStoreNode.tree[".component"]?.type === SummaryType.Blob,
             "Expected .component blob in default data store summary tree.");
-        const defaultDdsNode = defaultDataStoreNode.tree.root;
+        const dataStoreChannelsTree = defaultDataStoreNode.tree[channelsTreeName];
+        assert(dataStoreChannelsTree?.type === SummaryType.Tree, "Expected .channels tree in default data store.");
+
+        const defaultDdsNode = dataStoreChannelsTree.tree.root;
         assert(defaultDdsNode?.type === SummaryType.Tree, "Expected default root DDS in summary.");
         assert(!defaultDdsNode.unreferenced, "Default root DDS should be referenced.");
-        assert(defaultDdsNode.tree[".attributes"].type === SummaryType.Blob,
+        assert(defaultDdsNode.tree[".attributes"]?.type === SummaryType.Blob,
             "Expected .attributes blob in default root DDS summary tree.");
 
         // Validate GC nodes
