@@ -10,9 +10,13 @@ import { fromJson } from "./treeutils";
 
 export class AppState {
     private readonly update: (...change: Change[]) => void;
+    public readonly applyEdits: () => void;
     private readonly root: IApp;
 
     public readonly localClient: IClient;
+
+    private readonly deferredUpdates = true;
+    private readonly deferredChanges: Change[] = [];
 
     constructor(
         private readonly tree: SharedTree,
@@ -20,7 +24,16 @@ export class AppState {
         stageHeight: number,
         numBubbles: number,
     ) {
-        this.update = this.tree.applyEdit.bind(tree);
+        this.update = this.deferredUpdates
+            ? this.deferredChanges.push.bind(this.deferredChanges)
+            : this.tree.applyEdit.bind(tree);
+
+        this.applyEdits = this.deferredUpdates
+            ? () => {
+                this.tree.applyEdit(...this.deferredChanges);
+                this.deferredChanges.length = 0;
+            }
+            : () => {};
 
         this.root = TreeObjectProxy<IApp>(this.tree, this.tree.currentView.root, this.update);
 
@@ -32,6 +45,8 @@ export class AppState {
 
         this.clients.pushNode(clientNode);
         this.localClient = TreeObjectProxy(this.tree, clientNode.identifier, this.update);
+
+        this.applyEdits();
     }
 
     public get clients(): TreeArrayProxy<IClient> {

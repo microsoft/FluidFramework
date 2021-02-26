@@ -112,6 +112,8 @@ export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
             } else if (stats.smoothFps < 30) {
                 app.removeBubble();
             }
+
+        app.applyEdits();
         });
     });
 
