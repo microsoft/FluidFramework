@@ -4,6 +4,7 @@ packages:
   - 'packages/*/*'
   - 'examples/**'
   - 'experimental/**'
+#   - '!packages/utils/odsp-doclib-utils'
 #   - 'server/routerlicious/packages/**'
   - 'server/routerlicious/packages/gitresources'
   - 'server/routerlicious/packages/localserver'
