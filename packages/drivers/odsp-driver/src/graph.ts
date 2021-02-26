@@ -141,11 +141,11 @@ async function graphFetch(
     logger: ITelemetryLogger,
     requestInit?: RequestInit,
 ): Promise<IOdspResponse<IGraphFetchResponse>> {
-    let tries = 0;
+    let attempts = 0;
     const response = await PerformanceEvent.timedExecAsync(logger,
         { eventName: "odspFetchResponse", requestName: nameForLogging }, async (event) => {
             const odspResponse = await getWithRetryForTokenRefresh(async (options) => {
-                tries++;
+                attempts++;
                 const token = await getToken(options);
                 const { url, headers } = getUrlAndHeadersWithAuth(
                     graphUrl.startsWith("http") ? graphUrl : `https://graph.microsoft.com/v1.0/${graphUrl}`,
@@ -157,7 +157,7 @@ async function graphFetch(
                 return res;
             },
         );
-        event.end({ ...odspResponse.commonSpoHeaders, tries });
+        event.end({ ...odspResponse.commonSpoHeaders, attempts });
         return odspResponse;
     });
     return response;
@@ -206,9 +206,9 @@ async function getFileDefaultUrl(
         logger,
         { eventName: "odspFetchResponse", requestName: "getFileDefaultUrl" },
         async (event) => {
-            let tries = 0;
+            let attempts = 0;
             const odspResponse = await getWithRetryForTokenRefresh(async (options) => {
-                tries++;
+                attempts++;
                 const token = await getToken({ ...options, siteUrl, type: "OneDrive" });
                 const { url, headers } = getUrlAndHeadersWithAuth(
                     `${siteUrl}/_api/web/GetFileByUrl(@a1)/ListItemAllFields/GetSharingInformation?@a1=${
@@ -224,7 +224,7 @@ async function getFileDefaultUrl(
                 };
                 return fetchAndParseAsJSONHelper<any>(url, requestInit);
             });
-            event.end({ ...odspResponse.commonSpoHeaders, tries });
+            event.end({ ...odspResponse.commonSpoHeaders, attempts });
             return odspResponse.content?.d?.directUrl as string;
         },
     );

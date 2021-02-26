@@ -119,7 +119,7 @@ export class EpochTracker {
      * @param fetchType - method for which fetch is called.
      * @param addInBody - Pass True if caller wants to add epoch in post body.
      */
-    public async fetchResponse(
+    public async fetchArray(
         url: string,
         fetchOptions: {[index: string]: any},
         fetchType: FetchType,

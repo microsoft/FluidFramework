@@ -345,10 +345,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
                     },
                     async (event) => {
-                        const res = await this.epochTracker.fetchResponse(url, { headers }, "blob");
+                        const res = await this.epochTracker.fetchArray(url, { headers }, "blob");
                         event.end({
                             waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
                             ...res.commonSpoHeaders,
+                            attempts: options.refresh ? 2 : 1,
                         });
                         const cacheControl = res.headers.get("cache-control");
                         if (cacheControl === undefined || !(cacheControl.includes("private") || cacheControl.includes("public"))) {

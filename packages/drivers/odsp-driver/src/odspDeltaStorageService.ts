@@ -4,7 +4,6 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { performance } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
@@ -49,8 +48,6 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
 
             const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, storageToken);
 
-            const start = performance.now();
-
             const response = await this.epochTracker
                 .fetchAndParseAsJSON<IDeltaStorageGetResponse>(url, { headers }, "ops");
             const deltaStorageResponse = response.content;
@@ -61,12 +58,13 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
                 messages = deltaStorageResponse.value as ISequencedDocumentMessage[];
             }
 
-            this.logger.sendTelemetryEvent({
+            this.logger.sendPerformanceEvent({
                 eventName: "DeltaStorageOpsFetch",
                 headers: Object.keys(headers).length !== 0 ? true : undefined,
                 count: messages.length,
-                duration: performance.now() - start,
+                duration: response.duration, // this duration for single attempt!
                 ...response.commonSpoHeaders,
+                attempts: options.refresh ? 2 : 1,
             });
 
             // It is assumed that server always returns all the ops that it has in the range that was requested.

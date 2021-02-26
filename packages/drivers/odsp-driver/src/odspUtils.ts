@@ -6,6 +6,7 @@
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { isOnline, OnlineStatus } from "@fluidframework/driver-utils";
+import { performance } from "@fluidframework/common-utils";
 import {
     fetchIncorrectResponse,
     offlineFetchFailureStatusCode,
@@ -33,6 +34,7 @@ export interface IOdspResponse<T> {
     content: T;
     headers: Map<string, string>;
     commonSpoHeaders: ITelemetryProperties;
+    duration: number,
 }
 
 export function getHashedDocumentId(driveId: string, itemId: string): string {
@@ -82,7 +84,10 @@ export async function fetchHelper(
     response: Response,
     headers: Map<string, string>,
     commonSpoHeaders: ITelemetryProperties,
+    duration: number,
 }> {
+    const start = performance.now();
+
     // Node-fetch and dom have conflicting typing, force them to work by casting for now
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return fetch(requestInfo as FetchRequestInfo, requestInit as FetchRequestInit).then(async (fetchResponse) => {
@@ -102,6 +107,7 @@ export async function fetchHelper(
             response,
             headers,
             commonSpoHeaders: getSPOAndGraphRequestIdsFromResponse(headers),
+            duration: performance.now() - start,
         };
     }, (error) => {
         // While we do not know for sure whether computer is offline, this error is not actionable and
@@ -132,7 +138,7 @@ export async function fetchArray(
     requestInit: RequestInit | undefined,
     rateLimiter: RateLimiter,
 ) {
-    const { response, headers, commonSpoHeaders } = await rateLimiter.schedule(
+    const { response, headers, commonSpoHeaders, duration } = await rateLimiter.schedule(
         async () => fetchHelper(requestInfo, requestInit),
     );
 
@@ -142,6 +148,7 @@ export async function fetchArray(
         headers,
         arrayBuffer,
         commonSpoHeaders,
+        duration,
     };
     return res;
 }
@@ -155,7 +162,7 @@ export async function fetchAndParseAsJSONHelper<T>(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<T>> {
-    const { response, headers, commonSpoHeaders } = await fetchHelper(requestInfo, requestInit);
+    const { response, headers, commonSpoHeaders, duration } = await fetchHelper(requestInfo, requestInit);
     // JSON.parse() can fail and message (that goes into telemetry) would container full request URI, including
     // tokens... It fails for me with "Unexpected end of JSON input" quite often - an attempt to download big file
     // (many ops) almost always ends up with this error - I'd guess 1% of op request end up here... It always
@@ -168,6 +175,7 @@ export async function fetchAndParseAsJSONHelper<T>(
             headers,
             content: JSON.parse(text),
             commonSpoHeaders,
+            duration,
         };
         return res;
     } catch (e) {

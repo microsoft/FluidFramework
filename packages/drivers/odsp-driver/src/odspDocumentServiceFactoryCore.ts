@@ -170,7 +170,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 logger,
                 {
                     eventName: `${name || defaultEventName}_GetToken`,
-                    refresh: options.refresh,
+                    attempts: options.refresh ? 2 : 1,
                     hasClaims: !!options.claims,
                     hasTenantId: !!options.tenantId,
                 },
