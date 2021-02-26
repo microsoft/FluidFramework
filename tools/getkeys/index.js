@@ -58,6 +58,7 @@ function stdResponse(err, stdout, stderr) {
     await getKeys(client, rc, "https://prague-key-vault.vault.azure.net/");
 
     try {
+        // Key Vault with restricted access for the FF dev team only
         await getKeys(client, rc, "https://ff-internal-dev-secrets.vault.azure.net/");
     } catch (e) {
         console.log("Couldn't get secrets from FF internal keyvault. If you need access make sure you are in the relevant security group.")
