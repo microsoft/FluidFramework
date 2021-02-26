@@ -58,8 +58,7 @@ describe("SharedString", () => {
         function verifyAndReturnSummaryTree(): ISummaryTree {
             const summarizeResult = sharedString.summarize();
             const summaryObjectKeys = Object.keys(summarizeResult.summary.tree);
-            assert.strictEqual(summaryObjectKeys.length, 2, "summary should have two entries");
-            assert.strictEqual(summaryObjectKeys[0], "header", "header not present in summary");
+            assert.strictEqual(summaryObjectKeys.length, 0, "summary should have two entries");
             assert.strictEqual(summaryObjectKeys[1], "content", "content not present in summary");
 
             const subTree = summarizeResult.summary.tree.content as ISummaryTree;
