@@ -54,7 +54,7 @@ export class ExternalStorageManager implements IExternalStorageManager {
                 result = false;
             });
 
-            return result;
+        return result;
     }
 
     public async write(tenantId: string, ref: string, sha: string, update: boolean): Promise<void> {
