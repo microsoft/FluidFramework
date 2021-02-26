@@ -55,6 +55,7 @@ function stdResponse(err, stdout, stderr) {
     }
     console.log("Getting secrets...");
 
+    // Primary key vault for test/dev secrets shared by Microsoft-internal teams working on FF
     await getKeys(client, rc, "https://prague-key-vault.vault.azure.net/");
 
     try {
