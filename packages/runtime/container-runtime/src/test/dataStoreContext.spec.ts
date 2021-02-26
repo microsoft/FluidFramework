@@ -110,7 +110,7 @@ describe("Data Store Context Tests", () => {
                 const contents = JSON.parse((attributesEntry.value as IBlob).contents) as IFluidDataStoreAttributes;
                 const dataStoreAttributes: IFluidDataStoreAttributes = {
                     pkg: JSON.stringify(["TestDataStore1"]),
-                    snapshotFormatVersion: "0.1",
+                    snapshotFormatVersion: 2,
                     isRootDataStore: true,
                 };
 
@@ -180,7 +180,7 @@ describe("Data Store Context Tests", () => {
                 const contents = JSON.parse((attributesEntry.value as IBlob).contents) as IFluidDataStoreAttributes;
                 const dataStoreAttributes: IFluidDataStoreAttributes = {
                     pkg: JSON.stringify(["TestComp", "SubComp"]),
-                    snapshotFormatVersion: "0.1",
+                    snapshotFormatVersion: 2,
                     isRootDataStore: false,
                 };
 
@@ -337,7 +337,7 @@ describe("Data Store Context Tests", () => {
             it("can correctly initialize and generate attributes", async () => {
                 dataStoreAttributes = {
                     pkg: JSON.stringify(["TestDataStore1"]),
-                    snapshotFormatVersion: "0.1",
+                    snapshotFormatVersion: 2,
                     isRootDataStore: true,
                 };
                 const buffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
@@ -416,7 +416,7 @@ describe("Data Store Context Tests", () => {
                     "Remote DataStore package does not match.");
                 assert.strictEqual(
                     contents.snapshotFormatVersion,
-                    "0.1",
+                    2,
                     "Remote DataStore snapshot version does not match.");
                 // Remote context without the isRootDataStore flag in the snapshot should default it to true.
                 assert.strictEqual(contents.isRootDataStore, true, "Remote DataStore root state does not match.");
