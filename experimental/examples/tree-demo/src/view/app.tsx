@@ -6,7 +6,7 @@
 import { Change, SharedTree } from "@fluid-experimental/tree";
 import React, { useEffect, useState } from "react";
 import useResizeObserver from "use-resize-observer";
-import { ClientManager } from "../model";
+import { AppState } from "../state";
 import { IBubble } from "../proxy";
 import { Stats } from "../stats";
 import { StageView } from "./stage";
@@ -15,7 +15,7 @@ const formatFloat = (n: number) => Math.round(n * 10) / 10;
 
 interface IAppProps {
     tree: SharedTree;
-    app: ClientManager;
+    app: AppState;
 }
 
 function move(bubble: IBubble, width: number, height: number) {
@@ -135,7 +135,7 @@ export const AppView: React.FC<IAppProps> = ({ tree, app }: IAppProps) => {
             <div>{`${app.localBubbles.length}/${bubbleCount} bubbles @${
                 formatFloat(stats.smoothFps)} fps (${stats.lastFrameElapsed} ms)`}</div>
             <div>{`Total FPS: ${formatFloat(stats.totalFps)} (Glitches: ${stats.glitchCount})`}</div>
-            <StageView tree={tree} mgr={app}></StageView>
+            <StageView tree={tree} app={app}></StageView>
         </div>
     );
 };

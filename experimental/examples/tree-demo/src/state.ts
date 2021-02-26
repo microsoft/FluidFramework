@@ -4,11 +4,11 @@
  */
 
 import { Change, SharedTree } from "@fluid-experimental/tree";
-import { randomColor, rnd } from "../rnd";
-import { IApp, IBubble, IClient, TreeArrayProxy, TreeObjectProxy } from "../proxy";
-import { fromJson } from "../treeutils";
+import { randomColor, rnd } from "./rnd";
+import { IApp, IBubble, IClient, TreeArrayProxy, TreeObjectProxy } from "./proxy";
+import { fromJson } from "./treeutils";
 
-export class ClientManager {
+export class AppState {
     private readonly update: (...change: Change[]) => void;
     private readonly root: IApp;
 
@@ -43,7 +43,7 @@ export class ClientManager {
     }
 
     private makeBubble(stageWidth: number, stageHeight: number) {
-        const radius = 5;
+        const radius = (rnd.float64() * 15) + 5;
         const maxSpeed = 4;
         const diameter = radius * 2;
 

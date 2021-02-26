@@ -5,7 +5,7 @@
 
 import { SharedTree } from "@fluid-experimental/tree";
 import React from "react";
-import { ClientManager } from "../model";
+import { AppState } from "../state";
 import { BubbleView } from "./bubble";
 
 export interface IStage {
@@ -15,13 +15,13 @@ export interface IStage {
 
 export interface IStageProps {
     tree: SharedTree;
-    mgr: ClientManager;
+    app: AppState;
 }
 
-export const StageView: React.FC<IStageProps> = ({ tree, mgr }: IStageProps) => {
+export const StageView: React.FC<IStageProps> = ({ tree, app }: IStageProps) => {
     const groups: JSX.Element[] = [];
 
-    for (const client of mgr.clients) {
+    for (const client of app.clients) {
         const color = client.color;
 
         groups.push(<g key={client.color} fill={color} stroke={color}>

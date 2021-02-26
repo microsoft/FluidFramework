@@ -1,2 +1,2 @@
-export * from "./sharedtree";
+export * from "./tree";
 export * from "./types";

@@ -1,4 +1,4 @@
-import { TreeArrayProxy } from "./sharedtree";
+import { TreeArrayProxy } from "./tree";
 
 export interface IBubble {
     x: number;

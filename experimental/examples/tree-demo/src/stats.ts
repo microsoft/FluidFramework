@@ -8,7 +8,7 @@ export class Stats {
     private _glitchCount = 0;
     private _smoothFps = 60;
 
-    private readonly startTime = 0;
+    private readonly startTime;
     private currentFrameStart = 0;
     private _lastFrameElapsed = 0;
 

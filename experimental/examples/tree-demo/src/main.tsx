@@ -13,14 +13,14 @@ import { SharedTree } from "@fluid-experimental/tree";
 import React from "react";
 import ReactDOM from "react-dom";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ClientManager } from "./model";
+import { AppState } from "./state";
 import { AppView } from "./view";
 import { IApp, TreeObjectProxy } from "./proxy";
 
 export class TreeDemo extends DataObject implements IFluidHTMLView {
     public static get Name() { return "@fluid-experimental/tree-demo"; }
     private maybeTree?: SharedTree = undefined;
-    private maybeClientManager?: ClientManager = undefined;
+    private maybeClientManager?: AppState = undefined;
     public get IFluidHTMLView() { return this; }
 
     protected async initializingFirstTime() {
@@ -38,7 +38,7 @@ export class TreeDemo extends DataObject implements IFluidHTMLView {
     }
 
     protected async hasInitialized() {
-        this.maybeClientManager = new ClientManager(
+        this.maybeClientManager = new AppState(
             this.tree,
             /* stageWidth: */ 640,
             /* stageHeight: */ 480,
