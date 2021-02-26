@@ -44,7 +44,8 @@
     "semver": "^7.1.2",
     "shelljs": "^0.8.4",
     "sort-package-json": "1.40.0",
-    "typescript": "^3.7.4"
+    "typescript": "^3.7.4",
+    "yaml": "^1.10.0"
   },
   "devDependencies": {
     "@types/async": "^2.4.1",
