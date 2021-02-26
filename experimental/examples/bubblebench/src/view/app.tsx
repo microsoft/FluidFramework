@@ -77,11 +77,13 @@ export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
     useEffect(() => {
         const localBubbles = app.localBubbles;
 
+        // Move each bubble
         for (const bubble of localBubbles) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             move(bubble, size.width!, size.height!);
         }
 
+        // Handle collisions between each pair of local bubbles
         for (let i = 0; i < localBubbles.length; i++) {
             const left = localBubbles[i];
             for (let j = i + 1; j < localBubbles.length; j++) {
@@ -90,6 +92,8 @@ export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
             }
         }
 
+        // Handle collisions between local bubbles and remote bubbles (but not between pairs
+        // of remote bubbles.)
         for (const client of app.clients) {
             if (client.clientId === app.localClient.clientId) {
                 continue;
@@ -101,6 +105,7 @@ export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
             }
         }
 
+        // Scale the number of local bubbles to target 30 fps.
         if (!(stats.smoothFps > 30)) {
             app.decreaseBubbles();
         } else if (stats.smoothFps > 31) {
@@ -111,6 +116,7 @@ export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
         app.applyEdits();
     });
 
+    // Force a render each frame.
     requestAnimationFrame(() => {
         setFrame((currentFrame) => currentFrame + 1);
     });
