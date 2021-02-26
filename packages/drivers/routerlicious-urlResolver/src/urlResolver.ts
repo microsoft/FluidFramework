@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// import { parse } from "url";
+import { parse } from "url";
 import { assert } from "@fluidframework/common-utils";
 import {
     IRequest,
