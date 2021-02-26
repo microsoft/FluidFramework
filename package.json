@@ -7,6 +7,7 @@
   "license": "MIT",
   "author": "Microsoft",
   "scripts": {
+    "-postinstall": "pnpm run postinstall:lerna",
     "build": "pnpm run policy-check && pnpm run layer-check && pnpm run build:genver && pnpm run build:compile && pnpm run lint && pnpm run build:docs",
     "build:ci": "pnpm run build:genver && pnpm -r build:compile",
     "build:compile": "pnpm -r build:compile",
@@ -26,9 +27,9 @@
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
     "clean:r11s": "cd server/routerlicious && pnpm run clean",
-    "-postinstall": "pnpm run postinstall:lerna",
+    "lage": "lage",
     "layer-check": "fluid-layer-check --info tools/build-tools/data/layerInfo.json",
-    "-lint": "pnpm -r lint --no-sort -- -- -- --color",
+    "lint": "pnpm -r lint --no-sort -- -- -- --color",
     "lint:fix": "pnpm -r lint:fix --no-sort -- -- -- --color",
     "policy-check": "fluid-repo-policy-check",
     "policy-check:fix": "fluid-repo-policy-check -r",
@@ -70,8 +71,7 @@
     "watch:tsc": "pnpm -r tsc -- -- --watch",
     "watch:webpack": "pnpm -r webpack -- -- --watch",
     "webpack": "pnpm -r --no-sort webpack",
-    "webpack:profile": "pnpm -r --no-sort webpack:profile",
-    "lage": "lage"
+    "webpack:profile": "pnpm -r --no-sort webpack:profile"
   },
   "nyc": {
     "all": true,
@@ -112,6 +112,7 @@
     "concurrently": "^5.2.0",
     "copyfiles": "^2.1.0",
     "forever": "^3.0.4",
+    "lage": "0.29.0",
     "lerna": "^3.14.1",
     "markdown-magic": "^1.0.0",
     "nyc": "^15.0.0",
@@ -119,8 +120,7 @@
     "run-script-os": "^1.1.5",
     "start-server-and-test": "^1.11.7",
     "tinylicious": "^0.4.17169",
-    "typescript": "~4.1.3",
-    "lage": "0.24.0"
+    "typescript": "~4.1.3"
   },
   "fluidBuild": {
     "repoPackages": {
