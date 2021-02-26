@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { RequestInit, Response, default as fetch } from "node-fetch";
+import fetch from "node-fetch";
 import {
     IOdspAuthRequestInfo,
     authRequestWithRetry,
@@ -13,7 +13,7 @@ export async function getAsync(
     url: string,
     authRequestInfo: IOdspAuthRequestInfo,
 ): Promise<Response> {
-    return authRequest(authRequestInfo, async (config: RequestInit) => fetch(url, config));
+    return authRequest(authRequestInfo, async (config: RequestInit) => fetch(url, config) as Response);
 }
 
 export async function putAsync(
@@ -25,7 +25,7 @@ export async function putAsync(
             ...config,
             method: "PUT",
         };
-        return fetch(url, putConfig);
+        return fetch(url, putConfig) as Response;
     });
 }
 
@@ -40,13 +40,13 @@ export async function postAsync(
             body,
             method: "POST",
         };
-        return fetch(url, postConfig);
+        return fetch(url, postConfig) as Response;
     });
 }
 
 export async function unauthPostAsync(url: string, body: any): Promise<Response> {
     return safeRequestCore(async () => {
-        return fetch(url, { body, method: "POST" });
+        return fetch(url, { body, method: "POST" }) as Response;
     });
 }
 
@@ -54,10 +54,9 @@ async function authRequest(
     authRequestInfo: IOdspAuthRequestInfo,
     requestCallback: (config: RequestInit) => Promise<Response>,
 ): Promise<Response> {
-    const foo = async (config: RequestInit) => safeRequestCore(async () => requestCallback(config));
     return authRequestWithRetry(
         authRequestInfo,
-        foo,
+        async (config: RequestInit) => safeRequestCore(async () => requestCallback(config)),
     );
 }
 

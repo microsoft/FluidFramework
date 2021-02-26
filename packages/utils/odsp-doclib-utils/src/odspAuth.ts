@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { RequestInit, Response } from "node-fetch";
 import { getAadTenant } from "./odspDocLibUtils";
 import { throwOdspNetworkError } from "./odspErrorUtils";
 import { unauthPostAsync } from "./odspRequest";
@@ -143,7 +142,7 @@ export async function authRequestWithRetry(
     authRequestInfo: IOdspAuthRequestInfo,
     requestCallback: (config: RequestInit) => Promise<Response>,
 ): Promise<Response> {
-    const createConfig = (token: string) => ({ headers: { Authorization: `Bearer ${token}` } });
+    const createConfig = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
 
     const result = await requestCallback(createConfig(authRequestInfo.accessToken));
 
