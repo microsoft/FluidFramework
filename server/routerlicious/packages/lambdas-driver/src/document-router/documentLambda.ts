@@ -71,8 +71,8 @@ export class DocumentLambda implements IPartitionLambda {
         const routingKey = `${boxcar.tenantId}/${boxcar.documentId}`;
 
         // Create or update the DocumentPartition
-        let document: DocumentPartition;
-        if (!this.documents.has(routingKey)) {
+        let document = this.documents.get(routingKey);
+        if (!document) {
             // Create a new context and begin tracking it
             const documentContext = this.contextManager.createContext(message);
 
@@ -85,7 +85,6 @@ export class DocumentLambda implements IPartitionLambda {
                 this.documentLambdaServerConfiguration.partitionActivityTimeout);
             this.documents.set(routingKey, document);
         } else {
-            document = this.documents.get(routingKey);
             // SetHead assumes it will always receive increasing offsets. So we need to split the creation case
             // from the update case.
             document.context.setHead(message);

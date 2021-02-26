@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { AsyncLocalStorage } from "async_hooks";
 import * as git from "@fluidframework/gitresources";
 import { ICreateRefParamsExternal, IPatchRefParamsExternal } from "@fluidframework/server-services-client";
 import { IThrottler } from "@fluidframework/server-services-core";
@@ -17,7 +18,8 @@ export function create(
     store: nconf.Provider,
     tenantService: ITenantService,
     cache: ICache,
-    throttler: IThrottler): Router {
+    throttler: IThrottler,
+    asyncLocalStorage?: AsyncLocalStorage<string>): Router {
     const router: Router = Router();
 
     const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -26,12 +28,12 @@ export function create(
     };
 
     async function getRefs(tenantId: string, authorization: string): Promise<git.IRef[]> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
         return service.getRefs();
     }
 
     async function getRef(tenantId: string, authorization: string, ref: string): Promise<git.IRef> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
         return service.getRef(ref);
     }
 
@@ -39,7 +41,7 @@ export function create(
         tenantId: string,
         authorization: string,
         params: ICreateRefParamsExternal): Promise<git.IRef> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
         return service.createRef(params);
     }
 
@@ -48,7 +50,7 @@ export function create(
         authorization: string,
         ref: string,
         params: IPatchRefParamsExternal): Promise<git.IRef> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
         return service.updateRef(ref, params);
     }
 
@@ -56,7 +58,7 @@ export function create(
         tenantId: string,
         authorization: string,
         ref: string): Promise<void> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
         return service.deleteRef(ref);
     }
 

@@ -53,6 +53,8 @@ export class PartitionManager extends EventEmitter {
     }
 
     public async stop(): Promise<void> {
+        this.logger?.info("Stop requested");
+
         // Drain all pending messages from the partitions
         const partitionsStoppedP: Promise<void>[] = [];
         for (const [, partition] of this.partitions) {
@@ -78,14 +80,14 @@ export class PartitionManager extends EventEmitter {
             return;
         }
 
-        if (!this.partitions.has(message.partition)) {
+        const partition = this.partitions.get(message.partition);
+        if (!partition) {
             this.emit(
                 "error",
                 `Received message for untracked partition ${message.topic}:${message.partition}@${message.offset}`);
             return;
         }
 
-        const partition = this.partitions.get(message.partition);
         partition.process(message);
     }
 

@@ -56,7 +56,7 @@
     "test:jest:report": "assign-test-ports && lerna run test:jest --concurrency 4 --stream --no-bail --no-sort -- -- --ci --reporters=default --reporters=jest-junit",
     "test:mocha": "lerna run test:mocha --stream --no-bail --no-sort -- -- --color",
     "test:mocha:bail": "lerna run test:mocha --stream",
-    "test:mocha:report": "lerna run test:mocha --stream --no-bail --no-sort -- -- --timeout 4s --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/mocha-junit-report.xml",
+    "test:mocha:report": "lerna run test:mocha --stream --no-bail --no-sort -- -- --timeout 4s --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
     "test:realsvc": "lerna run test:realsvc --stream --no-bail --no-sort",
     "test:realsvc:report": "lerna run test:realsvc:report --stream --no-bail --no-sort",
     "test:report": "npm run test:mocha:report && npm run test:jest:report && npm run test:realsvc:report",
@@ -104,7 +104,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.16318",
+    "@fluidframework/build-tools": "^0.2.16657",
     "@fluidframework/test-tools": "^0.2.3074",
     "@mattetti/custom-api-documenter": "^0.3.3",
     "@microsoft/api-extractor": "^7.7.2",
@@ -117,7 +117,7 @@
     "rimraf": "^2.6.2",
     "run-script-os": "^1.1.5",
     "start-server-and-test": "^1.11.7",
-    "tinylicious": "^0.4.13835",
+    "tinylicious": "^0.4.17169",
     "typescript": "~4.1.3"
   },
   "fluidBuild": {
@@ -126,7 +126,12 @@
       "common-def": "common/lib/common-definitions",
       "common-utils": "common/lib/common-utils",
       "server": "server/routerlicious",
-      "client": "",
+      "client": {
+        "directory": "",
+        "ignoredDirs": [
+          "examples/apps/cra-demo"
+        ]
+      },
       "tools": [
         "tools/generator-fluid",
         "server/tinylicious"

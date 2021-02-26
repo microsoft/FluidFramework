@@ -79,27 +79,28 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			...this.consumerOptions.additionalOptions,
 		};
 
-		this.consumer = new kafka.KafkaConsumer(options, { "auto.offset.reset": "latest" });
+		const consumer: kafkaTypes.KafkaConsumer = this.consumer =
+			new kafka.KafkaConsumer(options, { "auto.offset.reset": "latest" });
 
-		this.consumer.setDefaultConsumeTimeout(this.consumerOptions.consumeTimeout);
-		this.consumer.setDefaultConsumeLoopTimeoutDelay(this.consumerOptions.consumeLoopTimeoutDelay);
+		consumer.setDefaultConsumeTimeout(this.consumerOptions.consumeTimeout);
+		consumer.setDefaultConsumeLoopTimeoutDelay(this.consumerOptions.consumeLoopTimeoutDelay);
 
-		this.consumer.on("ready", () => {
-			this.consumer.subscribe([this.topic]);
+		consumer.on("ready", () => {
+			consumer.subscribe([this.topic]);
 
 			if (this.consumerOptions.automaticConsume) {
 				// start the consume loop
-				this.consumer.consume();
+				consumer.consume();
 			}
 
-			this.emit("connected", this.consumer);
+			this.emit("connected", consumer);
 		});
 
-		this.consumer.on("disconnected", () => {
+		consumer.on("disconnected", () => {
 			this.emit("disconnected");
 		});
 
-		this.consumer.on("connection.failure", async (error) => {
+		consumer.on("connection.failure", async (error) => {
 			await this.close(true);
 
 			this.emit("error", error);
@@ -107,9 +108,9 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			this.connect();
 		});
 
-		this.consumer.on("data", this.processMessage.bind(this));
+		consumer.on("data", this.processMessage.bind(this));
 
-		this.consumer.on("offset.commit", (err, offsets) => {
+		consumer.on("offset.commit", (err, offsets) => {
 			let shouldRetryCommit = false;
 
 			if (err) {
@@ -153,7 +154,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			}
 		});
 
-		this.consumer.on("rebalance", async (err, topicPartitions) => {
+		consumer.on("rebalance", async (err, topicPartitions) => {
 			if (err.code === kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS ||
 				err.code === kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
 				const newAssignedPartitions = new Set<number>(topicPartitions.map((tp) => tp.partition));
@@ -216,19 +217,19 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			}
 		});
 
-		this.consumer.on("rebalance.error", (error) => {
+		consumer.on("rebalance.error", (error) => {
 			this.emit("error", error);
 		});
 
-		this.consumer.on("event.error", (error) => {
+		consumer.on("event.error", (error) => {
 			this.emit("error", error);
 		});
 
-		this.consumer.on("event.throttle", (event) => {
+		consumer.on("event.throttle", (event) => {
 			this.emit("throttled", event);
 		});
 
-		this.consumer.connect();
+		consumer.connect();
 	}
 
 	public async close(reconnecting: boolean = false): Promise<void> {

@@ -9,13 +9,15 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { taskSchedulerId } from "@fluidframework/container-runtime";
 import { IAgentScheduler } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { timeoutPromise, defaultTimeoutDurationMs } from "@fluidframework/test-utils";
 import { generateTest, ITestObjectProvider, TestDataObject } from "./compatUtils";
-import * as oldTypes from "./oldVersionTypes";
 
 const tests = (argsFactory: () => ITestObjectProvider) => {
+    let leaderTimeout = defaultTimeoutDurationMs;
     let args: ITestObjectProvider;
     beforeEach(() => {
         args = argsFactory();
+        leaderTimeout = args.driver.type === "odsp" ? 5000 : defaultTimeoutDurationMs;
     });
     afterEach(() => {
         args.reset();
@@ -36,8 +38,11 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             // tasks. Sending an op will switch it to "write" mode.
             dataObject._root.set("tempKey", "tempValue");
 
-            while (!container.deltaManager.active) {
-                await args.opProcessingController.process();
+            if (!dataObject._context.leader) {
+                // Wait until we are the leader before we proceed.
+                await timeoutPromise((res) => dataObject._context.on("leader", res), {
+                    durationMs: leaderTimeout,
+                });
             }
         });
 
@@ -47,7 +52,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         it("Can pick tasks", async () => {
             await scheduler.pick("task1", async () => { });
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             assert.deepStrictEqual(scheduler.pickedTasks(), [leader, "task1"]);
         });
 
@@ -96,8 +101,8 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     });
 
     describe("Multiple clients", () => {
-        let container1: IContainer | oldTypes.IContainer;
-        let container2: IContainer | oldTypes.IContainer;
+        let container1: IContainer;
+        let container2: IContainer;
         let scheduler1: IAgentScheduler;
         let scheduler2: IAgentScheduler;
 
@@ -111,8 +116,11 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
             dataObject1._root.set("tempKey1", "tempValue1");
-            while (!container1.deltaManager.active) {
-                await args.opProcessingController.process();
+            if (!dataObject1._context.leader) {
+                // Wait until we are the leader before we proceed.
+                await timeoutPromise((res) => dataObject1._context.on("leader", res), {
+                    durationMs: leaderTimeout,
+                });
             }
             // Load existing Container for the second document.
             container2 = await args.loadTestContainer();
@@ -123,9 +131,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
             dataObject2._root.set("tempKey2", "tempValue2");
-            while (!container2.deltaManager.active) {
-                await args.opProcessingController.process();
-            }
+            await args.ensureSynchronized();
         });
 
         it("No tasks initially", async () => {
@@ -136,12 +142,12 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         it("Clients agree on picking tasks sequentially", async () => {
             await scheduler1.pick("task1", async () => { });
 
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), []);
             await scheduler2.pick("task2", async () => { });
 
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task2"]);
         });
@@ -154,7 +160,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             await scheduler2.pick("task3", async () => { });
             await scheduler2.pick("task4", async () => { });
 
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task3"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4"]);
         });
@@ -170,7 +176,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             await scheduler2.pick("task5", async () => { });
             await scheduler2.pick("task6", async () => { });
 
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task5"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4", "task6"]);
         });
@@ -186,7 +192,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             await scheduler2.pick("task5", async () => { });
             await scheduler2.pick("task6", async () => { });
 
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             await scheduler1.release("task4").catch((err) => {
                 assert.deepStrictEqual(err.message, "task4 was never picked");
             });
@@ -209,15 +215,15 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             await scheduler2.pick("task5", async () => { });
             await scheduler2.pick("task6", async () => { });
 
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task5"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4", "task6"]);
             await scheduler1.release("task2", "task1", "task5");
 
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader]);
 
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             assert.deepStrictEqual(scheduler2.pickedTasks().sort(), ["task1", "task2", "task4", "task5", "task6"]);
             await scheduler1.pick("task1", async () => { });
             await scheduler1.pick("task2", async () => { });
@@ -225,7 +231,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             await scheduler1.pick("task6", async () => { });
             await scheduler2.release("task2", "task1", "task4", "task5", "task6");
 
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             assert.deepStrictEqual(scheduler1.pickedTasks().sort(),
                 [leader, "task1", "task2", "task4", "task5", "task6"]);
         });
@@ -233,7 +239,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         it("Releasing leadership should automatically elect a new leader", async () => {
             await scheduler1.release(leader);
 
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             assert.deepStrictEqual(scheduler1.pickedTasks(), []);
             assert.deepStrictEqual(scheduler2.pickedTasks(), [leader]);
         });

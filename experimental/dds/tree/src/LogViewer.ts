@@ -10,7 +10,7 @@ import { EditLog } from './EditLog';
 import { Snapshot } from './Snapshot';
 import { Edit, EditResult } from './PersistedTypes';
 import { EditId } from './Identifiers';
-import { Transaction } from './Transaction';
+import { EditingResult, Transaction } from './Transaction';
 import { initialTree } from './InitialTree';
 
 /**
@@ -37,7 +37,20 @@ export interface LogViewer {
 	 *  - revision 1 means the output of editLog.getAtIndex(0) (or initialSnapshot if there is no edit 0).
 	 *  - revision Number.POSITIVE_INFINITY means the newest revision.
 	 */
-	getSnapshot(revision: number): Snapshot;
+	getSnapshot(revision: number): Promise<Snapshot>;
+
+	/**
+	 * Returns the snapshot at a revision. Can only be used to retrieve revisions added during the current sessions.
+	 *
+	 * Revision numbers correspond to indexes in `editLog`.
+	 * Revision X means the revision output by the largest index in `editLog` less than (but not equal to) X.
+	 *
+	 * For example:
+	 *  - revision 0 means the initialSnapshot.
+	 *  - revision 1 means the output of editLog.getAtIndex(0) (or initialSnapshot if there is no edit 0).
+	 *  - revision Number.POSITIVE_INFINITY means the newest revision.
+	 */
+	getSnapshotInSession(revision: number): Snapshot;
 
 	/**
 	 * Specify that a particular revision is known to have the specified snapshot.
@@ -123,7 +136,7 @@ export class CachingLogViewer implements LogViewer {
 		}
 	}
 
-	public getSnapshot(revision: number): Snapshot {
+	public async getSnapshot(revision: number): Promise<Snapshot> {
 		// Per the documentation for this method, the returned snapshot should be the output of the edit at the largest index <= `revision`.
 		if (revision >= this.log.length && this.lastHeadSnapshot) {
 			return this.lastHeadSnapshot;
@@ -134,40 +147,15 @@ export class CachingLogViewer implements LogViewer {
 
 		let currentSnapshot = startSnapshot;
 		for (let i = startRevision; i < revision && i < this.log.length; i++) {
-			const edit = this.log.getAtIndex(i);
+			const edit = await this.log.getEditAtIndex(i);
 			const editingResult = new Transaction(currentSnapshot).applyChanges(edit.changes).close();
 			if (editingResult.result === EditResult.Applied) {
 				currentSnapshot = editingResult.snapshot;
 			}
 
-			// Only cache the snapshot if the edit has a final revision number assigned by Fluid.
-			// This avoids having to invalidate cache entries when concurrent edits cause local revision
-			// numbers to change when acknowledged.
-			if (i < this.log.numberOfSequencedEdits) {
-				const revision = i + 1; // Revision is the result of the edit being applied.
-				this.sequencedSnapshotCache.set(revision, currentSnapshot);
-
-				// This is the first time this sequenced edit has been processed by this LogViewer. If it was a local edit, log telemetry
-				// in the event that it was invalid or malformed.
-				if (this.unappliedSelfEdits.length > 0) {
-					if (edit.id === this.unappliedSelfEdits[0]) {
-						if (editingResult.result !== EditResult.Applied) {
-							this.logger.send({
-								category: 'generic',
-								eventName:
-									editingResult.result === EditResult.Malformed
-										? 'MalformedSharedTreeEdit'
-										: 'InvalidSharedTreeEdit',
-							});
-						}
-						this.unappliedSelfEdits.shift();
-					} else if (this.expensiveValidation) {
-						assert(this.unappliedSelfEdits.indexOf(edit.id) < 0, 'Local edits processed out of order.');
-					}
-				}
-			}
-
-			this.processEditResult(editingResult.result, edit.id);
+			// Revision is the result of the edit being applied.
+			this.cacheRevision(i + 1, currentSnapshot, edit, editingResult);
+			this.processEditResult(editingResult.result, this.log.getIdAtIndex(i));
 		}
 
 		if (revision >= this.log.length) {
@@ -177,16 +165,80 @@ export class CachingLogViewer implements LogViewer {
 		return currentSnapshot;
 	}
 
-	public setKnownRevision(revision: number, snapshot: Snapshot): void {
+	public getSnapshotInSession(revision: number): Snapshot {
+		// Per the documentation for this method, the returned snapshot should be the output of the edit at the largest index <= `revision`.
+		if (revision >= this.log.length && this.lastHeadSnapshot) {
+			return this.lastHeadSnapshot;
+		}
+
+		const [startRevision, startSnapshot] =
+			this.sequencedSnapshotCache.nextLowerPair(revision + 1) ?? fail('No preceding snapshot cached.');
+
+		let currentSnapshot = startSnapshot;
+		for (let i = startRevision; i < revision && i < this.log.length; i++) {
+			const edit = this.log.getEditInSessionAtIndex(i);
+			const editingResult = new Transaction(currentSnapshot).applyChanges(edit.changes).close();
+			if (editingResult.result === EditResult.Applied) {
+				currentSnapshot = editingResult.snapshot;
+			}
+
+			// Revision is the result of the edit being applied.
+			this.cacheRevision(i + 1, currentSnapshot, edit, editingResult);
+			this.processEditResult(editingResult.result, this.log.getIdAtIndex(i));
+		}
+
+		if (revision >= this.log.length) {
+			this.lastHeadSnapshot = currentSnapshot;
+		}
+
+		return currentSnapshot;
+	}
+
+	public async setKnownRevision(revision: number, snapshot: Snapshot): Promise<void> {
 		if (this.expensiveValidation) {
 			assert(Number.isInteger(revision), 'revision must be an integer');
 			assert(
 				revision <= this.log.numberOfSequencedEdits + 1,
 				'revision must correspond to the result of a SequencedEdit'
 			);
-			const computed = this.getSnapshot(revision);
+			const computed = await this.getSnapshot(revision);
 			assert(computed.equals(snapshot), 'setKnownRevision passed invalid snapshot');
 		}
 		this.sequencedSnapshotCache.set(revision, snapshot);
+	}
+
+	/**
+	 * Version of setKnownRevision that does not support expensive validation.
+	 */
+	public setKnownRevisionSynchronous(revision: number, snapshot: Snapshot): void {
+		this.sequencedSnapshotCache.set(revision, snapshot);
+	}
+
+	private cacheRevision(revision: number, snapshot: Snapshot, edit: Edit, editingResult: EditingResult): void {
+		// Only cache the snapshot if the edit has a final revision number assigned by Fluid.
+		// This avoids having to invalidate cache entries when concurrent edits cause local revision
+		// numbers to change when acknowledged.
+		if (revision <= this.log.numberOfSequencedEdits) {
+			this.sequencedSnapshotCache.set(revision, snapshot);
+
+			// This is the first time this sequenced edit has been processed by this LogViewer. If it was a local edit, log telemetry
+			// in the event that it was invalid or malformed.
+			if (this.unappliedSelfEdits.length > 0) {
+				if (edit.id === this.unappliedSelfEdits[0]) {
+					if (editingResult.result !== EditResult.Applied) {
+						this.logger.send({
+							category: 'generic',
+							eventName:
+								editingResult.result === EditResult.Malformed
+									? 'MalformedSharedTreeEdit'
+									: 'InvalidSharedTreeEdit',
+						});
+					}
+					this.unappliedSelfEdits.shift();
+				} else if (this.expensiveValidation) {
+					assert(this.unappliedSelfEdits.indexOf(edit.id) < 0, 'Local edits processed out of order.');
+				}
+			}
+		}
 	}
 }
