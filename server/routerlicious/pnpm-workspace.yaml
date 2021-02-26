@@ -3,7 +3,7 @@ packages:
 #   - 'common/*/*'
   - 'packages/*'
 #   - '../../common/*/*'
-  - '!packages/local-server'
+#   - '!packages/local-server'
 #   - 'examples/**'
 #   - 'server/routerlicious/packages/**'
 #   - 'server/routerlicious/packages/gitresources'

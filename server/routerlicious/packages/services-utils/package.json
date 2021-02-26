@@ -57,7 +57,7 @@
     "nconf": "^0.11.0",
     "sillyname": "0.1.0",
     "uuid": "^8.3.1",
-    "winston": "^3.1.0",
+    "winston": "^3.1.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0-0",
