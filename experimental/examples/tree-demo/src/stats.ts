@@ -2,17 +2,21 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
 export class Stats {
     private frameCount = 0;
     private _glitchCount = 0;
     private _smoothFps = 60;
 
-    private startTime = 0;
+    private readonly startTime = 0;
     private currentFrameStart = 0;
     private _lastFrameElapsed = 0;
 
-    public start() {
+    constructor() {
         this.startTime = this.now();
+    }
+
+    public start() {
         this.currentFrameStart = this.now();
     }
 
@@ -30,6 +34,8 @@ export class Stats {
 
         const a = 0.75;
         this._smoothFps = (a * this._smoothFps) + ((1 - a) * frameFps);
+
+        console.assert(isFinite(this._smoothFps), `${this._smoothFps}, ${frameFps}`);
     }
 
     public get smoothFps() { return this._smoothFps; }

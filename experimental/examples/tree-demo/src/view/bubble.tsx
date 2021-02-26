@@ -4,21 +4,13 @@
  */
 
 import React from "react";
-import { NodeId, Snapshot } from "@fluid-experimental/tree";
-import { BubbleProxy } from "./model";
+import { IBubble } from "../proxy";
 
-const bubbleProxy = new BubbleProxy();
+export type IBubbleProps = Pick<IBubble, "x" | "y" | "r">;
 
-export interface IBubbleProps {
-    tree: Snapshot;
-    id: NodeId;
-}
-
-export const BubbleView: React.FC<IBubbleProps> = ({ tree, id }: IBubbleProps) => {
-    bubbleProxy.moveTo(tree, id);
-
+export const BubbleView: React.FC<IBubbleProps> = ({ x, y, r }: IBubbleProps) => {
     return (
-        <g transform={`translate(${bubbleProxy.x},${bubbleProxy.y}) scale(${bubbleProxy.r})`}>
+        <g transform={`translate(${x},${y}) scale(${r})`}>
             <circle r="1"
                 fillOpacity="0.3"
                 strokeWidth="0.1"

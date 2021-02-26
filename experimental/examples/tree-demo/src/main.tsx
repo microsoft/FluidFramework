@@ -8,40 +8,27 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import {
-    Change,
-    SharedTree,
-} from "@fluid-experimental/tree";
+import { SharedTree } from "@fluid-experimental/tree";
 
 import React from "react";
 import ReactDOM from "react-dom";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import useResizeObserver from "use-resize-observer";
-import { IStage, StageView } from "./stage";
-import { ClientManager, BubbleProxy, makeBubble } from "./model";
-import { Stats } from "./stats";
-
-const stage: IStage = {
-    width: 640,
-    height: 480,
-};
+import { ClientManager } from "./model";
+import { AppView } from "./view";
+import { IApp, TreeObjectProxy } from "./proxy";
 
 export class TreeDemo extends DataObject implements IFluidHTMLView {
-    private readonly stats = new Stats();
-    private readonly bubble0 = new BubbleProxy();
-    private readonly bubble1 = new BubbleProxy();
-
     public static get Name() { return "@fluid-experimental/tree-demo"; }
     private maybeTree?: SharedTree = undefined;
     private maybeClientManager?: ClientManager = undefined;
     public get IFluidHTMLView() { return this; }
 
-    private makeBubble() {
-        return makeBubble(stage, /* radius: */ 10, /* maxSpeed: */ 2);
-    }
-
     protected async initializingFirstTime() {
-        this.maybeTree = SharedTree.create(this.runtime);
+        const tree = this.maybeTree = SharedTree.create(this.runtime);
+
+        const p = TreeObjectProxy<IApp>(tree, tree.currentView.root, tree.applyEdit.bind(tree));
+        p.clients = [] as any;
+
         this.root.set("tree", this.maybeTree.handle);
     }
 
@@ -53,8 +40,9 @@ export class TreeDemo extends DataObject implements IFluidHTMLView {
     protected async hasInitialized() {
         this.maybeClientManager = new ClientManager(
             this.tree,
-            new Array(10).fill(undefined).map(() => this.makeBubble()),
-            this.runtime.getAudience(),
+            /* stageWidth: */ 640,
+            /* stageHeight: */ 480,
+            /* numBubbles: */ 1,
         );
 
         const onConnected = () => {
@@ -62,9 +50,8 @@ export class TreeDemo extends DataObject implements IFluidHTMLView {
             // update the tree if it has.
             setInterval(() => {
                 const clientId = this.runtime.clientId;
-                if (clientId !== undefined && clientId !== this.clientManager.getClientId(this.tree.currentView)) {
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    this.clientManager.setClientId(this.tree, this.runtime.clientId!);
+                if (clientId !== undefined && clientId !== this.clientManager.localClient.clientId) {
+                    this.clientManager.localClient.clientId = clientId;
                 }
             }, 1000);
         };
@@ -78,80 +65,7 @@ export class TreeDemo extends DataObject implements IFluidHTMLView {
     }
 
     public render(div: HTMLElement) {
-        const formatFloat = (n: number) => Math.round(n * 10) / 10;
-
-        const App = () => {
-            const view = this.tree.currentView;
-            const bubbles = this.clientManager.localBubbles(view);
-
-            if (this.stats.smoothFps > 31) {
-                this.clientManager.addBubble(this.tree, this.makeBubble());
-            } else if (this.stats.smoothFps < 30) {
-                this.clientManager.removeBubble(this.tree);
-            }
-
-            const changes: Change[] = [];
-            for (const bubbleId of bubbles) {
-                this.bubble0.moveTo(view, bubbleId);
-                changes.push(...this.bubble0.move(stage, view));
-            }
-
-            // Collide local bubbles with selves
-            for (let i = 0; i < bubbles.length; i++) {
-                this.bubble0.moveTo(view, bubbles[i]);
-                for (let j = i + 1; j < bubbles.length; j++) {
-                    this.bubble1.moveTo(view, bubbles[j]);
-                    changes.push(...this.bubble0.collide(this.bubble1));
-                }
-            }
-
-            let bubbleCount = bubbles.length;
-
-            // Collide local bubbles with remote bubbles
-            this.clientManager.forEachRemoteBubble(view, (remoteBubble) => {
-                bubbleCount++;
-
-                for (const bubbleId of bubbles) {
-                    this.bubble0.moveTo(view, bubbleId);
-                    changes.push(...this.bubble0.collide(remoteBubble));
-                }
-            });
-
-            this.tree.applyEdit(...changes);
-
-            // Observe changes to the visible size and update physics accordingly.
-            const { ref } = useResizeObserver<HTMLDivElement>({
-                onResize: ({ width, height }) => {
-                    stage.width = width as number;
-                    stage.height = height as number;
-                },
-            });
-
-            return (
-                <div ref={ref} style={{ position: "absolute", inset: "0px" }}>
-                    <div>{`${bubbles.length}/${bubbleCount} bubbles @ ${
-                        formatFloat(this.stats.smoothFps)} fps (${this.stats.lastFrameElapsed} ms)`}</div>
-                    <div>{`Total FPS: ${formatFloat(this.stats.totalFps)} (Glitches: ${this.stats.glitchCount})`}</div>
-                    <StageView
-                        width={stage.width}
-                        height={stage.height}
-                        tree={this.tree.currentView}
-                        mgr={this.clientManager}></StageView>
-                </div>
-            );
-        };
-
-        const renderLoop = () => {
-            ReactDOM.render(
-                <div style={{ position: "absolute", inset: "0px" }}>
-                    <App></App>
-                </div>, div);
-            requestAnimationFrame(renderLoop);
-            this.stats.endFrame();
-        };
-
-        this.stats.start();
-        renderLoop();
+        ReactDOM.render(<AppView tree={this.tree} app={this.clientManager}></AppView>, div);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
