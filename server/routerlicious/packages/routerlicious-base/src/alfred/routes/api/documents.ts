@@ -4,7 +4,12 @@
  */
 
 import { IDocumentStorage, IThrottler, ITenantManager } from "@fluidframework/server-services-core";
-import { verifyStorageToken, throttle, IThrottleMiddlewareOptions, getParam } from "@fluidframework/server-services-utils";
+import {
+    verifyStorageToken,
+    throttle,
+    IThrottleMiddlewareOptions,
+    getParam,
+} from "@fluidframework/server-services-utils";
 import { Router } from "express";
 import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";

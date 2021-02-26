@@ -12,7 +12,12 @@ import {
     IThrottler,
     MongoManager,
 } from "@fluidframework/server-services-core";
-import { verifyStorageToken, throttle, IThrottleMiddlewareOptions, getParam } from "@fluidframework/server-services-utils";
+import {
+    verifyStorageToken,
+    throttle,
+    IThrottleMiddlewareOptions,
+    getParam,
+} from "@fluidframework/server-services-utils";
 import { Router } from "express";
 import { Provider } from "nconf";
 import winston from "winston";
