@@ -34,7 +34,7 @@ import {
     RemotedFluidDataStoreContext,
 } from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
-import { dataStoreAttributesBlobName } from "../snapshot";
+import { dataStoreAttributesBlobName } from "../summaryFormat";
 
 describe("Data Store Context Tests", () => {
     const dataStoreId = "Test1";

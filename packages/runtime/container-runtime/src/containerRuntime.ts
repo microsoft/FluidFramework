@@ -56,6 +56,7 @@ import { CreateContainerError } from "@fluidframework/container-utils";
 import { runGarbageCollection } from "@fluidframework/garbage-collector";
 import {
     BlobTreeEntry,
+    TreeTreeEntry,
 } from "@fluidframework/protocol-base";
 import {
     IClientDetails,
@@ -94,6 +95,7 @@ import {
     IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
+    channelsTreeName,
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
@@ -124,7 +126,8 @@ import {
     chunksBlobName,
     IContainerRuntimeMetadata,
     metadataBlobName,
-} from "./snapshot";
+    wrapSummaryInChannelsTree,
+} from "./summaryFormat";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -943,7 +946,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @deprecated - Use summarize to get summary of the container runtime.
      */
     public async snapshot(): Promise<ITree> {
-        const root: ITree = { entries: await this.dataStores.snapshot() };
+        const root: ITree = { entries: [] };
+
+        root.entries.push(new TreeTreeEntry(
+            channelsTreeName,
+            { entries: await this.dataStores.snapshot() },
+        ));
+
+        const metadata: IContainerRuntimeMetadata = { snapshotFormatVersion: 1 };
+        root.entries.push(new BlobTreeEntry(metadataBlobName, JSON.stringify(metadata)));
 
         if (this.chunkMap.size > 0) {
             root.entries.push(new BlobTreeEntry(chunksBlobName, JSON.stringify([...this.chunkMap])));
@@ -953,6 +964,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {
+        const metadata: IContainerRuntimeMetadata = { snapshotFormatVersion: 1 };
+        addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
         if (this.chunkMap.size > 0) {
             const content = JSON.stringify([...this.chunkMap]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
@@ -1346,6 +1359,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         const summarizeResult = await this.dataStores.summarize(fullTree, trackState);
+        // Wrap data store summaries in .channels subtree.
+        wrapSummaryInChannelsTree(summarizeResult);
         this.addContainerBlobsToSummary(summarizeResult);
         return {
             ...summarizeResult,
@@ -1364,9 +1379,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public createSummary(): ISummaryTree {
-        const summaryTree = this.dataStores.createSummary();
-        this.addContainerBlobsToSummary(summaryTree);
-        return summaryTree.summary;
+        const summarizeResult = this.dataStores.createSummary();
+        // Wrap data store summaries in .channels subtree.
+        wrapSummaryInChannelsTree(summarizeResult);
+        this.addContainerBlobsToSummary(summarizeResult);
+        return summarizeResult.summary;
     }
 
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {

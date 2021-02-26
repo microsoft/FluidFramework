@@ -64,14 +64,15 @@ import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/run
 import { ContainerRuntime } from "./containerRuntime";
 import {
     dataStoreAttributesBlobName,
-    DataStoreSnapshotFormatVersion,
-} from "./snapshot";
+    DataStoreSummaryFormatVersion,
+    wrapSummaryInChannelsTree,
+} from "./summaryFormat";
 
 function createAttributes(pkg: readonly string[], isRootDataStore: boolean): IFluidDataStoreAttributes {
     const stringifiedPkg = JSON.stringify(pkg);
     return {
         pkg: stringifiedPkg,
-        snapshotFormatVersion: "0.1",
+        snapshotFormatVersion: 2,
         isRootDataStore,
     };
 }
@@ -87,7 +88,7 @@ export function createAttributesBlob(pkg: readonly string[], isRootDataStore: bo
  */
 export interface IFluidDataStoreAttributes {
     pkg: string;
-    readonly snapshotFormatVersion: DataStoreSnapshotFormatVersion;
+    readonly snapshotFormatVersion: DataStoreSummaryFormatVersion;
     /**
      * This tells whether a data store is root. Root data stores are never collected.
      * Non-root data stores may be collected if they are not used. If this is not present, default it to
@@ -381,6 +382,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const summarizeResult = await this.channel!.summarize(fullTree, trackState);
+
+        // Wrap dds summaries in .channels subtree.
+        wrapSummaryInChannelsTree(summarizeResult);
 
         // Add data store's attributes to the summary.
         const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();

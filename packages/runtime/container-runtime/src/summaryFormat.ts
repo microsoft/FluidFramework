@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { channelsTreeName } from "@fluidframework/runtime-definitions";
+import { SummaryType } from "@fluidframework/protocol-definitions";
+import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
-export type ContainerRuntimeSnapshotFormatVersion =
+export type ContainerRuntimeSummaryFormatVersion =
     /**
-     * Version 0: format version is missing from snapshot.
+     * Version 0: format version is missing from summary.
      * This indicates it is an older version.
      */
     | undefined
@@ -18,9 +18,9 @@ export type ContainerRuntimeSnapshotFormatVersion =
      */
     | 1;
 
-export type DataStoreSnapshotFormatVersion =
+export type DataStoreSummaryFormatVersion =
     /**
-     * Version 0: format version is missing from snapshot.
+     * Version 0: format version is missing from summary.
      * This indicates it is an older version.
      */
     | undefined
@@ -35,8 +35,8 @@ export type DataStoreSnapshotFormatVersion =
      */
     | 2;
 
-export function snapshotFormatVersionToNumber(
-    version: ContainerRuntimeSnapshotFormatVersion | DataStoreSnapshotFormatVersion,
+export function summaryFormatVersionToNumber(
+    version: ContainerRuntimeSummaryFormatVersion | DataStoreSummaryFormatVersion,
 ): number {
     if (version === undefined) {
         return 0;
@@ -52,14 +52,14 @@ export const chunksBlobName = ".chunks";
 export const blobsTreeName = ".blobs";
 
 export interface IContainerRuntimeMetadata {
-    snapshotFormatVersion: ContainerRuntimeSnapshotFormatVersion;
+    snapshotFormatVersion: ContainerRuntimeSummaryFormatVersion;
 }
 
 export const protocolTreeName = ".protocol";
 
 /**
  * List of tree IDs at the container level which are reserved.
- * This is for older versions of snapshots that do not yet have an
+ * This is for older versions of summaries that do not yet have an
  * isolated data stores namespace. Without the namespace, this must
  * be used to prevent name collisions with data store IDs.
  */
@@ -67,15 +67,28 @@ export const nonDataStorePaths = [protocolTreeName, ".logTail", ".serviceProtoco
 
 export const dataStoreAttributesBlobName = ".component";
 
-export interface IRuntimeSnapshot {
-    id: string | null;
-    blobs: {
-        [chunksBlobName]: string;
-        [metadataBlobName]: string;
+/**
+ * Modifies summary tree and stats to put tree under .channels tree.
+ * Converts from: {
+ *     type: SummaryType.Tree,
+ *     tree: { a: {...}, b: {...}, c: {...} },
+ * }
+ * to: {
+ *     type: SummaryType.Tree,
+ *     tree: {
+ *         ".channels": {
+ *             type: SummaryType.Tree,
+ *             tree: { a: {...}, b: {...}, c: {...} }
+ *         },
+ *     },
+ * }
+ * And adds +1 to treeNodeCount in stats.
+ * @param summarizeResult - summary tree and stats to modify
+ */
+export function wrapSummaryInChannelsTree(summarizeResult: ISummaryTreeWithStats): void {
+    summarizeResult.summary = {
+        type: SummaryType.Tree,
+        tree: { [channelsTreeName]: summarizeResult.summary },
     };
-    trees: {
-        [protocolTreeName]: ISnapshotTree;
-        [blobsTreeName]: ISnapshotTree;
-        [channelsTreeName]: ISnapshotTree;
-    },
+    summarizeResult.stats.treeNodeCount++;
 }

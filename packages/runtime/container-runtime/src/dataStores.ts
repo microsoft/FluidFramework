@@ -51,10 +51,10 @@ import {
     LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
 import {
-    ContainerRuntimeSnapshotFormatVersion,
+    ContainerRuntimeSummaryFormatVersion,
     dataStoreAttributesBlobName,
     nonDataStorePaths,
-} from "./snapshot";
+} from "./summaryFormat";
 
  /**
   * This class encapsulates data store handling. Currently it is only used by the container runtime,
@@ -501,7 +501,7 @@ export class DataStores implements IDisposable {
 
 export function getSnapshotForDataStores(
     snapshot: ISnapshotTree | undefined,
-    snapshotFormatVersion: ContainerRuntimeSnapshotFormatVersion,
+    snapshotFormatVersion: ContainerRuntimeSummaryFormatVersion,
 ): ISnapshotTree | undefined {
     if (!snapshot) {
         return undefined;
