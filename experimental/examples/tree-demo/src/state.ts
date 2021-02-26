@@ -71,11 +71,13 @@ export class AppState {
         };
     }
 
-    public addBubble(width: number, height: number) {
+    public increaseBubbles(width: number, height: number) {
         this.localBubbles.pushNode(fromJson(this.makeBubble(width, height)));
     }
 
-    public removeBubble() {
-        this.localBubbles.pop();
+    public decreaseBubbles() {
+        if (this.localBubbles.length > 1) {
+            this.localBubbles.pop();
+        }
     }
 }

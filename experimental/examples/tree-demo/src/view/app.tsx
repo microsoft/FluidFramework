@@ -101,21 +101,21 @@ export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
             }
         }
 
-        requestAnimationFrame(() => {
-            setFrame((frameNum) => frameNum + 1);
-
-            stats.endFrame();
-
-            if (stats.smoothFps > 31) {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                app.addBubble(size.width!, size.height!);
-            } else if (stats.smoothFps < 30) {
-                app.removeBubble();
-            }
+        if (!(stats.smoothFps > 30)) {
+            app.decreaseBubbles();
+        } else if (stats.smoothFps > 31) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            app.increaseBubbles(size.width!, size.height!);
+        }
 
         app.applyEdits();
-        });
     });
+
+    requestAnimationFrame(() => {
+        setFrame((currentFrame) => currentFrame + 1);
+    });
+
+    stats.endFrame();
 
     // Observe changes to the visible size and update physics accordingly.
     const { ref } = useResizeObserver<HTMLDivElement>({ onResize });

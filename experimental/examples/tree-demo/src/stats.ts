@@ -8,17 +8,9 @@ export class Stats {
     private _glitchCount = 0;
     private _smoothFps = 60;
 
-    private readonly startTime;
+    private readonly startTime = this.now();
     private currentFrameStart = 0;
     private _lastFrameElapsed = 0;
-
-    constructor() {
-        this.startTime = this.now();
-    }
-
-    public start() {
-        this.currentFrameStart = this.now();
-    }
 
     public endFrame() {
         this.frameCount++;
@@ -28,14 +20,16 @@ export class Stats {
         this.currentFrameStart = nextFrameStart;
 
         const frameFps = 1000.0 / this._lastFrameElapsed;
-        if (frameFps < 24) {
-            this._glitchCount++;
+
+        // Note: frameFps can be infinite if the delta from the previous frame is 0 ms.
+        if (isFinite(frameFps)) {
+            if (frameFps < 24) {
+                this._glitchCount++;
+            }
+
+            const a = 0.75;
+            this._smoothFps = (a * this._smoothFps) + ((1 - a) * frameFps);
         }
-
-        const a = 0.75;
-        this._smoothFps = (a * this._smoothFps) + ((1 - a) * frameFps);
-
-        console.assert(isFinite(this._smoothFps), `${this._smoothFps}, ${frameFps}`);
     }
 
     public get smoothFps() { return this._smoothFps; }
