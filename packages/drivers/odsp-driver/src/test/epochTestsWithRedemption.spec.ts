@@ -10,7 +10,7 @@ import { IOdspResolvedUrl } from "../contracts";
 import { EpochTrackerWithRedemption } from "../epochTracker";
 import { ICacheEntry, LocalPersistentCache, LocalPersistentCacheAdapter } from "../odspCache";
 import { getHashedDocumentId } from "../odspUtils";
-import { mockFetch, notFound, okResponse } from "./mockFetch";
+import { mockFetchCore, mockFetch, notFound } from "./mockFetch";
 
 class DeferralWithCallback extends Deferred<void> {
     private epochCallback: () => Promise<any> = async () => {};
@@ -62,14 +62,13 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 
         try {
             // We will trigger a successful call to return the value set in the cache after the failed joinSession call
-            epochCallback.setCallback(async () => mockFetch({}, async () => {
-                return epochTracker.fetchFromCache(cacheEntry1, undefined, "other");
-            }, okResponse, false, false));
+            epochCallback.setCallback(async () => epochTracker.fetchFromCache(cacheEntry1, undefined, "other"));
 
             // Initial joinSession call will return 404 but after the timeout, the call will be retried and succeed
-            await mockFetch({ headers: { "x-fluid-epoch": "epoch1" } }, async () => {
-                return epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession");
-            }, notFound, true);
+            await mockFetch(
+                {},
+                async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
+                { "x-fluid-epoch": "epoch1" });
         } catch (error) {
             success = false;
         }
@@ -82,17 +81,19 @@ describe("Tests for Epoch Tracker With Redemption", () => {
         try {
             epochCallback.setCallback(async () => {
                 try {
-                    await mockFetch({}, async () => {
-                        return epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "treesLatest");
-                    }, notFound, false, false);
+                    await mockFetchCore(
+                        async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "treesLatest"),
+                        notFound,
+                        "internal");
                 } catch (error) {
                     assert.strictEqual(error.errorType, DriverErrorType.fileNotFoundOrAccessDeniedError,
                         "Error should be file not found or access denied error");
                 }
             });
-            await mockFetch({ headers: { "x-fluid-epoch": "epoch1" } }, async () => {
-                return epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession");
-            }, notFound, true);
+            await mockFetchCore(
+                async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
+                async () => notFound({ "x-fluid-epoch": "epoch1" }),
+                "external");
         } catch (error) {
             success = false;
             assert.strictEqual(error.errorType, DriverErrorType.fileNotFoundOrAccessDeniedError,

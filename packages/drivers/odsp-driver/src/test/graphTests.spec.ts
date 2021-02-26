@@ -67,9 +67,10 @@ describe("Tests for Graph fetch", () => {
         };
         const result = await mockFetchMultiple(
             [
-                [{ name: graphItemLite.name, webDavUrl: graphItemLite.webDavUrl,
-                    webUrl: graphItemLite.webUrl },  okResponse],
-                [{ d: { directUrl: "sharelink" } }, okResponse],
+                okResponse({}, {
+                     name: graphItemLite.name, webDavUrl: graphItemLite.webDavUrl, webUrl: graphItemLite.webUrl,
+                }),
+                okResponse({}, { d: { directUrl: "sharelink" } }),
             ], async () => {
             return getShareLink(shareLinkTokenFetcher, siteUrl, driveId, "newItemID1",
                 "Enterprise", logger, "existingAccess", "edit", graphOrigin);

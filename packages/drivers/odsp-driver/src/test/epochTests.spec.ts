@@ -11,7 +11,7 @@ import { IOdspResolvedUrl } from "../contracts";
 import { EpochTracker } from "../epochTracker";
 import { ICacheEntry, LocalPersistentCache, LocalPersistentCacheAdapter } from "../odspCache";
 import { getHashedDocumentId } from "../odspUtils";
-import { mockFetch, mockFetchCustom } from "./mockFetch";
+import { mockFetch, mockFetchCore, createResponse } from "./mockFetch";
 
 describe("Tests for Epoch Tracker", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -41,13 +41,9 @@ describe("Tests for Epoch Tracker", () => {
         cache.put(cacheEntry1, { value: "val1", fluidEpoch: "epoch1", version: "0.1" }, 0);
         cache.put(cacheEntry2, { value: "val2", fluidEpoch: "epoch2", version: "0.1" }, 0);
         // This will set the initial epoch value in epoch tracker.
-        await mockFetch({}, async () => {
-            return epochTracker.fetchFromCache(cacheEntry1, undefined, "other");
-        });
+        await epochTracker.fetchFromCache(cacheEntry1, undefined, "other");
         try {
-            await mockFetch({}, async () => {
-                return epochTracker.fetchFromCache(cacheEntry2, undefined, "other");
-            });
+            await epochTracker.fetchFromCache(cacheEntry2, undefined, "other");
         } catch (error) {
             success = false;
             assert.strictEqual(error.errorType, OdspErrorType.epochVersionMismatch, "Error should be epoch error");
@@ -66,13 +62,12 @@ describe("Tests for Epoch Tracker", () => {
             file: { docId: hashedDocumentId, resolvedUrl } };
         cache.put(cacheEntry1, { value: "val1", fluidEpoch: "epoch1", version: "0.1" }, 0);
         // This will set the initial epoch value in epoch tracker.
-        await mockFetch({}, async () => {
-            return epochTracker.fetchFromCache(cacheEntry1, undefined, "other");
-        });
+        await epochTracker.fetchFromCache(cacheEntry1, undefined, "other");
         try {
-            await mockFetch({ headers: { "x-fluid-epoch": "epoch2" } }, async () => {
-                return epochTracker.fetchResponse("fetchUrl", {}, "other");
-            });
+            await mockFetch(
+                {},
+                async () => epochTracker.fetchArray("fetchUrl", {}, "other"),
+                { "x-fluid-epoch": "epoch2" });
         } catch (error) {
             success = false;
             assert.strictEqual(error.errorType, OdspErrorType.epochVersionMismatch, "Error should be epoch error");
@@ -94,9 +89,10 @@ describe("Tests for Epoch Tracker", () => {
             return epochTracker.fetchFromCache(cacheEntry1, undefined, "other");
         });
         try {
-            await mockFetch({ headers: { "x-fluid-epoch": "epoch2" } }, async () => {
-                return epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "other");
-            });
+            await mockFetch(
+                {},
+                async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "other"),
+                { "x-fluid-epoch": "epoch2" });
         } catch (error) {
             success = false;
             assert.strictEqual(error.errorType, OdspErrorType.epochVersionMismatch, "Error should be epoch error");
@@ -119,7 +115,7 @@ describe("Tests for Epoch Tracker", () => {
         });
         try {
             await mockFetch({}, async () => {
-                return epochTracker.fetchResponse("fetchUrl", {}, "other");
+                return epochTracker.fetchArray("fetchUrl", {}, "other");
             });
         } catch (error) {
             success = false;
@@ -141,9 +137,10 @@ describe("Tests for Epoch Tracker", () => {
             return epochTracker.fetchFromCache(cacheEntry1, undefined, "other");
         });
         try {
-            await mockFetch({ headers: { "x-fluid-epoch": "epoch1" } }, async () => {
-                return epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "other");
-            });
+            await mockFetch(
+                {},
+                async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "other"),
+                { "x-fluid-epoch": "epoch1" });
         } catch (error) {
             success = false;
         }
@@ -164,9 +161,9 @@ describe("Tests for Epoch Tracker", () => {
             return epochTracker.fetchFromCache(cacheEntry1, undefined, "other");
         });
         try {
-            await mockFetchCustom({ headers: { "x-fluid-epoch": "epoch1" } }, false, 409, async () => {
-                return epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "other");
-            });
+            await mockFetchCore(
+                async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "other"),
+                async () => createResponse({ "x-fluid-epoch": "epoch1" }, undefined, 409));
         } catch (error) {
             success = false;
             assert.strictEqual(error.errorType, DriverErrorType.throttlingError, "Error should be throttling error");
@@ -189,9 +186,9 @@ describe("Tests for Epoch Tracker", () => {
             return epochTracker.fetchFromCache(cacheEntry1, undefined, "other");
         });
         try {
-            await mockFetchCustom({ headers: { "x-fluid-epoch": "epoch2" } }, false, 409, async () => {
-                return epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "other");
-            });
+            await mockFetchCore(
+                async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "other"),
+                async () => createResponse({ "x-fluid-epoch": "epoch2" }, undefined, 409));
         } catch (error) {
             success = false;
             assert.strictEqual(error.errorType, OdspErrorType.epochVersionMismatch, "Error should be epoch error");
