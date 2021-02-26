@@ -17,7 +17,7 @@ async function getKeys(keyVaultClient, rc, vaultUri) {
                 const envName = secretName.split('-').join('__'); // secret name can't contain underscores
                 console.log(`Setting environment variable ${envName}...`);
                 setEnv(envName, response.value);
-                rc[envName] = response.value;
+                rc.secrets[envName] = response.value;
             });
         }
     }
@@ -50,6 +50,9 @@ function stdResponse(err, stdout, stderr) {
     const rcP = rcTools.loadRC();
     const [credentials, rc] = await Promise.all([credentialsP, rcP]);
     const client = new keyVault.KeyVaultClient(credentials);
+    if (rc.secrets === undefined) {
+        rc.secrets = {};
+    }
     console.log("Getting secrets...");
 
     await getKeys(client, rc, "https://prague-key-vault.vault.azure.net/");
