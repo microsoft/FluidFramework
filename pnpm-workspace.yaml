@@ -9,7 +9,7 @@ packages:
   - 'server/routerlicious/packages/localserver'
   - 'server/routerlicious/packages/protocol-*'
   # exclude packages that are inside test/ directories
-  - '!**/test/**'
+  # - '!**/test/**'
 #   - '!**/routerlicious-urlResolver'
 #   - '!packages/*/*odsp*'
 #   - '!packages/*/end-to-end-tests'
