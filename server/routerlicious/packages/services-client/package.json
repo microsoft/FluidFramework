@@ -60,6 +60,7 @@
     "debug": "^4.1.1",
     "jsrsasign": "^10.0.2",
     "jwt-decode": "^3.0.0",
+    "querystring-browser": "^1.0.4",
     "sillyname": "0.1.0",
     "uuid": "^8.3.1"
   },
