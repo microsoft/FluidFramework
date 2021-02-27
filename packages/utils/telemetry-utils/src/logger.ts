@@ -49,33 +49,26 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         return name.replace("@", "").replace("/", "-");
     }
 
+    /**
+     * Take an unknown error object and add the appropriate info from it to the event
+     * NOTE - All properties will be copied over from the error object, except those specifically
+     * marked as pii on an instance of type LoggingError. Take care to sanitize the argument before passing in.
+     * @param event - Event being logged
+     * @param error - Error to extract info from
+     * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
+     */
     public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
         if (error === null || typeof error !== "object") {
             event.error = error;
         } else {
-            // WARNING: Exceptions can contain PII!
-            // For example, XHR will throw object derived from Error that contains config information
-            // for failed request, including all the headers, and thus - user tokens!
-            // Extract only call stack, message, and couple network-related properties form error object
-
-            const errorAsObject = error as {
-                stack?: string;
-                message?: string;
-            };
-
+            const errorAsObject = error as Partial<LoggingError>;
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
 
-            // Error message can contain PII information.
-            // If we know for sure it does, we have to not log it.
-            if (error.containsPII) {
-                event.error = "Error message was removed as it contained PII";
-            } else if (error.getTelemetryProperties) {
-                const telemetryProps: ITelemetryProperties = error.getTelemetryProperties();
-                for (const key of Object.keys(telemetryProps)) {
-                    if (event[key] === undefined) {
-                        event[key] = telemetryProps[key];
-                    }
+            const telemetryProps = errorAsObject.getTelemetryProperties?.() ?? {};
+            for (const key of Object.keys(telemetryProps)) {
+                if (event[key] === undefined) {
+                    event[key] = telemetryProps[key];
                 }
             }
         }
@@ -463,15 +456,17 @@ export class PerformanceEvent {
 /**
  * - Helper class for error tracking that can be used to log an error in telemetry.
  * - Care needs to be taken not to log PII information!
+ * - Callers may only add PII via the constructor so it's stripped out when properties are queried
  * - This allows additional properties to be logged because object of this instance will record all of their properties
  *   when logged with a logger.
  * - Logger ignores all properties from any other error objects (not being instance of LoggingError), with exception of
  *   'message' & 'stack' properties if they exists on error object.
- * - In other words, logger logs only what it knows about and has good confidence it does not container PII information.
+ * - In other words, logger logs only what it knows about and has good confidence it does not contain PII information.
  */
 export class LoggingError extends Error {
     constructor(
         message: string,
+        private pii?: any, // On here to be accessible during debugging but removed before logging
         props?: ITelemetryProperties,
     ) {
         super(message);
@@ -485,6 +480,8 @@ export class LoggingError extends Error {
         for (const key of Object.getOwnPropertyNames(this)) {
             props[key] = this[key];
         }
+        // Remove pii member
+        (props as unknown as LoggingError).pii = undefined;
         return props;
     }
 }
