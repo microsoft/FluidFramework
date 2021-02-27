@@ -150,7 +150,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             resolvedUrl.driveId,
             resolvedUrl.itemId,
             this.identityType,
-            this.logger!,
+            this.logger,
         ).then((fileLink) => {
             if (!fileLink) {
                 throw new Error("Failed to get share link");
