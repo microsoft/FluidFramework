@@ -218,6 +218,4 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     public static createNavParam(locator: OdspFluidDataStoreLocator) {
         return encodeOdspFluidDataStoreLocator(locator);
     }
-
-
 }

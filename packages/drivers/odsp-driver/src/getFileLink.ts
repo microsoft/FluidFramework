@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { PromiseCache } from "@fluidframework/common-utils";
 import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
@@ -48,7 +49,7 @@ async function delay(timeMs: number): Promise<void> {
 }
 
 // Store cached rsponses for the lifetime of web session as file link remains the same for given file item
-const fileLinkCache: { [key: string]: Promise<string | undefined> } = {};
+const fileLinkCache = new PromiseCache<string, string | undefined>();
 
 /**
  * Returns file link for a file with given drive and item ids.
@@ -73,12 +74,11 @@ export async function getFileLink(
     logger: ITelemetryLogger,
 ): Promise<string | undefined> {
     const cacheKey = `${siteUrl}_${driveId}_${itemId}`;
-    const cachedPromise = fileLinkCache[cacheKey];
-    if (cachedPromise) {
-        return cachedPromise;
+    if (fileLinkCache.has(cacheKey)) {
+        return fileLinkCache.get(cacheKey);
     }
 
-    const promise = new Promise<string | undefined>(async (resolve, reject) => {
+    const valueGenerator = async function() {
         let result: string | undefined;
         let success = false;
         let retryAfter = 0;
@@ -87,25 +87,21 @@ export async function getFileLink(
                 result = await getFileLinkCore(getToken, siteUrl, driveId, itemId, identityType, logger);
                 success = true;
             } catch (err) {
-                // If it is not retriable, then just throw the error.
+                // If it is not retriable, then just return undefined
                 if (!canRetryOnError(err)) {
-                    reject(err);
-                } else {
-                    // If the error is throttling error, then wait for the specified time before retrying.
-                    // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
-                    retryAfter = getRetryDelayFromError(err) ?? Math.min(retryAfter * 2, 8000);
-                    await delay(retryAfter);
+                    fileLinkCache.remove(cacheKey);
+                    return undefined;
                 }
+                // If the error is throttling error, then wait for the specified time before retrying.
+                // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
+                retryAfter = getRetryDelayFromError(err) ?? Math.min(retryAfter * 2, 8000);
+                await delay(retryAfter);
             }
         } while (!success);
-        resolve(result);
-    });
-
-    fileLinkCache[cacheKey] = promise;
-
-    promise.catch(() => delete fileLinkCache[cacheKey]);
-
-    return promise;
+        return result;
+    };
+    fileLinkCache.add(cacheKey, valueGenerator);
+    return fileLinkCache.get(cacheKey);
 }
 
 async function getFileLinkCore(
@@ -129,7 +125,7 @@ async function getFileLinkCore(
     let tries = 0;
     let additionalProps;
     // ODSP link requires extra call to return link that is resistant to file being renamed or moved to different folder
-    return await PerformanceEvent.timedExecAsync(
+    return PerformanceEvent.timedExecAsync(
         logger,
         { eventName: "odspFileLink", requestName: "getSharingInformation" },
         async (event) => {
@@ -179,7 +175,7 @@ async function getFileItemLite(
 ): Promise<FileItemLite | undefined> {
     let tries = 0;
     let additionalProps;
-    return await PerformanceEvent.timedExecAsync(
+    return PerformanceEvent.timedExecAsync(
         logger,
         { eventName: "odspFileLink", requestName: "getFileItemLite" },
         async (event) => {
