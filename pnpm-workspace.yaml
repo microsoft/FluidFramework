@@ -1,14 +1,15 @@
 packages:
   # all packages in subdirs of packages/ and examples/
-  - 'common/*/*'
+#   - 'common/*/*'
   - 'packages/*/*'
   - 'examples/**'
   - 'experimental/**'
 #   - '!packages/utils/odsp-doclib-utils'
 #   - 'server/routerlicious/packages/**'
-  - 'server/routerlicious/packages/gitresources'
-  - 'server/routerlicious/packages/localserver'
-  - 'server/routerlicious/packages/protocol-*'
+  - 'server/routerlicious/packages/gitresources/'
+#   - 'server/routerlicious/packages/local-server/'
+  - 'server/routerlicious/packages/protocol-base/'
+  - 'server/routerlicious/packages/protocol-definitions/'
   # exclude packages that are inside test/ directories
   # - '!**/test/**'
 #   - '!**/routerlicious-urlResolver'
