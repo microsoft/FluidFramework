@@ -105,10 +105,10 @@ export interface IDeltaConnection {
  */
 export interface IChannelStorageService {
     /**
-     * Reads the object contained at the given path. Returns a base64 string representation for the object.
+     * Reads the object contained at the given path. Returns a buffer representation for the object.
      */
-
     readBlob(path: string): Promise<ArrayBufferLike>;
+
     /**
      * Determines if there is an object contained at the given path.
      */
