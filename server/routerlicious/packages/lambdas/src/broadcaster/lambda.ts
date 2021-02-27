@@ -121,21 +121,23 @@ export class BroadcasterLambda implements IPartitionLambda {
             this.pendingOffset = undefined;
 
             // Process all the batches + checkpoint
-            const promises: Promise<void>[] = [];
+            if (this.publisher.emit) {
+                const promises: Promise<void>[] = [];
 
-            for (const [topic, batch] of this.current) {
-                if (this.publisher.emit) {
+                for (const [topic, batch] of this.current) {
                     promises.push(this.publisher.emit(topic, batch.event, batch.documentId, batch.messages));
-                } else {
+                }
+
+                try {
+                    await Promise.all(promises);
+                } catch (ex) {
+                    this.context.error(ex, { restart: true });
+                    return;
+                }
+            } else {
+                for (const [topic, batch] of this.current) {
                     this.publisher.to(topic).emit(batch.event, batch.documentId, batch.messages);
                 }
-            }
-
-            try {
-                await Promise.all(promises);
-            } catch (ex) {
-                this.context.error(ex, { restart: true });
-                return;
             }
 
             this.messageSendingTimerId = undefined;
