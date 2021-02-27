@@ -111,16 +111,16 @@ jobs:
       displayName: '[DI] Prepare DI package'
       inputs:
         targetType: 'inline'
-        script: 'mv _package.json package.json; mv _package-lock.json package-lock.json'
+        script: 'mv _package.json package.json'
         workingDirectory: ${{ variables.diDir }}
 
     # [DI] Install dependency-injection package
     - task: Npm@1
-      displayName: '[DI] npm ci'
+      displayName: '[DI] npm install'
       inputs:
         command: 'custom'
         workingDir: ${{ variables.diDir }}
-        customCommand: 'ci'
+        customCommand: 'install'
         customRegistry: 'useNpmrc'
 
     # end-to-end tests routerlicious
@@ -148,8 +148,7 @@ jobs:
         login__microsoft__clientId: $(login-microsoft-clientId)
         login__microsoft__secret: $(login-microsoft-secret)
         login__odsp__test__accounts: $(login-odsp-test-accounts)
-        FLUID_DI_ROOT: ${{ variables.diDir }}/node_modules
-        FLUID_DI_LOGGERPKG: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
+        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
       inputs:
         command: 'custom'
         workingDir: packages/test/end-to-end-tests
@@ -164,6 +163,7 @@ jobs:
         login__microsoft__clientId: $(login-microsoft-clientId)
         login__microsoft__secret: $(login-microsoft-secret)
         login__odsp__test__accounts: $(login-odsp-test-accounts)
+        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
       inputs:
         command: 'custom'
         workingDir: packages/test/service-load-test
