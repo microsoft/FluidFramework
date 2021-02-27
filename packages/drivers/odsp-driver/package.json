@@ -24,7 +24,7 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix",
-    "lint-deactivated": "pnpm run eslint",
+    "-lint": "pnpm run eslint",
     "lint:fix": "pnpm run eslint:fix",
     "test": "pnpm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",

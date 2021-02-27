@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as querystring from "querystring-browser";
+import * as querystring from "querystring";
 import { AxiosError, AxiosInstance, AxiosRequestConfig, default as Axios } from "axios";
 import * as uuid from "uuid";
 import { debug } from "./debug";
