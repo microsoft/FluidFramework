@@ -51,6 +51,9 @@ export abstract class LeafTask extends Task {
         this.parentCount++;
     }
 
+    protected get useWorker() {
+        return false;
+    }
     public async exec(): Promise<BuildResult> {
         if (this.isDisabled) { return BuildResult.UpToDate; }
         if (options.showExec) {
@@ -63,24 +66,50 @@ export abstract class LeafTask extends Task {
         if (this.recheckLeafIsUpToDate && !this.forced && await this.checkLeafIsUpToDate()) {
             return this.execDone(startTime, BuildResult.UpToDate);
         }
-        const ret = await execAsync(this.command, {
-            cwd: this.node.pkg.directory,
-            env: { PATH: `${path.join(this.node.pkg.directory, "node_modules", ".bin")}${path.delimiter}${process.env["PATH"]}` }
-        });
+        const ret = await this.execCore();
 
         if (ret.error) {
-            console.error(`${this.node.pkg.nameColored}: error during command ${this.command}`)
+            const codeStr = ret.error.code !== undefined? ` (exit code ${ret.error.code})` : "";
+            console.error(`${this.node.pkg.nameColored}: error during command '${this.command}'`)
             console.error(this.getExecErrors(ret));
             return this.execDone(startTime, BuildResult.Failed);
         }
         if (ret.stderr) {
             // no error code but still error messages, treat them is non fatal warnings
-            console.warn(`${this.node.pkg.nameColored}: warning during command ${this.command}`);
+            console.warn(`${this.node.pkg.nameColored}: warning during command '${this.command}'`);
             console.warn(this.getExecErrors(ret));
         }
 
         await this.markExecDone();
         return this.execDone(startTime, BuildResult.Success);
+    }
+
+    private async execCore(): Promise<ExecAsyncResult> {
+        const workerPool = this.node.buildContext.workerPool;
+        if (workerPool && this.useWorker) {
+            const workerResult = await workerPool.runOnWorker(this.executable, this.command, this.node.pkg.directory);
+            if (workerResult.code === 0 || !workerResult.error) {
+                return {
+                    error: workerResult.code === 0? null : { name: "Worker error", message: "Worker error", cmd: this.command, code: workerResult.code },
+                    stdout: workerResult.stdout?? "",
+                    stderr: workerResult.stderr?? "",
+                }
+            }
+            // rerun on the main thread in case the work has an unknown exception
+            const result = await this.execCommand();
+            if (!result.error) {
+                console.warn(`${this.node.pkg.nameColored}: warning: failed in worker but succeeded directly ${this.command}`)
+            }
+            return result;
+        }
+        return this.execCommand();
+    }
+
+    private async execCommand(): Promise<ExecAsyncResult> {
+        return execAsync(this.command, {
+            cwd: this.node.pkg.directory,
+            env: { PATH: `${path.join(this.node.pkg.directory, "node_modules", ".bin")}${path.delimiter}${process.env["PATH"]}` }
+        })
     }
 
     private getExecErrors(ret: ExecAsyncResult) {
@@ -214,7 +243,7 @@ export abstract class LeafTask extends Task {
     protected abstract addDependentTasks(dependentTasks: LeafTask[]): void;
 
     // check if this task is up to date
-    protected abstract async checkLeafIsUpToDate(): Promise<boolean>;
+    protected abstract checkLeafIsUpToDate(): Promise<boolean>;
 
     // do this task support recheck when it time to execute (even when the dependent task is out of date)
     protected get recheckLeafIsUpToDate(): boolean { return false; }

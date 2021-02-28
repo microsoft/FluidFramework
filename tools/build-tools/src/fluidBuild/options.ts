@@ -30,6 +30,9 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
     samples: boolean;
     fix: boolean;
     services: boolean;
+    worker: boolean;
+    worker_threads: boolean;
+
 }
 
 // defaults
@@ -56,6 +59,8 @@ export const options: FastBuildOptions = {
     all: false,
     server: false,
     services: false,
+    worker: false,
+    worker_threads: false,
 };
 
 function printUsage() {
@@ -255,6 +260,17 @@ export function parseOptions(argv: string[]) {
 
         if (arg === "--showExec") {
             options.showExec = true;
+            continue;
+        }
+
+        if (arg === "--worker") {
+            options.worker = true;
+            continue;
+        }
+
+        if (arg === "--worker_threads") {
+            options.worker_threads = true;
+            options.worker = true;
             continue;
         }
 

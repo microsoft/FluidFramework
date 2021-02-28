@@ -13,6 +13,7 @@ import { FileHashCache } from "../common/fileHashCache";
 import chalk from "chalk";
 import { options } from "./options";
 import * as semver from "semver";
+import { WorkerPool } from "./tasks/workers/workerPool";
 
 export enum BuildResult {
     Success,
@@ -44,6 +45,7 @@ class TaskStats {
 class BuildContext {
     public readonly fileHashCache = new FileHashCache();
     public readonly taskStats = new TaskStats();
+    constructor(public readonly workerPool?: WorkerPool) { }
 };
 
 export class BuildPackage {
@@ -92,7 +94,8 @@ export class BuildPackage {
 
 export class BuildGraph {
     private readonly buildPackages = new Map<string, BuildPackage>();
-    private readonly buildContext = new BuildContext();
+    private readonly buildContext = new BuildContext(
+        options.worker ? new WorkerPool(options.worker_threads) : undefined);
 
     public constructor(
         private readonly packages: Package[],
@@ -143,10 +146,15 @@ export class BuildGraph {
         this.buildContext.fileHashCache.clear();
         const q = Task.createTaskQueue();
         const p: Promise<BuildResult>[] = [];
-        this.buildPackages.forEach((node) => {
-            p.push(node.build(q));
-        });
-        return summarizeBuildResult(await Promise.all(p));
+        try {
+            this.buildPackages.forEach((node) => {
+                p.push(node.build(q));
+            });
+
+            return summarizeBuildResult(await Promise.all(p));
+        } finally {
+            this.buildContext.workerPool?.reset();
+        }
     }
 
     public async clean() {
@@ -197,7 +205,7 @@ export class BuildGraph {
     private populateLevel() {
         // level is not strictly necessary, except for circular reference.
         const getLevel = (node: BuildPackage, parent?: BuildPackage) => {
-            if (node.level === -2) { throw new Error(`Circular Reference detected ${parent? parent.pkg.nameColored : "<none>"} -> ${node.pkg.nameColored}`); }
+            if (node.level === -2) { throw new Error(`Circular Reference detected ${parent ? parent.pkg.nameColored : "<none>"} -> ${node.pkg.nameColored}`); }
             if (node.level !== -1) { return node.level; } // populated
             node.level = -2;
             let maxChildrenLevel = -1;
