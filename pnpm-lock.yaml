@@ -1516,6 +1516,7 @@ importers:
   examples/data-objects/image-gallery:
     dependencies:
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
+      '@fluidframework/common-definitions': 0.19.1
       '@fluidframework/map': link:../../../packages/dds/map
       '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       react: 16.14.0
@@ -1550,11 +1551,13 @@ importers:
       webpack-merge: 4.2.2
     specifiers:
       '@fluidframework/aqueduct': ^0.36.0
+      '@fluidframework/common-definitions': ^0.19.1
       '@fluidframework/eslint-config-fluid': ^0.23.0-0
       '@fluidframework/map': ^0.36.0
       '@fluidframework/view-interfaces': ^0.36.0
       '@fluidframework/webpack-fluid-loader': ^0.36.0
       '@types/node': ^10.17.24
+      '@types/react': ^16.9.15
       '@types/react-dom': ^16.9.4
       '@types/react-image-gallery': ^0.8.4
       '@typescript-eslint/eslint-plugin': ~4.14.0
@@ -2567,6 +2570,7 @@ importers:
   examples/data-objects/pond:
     dependencies:
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
+      '@fluidframework/common-definitions': 0.19.1
       '@fluidframework/container-runtime-definitions': link:../../../packages/runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../../packages/loader/core-interfaces
       '@fluidframework/counter': link:../../../packages/dds/counter
@@ -2616,6 +2620,7 @@ importers:
     specifiers:
       '@fluidframework/aqueduct': ^0.36.0
       '@fluidframework/build-common': ^0.20.0-0
+      '@fluidframework/common-definitions': ^0.19.1
       '@fluidframework/container-runtime-definitions': ^0.36.0
       '@fluidframework/core-interfaces': ^0.36.0
       '@fluidframework/counter': ^0.36.0
@@ -3459,6 +3464,7 @@ importers:
       '@fluid-example/flow-util-lib': link:../flow-util-lib
       '@fluid-example/table-document': link:../table-document
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
+      '@fluidframework/common-definitions': 0.19.1
       '@fluidframework/container-definitions': link:../../../packages/loader/container-definitions
       '@fluidframework/core-interfaces': link:../../../packages/loader/core-interfaces
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
@@ -3494,6 +3500,7 @@ importers:
       '@fluid-example/table-document': ^0.36.0
       '@fluidframework/aqueduct': ^0.36.0
       '@fluidframework/build-common': ^0.20.0-0
+      '@fluidframework/common-definitions': ^0.19.1
       '@fluidframework/container-definitions': ^0.36.0
       '@fluidframework/core-interfaces': ^0.36.0
       '@fluidframework/eslint-config-fluid': ^0.23.0-0

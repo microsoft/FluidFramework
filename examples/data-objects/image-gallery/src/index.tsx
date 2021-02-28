@@ -8,6 +8,8 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
+import { ISharedMap } from "@fluidframework/map";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
@@ -16,7 +18,6 @@ import ImageGallery from "react-image-gallery";
 import "react-image-gallery/styles/css/image-gallery.css";
 // eslint-disable-next-line import/no-unassigned-import
 import "./Styles.css";
-import { ISharedMap } from "@fluidframework/map";
 
 const imageGalleryName = "@fluid-example/image-gallery";
 
@@ -102,7 +103,9 @@ export class ImageGalleryObject extends DataObject implements IFluidHTMLView {
     }
 }
 
-export const ImageGalleryInstantiationFactory = new DataObjectFactory(
+// eslint-disable-next-line @typescript-eslint/ban-types
+export const ImageGalleryInstantiationFactory = new DataObjectFactory<ImageGalleryObject, object, undefined, IEvent>
+(
     imageGalleryName,
     ImageGalleryObject,
     [],
