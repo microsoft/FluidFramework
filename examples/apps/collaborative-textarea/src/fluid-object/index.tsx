@@ -24,6 +24,7 @@ export class CollaborativeText extends DataObject implements IFluidHTMLView {
 
     public static get Name() { return "@fluid-example/collaborative-textarea"; }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     private static readonly factory = new DataObjectFactory<CollaborativeText, object, undefined, IEvent>(
         CollaborativeText.Name,
         CollaborativeText,
