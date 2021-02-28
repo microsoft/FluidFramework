@@ -5,13 +5,15 @@
 
 import { DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
+import { IEvent } from "@fluidframework/common-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { SharedObjectSequence } from "@fluidframework/sequence";
 import { Badge } from "./BadgeModel";
 
 const BadgeName = "@fluid-example/badge";
 
-export const BadgeInstantiationFactory = new DataObjectFactory(
+// eslint-disable-next-line @typescript-eslint/ban-types
+export const BadgeInstantiationFactory = new DataObjectFactory<Badge, object, undefined, IEvent>(
     BadgeName,
     Badge,
     [

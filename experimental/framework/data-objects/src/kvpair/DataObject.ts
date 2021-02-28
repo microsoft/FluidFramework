@@ -5,6 +5,7 @@
 
 import { EventEmitter } from "events";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { IDirectoryValueChanged, IValueChanged } from "@fluidframework/map";
 
 /**
@@ -89,7 +90,8 @@ export class KeyValueDataObject
  * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
-export const KeyValueInstantiationFactory = new DataObjectFactory(
+// eslint-disable-next-line @typescript-eslint/ban-types
+export const KeyValueInstantiationFactory = new DataObjectFactory<KeyValueDataObject, object, undefined, IEvent>(
     "keyvalue-dataobject",
     KeyValueDataObject,
     [],

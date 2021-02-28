@@ -7,6 +7,7 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { UpgradeManager } from "@fluidframework/base-host";
 
@@ -170,4 +171,10 @@ export class VersionTest extends DataObject implements IFluidHTMLView {
     }
 }
 
-export const VersiontestInstantiationFactory = new DataObjectFactory(versionTest1Name, VersionTest, [], {});
+export const VersiontestInstantiationFactory =
+// eslint-disable-next-line @typescript-eslint/ban-types
+new DataObjectFactory<VersionTest, object, undefined, IEvent>(
+    versionTest1Name,
+    VersionTest,
+    [],
+    {});

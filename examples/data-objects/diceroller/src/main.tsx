@@ -4,16 +4,16 @@
  */
 
 import { EventEmitter } from "events";
-
 import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { IValueChanged } from "@fluidframework/map";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-
 import React from "react";
 import ReactDOM from "react-dom";
+
 
 const diceValueKey = "diceValue";
 
@@ -116,7 +116,9 @@ export class DiceRoller extends DataObject implements IDiceRoller, IFluidHTMLVie
  * The DataObjectFactory declares the Fluid object and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
-export const DiceRollerInstantiationFactory = new DataObjectFactory(
+// eslint-disable-next-line @typescript-eslint/ban-types
+export const DiceRollerInstantiationFactory = new DataObjectFactory<DiceRoller, object, undefined, IEvent>
+(
     DiceRoller.Name,
     DiceRoller,
     [],

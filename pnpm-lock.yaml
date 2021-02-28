@@ -34,6 +34,131 @@ importers:
       start-server-and-test: ^1.11.7
       tinylicious: ^0.4.17169
       typescript: ~4.1.3
+  common/lib/common-definitions:
+    devDependencies:
+      '@fluidframework/build-common': 0.20.0_typescript@4.1.5
+      '@fluidframework/eslint-config-fluid': 0.23.0_eslint@7.18.0+typescript@4.1.5
+      '@microsoft/api-extractor': 7.13.1
+      '@typescript-eslint/eslint-plugin': 4.14.2_36b1f974bab68af25fa3a8b07e7c056b
+      '@typescript-eslint/parser': 4.14.2_eslint@7.18.0+typescript@4.1.5
+      concurrently: 5.3.0
+      copyfiles: 2.4.1
+      eslint: 7.18.0
+      eslint-plugin-eslint-comments: 3.2.0_eslint@7.18.0
+      eslint-plugin-import: 2.22.1_eslint@7.18.0
+      eslint-plugin-no-null: 1.0.2_eslint@7.18.0
+      eslint-plugin-prefer-arrow: 1.2.3_eslint@7.18.0
+      eslint-plugin-react: 7.22.0_eslint@7.18.0
+      eslint-plugin-unicorn: 26.0.1_eslint@7.18.0
+      rimraf: 2.7.1
+      typescript: 4.1.5
+      typescript-formatter: 7.1.0_typescript@4.1.5
+    specifiers:
+      '@fluidframework/build-common': ^0.20.0-0
+      '@fluidframework/eslint-config-fluid': ^0.23.0-0
+      '@microsoft/api-extractor': ^7.7.2
+      '@typescript-eslint/eslint-plugin': ~4.14.0
+      '@typescript-eslint/parser': ~4.14.0
+      concurrently: ^5.2.0
+      copyfiles: ^2.1.0
+      eslint: ~7.18.0
+      eslint-plugin-eslint-comments: ~3.2.0
+      eslint-plugin-import: ~2.22.1
+      eslint-plugin-no-null: ~1.0.2
+      eslint-plugin-prefer-arrow: ~1.2.2
+      eslint-plugin-react: ~7.22.0
+      eslint-plugin-unicorn: ~26.0.1
+      rimraf: ^2.6.2
+      typescript: ~4.1.3
+      typescript-formatter: 7.1.0
+  common/lib/common-utils:
+    dependencies:
+      '@fluidframework/common-definitions': 0.19.1
+      '@types/events': 3.0.0
+      assert: 2.0.0
+      base64-js: 1.5.1
+      events: 3.3.0
+      lodash: 4.17.21
+      sha.js: 2.4.11
+    devDependencies:
+      '@fluidframework/build-common': 0.20.0_typescript@4.1.5
+      '@fluidframework/eslint-config-fluid': 0.23.0_eslint@7.18.0+typescript@4.1.5
+      '@microsoft/api-extractor': 7.13.1
+      '@types/assert': 1.5.4
+      '@types/base64-js': 1.3.0
+      '@types/benchmark': 1.0.33
+      '@types/jest': 22.2.3
+      '@types/jest-environment-puppeteer': 2.2.0
+      '@types/mocha': 5.2.7
+      '@types/puppeteer': 1.3.0
+      '@types/sinon': 7.5.2
+      '@typescript-eslint/eslint-plugin': 4.14.2_36b1f974bab68af25fa3a8b07e7c056b
+      '@typescript-eslint/parser': 4.14.2_eslint@7.18.0+typescript@4.1.5
+      benchmark: 2.1.4
+      concurrently: 5.3.0
+      copyfiles: 2.4.1
+      eslint: 7.18.0
+      eslint-plugin-eslint-comments: 3.2.0_eslint@7.18.0
+      eslint-plugin-import: 2.22.1_eslint@7.18.0
+      eslint-plugin-no-null: 1.0.2_eslint@7.18.0
+      eslint-plugin-prefer-arrow: 1.2.3_eslint@7.18.0
+      eslint-plugin-react: 7.22.0_eslint@7.18.0
+      eslint-plugin-unicorn: 26.0.1_eslint@7.18.0
+      jest: 26.6.3
+      jest-junit: 10.0.0
+      jest-puppeteer: 4.4.0_puppeteer@2.1.1
+      mocha: 8.3.0
+      nyc: 15.1.0
+      puppeteer: 2.1.1
+      rimraf: 2.7.1
+      sinon: 7.5.0
+      ts-jest: 26.5.2_jest@26.6.3+typescript@4.1.5
+      ts-node: 7.0.1
+      typescript: 4.1.5
+      typescript-formatter: 7.1.0_typescript@4.1.5
+    specifiers:
+      '@fluidframework/build-common': ^0.20.0-0
+      '@fluidframework/common-definitions': ^0.19.1
+      '@fluidframework/eslint-config-fluid': ^0.23.0-0
+      '@microsoft/api-extractor': ^7.7.2
+      '@types/assert': ^1.5.2
+      '@types/base64-js': ^1.3.0
+      '@types/benchmark': ^1.0.31
+      '@types/events': ^3.0.0
+      '@types/jest': 22.2.3
+      '@types/jest-environment-puppeteer': 2.2.0
+      '@types/mocha': ^5.2.5
+      '@types/puppeteer': 1.3.0
+      '@types/sinon': ^7.0.13
+      '@typescript-eslint/eslint-plugin': ~4.14.0
+      '@typescript-eslint/parser': ~4.14.0
+      assert: ^2.0.0
+      base64-js: ^1.3.1
+      benchmark: ^2.1.4
+      concurrently: ^5.2.0
+      copyfiles: ^2.1.0
+      eslint: ~7.18.0
+      eslint-plugin-eslint-comments: ~3.2.0
+      eslint-plugin-import: ~2.22.1
+      eslint-plugin-no-null: ~1.0.2
+      eslint-plugin-prefer-arrow: ~1.2.2
+      eslint-plugin-react: ~7.22.0
+      eslint-plugin-unicorn: ~26.0.1
+      events: ^3.1.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
+      jest-puppeteer: ^4.4.0
+      lodash: ^4.17.21
+      mocha: ^8.1.1
+      nyc: ^15.0.0
+      puppeteer: ^2.1.0
+      rimraf: ^2.6.2
+      sha.js: ^2.4.11
+      sinon: ^7.4.2
+      ts-jest: ^26.4.4
+      ts-node: ^7.0.1
+      typescript: ~4.1.3
+      typescript-formatter: 7.1.0
   examples/apps/collaborative-textarea:
     dependencies:
       '@fluid-experimental/get-container': link:../../../experimental/framework/get-container
@@ -444,6 +569,7 @@ importers:
       '@fluid-experimental/get-container': ^0.36.0
       '@fluidframework/aqueduct': ^0.36.0
       '@fluidframework/build-common': ^0.20.0-0
+      '@fluidframework/common-definitions': ^0.19.1
       '@fluidframework/eslint-config-fluid': ^0.23.0-0
       '@fluidframework/test-tools': ^0.2.3074
       '@types/expect-puppeteer': 2.2.1
@@ -486,6 +612,7 @@ importers:
     dependencies:
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/cell': link:../../../packages/dds/cell
+      '@fluidframework/common-definitions': 0.19.1
       '@fluidframework/core-interfaces': link:../../../packages/loader/core-interfaces
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/map': link:../../../packages/dds/map
@@ -524,6 +651,7 @@ importers:
       '@fluidframework/aqueduct': ^0.36.0
       '@fluidframework/build-common': ^0.20.0-0
       '@fluidframework/cell': ^0.36.0
+      '@fluidframework/common-definitions': ^0.19.1
       '@fluidframework/core-interfaces': ^0.36.0
       '@fluidframework/datastore-definitions': ^0.36.0
       '@fluidframework/eslint-config-fluid': ^0.23.0-0
@@ -559,6 +687,7 @@ importers:
   examples/data-objects/canvas:
     dependencies:
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
+      '@fluidframework/common-definitions': 0.19.1
       '@fluidframework/core-interfaces': link:../../../packages/loader/core-interfaces
       '@fluidframework/ink': link:../../../packages/dds/ink
       '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
@@ -603,6 +732,7 @@ importers:
     specifiers:
       '@fluidframework/aqueduct': ^0.36.0
       '@fluidframework/build-common': ^0.20.0-0
+      '@fluidframework/common-definitions': ^0.19.1
       '@fluidframework/core-interfaces': ^0.36.0
       '@fluidframework/eslint-config-fluid': ^0.23.0-0
       '@fluidframework/ink': ^0.36.0
@@ -1313,6 +1443,7 @@ importers:
   examples/data-objects/diceroller:
     dependencies:
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
+      '@fluidframework/common-definitions': 0.19.1
       '@fluidframework/map': link:../../../packages/dds/map
       '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       react: 16.14.0
@@ -1356,6 +1487,7 @@ importers:
     specifiers:
       '@fluidframework/aqueduct': ^0.36.0
       '@fluidframework/build-common': ^0.20.0-0
+      '@fluidframework/common-definitions': ^0.19.1
       '@fluidframework/eslint-config-fluid': ^0.23.0-0
       '@fluidframework/map': ^0.36.0
       '@fluidframework/test-tools': ^0.2.3074
@@ -1829,6 +1961,7 @@ importers:
       '@fluid-example/multiview-coordinate-interface': link:../interface
       '@fluid-example/multiview-coordinate-model': link:../coordinate-model
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
+      '@fluidframework/common-definitions': 0.19.1
       '@fluidframework/core-interfaces': link:../../../../packages/loader/core-interfaces
       '@fluidframework/map': link:../../../../packages/dds/map
     devDependencies:
@@ -1870,6 +2003,7 @@ importers:
       '@fluid-example/multiview-coordinate-model': ^0.36.0
       '@fluidframework/aqueduct': ^0.36.0
       '@fluidframework/build-common': ^0.20.0-0
+      '@fluidframework/common-definitions': ^0.19.1
       '@fluidframework/core-interfaces': ^0.36.0
       '@fluidframework/eslint-config-fluid': ^0.23.0-0
       '@fluidframework/map': ^0.36.0
@@ -3931,6 +4065,7 @@ importers:
     dependencies:
       '@fluid-experimental/get-container': link:../../../../experimental/framework/get-container
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
+      '@fluidframework/common-definitions': 0.19.1
       '@fluidframework/container-definitions': link:../../../../packages/loader/container-definitions
       '@fluidframework/container-loader': link:../../../../packages/loader/container-loader
       '@fluidframework/core-interfaces': link:../../../../packages/loader/core-interfaces
@@ -3980,6 +4115,7 @@ importers:
       '@fluid-experimental/get-container': ^0.36.0
       '@fluidframework/aqueduct': ^0.36.0
       '@fluidframework/build-common': ^0.20.0-0
+      '@fluidframework/common-definitions': ^0.19.1
       '@fluidframework/container-definitions': ^0.36.0
       '@fluidframework/container-loader': ^0.36.0
       '@fluidframework/core-interfaces': ^0.36.0
@@ -4172,6 +4308,7 @@ importers:
       '@fluid-experimental/get-container': ^0.36.0
       '@fluidframework/aqueduct': ^0.36.0
       '@fluidframework/build-common': ^0.20.0-0
+      '@fluidframework/common-definitions': ^0.19.1
       '@fluidframework/eslint-config-fluid': ^0.23.0-0
       '@fluidframework/test-tools': ^0.2.3074
       '@types/expect-puppeteer': 2.2.1
@@ -4800,6 +4937,7 @@ importers:
   experimental/framework/data-objects:
     dependencies:
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
+      '@fluidframework/common-definitions': 0.19.1
       '@fluidframework/map': link:../../../packages/dds/map
     devDependencies:
       '@fluidframework/build-common': 0.20.0_typescript@4.1.5
@@ -4824,6 +4962,7 @@ importers:
     specifiers:
       '@fluidframework/aqueduct': ^0.36.0
       '@fluidframework/build-common': ^0.20.0-0
+      '@fluidframework/common-definitions': ^0.19.1
       '@fluidframework/eslint-config-fluid': ^0.23.0-0
       '@fluidframework/map': ^0.36.0
       '@microsoft/api-extractor': ^7.7.2
@@ -7056,6 +7195,7 @@ importers:
   packages/framework/last-edited-experimental:
     dependencies:
       '@fluidframework/aqueduct': link:../aqueduct
+      '@fluidframework/common-definitions': 0.19.1
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../loader/core-interfaces
@@ -7088,6 +7228,7 @@ importers:
     specifiers:
       '@fluidframework/aqueduct': ^0.36.0
       '@fluidframework/build-common': ^0.20.0-0
+      '@fluidframework/common-definitions': ^0.19.1
       '@fluidframework/container-runtime': ^0.36.0
       '@fluidframework/container-runtime-definitions': ^0.36.0
       '@fluidframework/core-interfaces': ^0.36.0
@@ -9631,6 +9772,7 @@ importers:
     dependencies:
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/base-host': link:../../hosts/base-host
+      '@fluidframework/common-definitions': 0.19.1
       '@fluidframework/common-utils': 0.27.0
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/view-interfaces': link:../../framework/view-interfaces
@@ -9671,6 +9813,7 @@ importers:
     specifiers:
       '@fluidframework/aqueduct': ^0.36.0
       '@fluidframework/base-host': ^0.36.0
+      '@fluidframework/common-definitions': ^0.19.1
       '@fluidframework/common-utils': ^0.27.0
       '@fluidframework/eslint-config-fluid': ^0.23.0-0
       '@fluidframework/runtime-utils': ^0.36.0
@@ -17692,6 +17835,12 @@ packages:
       node: '>= 4.0.0'
     resolution:
       integrity: sha512-salcGninV0nPrwpGNn4VTXBb1SOuXQBiqbrNXoeizJsHrsL6ERFM2Ne3JUSBWRE6aeNJI2ROP/WEEIDUiDe3cg==
+  /agent-base/5.1.1:
+    dev: true
+    engines:
+      node: '>= 6.0.0'
+    resolution:
+      integrity: sha512-TMeqbNl2fMW0nMjTEPOwe3J/PRFP4vqeoNuQMG0HlMrtm5QxKqdvAkZ1pRBQ/ulIyDD5Yq0nJ7YbdD8ey0TO3g==
   /agent-base/6.0.2:
     dependencies:
       debug: 4.3.1
@@ -24497,6 +24646,15 @@ packages:
       node: '>= 4.5.0'
     resolution:
       integrity: sha512-OmvfoQ53WLjtA9HeYP9RNrWMJzzAz1JGaSFr1nijg0PVR1JaD/xbJq1mdEIIlxGpXp9eSe/O2LgU9DJmTPd0Eg==
+  /https-proxy-agent/4.0.0:
+    dependencies:
+      agent-base: 5.1.1
+      debug: 4.3.1
+    dev: true
+    engines:
+      node: '>= 6.0.0'
+    resolution:
+      integrity: sha512-zoDhWrkR3of1l9QAL8/scJZyLu8j/gBkcwcaQOZh7Gyh/+uJQzGVETdgT30akuwkpL8HTRfssqI3BZuV18teDg==
   /https-proxy-agent/5.0.0:
     dependencies:
       agent-base: 6.0.2
@@ -25889,6 +26047,16 @@ packages:
       expect-puppeteer: 4.4.0
       jest-environment-puppeteer: 4.4.0
       puppeteer: 1.20.0
+    dev: true
+    peerDependencies:
+      puppeteer: '>= 1.5.0 < 3'
+    resolution:
+      integrity: sha512-ZaiCTlPZ07B9HW0erAWNX6cyzBqbXMM7d2ugai4epBDKpKvRDpItlRQC6XjERoJELKZsPziFGS0OhhUvTvQAXA==
+  /jest-puppeteer/4.4.0_puppeteer@2.1.1:
+    dependencies:
+      expect-puppeteer: 4.4.0
+      jest-environment-puppeteer: 4.4.0
+      puppeteer: 2.1.1
     dev: true
     peerDependencies:
       puppeteer: '>= 1.5.0 < 3'
@@ -30767,6 +30935,24 @@ packages:
     requiresBuild: true
     resolution:
       integrity: sha512-bt48RDBy2eIwZPrkgbcwHtb51mj2nKvHOPMaSH2IsWiv7lOG9k9zhaRzpDZafrk05ajMc3cu+lSQYYOfH2DkVQ==
+  /puppeteer/2.1.1:
+    dependencies:
+      '@types/mime-types': 2.1.0
+      debug: 4.3.1
+      extract-zip: 1.7.0
+      https-proxy-agent: 4.0.0
+      mime: 2.5.2
+      mime-types: 2.1.29
+      progress: 2.0.3
+      proxy-from-env: 1.1.0
+      rimraf: 2.7.1
+      ws: 6.2.1
+    dev: true
+    engines:
+      node: '>=8.16.0'
+    requiresBuild: true
+    resolution:
+      integrity: sha512-LWzaDVQkk1EPiuYeTOj+CZRIjda4k2s5w4MK4xoH2+kgWV/SDlkYHmxatDdtYrciHUKSXTsGgPgPP8ILVdBsxg==
   /q/1.5.1:
     dev: true
     engines:

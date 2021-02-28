@@ -5,6 +5,7 @@
 
 import { EventEmitter } from "events";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.
@@ -69,7 +70,9 @@ export class DiceRoller extends DataObject implements IDiceRoller {
  * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
-export const DiceRollerInstantiationFactory = new DataObjectFactory(
+// eslint-disable-next-line @typescript-eslint/ban-types
+export const DiceRollerInstantiationFactory = new DataObjectFactory<DiceRoller, object, undefined, IEvent>
+(
     "dice-roller",
     DiceRoller,
     [],
