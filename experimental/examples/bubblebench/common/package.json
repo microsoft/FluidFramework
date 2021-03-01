@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-experimental/bubblebench",
+  "name": "@fluid-experimental/bubblebench-common",
   "version": "0.36.0",
   "description": "Bubblemark inspired DDS benchmark",
   "homepage": "https://fluidframework.com",

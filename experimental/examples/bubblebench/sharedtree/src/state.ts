@@ -4,11 +4,13 @@
  */
 
 import { Change, SharedTree } from "@fluid-experimental/tree";
-import { randomColor, rnd } from "./rnd";
-import { IApp, IBubble, IClient, TreeArrayProxy, TreeObjectProxy } from "./proxy";
-import { fromJson } from "./treeutils";
+import { IAppState, IClient, IArrayish, makeBubble } from "@fluid-experimental/bubblebench-common";
+import { randomColor } from "./rnd";
+import { fromJson, TreeArrayProxy, TreeObjectProxy } from "./proxy";
 
-export class AppState {
+interface IApp { clients: IArrayish<IClient>; }
+
+export class AppState implements IAppState {
     private readonly update: (...change: Change[]) => void;
     public readonly applyEdits: () => void;
     private readonly root: IApp;
@@ -20,8 +22,8 @@ export class AppState {
 
     constructor(
         private readonly tree: SharedTree,
-        stageWidth: number,
-        stageHeight: number,
+        private _width: number,
+        private _height: number,
         numBubbles: number,
     ) {
         this.update = this.deferredUpdates
@@ -40,44 +42,39 @@ export class AppState {
         const clientNode = fromJson({
             clientId: "pending",
             color: randomColor(),
-            bubbles: new Array(numBubbles).fill(undefined).map(() => this.makeBubble(stageWidth, stageHeight)),
+            bubbles: new Array(numBubbles).fill(undefined).map(() => this.makeBubble()),
         });
 
-        this.clients.pushNode(clientNode);
+        (this.clients as TreeArrayProxy<IClient>).pushNode(clientNode);
         this.localClient = TreeObjectProxy(this.tree, clientNode.identifier, this.update);
 
         this.applyEdits();
     }
 
-    public get clients(): TreeArrayProxy<IClient> {
+    public setSize(width?: number, height?: number) {
+        this._width = width ?? 640;
+        this._height = height ?? 480;
+    }
+
+    public get width() { return this._width; }
+    public get height() { return this._height; }
+
+    public get clients(): IArrayish<IClient> {
         return this.root.clients;
     }
 
-    public get localBubbles(): TreeArrayProxy<IBubble> {
-        return this.localClient.bubbles;
+    private makeBubble() {
+        return makeBubble(this.width,  this.height);
     }
 
-    private makeBubble(stageWidth: number, stageHeight: number) {
-        const radius = (rnd.float64() * 15) + 5;
-        const maxSpeed = 4;
-        const diameter = radius * 2;
-
-        return {
-            x: radius + (stageWidth - diameter) * rnd.float64(),
-            y: radius + (stageHeight - diameter) * rnd.float64(),
-            r: radius,
-            vx: maxSpeed * (rnd.float64() * 2 - 1),
-            vy: maxSpeed * (rnd.float64() * 2 - 1),
-        };
-    }
-
-    public increaseBubbles(width: number, height: number) {
-        this.localBubbles.pushNode(fromJson(this.makeBubble(width, height)));
+    public increaseBubbles() {
+        this.localClient.bubbles.push(this.makeBubble());
     }
 
     public decreaseBubbles() {
-        if (this.localBubbles.length > 1) {
-            this.localBubbles.pop();
+        const bubbles = this.localClient.bubbles;
+        if (bubbles.length > 1) {
+            bubbles.pop();
         }
     }
 }

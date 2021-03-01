@@ -3,5 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from "./tree";
-export * from "./types";
+module.exports = {
+    mode: "production",
+    devtool: "source-map"
+};

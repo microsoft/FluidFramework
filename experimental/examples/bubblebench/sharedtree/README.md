@@ -1,4 +1,4 @@
-# @fluid-experimental/bubblebench
+# @fluid-experimental/bubblebench-sharedtree
 
 ## Getting Started
 
