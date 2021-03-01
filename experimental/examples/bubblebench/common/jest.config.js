@@ -11,7 +11,7 @@ mappedPort = testTools.getTestPort(name);
 process.env["PORT"] = mappedPort;
 
 module.exports = {
-  preset: "jest-puppeteer",
+  preset: "jest",
   globals: {
     PATH: `http://localhost:${mappedPort}`
   },
