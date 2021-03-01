@@ -4,7 +4,7 @@
  */
 
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { assert, TelemetryNullLogger, stringToBuffer, bufferToString } from "@fluidframework/common-utils";
+import { assert, TelemetryNullLogger, bufferToString } from "@fluidframework/common-utils";
 import { ISummaryTree, SummaryType, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { BlobAggregationStorage } from "../blobAggregationStorage";
@@ -40,7 +40,7 @@ export class FlattenedStorageService {
 
 class InMemoryStorage {
     private summaryWritten: ISummaryTree | undefined;
-    public readonly blobs = new Map<string, string>();
+    public readonly blobs = new Map<string, ArrayBufferLike>();
 
     public get policies() {
         return { minBlobSize: this.blobSizeLimit };
@@ -62,7 +62,7 @@ class InMemoryStorage {
     async readBlob(id: string) {
         const blob = this.blobs.get(id);
         if (blob !== undefined) {
-            return stringToBuffer(blob, "base64");
+            return blob;
         }
 
         throw new Error("unknown blob id");

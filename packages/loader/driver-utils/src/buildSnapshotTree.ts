@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, IsoBuffer } from "@fluidframework/common-utils";
+import { assert, IsoBuffer, stringToBuffer } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import {
     FileMode,
@@ -17,7 +17,7 @@ import { v4 as uuid } from "uuid";
 function flattenCore(
     path: string,
     treeEntries: ITreeEntry[],
-    blobMap: Map<string, string>,
+    blobMap: Map<string, ArrayBufferLike>,
 ): git.ITreeEntry[] {
     const entries: git.ITreeEntry[] = [];
     for (const treeEntry of treeEntries) {
@@ -25,15 +25,15 @@ function flattenCore(
 
         if (treeEntry.type === TreeEntry.Blob) {
             const blob = treeEntry.value;
-            const buffer = IsoBuffer.from(blob.contents, blob.encoding);
+            const buffer = stringToBuffer(blob.contents, blob.encoding);
             const id = uuid();
-            blobMap.set(id, buffer.toString("base64"));
+            blobMap.set(id, buffer);
 
             const entry: git.ITreeEntry = {
                 mode: FileMode[treeEntry.mode],
                 path: subPath,
                 sha: id,
-                size: buffer.length,
+                size: IsoBuffer.from(blob.contents, blob.encoding).length,
                 type: "blob",
                 url: "",
             };
@@ -76,7 +76,7 @@ function flattenCore(
  * @param blobMap - a map of blob's sha1 to content
  * @returns A flatten with of the ITreeEntry
  */
-function flatten(tree: ITreeEntry[], blobMap: Map<string, string>): git.ITree {
+function flatten(tree: ITreeEntry[], blobMap: Map<string, ArrayBufferLike>): git.ITree {
     const entries = flattenCore("", tree, blobMap);
     return {
         sha: "",
@@ -95,7 +95,7 @@ function flatten(tree: ITreeEntry[], blobMap: Map<string, string>): git.ITree {
  */
 export function buildSnapshotTree(
     entries: ITreeEntry[],
-    blobMap: Map<string, string>,
+    blobMap: Map<string, ArrayBufferLike>,
 ): ISnapshotTree {
     const flattened = flatten(entries, blobMap);
     return buildHierarchy(flattened);

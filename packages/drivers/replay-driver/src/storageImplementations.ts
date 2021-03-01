@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, stringToBuffer } from "@fluidframework/common-utils";
+import { assert, bufferToString } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -38,7 +38,7 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
 
     protected docId?: string;
     protected docTree: ISnapshotTree;
-    protected blobs: Map<string, string>;
+    protected blobs: Map<string, ArrayBufferLike>;
     protected readonly commits: { [key: string]: ITree } = {};
     protected readonly trees: { [key: string]: ISnapshotTree } = {};
 
@@ -46,7 +46,7 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
         super();
         this.commits = json.commits;
 
-        this.blobs = new Map<string, string>();
+        this.blobs = new Map<string, ArrayBufferLike>();
         this.docTree = buildSnapshotTree(json.tree.entries, this.blobs);
     }
 
@@ -87,7 +87,7 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
     public async read(blobId: string): Promise<string> {
         const blob = this.blobs.get(blobId);
         if (blob !== undefined) {
-            return blob;
+            return bufferToString(blob,"base64");
         }
         throw new Error(`Unknown blob ID: ${blobId}`);
     }
@@ -95,7 +95,7 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
         const blob = this.blobs.get(blobId);
         if (blob !== undefined) {
-            return stringToBuffer(blob, "base64");
+            return blob;
         }
         throw new Error(`Unknown blob ID: ${blobId}`);
     }

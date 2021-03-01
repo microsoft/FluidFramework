@@ -516,7 +516,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                             is in pendingAttach set: ${this.pendingAttach.has(id)},
                             is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContext}`);
 
-                        const flatBlobs = new Map<string, string>();
+                        const flatBlobs = new Map<string, ArrayBufferLike>();
                         const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
 
                         const remoteChannelContext = new RemoteChannelContext(

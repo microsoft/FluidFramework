@@ -57,7 +57,7 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly id: string,
         baseSnapshot:  ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
-        extraBlobs: Map<string, string> | undefined,
+        extraBlobs: Map<string, ArrayBufferLike> | undefined,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         gcDetailsInInitialSummary: () => Promise<IGarbageCollectionSummaryDetails>,
         private readonly attachMessageType?: string,
