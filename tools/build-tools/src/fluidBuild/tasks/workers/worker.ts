@@ -15,8 +15,6 @@ export interface WorkerMessage {
 
 export interface WorkerExecResult {
     code: number;
-    stdout?: string,
-    stderr?: string,
     error?: Error,  // unhandled exception, main thread should rerun it.
 }
 

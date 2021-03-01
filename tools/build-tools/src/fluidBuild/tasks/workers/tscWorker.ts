@@ -71,8 +71,6 @@ export async function compile(msg: WorkerMessage): Promise<WorkerExecResult> {
     }
 
     const sortedDiagnostics = ts.sortAndDeduplicateDiagnostics(diagnostics);
-    return {
-        code,
-        stderr: convertDiagnostics(sortedDiagnostics)
-    };
+    console.log(convertDiagnostics(sortedDiagnostics));
+    return { code };
 }
