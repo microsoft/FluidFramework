@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as child_process from "child_process";
+import { ChildProcess, fork } from "child_process";
+import { EventEmitter } from "events";
 import { Worker } from "worker_threads";
 import { WorkerMessage, WorkerExecResult } from "./worker";
 
@@ -14,8 +15,11 @@ export interface WorkerExecResultWithOutput extends WorkerExecResult {
 
 export class WorkerPool {
     private readonly threadWorkerPool: Worker[] = [];
-    private readonly processWorkerPool: child_process.ChildProcess[] = [];
-    constructor(public readonly useWorkerThreads: boolean) {
+    private readonly processWorkerPool: ChildProcess[] = [];
+    constructor(
+        public readonly useWorkerThreads: boolean,
+        private readonly memoryUsageLimit: number,
+    ) {
     }
 
     private getThreadWorker() {
@@ -27,9 +31,12 @@ export class WorkerPool {
     }
 
     private getProcessWorker() {
-        let worker: child_process.ChildProcess | undefined = this.processWorkerPool.pop();
+        let worker: ChildProcess | undefined = this.processWorkerPool.pop();
         if (!worker) {
-            worker = child_process.fork(`${__dirname}/worker.js`, undefined, { silent: true });
+            worker = fork(`${__dirname}/worker.js`,
+                this.memoryUsageLimit !== -1 ? ["--memoryUsage"] : undefined,
+                { silent: true }
+            );
         }
         return worker;
     }
@@ -41,7 +48,7 @@ export class WorkerPool {
             object.on(event, handler);
             cleanup.push(() => object.off(event, handler));
         }
-        const setupWorker = (worker: Worker | child_process.ChildProcess, res: (value: WorkerExecResultWithOutput) => void) => {
+        const setupWorker = (worker: Worker | ChildProcess, res: (value: WorkerExecResultWithOutput) => void) => {
             let stdout = "";
             let stderr = "";
             installTemporaryListener(worker.stdout, "data", (chunk: any) => { stdout += chunk; });
@@ -61,7 +68,7 @@ export class WorkerPool {
                 return res;
             } else {
                 const worker = this.getProcessWorker();
-                const res = new Promise<WorkerExecResultWithOutput>((res, rej) => {
+                const res = await new Promise<WorkerExecResultWithOutput>((res, rej) => {
                     const setupErrorListener = (event: string) => {
                         installTemporaryListener(worker, event, () => { rej(new Error(`Worker ${event}`)); });
                     }
@@ -75,7 +82,12 @@ export class WorkerPool {
                     worker.send(workerMessage);
                 });
 
-                this.processWorkerPool.push(worker);
+                if (this.memoryUsageLimit >= 0 && (res.memoryUsage?.rss ?? 0) > this.memoryUsageLimit) {
+                    // Don't keep worker using more then 1GB of memory
+                    worker.kill();
+                } else {
+                    this.processWorkerPool.push(worker);
+                }
                 return res;
             }
         } finally {

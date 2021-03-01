@@ -316,7 +316,13 @@ export class TscTask extends LeafTask {
         this._tsBuildInfo = undefined;
     }
 
-    protected get useWorker() { return true; }
+    protected get useWorker() {
+        // TODO: Worker doesn't implement all mode.  This is not comprehensive filtering yet.
+        const parsed = this.parsedCommandLine;
+        return parsed !== undefined
+            && (parsed.fileNames.length === 0 || parsed.options.project === undefined)
+            && !parsed.watchOptions;
+    }
 };
 
 // Base class for tasks that are dependent on a tsc compile

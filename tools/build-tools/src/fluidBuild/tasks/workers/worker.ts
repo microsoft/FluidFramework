@@ -14,8 +14,9 @@ export interface WorkerMessage {
 };
 
 export interface WorkerExecResult {
-    code: number;
+    code: number,
     error?: Error,  // unhandled exception, main thread should rerun it.
+    memoryUsage?: NodeJS.MemoryUsage,
 }
 
 const workers: { [key: string]: (message: WorkerMessage) => Promise<WorkerExecResult> } = {
@@ -23,17 +24,23 @@ const workers: { [key: string]: (message: WorkerMessage) => Promise<WorkerExecRe
     "eslint": lint,
 }
 
+let collectMemoryUsage = false;
+
 async function messageHandler(msg: WorkerMessage): Promise<WorkerExecResult> {
+    let res: WorkerExecResult;
     try {
         const worker = workers[msg.workerName];
         if (worker) {
-            return worker(msg);
+            // await here so that if the promise is rejected, the try/catch will catch it
+            res = await worker(msg);
+        } else {
+            throw new Error(`Invalid workerName ${msg.workerName}`);
         }
-        throw new Error(`Invalid workerName ${msg.workerName}`);
     } catch (error) {
         // any unhandled exception thrown is going to rerun on main thread.
-        return { error, code: -1 };
+        res = { error, code: -1 };
     }
+    return collectMemoryUsage ? { ...res, memoryUsage: process.memoryUsage() } : res;
 }
 
 if (parentPort) {
@@ -41,14 +48,15 @@ if (parentPort) {
         messageHandler(message).then(parentPort!.postMessage.bind(parentPort));
     });
 } else if (process.send) {
+    collectMemoryUsage = process.argv.includes("--memoryUsage");
     process.on('message', (message: WorkerMessage) => {
         messageHandler(message).then(process.send!.bind(process));
     });
-    process.on("uncaughtException", (error)=> {
+    process.on("uncaughtException", (error) => {
         console.error(`ERROR: Uncaught exception. ${error.message}\n${error.stack}`);
         process.exit(-1);
     });
-    process.on("unhandledRejection", (reason, promise)=> {
+    process.on("unhandledRejection", (reason, promise) => {
         console.error(`ERROR: Unhandled promise rejection. ${reason}`);
         process.exit(-1);
     });

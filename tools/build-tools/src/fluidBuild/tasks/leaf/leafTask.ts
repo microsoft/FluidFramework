@@ -98,7 +98,7 @@ export abstract class LeafTask extends Task {
             // rerun on the main thread in case the work has an unknown exception
             const result = await this.execCommand();
             if (!result.error) {
-                console.warn(`${this.node.pkg.nameColored}: warning: failed in worker but succeeded directly ${this.command}`)
+                console.warn(`${this.node.pkg.nameColored}: warning: failed in worker but succeeded directly '${this.command}'`)
             }
             return result;
         }

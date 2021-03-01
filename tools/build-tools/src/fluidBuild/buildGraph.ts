@@ -51,7 +51,6 @@ class BuildContext {
 export class BuildPackage {
     private buildTask?: Task | null = null;
     private buildScriptNames: string[];
-    private loaded = false;
     public readonly parents = new Array<BuildPackage>();
     public readonly dependentPackages = new Array<BuildPackage>();
     public level: number = -1;
@@ -95,7 +94,7 @@ export class BuildPackage {
 export class BuildGraph {
     private readonly buildPackages = new Map<string, BuildPackage>();
     private readonly buildContext = new BuildContext(
-        options.worker ? new WorkerPool(options.worker_threads) : undefined);
+        options.worker ? new WorkerPool(options.workerThreads, options.workerMemoryLimit) : undefined);
 
     public constructor(
         private readonly packages: Package[],
