@@ -17,35 +17,8 @@ modern documentation system. Content is written in Markdown.
 
 ## Building documentation locally
 
-### Generating API documentation
-
-To build the API documentation, do the following from the root of the repository:
-
-```bash
-npm install
-npm run build:fast -- --symlink:full --install --all
-npm run build:fast -- -s build:docs --all
-```
-
-This will generate a JSON representation of all the TSDoc comments, which will be transformed into Markdown in the next
-step.
-
-
-### Building documentation site with Hugo
-
-To build the docs themselves, you'll need to switch to the `docs/` folder, install the dependencies, and then build the
-site.
-
-```bash
-cd docs
-npm install
-```
-
-`npm start` will serve the local documentation from <http://localhost:1313/>, while `npm run build` will build the full
-documentation site and output it to `docs/public/`.
-
-Both `npm start` and `npm run build` will convert the TSDoc JSON into a tree of Markdown files under
-`docs/content/apis/` as part of the site build. These files should _not_ be committed to Git.
+For instructions to build the documentation locally, see the Fluid Framework wiki on GitHub:
+<https://github.com/microsoft/FluidFramework/wiki/Building-documentation-locally>.
 
 ## Documentation sources
 

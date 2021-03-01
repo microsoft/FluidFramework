@@ -25,7 +25,6 @@ import {
     LoaderContainerTracker,
 } from "@fluidframework/test-utils";
 import { Loader } from "@fluidframework/container-loader";
-import * as oldTypes from "./oldVersionTypes";
 import * as old from "./oldVersion";
 import * as old2 from "./oldVersion2";
 import { ITestDriver } from "./newVersion";
@@ -63,7 +62,7 @@ describe("context reload (hot-swap)", function() {
     let dataStoreV1: TestDataStoreV1;
     let opProcessingController: OpProcessingController;
     const loaderContainerTracker = new LoaderContainerTracker();
-    const codeDetails = (version: string): oldTypes.IFluidCodeDetails => {
+    const codeDetails = (version: string): IFluidCodeDetails => {
         return {
             package: { name: TestDataStore.type, version, fluid: {} },
             config: {},
@@ -275,7 +274,7 @@ describe("context reload (hot-swap)", function() {
         });
     });
 
-    oldApis.forEach((oldApi: oldTypes.OldApi) => {
+    oldApis.forEach((oldApi) => {
         describe("compat", () => {
             describe("old loader, new runtime", () => {
                 class OldTestDataObjectV1 extends oldApi.OldTestDataObject {

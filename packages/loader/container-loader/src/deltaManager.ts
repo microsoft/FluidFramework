@@ -1428,10 +1428,20 @@ export class DeltaManager
         }
 
         // Watch the minimum sequence number and be ready to update as needed
-        assert(this.minSequenceNumber <= message.minimumSequenceNumber, "msn moves backwards");
+        if (this.minSequenceNumber > message.minimumSequenceNumber) {
+            throw new DataCorruptionError("msn moves backwards", {
+                ...extractLogSafeMessageProperties(message),
+                clientId: this.connection?.clientId,
+            });
+        }
         this.minSequenceNumber = message.minimumSequenceNumber;
 
-        assert(message.sequenceNumber === this.lastProcessedSequenceNumber + 1, "non-seq seq#");
+        if (message.sequenceNumber !== this.lastProcessedSequenceNumber + 1) {
+            throw new DataCorruptionError("non-seq seq#", {
+                ...extractLogSafeMessageProperties(message),
+                clientId: this.connection?.clientId,
+            });
+        }
         this.lastProcessedSequenceNumber = message.sequenceNumber;
 
         // Back-compat for older server with no term
@@ -1530,4 +1540,18 @@ export class DeltaManager
             this.lastObservedSeqNumber = seq;
         }
     }
+}
+
+// TODO: move this elsewhere and use it more broadly for DataCorruptionError/DataProcessingError
+function extractLogSafeMessageProperties(message: Partial<ISequencedDocumentMessage>) {
+    const safeProps = {
+        messageClientId: message.clientId,
+        sequenceNumber: message.sequenceNumber,
+        clientSequenceNumber: message.clientSequenceNumber,
+        referenceSequenceNumber: message.referenceSequenceNumber,
+        minimumSequenceNumber: message.minimumSequenceNumber,
+        messageTimestamp: message.timestamp,
+    };
+
+    return safeProps;
 }

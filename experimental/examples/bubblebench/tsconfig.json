@@ -6,6 +6,7 @@
     ],
     "compilerOptions": {
         "module": "esnext",
+        "lib": ["ESNext", "DOM"],
         "outDir": "dist",
         "jsx": "react",
         "types": ["react", "react-dom", "jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"]
