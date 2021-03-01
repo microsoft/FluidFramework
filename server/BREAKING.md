@@ -1,14 +1,18 @@
+> **Note:** These breaking changes are only relevant to the server packages and images released from `./routerlicious`.
 
 ## 0.1020 Breaking Changes
 
-- [`RestWrapper` is now an abstract class](#`restwrapper`-is-now-an-abstract-class)
-- [`Historian` no longer handles request headers](#`historian`-no-longer-handles-request-headers)
+- [@fluidframework/server-services-client](#@fluidframework/server-services-client)
+  - [`RestWrapper` is now an abstract class](#`restwrapper`-is-now-an-abstract-class)
+  - [`Historian` class no longer handles request headers](#`historian`-class-no-longer-handles-request-headers)
 
-### `RestWrapper` is now an abstract class
+### @fluidframework/server-services-client
+
+#### `RestWrapper` is now an abstract class
 
 `RestWrapper` is now an abstract class that cannot be instantiated. Use `BasicRestWrapper` instead to maintain current functionality.
 
-### `Historian` no longer handles request headers
+#### `Historian` class no longer handles request headers
 
 The `Historian` client class no longer builds its own request headers, and therefore does not have constructor parameters `getCredentials` and `getCorrelationId`. Instead, it relies on the consumer to pass in a `RestWrapper` with the desired default headers. To easily generate the necessary token format for communicating with the Historian service, use the new `getAuthorizationTokenFromCredentials()` function. For example,
 
