@@ -45,10 +45,8 @@
     "@fluidframework/datastore-definitions": "^0.36.0",
     "@fluidframework/map": "^0.36.0",
     "@fluidframework/view-interfaces": "^0.36.0",
-    "best-random": "^1.0.0",
     "react": "^16.10.2",
-    "react-dom": "^16.10.2",
-    "use-resize-observer": "^7.0.0"
+    "react-dom": "^16.10.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0-0",
