@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { rnd } from "./rnd";
 
 export interface IArrayish<T> extends ArrayLike<T>, Pick<T[], "push" | "pop" | "map">, Iterable<T> { }
