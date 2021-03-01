@@ -13,3 +13,4 @@ export * from "./network";
 export * from "./readAndParse";
 export * from "./fluidResolvedUrl";
 export * from "./summaryForCreateNew";
+export * from "./compliantLogging";

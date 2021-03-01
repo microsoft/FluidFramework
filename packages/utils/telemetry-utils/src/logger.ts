@@ -14,6 +14,7 @@ import {
     TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
 import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
+import { ContainerErrorType, IErrorBase } from "@fluidframework/container-definitions";
 
 export interface ITelemetryPropertyGetters {
     [index: string]: () => TelemetryEventPropertyType;
@@ -58,13 +59,10 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             // for failed request, including all the headers, and thus - user tokens!
             // Extract only call stack, message, and couple network-related properties form error object
 
-            const errorAsObject = error as {
-                stack?: string;
-                message?: string;
-            };
+            const compliantProps = extractLogCompliantErrorProperties(error);
 
-            event.stack = errorAsObject.stack;
-            event.error = errorAsObject.message;
+            event.stack = compliantProps.stack;
+            event.error = compliantProps.message;
 
             // Error message can contain PII information.
             // If we know for sure it does, we have to not log it.
@@ -487,4 +485,52 @@ export class LoggingError extends Error {
         }
         return props;
     }
+}
+
+export class DataCorruptionError extends LoggingError implements IErrorBase {
+    readonly errorType = ContainerErrorType.dataCorruptionError;
+    readonly canRetry = false;
+
+    constructor(errorMessage: string, props: ITelemetryProperties) {
+        super(errorMessage, props);
+    }
+}
+
+export function messageFromError(error: any): string {
+    if (typeof error?.message === "string") {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return error.message;
+    }
+    return `${error}`;
+}
+
+export const isTypedLoggingError = (error: any): error is LoggingError => {
+    return typeof error?.errorType === "string" && error instanceof LoggingError;
+};
+
+export const isRegularObject = (value: any): boolean => {
+    return value !== null && !Array.isArray(value) && typeof value === "object";
+};
+
+export function extractLogCompliantErrorProperties(error: any) {
+    // Only get properties we know about.
+    // Grabbing all properties will expose PII in telemetry!
+    const message = messageFromError(error);
+    const safeProps: { message: string; errorType?: string; stack?: string } = {
+        message,
+    };
+
+    if (isRegularObject(error)) {
+        const { errorType, stack } = error;
+
+        if (typeof errorType === "string") {
+            safeProps.errorType = errorType;
+        }
+
+        if (typeof stack === "string") {
+            safeProps.stack = stack;
+        }
+    }
+
+    return safeProps;
 }

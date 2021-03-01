@@ -17,7 +17,12 @@ import {
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
-import { PerformanceEvent, TelemetryLogger, safeRaiseEvent } from "@fluidframework/telemetry-utils";
+import {
+    PerformanceEvent,
+    TelemetryLogger,
+    safeRaiseEvent,
+    DataCorruptionError,
+} from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -49,12 +54,9 @@ import {
     createWriteError,
     createGenericNetworkError,
     getRetryDelayFromError,
+    extractLogCompliantMessageProperties,
 } from "@fluidframework/driver-utils";
-import {
-    CreateContainerError,
-    CreateProcessingError,
-    DataCorruptionError,
-} from "@fluidframework/container-utils";
+import { CreateContainerError, CreateProcessingError } from "@fluidframework/container-utils";
 import { debug } from "./debug";
 import { DeltaQueue } from "./deltaQueue";
 import { logNetworkFailure, waitForConnectedState } from "./networkUtils";
@@ -1428,20 +1430,18 @@ export class DeltaManager
         }
 
         // Watch the minimum sequence number and be ready to update as needed
-        if (this.minSequenceNumber > message.minimumSequenceNumber) {
-            throw new DataCorruptionError("msn moves backwards", {
-                ...extractLogSafeMessageProperties(message),
-                clientId: this.connection?.clientId,
-            });
-        }
+        assertFluidOpInvariant(
+            this.minSequenceNumber <= message.minimumSequenceNumber,
+            message,
+            "msn moves backwards",
+        );
         this.minSequenceNumber = message.minimumSequenceNumber;
 
-        if (message.sequenceNumber !== this.lastProcessedSequenceNumber + 1) {
-            throw new DataCorruptionError("non-seq seq#", {
-                ...extractLogSafeMessageProperties(message),
-                clientId: this.connection?.clientId,
-            });
-        }
+        assertFluidOpInvariant(
+            message.sequenceNumber === this.lastProcessedSequenceNumber + 1,
+            message,
+            "non-seq seq#",
+        );
         this.lastProcessedSequenceNumber = message.sequenceNumber;
 
         // Back-compat for older server with no term
@@ -1542,16 +1542,14 @@ export class DeltaManager
     }
 }
 
-// TODO: move this elsewhere and use it more broadly for DataCorruptionError/DataProcessingError
-function extractLogSafeMessageProperties(message: Partial<ISequencedDocumentMessage>) {
-    const safeProps = {
-        messageClientId: message.clientId,
-        sequenceNumber: message.sequenceNumber,
-        clientSequenceNumber: message.clientSequenceNumber,
-        referenceSequenceNumber: message.referenceSequenceNumber,
-        minimumSequenceNumber: message.minimumSequenceNumber,
-        messageTimestamp: message.timestamp,
-    };
-
-    return safeProps;
+export function assertFluidOpInvariant(
+    condition: boolean,
+    op: Partial<ISequencedDocumentMessage>,
+    errorMessage: string)
+{
+    if (!condition) {
+        throw new DataCorruptionError(errorMessage, {
+            ...extractLogCompliantMessageProperties(op),
+        });
+    }
 }
