@@ -1,6 +1,3 @@
 {
-  "packages": [
-    "packages/**"
-  ],
   "version": "0.1020.0"
 }

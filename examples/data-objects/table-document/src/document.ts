@@ -33,7 +33,8 @@ export interface ITableDocumentEvents extends IEvent {
 export class TableDocument extends DataObject<{}, {}, ITableDocumentEvents> implements ITable {
     public static getFactory() { return TableDocument.factory; }
 
-    private static readonly factory = new DataObjectFactory(
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    private static readonly factory = new DataObjectFactory<TableDocument, object, object, IEvent>(
         TableDocumentType,
         TableDocument,
         [

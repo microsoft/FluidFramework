@@ -214,7 +214,7 @@ export abstract class LeafTask extends Task {
     protected abstract addDependentTasks(dependentTasks: LeafTask[]): void;
 
     // check if this task is up to date
-    protected abstract async checkLeafIsUpToDate(): Promise<boolean>;
+    protected abstract checkLeafIsUpToDate(): Promise<boolean>;
 
     // do this task support recheck when it time to execute (even when the dependent task is out of date)
     protected get recheckLeafIsUpToDate(): boolean { return false; }

@@ -1,0 +1,25 @@
+packages:
+  - 'common/*/*'
+  - 'packages/*/*'
+  - 'examples/**'
+  - 'experimental/**'
+#   - '!packages/utils/odsp-doclib-utils'
+#   - 'server/routerlicious/packages/**'
+  - 'server/routerlicious/packages/gitresources/'
+#   - 'server/routerlicious/packages/local-server/'
+  - 'server/routerlicious/packages/protocol-base/'
+  - 'server/routerlicious/packages/protocol-definitions/'
+  # exclude packages that are inside test/ directories
+  # - '!**/test/**'
+#   - '!**/routerlicious-urlResolver'
+#   - '!packages/*/*odsp*'
+#   - '!packages/*/end-to-end-tests'
+#   - '!packages/*/fetch-tool'
+#   - '!packages/*/tool-utils'
+#   - '!packages/*/webpack-fluid-loader'
+#   - '!packages\driversodsp-urlResolver'
+
+link-workspace-packages: deep
+prefer-workspace-packages: true
+save-workspace-protocol: true
+shared-workspace-lockfile: true

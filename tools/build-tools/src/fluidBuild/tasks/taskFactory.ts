@@ -30,6 +30,7 @@ const executableToLeafTask: { [key: string]: new (node: BuildPackage, command: s
     prettier: PrettierTask,
     "gen-version": GenVerTask,
     "api-extractor": ApiExtractorTask,
+    // pnpm: PnpmTask,
 };
 
 export class TaskFactory {
@@ -41,17 +42,17 @@ export class TaskFactory {
             const steps = command.substring("concurrently ".length).split(" ");
             for (const step of steps) {
                 const stepT = step.trim();
-                if (stepT.startsWith("npm:")) {
-                    subTasks.push(TaskFactory.Create(node, "npm run " + stepT.substring("npm:".length)));
+                if (stepT.startsWith("pnpm:")) {
+                    subTasks.push(TaskFactory.Create(node, "pnpm run " + stepT.substring("pnpm:".length)));
                 } else {
                     subTasks.push(TaskFactory.Create(node, stepT));
                 }
             }
             return new ConcurrentNPMTask(node, command, subTasks);
         }
-        if (command.startsWith("npm run ")) {
+        if (command.startsWith("pnpm run ")) {
             const subTasks = new Array<Task>();
-            const script = node.pkg.getScript(command.substring("npm run ".length));
+            const script = node.pkg.getScript(command.substring("pnpm run ".length));
             if (script) {
                 const steps = script.split("&&");
                 for (const step of steps) {
@@ -72,7 +73,7 @@ export class TaskFactory {
 
     public static CreateScriptTasks(node: BuildPackage, scripts: string[]) {
         if (scripts.length === 0) { return undefined; }
-        const tasks = scripts.map(value => TaskFactory.Create(node, `npm run ${value}`));
-        return tasks.length == 1 ? tasks[0] : new NPMTask(node, `npm run ${scripts.map(name => `npm run ${name}`).join(" && ")}`, tasks);
+        const tasks = scripts.map(value => TaskFactory.Create(node, `pnpm run ${value}`));
+        return tasks.length == 1 ? tasks[0] : new NPMTask(node, `pnpm run ${scripts.map(name => `pnpm run ${name}`).join(" && ")}`, tasks);
     }
 };

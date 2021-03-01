@@ -8,11 +8,11 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedDirectory } from "@fluidframework/map";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-
 import {
     Clicker,
     ExampleUsingProviders,
@@ -105,7 +105,8 @@ export class Pond extends DataObject implements IFluidHTMLView {
 
     public static getFactory() { return Pond.factory; }
 
-    private static readonly factory = new DataObjectFactory(
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    private static readonly factory = new DataObjectFactory<Pond, object, undefined, IEvent>(
         PondName,
         Pond,
         [SharedDirectory.getFactory()],

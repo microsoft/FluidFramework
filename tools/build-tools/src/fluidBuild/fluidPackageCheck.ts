@@ -87,7 +87,7 @@ export class FluidPackageCheck {
 
                 const verboseTestScriptName = `${testScriptName}:verbose`;
                 const verboseTestMochaScript = pkg.getScript(verboseTestScriptName);
-                const expectedVerboseTestMochaScript = `cross-env FLUID_TEST_VERBOSE=1 npm run ${testScriptName}`;
+                const expectedVerboseTestMochaScript = `cross-env FLUID_TEST_VERBOSE=1 pnpm run ${testScriptName}`;
                 if (verboseTestMochaScript !== expectedVerboseTestMochaScript) {
                     this.logWarn(pkg, `${verboseTestScriptName} script not match "${expectedVerboseTestMochaScript}"`, fix);
                     if (fix) {
@@ -134,7 +134,7 @@ export class FluidPackageCheck {
         const expectedScript = expected ?
             concurrent ?
                 `concurrently ${expected.map((value) => `npm:${value}`).join(" ")}` :
-                expected.map((value) => `npm run ${value}`).join(" && ")
+                expected.map((value) => `pnpm run ${value}`).join(" && ")
             : undefined;
         return this.checkScript(pkg, name, expectedScript, fix);
     }
@@ -152,11 +152,11 @@ export class FluidPackageCheck {
             if (pkg.getScript("start:tinylicious:test") !== undefined) {
                 expectedTestScripts.push("start-server-and-test start:tinylicious:test 3000 test:mocha")
             } else {
-                expectedTestScripts.push("npm run test:mocha");
+                expectedTestScripts.push("pnpm run test:mocha");
             }
         }
         if (testJestScript) {
-            expectedTestScripts.push("npm run test:jest");
+            expectedTestScripts.push("pnpm run test:jest");
         }
         let expectedTestScript = expectedTestScripts.length > 0 ? expectedTestScripts.join(" && ") : undefined;
 
@@ -230,7 +230,7 @@ export class FluidPackageCheck {
         let fixed = false;
         const buildScript = pkg.getScript("build");
         if (buildScript) {
-            if (buildScript.startsWith("echo ") || buildScript === "npm run noop") {
+            if (buildScript.startsWith("echo ") || buildScript === "pnpm run noop") {
                 return;
             }
             // These are script rules in the FluidFramework repo
@@ -255,7 +255,7 @@ export class FluidPackageCheck {
 
             let concurrentBuildCompile = true;
 
-            const buildPrefix = pkg.getScript("build:genver") ? "npm run build:genver && " : "";
+            const buildPrefix = pkg.getScript("build:genver") ? "pnpm run build:genver && " : "";
             // tsc should be in build:commonjs if it exists, otherwise, it should be in build:compile
             if (pkg.getScript("tsc")) {
                 if (pkg.getScript("build:commonjs")) {
@@ -328,7 +328,7 @@ export class FluidPackageCheck {
 
             const check = (scriptName: string, parts: string[], concurrently = true, prefix = "") => {
                 const expected = parts.length === 0 ? undefined :
-                    prefix + (parts.length > 1 && concurrently ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts.join(" && npm run ")}`);
+                    prefix + (parts.length > 1 && concurrently ? `concurrently pnpm:${parts.join(" pnpm:")}` : `pnpm run ${parts.join(" && pnpm run ")}`);
                 if (this.checkScript(pkg, scriptName, expected, fix)) {
                     fixed = true;
                 }

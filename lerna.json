@@ -1,8 +1,13 @@
 {
-  "packages": [
-    "examples/**",
-    "experimental/**",
-    "packages/**"
-  ],
-  "version": "0.36.0"
+    "packages": [
+        "examples/**",
+        "experimental/**",
+        "packages/**",
+        "server/routerlicious/packages/gitresources/",
+        "server/routerlicious/packages/local-server/",
+        "server/routerlicious/packages/protocol-base/",
+        "server/routerlicious/packages/protocol-definitions/"
+
+    ],
+    "version": "0.36.0"
 }

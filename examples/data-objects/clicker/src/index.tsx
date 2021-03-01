@@ -4,6 +4,7 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { ITask } from "@fluidframework/runtime-definitions";
@@ -114,7 +115,8 @@ class CounterReactView extends React.Component<CounterProps, CounterState> {
 
 // ----- FACTORY SETUP -----
 
-export const ClickerInstantiationFactory = new DataObjectFactory(
+// eslint-disable-next-line @typescript-eslint/ban-types
+export const ClickerInstantiationFactory = new DataObjectFactory<Clicker, object, undefined, IEvent>(
     ClickerName,
     Clicker,
     [SharedCounter.getFactory()],

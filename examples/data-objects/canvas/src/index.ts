@@ -7,10 +7,13 @@ import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { Ink } from "@fluidframework/ink";
 import { Canvas } from "./canvas";
 
-export const CanvasInstantiationFactory = new DataObjectFactory(
+// eslint-disable-next-line @typescript-eslint/ban-types
+export const CanvasInstantiationFactory = new DataObjectFactory<Canvas, object, undefined, IEvent>
+(
     "Canvas",
     Canvas,
     [

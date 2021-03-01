@@ -7,6 +7,7 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
 
@@ -27,7 +28,8 @@ export class Constellation extends DataObject implements IConstellation {
         return Constellation.factory;
     }
 
-    private static readonly factory = new DataObjectFactory(
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    private static readonly factory = new DataObjectFactory<Constellation, object, undefined, IEvent>(
         Constellation.ComponentName,
         Constellation,
         [],

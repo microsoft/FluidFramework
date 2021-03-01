@@ -5,7 +5,9 @@
 
 import { Package, Packages } from "./npmPackage";
 import * as path from "path";
+import YAML from "yaml";
 import { execWithErrorAsync, rimrafWithErrorAsync, existsSync, readJsonSync } from "./utils";
+import { readFileSync } from "fs-extra";
 
 export enum MonoRepoKind {
     Client,
@@ -21,12 +23,61 @@ export class MonoRepo {
             throw new Error(`ERROR: lerna.json not found in ${repoPath}`);
         }
         const lerna = readJsonSync(lernaPath);
-        for (const dir of lerna.packages as string[]) {
-            // TODO: other glob pattern?
-            const loadDir = dir.endsWith("/**") ? dir.substr(0, dir.length - 3) : dir;
-            this.packages.push(...Packages.loadDir(path.join(this.repoPath, loadDir), MonoRepoKind[kind], ignoredDirs, this));
+        if (lerna.packages) {
+            for (const dir of lerna.packages as string[]) {
+                // TODO: other glob pattern?
+                const loadDir = dir.endsWith("/**") ? dir.substr(0, dir.length - 3) : dir;
+            	this.packages.push(...Packages.loadDir(path.join(this.repoPath, loadDir), MonoRepoKind[kind], ignoredDirs, this));
+            }
+        } else if (existsSync(path.join(repoPath, "pnpm-workspace.yaml"))) {
+            this.packages.push(...this.loadWorkspacesFromPnpm(repoPath));
+        } else {
+            // look for workspaces in package.json
+            this.packages.push(...this.loadWorkspacesFromPackage(repoPath));
         }
         this.version = lerna.version;
+    }
+
+    private loadWorkspacesFromPackage(packagePath: string, ignoredDirs?: string[]): Package[] {
+        const pkgJsonPath = path.join(packagePath, "package.json");
+        const pkg = readJsonSync(pkgJsonPath);
+        const packages: Package[] = [];
+
+        for (const dir of pkg.workspaces) {
+            if (dir.endsWith("/")) {
+                // ignore these for now
+                // this.packages.push(...this.loadWorkspaces(dir.substr(0, dir.length - 1)));
+            }
+            else if (dir.endsWith("/**") || dir.endsWith("*/*")) {
+                const loadDir = path.join(this.repoPath, dir.substr(0, dir.length - 3));
+                packages.push(...Packages.loadDir(loadDir, MonoRepoKind[this.kind], ignoredDirs, this));
+            }
+        }
+        return packages;
+    }
+
+    private loadWorkspacesFromPnpm(packagePath: string, ignoredDirs?: string[]): Package[] {
+        const packages: Package[] = [];
+        const pkgPath = path.join(packagePath || this.repoPath, "pnpm-workspace.yaml");
+        const content = readFileSync(pkgPath, "utf-8");
+        const config = YAML.parse(content);
+
+        for (const dir of config.packages as string[]) {
+            console.log(dir);
+        }
+
+        for (const d of config.packages as string[]) {
+            console.log(d);
+            if (d.endsWith("/")) {
+                const loadDir = path.join(this.repoPath, d.substr(0, d.length - 1));
+                packages.push(...Packages.loadDir(loadDir, MonoRepoKind[this.kind], ignoredDirs, this));
+            }
+            else if (d.endsWith("/**") || d.endsWith("*/*")) {
+                const loadDir = path.join(this.repoPath, d.substr(0, d.length - 3));
+                packages.push(...Packages.loadDir(loadDir, MonoRepoKind[this.kind], ignoredDirs, this));
+            }
+        }
+        return [];
     }
 
     public static isSame(a: MonoRepo | undefined, b: MonoRepo | undefined) {
