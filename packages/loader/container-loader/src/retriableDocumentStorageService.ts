@@ -16,7 +16,7 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { performance } from "@fluidframework/common-utils";
+import { performance, bufferToString } from "@fluidframework/common-utils";
 import { DeltaManager } from "./deltaManager";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService {
@@ -45,6 +45,11 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
             async () => this.internalStorageService.getSnapshotTree(version),
             "getSnapshotTree",
         );
+    }
+
+    public async read(blobId: string): Promise<string> {
+        return this.readWithRetry(async () =>
+        bufferToString(await this.internalStorageService.readBlob(blobId),"base64"), "read");
     }
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {
