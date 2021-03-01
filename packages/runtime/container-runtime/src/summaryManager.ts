@@ -429,7 +429,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                     type: summarizerClientType,
                 },
                 [DriverHeader.summarizingClient]: true,
-                [LoaderHeader.reconnect]: false,
                 [LoaderHeader.sequenceNumber]: this.context.deltaManager.lastSequenceNumber,
                 [LoaderHeader.executionContext]: this.enableWorker ? "worker" : undefined,
             },
