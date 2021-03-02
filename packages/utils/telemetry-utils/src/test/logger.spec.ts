@@ -36,12 +36,14 @@ describe("Logger", () => {
                 assert(event.error === "boom");
                 assert(!!event.stack);
             });
-            it("containsPII respected", () => {
+            it("containsPII (legacy) is ignored", () => {
+                // Previously, setting containsPII = true on an error obj would (attempt to) redact its message
                 const event = freshEvent();
                 const error = new Error("boom");
                 (error as any).containsPII = true;
                 TelemetryLogger.prepareErrorObject(event, error, false);
-                assert(event.error !== "boom");
+                assert(event.error === "boom");
+                assert((event.stack as string).includes("boom"));
             });
             it("getTelemetryProperties absent - no further props added", () => {
                 const event = freshEvent();
