@@ -51,8 +51,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
     /**
      * Take an unknown error object and add the appropriate info from it to the event
-     * NOTE - All properties will be copied over from the error object, except those specifically
-     * marked as pii on an instance of type LoggingError. Take care to sanitize the argument before passing in.
+     * NOTE - message and stack will be copied over from the error object, along with other telemetry properties
+     * if it's an instance of LoggingError
      * @param event - Event being logged
      * @param error - Error to extract info from
      * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
@@ -61,14 +61,16 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         if (error === null || typeof error !== "object") {
             event.error = error;
         } else {
-            const errorAsObject = error as Partial<LoggingError>;
+            const errorAsObject = error as Partial<Error>;
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
 
-            const telemetryProps = errorAsObject.getTelemetryProperties?.() ?? {};
-            for (const key of Object.keys(telemetryProps)) {
-                if (event[key] === undefined) {
-                    event[key] = telemetryProps[key];
+            if (error instanceof LoggingError) {
+                const telemetryProps = error.getTelemetryProperties();
+                for (const key of Object.keys(telemetryProps)) {
+                    if (event[key] === undefined) {
+                        event[key] = telemetryProps[key];
+                    }
                 }
             }
         }
@@ -466,7 +468,7 @@ export class PerformanceEvent {
 export class LoggingError extends Error {
     constructor(
         message: string,
-        private pii?: any, // On here to be accessible during debugging but removed before logging
+        private readonly pii?: any, // On here to be accessible during debugging but removed before logging
         props?: ITelemetryProperties,
     ) {
         super(message);
@@ -481,7 +483,9 @@ export class LoggingError extends Error {
             props[key] = this[key];
         }
         // Remove pii member
-        delete (props as unknown as LoggingError).pii;
+        if ((props as unknown as LoggingError).pii !== undefined) {
+            props.pii = undefined;
+        }
         return props;
     }
 }
