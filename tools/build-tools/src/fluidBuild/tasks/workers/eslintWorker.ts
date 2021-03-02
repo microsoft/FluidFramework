@@ -5,13 +5,14 @@
 
 import type { WorkerMessage, WorkerExecResult } from "./worker";
 
-const eslintPath = require.resolve("eslint/lib/cli");
-const eslint = require("eslint/lib/cli");
-
 export async function lint(message: WorkerMessage): Promise<WorkerExecResult> {
     const oldArgv = process.argv;
     const oldCwd = process.cwd();
     try {
+        // Load the eslint version that is in the cwd scope
+        const eslintPath = require.resolve("eslint/lib/cli", { paths: [message.cwd] });
+        const eslint = require(eslintPath);
+
         // TODO: better parsing, assume split delimited for now.
         const argv = message.command.split(" ");
 

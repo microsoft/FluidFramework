@@ -36,9 +36,16 @@ async function messageHandler(msg: WorkerMessage): Promise<WorkerExecResult> {
         } else {
             throw new Error(`Invalid workerName ${msg.workerName}`);
         }
-    } catch (error) {
+    } catch (e) {
         // any unhandled exception thrown is going to rerun on main thread.
-        res = { error, code: -1 };
+        res = {
+            error: {
+                name: e.name,
+                message: e.message,
+                stack: e.stack,
+            },
+            code: -1,
+        };
     }
     return collectMemoryUsage ? { ...res, memoryUsage: process.memoryUsage() } : res;
 }
@@ -67,5 +74,3 @@ if (parentPort) {
 } else {
     throw new Error("Invalid worker invocation");
 }
-
-

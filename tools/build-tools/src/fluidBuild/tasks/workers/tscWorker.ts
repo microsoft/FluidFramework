@@ -3,28 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import * as ts from "typescript";
-import * as TscUtils from "../../tscUtils";
+import type { SortedReadonlyArray, Diagnostic } from "typescript";
+import * as tsLib from "typescript";
 import type { WorkerMessage, WorkerExecResult } from "./worker";
+import { getTscUtil } from "../../tscUtils";
 
-function convertDiagnostics(diagnostics: ts.SortedReadonlyArray<ts.Diagnostic>) {
-    const messages: string[] = [];
-    diagnostics.forEach(diagnostic => {
-        if (diagnostic.file) {
-            let { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start!);
-            let message = ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n");
-            messages.push(`${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`);
-        } else {
-            messages.push(ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"));
-        }
-    });
-    return messages.join("\n");
-}
 
 export async function compile(msg: WorkerMessage): Promise<WorkerExecResult> {
     const { command, cwd } = msg;
+    // Load the typescript version that is in the cwd scope
+    // Load the eslint version that is in the cwd scope
+    const tsPath = require.resolve("typescript", { paths: [cwd] });
+    const ts: typeof tsLib = require(tsPath);
+
+    const TscUtils = getTscUtil(ts);
+    function convertDiagnostics(diagnostics: SortedReadonlyArray<Diagnostic>) {
+        const messages: string[] = [];
+        diagnostics.forEach(diagnostic => {
+            if (diagnostic.file) {
+                let { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start!);
+                let message = ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n");
+                messages.push(`${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`);
+            } else {
+                messages.push(ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"));
+            }
+        });
+        return messages.join("\n");
+    }
+
     let commandLine = TscUtils.parseCommandLine(command);
-    let diagnostics: ts.Diagnostic[] = [];
+    let diagnostics: Diagnostic[] = [];
 
     if (commandLine) {
         const configFileName = TscUtils.findConfigFile(cwd, commandLine);
@@ -35,7 +43,7 @@ export async function compile(msg: WorkerMessage): Promise<WorkerExecResult> {
                 {
                     ...ts.sys,
                     getCurrentDirectory: () => cwd,
-                    onUnRecoverableConfigFileDiagnostic: (diagnostic: ts.Diagnostic) => {
+                    onUnRecoverableConfigFileDiagnostic: (diagnostic: Diagnostic) => {
                         diagnostics.push(diagnostic);
                     }
                 })!;
