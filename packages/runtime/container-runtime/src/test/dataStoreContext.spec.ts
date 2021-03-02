@@ -340,7 +340,7 @@ describe("Data Store Context Tests", () => {
                     snapshotFormatVersion: "0.1",
                     isRootDataStore: true,
                 };
-                const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "base64");
+                const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
                 const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
                 const snapshotTree: ISnapshotTree = {
                     blobs: { [dataStoreAttributesBlobName]: "fluidDataStoreAttributes" },
@@ -384,7 +384,7 @@ describe("Data Store Context Tests", () => {
                     pkg: "TestDataStore1",
                     snapshotFormatVersion: undefined,
                 };
-                const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "base64");
+                const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
                 const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
                 const snapshotTree: ISnapshotTree = {
                     blobs: { [dataStoreAttributesBlobName]: "fluidDataStoreAttributes" },
@@ -444,7 +444,7 @@ describe("Data Store Context Tests", () => {
                     pkg: "TestDataStore1",
                     snapshotFormatVersion: undefined,
                 };
-                const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "base64");
+                const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
                 const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
                 const snapshotTree: ISnapshotTree = {
                     blobs: {
@@ -487,8 +487,8 @@ describe("Data Store Context Tests", () => {
                     usedRoutes: [],
                     gcData: emptyGCData,
                 };
-                const attributesBuffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "base64");
-                const gcDetailsBuffer = stringToBuffer(JSON.stringify(gcDetails), "base64");
+                const attributesBuffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
+                const gcDetailsBuffer = stringToBuffer(JSON.stringify(gcDetails), "utf8");
                 const blobCache = new Map<string, ArrayBufferLike>([
                     ["fluidDataStoreAttributes", attributesBuffer],
                     ["gcDetails", gcDetailsBuffer],
@@ -542,8 +542,8 @@ describe("Data Store Context Tests", () => {
                         },
                     },
                 };
-                const attributesBuffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "base64");
-                const gcDetailsBuffer = stringToBuffer(JSON.stringify(gcDetails), "base64");
+                const attributesBuffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
+                const gcDetailsBuffer = stringToBuffer(JSON.stringify(gcDetails), "utf8");
                 const blobCache = new Map<string, ArrayBufferLike>([
                     ["fluidDataStoreAttributes", attributesBuffer],
                     ["gcDetails", gcDetailsBuffer],
@@ -578,8 +578,8 @@ describe("Data Store Context Tests", () => {
                 const gcDetails: IGarbageCollectionSummaryDetails = {
                     usedRoutes: [""], // Set initial used routes to be same as the default used routes.
                 };
-                const attributesBuffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "base64");
-                const gcDetailsBuffer = stringToBuffer(JSON.stringify(gcDetails), "base64");
+                const attributesBuffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
+                const gcDetailsBuffer = stringToBuffer(JSON.stringify(gcDetails), "utf8");
                 const blobCache = new Map<string, ArrayBufferLike>([
                     ["fluidDataStoreAttributes", attributesBuffer],
                     ["gcDetails", gcDetailsBuffer],
@@ -626,7 +626,7 @@ describe("Data Store Context Tests", () => {
                     pkg: "TestDataStore1",
                     snapshotFormatVersion: undefined,
                 };
-                const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "base64");
+                const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
                 const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
                 const snapshotTree: ISnapshotTree = {
                     id: "dummy",
