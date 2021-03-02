@@ -77,7 +77,7 @@
     "@types/lodash": "^4.14.149",
     "@types/mocha": "^5.2.5",
     "@types/morgan": "^1.7.35",
-    "@types/nconf": "^0.0.37",
+    "@types/nconf": "^0.10.0",
     "@types/node": "^10.17.13",
     "@types/redis": "^2.8.8",
     "@types/rimraf": "^3.0.0",
