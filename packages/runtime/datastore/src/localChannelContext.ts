@@ -188,7 +188,7 @@ export class LocalChannelContext implements IChannelContext {
         for (const [blobName, blobId] of blobMapInitial.entries()) {
             const blobValue = blobMapInitial.get(blobId);
             if (blobValue !== undefined) {
-                blobMap.set(blobId, stringToBuffer(blobValue, "utf8"));
+                blobMap.set(blobId, stringToBuffer(blobValue, "base64"));
             } else {
                 // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                 delete snapshotTree.blobs[blobName];
