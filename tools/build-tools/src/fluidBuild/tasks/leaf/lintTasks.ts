@@ -80,6 +80,11 @@ export class EsLintTask extends LintBaseTask {
         }
         super.addDependentTasks(dependentTasks);
     }
+
+    protected get useWorker() {
+        // eslint can't use worker thread as it needs to change the current working directory
+        return this.node.buildContext.workerPool?.useWorkerThreads === false;
+    }
 }
 
 export class TsFormatTask extends LintBaseTask {

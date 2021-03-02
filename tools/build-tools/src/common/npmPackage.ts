@@ -230,13 +230,12 @@ async function queueExec<TItem, TResult>(items: Iterable<TItem>, exec: (item: TI
         logStatus(`[${++numDone}/${p.length}] ${messageCallback(item)} - ${elapsedTime.toFixed(3)}s`);
         return result;
     } : exec;
-    const q = queue(async (taskExec: TaskExec<TItem, TResult>, callback) => {
+    const q = queue(async (taskExec: TaskExec<TItem, TResult>) => {
         try {
             taskExec.resolve(await timedExec(taskExec.item));
         } catch (e) {
             taskExec.reject(e);
         }
-        callback();
     }, options.concurrency);
     const p: Promise<TResult>[] = [];
     for (const item of items) {
