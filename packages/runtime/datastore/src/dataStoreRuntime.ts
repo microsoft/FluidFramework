@@ -60,6 +60,9 @@ import {
     generateHandleContextPath,
     RequestParser,
     SummaryTreeBuilder,
+    create404Response,
+    createResponseError,
+    exceptionToResponse,
 } from "@fluidframework/runtime-utils";
 import {
     IChannel,
@@ -320,34 +323,34 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        const parser = RequestParser.create(request);
-        const id = parser.pathParts[0];
+        try {
+            const parser = RequestParser.create(request);
+            const id = parser.pathParts[0];
 
-        if (id === "_channels" || id === "_custom") {
-            return this.request(parser.createSubRequest(1));
-        }
-
-        // Check for a data type reference first
-        if (this.contextsDeferred.has(id) && parser.isLeaf(1)) {
-            try {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                const value = await this.contextsDeferred.get(id)!.promise;
-                const channel = await value.getChannel();
-
-                return { mimeType: "fluid/object", status: 200, value: channel };
-            } catch (error) {
-                this.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
-
-                return {
-                    status: 500,
-                    mimeType: "text/plain",
-                    value: `Failed to get Channel with id:[${id}] error:{${error}}`,
-                };
+            if (id === "_channels" || id === "_custom") {
+                return this.request(parser.createSubRequest(1));
             }
-        }
 
-        // Otherwise defer to an attached request handler
-        return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+            // Check for a data type reference first
+            if (this.contextsDeferred.has(id) && parser.isLeaf(1)) {
+                try {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    const value = await this.contextsDeferred.get(id)!.promise;
+                    const channel = await value.getChannel();
+
+                    return { mimeType: "fluid/object", status: 200, value: channel };
+                } catch (error) {
+                    this.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
+
+                    return createResponseError(500, `Failed to get Channel: ${error}`, request);
+                }
+            }
+
+            // Otherwise defer to an attached request handler
+            return create404Response(request);
+        } catch (error) {
+            return exceptionToResponse(error);
+        }
     }
 
     public async getChannel(id: string): Promise<IChannel> {

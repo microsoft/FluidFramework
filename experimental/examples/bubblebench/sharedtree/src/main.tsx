@@ -13,12 +13,14 @@ import { SharedTree } from "@fluid-experimental/tree";
 import React from "react";
 import ReactDOM from "react-dom";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IArrayish, IClient, AppView } from "@fluid-experimental/bubblebench-common";
 import { AppState } from "./state";
-import { AppView } from "./view";
-import { IApp, TreeObjectProxy } from "./proxy";
+import { TreeObjectProxy } from "./proxy";
 
-export class TreeDemo extends DataObject implements IFluidHTMLView {
-    public static get Name() { return "@fluid-experimental/tree-demo"; }
+interface IApp { clients: IArrayish<IClient>; }
+
+export class Bubblebench extends DataObject implements IFluidHTMLView {
+    public static get Name() { return "@fluid-experimental/bubblebench-sharedtree"; }
     private maybeTree?: SharedTree = undefined;
     private maybeClientManager?: AppState = undefined;
     public get IFluidHTMLView() { return this; }
@@ -79,9 +81,9 @@ export class TreeDemo extends DataObject implements IFluidHTMLView {
  * The DataObjectFactory declares the Fluid object and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
-export const TreeDemoInstantiationFactory = new DataObjectFactory(
-    TreeDemo.Name,
-    TreeDemo,
+export const BubblebenchInstantiationFactory = new DataObjectFactory(
+    Bubblebench.Name,
+    Bubblebench,
     [SharedTree.getFactory()],
     {},
 );

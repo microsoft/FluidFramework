@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import { AppState } from "../state";
+import { IAppState } from "../types";
 import { BubbleView } from "./bubble";
 
 export interface IStage {
@@ -13,7 +13,7 @@ export interface IStage {
 }
 
 export interface IStageProps {
-    app: AppState;
+    app: IAppState;
 }
 
 export const StageView: React.FC<IStageProps> = ({ app }: IStageProps) => {

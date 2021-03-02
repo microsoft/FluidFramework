@@ -11,12 +11,13 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
+import { create404Response, exceptionToResponse, responseToException } from "./dataStoreHelpers";
 
 /**
- * This handle is used to dynamically load a data store on a remote client and is created on parsing a serialized
+ * This handle is used to dynamically load a Fluid object on a remote client and is created on parsing a serialized
  * FluidObjectHandle.
- * This class is used to generate an IFluidHandle when de-serializing Fluid Data Store and SharedObject handles
- * that are stored in SharedObjects. The Data Store or SharedObject corresponding to the IFluidHandle can be
+ * This class is used to generate an IFluidHandle when de-serializing any all handles (including handles to DDSs, custom
+ * objects) that are stored in SharedObjects. The Data Store or SharedObject corresponding to the IFluidHandle can be
  * retrieved by calling `get` on it.
  */
 export class RemoteFluidObjectHandle implements IFluidHandle {
@@ -25,7 +26,7 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
     public get IFluidHandle() { return this; }
 
     public readonly isAttached = true;
-    private dataStoreP: Promise<IFluidObject> | undefined;
+    private objectP: Promise<IFluidObject> | undefined;
 
     /**
      * Creates a new RemoteFluidObjectHandle when parsing an IFluidHandle.
@@ -47,15 +48,17 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
     }
 
     public async get(): Promise<any> {
-        if (this.dataStoreP === undefined) {
-            this.dataStoreP = this.routeContext.resolveHandle({ url: this.absolutePath })
-                .then<IFluidObject>((response) =>
-                    response.mimeType === "fluid/object"
-                        ? response.value as IFluidObject
-                        : Promise.reject(new Error(response.value)));
+        if (this.objectP === undefined) {
+            const request = { url: this.absolutePath };
+            this.objectP = this.routeContext.resolveHandle(request)
+                .then<IFluidObject>((response) => {
+                    if (response.mimeType === "fluid/object") {
+                        return response.value as IFluidObject;
+                    }
+                    throw responseToException(response, request);
+                });
         }
-
-        return this.dataStoreP;
+        return this.objectP;
     }
 
     public attachGraph(): void {
@@ -67,11 +70,15 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        const dataStore = await this.get() as IFluidObject;
-        const router = dataStore.IFluidRouter;
+        try {
+            const object = await this.get() as IFluidObject;
+            const router = object.IFluidRouter;
 
-        return router !== undefined
-            ? router.request(request)
-            : { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+            return router !== undefined
+                ? router.request(request)
+                : create404Response(request);
+        } catch (error) {
+            return exceptionToResponse(error);
+        }
     }
 }

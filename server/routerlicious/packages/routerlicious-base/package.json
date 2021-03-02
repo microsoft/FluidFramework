@@ -92,7 +92,7 @@
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^5.2.5",
     "@types/morgan": "^1.7.35",
-    "@types/nconf": "^0.0.37",
+    "@types/nconf": "^0.10.0",
     "@types/redis": "^2.8.8",
     "@types/request": "^2.47.1",
     "@types/split": "^0.3.28",

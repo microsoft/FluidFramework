@@ -57,6 +57,7 @@
     "@types/debug": "^4.1.5",
     "@types/jsonwebtoken": "^8.3.0",
     "@types/mongodb": "^3.1.22",
+    "@types/nconf": "^0.10.0",
     "@types/puppeteer": "^1.12.3",
     "@types/redis": "^2.8.10",
     "@types/request": "^2.48.4",

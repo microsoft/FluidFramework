@@ -44,7 +44,7 @@
     "@fluidframework/mocha-test-setup": "^0.36.0",
     "@types/assert": "^1.5.2",
     "@types/mocha": "^5.2.5",
-    "@types/nconf": "^0.0.37",
+    "@types/nconf": "^0.10.0",
     "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",

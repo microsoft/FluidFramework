@@ -25,6 +25,7 @@ import {
     ITaskManager,
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
+import { create404Response } from "@fluidframework/runtime-utils";
 import debug from "debug";
 import { v4 as uuid } from "uuid";
 
@@ -393,14 +394,14 @@ export class TaskManager implements ITaskManager {
         if (request.url === "" || request.url === "/") {
             return { status: 200, mimeType: "fluid/object", value: this };
         } else if (!request.url.startsWith(this.taskUrl)) {
-            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+            return create404Response(request);
         } else {
             const trimmedUrl = request.url.substr(this.taskUrl.length);
             const taskUrl = trimmedUrl.length > 0 && trimmedUrl.startsWith("/")
                 ? trimmedUrl.substr(1)
                 : "";
             if (taskUrl === "" || !this.taskMap.has(taskUrl)) {
-                return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+                return create404Response(request);
             } else {
                 return { status: 200, mimeType: "fluid/object", value: this.taskMap.get(taskUrl) };
             }

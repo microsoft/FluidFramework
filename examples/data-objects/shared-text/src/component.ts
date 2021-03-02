@@ -36,7 +36,7 @@ import {
     SharedObjectSequence,
     SharedString,
 } from "@fluidframework/sequence";
-import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
+import { requestFluidObject, RequestParser, create404Response } from "@fluidframework/runtime-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
@@ -109,7 +109,7 @@ export class SharedTextRunner
             return { status:200, mimeType: "fluid/sharedstring", value: this.sharedString };
         }
         else {
-            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+            return create404Response(request);
         }
     }
 

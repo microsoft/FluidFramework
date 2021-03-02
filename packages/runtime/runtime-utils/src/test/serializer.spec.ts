@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { RemoteFluidObjectHandle } from "../remoteFluidObjectHandle";
+import { RemoteFluidObjectHandle } from "../remoteObjectHandle";
 import { FluidSerializer } from "../serializer";
 import {
     makeJson,
