@@ -5,14 +5,13 @@
 
 import React, { useEffect, useState } from "react";
 import useResizeObserver from "use-resize-observer";
-import { AppState } from "../state";
-import { IBubble } from "../proxy";
 import { Stats } from "../stats";
+import { IAppState, IBubble } from "../types";
 import { StageView } from "./stage";
 
 const formatFloat = (n: number) => Math.round(n * 10) / 10;
 interface IAppProps {
-    app: AppState;
+    app: IAppState;
 }
 
 function move(bubble: IBubble, width: number, height: number) {
@@ -71,16 +70,14 @@ function collide(left: IBubble, right: IBubble): void {
 
 export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
     const [stats] = useState<Stats>(new Stats());
-    const [size, onResize] = useState<{ width?: number, height?: number }>({ width: 640, height: 480 });
     const [, setFrame] = useState<number>(0);
 
     useEffect(() => {
-        const localBubbles = app.localBubbles;
+        const localBubbles = app.localClient.bubbles;
 
         // Move each bubble
         for (const bubble of localBubbles) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            move(bubble, size.width!, size.height!);
+            move(bubble, app.width, app.height);
         }
 
         // Handle collisions between each pair of local bubbles
@@ -109,8 +106,7 @@ export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
         if (!(stats.smoothFps > 30)) {
             app.decreaseBubbles();
         } else if (stats.smoothFps > 31) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            app.increaseBubbles(size.width!, size.height!);
+            app.increaseBubbles();
         }
 
         app.applyEdits();
@@ -124,7 +120,11 @@ export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
     stats.endFrame();
 
     // Observe changes to the visible size and update physics accordingly.
-    const { ref } = useResizeObserver<HTMLDivElement>({ onResize });
+    const { ref } = useResizeObserver<HTMLDivElement>({
+        onResize: ({width, height}) => {
+            app.setSize(width, height);
+        },
+    });
 
     let bubbleCount = 0;
     for (const client of app.clients) {
@@ -133,7 +133,7 @@ export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
 
     return (
         <div ref={ref} style={{ position: "absolute", inset: "0px" }}>
-            <div>{`${app.localBubbles.length}/${bubbleCount} bubbles @${
+            <div>{`${app.localClient.bubbles.length}/${bubbleCount} bubbles @${
                 formatFloat(stats.smoothFps)} fps (${stats.lastFrameElapsed} ms)`}</div>
             <div>{`Total FPS: ${formatFloat(stats.totalFps)} (Glitches: ${stats.glitchCount})`}</div>
             <StageView app={app}></StageView>

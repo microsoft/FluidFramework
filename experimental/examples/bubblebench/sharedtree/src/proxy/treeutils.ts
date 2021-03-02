@@ -29,7 +29,7 @@ export const makeScalar = (value: Jsonable): TreeNode<EditNode> => ({
 
 /* eslint-disable no-null/no-null */
 
-export function fromJson(value: Jsonable): TreeNode<EditNode> {
+export function fromJson(value: Partial<Jsonable>): TreeNode<EditNode> {
     if (typeof value === "object") {
         if (Array.isArray(value)) {
             return {
