@@ -31,6 +31,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import {
+    DriverHeader,
     IDocumentService,
     IDocumentStorageService,
     IFluidResolvedUrl,
@@ -1870,7 +1871,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("Base request is not provided");
         }
 
-        const resolvedAsFluid = await urlResolver.resolve({ url: baseRequestUrl });
+        // This is necessary because the ODSP UrlResolver/Driver pair use the summarizer key
+        // on the IOdspResolvedUrl returned by the resolver (here) to tell the driver (later)
+        // that it is the summarizing client, even though the interfaces/APIs all use less
+        // specific types.  When this can be specified to the driver more explicitly, this
+        // can be removed
+        const summarizer = clientDetails?.type === "summarizer";
+
+        const resolvedAsFluid = await urlResolver.resolve({
+            url: baseRequestUrl,
+            headers: {
+                [DriverHeader.summarizingClient]: summarizer,
+            },
+        });
         ensureFluidResolvedUrl(resolvedAsFluid);
 
         // Parse URL into data stores
