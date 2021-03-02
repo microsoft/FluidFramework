@@ -4,7 +4,7 @@
  */
 
 import * as path from "path";
-import nconf from "nconf";
+import * as nconf from "nconf";
 import { runService } from "@fluidframework/server-services-utils";
 import { HistorianResourcesFactory, HistorianRunnerFactory } from "@fluidframework/historian-base";
 

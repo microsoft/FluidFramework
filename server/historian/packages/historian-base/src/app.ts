@@ -10,7 +10,7 @@ import compression from "compression";
 import cors from "cors";
 import express from "express";
 import morgan from "morgan";
-import nconf from "nconf";
+import * as nconf from "nconf";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import split = require("split");
 import * as winston from "winston";
