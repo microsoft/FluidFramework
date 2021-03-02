@@ -8,6 +8,7 @@ import {
     IFluidObject,
     IFluidRouter,
     IRequest,
+    IResponse,
 } from "@fluidframework/core-interfaces";
 import {
     IFluidDataStoreFactory,
@@ -15,17 +16,85 @@ import {
     IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 
+interface IResponseException extends Error {
+    errorFromRequestFluidObject: true;
+    message: string;
+    code: number;
+    stack: string;
+}
+
+export function getStack() {
+    const err = new Error();
+    if (err.stack !== undefined) {
+        return err.stack;
+    }
+    try {
+        throw err;
+    } catch (err2) {
+        return (err2 as Error).stack;
+    }
+}
+
+export function exceptionToResponse(err: any): IResponse {
+    const status = 500;
+    // eslint-disable-next-line no-null/no-null
+    if (err !== null && typeof err === "object" && err.errorFromRequestFluidObject === true) {
+        const responseErr: IResponseException = err;
+        return {
+            mimeType: "text/plain",
+            status,
+            value: responseErr.message,
+            stack: responseErr.stack ?? getStack(),
+        };
+    }
+    return {
+        mimeType: "text/plain",
+        status,
+        value : `${err}`,
+        stack: getStack(),
+    };
+}
+
+export function responseToException(response: IResponse, request: IRequest) {
+    // add one more 'frame' to message
+    const message = `${response.value}\nNot found: ${request.url}`;
+    const err = new Error(message);
+    const responseErr = err as any as IResponseException;
+    responseErr.errorFromRequestFluidObject = true;
+    responseErr.message = message;
+    responseErr.code = response.status;
+    if (response.stack !== undefined) {
+        try {
+            // not clear if all browsers allow overwriting stack
+            responseErr.stack = response.stack;
+        } catch (err2) {}
+    }
+    return err;
+}
+
 export async function requestFluidObject<T = IFluidObject>(
     router: IFluidRouter, url: string | IRequest): Promise<T> {
     const request = typeof url === "string" ? { url } : url;
     const response = await router.request(request);
 
     if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        return Promise.reject(new Error("Not found"));
+        throw responseToException(response, request);
     }
 
     assert(response.value);
     return response.value as T;
+}
+
+export const create404Response = (request: IRequest) => createResponseError(404, "not found", request);
+
+export function createResponseError(status: number, value: string, request: IRequest): IResponse {
+    assert(status !== 200);
+    return {
+        mimeType: "text/plain",
+        status,
+        value : request.url === undefined ? value : `${value}: ${request.url}`,
+        stack: getStack(),
+    };
 }
 
 export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>;

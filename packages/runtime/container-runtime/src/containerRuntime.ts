@@ -104,6 +104,8 @@ import {
     IRootSummarizerNodeWithGC,
     requestFluidObject,
     RequestParser,
+    create404Response,
+    exceptionToResponse,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -871,25 +873,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param request - Request made to the handler.
      */
     public async request(request: IRequest): Promise<IResponse> {
-        const parser = RequestParser.create(request);
-        const id = parser.pathParts[0];
+        try {
+            const parser = RequestParser.create(request);
+            const id = parser.pathParts[0];
 
-        if (id === "_summarizer" && parser.pathParts.length === 1) {
-            return {
-                status: 200,
-                mimeType: "fluid/object",
-                value: this.summarizer,
-            };
-        }
-        if (this.requestHandler !== undefined) {
-            return this.requestHandler(parser, this);
-        }
+            if (id === "_summarizer" && parser.pathParts.length === 1) {
+                return {
+                    status: 200,
+                    mimeType: "fluid/object",
+                    value: this.summarizer,
+                };
+            }
+            if (this.requestHandler !== undefined) {
+                return this.requestHandler(parser, this);
+            }
 
-        return {
-            status: 404,
-            mimeType: "text/plain",
-            value: "resource not found",
-        };
+            return create404Response(request);
+        } catch (error) {
+            return exceptionToResponse(error);
+        }
     }
 
     /**
@@ -897,45 +899,41 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param request - Request made to the handler.
      */
     public async resolveHandle(request: IRequest): Promise<IResponse> {
-        const requestParser = RequestParser.create(request);
-        const id = requestParser.pathParts[0];
+        try {
+            const requestParser = RequestParser.create(request);
+            const id = requestParser.pathParts[0];
 
-        if (id === "_channels") {
-            return this.resolveHandle(requestParser.createSubRequest(1));
-        }
-
-        if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
-            const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
-            if (handle) {
-                return {
-                    status: 200,
-                    mimeType: "fluid/object",
-                    value: handle.get(),
-                };
-            } else {
-                return {
-                    status: 404,
-                    mimeType: "text/plain",
-                    value: "blob not found",
-                };
+            if (id === "_channels") {
+                return this.resolveHandle(requestParser.createSubRequest(1));
             }
-        } else if (requestParser.pathParts.length > 0) {
-            const wait =
-                typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const dataStore = await this.getDataStore(id, wait);
-            const subRequest = requestParser.createSubRequest(1);
-            // We always expect createSubRequest to include a leading slash, but asserting here to protect against
-            // unintentionally modifying the url if that changes.
-            assert(subRequest.url.startsWith("/"), "Expected createSubRequest url to include a leading slash");
-            return dataStore.IFluidRouter.request(subRequest);
+            if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
+                const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
+                if (handle) {
+                    return {
+                        status: 200,
+                        mimeType: "fluid/object",
+                        value: handle.get(),
+                    };
+                } else {
+                    return create404Response(request);
+                }
+            } else if (requestParser.pathParts.length > 0) {
+                const wait =
+                    typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
+
+                const dataStore = await this.getDataStore(id, wait);
+                const subRequest = requestParser.createSubRequest(1);
+                // We always expect createSubRequest to include a leading slash, but asserting here to protect against
+                // unintentionally modifying the url if that changes.
+                assert(subRequest.url.startsWith("/"), "Expected createSubRequest url to include a leading slash");
+                return dataStore.IFluidRouter.request(subRequest);
+            }
+
+            return create404Response(request);
+        } catch (error) {
+            return exceptionToResponse(error);
         }
-
-        return {
-            status: 404,
-            mimeType: "text/plain",
-            value: "resource not found",
-        };
     }
 
     /**
