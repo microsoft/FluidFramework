@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import { assert, bufferToString } from "@fluidframework/common-utils";
-import { 
+import {
     IDocumentStorageService,
     IDocumentStorageServicePolicies,
     ISummaryContext,
