@@ -51,13 +51,30 @@ describe("Logger", () => {
                 TelemetryLogger.prepareErrorObject(event, error, false);
                 assert(event.foo === undefined && event.bar === undefined);
             });
-            it("getTelemetryProperties present", () => {
+            it("getTelemetryProperties present - add additional props", () => {
                 const event = freshEvent();
-                const error = { foo: "foo", bar: 2, getTelemetryProperties: () => ({}) };
+                const error = { getTelemetryProperties: () => ({foo: "foo", bar: 2}) };
                 TelemetryLogger.prepareErrorObject(event, error, false);
-                assert(event.foo === undefined && event.bar === undefined);
+                assert(event.foo === "foo" && event.bar === 2);
             });
-            it("fetchStack", () => {});
+            it("fetchStack false - Don't add a stack if missing", () => {
+                const event = freshEvent();
+                const error = { message: "I have no stack" };
+                TelemetryLogger.prepareErrorObject(event, error, false);
+                assert.strictEqual(event.stack, undefined);
+            });
+            it("fetchStack true - Don't add a stack if present", () => {
+                const event = freshEvent();
+                const error = new Error("boom");
+                TelemetryLogger.prepareErrorObject(event, error, false);
+                assert.strictEqual(typeof (event.stack), "string");
+            });
+            it("fetchStack true - Add a stack if missing", () => {
+                const event = freshEvent();
+                const error = { message: "I have no stack" };
+                TelemetryLogger.prepareErrorObject(event, error, true);
+                assert.strictEqual(typeof (event.stack), "string");
+            });
         });
         describe("LoggingError", () => {
             it("props are assigned to the object which extends Error", () => {
