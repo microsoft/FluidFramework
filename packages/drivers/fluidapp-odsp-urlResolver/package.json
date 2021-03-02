@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/fluidapp-odsp-urlresolver",
-  "version": "0.35.1",
+  "version": "0.35.2",
   "private": true,
   "description": "Url Resolver for Fluid app urls.",
   "homepage": "https://fluidframework.com",
@@ -34,15 +34,15 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.27.0",
-    "@fluidframework/core-interfaces": "^0.35.1",
-    "@fluidframework/driver-definitions": "^0.35.1",
-    "@fluidframework/odsp-driver": "^0.35.1",
+    "@fluidframework/core-interfaces": "^0.35.2",
+    "@fluidframework/driver-definitions": "^0.35.2",
+    "@fluidframework/odsp-driver": "^0.35.2",
     "assert": "^2.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
-    "@fluidframework/mocha-test-setup": "^0.35.1",
+    "@fluidframework/mocha-test-setup": "^0.35.2",
     "@types/assert": "^1.5.2",
     "@types/mocha": "^5.2.5",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
