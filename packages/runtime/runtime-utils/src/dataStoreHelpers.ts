@@ -56,8 +56,7 @@ export function exceptionToResponse(err: any): IResponse {
 }
 
 export function responseToException(response: IResponse, request: IRequest) {
-    // add one more 'frame' to message
-    const message = `${response.value}\nNot found: ${request.url}`;
+    const message = response.value;
     const err = new Error(message);
     const responseErr = err as any as IResponseException;
     responseErr.errorFromRequestFluidObject = true;
