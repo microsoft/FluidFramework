@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { strict as assert } from "assert";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { TelemetryLogger } from "../logger";
+import { LoggingError, TelemetryLogger } from "../logger";
 
 describe("Logger", () => {
     describe("Error Logging", () => {
@@ -58,7 +58,25 @@ describe("Logger", () => {
             it("fetchStack", () => {});
         });
         describe("LoggingError", () => {
-            it("", () => {});
+            it("props are assigned to the object which extends Error", () => {
+                const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
+                assert.strictEqual(loggingError.name, "Error");
+                assert.strictEqual(loggingError.message, "myMessage");
+                const errorAsAny = loggingError as any;
+                assert.strictEqual(errorAsAny.p1, 1);
+                assert.strictEqual(errorAsAny.p2, "two");
+                assert.strictEqual(errorAsAny.p3, true);
+            });
+            it("getTelemetryProperties extracts all props", () => {
+                const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
+                const props = loggingError.getTelemetryProperties();
+                assert.strictEqual(props.message, "myMessage");
+                assert.strictEqual(typeof props.stack, "string");
+                assert.strictEqual(props.name, undefined, "Error's name prop is not cloned by getTelemetryProperties");
+                assert.strictEqual(props.p1, 1);
+                assert.strictEqual(props.p2, "two");
+                assert.strictEqual(props.p3, true);
+            });
         });
     });
 });
