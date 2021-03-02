@@ -6,7 +6,7 @@
 import { AsyncLocalStorage } from "async_hooks";
 import { IThrottler } from "@fluidframework/server-services-core";
 import { Router } from "express";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import { ICache, ITenantService } from "../services";
 /* eslint-disable import/no-internal-modules */
 import * as blobs from "./git/blobs";

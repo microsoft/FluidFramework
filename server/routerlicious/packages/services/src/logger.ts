@@ -5,7 +5,7 @@
 
 import { debug } from "debug";
 import * as winston from "winston";
-import * as nconf from "nconf";
+import nconf from "nconf";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import Transport = require("winston-transport");
 

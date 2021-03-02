@@ -8,7 +8,7 @@ import { ICommit, ICreateCommitParams } from "@fluidframework/gitresources";
 import { IThrottler } from "@fluidframework/server-services-core";
 import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
 import { Router } from "express";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import winston from "winston";
 import { ICache, ITenantService } from "../../services";
 import * as utils from "../utils";
