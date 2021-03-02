@@ -14,6 +14,7 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
+    IFluidConfiguration,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -864,7 +865,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return undefined;
     }
 
-    public get IFluidConfiguration() {
+    public get IFluidConfiguration(): IFluidConfiguration {
         return this.context.configuration;
     }
 

@@ -5,9 +5,11 @@
 
 import {
      IDocumentStorageService,
+    IDocumentStorageServicePolicies,
      ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import {
+    ICreateBlobResponse,
     ISnapshotTree,
     ISummaryHandle,
     ISummaryTree,
@@ -200,7 +202,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         await converter.unpackSnapshotCore(snapshot);
     }
 
-    public get policies() {
+    public get policies(): IDocumentStorageServicePolicies | undefined {
         const policies = this.storage.policies;
         if (policies) {
             return { ...policies, minBlobSize: undefined };
@@ -252,7 +254,9 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 
     // for now we are not optimizing these blobs, with assumption that this API is used only
     // for big blobs (images)
-    public async createBlob(file: ArrayBufferLike) { return this.storage.createBlob(file); }
+    public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
+        return this.storage.createBlob(file);
+    }
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
         const tree = await this.storage.getSnapshotTree(version);
