@@ -8,6 +8,9 @@
   "author": "Microsoft",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
+  "engines" : {
+    "node" : ">=12.17.0"
+  },
   "bin": "dist/index.js",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
