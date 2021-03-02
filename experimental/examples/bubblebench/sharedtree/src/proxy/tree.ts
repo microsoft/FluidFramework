@@ -14,7 +14,8 @@ import {
     StableRange,
     TraitLabel,
 } from "@fluid-experimental/tree";
-import { fromJson, NodeKind } from "../treeutils";
+import { IArrayish } from "@fluid-experimental/bubblebench-common";
+import { fromJson, NodeKind } from "./treeutils";
 
 function getChild(tree: SharedTree, nodeId: NodeId, update: (...change: Change[]) => void): unknown {
     const view = tree.currentView;
@@ -73,7 +74,7 @@ export const TreeObjectProxy = <T extends Object>(
         // },
     });
 
-export class TreeArrayProxy<T> /* , Array<T> */ {
+export class TreeArrayProxy<T> implements IArrayish<T> {
     constructor(
         private readonly tree: SharedTree,
         private readonly nodeId: NodeId,
@@ -120,8 +121,7 @@ export class TreeArrayProxy<T> /* , Array<T> */ {
         return itemIds.map((itemId) => getChild(this.tree, itemId, this.update)) as T[];
     }
 
-    get items(): readonly T[] { return this.idsToItems(this.itemIds); }
-
+    private get items(): T[] { return this.idsToItems(this.itemIds); }
     get length(): number { return this.items.length; }
 
     [Symbol.iterator](): IterableIterator<T> { return this.items[Symbol.iterator](); }
@@ -141,6 +141,16 @@ export class TreeArrayProxy<T> /* , Array<T> */ {
         return removed as T;
     }
 
+    push(...item: T[]): number {
+        this.update(
+            ...Insert.create(
+                item.map(fromJson), StablePlace.atEndOf({
+                    parent: this.nodeId,
+                    label: "items" as TraitLabel })));
+
+        return this.items.length;
+    }
+
     pushNode(...node: EditNode[]) {
         this.update(
             ...Insert.create(
@@ -149,7 +159,7 @@ export class TreeArrayProxy<T> /* , Array<T> */ {
                     label: "items" as TraitLabel })));
     }
 
-    map<U>(callbackfn: (value: T, index: number, array: readonly T[]) => U, thisArg?: any): U[] {
+    map<U>(callbackfn: (value: T, index: number, array: T[]) => U, thisArg?: any): U[] {
         return this.items.map<U>(callbackfn, thisArg);
     }
 }
