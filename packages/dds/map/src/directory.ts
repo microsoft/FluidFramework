@@ -230,11 +230,13 @@ export interface IDirectoryDataObject {
 }
 
 export interface IDirectoryNewStorageFormat {
+    /** @deprecated - added to prevent buggy caching. remove once all loaders past 0.35 */
+    absolutePath?: string;
     blobs: string[];
     content: IDirectoryDataObject;
 }
 
-function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): ITree {
+function serializeDirectory(absolutePath: string, root: SubDirectory, serializer: IFluidSerializer): ITree {
     const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
 
     const tree: ITree = { entries: [] };
@@ -288,6 +290,7 @@ function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): I
     }
 
     const newFormat: IDirectoryNewStorageFormat = {
+        absolutePath,
         blobs,
         content,
     };
@@ -593,7 +596,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
      */
     protected snapshotCore(serializer: IFluidSerializer): ITree {
-        return serializeDirectory(this.root, serializer);
+        return serializeDirectory(this.handle.absolutePath, this.root, serializer);
     }
 
     /**
