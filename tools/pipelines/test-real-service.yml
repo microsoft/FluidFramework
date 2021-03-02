@@ -23,6 +23,7 @@ parameters:
   default: false
 
 trigger:
+  batch: true
   branches:
     include:
     - main
@@ -111,42 +112,59 @@ jobs:
       displayName: '[DI] Prepare DI package'
       inputs:
         targetType: 'inline'
-        script: 'mv _package.json package.json; mv _package-lock.json package-lock.json'
+        script: 'mv _package.json package.json'
         workingDirectory: ${{ variables.diDir }}
 
     # [DI] Install dependency-injection package
     - task: Npm@1
-      displayName: '[DI] npm ci'
+      displayName: '[DI] npm install'
       inputs:
         command: 'custom'
         workingDir: ${{ variables.diDir }}
-        customCommand: 'ci'
+        customCommand: 'install'
         customRegistry: 'useNpmrc'
 
-    # Run End-to-end Tests
+    # end-to-end tests routerlicious
     - task: Npm@1
-      displayName: '[end-to-end tests] npm run ci:test:realsvc'
+      displayName: '[end-to-end tests] npm run test:realsvc:routerlicious:report'
       continueOnError: true
+      timeoutInMinutes: 15
       env:
         fluid__webpack__bearerSecret: $(fluid-webpack-bearerSecret)
         fluid__webpack__fluidHost: $(fluid-webpack-fluidHost)
         fluid__webpack__tenantId: $(fluid-webpack-tenantId)
         fluid__webpack__tenantSecret: $(fluid-webpack-tenantSecret)
-        FLUID_DI_ROOT: ${{ variables.diDir }}/node_modules
-        FLUID_DI_LOGGERPKG: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
+        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
       inputs:
         command: 'custom'
         workingDir: packages/test/end-to-end-tests
-        customCommand: 'run ci:test:realsvc'
+        customCommand: 'run test:realsvc:routerlicious:report'
+
+    # end-to-end tests odsp
+    - task: Npm@1
+      displayName: '[end-to-end tests] npm run test:realsvc:odsp:report'
+      continueOnError: true
+      timeoutInMinutes: 15
+      env:
+        login__microsoft__clientId: $(login-microsoft-clientId)
+        login__microsoft__secret: $(login-microsoft-secret)
+        login__odsp__test__accounts: $(login-odsp-test-accounts)
+        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+      inputs:
+        command: 'custom'
+        workingDir: packages/test/end-to-end-tests
+        customCommand: 'run test:realsvc:odsp:report'
 
     # Run Stress Tests
     - task: Npm@1
       displayName: '[stress tests] npm run start'
       continueOnError: true
+      timeoutInMinutes: 15
       env:
         login__microsoft__clientId: $(login-microsoft-clientId)
         login__microsoft__secret: $(login-microsoft-secret)
         login__odsp__test__accounts: $(login-odsp-test-accounts)
+        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
       inputs:
         command: 'custom'
         workingDir: packages/test/service-load-test
@@ -167,5 +185,5 @@ jobs:
         testResultsFormat: 'JUnit'
         testResultsFiles: '**/*junit-report.xml'
         searchFolder: ${{ parameters.buildDirectory }}/nyc
-        mergeTestResults: true
+        mergeTestResults: false
       condition: succeededOrFailed()

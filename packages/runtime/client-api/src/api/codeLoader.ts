@@ -12,7 +12,7 @@ import {
     IRuntimeFactory,
     IFluidModule,
 } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IFluidCodeDetailsComparer, IRequest } from "@fluidframework/core-interfaces";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import * as ink from "@fluidframework/ink";
 import * as map from "@fluidframework/map";
@@ -145,7 +145,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
     }
 }
 
-export class CodeLoader implements ICodeLoader {
+export class CodeLoader implements ICodeLoader, IFluidCodeDetailsComparer {
     private readonly fluidModule: IFluidModule;
 
     constructor(
@@ -159,7 +159,19 @@ export class CodeLoader implements ICodeLoader {
         };
     }
 
+    public get IFluidCodeDetailsComparer(): IFluidCodeDetailsComparer {
+        return this;
+    }
+
     public async load(source: IFluidCodeDetails): Promise<IFluidModule> {
         return Promise.resolve(this.fluidModule);
+    }
+
+    public async satisfies(candidate: IFluidCodeDetails, constraint: IFluidCodeDetails): Promise<boolean> {
+        return true;
+    }
+
+    public async compare(a: IFluidCodeDetails, b: IFluidCodeDetails): Promise<number | undefined> {
+        return undefined;
     }
 }

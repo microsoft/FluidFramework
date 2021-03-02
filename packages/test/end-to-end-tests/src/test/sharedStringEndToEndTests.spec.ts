@@ -53,7 +53,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         assert.equal(sharedString1.getText(), text, "The retrieved text should match the inserted text.");
 
         // Wait for the ops to to be submitted and processed across the containers.
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         assert.equal(sharedString2.getText(), text, "The inserted text should have synced across the containers");
     });
@@ -64,7 +64,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         assert.equal(sharedString1.getText(), text, "The retrieved text should match the inserted text.");
 
         // Wait for the ops to to be submitted and processed across the containers.
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         // Create a initialize a new container with the same id.
         const newContainer = await args.loadTestContainer(testContainerConfig) as Container;

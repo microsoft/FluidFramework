@@ -26,7 +26,7 @@ import { Context } from "./context";
 export class Partition extends EventEmitter {
     private q: AsyncQueue<IQueuedMessage>;
     private readonly lambdaP: Promise<IPartitionLambda>;
-    private lambda: IPartitionLambda;
+    private lambda: IPartitionLambda | undefined;
     private readonly checkpointManager: CheckpointManager;
     private readonly context: Context;
     private closed = false;
@@ -46,7 +46,7 @@ export class Partition extends EventEmitter {
         const partitionConfig = new Provider({}).defaults(clonedConfig).use("memory");
 
         this.checkpointManager = new CheckpointManager(id, consumer);
-        this.context = new Context(this.checkpointManager);
+        this.context = new Context(this.checkpointManager, this.logger);
         this.context.on("error", (error: any, errorData: IContextErrorData) => {
             this.emit("error", error, errorData);
         });
@@ -55,7 +55,8 @@ export class Partition extends EventEmitter {
         this.q = queue(
             (message: IQueuedMessage, callback) => {
                 try {
-                    this.lambda.handler(message);
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    this.lambda!.handler(message);
                     callback();
                 } catch (error) {
                     callback(error);

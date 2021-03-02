@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidHandle, IFluidSerializer, ISerializedHandle } from '@fluidframework/core-interfaces';
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from '@fluidframework/protocol-definitions';
 import { IFluidDataStoreRuntime, IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { bufferToString } from '@fluidframework/common-utils';
+import { bufferToString, IsoBuffer } from '@fluidframework/common-utils';
 import { ChildLogger } from '@fluidframework/telemetry-utils';
-import { assert, fail } from './Common';
-import { EditLog, OrderedEditSet } from './EditLog';
+import { assert, fail, SharedTreeTelemetryProperties } from './Common';
+import { EditHandle, editsPerChunk, EditLog, OrderedEditSet } from './EditLog';
 import {
 	Edit,
 	Delete,
@@ -24,22 +24,26 @@ import {
 	StableRange,
 	StablePlace,
 	Payload,
+	SharedTreeOpType,
+	SharedTreeEditOp,
+	SharedTreeHandleOp,
+	EditWithoutId,
 } from './PersistedTypes';
 import { newEdit } from './EditUtilities';
 import { EditId } from './Identifiers';
 import { SharedTreeFactory } from './Factory';
 import { Snapshot } from './Snapshot';
 import {
-	deserialize,
 	SharedTreeSummarizer,
-	formatVersion,
 	serialize,
 	SharedTreeSummary,
 	fullHistorySummarizer,
+	SharedTreeSummaryBase,
 } from './Summary';
 import * as HistoryEditFactory from './HistoryEditFactory';
 import { initialTree } from './InitialTree';
 import { CachingLogViewer, LogViewer } from './LogViewer';
+import { convertSummaryToReadFormat, deserialize, readFormatVersion } from './SummaryBackCompatibility';
 
 /**
  * Filename where the snapshot is stored.
@@ -52,7 +56,14 @@ const snapshotFileName = 'header';
  */
 export type ErrorString = string;
 
-const initialSummary: SharedTreeSummary = { version: formatVersion, currentTree: initialTree, sequencedEdits: [] };
+const initialSummary: SharedTreeSummary = {
+	version: readFormatVersion,
+	currentTree: initialTree,
+	editHistory: {
+		editChunks: [],
+		editIds: [],
+	},
+};
 
 /**
  * An event emitted by a `SharedTree` to indicate a state change
@@ -68,6 +79,12 @@ export enum SharedTreeEvent {
 	 * Passed the EditId of the committed edit.
 	 */
 	EditCommitted = 'committedEdit',
+	/**
+	 * Upload has completed for a set of edit chunks.
+	 * This event is used exclusively for testing.
+	 * @internal
+	 */
+	ChunksUploaded = 'uploadedChunks',
 }
 
 // TODO:#48151: Support reference payloads, and use this type to identify them.
@@ -154,16 +171,19 @@ export class SharedTreeEditor {
 
 	/**
 	 * Reverts a previous edit.
-	 * @param edit - ID of the edit to revert
+	 * @param edit - the edit to revert
+	 * @param view - the revision to which the edit is applied (not the output of applying edit: it's the one just before that)
 	 */
-	public revert(edit: EditId): EditId {
-		return this.tree.applyEdit(...this.tree.createRevert(edit));
+	public revert(edit: Edit, view: Snapshot): EditId {
+		return this.tree.applyEdit(...HistoryEditFactory.revert(edit, view));
 	}
 
 	private isNode(source: ChangeNode | StableRange): source is ChangeNode {
 		return (source as ChangeNode).definition !== undefined && (source as ChangeNode).identifier !== undefined;
 	}
 }
+
+const sharedTreeTelemetryProperties: SharedTreeTelemetryProperties = { isSharedTreeEvent: true };
 
 /**
  * A distributed tree.
@@ -225,8 +245,10 @@ export class SharedTree extends SharedObject {
 	public constructor(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation = false) {
 		super(id, runtime, SharedTreeFactory.Attributes);
 		this.expensiveValidation = expensiveValidation;
-		this.logger = ChildLogger.create(super.logger, 'SharedTree');
-		const { editLog, logViewer } = loadSummary(initialSummary, this.expensiveValidation, this.logger);
+
+		this.logger = ChildLogger.create(runtime.logger, 'SharedTree', sharedTreeTelemetryProperties);
+		const { editLog, logViewer } = this.createEditLogFromSummary(initialSummary);
+
 		this.editLog = editLog;
 		this.logViewer = logViewer;
 	}
@@ -235,7 +257,7 @@ export class SharedTree extends SharedObject {
 	 * @returns the current view of the tree.
 	 */
 	public get currentView(): Snapshot {
-		return this.logViewer.getSnapshot(Number.POSITIVE_INFINITY);
+		return this.logViewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
 	}
 
 	/**
@@ -271,14 +293,44 @@ export class SharedTree extends SharedObject {
 		return edit.id;
 	}
 
+	private deserializeHandle(serializedHandle: ISerializedHandle): IFluidHandle<ArrayBufferLike> {
+		const deserializeHandle = this.serializer.parse(JSON.stringify(serializedHandle));
+		assert(typeof deserializeHandle === 'object');
+		return deserializeHandle as IFluidHandle<ArrayBufferLike>;
+	}
+
+	private toSerializable(value: EditHandle): ISerializedHandle {
+		// Stringify to convert to the serialized handle values - and then parse
+		const stringified = this.serializer.stringify(value, this.handle);
+		return JSON.parse(stringified) as ISerializedHandle;
+	}
+
 	/**
-	 * @returns Changes reverting the specified edit.
+	 * Uploads the edit chunk and sends the chunk key along with the resulting handle as an op.
 	 */
-	public createRevert(editId: EditId): Change[] {
-		const edit = this.editLog.tryGetEdit(editId) ?? fail('Edit must exist in the edit log to be reverted.');
-		// Get the revision to which edit is applied (This is not the output of applying edit: it's the one just before that).
-		const revision = this.logViewer.getSnapshot(this.editLog.indexOf(editId));
-		return HistoryEditFactory.revert(edit, revision);
+	private async uploadEditChunk(edits: EditWithoutId[], chunkKey: number): Promise<void> {
+		const editHandle = await this.runtime.uploadBlob(IsoBuffer.from(JSON.stringify({ edits })));
+		this.submitLocalMessage({
+			editHandle: this.toSerializable(editHandle),
+			chunkKey,
+			type: SharedTreeOpType.Handle,
+		});
+	}
+
+	/**
+	 * Asynchronously uploads edit chunks that have reached the chunk size limit.
+	 */
+	private async initiateEditChunkUpload(): Promise<void> {
+		// Initiate upload of any edit chunks not yet uploaded.
+		const editChunks = this.editLog.getEditLogSummary(true).editChunks;
+		await Promise.all(
+			editChunks.map(async ({ key, chunk }) => {
+				if (Array.isArray(chunk) && chunk.length === editsPerChunk) {
+					await this.uploadEditChunk(chunk, key);
+				}
+			})
+		);
+		this.emit(SharedTreeEvent.ChunksUploaded);
 	}
 
 	/**
@@ -306,11 +358,7 @@ export class SharedTree extends SharedObject {
 	 * Saves this SharedTree into a summary.
 	 * @internal
 	 */
-	public saveSummary(): SharedTreeSummary {
-		if (this.editLog.length === 0) {
-			return initialSummary;
-		}
-
+	public saveSummary(): SharedTreeSummaryBase {
 		// If local changes exist, emulate the sequencing of those changes.
 		// Doing so is necessary so edits created during DataObject.initializingFirstTime are included.
 		// Doing so is safe because it is guaranteed that the DDS has not yet been attached. This is because summary creation is only
@@ -321,23 +369,43 @@ export class SharedTree extends SharedObject {
 				this.runtime.attachState !== AttachState.Attached,
 				'Summarizing should not occur with local edits except on first attach.'
 			);
-			while (this.editLog.numberOfLocalEdits > 0) {
-				const localEdit = this.editLog.getAtIndex(this.editLog.numberOfSequencedEdits);
-				this.editLog.addSequencedEdit(localEdit);
-			}
+			this.editLog.sequenceLocalEdits();
 		}
 
-		return this.summarizer(this.edits, this.currentView);
+		void this.initiateEditChunkUpload();
+		return this.summarizer(this.editLog, this.currentView);
 	}
 
 	/**
 	 * Initialize shared tree with a summary.
 	 * @internal
 	 */
-	public loadSummary(summary: SharedTreeSummary): void {
-		const { editLog, logViewer } = loadSummary(summary, this.expensiveValidation, this.logger);
+	public loadSummary(summary: SharedTreeSummaryBase): void {
+		const { editLog, logViewer } = this.createEditLogFromSummary(summary);
 		this.editLog = editLog;
 		this.logViewer = logViewer;
+	}
+
+	private createEditLogFromSummary(summary: SharedTreeSummaryBase): { editLog: EditLog; logViewer: LogViewer } {
+		const convertedSummary = convertSummaryToReadFormat(summary);
+		if (typeof convertedSummary === 'string') {
+			fail(convertedSummary);
+		}
+		const { editHistory, currentTree } = convertedSummary;
+		const currentView = Snapshot.fromTree(currentTree);
+
+		const serializationHelpers = {
+			serializeHandle: this.toSerializable.bind(this),
+			deserializeHandle: this.deserializeHandle.bind(this),
+		};
+
+		const editLog = new EditLog(editHistory, serializationHelpers);
+		const logViewer = new CachingLogViewer(editLog, initialTree, this.expensiveValidation, undefined, this.logger);
+
+		// TODO:#47830: Store the associated revision on the snapshot.
+		// The current view should only be stored in the cache if the revision it's associated with is known.
+		void logViewer.setKnownRevisionSynchronous(editLog.length, currentView);
+		return { editLog, logViewer };
 	}
 
 	/**
@@ -367,7 +435,7 @@ export class SharedTree extends SharedObject {
 		const header = await storage.readBlob(snapshotFileName);
 		const summary = deserialize(bufferToString(header, 'utf8'));
 		if (typeof summary === 'string') {
-			fail(summary); // TODO: Where does this error propagate?
+			fail(summary);
 		}
 		this.loadSummary(summary);
 	}
@@ -376,7 +444,14 @@ export class SharedTree extends SharedObject {
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
 	 */
 	protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
-		this.processSequencedEdit(message.contents);
+		const { type } = message.contents;
+		if (type === SharedTreeOpType.Handle) {
+			const { editHandle, chunkKey } = message.contents as SharedTreeHandleOp;
+			this.editLog.processEditChunkHandle(this.deserializeHandle(editHandle), chunkKey);
+		} else if (type === SharedTreeOpType.Edit) {
+			const { edit } = message.contents as SharedTreeEditOp;
+			this.processSequencedEdit(edit);
+		}
 	}
 
 	/**
@@ -408,26 +483,13 @@ export class SharedTree extends SharedObject {
 	 * @internal
 	 */
 	public processLocalEdit(edit: Edit): void {
+		const editOp: SharedTreeEditOp = {
+			type: SharedTreeOpType.Edit,
+			edit,
+		};
 		// TODO:44711: what should be passed in when unattached?
-		this.submitLocalMessage(edit);
+		this.submitLocalMessage(editOp);
 		this.editLog.addLocalEdit(edit);
 		this.emit(SharedTreeEvent.EditCommitted, edit.id);
 	}
-}
-
-function loadSummary(
-	summary: SharedTreeSummary,
-	expensiveValidation: boolean,
-	logger: ITelemetryLogger
-): { editLog: EditLog; logViewer: LogViewer } {
-	const { version, sequencedEdits, currentTree } = summary;
-	assert(version === formatVersion);
-	const currentView = Snapshot.fromTree(currentTree);
-	const editLog = new EditLog(sequencedEdits);
-	const logViewer = new CachingLogViewer(editLog, initialTree, expensiveValidation, undefined, logger);
-
-	// TODO:#47830: Store the associated revision on the snapshot.
-	// The current view should only be stored in the cache if the revision it's associated with is known.
-	logViewer.setKnownRevision(editLog.length, currentView);
-	return { editLog, logViewer };
 }

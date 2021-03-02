@@ -1290,8 +1290,9 @@ export class DeltaManager
     // We only extract the most obvious fields that are sufficient (with high probability) to detect sequence number
     // reuse.
     // Also payload goes to telemetry, so no PII, including content!!
+    // Note: It's possible for a duplicate op to be broadcasted and have everything the same except the timestamp.
     private comparableMessagePayload(m: ISequencedDocumentMessage) {
-        return `${m.clientId}-${m.type}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}`;
+        return `${m.clientId}-${m.type}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
     }
 
     private enqueueMessages(
@@ -1315,6 +1316,9 @@ export class DeltaManager
         if (messages.length > 0) {
             this.updateLatestKnownOpSeqNumber(messages[messages.length - 1].sequenceNumber);
         }
+
+        const n = this.previouslyProcessedMessage?.sequenceNumber;
+        assert(n === undefined || n === this.lastQueuedSequenceNumber);
 
         for (const message of messages) {
             // Check that the messages are arriving in the expected order
@@ -1424,10 +1428,20 @@ export class DeltaManager
         }
 
         // Watch the minimum sequence number and be ready to update as needed
-        assert(this.minSequenceNumber <= message.minimumSequenceNumber, "msn moves backwards");
+        if (this.minSequenceNumber > message.minimumSequenceNumber) {
+            throw new DataCorruptionError("msn moves backwards", {
+                ...extractLogSafeMessageProperties(message),
+                clientId: this.connection?.clientId,
+            });
+        }
         this.minSequenceNumber = message.minimumSequenceNumber;
 
-        assert(message.sequenceNumber === this.lastProcessedSequenceNumber + 1, "non-seq seq#");
+        if (message.sequenceNumber !== this.lastProcessedSequenceNumber + 1) {
+            throw new DataCorruptionError("non-seq seq#", {
+                ...extractLogSafeMessageProperties(message),
+                clientId: this.connection?.clientId,
+            });
+        }
         this.lastProcessedSequenceNumber = message.sequenceNumber;
 
         // Back-compat for older server with no term
@@ -1448,7 +1462,7 @@ export class DeltaManager
     /**
      * Retrieves the missing deltas between the given sequence numbers
      */
-    private fetchMissingDeltas(telemetryEventSuffix: string, from: number, to?: number) {
+    private fetchMissingDeltas(telemetryEventSuffix: string, fromArg: number, to?: number) {
         // Exit out early if we're already fetching deltas
         if (this.fetching) {
             return;
@@ -1457,6 +1471,21 @@ export class DeltaManager
         if (this.closed) {
             this.logger.sendTelemetryEvent({ eventName: "fetchMissingDeltasClosedConnection" });
             return;
+        }
+
+        assert(fromArg === this.lastQueuedSequenceNumber, "from arg");
+        let from = fromArg;
+
+        const n = this.previouslyProcessedMessage?.sequenceNumber;
+        if (n !== undefined) {
+            // If we already processed at least one op, then we have this.previouslyProcessedMessage populated
+            // and can use it to validate that we are operating on same file, i.e. it was not overwritten.
+            // Knowing about this mechanism, we could ask for op we already observed to increase validation.
+            // This is especially useful when coming out of offline mode or loading from
+            // very old cached (by client / driver) snapshot.
+            assert(n === fromArg, "previouslyProcessedMessage");
+            assert(from > 0, "not positive");
+            from--;
         }
 
         this.fetching = true;
@@ -1511,4 +1540,18 @@ export class DeltaManager
             this.lastObservedSeqNumber = seq;
         }
     }
+}
+
+// TODO: move this elsewhere and use it more broadly for DataCorruptionError/DataProcessingError
+function extractLogSafeMessageProperties(message: Partial<ISequencedDocumentMessage>) {
+    const safeProps = {
+        messageClientId: message.clientId,
+        sequenceNumber: message.sequenceNumber,
+        clientSequenceNumber: message.clientSequenceNumber,
+        referenceSequenceNumber: message.referenceSequenceNumber,
+        minimumSequenceNumber: message.minimumSequenceNumber,
+        messageTimestamp: message.timestamp,
+    };
+
+    return safeProps;
 }

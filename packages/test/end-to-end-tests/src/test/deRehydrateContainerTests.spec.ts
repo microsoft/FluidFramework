@@ -11,7 +11,6 @@ import {
     TestFluidObjectFactory,
     ITestFluidObject,
     TestFluidObject,
-    OpProcessingController,
     createDocumentId,
     LoaderContainerTracker,
 } from "@fluidframework/test-utils";
@@ -34,7 +33,7 @@ const detachedContainerRefSeqNumber = 0;
 describe(`Dehydrate Rehydrate Container Test`, () => {
     let driver: ITestDriver;
     before(()=>{
-        driver = getFluidTestDriver() as ITestDriver;
+        driver = getFluidTestDriver() as unknown as ITestDriver;
     });
 
     const codeDetails: IFluidCodeDetails = {
@@ -54,7 +53,6 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
 
     let loader: Loader;
     let request: IRequest;
-    let opProcessingController: OpProcessingController;
     const loaderContainerTracker = new LoaderContainerTracker();
 
     async function createDetachedContainerAndGetRootDataStore() {
@@ -108,7 +106,6 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const documentId = createDocumentId();
         request = driver.createCreateNewRequest(documentId);
         loader = createTestLoader();
-        opProcessingController = new OpProcessingController();
     });
 
     afterEach(() => {
@@ -355,9 +352,9 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
         sharedMap1.set("0", "A");
         const snapshotTree = container.serialize();
+        container.close();  // close the container that we don't use any more, so it doesn't block ensureSynchronized()
 
         const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
-        opProcessingController.addDeltaManagers(rehydratedContainer.deltaManager);
         await rehydratedContainer.attach(request);
 
         // Now load the container from another loader.
@@ -366,7 +363,6 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         assert(rehydratedContainer.resolvedUrl);
         const requestUrl2 = await urlResolver2.getAbsoluteUrl(rehydratedContainer.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
-        opProcessingController.addDeltaManagers(container2.deltaManager);
 
         // Get the sharedString1 from dataStore2 in rehydrated container.
         const responseBefore = await rehydratedContainer.request({ url: `/${dataStore2.context.id}` });
@@ -378,7 +374,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const dataStore3 = responseAfter.value as TestFluidObject;
         const sharedMap3 = await dataStore3.getSharedObject<SharedMap>(sharedMapId);
 
-        await opProcessingController.process();
+        await loaderContainerTracker.ensureSynchronized();
         assert.strictEqual(sharedMap3.get("1"), "B", "Contents should be as required");
         assert.strictEqual(
             JSON.stringify(sharedMap3.summarize()),
@@ -400,9 +396,9 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
         sharedMap1.set("0", "A");
         const snapshotTree = container.serialize();
+        container.close();  // close the container that we don't use any more, so it doesn't block ensureSynchronized()
 
         const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
-        opProcessingController.addDeltaManagers(rehydratedContainer.deltaManager);
         await rehydratedContainer.attach(request);
 
         // Now load the container from another loader.
@@ -411,7 +407,6 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         assert(rehydratedContainer.resolvedUrl);
         const requestUrl2 = await urlResolver2.getAbsoluteUrl(rehydratedContainer.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
-        opProcessingController.addDeltaManagers(container2.deltaManager);
 
         // Get the sharedString1 from dataStore2 in container2.
         const responseBefore = await container2.request({ url: `/${dataStore2.context.id}` });
@@ -424,7 +419,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const dataStore2FromRC = responseAfter.value as TestFluidObject;
         const sharedMapFromRC = await dataStore2FromRC.getSharedObject<SharedMap>(sharedMapId);
 
-        await opProcessingController.process();
+        await loaderContainerTracker.ensureSynchronized();
         assert.strictEqual(sharedMapFromRC.get("1"), "B", "Changes should be reflected in other map");
         assert.strictEqual(
             JSON.stringify(sharedMap3.summarize()),

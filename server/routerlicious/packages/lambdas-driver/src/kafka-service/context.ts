@@ -5,13 +5,12 @@
 
 import { EventEmitter } from "events";
 import { IContext, IQueuedMessage, ILogger, IContextErrorData } from "@fluidframework/server-services-core";
-import * as winston from "winston";
 import { CheckpointManager } from "./checkpointManager";
 
 export class Context extends EventEmitter implements IContext {
     private closed = false;
 
-    constructor(private readonly checkpointManager: CheckpointManager) {
+    constructor(private readonly checkpointManager: CheckpointManager, public readonly log: ILogger | undefined) {
         super();
     }
 
@@ -24,6 +23,11 @@ export class Context extends EventEmitter implements IContext {
         }
 
         this.checkpointManager.checkpoint(queuedMessage).catch((error) => {
+            if (this.closed) {
+                // don't emit errors after closing
+                return;
+            }
+
             // Close context on error. Once the checkpointManager enters an error state it will stay there.
             // We will look to restart on checkpointing given it likely indicates a Kafka connection issue.
             this.error(error, { restart: true });
@@ -37,10 +41,6 @@ export class Context extends EventEmitter implements IContext {
      */
     public error(error: any, errorData: IContextErrorData) {
         this.emit("error", error, errorData);
-    }
-
-    public get log(): ILogger {
-        return winston;
     }
 
     /**

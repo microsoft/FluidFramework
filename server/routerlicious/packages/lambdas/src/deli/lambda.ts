@@ -92,7 +92,7 @@ export class DeliLambda implements IPartitionLambda {
     // Client sequence number mapping
     private readonly clientSeqManager = new ClientSequenceNumberManager();
     private minimumSequenceNumber = 0;
-    private readonly branchMap: RangeTracker;
+    private readonly branchMap: RangeTracker | undefined;
     private readonly checkpointContext: CheckpointContext;
     private lastSendP = Promise.resolve();
     private lastSentMSN = 0;
@@ -119,14 +119,16 @@ export class DeliLambda implements IPartitionLambda {
         // Instantiate existing clients
         if (lastCheckpoint.clients) {
             for (const client of lastCheckpoint.clients) {
-                this.clientSeqManager.upsertClient(
-                    client.clientId,
-                    client.clientSequenceNumber,
-                    client.referenceSequenceNumber,
-                    client.lastUpdate,
-                    client.canEvict,
-                    client.scopes,
-                    client.nack);
+                if (client.clientId) {
+                    this.clientSeqManager.upsertClient(
+                        client.clientId,
+                        client.clientSequenceNumber,
+                        client.referenceSequenceNumber,
+                        client.lastUpdate,
+                        client.canEvict,
+                        client.scopes,
+                        client.nack);
+                }
             }
         }
 
@@ -203,12 +205,14 @@ export class DeliLambda implements IPartitionLambda {
                 this.checkpointContext.checkpoint(checkpoint);
             },
             (error) => {
-                const messageMetaData = {
-                    documentId: this.documentId,
-                    tenantId: this.tenantId,
-                };
-                this.context.log.error(
-                    `Could not send message to scriptorium: ${JSON.stringify(error)}`, { messageMetaData });
+                this.context.log?.error(
+                    `Could not send message to scriptorium: ${JSON.stringify(error)}`,
+                    {
+                        messageMetaData: {
+                            documentId: this.documentId,
+                            tenantId: this.tenantId,
+                        },
+                    });
                 this.context.error(error, {
                     restart: true,
                     tenantId: this.tenantId,
@@ -229,10 +233,10 @@ export class DeliLambda implements IPartitionLambda {
         this.clearNoopConsolidationTimer();
     }
 
-    private ticket(rawMessage: IMessage, trace: ITrace): ITicketedMessageOutput {
+    private ticket(rawMessage: IMessage, trace: ITrace): ITicketedMessageOutput | undefined {
         // Exit out early for unknown messages
         if (rawMessage.type !== RawOperationType) {
-            return;
+            return undefined;
         }
 
         // Update and retrieve the minimum sequence number
@@ -405,11 +409,12 @@ export class DeliLambda implements IPartitionLambda {
             const controlMessage = systemContent as IControlMessage;
             switch (controlMessage.type) {
                 case ControlMessageType.UpdateDSN: {
-                    const messageMetaData = {
-                        documentId: this.documentId,
-                        tenantId: this.tenantId,
-                    };
-                    this.context.log.info(`Update DSN: ${JSON.stringify(controlMessage)}`, { messageMetaData });
+                    this.context.log?.info(`Update DSN: ${JSON.stringify(controlMessage)}`, {
+                        messageMetaData: {
+                            documentId: this.documentId,
+                            tenantId: this.tenantId,
+                        },
+                    });
 
                     const controlContents = controlMessage.contents as IUpdateDSNControlMessageContents;
                     const dsn = controlContents.durableSequenceNumber;
@@ -418,7 +423,12 @@ export class DeliLambda implements IPartitionLambda {
                         if (controlContents.clearCache && this.noActiveClients) {
                             instruction = InstructionType.ClearCache;
                             this.canClose = true;
-                            this.context.log.info(`Deli cache will be cleared`, { messageMetaData });
+                            this.context.log?.info(`Deli cache will be cleared`, {
+                                messageMetaData: {
+                                    documentId: this.documentId,
+                                    tenantId: this.tenantId,
+                                },
+                            });
                         }
 
                         this.durableSequenceNumber = dsn;
@@ -476,12 +486,13 @@ export class DeliLambda implements IPartitionLambda {
 
     private createOutputMessage(
         message: IRawOperationMessage,
-        origin: IBranchOrigin,
+        origin: IBranchOrigin | undefined,
         sequenceNumber: number,
         systemContent,
     ): ISequencedDocumentMessage {
         const outputMessage: ISequencedDocumentMessage = {
-            clientId: message.clientId,
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            clientId: message.clientId!,
             clientSequenceNumber: message.operation.clientSequenceNumber,
             contents: message.operation.contents,
             metadata: message.operation.metadata,
@@ -530,11 +541,11 @@ export class DeliLambda implements IPartitionLambda {
         if (clientSequenceNumber === expectedClientSequenceNumber) {
             return IncomingMessageOrder.ConsecutiveOrSystem;
         } else if (clientSequenceNumber > expectedClientSequenceNumber) {
-            this.context.log.info(
+            this.context.log?.info(
                 `Gap ${clientId}:${expectedClientSequenceNumber} > ${clientSequenceNumber}`, { messageMetaData });
             return IncomingMessageOrder.Gap;
         } else {
-            this.context.log.info(
+            this.context.log?.info(
                 `Duplicate ${clientId}:${expectedClientSequenceNumber} < ${clientSequenceNumber}`, { messageMetaData });
             return IncomingMessageOrder.Duplicate;
         }
@@ -547,11 +558,15 @@ export class DeliLambda implements IPartitionLambda {
 
     private sendToAlfred(message: IRawOperationMessage) {
         this.reverseProducer.send([message], message.tenantId, message.documentId).catch((error) => {
-            const messageMetaData = {
-                documentId: this.documentId,
-                tenantId: this.tenantId,
-            };
-            this.context.log.error(`Could not send message to alfred: ${JSON.stringify(error)}`, { messageMetaData });
+            this.context.log?.error(
+                `Could not send message to alfred: ${JSON.stringify(error)}`,
+                {
+                    messageMetaData: {
+                        documentId: this.documentId,
+                        tenantId: this.tenantId,
+
+                    },
+                });
             this.context.error(error, {
                 restart: true,
                 tenantId: this.tenantId,
@@ -566,7 +581,7 @@ export class DeliLambda implements IPartitionLambda {
     private checkIdleClients(message: ITicketedMessageOutput) {
         if (message.type !== MessageType.ClientLeave) {
             const idleClient = this.getIdleClient(message.timestamp);
-            if (idleClient) {
+            if (idleClient?.clientId) {
                 const leaveMessage = this.createLeaveMessage(idleClient.clientId);
                 this.sendToAlfred(leaveMessage);
             }
@@ -606,7 +621,8 @@ export class DeliLambda implements IPartitionLambda {
         reason: string,
         retryAfter?: number): ITicketedMessageOutput {
         const nackMessage: INackMessage = {
-            clientId: message.clientId,
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            clientId: message.clientId!,
             documentId: this.documentId,
             operation: {
                 content: {
@@ -675,7 +691,7 @@ export class DeliLambda implements IPartitionLambda {
 
     private generateDeliCheckpoint(): IDeliState {
         return {
-            branchMap: this.branchMap ? this.branchMap.serialize() : undefined,
+            branchMap: this.branchMap?.serialize(),
             clients: this.clientSeqManager.cloneValues(),
             durableSequenceNumber: this.durableSequenceNumber,
             epoch: this.epoch,
@@ -695,12 +711,11 @@ export class DeliLambda implements IPartitionLambda {
     /**
      * Get idle client.
      */
-    private getIdleClient(timestamp: number): IClientSequenceNumber {
-        if (this.clientSeqManager.count() > 0) {
-            const client = this.clientSeqManager.peek();
-            if (client.canEvict && (timestamp - client.lastUpdate > this.serviceConfiguration.deli.clientTimeout)) {
-                return client;
-            }
+    private getIdleClient(timestamp: number): IClientSequenceNumber | undefined {
+        const client = this.clientSeqManager.peek();
+        if (client && client.canEvict &&
+            (timestamp - client.lastUpdate > this.serviceConfiguration.deli.clientTimeout)) {
+            return client;
         }
     }
 

@@ -42,7 +42,7 @@ export class SocketIoRedisPublisher implements core.IPublisher {
         return new SocketIoRedisTopic(this.io.to(topic));
     }
 
-    public emit(topic: string, event: string, ...args: any[]): void {
+    public async emit(topic: string, event: string, ...args: any[]): Promise<void> {
         this.io.to(topic).emit(event, ...args);
     }
 

@@ -312,7 +312,7 @@ export class Loader extends EventEmitter implements ILoader {
     public async request(request: IRequest): Promise<IResponse> {
         return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
             const resolved = await this.resolveCore(request);
-            return resolved.container.request({ url: resolved.parsed.path });
+            return resolved.container.request({ url: `${resolved.parsed.path}${resolved.parsed.query}` });
         });
     }
 
@@ -363,7 +363,7 @@ export class Loader extends EventEmitter implements ILoader {
                     this.containers.delete(key);
                 });
             }
-        }).catch((error) => { console.log("Error during caching Container on the Loader", error); });
+        }).catch((error) => { console.error("Error during caching Container on the Loader", error); });
     }
 
     private async resolveCore(
@@ -375,7 +375,7 @@ export class Loader extends EventEmitter implements ILoader {
         // Parse URL into data stores
         const parsed = parseUrl(resolvedAsFluid.url);
         if (parsed === undefined) {
-            return Promise.reject(new Error(`Invalid URL ${resolvedAsFluid.url}`));
+            throw new Error(`Invalid URL ${resolvedAsFluid.url}`);
         }
 
         // parseUrl's id is expected to be of format "tenantId/docId"

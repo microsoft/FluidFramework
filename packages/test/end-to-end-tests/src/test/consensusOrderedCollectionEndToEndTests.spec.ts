@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, IDeltaManager } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -54,12 +54,12 @@ function generate(
 
         beforeEach(async () => {
             // Create a Container for the first client.
-            const container1 = await args.makeTestContainer(testContainerConfig) as IContainer;
+            const container1 = await args.makeTestContainer(testContainerConfig);
             dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
             sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
             // Load the Container that was created by the first client.
-            const container2 = await args.loadTestContainer(testContainerConfig) as IContainer;
+            const container2 = await args.loadTestContainer(testContainerConfig);
             dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
             sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
             deltaManager2 = container2.deltaManager;
@@ -124,7 +124,7 @@ function generate(
             for (const item of input) {
                 addP.push(collection1.add(item));
             }
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             await Promise.all(addP);
 
             const removeP1 = acquireAndComplete(collection3);
@@ -138,7 +138,7 @@ function generate(
             const removeEmptyP = acquireAndComplete(collection1);
 
             // Now process all the incoming and outgoing
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
 
             // Verify the value is in the correct order
             assert.strictEqual(await removeP1, output[0], "Unexpected value in document 1");
@@ -163,7 +163,7 @@ function generate(
             await args.opProcessingController.pauseProcessing();
 
             const waitOn2P = waitAcquireAndComplete(collection2);
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             let added = false;
             waitOn2P.then(
                 (value) => {
@@ -187,18 +187,18 @@ function generate(
             added = true;
 
             // Now process the incoming
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             await Promise.all([addP1, addP2, addP3]);
             assert.strictEqual(await waitOn2P, output[0],
                 "Unexpected wait before add resolved value in document 2 added in document 1");
 
             const waitOn1P = waitAcquireAndComplete(collection1);
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             assert.strictEqual(await waitOn1P, output[1],
                 "Unexpected wait after add resolved value in document 1 added in document 3");
 
             const waitOn3P = waitAcquireAndComplete(collection3);
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             assert.strictEqual(await waitOn3P, output[2],
                 "Unexpected wait after add resolved value in document 13added in document 2");
         });
@@ -339,7 +339,7 @@ function generate(
             const removeEmptyP = acquireAndComplete(collection1);
 
             // Now process all
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             await Promise.all(p);
             assert.strictEqual(await removeEmptyP, undefined, "Remove of empty collection should be undefined");
             assert.strictEqual(addCount1, 3, "Incorrect number add events in document 1");

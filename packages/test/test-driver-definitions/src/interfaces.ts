@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 
@@ -48,5 +49,17 @@ export interface ITestDriver{
      * type, this should only be done it absolutely necessary for complex scenarios
      * as the test may not  work against all supported servers if done.
      */
-    createContainerUrl(testId: string): string;
+    createContainerUrl(testId: string): Promise<string>;
+}
+
+/**
+ * Extension of ITelemetryBaseLogger with support for flushing
+ * all buffered logs that have not yet been fully processed (e.g. uploaded)
+ */
+export interface ITelemetryBufferedLogger extends ITelemetryBaseLogger {
+    /**
+     * Flush any underlying buffer of events that have been sent so far
+     * but not yet fully processed - e.g. uploaded to a log ingestion service.
+     */
+    flush(): Promise<void>;
 }

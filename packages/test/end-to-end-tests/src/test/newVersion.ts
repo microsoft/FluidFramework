@@ -28,8 +28,6 @@ export { SharedString, SparseMatrix } from "@fluidframework/sequence";
 export { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 export { ITestDriver } from "@fluidframework/test-driver-definitions";
 export {
-    createLocalLoader,
-    createAndAttachContainer,
     ChannelFactoryRegistry,
     LocalCodeLoader,
     OpProcessingController,
