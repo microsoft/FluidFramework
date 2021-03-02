@@ -108,6 +108,11 @@ describe("Logger", () => {
                 assert((loggingError as any).pii === "BAM", "pii field can be overwritten via props");
                 assert.strictEqual(props.pii, undefined, "pii field should not be present on props");
             });
+            it("pii property contains packageName - packageName restored from pii", () => {
+                const loggingError = new LoggingError("myMessage", {}, { packageName: "fooPkg" });
+                const props = loggingError.getTelemetryProperties();
+                assert.strictEqual(props.packageName, "fooPkg");
+            });
         });
     });
 });
