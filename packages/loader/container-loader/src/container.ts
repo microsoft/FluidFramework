@@ -28,6 +28,8 @@ import {
     ContainerWarning,
     AttachState,
     IThrottlingWarning,
+    ReadOnlyInfo,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import {
@@ -443,7 +445,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     /**
      * {@inheritDoc DeltaManager.readOnlyInfo}
      */
-    public get readOnlyInfo() {
+    public get readOnlyInfo(): ReadOnlyInfo {
         return this._deltaManager.readOnlyInfo;
     }
 
@@ -538,7 +540,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private get serviceFactory() {return this.loader.services.documentServiceFactory;}
     private get urlResolver() {return this.loader.services.urlResolver;}
-    public get options() { return this.loader.services.options;}
+    public get options(): ILoaderOptions { return this.loader.services.options; }
     private get scope() { return this.loader.services.scope;}
     private get codeLoader() { return this.loader.services.codeLoader;}
     constructor(
