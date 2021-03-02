@@ -456,6 +456,18 @@ export class PerformanceEvent {
 }
 
 /**
+ * An interface for defining specific types of debug data, intended to be extended via declaration merging.
+ * Consumers of logging objects containing ISensitiveDebugData may then handle each property as appropriate.
+ */
+export interface ISensitiveDebugData {
+    /**
+     * Name of a code package being loaded.
+     * This declaration should be moved to the container-runtime package where it's used
+     */
+    packageName?: string,
+}
+
+/**
  * An error object that supports exporting its properties to be logged to telemetry
  */
 export interface ILoggingError extends Error {
@@ -470,7 +482,7 @@ export const IsILoggingError = (x: any): x is ILoggingError => typeof x.getTelem
  * - Callers may only add PII via the constructor so it's stripped out when properties are queried
  * - This allows additional properties to be logged because object of this instance will record all of their properties
  *   when logged with a logger.
- * - Logger ignores all properties from any other error objects (not being instance of LoggingError), with exception of
+ * - Logger ignores all properties from any other error objects (not implementing ILoggingError), with exception of
  *   'message' & 'stack' properties if they exists on error object.
  * - In other words, logger logs only what it knows about and has good confidence it does not contain PII information.
  */
@@ -490,10 +502,23 @@ export class LoggingError extends Error implements ILoggingError {
         for (const key of Object.getOwnPropertyNames(this)) {
             props[key] = this[key];
         }
-        // Remove pii member
-        if ((props as unknown as LoggingError).pii !== undefined) {
-            props.pii = undefined;
-        }
+        this.handlePii(props);
         return props;
+    }
+
+    private handlePii(props: ITelemetryProperties) {
+        if ((props as unknown as LoggingError).pii === undefined) {
+            return;
+        }
+
+        // Rescue packageName from being removed as PII, since at this point in time all loaded packages will be 1P
+        // This logic really belongs in the host layer
+        const piiAsDebugData = props.pii as Partial<ISensitiveDebugData>;
+        if (piiAsDebugData.packageName !== undefined && props.packageName === undefined) {
+            props.packageName = piiAsDebugData.packageName;
+        }
+
+        // Remove pii property altogether
+        props.pii = undefined;
     }
 }
