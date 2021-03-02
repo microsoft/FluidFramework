@@ -9,6 +9,7 @@ import {
     IResponse,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
+import { create404Response } from "@fluidframework/runtime-utils";
 import { ISharedObject } from "./types";
 
 /**
@@ -56,6 +57,6 @@ export class SharedObjectHandle extends FluidObjectHandle<ISharedObject> {
      * @returns A 404 error
      */
     public async request(request: IRequest): Promise<IResponse> {
-        return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+        return create404Response(request);
     }
 }

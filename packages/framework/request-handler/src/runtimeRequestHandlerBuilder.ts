@@ -5,7 +5,7 @@
 
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { RequestParser } from "@fluidframework/runtime-utils";
+import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
 import { RuntimeRequestHandler } from "./requestHandlers";
 
 /**
@@ -29,7 +29,7 @@ export class RuntimeRequestHandlerBuilder {
                 return response;
             }
         }
-        return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+        return create404Response(request);
     }
 }
 

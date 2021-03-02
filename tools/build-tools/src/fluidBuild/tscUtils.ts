@@ -10,7 +10,7 @@ export function parseCommandLine(command: string) {
     // TODO: parse the command line for real, split space for now.
     const args = command.split(" ");
 
-    const parsedCommand = ts.parseCommandLine(args);
+    const parsedCommand = ts.parseCommandLine(args.slice(1));
     if (parsedCommand.errors.length) {
         return undefined;
     }
@@ -39,4 +39,15 @@ export function readConfigFile(path: string) {
         return undefined;
     }
     return configFile.config;
+}
+
+export function convertToOptionsWithAbsolutePath(options: ts.CompilerOptions, cwd: string) {
+    const result = { ...options };
+    for (const key of ["configFilePath", "declarationDir", "outDir", "rootDir", "project"]) {
+        const value = result[key] as string;
+        if (value !== undefined) {
+            result[key] = path.resolve(cwd, value);
+        }
+    }
+    return result;
 }
