@@ -3,27 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import fs from "fs";
 import child_process from "child_process";
+import assert from "assert";
 import commander from "commander";
 import { Loader } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
-import { OdspTestDriver } from "@fluidframework/test-drivers";
+import { ITestDriver, TestDriverTypes, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
+import { createFluidTestDriver } from "@fluidframework/test-drivers";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { pkgName, pkgVersion } from "./packageVersion";
-import { ITestConfig, ILoadTestConfig, ITestTenant } from "./testConfigFile";
+import { ITestConfig, ILoadTestConfig } from "./testConfigFile";
 import { IRunConfig, fluidExport, ILoadTest } from "./loadTestDataStore";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
-interface IOdspTestLoginInfo {
-    server: string;
-    username: string;
-    password: string;
-    driveId: string;
-}
+// Provide default implementation of getTestLogger since it's declared as always defined
+const nullLogger: ITelemetryBufferedLogger = { send: () => {}, flush: async () => {} };
+(global as any).getTestLogger = () => nullLogger;
+
+let logger: ITelemetryBufferedLogger = getTestLogger();
 
 const codeDetails: IFluidCodeDetails = {
     package: packageName,
@@ -38,6 +38,7 @@ function createLoader(testDriver: ITestDriver) {
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
         codeLoader,
+        logger,
     });
     return loader;
 }
@@ -59,23 +60,36 @@ async function initialize(testDriver: ITestDriver) {
 
 async function load(testDriver: ITestDriver, testId: string) {
     const loader = createLoader(testDriver);
-    const respond = await loader.request({ url: await testDriver.createContainerUrl(testId) });
-    // TODO: Error checking
-    return respond.value as ILoadTest;
+    const url =  await testDriver.createContainerUrl(testId);
+    const container = await loader.resolve({ url });
+    return requestFluidObject<ILoadTest>(container,"/");
 }
 
+const createTestDriver =
+    async (driver: TestDriverTypes) => createFluidTestDriver(driver,{
+        odsp: {
+            directory: "stress",
+        },
+    });
+
 async function main() {
+    if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {
+        await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+        logger = getTestLogger();
+        assert(logger, "Expected getTestLogger to return something");
+    }
+
     commander
         .version("0.0.1")
-        .requiredOption("-t, --tenant <tenant>", "Which test tenant info to use from testConfig.json", "fluidCI")
+        .requiredOption("-d, --driver <driver>", "Which test driver info to use", "odsp")
         .requiredOption("-p, --profile <profile>", "Which test profile to use from testConfig.json", "ci")
         .option("-id, --testId <testId>", "Load an existing data store rather than creating new")
         .option("-r, --runId <runId>", "run a child process with the given id. Requires --testId option.")
-        .option("-d, --debug", "Debug child processes via --inspect-brk")
+        .option("-dbg, --debug", "Debug child processes via --inspect-brk")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .parse(process.argv);
 
-    const tenantArg: string = commander.tenant;
+    const driver: TestDriverTypes = commander.driver;
     const profileArg: string = commander.profile;
     const testId: string | undefined = commander.testId;
     const runId: number | undefined = commander.runId === undefined ? undefined : parseInt(commander.runId, 10);
@@ -90,28 +104,6 @@ async function main() {
         console.error(e);
         process.exit(-1);
     }
-
-    const tenant: ITestTenant | undefined = config.tenants[tenantArg];
-    if (tenant === undefined) {
-        console.error("Invalid --tenant argument not found in testConfig.json tenants");
-        process.exit(-1);
-    }
-
-    let password: string;
-    try {
-        // Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
-        const passwords: { [user: string]: string } =
-            JSON.parse(process.env.login__odsp__test__accounts ?? "");
-
-        password = passwords[tenant.username];
-        assert(password, "Expected to find Password in an env variable since it wasn't provided via script param");
-    } catch (e) {
-        console.error("Failed to parse login__odsp__test__accounts env variable");
-        console.error(e);
-        process.exit(-1);
-    }
-    const loginInfo: IOdspTestLoginInfo = {
-        server: tenant.server, username: tenant.username, password, driveId: tenant.driveId };
 
     const profile: ILoadTestConfig | undefined = config.profiles[profileArg];
     if (profile === undefined) {
@@ -130,15 +122,21 @@ async function main() {
             console.error("Missing --testId argument needed to run child process");
             process.exit(-1);
         }
-        result = await runnerProcess(loginInfo, profile, runId, testId);
-        process.exit(result);
+        result = await runnerProcess(driver, profile, runId, testId);
+    }
+    else {
+        // When runId is not specified, this is the orchestrator process which will spawn child test runners.
+        result = await orchestratorProcess(
+            driver,
+            { ...profile, name: profileArg },
+            { testId, debug });
     }
 
-    // When runId is not specified, this is the orchestrator process which will spawn child test runners.
-    result = await orchestratorProcess(
-        { ...loginInfo, tenantFriendlyName: tenantArg },
-        { ...profile, name: profileArg },
-        { testId, debug });
+    // There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
+    await(new Promise((res) => { setTimeout(res, 1000); }));
+    // Flush the logs
+    await logger.flush();
+
     process.exit(result);
 }
 
@@ -146,7 +144,7 @@ async function main() {
  * Implementation of the runner process. Returns the return code to exit the process with.
  */
 async function runnerProcess(
-    loginInfo: IOdspTestLoginInfo,
+    driver: TestDriverTypes,
     profile: ILoadTestConfig,
     runId: number,
     testId: string,
@@ -157,7 +155,7 @@ async function runnerProcess(
             testConfig: profile,
         };
 
-        const testDriver = createTestDriver(loginInfo);
+        const testDriver = await createTestDriver(driver);
 
         const stressTest = await load(testDriver, testId);
         await stressTest.run(runConfig);
@@ -170,30 +168,21 @@ async function runnerProcess(
     }
 }
 
-const createTestDriver = (loginInfo: IOdspTestLoginInfo) =>
-    OdspTestDriver.create(
-        loginInfo.username,
-        loginInfo.password,
-        loginInfo.server,
-        loginInfo.driveId,
-        "stress");
-
 /**
  * Implementation of the orchestrator process. Returns the return code to exit the process with.
  */
 async function orchestratorProcess(
-    loginInfo: IOdspTestLoginInfo & { tenantFriendlyName: string },
+    driver: TestDriverTypes,
     profile: ILoadTestConfig & { name: string },
     args: { testId?: string, debug?: true },
 ): Promise<number> {
-    const testDriver = createTestDriver(loginInfo);
+    const testDriver = await createTestDriver(driver);
 
     // Create a new file if a testId wasn't provided
     const testId = args.testId ?? await initialize(testDriver);
 
     const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
     console.log(`Connecting to ${args.testId ? "existing" : "new"} Container targeting with testId:\n${testId }`);
-    console.log(`Authenticated as user: ${loginInfo.username}`);
     console.log(`Selected test profile: ${profile.name}`);
     console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
 
@@ -201,7 +190,7 @@ async function orchestratorProcess(
     for (let i = 0; i < profile.numClients; i++) {
         const childArgs: string[] = [
             "./dist/nodeStressTest.js",
-            "--tenant", loginInfo.tenantFriendlyName,
+            "--driver", driver,
             "--profile", profile.name,
             "--runId", i.toString(),
             "--testId", testId];

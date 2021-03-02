@@ -18,20 +18,22 @@ import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
 import { LocalCodeLoader, TestObjectProvider, LoaderContainerTracker } from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
-import { createPrimedDataStoreFactory, createRuntimeFactory, TestDataObject } from "./compatUtils";
+import { ITestDriver, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
+import { getDataStoreFactory, createRuntimeFactory, TestDataObject } from "./compatUtils";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
 
 describe("Container", () => {
     let driver: ITestDriver;
+    let logger: ITelemetryBufferedLogger;
     const loaderContainerTracker = new LoaderContainerTracker();
     before(function() {
         driver = getFluidTestDriver() as unknown as ITestDriver;
+        logger = getTestLogger();
 
         // TODO: Convert these to mocked unit test. These are all API tests and doesn't
-        // need the service.  For new disable the tests other then local driver
+        // need the service.  For new disable the tests other than local driver
         if (driver.type !== "local") {
             this.skip();
         }
@@ -41,9 +43,10 @@ describe("Container", () => {
     });
     async function loadContainer(props?: Partial<ILoaderProps>) {
         const loader =  new Loader({
-            ... props,
+            ...props,
+            logger,
             urlResolver: props?.urlResolver ?? driver.createUrlResolver(),
-            documentServiceFactory :
+            documentServiceFactory:
                 props?.documentServiceFactory ?? driver.createDocumentServiceFactory(),
             codeLoader: props?.codeLoader ?? new LocalCodeLoader([]),
         });
@@ -203,7 +206,7 @@ describe("Container", () => {
     it("Delta manager receives readonly event when calling container.forceReadonly()", async () => {
         const runtimeFactory = (_?: unknown) => createRuntimeFactory(
             TestDataObject.type,
-            createPrimedDataStoreFactory());
+            getDataStoreFactory());
 
         const localTestObjectProvider = new TestObjectProvider(
             Loader,

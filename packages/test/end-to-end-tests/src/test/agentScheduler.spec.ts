@@ -11,7 +11,6 @@ import { IAgentScheduler } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { timeoutPromise, defaultTimeoutDurationMs } from "@fluidframework/test-utils";
 import { generateTest, ITestObjectProvider, TestDataObject } from "./compatUtils";
-import * as oldTypes from "./oldVersionTypes";
 
 const tests = (argsFactory: () => ITestObjectProvider) => {
     let leaderTimeout = defaultTimeoutDurationMs;
@@ -102,8 +101,8 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     });
 
     describe("Multiple clients", () => {
-        let container1: IContainer | oldTypes.IContainer;
-        let container2: IContainer | oldTypes.IContainer;
+        let container1: IContainer;
+        let container2: IContainer;
         let scheduler1: IAgentScheduler;
         let scheduler2: IAgentScheduler;
 
