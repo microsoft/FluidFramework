@@ -22,14 +22,15 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 const waitForSignal =
-    async (... signallers: {once(e: "signal", l: () => void): void}[])=>
+    async (...signallers: {once(e: "signal", l: () => void): void}[]) =>
         Promise.all(
             signallers.map(
                 async (signaller, index) =>
                     timeoutPromise(
-                        (resolve)=>signaller.once("signal", ()=>resolve()),
+                        (resolve) => signaller.once("signal", () => resolve()),
                         {
-                            errorMsg: `Singaller[${index}] Timeout`,
+                            durationMs: 2000,
+                            errorMsg: `Signaller[${index}] Timeout`,
                         })));
 
 const tests = (argsFactory: () => ITestObjectProvider) => {
@@ -44,6 +45,14 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         const container2 = await args.loadTestContainer(testContainerConfig) as Container;
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+
+        // need to be connected to send signals
+        if (!container1.connected) {
+            await new Promise((res) => container1.once("connected", res));
+        }
+        if (!container2.connected) {
+            await new Promise((res) => container2.once("connected", res));
+        }
     });
     afterEach(() => {
         args.reset();
