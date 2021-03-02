@@ -4,7 +4,7 @@
  */
 
 import * as util from "util";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import rimrafCallback from "rimraf";
 
 export const defaultProvider = new nconf.Provider({}).defaults({

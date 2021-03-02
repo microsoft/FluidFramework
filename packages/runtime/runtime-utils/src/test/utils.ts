@@ -4,6 +4,7 @@
  */
 
 import { IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
+import { create404Response } from "../dataStoreHelpers";
 
 export class MockHandleContext implements IFluidHandleContext {
     public isAttached = false;
@@ -18,7 +19,7 @@ export class MockHandleContext implements IFluidHandleContext {
     }
 
     public async resolveHandle(request: IRequest) {
-        return { status: 404, mimeType: "text/plain", value: `Method not implemented.` };
+        return create404Response(request);
     }
 }
 

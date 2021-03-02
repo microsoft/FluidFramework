@@ -47,7 +47,7 @@
     "@types/lorem-ipsum": "^1.0.2",
     "@types/mocha": "^2.2.48",
     "@types/morgan": "^1.7.32",
-    "@types/nconf": "^0.0.37",
+    "@types/nconf": "^0.10.0",
     "@types/node": "^12.12.54",
     "@types/nodegit": "^0.26.7",
     "@types/rimraf": "^2.0.2",

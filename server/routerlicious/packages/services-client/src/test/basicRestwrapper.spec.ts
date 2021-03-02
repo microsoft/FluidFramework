@@ -7,9 +7,9 @@ import { strict as assert } from "assert";
 import Axios from "axios";
 import { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
-import { RestWrapper } from "../restWrapper";
+import { BasicRestWrapper } from "../restWrapper";
 
-describe("RestWrapper", () => {
+describe("BasicRestWrapper", () => {
     const baseurl = "https://fake.microsoft.com";
     const requestUrl = "/fakerequesturl/";
     const correlationIdHeader = "x-correlation-id";
@@ -147,7 +147,7 @@ describe("RestWrapper", () => {
 
         it("Invalid Response Code should reject Promise", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosErrorMock as AxiosInstance);
+            const rw = new BasicRestWrapper(baseurl, {}, maxContentLength, {}, axiosErrorMock as AxiosInstance);
 
             // act/assert
             await rw.get(requestUrl).then(
@@ -160,7 +160,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should reject Promise with 0 retryAfter", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorZeroRetryAfterMock as AxiosInstance);
+            const rw = new BasicRestWrapper(baseurl, {}, maxContentLength, {}, axiosTooManyRequestsErrorZeroRetryAfterMock as AxiosInstance);
 
             // act/assert
             await rw.get(requestUrl).then(
@@ -173,7 +173,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should reject Promise with negative retryAfter", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorNegativeRetryAfterMock as AxiosInstance);
+            const rw = new BasicRestWrapper(baseurl, {}, maxContentLength, {}, axiosTooManyRequestsErrorNegativeRetryAfterMock as AxiosInstance);
 
             // act/assert
             await rw.get(requestUrl).then(
@@ -187,7 +187,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should not reject Promise with positive retryAfter", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, Axios);
+            const rw = new BasicRestWrapper(baseurl, {}, maxContentLength, {}, Axios);
 
             // act/assert
             await rw.get(requestUrl).then(
@@ -197,10 +197,10 @@ describe("RestWrapper", () => {
                 (err) => assert.fail("Invalid response code rejected Promise"),
             );
         });
-        
+
         it("Standard properties should not change", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, undefined, {}, false, maxContentLength, axiosMock as AxiosInstance);
+            const rw = new BasicRestWrapper(baseurl, {}, maxContentLength, undefined, axiosMock as AxiosInstance);
 
             // act
             await rw.get(requestUrl);
@@ -216,13 +216,12 @@ describe("RestWrapper", () => {
             // arrange
             const defaultHeaders = { h1: "valueh1", h2: "valueh2" };
             const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
-            const outputUrl = `${requestUrl}?q1=valueq1&q2=valueq2&cacheBust=`;
-            const rw = new RestWrapper(
+            const outputUrl = `${requestUrl}?q1=valueq1&q2=valueq2`;
+            const rw = new BasicRestWrapper(
                 baseurl,
-                defaultHeaders,
                 defaultQueryString,
-                true, // cacheBust
                 maxContentLength,
+                defaultHeaders,
                 axiosMock as AxiosInstance,
             );
 
@@ -242,13 +241,12 @@ describe("RestWrapper", () => {
             const requestHeaders = { h1: "valueh11", h3: "valueh3" };
             const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
             const requestQueryString = { q1: "valueq11", q3: "valueq3" };
-            const outputUrl = `${requestUrl}?q1=valueq11&q2=valueq2&q3=valueq3&cacheBust=`;
-            const rw = new RestWrapper(
+            const outputUrl = `${requestUrl}?q1=valueq11&q2=valueq2&q3=valueq3`;
+            const rw = new BasicRestWrapper(
                 baseurl,
-                defaultHeaders,
                 defaultQueryString,
-                true, // cacheBust
                 maxContentLength,
+                defaultHeaders,
                 axiosMock as AxiosInstance,
             );
 
@@ -267,7 +265,7 @@ describe("RestWrapper", () => {
 
         it("Invalid Response Code should reject Promise", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosErrorMock as AxiosInstance);
+            const rw = new BasicRestWrapper(baseurl, {}, maxContentLength, {}, axiosErrorMock as AxiosInstance);
 
             // act/assert
             await rw.post(requestUrl, {}).then(
@@ -280,7 +278,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should reject Promise with 0 retryAfter", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorZeroRetryAfterMock as AxiosInstance);
+            const rw = new BasicRestWrapper(baseurl, {}, maxContentLength, {}, axiosTooManyRequestsErrorZeroRetryAfterMock as AxiosInstance);
 
             // act/assert
             await rw.post(requestUrl, {}).then(
@@ -293,7 +291,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should reject Promise with negative retryAfter", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorNegativeRetryAfterMock as AxiosInstance);
+            const rw = new BasicRestWrapper(baseurl, {}, maxContentLength, {}, axiosTooManyRequestsErrorNegativeRetryAfterMock as AxiosInstance);
 
             // act/assert
             await rw.post(requestUrl, {}).then(
@@ -306,7 +304,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should not reject Promise with positive retryAfter", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, Axios);
+            const rw = new BasicRestWrapper(baseurl, {}, maxContentLength, {}, Axios);
 
             // act/assert
             await rw.post(requestUrl, {}).then(
@@ -319,7 +317,7 @@ describe("RestWrapper", () => {
 
         it("Standard properties should not change", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, undefined, {}, false, maxContentLength, axiosMock as AxiosInstance);
+            const rw = new BasicRestWrapper(baseurl, {}, maxContentLength, undefined, axiosMock as AxiosInstance);
 
             // act
             await rw.post(requestUrl, {});
@@ -335,12 +333,11 @@ describe("RestWrapper", () => {
             // arrange
             const defaultHeaders = { h1: "valueh1", h2: "valueh2" };
             const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
-            const rw = new RestWrapper(
+            const rw = new BasicRestWrapper(
                 baseurl,
-                defaultHeaders,
                 defaultQueryString,
-                false,
                 maxContentLength,
+                defaultHeaders,
                 axiosMock as AxiosInstance,
             );
 
@@ -359,12 +356,11 @@ describe("RestWrapper", () => {
             const requestHeaders = { h1: "valueh11", h3: "valueh3" };
             const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
             const requestQueryString = { q1: "valueq11", q3: "valueq3" };
-            const rw = new RestWrapper(
+            const rw = new BasicRestWrapper(
                 baseurl,
-                defaultHeaders,
                 defaultQueryString,
-                false,
                 maxContentLength,
+                defaultHeaders,
                 axiosMock as AxiosInstance,
             );
 
@@ -387,7 +383,7 @@ describe("RestWrapper", () => {
 
         it("Invalid Response Code should reject Promise", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosErrorMock as AxiosInstance);
+            const rw = new BasicRestWrapper(baseurl, {}, maxContentLength, {}, axiosErrorMock as AxiosInstance);
 
             // act/assert
             await rw.delete(requestUrl, {}).then(
@@ -400,7 +396,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should reject Promise with 0 retryAfter", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorZeroRetryAfterMock as AxiosInstance);
+            const rw = new BasicRestWrapper(baseurl, {}, maxContentLength, {}, axiosTooManyRequestsErrorZeroRetryAfterMock as AxiosInstance);
 
             // act/assert
             await rw.delete(requestUrl, {}).then(
@@ -413,7 +409,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should reject Promise with negative retryAfter", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorNegativeRetryAfterMock as AxiosInstance);
+            const rw = new BasicRestWrapper(baseurl, {}, maxContentLength, {}, axiosTooManyRequestsErrorNegativeRetryAfterMock as AxiosInstance);
 
             // act/assert
             await rw.delete(requestUrl, {}).then(
@@ -426,7 +422,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should not reject Promise with positive retryAfter", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, Axios);
+            const rw = new BasicRestWrapper(baseurl, {}, maxContentLength, {}, Axios);
 
             // act/assert
             await rw.delete(requestUrl, {}).then(
@@ -439,7 +435,7 @@ describe("RestWrapper", () => {
 
         it("Standard properties should not change", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, undefined, {}, false, maxContentLength, axiosMock as AxiosInstance);
+            const rw = new BasicRestWrapper(baseurl, {}, maxContentLength, undefined, axiosMock as AxiosInstance);
 
             // act
             await rw.delete(requestUrl);
@@ -455,12 +451,11 @@ describe("RestWrapper", () => {
             // arrange
             const defaultHeaders = { h1: "valueh1", h2: "valueh2" };
             const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
-            const rw = new RestWrapper(
+            const rw = new BasicRestWrapper(
                 baseurl,
-                defaultHeaders,
                 defaultQueryString,
-                false,
                 maxContentLength,
+                defaultHeaders,
                 axiosMock as AxiosInstance,
             );
 
@@ -479,12 +474,11 @@ describe("RestWrapper", () => {
             const requestHeaders = { h1: "valueh11", h3: "valueh3" };
             const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
             const requestQueryString = { q1: "valueq11", q3: "valueq3" };
-            const rw = new RestWrapper(
+            const rw = new BasicRestWrapper(
                 baseurl,
-                defaultHeaders,
                 defaultQueryString,
-                false,
                 maxContentLength,
+                defaultHeaders,
                 axiosMock as AxiosInstance,
             );
 
@@ -507,7 +501,7 @@ describe("RestWrapper", () => {
 
         it("Invalid Response Code should reject Promise", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosErrorMock as AxiosInstance);
+            const rw = new BasicRestWrapper(baseurl, {}, maxContentLength, {}, axiosErrorMock as AxiosInstance);
 
             // act/assert
             await rw.patch(requestUrl, {}).then(
@@ -520,7 +514,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should reject Promise with 0 retryAfter", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorZeroRetryAfterMock as AxiosInstance);
+            const rw = new BasicRestWrapper(baseurl, {}, maxContentLength, {}, axiosTooManyRequestsErrorZeroRetryAfterMock as AxiosInstance);
 
             // act/assert
             await rw.patch(requestUrl, {}).then(
@@ -533,7 +527,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should reject Promise with negative retryAfter", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, axiosTooManyRequestsErrorNegativeRetryAfterMock as AxiosInstance);
+            const rw = new BasicRestWrapper(baseurl, {}, maxContentLength, {}, axiosTooManyRequestsErrorNegativeRetryAfterMock as AxiosInstance);
 
             // act/assert
             await rw.patch(requestUrl, {}).then(
@@ -546,7 +540,7 @@ describe("RestWrapper", () => {
 
         it("429 Response Code should not reject Promise with positive retryAfter", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, {}, {}, false, maxContentLength, Axios);
+            const rw = new BasicRestWrapper(baseurl, {}, maxContentLength, {}, Axios);
 
             // act/assert
             await rw.patch(requestUrl, {}).then(
@@ -559,7 +553,7 @@ describe("RestWrapper", () => {
 
         it("Standard properties should not change", async () => {
             // arrange
-            const rw = new RestWrapper(baseurl, undefined, {}, false, maxContentLength, axiosMock as AxiosInstance);
+            const rw = new BasicRestWrapper(baseurl, {}, maxContentLength, undefined, axiosMock as AxiosInstance);
 
             // act
             await rw.patch(requestUrl, {});
@@ -575,12 +569,11 @@ describe("RestWrapper", () => {
             // arrange
             const defaultHeaders = { h1: "valueh1", h2: "valueh2" };
             const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
-            const rw = new RestWrapper(
+            const rw = new BasicRestWrapper(
                 baseurl,
-                defaultHeaders,
                 defaultQueryString,
-                false,
                 maxContentLength,
+                defaultHeaders,
                 axiosMock as AxiosInstance,
             );
 
@@ -599,12 +592,11 @@ describe("RestWrapper", () => {
             const requestHeaders = { h1: "valueh11", h3: "valueh3" };
             const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
             const requestQueryString = { q1: "valueq11", q3: "valueq3" };
-            const rw = new RestWrapper(
+            const rw = new BasicRestWrapper(
                 baseurl,
-                defaultHeaders,
                 defaultQueryString,
-                false,
                 maxContentLength,
+                defaultHeaders,
                 axiosMock as AxiosInstance,
             );
 

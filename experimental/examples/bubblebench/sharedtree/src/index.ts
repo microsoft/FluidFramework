@@ -7,8 +7,8 @@ import {
     ContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/aqueduct";
 
-import { TreeDemo, TreeDemoInstantiationFactory } from "./main";
-export { TreeDemo, TreeDemoInstantiationFactory } from "./main";
+import { Bubblebench, BubblebenchInstantiationFactory } from "./main";
+export { Bubblebench, BubblebenchInstantiationFactory } from "./main";
 
 /**
  * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultDataStore also enables dynamic loading by
@@ -22,8 +22,8 @@ export { TreeDemo, TreeDemoInstantiationFactory } from "./main";
  * Fluid objects.
  */
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    TreeDemoInstantiationFactory,
+    BubblebenchInstantiationFactory,
     new Map([
-        [TreeDemo.Name, Promise.resolve(TreeDemoInstantiationFactory)],
+        [Bubblebench.Name, Promise.resolve(BubblebenchInstantiationFactory)],
     ]),
 );
