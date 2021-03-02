@@ -481,7 +481,7 @@ export class LoggingError extends Error {
             props[key] = this[key];
         }
         // Remove pii member
-        (props as unknown as LoggingError).pii = undefined;
+        delete (props as unknown as LoggingError).pii;
         return props;
     }
 }
