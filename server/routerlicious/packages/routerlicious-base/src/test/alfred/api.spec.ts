@@ -6,7 +6,7 @@
 import assert from "assert";
 import express from "express";
 import request from "supertest";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import { TestTenantManager, TestThrottler, TestDocumentStorage, TestDbFactory, TestProducer, TestKafka } from "@fluidframework/server-test-utils";
 import { MongoDatabaseManager, MongoManager } from "@fluidframework/server-services-core";
 import * as alfredApp from "../../alfred/app";

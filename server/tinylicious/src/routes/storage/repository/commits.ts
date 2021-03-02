@@ -6,7 +6,7 @@
 import { ICommitDetails } from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as git from "isomorphic-git";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import { queryParamToNumber, queryParamToString } from "../../../utils";
 import * as utils from "../utils";
 
