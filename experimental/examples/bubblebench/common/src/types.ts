@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { rnd } from "./rnd";
+import { normal, rnd } from "./rnd";
 
 export interface IArrayish<T> extends ArrayLike<T>, Pick<T[], "push" | "pop" | "map">, Iterable<T> { }
 
@@ -33,7 +33,7 @@ export interface IAppState {
 }
 
 export function makeBubble(stageWidth: number, stageHeight: number) {
-    const radius = (rnd.float64() * 15) + 5;
+    const radius = (normal() * 15) + 5;
     const maxSpeed = 4;
     const diameter = radius * 2;
 
