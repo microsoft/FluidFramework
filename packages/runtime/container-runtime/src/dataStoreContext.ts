@@ -263,26 +263,29 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this.channelDeferred.promise;
     }
 
-    protected async factoryFromPackagePath(packages: readonly string[]) {
+    protected async factoryFromPackagePath(packages?: readonly string[]) {
         assert(this.pkg === packages);
+        if (packages === undefined) {
+            this.rejectDeferredRealize("packages is undefined");
+        }
 
         let entry: FluidDataStoreRegistryEntry | undefined;
         let registry: IFluidDataStoreRegistry | undefined = this._containerRuntime.IFluidDataStoreRegistry;
         let lastPkg: string | undefined;
         for (const pkg of packages) {
             if (!registry) {
-                this.rejectDeferredRealize(`No registry for package`, lastPkg);
+                this.rejectDeferredRealize("No registry for package", lastPkg);
             }
             lastPkg = pkg;
             entry = await registry.get(pkg);
             if (!entry) {
-                this.rejectDeferredRealize(`Registry does not contain entry for the package`, pkg);
+                this.rejectDeferredRealize("Registry does not contain entry for the package", pkg);
             }
             registry = entry.IFluidDataStoreRegistry;
         }
         const factory = entry?.IFluidDataStoreFactory;
         if (factory === undefined) {
-            this.rejectDeferredRealize(`Can't find factory for package`, lastPkg);
+            this.rejectDeferredRealize("Can't find factory for package", lastPkg);
         }
 
         return { factory, registry };
