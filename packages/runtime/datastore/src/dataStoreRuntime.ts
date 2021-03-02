@@ -7,8 +7,10 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
     IFluidHandleContext,
+    IFluidRoutingContext,
     IRequest,
     IResponse,
+    IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -55,10 +57,10 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
     convertSnapshotTreeToSummaryTree,
+    FluidHandleContext,
+    FluidRoutingContext,
+    TerminatingRoute,
     convertSummaryTreeToITree,
-    FluidSerializer,
-    generateHandleContextPath,
-    RequestParser,
     SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
 import {
@@ -97,7 +99,7 @@ export interface ISharedObjectRegistry {
  */
 export class FluidDataStoreRuntime extends
 TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements
-IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
+IFluidDataStoreChannel, IFluidDataStoreRuntime {
     /**
      * Loads the data store runtime
      * @param context - The data store context
@@ -111,8 +113,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     ): FluidDataStoreRuntime {
         return new FluidDataStoreRuntime(context, sharedObjectRegistry);
     }
-
-    public get IFluidRouter() { return this; }
 
     public get connected(): boolean {
         return this.dataStoreContext.connected;
@@ -134,7 +134,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this.dataStoreContext.loader;
     }
 
-    public get isAttached(): boolean {
+    protected get isAttached(): boolean {
         return this.attachState !== AttachState.Detached;
     }
 
@@ -142,22 +142,15 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this._attachState;
     }
 
-    public get absolutePath(): string {
-        return generateHandleContextPath(this.id, this.routeContext);
-    }
-
-    public get routeContext(): IFluidHandleContext {
-        return this.dataStoreContext.containerRuntime.IFluidHandleContext;
-    }
-
-    private readonly serializer = new FluidSerializer(this.IFluidHandleContext);
-    public get IFluidSerializer() { return this.serializer; }
-
-    public get IFluidHandleContext() { return this; }
-
-    public get rootRoutingContext() { return this; }
-    public get channelsRoutingContext() { return this; }
-    public get objectsRoutingContext() { return this; }
+    // Routing context for /_channels/<DataStoreId>.
+    // It's same as this.dataStoreContext.channelRoutingContext
+    private readonly dataStoreRoutingContext: IFluidRoutingContext;
+    // Routing context for /_channels/<DataStoreId>/_channels
+    // Represents routing for channels (DDSs)
+    public readonly channelsRoutingContext: IFluidHandleContext;
+    // Routing context for /_channels/<DataStoreId>/_custom
+    // Represents custom object routing (i.e. example - DataObject routing)
+    public readonly objectsRoutingContext: IFluidHandleContext;
 
     private _disposed = false;
     public get disposed() { return this._disposed; }
@@ -183,6 +176,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly audience: IAudience;
     public readonly logger: ITelemetryLogger;
 
+    // Back-compat: 0.35. To be removed in later versions.
+    public get IFluidRouter(): IFluidRouter {
+        return {
+            get IFluidRouter() { return this; },
+            request: async (request: IRequest) => this.dataStoreRoutingContext.resolveHandle(request),
+        };
+    }
+
     // A map of child channel context ids to the context's used routes in the initial summary of this data store. This
     // is used to initialize the context with data from the previous summary.
     private readonly initialChannelUsedRoutesP: LazyPromise<Map<string, string[]>>;
@@ -205,6 +206,31 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this.deltaManager = dataStoreContext.deltaManager;
         this.quorum = dataStoreContext.getQuorum();
         this.audience = dataStoreContext.getAudience();
+
+        this.dataStoreRoutingContext = this.dataStoreContext.channelRoutingContext;
+
+        // back-compat: added in 0.35: remove in future versions
+        if (this.dataStoreRoutingContext === undefined) {
+            this.dataStoreRoutingContext =
+                new FluidRoutingContext(this.id, {
+                    resolveHandle: async (request: IRequest) => {
+                        const context: IFluidHandleContext =
+                            (this.dataStoreContext.containerRuntime as any).IFluidHandleContext;
+                        return context.resolveHandle(request);
+                    },
+                    absolutePath: "",
+                    addRoute: () => {},
+                });
+            assert(this.dataStoreRoutingContext !== undefined);
+        }
+
+        this.objectsRoutingContext = new FluidHandleContext(
+            this,
+            new FluidRoutingContext("_custom", this.dataStoreRoutingContext, undefined, this.request.bind(this)));
+
+        this.channelsRoutingContext = new FluidHandleContext(
+            this,
+            new FluidRoutingContext("_channels", this.dataStoreRoutingContext));
 
         const tree = dataStoreContext.baseSnapshot;
 
@@ -231,7 +257,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 // Remove GC node for this data store, if any.
                 delete gcData.gcNodes["/"];
                 // Remove the back route to this data store that was added when generating each child's GC nodes.
-                removeRouteFromAllNodes(gcData.gcNodes, this.absolutePath);
+                removeRouteFromAllNodes(gcData.gcNodes, this.dataStoreRoutingContext.absolutePath);
                 return getChildNodesGCData(gcData);
             }
             return new Map();
@@ -286,11 +312,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         ),
                         async () => this.getChannelInitialGCDetails(path));
                 }
-                const deferred = new Deferred<IChannelContext>();
-                deferred.resolve(channelContext);
-
-                this.contexts.set(path, channelContext);
-                this.contextsDeferred.set(path, deferred);
+                this.addChannel(path, channelContext);
             });
         }
 
@@ -305,6 +327,27 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
     }
 
+    protected addChannel(id: string, context: IChannelContext) {
+        if (!this.contextsDeferred.has(id)) {
+            this.contextsDeferred.set(id, new Deferred<IChannelContext>());
+        }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.contextsDeferred.get(id)!.resolve(context);
+
+        this.contexts.set(id, context);
+
+        const route = new TerminatingRoute(
+            id,
+            this.channelsRoutingContext,
+            async () => { return { status: 200, mimeType: "fluid/object", value: await context.getChannel() }; });
+
+        // Supporting legacy URI format: required to handle old external URIs and handles in old files
+        // Note: this may explode if there is ID collision (i.e. id === "_channels" || id === "_custom")
+        try {
+            this.dataStoreRoutingContext.addRoute(id, route);
+        } catch (error) {}
+    }
+
     public dispose(): void {
         if (this._disposed) {
             return;
@@ -315,56 +358,45 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this.removeAllListeners();
     }
 
-    public async resolveHandle(request: IRequest): Promise<IResponse> {
-        return this.request(request);
-    }
-
+    /**
+    * Used only to service custom routes. I.e. channels can not be accessed through this path, unless
+    * custom data object implements such behavior.
+    * Users of this class should overwrite this method, directly or indirectly through mixinRequestHandler.
+     * @param request - request on custom route
+     */
     public async request(request: IRequest): Promise<IResponse> {
-        const parser = RequestParser.create(request);
-        const id = parser.pathParts[0];
-
-        if (id === "_channels" || id === "_custom") {
-            return this.request(parser.createSubRequest(1));
-        }
-
-        // Check for a data type reference first
-        if (this.contextsDeferred.has(id) && parser.isLeaf(1)) {
-            try {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                const value = await this.contextsDeferred.get(id)!.promise;
-                const channel = await value.getChannel();
-
-                return { mimeType: "fluid/object", status: 200, value: channel };
-            } catch (error) {
-                this.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
-
-                return {
-                    status: 500,
-                    mimeType: "text/plain",
-                    value: `Failed to get Channel with id:[${id}] error:{${error}}`,
-                };
-            }
-        }
-
-        // Otherwise defer to an attached request handler
         return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
     }
 
     public async getChannel(id: string): Promise<IChannel> {
         this.verifyNotClosed();
 
-        // TODO we don't assume any channels (even root) in the runtime. If you request a channel that doesn't exist
-        // we will never resolve the promise. May want a flag to getChannel that doesn't wait for the promise if
-        // it doesn't exist
+        const context = this.contexts.get(id);
+        if (context === undefined) {
+            throw new Error(`Channel ${id} does not exist`);
+        }
+        const channel = await context.getChannel();
+        return channel;
+    }
+
+    /**
+     * @deprecated - please use getChannel() instead, use it only to solve backward compatibility issues.
+     * This API is similar to getChannel(), but it will wait for channel to be created if it's not there.
+     * Please note that the wait could be infinite (i.e. deadlock!) if such channel never materializes.
+     * As such, it's not recommended to use this API, it's here only to help with backward compatibility,
+     * i.e. cases where (in the past) we were attaching data stores too soon, before DDSs were created
+     * @param id - channel ID
+     */
+    public async waitChannel(id: string): Promise<IChannel> {
+        this.verifyNotClosed();
+
         if (!this.contextsDeferred.has(id)) {
             this.contextsDeferred.set(id, new Deferred<IChannelContext>());
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const context = await this.contextsDeferred.get(id)!.promise;
-        const channel = await context.getChannel();
-
-        return channel;
+        return context.getChannel();
     }
 
     public createChannel(id: string = uuid(), type: string): IChannel {
@@ -382,16 +414,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             (content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
             (address: string) => this.setChannelDirty(address),
             undefined);
-        this.contexts.set(id, context);
-
-        if (this.contextsDeferred.has(id)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.contextsDeferred.get(id)!.resolve(context);
-        } else {
-            const deferred = new Deferred<IChannelContext>();
-            deferred.resolve(context);
-            this.contextsDeferred.set(id, deferred);
-        }
+        this.addChannel(id, context);
 
         assert(!!context.channel, "Channel should be loaded when created!!");
         return context.channel;
@@ -540,15 +563,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                             async () => this.getChannelInitialGCDetails(id),
                             attachMessage.type);
 
-                        this.contexts.set(id, remoteChannelContext);
-                        if (this.contextsDeferred.has(id)) {
-                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                            this.contextsDeferred.get(id)!.resolve(remoteChannelContext);
-                        } else {
-                            const deferred = new Deferred<IChannelContext>();
-                            deferred.resolve(remoteChannelContext);
-                            this.contextsDeferred.set(id, deferred);
-                        }
+                        this.addChannel(id, remoteChannelContext);
                     }
                     break;
                 }
@@ -600,7 +615,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private getOutboundRoutes(): string[] {
         const outboundRoutes: string[] = [];
         for (const [contextId] of this.contexts) {
-            outboundRoutes.push(`${this.absolutePath}/${contextId}`);
+            outboundRoutes.push(`${this.channelsRoutingContext.absolutePath}/${contextId}`);
         }
         return outboundRoutes;
     }
@@ -614,7 +629,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private updateGCNodes(builder: GCDataBuilder) {
         // Add a back route to self in each child's GC nodes. If any child is referenced, then its parent should
         // be considered referenced as well.
-        builder.addRouteToAllNodes(this.absolutePath);
+        builder.addRouteToAllNodes(this.dataStoreRoutingContext.absolutePath);
 
         // Get the outbound routes and add a GC node for this channel.
         builder.addNode("/", this.getOutboundRoutes());

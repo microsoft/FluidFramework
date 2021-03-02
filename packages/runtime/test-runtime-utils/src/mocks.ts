@@ -12,9 +12,9 @@ import {
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
-    IFluidHandleContext,
     IRequest,
     IResponse,
+    IFluidHandleContext,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -43,7 +43,12 @@ import {
     IChannelStorageService,
     IChannelServices,
 } from "@fluidframework/datastore-definitions";
-import { FluidSerializer, getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
+import {
+    FluidHandleContext,
+    getNormalizedObjectStoragePathParts,
+    mergeStats,
+    FluidRoutingContext,
+} from "@fluidframework/runtime-utils";
 import {
     IChannelSummarizeResult,
     IFluidDataStoreChannel,
@@ -365,33 +370,29 @@ export class MockQuorum implements IQuorum, EventEmitter {
 /**
  * Mock implementation of IRuntime for testing that does nothing
  */
-export class MockFluidDataStoreRuntime extends EventEmitter
-    implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
-    public get IFluidHandleContext(): IFluidHandleContext { return this; }
-    public get rootRoutingContext(): IFluidHandleContext { return this; }
-    public get channelsRoutingContext(): IFluidHandleContext { return this; }
-    public get objectsRoutingContext(): IFluidHandleContext { return this; }
+export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel
+{
+    public constructor() {
+        super();
+        const rootContext = new FluidRoutingContext(`${this.id}`);
+        this.objectsRoutingContext = new FluidHandleContext(this, new FluidRoutingContext("custom", rootContext));
+        this.channelsRoutingContext = new FluidHandleContext(this, new FluidRoutingContext("channels", rootContext));
+    }
 
-    public get IFluidRouter() { return this; }
-
-    public readonly IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
+    public readonly objectsRoutingContext: IFluidHandleContext;
+    public readonly channelsRoutingContext: IFluidHandleContext;
 
     public readonly documentId: string;
     public readonly id: string = uuid();
     public readonly existing: boolean;
     public options: ILoaderOptions = {};
     public clientId: string | undefined = uuid();
-    public readonly path = "";
     public readonly connected = true;
     public readonly leader: boolean;
     public deltaManager = new MockDeltaManager();
     public readonly loader: ILoader;
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockFluidDataStoreRuntime");
     public readonly quorum = new MockQuorum();
-
-    public get absolutePath() {
-        return `/${this.id}`;
-    }
 
     private _local = false;
 
@@ -416,10 +417,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     }
     public createChannel(id: string, type: string): IChannel {
         return null;
-    }
-
-    public get isAttached(): boolean {
-        return !this.local;
     }
 
     public get attachState(): AttachState {
@@ -450,14 +447,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return null;
     }
 
-    public save(message: string) {
-        return;
-    }
-
-    public async close(): Promise<void> {
-        return null;
-    }
-
     public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
         return null;
     }
@@ -482,16 +471,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return;
     }
 
-    public updateMinSequenceNumber(value: number): void {
-        return;
-    }
-
     public setConnectionState(connected: boolean, clientId?: string) {
         return;
-    }
-
-    public async resolveHandle(request: IRequest): Promise<IResponse> {
-        return this.request(request);
     }
 
     public async request(request: IRequest): Promise<IResponse> {

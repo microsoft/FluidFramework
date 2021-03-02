@@ -8,24 +8,10 @@ import { strict as assert } from "assert";
 import {
     IFluidConfiguration,
     IFluidLoadable,
-    IFluidHandleContext,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
-
+import { mockHandleContext } from "@fluidframework/runtime-utils";
 import { DependencyContainer } from "..";
-
-const mockHandleContext: IFluidHandleContext = {
-    absolutePath: "",
-    isAttached: false,
-    IFluidHandleContext: undefined as any,
-
-    attachGraph: () => {
-        throw new Error("Method not implemented.");
-    },
-    resolveHandle: () => {
-        throw new Error("Method not implemented.");
-    },
-};
 
 class MockLoadable implements IFluidLoadable {
     public get IFluidLoadable() { return this; }

@@ -5,11 +5,9 @@
 
 import { strict as assert } from "assert";
 import { RemoteFluidObjectHandle } from "../remoteFluidObjectHandle";
+import { MockHandleContext } from "../mockHandleContext";
 import { FluidSerializer } from "../serializer";
-import {
-    makeJson,
-    MockHandleContext,
-} from "./utils";
+import { makeJson } from "./utils";
 
 describe("FluidSerializer", () => {
     // eslint-disable-next-line prefer-arrow/prefer-arrow-functions

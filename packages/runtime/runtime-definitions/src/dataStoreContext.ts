@@ -7,7 +7,7 @@ import { ITelemetryLogger, IDisposable, IEvent, IEventProvider } from "@fluidfra
 import {
     IFluidObject,
     IFluidRouter,
-    IProvideFluidHandleContext,
+    IFluidRoutingContext,
     IFluidHandle,
     IRequest,
     IResponse,
@@ -68,11 +68,8 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
  * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
  */
-export interface IContainerRuntimeBase extends
-    IEventProvider<IContainerRuntimeBaseEvents>,
-    IProvideFluidHandleContext
+export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents>
 {
-
     readonly logger: ITelemetryLogger;
     readonly clientDetails: IClientDetails;
 
@@ -91,6 +88,11 @@ export interface IContainerRuntimeBase extends
      * Executes a request against the container runtime
      */
     request(request: IRequest): Promise<IResponse>;
+
+    /**
+     * Internal resolution of handles
+     */
+    resolveHandle(request: IRequest): Promise<IResponse>;
 
     /**
      * Submits a container runtime level signal to be sent to other clients.
@@ -148,9 +150,7 @@ export interface IContainerRuntimeBase extends
  * Functionality include attach, snapshot, op/signal processing, request routes,
  * and connection state notifications
  */
-export interface IFluidDataStoreChannel extends
-    IFluidRouter,
-    IDisposable {
+export interface IFluidDataStoreChannel extends IDisposable {
 
     readonly id: string;
 
@@ -215,6 +215,14 @@ export interface IFluidDataStoreChannel extends
      * @param localOpMetadata - The local metadata associated with the original message.
      */
     reSubmit(type: string, content: any, localOpMetadata: unknown);
+
+    /*
+    * IContainerRuntime[Base].*create*DataStore() methods return IFluidRouter.
+    * Requests to it map to calls to this API.
+    * IFluidDataStoreChannel implementation should use it only for custom routes, i.e.
+    * this path should not be used for requesting channels (DDSs)
+    */
+    request(request: IRequest): Promise<IResponse>;
 }
 
 export type CreateChildSummarizerNodeFn = (
@@ -276,6 +284,12 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
      * Ambient services provided with the context
      */
     readonly scope: IFluidObject;
+
+    /**
+     * Context for handle resolution, represents a route to a data store
+     * I.e. "/_channels/<DataStoreId>" route
+     */
+    readonly channelRoutingContext: IFluidRoutingContext;
 
     /**
      * Returns the current quorum.

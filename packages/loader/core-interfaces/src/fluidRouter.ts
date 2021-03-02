@@ -19,6 +19,10 @@ export interface IResponse {
     headers?: { [key: string]: any };
 }
 
+export interface IFluidRequestHandler {
+    request(request: IRequest): Promise<IResponse>;
+}
+
 export const IFluidRouter: keyof IProvideFluidRouter = "IFluidRouter";
 
 /**
@@ -27,6 +31,5 @@ export const IFluidRouter: keyof IProvideFluidRouter = "IFluidRouter";
 export interface IProvideFluidRouter {
     readonly IFluidRouter: IFluidRouter;
 }
-export interface IFluidRouter extends IProvideFluidRouter {
-    request(request: IRequest): Promise<IResponse>;
+export interface IFluidRouter extends IProvideFluidRouter, IFluidRequestHandler {
 }

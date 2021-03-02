@@ -12,7 +12,6 @@ import {
     IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import {
     innerRequestHandler,
@@ -20,8 +19,6 @@ import {
 } from "../requestHandlers";
 
 class MockRuntime {
-    public get IFluidHandleContext() { return this; }
-
     public async getRootDataStore(id, wait): Promise<IFluidRouter> {
         if (id === "objectId") {
             return {
@@ -31,7 +28,7 @@ class MockRuntime {
                     }
                     return { status: 404, mimeType: "text/plain", value: "not found" };
                 },
-            } as IFluidDataStoreChannel;
+            } as IFluidRouter;
         }
 
         assert(wait !== true);

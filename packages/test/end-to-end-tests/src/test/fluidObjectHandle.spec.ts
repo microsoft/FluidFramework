@@ -25,6 +25,20 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         args.reset();
     });
 
+    // back-compat: added in 0.35 to support old and new paths.
+    // Remove in future versions by leaving path intact.
+    function comparePaths(path: string, referencePath: string) {
+        const path2 = path
+            .replace("/_channels/", "/")
+            .replace("/_channels/", "/")
+            .replace("/_custom", "");
+        const referencePath2 = referencePath
+            .replace("/_channels/", "/")
+            .replace("/_channels/", "/")
+            .replace("/_custom", "");
+        return path2 === referencePath2;
+    }
+
     let firstContainerObject1: TestDataObject;
     let firstContainerObject2: TestDataObject;
     let secondContainerObject1: TestDataObject;
@@ -44,36 +58,6 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         await args.ensureSynchronized();
     });
 
-    it("should generate the absolute path for ContainerRuntime correctly", () => {
-        // The expected absolute path for the ContainerRuntime is empty string.
-        const absolutePath = "";
-
-        // Verify that the local client's ContainerRuntime has the correct absolute path.
-        const containerRuntime1 = firstContainerObject1._context.containerRuntime.IFluidHandleContext;
-        assert.equal(containerRuntime1.absolutePath, absolutePath, "The ContainerRuntime's path is incorrect");
-
-        // Verify that the remote client's ContainerRuntime has the correct absolute path.
-        const containerRuntime2 = secondContainerObject1._context.containerRuntime.IFluidHandleContext;
-        assert.equal(containerRuntime2.absolutePath, absolutePath, "The remote ContainerRuntime's path is incorrect");
-    });
-
-    it("should generate the absolute path for FluidDataObjectRuntime correctly", function() {
-        // The expected absolute path for the FluidDataObjectRuntime.
-        const absolutePath = `/${firstContainerObject1._runtime.id}`;
-
-        // Verify that the local client's FluidDataObjectRuntime has the correct absolute path.
-        const fluidHandleContext11 = firstContainerObject1._runtime.rootRoutingContext;
-        assert.equal(fluidHandleContext11.absolutePath, absolutePath,
-            "The FluidDataObjectRuntime's path is incorrect");
-
-        // Verify that the remote client's FluidDataObjectRuntime has the correct absolute path.
-        const fluidHandleContext12 = secondContainerObject1._runtime.rootRoutingContext;
-        assert.equal(
-            fluidHandleContext12.absolutePath,
-            absolutePath,
-            "The remote FluidDataObjectRuntime's path is incorrect");
-    });
-
     it("can store and retrieve a DDS from handle within same data store runtime", async () => {
         // Create a new SharedMap in `firstContainerObject1` and set a value.
         const sharedMap = SharedMap.create(firstContainerObject1._runtime);
@@ -82,10 +66,10 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         const sharedMapHandle = sharedMap.handle;
 
         // The expected absolute path.
-        const absolutePath = `/default/${sharedMap.id}`;
+        const absolutePath = `/_channels/default/_channels/${sharedMap.id}`;
 
         // Verify that the local client's handle has the correct absolute path.
-        assert.equal(sharedMapHandle.absolutePath, absolutePath, "The handle's path is incorrect");
+        assert(comparePaths(sharedMapHandle.absolutePath, absolutePath), "The handle's path is incorrect");
 
         // Add the handle to the root DDS of `firstContainerObject1`.
         firstContainerObject1._root.set("sharedMap", sharedMapHandle);
@@ -97,7 +81,9 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         assert(remoteSharedMapHandle);
 
         // Verify that the remote client's handle has the correct absolute path.
-        assert.equal(remoteSharedMapHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");
+        assert(
+            comparePaths(remoteSharedMapHandle.absolutePath, absolutePath),
+            "The remote handle's path is incorrect");
 
         // Get the SharedMap from the handle.
         const remoteSharedMap = await remoteSharedMapHandle.get();
@@ -113,10 +99,10 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         const sharedMapHandle = sharedMap.handle;
 
         // The expected absolute path.
-        const absolutePath = `/${firstContainerObject2._runtime.id}/${sharedMap.id}`;
+        const absolutePath = `/_channels/${firstContainerObject2._runtime.id}/_channels/${sharedMap.id}`;
 
         // Verify that the local client's handle has the correct absolute path.
-        assert.equal(sharedMapHandle.absolutePath, absolutePath, "The handle's path is incorrect");
+        assert(comparePaths(sharedMapHandle.absolutePath, absolutePath), "The handle's path is incorrect");
 
         // Add the handle to the root DDS of `firstContainerObject1` so that the FluidDataObjectRuntime is different.
         firstContainerObject1._root.set("sharedMap", sharedMap.handle);
@@ -128,7 +114,9 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         assert(remoteSharedMapHandle);
 
         // Verify that the remote client's handle has the correct absolute path.
-        assert.equal(remoteSharedMapHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");
+        assert(
+            comparePaths(remoteSharedMapHandle.absolutePath, absolutePath),
+            "The remote handle's path is incorrect");
 
         // Get the SharedMap from the handle.
         const remoteSharedMap = await remoteSharedMapHandle.get();
@@ -137,13 +125,15 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     });
 
     it("can store and retrieve a PureDataObject from handle in different data store runtime", async () => {
-        // The expected absolute path.
-        const absolutePath = `/${firstContainerObject2._runtime.id}`;
-
         const dataObjectHandle = firstContainerObject2.handle;
 
+        // The expected absolute path.
+        const absolutePath = `/_channels/${firstContainerObject2._runtime.id}/_custom`;
+
         // Verify that the local client's handle has the correct absolute path.
-        assert.equal(dataObjectHandle.absolutePath, absolutePath, "The handle's absolutepath is not correct");
+        assert(
+            comparePaths(dataObjectHandle.absolutePath, absolutePath),
+            "The handle's absolutepath is not correct");
 
         // Add `firstContainerObject2's` handle to the root DDS of `firstContainerObject1` so that the
         // FluidDataObjectRuntime is different.
@@ -157,7 +147,9 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         assert(remoteDataObjectHandle);
 
         // Verify that the remote client's handle has the correct absolute path.
-        assert.equal(remoteDataObjectHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");
+        assert(
+            comparePaths(remoteDataObjectHandle.absolutePath, absolutePath),
+            "The remote handle's path is incorrect");
 
         // Get the dataObject from the handle.
         const container2DataObject2 = await remoteDataObjectHandle.get();

@@ -7,8 +7,9 @@ import { IDisposable } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
     IRequest,
-    IResponse,
     IFluidHandle,
+    IFluidRouter,
+    IFluidRoutingContext,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -60,7 +61,11 @@ import {
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
-import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+import {
+    FluidRoutingContext,
+    addBlobToSummary,
+    convertSummaryTreeToITree,
+} from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
 import {
     dataStoreAttributesBlobName,
@@ -173,6 +178,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this.registry;
     }
 
+    public readonly IFluidRouter: IFluidRouter;
+
     public async isRoot(): Promise<boolean> {
         return (await this.getInitialSnapshotDetails()).isRootDataStore;
     }
@@ -188,6 +195,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
+
+    // Routing context for `/_channels/{this.id}`
+    readonly channelRoutingContext: IFluidRoutingContext;
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
@@ -220,12 +230,35 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         const thisSummarizeInternal =
             async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
-
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
             async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
             async () => this.getInitialGCSummaryDetails(),
         );
+
+        this.channelRoutingContext = new FluidRoutingContext(
+            this.id,
+            _containerRuntime.channelsRoute,
+            async () => { await this.realize(); },
+            // Supporting legacy URI format:
+            // /<dataStoreId>[/custom] -> map to custom route "/custom".
+            async (request: IRequest) => (await this.realize()).request(request));
+
+        // Supporting legacy URI format: required to handle old external URIs and handles in old files
+        // Note: this may explode if there is ID collision (i.e. id === "_channels" || id === "_blobs")
+        try {
+            _containerRuntime.rootRoute.addRoute(this.id, this.channelRoutingContext);
+        } catch (error) {}
+
+        // Only allow asking data store for custom routes, i.e. do not route to
+        // this.channelRoutingContext.resolveHandle() as this will expose channels (DDSs), which should not
+        // be exposed directly (only if custom routes decides to expose them)
+        this.IFluidRouter = {
+            get IFluidRouter() { return this; },
+            request: async (request: IRequest) => {
+                const runtime = await this.realize();
+                return runtime.request(request);
+            }};
     }
 
     public dispose(): void {
@@ -464,14 +497,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             (id: string) => { return id !== "/" && id !== ""; },
         );
         this.channel.updateUsedRoutes(usedChannelRoutes);
-    }
-
-    /**
-     * @deprecated 0.18.Should call request on the runtime directly
-     */
-    public async request(request: IRequest): Promise<IResponse> {
-        const runtime = await this.realize();
-        return runtime.request(request);
     }
 
     public submitMessage(type: string, content: any, localOpMetadata: unknown): void {

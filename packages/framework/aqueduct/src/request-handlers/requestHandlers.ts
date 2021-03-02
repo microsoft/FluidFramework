@@ -58,8 +58,10 @@ export const defaultRouteRequestHandler = (defaultRootId: string) => {
     return async (request: IRequest, runtime: IContainerRuntime) => {
         const parser = RequestParser.create(request);
         if (parser.pathParts.length === 0) {
-            return runtime.IFluidHandleContext.resolveHandle({
-                url: `/${defaultRootId}${parser.query}`,
+            const router = await runtime.getRootDataStore(defaultRootId);
+            // adding leading slash
+            return router.request({
+                url: `/${parser.query}`,
                 headers: request.headers });
         }
         return undefined; // continue search

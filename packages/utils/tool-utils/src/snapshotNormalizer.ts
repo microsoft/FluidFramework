@@ -82,6 +82,8 @@ function getSortedBlobContent(content: string): string {
             contentObj = getDeepSortedArray(contentObj);
         } else if (contentObj instanceof Object) {
             contentObj = getDeepSortedObject(contentObj);
+        } else {
+            return content;
         }
         sortedContent = JSON.stringify(contentObj);
     } catch {}

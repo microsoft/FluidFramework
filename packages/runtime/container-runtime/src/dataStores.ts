@@ -6,6 +6,9 @@
 import { ITelemetryLogger, ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
 import { DataCorruptionError } from "@fluidframework/container-utils";
 import {
+    IFluidRouter,
+} from "@fluidframework/core-interfaces";
+import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITreeEntry,
@@ -279,14 +282,14 @@ export class DataStores implements IDisposable {
         context.process(transformed, local, localMessageMetadata);
     }
 
-    public async getDataStore(id: string, wait: boolean): Promise<IFluidDataStoreChannel> {
+    public async getDataStore(id: string, wait: boolean): Promise<IFluidRouter> {
         const context = await this.contexts.getBoundOrRemoted(id, wait);
 
         if (context === undefined) {
             throw new Error(`DataStore ${id} does not yet exist or is not yet bound`);
         }
 
-        return context.realize();
+        return context.IFluidRouter;
     }
 
     public processSignal(address: string, message: IInboundSignalMessage, local: boolean) {

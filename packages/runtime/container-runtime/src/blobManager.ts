@@ -3,11 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
+import {
+    IFluidHandle,
+    IFluidRoutingContext,
+    IRequest,
+} from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { AttachmentTreeEntry } from "@fluidframework/protocol-base";
 import { ISnapshotTree, ITree } from "@fluidframework/protocol-definitions";
-import { generateHandleContextPath } from "@fluidframework/runtime-utils";
+import { generateHandleContextPath, FluidRoutingContext } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 
@@ -29,7 +33,7 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 
     constructor(
         public readonly path: string,
-        public readonly routeContext: IFluidHandleContext,
+        public readonly routeContext: IFluidRoutingContext,
         public get: () => Promise<any>,
         private attachGraphCallback: undefined | (() => void),
     ) {
@@ -50,20 +54,35 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 
 export class BlobManager {
     public static readonly basePath = "_blobs";
+    protected readonly routeContext: IFluidRoutingContext;
     private readonly pendingBlobIds: Set<string> = new Set();
     private readonly blobIds: Set<string> = new Set();
 
     constructor(
-        private readonly routeContext: IFluidHandleContext,
+        rootRoute: IFluidRoutingContext,
         private readonly getStorage: () => IDocumentStorageService,
         private readonly attachBlobCallback: (blobId: string) => void,
-        private readonly logger: ITelemetryLogger,
-    ) { }
+        private readonly logger: ITelemetryLogger)
+    {
+        this.routeContext = new FluidRoutingContext(
+            "_blobs",
+            rootRoute,
+            undefined,
+            async (request: IRequest, route?: string) => {
+                if (route !== undefined) {
+                    const handle = await this.getBlob(route);
+                    if (handle) {
+                        return { status: 200, mimeType: "fluid/object", value: await handle.get() };
+                    }
+                }
+                return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+            });
+    }
 
     public async getBlob(blobId: string): Promise<IFluidHandle<ArrayBufferLike>> {
         assert(this.blobIds.has(blobId) || this.pendingBlobIds.has(blobId), "requesting unknown blobs");
         return new BlobHandle(
-            `${BlobManager.basePath}/${blobId}`,
+            blobId,
             this.routeContext,
             async () => this.getStorage().readBlob(blobId),
             undefined,
@@ -74,7 +93,7 @@ export class BlobManager {
         const response = await this.getStorage().createBlob(blob);
 
         const handle = new BlobHandle(
-            `${BlobManager.basePath}/${response.id}`,
+            response.id,
             this.routeContext,
             async () => this.getStorage().readBlob(response.id),
             () => this.attachBlobCallback(response.id),
