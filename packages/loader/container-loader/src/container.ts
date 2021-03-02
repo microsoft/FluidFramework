@@ -11,10 +11,11 @@ import {
 } from "@fluidframework/common-definitions";
 import { assert, performance } from "@fluidframework/common-utils";
 import {
+    IFluidCodeDetails,
+    IFluidObject,
+    IFluidRouter,
     IRequest,
     IResponse,
-    IFluidRouter,
-    IFluidCodeDetails,
     isFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
@@ -124,6 +125,11 @@ export interface IContainerLoadOptions {
      * Loads the Container in paused state if true, unpaused otherwise.
      */
     pause?: boolean;
+
+    /**
+     * Services to make available throughout the entire Container
+     */
+    scope?: IFluidObject;
 }
 
 export interface IContainerConfig {
@@ -139,6 +145,11 @@ export interface IContainerConfig {
      */
     clientDetailsOverride?: IClientDetails;
     id?: string;
+
+    /**
+     * Services to make available throughout the entire Container
+     */
+    scope?: IFluidObject;
 }
 
 export enum ConnectionState {
@@ -286,6 +297,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 id: loadOptions.docId,
                 resolvedUrl: loadOptions.resolvedUrl,
                 canReconnect: loadOptions.canReconnect,
+                scope: loadOptions.scope,
             });
 
         return PerformanceEvent.timedExecAsync(container.logger, { eventName: "Load" }, async (event) => {
@@ -539,7 +551,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private get serviceFactory() {return this.loader.services.documentServiceFactory;}
     private get urlResolver() {return this.loader.services.urlResolver;}
     public get options() { return this.loader.services.options;}
-    private get scope() { return this.loader.services.scope;}
+    private readonly _scope: IFluidObject | undefined;
+    private get scope() { return this._scope ?? this.loader.services.scope;}
     private get codeLoader() { return this.loader.services.codeLoader;}
     constructor(
         private readonly loader: Loader,
@@ -556,6 +569,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (config.canReconnect !== undefined) {
             this._canReconnect = config.canReconnect;
         }
+        this._scope = config.scope;
 
         // Create logger for data stores to use
         const type = this.client.details.type;

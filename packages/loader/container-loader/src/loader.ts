@@ -472,6 +472,7 @@ export class Loader extends EventEmitter implements ILoader {
                 resolvedUrl: resolved,
                 version: request.headers?.[LoaderHeader.version],
                 pause: request.headers?.[LoaderHeader.pause],
+                scope: this.services.scope,
             },
         );
     }
