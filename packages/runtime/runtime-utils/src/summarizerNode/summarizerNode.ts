@@ -106,6 +106,9 @@ export class SummarizerNode implements IRootSummarizerNode {
         try {
             const result = await this.summarizeInternalFn(fullTree);
             this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
+            if (result.pathPartsForChildren !== undefined) {
+                this.wipLocalPaths.additionalPath = EscapedPath.createAndConcat(result.pathPartsForChildren);
+            }
             return { summary: result.summary, stats: result.stats };
         } catch (error) {
             if (this.throwOnError || this.trackingSequenceNumber < this._changeSequenceNumber) {
@@ -355,6 +358,14 @@ export class SummarizerNode implements IRootSummarizerNode {
             && this.outstandingOps[0].sequenceNumber <= referenceSequenceNumber
         ) {
             this.outstandingOps.shift();
+        }
+    }
+
+    public loadBaseSummaryWithoutDifferential(snapshot: ISnapshotTree) {
+        const { childrenPathPart } = parseSummaryForSubtrees(snapshot);
+        if (childrenPathPart !== undefined) {
+            assert(!!this.latestSummary, "Should have latest summary defined during loadBaseSummary");
+            this.latestSummary.additionalPath = EscapedPath.create(childrenPathPart);
         }
     }
 

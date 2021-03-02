@@ -41,6 +41,8 @@ export interface IContextSummarizeResult extends ISummarizeResult {
 
 export interface ISummarizeInternalResult extends IContextSummarizeResult {
     id: string;
+    /** Additional path parts between this node's ID and its children's IDs. */
+    pathPartsForChildren?: string[];
 }
 
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
@@ -102,6 +104,12 @@ export interface ISummarizerNode {
      * @param fullTree - true to skip optimizations and always generate the full tree
      */
     summarize(fullTree: boolean): Promise<ISummarizeResult>;
+    /**
+     * Checks if there are any additional path parts for children that need to
+     * be loaded from the base summary.
+     * @param snapshot - the base summary to parse
+     */
+    loadBaseSummaryWithoutDifferential(snapshot: ISnapshotTree): void;
     /**
      * Checks if the base snapshot was created as a failure summary. If it has
      * the base summary handle + outstanding ops blob, then this will return the

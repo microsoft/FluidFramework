@@ -723,6 +723,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
         );
 
+        if (this.context.baseSnapshot) {
+            this.summarizerNode.loadBaseSummaryWithoutDifferential(this.context.baseSnapshot);
+        }
+
         this.dataStores = new DataStores(
             getSnapshotForDataStores(context.baseSnapshot, metadata.snapshotFormatVersion),
             this,
@@ -1412,6 +1416,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return {
             ...summarizeResult,
             id: "",
+            pathPartsForChildren: [channelsTreeName],
         };
     }
 

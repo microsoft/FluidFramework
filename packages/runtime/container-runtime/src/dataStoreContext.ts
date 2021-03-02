@@ -403,7 +403,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             summarizeResult.summary.unreferenced = true;
         }
 
-        return { ...summarizeResult, id: this.id };
+        return {
+            ...summarizeResult,
+            id: this.id,
+            pathPartsForChildren: [channelsTreeName],
+        };
     }
 
     /**
@@ -808,6 +812,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         assert(this.isRootDataStore !== undefined, "isRootDataStore should be available in local data store context");
 
         const summarizeResult = this.channel.getAttachSummary();
+
+        // Wrap dds summaries in .channels subtree.
+        wrapSummaryInChannelsTree(summarizeResult);
 
         // Add data store's attributes to the summary.
         const attributes: IFluidDataStoreAttributes = createAttributes(this.pkg, this.isRootDataStore);
