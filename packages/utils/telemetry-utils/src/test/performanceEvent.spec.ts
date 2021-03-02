@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import { ITelemetryLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { assert } from "@fluidframework/common-utils";
 import { TelemetryLogger, PerformanceEvent } from "../logger";
 
 class MockLogger extends TelemetryLogger implements ITelemetryLogger {
