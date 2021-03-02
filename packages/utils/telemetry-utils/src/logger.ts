@@ -65,7 +65,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
 
-            if (error instanceof LoggingError) {
+            if (IsILoggingError(error)) {
                 const telemetryProps = error.getTelemetryProperties();
                 for (const key of Object.keys(telemetryProps)) {
                     if (event[key] === undefined) {
@@ -456,6 +456,15 @@ export class PerformanceEvent {
 }
 
 /**
+ * An error object that supports exporting its properties to be logged to telemetry
+ */
+export interface ILoggingError extends Error {
+    /** Return all properties from this object that should be logged to telemetry */
+    getTelemetryProperties(): ITelemetryProperties;
+}
+export const IsILoggingError = (x: any): x is ILoggingError => typeof x.getTelemetryProperties === "function";
+
+/**
  * - Helper class for error tracking that can be used to log an error in telemetry.
  * - Care needs to be taken not to log PII information!
  * - Callers may only add PII via the constructor so it's stripped out when properties are queried
@@ -465,17 +474,16 @@ export class PerformanceEvent {
  *   'message' & 'stack' properties if they exists on error object.
  * - In other words, logger logs only what it knows about and has good confidence it does not contain PII information.
  */
-export class LoggingError extends Error {
+export class LoggingError extends Error implements ILoggingError {
     constructor(
         message: string,
-        private readonly pii?: any, // On here to be accessible during debugging but removed before logging
         props?: ITelemetryProperties,
+        private readonly pii?: any, // On here to be accessible during debugging but removed before logging
     ) {
         super(message);
         Object.assign(this, props);
     }
 
-    // Return all properties
     public getTelemetryProperties(): ITelemetryProperties {
         const props: ITelemetryProperties = {};
         // Could not use {...this} because it does not return properties of base class.

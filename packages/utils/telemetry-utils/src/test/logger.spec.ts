@@ -96,6 +96,18 @@ describe("Logger", () => {
                 assert.strictEqual(props.p2, "two");
                 assert.strictEqual(props.p3, true);
             });
+            it("pii object is removed", () => {
+                const loggingError = new LoggingError("myMessage", {}, { pii1: 1, pii2: "two", pii3: true});
+                const props = loggingError.getTelemetryProperties();
+                assert(typeof ((loggingError as any).pii) === "object", "pii field should be present on loggingError");
+                assert.strictEqual(props.pii, undefined, "pii field should not be present on props");
+            });
+            it("pii property passed in - Overwrites pii param", () => {
+                const loggingError = new LoggingError("myMessage", { pii: "BAM" }, { pii1: 1, pii2: "two", pii3: true});
+                const props = loggingError.getTelemetryProperties();
+                assert((loggingError as any).pii === "BAM", "pii field can be overwritten via props");
+                assert.strictEqual(props.pii, undefined, "pii field should not be present on props");
+            });
         });
     });
 });
