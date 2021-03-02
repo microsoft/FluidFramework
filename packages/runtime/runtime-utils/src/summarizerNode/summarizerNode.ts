@@ -358,6 +358,14 @@ export class SummarizerNode implements IRootSummarizerNode {
         }
     }
 
+    public loadBaseSummaryWithoutDifferential(snapshot: ISnapshotTree) {
+        const { childrenPathPart } = parseSummaryForSubtrees(snapshot);
+        if (childrenPathPart !== undefined) {
+            assert(!!this.latestSummary, "Should have latest summary defined during loadBaseSummary");
+            this.latestSummary.additionalPath = EscapedPath.create(childrenPathPart);
+        }
+    }
+
     public async loadBaseSummary(
         snapshot: ISnapshotTree,
         readAndParseBlob: ReadAndParseBlob,
