@@ -23,9 +23,10 @@ import {
     TestObjectProvider,
 } from "@fluidframework/test-utils";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
-import * as oldTypes from "./oldVersionTypes";
 import * as old from "./oldVersion";
 import * as old2 from "./oldVersion2";
+
+type OldApi = typeof old | typeof old2;
 
 export interface ITestObjectProvider {
     /**
@@ -52,7 +53,7 @@ export interface ITestOptions {
     serviceConfiguration?: Partial<IClientConfiguration>,
 
     // The old apis to use if running against an older version
-    oldApis?: oldTypes.OldApi[],
+    oldApis?: OldApi[],
 }
 
 export enum DataObjectFactoryType {
@@ -92,10 +93,10 @@ const createTestFluidDataStoreFactory = (registry: ChannelFactoryRegistry = []):
 
 export const createRuntimeFactory = (
     type: string,
-    dataStoreFactory: IFluidDataStoreFactory | oldTypes.IFluidDataStoreFactory,
+    dataStoreFactory: IFluidDataStoreFactory,
     runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
 ): IRuntimeFactory => {
-    return new TestContainerRuntimeFactory(type, dataStoreFactory as IFluidDataStoreFactory, runtimeOptions);
+    return new TestContainerRuntimeFactory(type, dataStoreFactory, runtimeOptions);
 };
 
 export function getDataStoreFactory(containerOptions?: ITestContainerConfig) {
@@ -138,12 +139,12 @@ export const generateNonCompatTest = (
 };
 
 export const generateCompatTest = (
-    tests: (compatArgsFactory: () => ITestObjectProvider, oldApi: oldTypes.OldApi) => void,
+    tests: (compatArgsFactory: () => ITestObjectProvider) => void,
     options: ITestOptions = {},
 ) => {
     // Run against all currently supported versions by default
     const oldApis = options.oldApis ?? [old, old2];
-    oldApis.forEach((oldApi: oldTypes.OldApi) => {
+    oldApis.forEach((oldApi: OldApi) => {
         describe(`compat ${oldApi.versionString} - old loader, new runtime`, function() {
             tests(() => {
                 const driver = getFluidTestDriver();
@@ -152,7 +153,7 @@ export const generateCompatTest = (
                     driver as any,
                     oldApi.Loader as any,
                 );
-            }, oldApi);
+            });
         });
 
         describe(`compat ${oldApi.versionString} - new loader, old runtime`, function() {
@@ -165,7 +166,7 @@ export const generateCompatTest = (
                     oldApi.createRuntimeFactory as any,
                     oldApi.getDataStoreFactory as any,
                 );
-            }, oldApi);
+            });
         });
 
         describe(`compat ${oldApi.versionString} - new ContainerRuntime, old DataStoreRuntime`, function() {
@@ -178,7 +179,7 @@ export const generateCompatTest = (
                     createRuntimeFactory,
                     oldApi.getDataStoreFactory as any,
                 );
-            }, oldApi);
+            });
         });
 
         describe(`compat ${oldApi.versionString} - old ContainerRuntime, new DataStoreRuntime`, function() {
@@ -191,7 +192,7 @@ export const generateCompatTest = (
                     oldApi.createRuntimeFactory as any,
                     getDataStoreFactory,
                 );
-            }, oldApi);
+            });
         });
     });
 };

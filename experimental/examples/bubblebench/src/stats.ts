@@ -2,19 +2,15 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
 export class Stats {
     private frameCount = 0;
     private _glitchCount = 0;
     private _smoothFps = 60;
 
-    private startTime = 0;
+    private readonly startTime = this.now();
     private currentFrameStart = 0;
     private _lastFrameElapsed = 0;
-
-    public start() {
-        this.startTime = this.now();
-        this.currentFrameStart = this.now();
-    }
 
     public endFrame() {
         this.frameCount++;
@@ -24,12 +20,16 @@ export class Stats {
         this.currentFrameStart = nextFrameStart;
 
         const frameFps = 1000.0 / this._lastFrameElapsed;
-        if (frameFps < 24) {
-            this._glitchCount++;
-        }
 
-        const a = 0.75;
-        this._smoothFps = (a * this._smoothFps) + ((1 - a) * frameFps);
+        // Note: frameFps can be infinite if the delta from the previous frame is 0 ms.
+        if (isFinite(frameFps)) {
+            if (frameFps < 24) {
+                this._glitchCount++;
+            }
+
+            const a = 0.75;
+            this._smoothFps = (a * this._smoothFps) + ((1 - a) * frameFps);
+        }
     }
 
     public get smoothFps() { return this._smoothFps; }
