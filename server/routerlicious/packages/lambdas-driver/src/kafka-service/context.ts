@@ -23,6 +23,11 @@ export class Context extends EventEmitter implements IContext {
         }
 
         this.checkpointManager.checkpoint(queuedMessage).catch((error) => {
+            if (this.closed) {
+                // don't emit errors after closing
+                return;
+            }
+
             // Close context on error. Once the checkpointManager enters an error state it will stay there.
             // We will look to restart on checkpointing given it likely indicates a Kafka connection issue.
             this.error(error, { restart: true });

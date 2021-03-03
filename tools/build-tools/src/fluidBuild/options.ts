@@ -30,6 +30,9 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
     samples: boolean;
     fix: boolean;
     services: boolean;
+    worker: boolean;
+    workerThreads: boolean;
+    workerMemoryLimit: number;
 }
 
 // defaults
@@ -56,6 +59,9 @@ export const options: FastBuildOptions = {
     all: false,
     server: false,
     services: false,
+    worker: false,
+    workerThreads: false,
+    workerMemoryLimit: -1,
 };
 
 function printUsage() {
@@ -256,6 +262,32 @@ export function parseOptions(argv: string[]) {
         if (arg === "--showExec") {
             options.showExec = true;
             continue;
+        }
+
+        if (arg === "--worker") {
+            options.worker = true;
+            continue;
+        }
+
+        if (arg === "--workerThreads") {
+            options.workerThreads = true;
+            options.worker = true;
+            continue;
+        }
+
+        if (arg === "--workerMemoryLimitMB") {
+            if (i !== process.argv.length - 1) {
+                const mb = parseInt(process.argv[++i]);
+                if (!isNaN(mb)) {
+                    options.workerMemoryLimit = mb * 1024 * 1024;
+                    continue;
+                }
+                console.error("ERROR: Argument for --workerMemoryLimitMB is not a number");
+            } else {
+                console.error("ERROR: Missing argument for --workerMemoryLimit");
+            }
+            error = true;
+            break;
         }
 
         // Package regexp or paths

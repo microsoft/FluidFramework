@@ -35,7 +35,7 @@ export interface IConsumer {
     /**
      * Event Handler.
      */
-    on(event: "connected" | "disconnected" | "closed", listener: () => void): this;
+    on(event: "connected" | "disconnected" | "closed" | "paused" | "resumed", listener: () => void): this;
     on(event: "data", listener: (message: IQueuedMessage) => void): this;
     on(event: "rebalancing", listener: (partitions: IPartition[]) => void): this;
     on(event: "rebalanced", listener: (partitions: IPartitionWithEpoch[]) => void): this;

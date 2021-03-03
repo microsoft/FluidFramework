@@ -3,12 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "old-container-definitions2";
-export * from "old-core-interfaces2";
-export { IDocumentServiceFactory, IUrlResolver } from "old-driver-definitions2";
-export { LocalResolver } from "old-local-driver2";
-export { IFluidDataStoreFactory } from "old-runtime-definitions2";
-export { OpProcessingController } from "old-test-utils2";
 export { Loader } from "old-container-loader2";
 export const versionString = "N-2";
 

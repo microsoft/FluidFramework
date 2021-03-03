@@ -5,23 +5,22 @@
 
 import * as querystring from "querystring";
 import { AxiosError, AxiosInstance, AxiosRequestConfig, default as Axios } from "axios";
-import * as uuid from "uuid";
+import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
 
-export class RestWrapper {
+export abstract class RestWrapper {
     constructor(
-        private readonly baseurl?: string,
-        // eslint-disable-next-line @typescript-eslint/ban-types
-        private readonly defaultHeaders?: {},
-        // eslint-disable-next-line @typescript-eslint/ban-types
-        private readonly defaultQueryString?: {},
-        private readonly cacheBust = false,
-        private readonly maxContentLength = 1000 * 1024 * 1024,
-        private readonly axios: AxiosInstance = Axios) {
+        protected readonly baseurl?: string,
+        protected defaultQueryString: Record<string, unknown> = {},
+        protected readonly maxContentLength = 1000 * 1024 * 1024,
+    ) {
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    public async get<T>(url: string, queryString?: {}, headers?: {}): Promise<T> {
+    public async get<T>(
+        url: string,
+        queryString?: Record<string, unknown>,
+        headers?: Record<string, unknown>,
+    ): Promise<T> {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
             headers,
@@ -32,8 +31,12 @@ export class RestWrapper {
         return this.request<T>(options, 200);
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    public async post<T>(url: string, requestBody: any, queryString?: {}, headers?: {}): Promise<T> {
+    public async post<T>(
+        url: string,
+        requestBody: any,
+        queryString?: Record<string, unknown>,
+        headers?: Record<string, unknown>,
+    ): Promise<T> {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
             data: requestBody,
@@ -45,8 +48,11 @@ export class RestWrapper {
         return this.request<T>(options, 201);
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    public async delete<T>(url: string, queryString?: {}, headers?: {}): Promise<T> {
+    public async delete<T>(
+        url: string,
+        queryString?: Record<string, unknown>,
+        headers?: Record<string, unknown>,
+    ): Promise<T> {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
             headers,
@@ -57,8 +63,12 @@ export class RestWrapper {
         return this.request<T>(options, 204);
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    public async patch<T>(url: string, requestBody: any, queryString?: {}, headers?: {}): Promise<T> {
+    public async patch<T>(
+        url: string,
+        requestBody: any,
+        queryString?: Record<string, unknown>,
+        headers?: Record<string, unknown>,
+    ): Promise<T> {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
             data: requestBody,
@@ -70,13 +80,38 @@ export class RestWrapper {
         return this.request<T>(options, 200);
     }
 
-    private async request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T> {
-        if (this.defaultHeaders) {
-            options.headers = { ...this.defaultHeaders, ...options.headers };
+    protected abstract request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T>;
+
+    protected generateQueryString(queryStringValues: Record<string, unknown>) {
+        if (this.defaultQueryString || queryStringValues) {
+            const queryStringMap = { ...this.defaultQueryString, ...queryStringValues };
+
+            const queryString = querystring.stringify(queryStringMap);
+            if (queryString !== "") {
+                return `?${queryString}`;
+            }
         }
-        if (!options.headers?.["x-correlation-id"]) {
-            options.headers = { ...{ "x-correlation-id": uuid.v4() }, ...options.headers };
-        }
+
+        return "";
+    }
+}
+
+export class BasicRestWrapper extends RestWrapper {
+    constructor(
+        baseurl?: string,
+        defaultQueryString: Record<string, unknown> = {},
+        maxContentLength = 1000 * 1024 * 1024,
+        private defaultHeaders: Record<string, unknown> = {},
+        private readonly axios: AxiosInstance = Axios,
+        private readonly refreshDefaultQueryString?: () => Record<string, unknown>,
+        private readonly refreshDefaultHeaders?: () => Record<string, unknown>,
+    ) {
+        super(baseurl, defaultQueryString, maxContentLength);
+    }
+
+    protected async request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry = true): Promise<T> {
+        const options = { ...requestConfig };
+        options.headers = this.generateHeaders(options.headers, uuid());
 
         return new Promise<T>((resolve, reject) => {
             this.axios.request<T>(options)
@@ -89,12 +124,20 @@ export class RestWrapper {
                         debug(`request to ${options.url} failed ${error ? error.message : ""}`);
                     }
 
-                    if (error?.response?.status === 429 && error?.response?.data?.retryAfter > 0) {
+                    if (error?.response?.status === 429 && error?.response?.data?.retryAfter > 0 && canRetry) {
                         setTimeout(() => {
                             this.request<T>(options, statusCode)
                                 .then(resolve)
                                 .catch(reject);
                         }, error.response.data.retryAfter * 1000);
+                    } else if (error?.response?.status === 401 && canRetry && this.refreshOnAuthError()) {
+                        const retryConfig = { ...requestConfig };
+                        retryConfig.headers = this.generateHeaders(
+                            retryConfig.headers, options.headers["x-correlation-id"]);
+
+                        this.request<T>(retryConfig, statusCode, false)
+                            .then(resolve)
+                            .catch(reject);
                     } else if (error.response && error.response.status !== statusCode) {
                         reject(error.response.status);
                     } else {
@@ -104,19 +147,33 @@ export class RestWrapper {
         });
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    private generateQueryString(queryStringValues: {}) {
-        if (this.defaultQueryString || queryStringValues) {
-            const queryStringMap = this.cacheBust
-                ? { ...this.defaultQueryString, ...queryStringValues, ...{ cacheBust: Date.now() } }
-                : { ...this.defaultQueryString, ...queryStringValues };
-
-            const queryString = querystring.stringify(queryStringMap);
-            if (queryString !== "") {
-                return `?${queryString}`;
-            }
+    private generateHeaders(
+        headers?: Record<string, unknown>,
+        fallbackCorrelationId?: string,
+    ): Record<string, unknown> {
+        let result = headers ?? {};
+        if (this.defaultHeaders) {
+            result = { ...this.defaultHeaders, ...headers };
         }
 
-        return "";
+        if (result["x-correlation-id"]) {
+            return result;
+        }
+        return { "x-correlation-id": fallbackCorrelationId, ...result };
+    }
+
+    private refreshOnAuthError(): boolean {
+        if (this.refreshDefaultQueryString === undefined && this.refreshDefaultHeaders === undefined) {
+            // retry will not succeed with the same params and headers
+            return false;
+        }
+
+        if (this.refreshDefaultHeaders !== undefined) {
+            this.defaultHeaders = this.refreshDefaultHeaders();
+        }
+        if (this.refreshDefaultQueryString !== undefined) {
+            this.defaultQueryString = this.refreshDefaultQueryString();
+        }
+        return true;
     }
 }

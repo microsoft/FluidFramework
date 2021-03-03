@@ -80,15 +80,15 @@ export class BlobManager {
             () => this.attachBlobCallback(response.id),
         );
 
-        assert(!this.pendingBlobIds.has(response.id));
-        assert(!this.blobIds.has(response.id));
-        this.pendingBlobIds.add(response.id);
+        // Note - server will de-dup blobs, so we might get existing blobId!
+        if (!this.blobIds.has(response.id)) {
+            this.pendingBlobIds.add(response.id);
+        }
 
         return handle;
     }
 
     public addBlobId(blobId: string) {
-        assert(!this.blobIds.has(blobId));
         this.blobIds.add(blobId);
         this.pendingBlobIds.delete(blobId);
     }

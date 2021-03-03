@@ -3,10 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { GitManager, Historian, ICredentials } from "@fluidframework/server-services-client";
+import {
+    GitManager,
+    Historian,
+    ICredentials,
+    BasicRestWrapper,
+    getAuthorizationTokenFromCredentials,
+} from "@fluidframework/server-services-client";
 import { generateToken, getCorrelationId } from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
 import Axios from "axios";
+import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { v4 as uuid } from "uuid";
 
 export class Tenant implements core.ITenant {
     public get id(): string {
@@ -47,16 +55,25 @@ export class TenantManager implements core.ITenantManager {
             Axios.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`),
             this.getKey(tenantId)]);
 
-        const getCredentials = async (): Promise<ICredentials> => ({
+        const credentials: ICredentials = {
             password: generateToken(tenantId, null, key, null),
             user: tenantId,
-        });
+        };
+        const defaultQueryString = {
+            token: fromUtf8ToBase64(`${credentials.user}`),
+        };
+        const defaultHeaders = {
+            "Authorization": getAuthorizationTokenFromCredentials(credentials),
+            // TODO: all requests from this GitManager will have the same correlation id. Is this intended behavior?
+            "x-correlation-id": getCorrelationId() || uuid(),
+        };
+        const baseUrl = `${details.data.storage.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`;
+        const restWrapper = new BasicRestWrapper(baseUrl, defaultQueryString, undefined, defaultHeaders);
         const historian = new Historian(
             `${details.data.storage.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`,
             true,
             false,
-            getCredentials,
-            getCorrelationId);
+            restWrapper);
         const gitManager = new GitManager(historian);
         const tenant = new Tenant(details.data, gitManager);
 
