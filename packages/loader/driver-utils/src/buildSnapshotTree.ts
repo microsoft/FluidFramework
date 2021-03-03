@@ -33,7 +33,7 @@ function flattenCore(
                 mode: FileMode[treeEntry.mode],
                 path: subPath,
                 sha: id,
-                size: IsoBuffer.from(blob.contents, blob.encoding).length,
+                size: 0,
                 type: "blob",
                 url: "",
             };

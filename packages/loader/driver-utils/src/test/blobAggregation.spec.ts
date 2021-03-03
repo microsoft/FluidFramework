@@ -61,11 +61,8 @@ class InMemoryStorage {
 
     async readBlob(id: string) {
         const blob = this.blobs.get(id);
-        if (blob !== undefined) {
-            return blob;
-        }
-
-        throw new Error("unknown blob id");
+        assert(blob !== undefined, "unknown blob id");
+        return blob;
     }
 }
 
