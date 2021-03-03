@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { TaskManagerFactory } from "@fluidframework/agent-scheduler";
+import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
@@ -90,8 +90,8 @@ import {
     ISummaryStats,
     ISummaryTreeWithStats,
     ISummarizeInternalResult,
+    IProvideAgentScheduler,
     IAgentScheduler,
-    ITaskManager,
     IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
@@ -443,7 +443,7 @@ class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
     constructor(namedEntries: NamedFluidDataStoreRegistryEntries) {
         super([
             ...namedEntries,
-            TaskManagerFactory.registryEntry,
+            AgentSchedulerFactory.registryEntry,
         ]);
     }
 }
@@ -528,7 +528,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Create all internal data stores if not already existing on storage or loaded a detached
         // container from snapshot(ex. draft mode).
         if (!context.existing) {
-            await runtime.createRootDataStore(TaskManagerFactory.type, taskSchedulerId);
+            await runtime.createRootDataStore(AgentSchedulerFactory.type, taskSchedulerId);
         }
 
         runtime.subscribeToLeadership();
@@ -1789,12 +1789,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    public async getTaskManager(): Promise<IProvideAgentScheduler> {
+        console.error("getTaskManager is deprecated.  Please move to getScheduler.");
+        const agentScheduler = await this.getScheduler();
+        return { IAgentScheduler: agentScheduler };
+    }
+
     public async getScheduler(): Promise<IAgentScheduler> {
-        const taskManager = await requestFluidObject<ITaskManager>(
+        const agentScheduler = await requestFluidObject<IAgentScheduler>(
             await this.getDataStore(taskSchedulerId, true),
             "",
         );
-        return taskManager.IAgentScheduler;
+        return agentScheduler.IAgentScheduler;
     }
 
     private updateLeader(leadership: boolean) {

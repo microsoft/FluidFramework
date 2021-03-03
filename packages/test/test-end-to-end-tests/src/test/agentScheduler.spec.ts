@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { TaskManager } from "@fluidframework/agent-scheduler";
 import { IContainer } from "@fluidframework/container-definitions";
 import { taskSchedulerId } from "@fluidframework/container-runtime";
 import { IAgentScheduler } from "@fluidframework/runtime-definitions";
@@ -29,7 +28,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         beforeEach(async () => {
             const container = await args.makeTestContainer();
-            scheduler = await requestFluidObject<TaskManager>(container, taskSchedulerId)
+            scheduler = await requestFluidObject<IAgentScheduler>(container, taskSchedulerId)
                 .then((taskManager) => taskManager.IAgentScheduler);
 
             const dataObject = await requestFluidObject<TestDataObject>(container, "default");
@@ -109,7 +108,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         beforeEach(async () => {
             // Create a new Container for the first document.
             container1 = await args.makeTestContainer();
-            scheduler1 = await requestFluidObject<TaskManager>(container1, taskSchedulerId)
+            scheduler1 = await requestFluidObject<IAgentScheduler>(container1, taskSchedulerId)
                 .then((taskManager) => taskManager.IAgentScheduler);
             const dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
 
@@ -124,7 +123,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             }
             // Load existing Container for the second document.
             container2 = await args.loadTestContainer();
-            scheduler2 = await requestFluidObject<TaskManager>(container2, taskSchedulerId)
+            scheduler2 = await requestFluidObject<IAgentScheduler>(container2, taskSchedulerId)
                 .then((taskManager) => taskManager.IAgentScheduler);
             const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
 

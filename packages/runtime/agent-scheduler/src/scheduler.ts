@@ -8,9 +8,8 @@ import { assert } from "@fluidframework/common-utils";
 import {
     IFluidHandle,
     IRequest,
-    IResponse,
 } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, FluidObjectHandle, ISharedObjectRegistry } from "@fluidframework/datastore";
+import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
@@ -19,7 +18,6 @@ import {
     IAgentScheduler,
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
-    ITaskManager,
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import { create404Response } from "@fluidframework/runtime-utils";
@@ -362,63 +360,34 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
     }
 }
 
-export class TaskManager implements ITaskManager {
-    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext): Promise<TaskManager> {
-        const agentScheduler = await AgentScheduler.load(runtime, context);
-        return new TaskManager(agentScheduler, runtime, context);
-    }
-
-    private readonly innerHandle: IFluidHandle<this>;
-
-    public get IAgentScheduler() { return this.scheduler; }
-    public get handle(): IFluidHandle<this> { return this.innerHandle; }
-    public get IFluidHandle() { return this.innerHandle; }
-    public get IFluidLoadable() { return this; }
-    public get IFluidRouter() { return this; }
-    public get ITaskManager() { return this; }
-
-    protected readonly taskUrl = "_tasks";
-
-    constructor(
-        private readonly scheduler: IAgentScheduler,
-        private readonly runtime: IFluidDataStoreRuntime,
-        context: IFluidDataStoreContext) {
-        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
-    }
-
-    public async request(request: IRequest): Promise<IResponse> {
-        if (request.url === "" || request.url === "/") {
-            return { status: 200, mimeType: "fluid/object", value: this };
-        } else {
-            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
-        }
-    }
-}
-
-class TaskManagerRuntimeClass extends FluidDataStoreRuntime {
-    private readonly taskManagerP: Promise<TaskManager>;
+class AgentSchedulerRuntime extends FluidDataStoreRuntime {
+    private readonly agentSchedulerP: Promise<AgentScheduler>;
     constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry) {
         super(dataStoreContext, sharedObjectRegistry);
-        this.taskManagerP = TaskManager.load(this, dataStoreContext);
+        this.agentSchedulerP = AgentScheduler.load(this, dataStoreContext);
     }
     public async request(request: IRequest) {
-        const response  = await super.request(request);
+        const response = await super.request(request);
         if (response.status === 404) {
-            const taskManager = await this.taskManagerP;
-            return taskManager.request(request);
+            const agentScheduler = await this.agentSchedulerP;
+            if (request.url === "" || request.url === "/") {
+                return { status: 200, mimeType: "fluid/object", value: agentScheduler };
+            } else {
+                return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+            }
         }
         return response;
     }
 }
 
-export class TaskManagerFactory implements IFluidDataStoreFactory {
+export class AgentSchedulerFactory implements IFluidDataStoreFactory {
     public static readonly type = "_scheduler";
-    public readonly type = TaskManagerFactory.type;
+    public readonly type = AgentSchedulerFactory.type;
 
     public get IFluidDataStoreFactory() { return this; }
 
     public static get registryEntry(): NamedFluidDataStoreRegistryEntry {
-        return [this.type, Promise.resolve(new TaskManagerFactory())];
+        return [this.type, Promise.resolve(new AgentSchedulerFactory())];
     }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
@@ -428,8 +397,6 @@ export class TaskManagerFactory implements IFluidDataStoreFactory {
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
 
-        const runtime = new TaskManagerRuntimeClass(context, dataTypes);
-
-        return runtime;
+        return new AgentSchedulerRuntime(context, dataTypes);
     }
 }
