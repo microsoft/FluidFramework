@@ -1,3 +1,9 @@
+## 0.36 Breaking changes
+- [`ILoader` API trimmed down](#ILoader-API-trimmed-down)
+
+### ILoader API trimmed down
+The `createDetachedContainer` and `rehydrateDetachedContainerFromSnapshot` APIs are removed from the `ILoader` interface.  They are still available on the `Loader` class, and consumers who need these methods should operate on a `Loader` instead of an `ILoader`
+
 ## 0.35 Breaking changes
 - [Removed some api implementations from odsp driver](#Removed-some-api-implemenations-from-odsp-driver)
 - [get-tinylicious-container and get-session-storage-container moved](#get-tinylicious-container-and-get-session-storage-container-moved)
