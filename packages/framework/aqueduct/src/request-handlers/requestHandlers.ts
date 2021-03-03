@@ -7,7 +7,7 @@ import { IFluidObject, IRequest, IRequestHeader, IResponse } from "@fluidframewo
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidMountableViewClass } from "@fluidframework/view-interfaces";
 import { RuntimeRequestHandler, buildRuntimeRequestHandler } from "@fluidframework/request-handler";
-import { RequestParser } from "@fluidframework/runtime-utils";
+import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
 
 /**
  * A mountable view is only required if the view needs to be mounted across a bundle boundary.  Mounting across
@@ -76,6 +76,6 @@ export function defaultFluidObjectRequestHandler(fluidObject: IFluidObject, requ
     if (request.url === "/" || request.url === "") {
         return { mimeType: "fluid/object", status: 200, value: fluidObject };
     } else {
-        return { mimeType: "text/plain", status: 404, value: `unknown request url: ${request.url}` };
+        return create404Response(request);
     }
 }

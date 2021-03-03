@@ -12,7 +12,7 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { DeltaManager } from "@fluidframework/container-loader";
-import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-internal/test-loader-utils";
+import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
 import { ScheduleManager, DeltaScheduler } from "@fluidframework/container-runtime";
 
 describe("Container Runtime", () => {
@@ -31,7 +31,7 @@ describe("Container Runtime", () => {
         let batchEnd: number = 0;
 
         async function startDeltaManager() {
-            await deltaManager.connect();
+            await deltaManager.connect({ reason: "test" });
             deltaManager.inbound.resume();
             deltaManager.outbound.resume();
             deltaManager.inboundSignal.resume();

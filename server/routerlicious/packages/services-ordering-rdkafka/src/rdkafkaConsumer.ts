@@ -165,21 +165,6 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					return;
 				}
 
-				// cleanup things left over from the lost partitions
-				for (const partition of this.assignedPartitions) {
-					if (!newAssignedPartitions.has(partition)) {
-						// clear latest offset
-						this.latestOffsets.delete(partition);
-
-						// reject pending commit
-						const deferredCommit = this.pendingCommits.get(partition);
-						if (deferredCommit) {
-							this.pendingCommits.delete(partition);
-							deferredCommit.reject(new Error(`Partition for commit was unassigned. ${partition}`));
-						}
-					}
-				}
-
 				// clear pending messages
 				this.pendingMessages.clear();
 
@@ -191,6 +176,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					}
 				}
 
+				const originalAssignedPartitions = this.assignedPartitions;
 				this.assignedPartitions = newAssignedPartitions;
 
 				try {
@@ -198,6 +184,22 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					const partitions = this.getPartitions(this.assignedPartitions);
 					const partitionsWithEpoch = await this.fetchPartitionEpochs(partitions);
 					this.emit("rebalanced", partitionsWithEpoch, err.code);
+
+					// cleanup things left over from the lost partitions
+					for (const partition of originalAssignedPartitions) {
+						if (!newAssignedPartitions.has(partition)) {
+							// clear latest offset
+							this.latestOffsets.delete(partition);
+
+							// reject pending commit
+							const deferredCommit = this.pendingCommits.get(partition);
+							if (deferredCommit) {
+								this.pendingCommits.delete(partition);
+								deferredCommit.reject(new Error(`Partition for commit was unassigned. ${partition}`));
+							}
+						}
+					}
+
 					this.isRebalancing = false;
 
 					for (const pendingMessages of this.pendingMessages.values()) {
@@ -292,11 +294,13 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 
 	public async pause() {
 		this.consumer?.unsubscribe();
+		this.emit("paused");
 		return Promise.resolve();
 	}
 
 	public async resume() {
 		this.consumer?.subscribe([this.topic]);
+		this.emit("resumed");
 		return Promise.resolve();
 	}
 

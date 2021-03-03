@@ -30,6 +30,7 @@ import {
     ISummaryConfiguration,
     MessageType,
 } from "@fluidframework/protocol-definitions";
+import { create404Response } from "@fluidframework/runtime-utils";
 import { GenerateSummaryData, IPreviousState } from "./containerRuntime";
 import { IConnectableRuntime, RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
@@ -54,8 +55,8 @@ export interface IProvideSummarizer {
 }
 
 export interface IGenerateSummaryOptions {
-    /** True to generate the full tree with no handle reuse optimizations */
-    fullTree: boolean,
+    /** True to generate the full tree with no handle reuse optimizations; defaults to false */
+    fullTree?: boolean,
     /** True to ask the server what the latest summary is first */
     refreshLatestAck: boolean,
     /** Logger to use for correlated summary events */
@@ -716,11 +717,14 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return {
-            mimeType: "fluid/object",
-            status: 200,
-            value: this,
-        };
+        if (request.url === "/" || request.url === "") {
+            return {
+                mimeType: "fluid/object",
+                status: 200,
+                value: this,
+            };
+        }
+        return create404Response(request);
     }
 
     private async runCore(onBehalfOf: string): Promise<void> {

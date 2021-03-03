@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
 import { ITaskManager } from "@fluidframework/runtime-definitions";
-import { RequestParser } from "@fluidframework/runtime-utils";
+import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
 import { IEvent } from "@fluidframework/common-definitions";
 import { PureDataObject } from "./pureDataObject";
 
@@ -36,17 +36,16 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
     private readonly rootDirectoryId = "root";
 
     public async request(request: IRequest): Promise<IResponse> {
-        const url = request.url;
-        const requestParser = RequestParser.create({ url: request.url });
+        const requestParser = RequestParser.create(request);
         const itemId = requestParser.pathParts[0];
         if (itemId === "bigBlobs") {
             const value = this.root.get<string>(requestParser.pathParts.join("/"));
             if (value === undefined) {
-                return { mimeType: "text/plain", status: 404, value: `request ${url} not found` };
+                return create404Response(requestParser);
             }
             return { mimeType: "fluid/object", status: 200, value };
         } else {
-            return super.request(request);
+            return super.request(requestParser);
         }
     }
 

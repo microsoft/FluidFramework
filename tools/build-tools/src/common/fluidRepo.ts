@@ -8,7 +8,6 @@ import { Package, Packages } from "./npmPackage";
 import { MonoRepo, MonoRepoKind } from "./monoRepo";
 import { getPackageManifest } from "./fluidUtils";
 import { ExecAsyncResult } from "./utils";
-import { isTemplateSpan } from "typescript";
 
 export interface IPackageManifest {
     repoPackages: {

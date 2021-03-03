@@ -10,7 +10,7 @@ import {
     IPatchRefParamsExternal } from "@fluidframework/server-services-client";
 import { Response, Router } from "express";
 import safeStringify from "json-stringify-safe";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import git from "nodegit";
 import * as winston from "winston";
 import { IExternalStorageManager } from "../../externalStorageManager";
@@ -124,7 +124,7 @@ async function patchRef(
         try {
             await externalStorageManager.write(repo, refId, patchParams.sha, true);
         } catch (error) {
-            winston.error(`External storage write failed while trying to update file 
+            winston.error(`External storage write failed while trying to update file
             ${safeStringify(error, undefined, 2)}, ${repo} / ${refId}`);
         }
     }

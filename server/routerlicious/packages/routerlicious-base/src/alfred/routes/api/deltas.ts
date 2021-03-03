@@ -12,12 +12,17 @@ import {
     IThrottler,
     MongoManager,
 } from "@fluidframework/server-services-core";
-import { throttle, IThrottleMiddlewareOptions } from "@fluidframework/server-services-utils";
+import {
+    verifyStorageToken,
+    throttle,
+    IThrottleMiddlewareOptions,
+    getParam,
+} from "@fluidframework/server-services-utils";
 import { Router } from "express";
 import { Provider } from "nconf";
 import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { getParam, Constants } from "../../../utils";
+import { Constants } from "../../../utils";
 
 export async function getDeltas(
     mongoManager: MongoManager,
@@ -191,7 +196,8 @@ export function create(
      * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
      */
     router.get(
-        ["/v1/:tenantId?/:id", "/:tenantId?/:id/v1"],
+        ["/v1/:tenantId/:id", "/:tenantId/:id/v1"],
+        verifyStorageToken(tenantManager, config),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const from = stringToSequenceNumber(request.query.from);
@@ -222,7 +228,8 @@ export function create(
      * Retrieves raw (unsequenced) deltas for the given document.
      */
     router.get(
-        "/raw/:tenantId?/:id",
+        "/raw/:tenantId/:id",
+        verifyStorageToken(tenantManager, config),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
@@ -248,7 +255,8 @@ export function create(
      * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
      */
     router.get(
-        "/:tenantId?/:id",
+        "/:tenantId/:id",
+        verifyStorageToken(tenantManager, config),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const from = stringToSequenceNumber(request.query.from);

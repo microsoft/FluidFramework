@@ -29,6 +29,7 @@ import {
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
+import { create404Response } from "@fluidframework/runtime-utils";
 import { Document } from "./document";
 
 const rootMapId = "root";
@@ -83,7 +84,7 @@ export class Chaincode implements IFluidDataStoreFactory {
                         value: document,
                     };
                 } else {
-                    return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+                    return create404Response(request);
                 }
             },
             this.dataStoreFactory);
