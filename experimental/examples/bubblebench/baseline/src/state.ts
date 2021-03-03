@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IAppState, IClient, makeBubble, randomColor } from "@fluid-experimental/bubblebench-common";
+import { IAppState, IClient, makeBubble, makeClient } from "@fluid-experimental/bubblebench-common";
 
 export class AppState implements IAppState {
     public readonly applyEdits = () => {};
@@ -15,12 +15,7 @@ export class AppState implements IAppState {
         private _height: number,
         numBubbles: number,
     ) {
-        this.localClient = {
-            clientId: "pending",
-            color: randomColor(),
-            bubbles: new Array(numBubbles).fill(undefined).map(() => this.makeBubble()),
-        };
-
+        this.localClient = makeClient(_width, _height, numBubbles);
         this.clients = [ this.localClient ];
     }
 
