@@ -202,6 +202,7 @@ describe("Map", () => {
                     Object.keys(summaryTree.tree).length, 1, "summary tree should only have one blob");
                 const summaryContent = (summaryTree.tree.header as ISummaryBlob)?.content;
                 const expectedContent = JSON.stringify({
+                    absolutePath: map.handle.absolutePath,
                     blobs: [],
                     content: {
                         key: {
@@ -235,6 +236,7 @@ describe("Map", () => {
                 assert.strictEqual(
                     Object.keys(summaryTree.tree).length, 2, "There should be 2 entries in the summary tree");
                 const expectedContent1 = JSON.stringify({
+                    absolutePath: map.handle.absolutePath,
                     blobs: ["blob0"],
                     content: {
                         key: {
