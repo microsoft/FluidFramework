@@ -6,14 +6,13 @@
 import { EventEmitter } from "events";
 import { assert } from "@fluidframework/common-utils";
 import {
-    IFluidObject,
     IFluidHandle,
     IFluidRunnable,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
-import { LoaderHeader, AttachState } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
@@ -21,7 +20,6 @@ import {
     IAgentScheduler,
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
-    ITask,
     ITaskManager,
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
@@ -386,7 +384,7 @@ export class TaskManager implements ITaskManager {
     constructor(
         private readonly scheduler: IAgentScheduler,
         private readonly runtime: IFluidDataStoreRuntime,
-        private readonly context: IFluidDataStoreContext) {
+        context: IFluidDataStoreContext) {
         this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
     }
 
@@ -406,59 +404,6 @@ export class TaskManager implements ITaskManager {
                 return { status: 200, mimeType: "fluid/object", value: this.taskMap.get(taskUrl) };
             }
         }
-    }
-
-    /**
-     * {@inheritDoc ITaskManager.register}
-     */
-    public register(...tasks: ITask[]): void {
-        for (const task of tasks) {
-            this.taskMap.set(task.id, task.instance);
-        }
-    }
-
-    /**
-     * {@inheritDoc ITaskManager.pick}
-     */
-    public async pick(taskId: string, worker?: boolean): Promise<void> {
-        if (!this.context.deltaManager.clientDetails.capabilities.interactive) {
-            return Promise.reject(new Error("Picking not allowed on secondary copy"));
-        } else if (this.runtime.attachState !== AttachState.Attached) {
-            return Promise.reject(new Error("Picking not allowed in detached container in task manager"));
-        } else {
-            const fullUrl = `/${this.runtime.id}/${this.taskUrl}/${taskId}`;
-            return this.scheduler.pick(
-                fullUrl,
-                async () => this.runTask(fullUrl, worker !== undefined ? worker : false));
-        }
-    }
-
-    private async runTask(url: string, worker: boolean) {
-        const request: IRequest = {
-            headers: {
-                [LoaderHeader.cache]: false,
-                [LoaderHeader.clientDetails]: {
-                    capabilities: { interactive: false },
-                    type: "agent",
-                },
-                [LoaderHeader.reconnect]: false,
-                [LoaderHeader.sequenceNumber]: this.context.deltaManager.lastSequenceNumber,
-                [LoaderHeader.executionContext]: worker ? "worker" : undefined,
-            },
-            url,
-        };
-        const response = await this.runtime.loader.request(request);
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            return Promise.reject(new Error(`Invalid agent route: ${url}`));
-        }
-
-        const fluidObject = response.value as IFluidObject;
-        const agent = fluidObject.IFluidRunnable;
-        if (agent === undefined) {
-            return Promise.reject(new Error("Fluid object does not implement IFluidRunnable"));
-        }
-
-        return agent.run();
     }
 }
 
