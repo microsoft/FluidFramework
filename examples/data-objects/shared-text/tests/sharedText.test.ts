@@ -55,9 +55,15 @@ describe("sharedText", () => {
         }
 
         const word: string = "sharedTextTest";
-        // Type a word in one of the documents. There are two classes with name "flow-view",
-        // one for each user. This will pick the first class it finds and type in that.
-        await page.type('[class=flow-view]', word, { delay: 10 });
+        /*
+        // Issue #5331:  See if typing a character at a time will help with stability
+        for (const c of word) {
+            // Type a word in one of the documents. There are two classes with name "flow-view",
+            // one for each user. This will pick the first class it finds and type in that.
+            await page.type('[class=flow-view]', c, { delay: 10 });
+        }
+        */
+       await page.type('[class=flow-view]', word, { delay: 10 });
 
         // wait for all changes to propagate
         await page.waitFor(() => window["FluidLoader"].isSynchronized());
