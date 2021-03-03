@@ -11,7 +11,6 @@ import {
 } from "@fluidframework/aqueduct";
 import {
     IContainer,
-    ILoader,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
@@ -87,7 +86,7 @@ describe("context reload (hot-swap)", function() {
         packageEntries,
         documentId: string,
         LoaderConstructor = Loader): Promise<IContainer> {
-        const loader: ILoader = new LoaderConstructor({
+        const loader = new LoaderConstructor({
             codeLoader: new LocalCodeLoader(packageEntries),
             options: { hotSwapContext: true },
             urlResolver: driver.createUrlResolver(),
@@ -212,7 +211,7 @@ describe("context reload (hot-swap)", function() {
 
     describe("two containers", () => {
         async function loadContainer(packageEntries, documentId): Promise<IContainer> {
-            const loader: ILoader = new Loader({
+            const loader = new Loader({
                 codeLoader: new LocalCodeLoader(packageEntries),
                 options: { hotSwapContext: true },
                 urlResolver: driver.createUrlResolver(),

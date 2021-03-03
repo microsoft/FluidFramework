@@ -100,14 +100,6 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         return this.loader.request(request);
     }
 
-    public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
-        throw new Error("Relative loader should not create a detached container");
-    }
-
-    public async rehydrateDetachedContainerFromSnapshot(source: string): Promise<Container> {
-        throw new Error("Relative loader should not create a detached container from snapshot");
-    }
-
     public resolveContainer(container: Container) {
         this.containerDeferred.resolve(container);
     }
@@ -273,6 +265,10 @@ export class Loader extends EventEmitter implements ILoader {
 
     public get IFluidRouter(): IFluidRouter { return this; }
 
+    /**
+     * Creates a new container using the specified chaincode but in an unattached state. While unattached all
+     * updates will only be local until the user explicitly attaches the container to a service provider.
+     */
     public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<Container> {
         debug(`Container creating in detached state: ${performance.now()} `);
 
@@ -294,6 +290,10 @@ export class Loader extends EventEmitter implements ILoader {
         return container;
     }
 
+    /**
+     * Creates a new container using the specified snapshot but in an unattached state. While unattached all
+     * updates will only be local until the user explicitly attaches the container to a service provider.
+     */
     public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<Container> {
         debug(`Container creating in detached state: ${performance.now()} `);
 

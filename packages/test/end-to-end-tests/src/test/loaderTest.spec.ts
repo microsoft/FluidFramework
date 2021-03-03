@@ -10,8 +10,8 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IContainer, ILoader, LoaderHeader } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { Loader } from "@fluidframework/container-loader";
 import { IFluidCodeDetails, IRequest,
     IResponse } from "@fluidframework/core-interfaces";
 import {
@@ -94,7 +94,7 @@ describe("Loader.request", () => {
 
     let dataStore1: TestSharedDataObject1;
     let dataStore2: TestSharedDataObject2;
-    let loader: ILoader;
+    let loader: Loader;
     let opProcessingController: OpProcessingController;
 
     async function createContainer(documentId: string): Promise<IContainer> {
@@ -191,7 +191,7 @@ describe("Loader.request", () => {
         }
         assert(success, "Loader pause flags doesn't pause container op processing");
 
-        (container2 as Container).resume();
+        container2.resume();
 
         // Flush all the ops
         await opProcessingController.process();
@@ -218,7 +218,7 @@ describe("Loader.request", () => {
         // this binds newDataStore to dataStore1
         dataStore1._root.set("key", newDataStore.handle);
 
-        (container1 as Container).resume();
+        container1.resume();
 
         // Flush all the ops
         await opProcessingController.process();

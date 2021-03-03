@@ -8,7 +8,6 @@ import {
     IFluidRunnable,
     IRequest,
     IResponse,
-    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import { IContainer, ILoader, ILoaderOptions } from "@fluidframework/container-definitions";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
@@ -70,13 +69,5 @@ export class WebWorkerLoader implements ILoader, IFluidRunnable, IFluidRouter {
 
     public async resolve(request: IRequest): Promise<IContainer> {
         return this.proxy.resolve(request);
-    }
-
-    public async createDetachedContainer(source: IFluidCodeDetails): Promise<IContainer> {
-        return this.proxy.createDetachedContainer(source);
-    }
-
-    public async rehydrateDetachedContainerFromSnapshot(source: string): Promise<IContainer> {
-        return this.proxy.rehydrateDetachedContainerFromSnapshot(source);
     }
 }
