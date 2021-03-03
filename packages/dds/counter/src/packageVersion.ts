@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/counter";
-export const pkgVersion = "0.33.4";
+export const pkgVersion = "0.33.5";
