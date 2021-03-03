@@ -25,7 +25,7 @@ import { Context } from "./context";
  */
 export class Partition extends EventEmitter {
     private q: AsyncQueue<IQueuedMessage>;
-    private readonly lambdaP: Promise<IPartitionLambda>;
+    private lambdaP: Promise<IPartitionLambda> | undefined;
     private lambda: IPartitionLambda | undefined;
     private readonly checkpointManager: CheckpointManager;
     private readonly context: Context;
@@ -69,9 +69,14 @@ export class Partition extends EventEmitter {
         this.lambdaP.then(
             (lambda) => {
                 this.lambda = lambda;
+                this.lambdaP = undefined;
                 this.q.resume();
             },
             (error) => {
+                if (this.closed) {
+                    return;
+                }
+
                 const errorData: IContextErrorData = {
                     restart: true,
                 };
@@ -105,14 +110,25 @@ export class Partition extends EventEmitter {
         this.checkpointManager.close();
         this.context.close();
 
-        // Notify the lambda (should it be resolved) of the close
-        this.lambdaP.then(
-            (lambda) => {
-                lambda.close(closeType);
-            },
-            (error) => {
-                // Lambda never existed - no need to close
-            });
+        // Notify the lambda of the close
+        if (this.lambda) {
+            this.lambda.close(closeType);
+            this.lambda = undefined;
+        } else if (this.lambdaP) {
+            // asynchronously close the lambda since it's not created yet
+            this.lambdaP
+                .then(
+                    (lambda) => {
+                        lambda.close(closeType);
+                    },
+                    (error) => {
+                        // Lambda never existed - no need to close
+                    })
+                .finally(() => {
+                    this.lambda = undefined;
+                    this.lambdaP = undefined;
+                });
+        }
 
         this.removeAllListeners();
     }
