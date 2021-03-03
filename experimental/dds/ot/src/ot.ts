@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert , bufferToString } from "@fluidframework/common-utils";
-import { IFluidSerializer, ISerializedHandle } from "@fluidframework/core-interfaces";
+import { bufferToString } from "@fluidframework/common-utils";
+import { IFluidSerializer } from "@fluidframework/core-interfaces";
 
 import {
     FileMode,
     ISequencedDocumentMessage,
     ITree,
-    MessageType,
     TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -20,7 +19,7 @@ import {
     IChannelFactory,
     Serializable,
 } from "@fluidframework/datastore-definitions";
-import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
+import { SharedObject } from "@fluidframework/shared-object-base";
 import { moveOp, Doc, type, insertOp, JSONOp, removeOp, replaceOp } from "ot-json1";
 import { OTFactory } from "./factory";
 import { debug } from "./debug";
@@ -129,18 +128,17 @@ export class SharedOT<T extends Serializable = any>
         debug(`OT ${this.id} is now disconnected`);
     }
 
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         if (local) {
             this.pendingOps.shift();
-            return;
+        } else {
+            let remoteOp = message.contents;
+
+            for (const localPendingOp of this.pendingOps) {
+                remoteOp = type.transformNoConflict(remoteOp, localPendingOp, "right");
+            }
+
+            this.root = type.apply(this.root as Doc, remoteOp);
         }
-
-        let remoteOp = message.contents;
-
-        for (const localPendingOp of this.pendingOps) {
-            remoteOp = type.transformNoConflict(localPendingOp, remoteOp, "right");
-        }
-
-
     }
 }
