@@ -80,12 +80,7 @@ export async function getWithRetryForTokenRefresh<T>(get: (options: TokenFetchOp
 export async function fetchHelper(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
-): Promise<{
-    response: Response,
-    headers: Map<string, string>,
-    commonSpoHeaders: ITelemetryProperties,
-    duration: number,
-}> {
+): Promise<IOdspResponse<Response>> {
     const start = performance.now();
 
     // Node-fetch and dom have conflicting typing, force them to work by casting for now
@@ -104,7 +99,7 @@ export async function fetchHelper(
 
         const headers = headersToMap(response.headers);
         return {
-            response,
+            content: response,
             headers,
             commonSpoHeaders: getSPOAndGraphRequestIdsFromResponse(headers),
             duration: performance.now() - start,
@@ -137,20 +132,19 @@ export async function fetchArray(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
     rateLimiter: RateLimiter,
-) {
-    const { response, headers, commonSpoHeaders, duration } = await rateLimiter.schedule(
+): Promise<IOdspResponse<ArrayBuffer>> {
+    const { content, headers, commonSpoHeaders, duration } = await rateLimiter.schedule(
         async () => fetchHelper(requestInfo, requestInit),
     );
 
-    const arrayBuffer = await response.arrayBuffer();
+    const arrayBuffer = await content.arrayBuffer();
     commonSpoHeaders.bodySize = arrayBuffer.byteLength;
-    const res = {
+    return {
         headers,
-        arrayBuffer,
+        content: arrayBuffer,
         commonSpoHeaders,
         duration,
     };
-    return res;
 }
 
 /**
@@ -162,13 +156,13 @@ export async function fetchAndParseAsJSONHelper<T>(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<T>> {
-    const { response, headers, commonSpoHeaders, duration } = await fetchHelper(requestInfo, requestInit);
+    const { content, headers, commonSpoHeaders, duration } = await fetchHelper(requestInfo, requestInit);
     // JSON.parse() can fail and message (that goes into telemetry) would container full request URI, including
     // tokens... It fails for me with "Unexpected end of JSON input" quite often - an attempt to download big file
     // (many ops) almost always ends up with this error - I'd guess 1% of op request end up here... It always
     // succeeds on retry.
     try {
-        const text = await response.text();
+        const text = await content.text();
 
         commonSpoHeaders.bodySize = text.length;
         const res = {
@@ -179,7 +173,7 @@ export async function fetchAndParseAsJSONHelper<T>(
         };
         return res;
     } catch (e) {
-        throwOdspNetworkError(`Error while parsing fetch response: ${e}`, fetchIncorrectResponse, response);
+        throwOdspNetworkError(`Error while parsing fetch response: ${e}`, fetchIncorrectResponse, content);
     }
 }
 

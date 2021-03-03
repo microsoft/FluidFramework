@@ -360,7 +360,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                 ...res.commonSpoHeaders,
                             });
                         }
-                        return res.arrayBuffer;
+                        return res.content;
                     },
                 );
             });
