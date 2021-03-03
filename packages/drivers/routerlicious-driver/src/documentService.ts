@@ -30,7 +30,7 @@ export class DocumentService implements api.IDocumentService {
         private readonly historianApi: boolean,
         private readonly directCredentials: ICredentials | undefined,
         private readonly gitCache: IGitCache | undefined,
-        private readonly logger: ITelemetryLogger | undefined,
+        private readonly logger: ITelemetryLogger,
         protected tokenProvider: ITokenProvider,
         protected tenantId: string,
         protected documentId: string,
@@ -124,7 +124,8 @@ export class DocumentService implements api.IDocumentService {
             ordererToken.jwt,
             io,
             client,
-            this.ordererUrl);
+            this.ordererUrl,
+            this.logger);
     }
 
     public getErrorTrackingService() {
