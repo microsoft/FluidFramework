@@ -248,9 +248,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     private rejectDeferredRealize(reason: string, packageName?: string): never {
-        // See ISensitiveDebugData.packageName in @fluidframework/telemetry-utils
-        const pii = { packageName };
-        throw new LoggingError(reason, {}, pii);
+        throw new LoggingError(reason, {}, { packageName: { value: packageName, tag: TelemetryDataTag.FirstPartySafe }});
     }
 
     public async realize(): Promise<IFluidDataStoreChannel> {

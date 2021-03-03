@@ -13,7 +13,7 @@ import {
     ITelemetryProperties,
     TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
-import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
+import { BaseTelemetryNullLogger, performance, unreachableCase } from "@fluidframework/common-utils";
 
 export interface ITelemetryPropertyGetters {
     [index: string]: () => TelemetryEventPropertyType;
@@ -455,16 +455,14 @@ export class PerformanceEvent {
     }
 }
 
-/**
- * An interface for defining specific types of debug data, intended to be extended via declaration merging.
- * Consumers of logging objects containing ISensitiveDebugData may then handle each property as appropriate.
- */
-export interface ISensitiveDebugData {
-    /**
-     * Name of a code package being loaded.
-     * This declaration should be moved to the container-runtime package where it's used
-     */
-    packageName?: string,
+export enum TelemetryDataTag {
+    Safe,
+    FirstPartySafe,
+}
+
+// Note - this should move to common-definitions package
+export interface ITaggedTelemetryProperties {
+    [name: string]: { value: TelemetryEventPropertyType, tag: TelemetryDataTag };
 }
 
 /**
@@ -490,10 +488,11 @@ export class LoggingError extends Error implements ILoggingError {
     constructor(
         message: string,
         props?: ITelemetryProperties,
-        private readonly pii?: any, // On here to be accessible during debugging but removed before logging
+        private taggedProps?: ITaggedTelemetryProperties,
     ) {
         super(message);
         Object.assign(this, props);
+        const pkg: ITaggedTelemetryProperties = { packageName: { value: "afd", tag: TelemetryDataTag.FirstPartySafe }};
     }
 
     public getTelemetryProperties(): ITelemetryProperties {
@@ -502,23 +501,33 @@ export class LoggingError extends Error implements ILoggingError {
         for (const key of Object.getOwnPropertyNames(this)) {
             props[key] = this[key];
         }
-        this.handlePii(props);
+        this.handleTaggedProps(props);
         return props;
     }
 
-    private handlePii(props: ITelemetryProperties) {
-        if ((props as unknown as LoggingError).pii === undefined) {
+    private handleTaggedProps(props: ITelemetryProperties) {
+        const propsAsLoggingError = props as unknown as LoggingError;
+        if (propsAsLoggingError.taggedProps === undefined) {
             return;
         }
 
-        // Rescue packageName from being removed as PII, since at this point in time all loaded packages will be 1P
-        // This logic really belongs in the host layer
-        const piiAsDebugData = props.pii as Partial<ISensitiveDebugData>;
-        if (piiAsDebugData.packageName !== undefined && props.packageName === undefined) {
-            props.packageName = piiAsDebugData.packageName;
+        const taggedProps = propsAsLoggingError.taggedProps;
+        for (const key of Object.keys(taggedProps)) {
+            const { value, tag } = taggedProps[key];
+            switch (tag) {
+                case TelemetryDataTag.Safe:
+                case TelemetryDataTag.FirstPartySafe:
+                    // These are both ok to leave in for now - only 1P scenarios are supported
+                    if (props[key] === undefined) {
+                        props[key] = value;
+                    }
+                    break;
+                default:
+                    unreachableCase(tag, `unexpected value ${tag} for TelemetryDataTag`);
+            }
         }
 
-        // Remove pii property altogether
-        props.pii = undefined;
+        // Remove taggedProps property altogether since it could contain PII
+        propsAsLoggingError.taggedProps = undefined;
     }
 }
