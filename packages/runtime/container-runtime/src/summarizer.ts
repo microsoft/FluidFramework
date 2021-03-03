@@ -54,8 +54,8 @@ export interface IProvideSummarizer {
 }
 
 export interface IGenerateSummaryOptions {
-    /** True to generate the full tree with no handle reuse optimizations */
-    fullTree: boolean,
+    /** True to generate the full tree with no handle reuse optimizations; defaults to false */
+    fullTree?: boolean,
     /** True to ask the server what the latest summary is first */
     refreshLatestAck: boolean,
     /** Logger to use for correlated summary events */

@@ -1400,22 +1400,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     /**
      * Returns a summary of the runtime at the current sequence number.
+     * @param options - summarize options
      */
     public async summarize(options: {
         /** True to run garbage collection before summarizing */
-        runGc: boolean,
-        /** True to generate the full tree with no handle reuse optimizations */
-        fullTree: boolean,
+        runGC: boolean,
+        /** True to generate the full tree with no handle reuse optimizations; defaults to false */
+        fullTree?: boolean,
         /** True to track the state for this summary in the SummarizerNodes */
         trackState: boolean,
         /** Logger to use for correlated summary events */
         summaryLogger: ITelemetryLogger,
     }): Promise<IChannelSummarizeResult> {
-        if (options.runGc) {
-            await this.collectGarbage(options.summaryLogger);
+        const { runGC, fullTree = false, trackState, summaryLogger } = options;
+
+        if (runGC) {
+            await this.collectGarbage(summaryLogger);
         }
 
-        const summarizeResult = await this.summarizerNode.summarize(options.fullTree, options.trackState);
+        const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
         assert(summarizeResult.summary.type === SummaryType.Tree,
             "Container Runtime's summarize should always return a tree");
 
@@ -1424,11 +1427,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     /** Implementation of ISummarizerInternalsProvider.generateSummary */
     public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData | undefined> {
+        const { fullTree, refreshLatestAck, summaryLogger } = options;
+
         const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
         const message =
             `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 
-        this.summarizerNode.startSummary(summaryRefSeqNum, options.summaryLogger);
+        this.summarizerNode.startSummary(summaryRefSeqNum, summaryLogger);
 
         try {
             await this.deltaManager.inbound.pause();
@@ -1445,10 +1450,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             const trace = Trace.start();
             const summarizeResult = await this.summarize({
-                runGc: !this.runtimeOptions.disableGC,
-                fullTree: options.fullTree,
+                runGC: !this.runtimeOptions.disableGC,
+                fullTree,
                 trackState: true,
-                summaryLogger: options.summaryLogger,
+                summaryLogger,
             });
 
             const generateData: IGeneratedSummaryData = {
@@ -1471,12 +1476,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 summarizeResult.summary,
                 { ... this.latestSummaryAck, referenceSequenceNumber: summaryRefSeqNum });
 
-            if (options.refreshLatestAck) {
+            if (refreshLatestAck) {
                 const version = await this.getVersionFromStorage(this.id);
                 await this.refreshLatestSummaryAck(
                     undefined,
                     version.id,
-                    new ChildLogger(options.summaryLogger, undefined, { safeSummary: true }),
+                    new ChildLogger(summaryLogger, undefined, { safeSummary: true }),
                     version,
                 );
             }
