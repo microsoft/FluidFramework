@@ -62,7 +62,7 @@ export class TenantManager implements core.ITenantManager {
             token: fromUtf8ToBase64(`${credentials.user}`),
         };
         const defaultHeaders = {
-            "Authorization": getAuthorizationTokenFromCredentials(credentials),
+            Authorization: getAuthorizationTokenFromCredentials(credentials),
         };
         const baseUrl = `${details.data.storage.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`;
         const restWrapper = new BasicRestWrapper(
