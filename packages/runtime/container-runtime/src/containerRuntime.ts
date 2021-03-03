@@ -1789,7 +1789,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    public async getTaskManager(): Promise<ITaskManager> {
+    private async getTaskManager(): Promise<ITaskManager> {
         return requestFluidObject<ITaskManager>(
             await this.getDataStore(taskSchedulerId, true),
             "");

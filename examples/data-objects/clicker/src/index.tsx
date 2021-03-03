@@ -54,8 +54,7 @@ export class Clicker extends DataObject implements IFluidHTMLView {
     // #endregion IFluidHTMLView
 
     public async setupAgent() {
-        const taskManager = await this.context.containerRuntime.getTaskManager();
-        const agentScheduler = taskManager.IAgentScheduler;
+        const agentScheduler = await this.context.containerRuntime.getScheduler();
         const agentTaskId = "agent";
         const clickerAgent = new ClickerAgent(this.counter);
         await agentScheduler.pick(agentTaskId, async () => {

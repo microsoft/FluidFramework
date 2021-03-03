@@ -38,7 +38,7 @@ import {
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
 } from "./summary";
-import { ITaskManager } from "./agent";
+import { IAgentScheduler } from "./agent";
 
 /**
  * Runtime flush mode handling
@@ -127,7 +127,7 @@ export interface IContainerRuntimeBase extends
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
-    getTaskManager(): Promise<ITaskManager>;
+    getScheduler(): Promise<IAgentScheduler>;
 
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 

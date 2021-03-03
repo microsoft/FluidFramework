@@ -179,8 +179,7 @@ export class SharedTextRunner
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performance.now()}`);
 
-        const taskManager = await this.context.containerRuntime.getTaskManager();
-        const agentScheduler = taskManager.IAgentScheduler;
+        const agentScheduler = await this.context.containerRuntime.getScheduler();
 
         const options = parse(window.location.search.substr(1));
         setTranslation(
