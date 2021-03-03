@@ -68,16 +68,24 @@ import {
     wrapSummaryInChannelsTree,
 } from "./summaryFormat";
 
-function createAttributes(pkg: readonly string[], isRootDataStore: boolean): IFluidDataStoreAttributes {
+function createAttributes(
+    pkg: readonly string[],
+    isRootDataStore: boolean,
+    disableIsolatedChannels: boolean,
+): IFluidDataStoreAttributes {
     const stringifiedPkg = JSON.stringify(pkg);
     return {
         pkg: stringifiedPkg,
-        snapshotFormatVersion: 2,
+        snapshotFormatVersion: disableIsolatedChannels ? "0.1" : 2,
         isRootDataStore,
     };
 }
-export function createAttributesBlob(pkg: readonly string[], isRootDataStore: boolean): ITreeEntry {
-    const attributes = createAttributes(pkg, isRootDataStore);
+export function createAttributesBlob(
+    pkg: readonly string[],
+    isRootDataStore: boolean,
+    disableIsolatedChannels: boolean,
+): ITreeEntry {
+    const attributes = createAttributes(pkg, isRootDataStore, disableIsolatedChannels);
     return new BlobTreeEntry(dataStoreAttributesBlobName, JSON.stringify(attributes));
 }
 
@@ -200,6 +208,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         private bindState: BindState,
         public readonly isLocalDataStore: boolean,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
+        protected readonly disableIsolatedChannels: boolean,
         protected pkg?: readonly string[],
     ) {
         super();
@@ -382,13 +391,17 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const summarizeResult = await this.channel!.summarize(fullTree, trackState);
+        let pathPartsForChildren: string[] | undefined;
 
-        // Wrap dds summaries in .channels subtree.
-        wrapSummaryInChannelsTree(summarizeResult);
+        if (!this.disableIsolatedChannels) {
+            // Wrap dds summaries in .channels subtree.
+            wrapSummaryInChannelsTree(summarizeResult);
+            pathPartsForChildren = [channelsTreeName];
+        }
 
         // Add data store's attributes to the summary.
         const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
-        const attributes: IFluidDataStoreAttributes = createAttributes(pkg, isRootDataStore);
+        const attributes = createAttributes(pkg, isRootDataStore, this.disableIsolatedChannels);
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // Add GC details to the summary.
@@ -406,7 +419,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return {
             ...summarizeResult,
             id: this.id,
-            pathPartsForChildren: [channelsTreeName],
+            pathPartsForChildren,
         };
     }
 
@@ -649,6 +662,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         storage: IDocumentStorageService,
         scope: IFluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
+        disableIsolatedChannels: boolean,
         pkg?: string[],
     ) {
         super(
@@ -663,6 +677,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             () => {
                 throw new Error("Already attached");
             },
+            disableIsolatedChannels,
             pkg,
         );
     }
@@ -776,6 +791,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
         protected readonly isRootDataStore: boolean,
+        disableIsolatedChannels: boolean,
         /**
          * @deprecated 0.16 Issue #1635, #3631
          */
@@ -791,6 +807,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
             snapshotTree ? BindState.Bound : BindState.NotBound,
             true,
             bindChannel,
+            disableIsolatedChannels,
             pkg);
         this.attachListeners();
     }
@@ -813,11 +830,13 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
         const summarizeResult = this.channel.getAttachSummary();
 
-        // Wrap dds summaries in .channels subtree.
-        wrapSummaryInChannelsTree(summarizeResult);
+        if (!this.disableIsolatedChannels) {
+            // Wrap dds summaries in .channels subtree.
+            wrapSummaryInChannelsTree(summarizeResult);
+        }
 
         // Add data store's attributes to the summary.
-        const attributes: IFluidDataStoreAttributes = createAttributes(this.pkg, this.isRootDataStore);
+        const attributes = createAttributes(this.pkg, this.isRootDataStore, this.disableIsolatedChannels);
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // Add GC details to the summary.
@@ -872,6 +891,7 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         snapshotTree: ISnapshotTree | undefined,
         isRootDataStore: boolean,
+        disableIsolatedChannels: boolean,
         /**
          * @deprecated 0.16 Issue #1635, #3631
          */
@@ -887,6 +907,7 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
             bindChannel,
             snapshotTree,
             isRootDataStore,
+            disableIsolatedChannels,
             createProps);
     }
 }
@@ -911,6 +932,7 @@ export class LocalDetachedFluidDataStoreContext
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         snapshotTree: ISnapshotTree | undefined,
         isRootDataStore: boolean,
+        disableIsolatedChannels: boolean,
     ) {
         super(
             id,
@@ -922,6 +944,7 @@ export class LocalDetachedFluidDataStoreContext
             bindChannel,
             snapshotTree,
             isRootDataStore,
+            disableIsolatedChannels,
         );
         this.detachedRuntimeCreation = true;
     }

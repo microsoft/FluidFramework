@@ -99,7 +99,8 @@ describe("Data Store Context Tests", () => {
                     createSummarizerNodeFn,
                     attachCb,
                     undefined,
-                    true /* isRootDataStore */);
+                    true /* isRootDataStore */,
+                    false /* disableIsolatedChannels */);
 
                 await localDataStoreContext.realize();
                 const attachMessage = localDataStoreContext.generateAttachMessage();
@@ -137,7 +138,8 @@ describe("Data Store Context Tests", () => {
                     createSummarizerNodeFn,
                     attachCb,
                     undefined,
-                    false /* isRootDataStore */);
+                    false /* isRootDataStore */,
+                    false /* disableIsolatedChannels */);
 
                 await localDataStoreContext.realize()
                     .catch((error) => {
@@ -169,7 +171,8 @@ describe("Data Store Context Tests", () => {
                     createSummarizerNodeFn,
                     attachCb,
                     undefined,
-                    false /* isRootDataStore */);
+                    false /* isRootDataStore */,
+                    false /* disableIsolatedChannels */);
 
                 await localDataStoreContext.realize();
 
@@ -206,7 +209,8 @@ describe("Data Store Context Tests", () => {
                     createSummarizerNodeFn,
                     attachCb,
                     undefined,
-                    true /* isRootDataStore */);
+                    true /* isRootDataStore */,
+                    false /* disableIsolatedChannels */);
 
                 const isRootNode = await localDataStoreContext.isRoot();
                 assert.strictEqual(isRootNode, true, "The data store should be root.");
@@ -222,7 +226,8 @@ describe("Data Store Context Tests", () => {
                     createSummarizerNodeFn,
                     attachCb,
                     undefined,
-                    false /* isRootDataStore */);
+                    false /* isRootDataStore */,
+                    false /* disableIsolatedChannels */);
 
                 const isRootNode = await localDataStoreContext.isRoot();
                 assert.strictEqual(isRootNode, false, "The data store should not be root.");
@@ -240,7 +245,8 @@ describe("Data Store Context Tests", () => {
                     createSummarizerNodeFn,
                     attachCb,
                     undefined,
-                    true /* isRootDataStore */);
+                    true /* isRootDataStore */,
+                    false /* disableIsolatedChannels */);
 
                 const gcData = await localDataStoreContext.getGCData();
                 assert.deepStrictEqual(gcData, emptyGCData, "GC data from getGCData should be empty.");
@@ -265,7 +271,8 @@ describe("Data Store Context Tests", () => {
                     createSummarizerNodeFn,
                     attachCb,
                     undefined,
-                    false /* isRootDataStore */);
+                    false /* isRootDataStore */,
+                    false /* disableIsolatedChannels */);
 
                 // Get the summarizer node for this data store which tracks its referenced state.
                 const dataStoreSummarizerNode = summarizerNode.getChild(dataStoreId);
@@ -355,6 +362,7 @@ describe("Data Store Context Tests", () => {
                     new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
+                    false /* disableIsolatedChannels */,
                 );
 
                 const isRootNode = await remotedDataStoreContext.isRoot();
@@ -399,6 +407,7 @@ describe("Data Store Context Tests", () => {
                     new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
+                    false /* disableIsolatedChannels */,
                 );
 
                 const isRootNode = await remotedDataStoreContext.isRoot();
@@ -463,6 +472,7 @@ describe("Data Store Context Tests", () => {
                     new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
+                    false /* disableIsolatedChannels */,
                 );
 
                 const gcData = await remotedDataStoreContext.getGCData();
@@ -511,6 +521,7 @@ describe("Data Store Context Tests", () => {
                     new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
+                    false /* disableIsolatedChannels */,
                 );
 
                 const gcData = await remotedDataStoreContext.getGCData();
@@ -566,6 +577,7 @@ describe("Data Store Context Tests", () => {
                     new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
+                    false /* disableIsolatedChannels */,
                 );
 
                 const gcData = await remotedDataStoreContext.getGCData();
@@ -603,6 +615,7 @@ describe("Data Store Context Tests", () => {
                     new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
+                    false /* disableIsolatedChannels */,
                 );
 
                 // Update used routes before calling summarize. This is a requirement for GC.
@@ -644,6 +657,7 @@ describe("Data Store Context Tests", () => {
                     new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
+                    false /* disableIsolatedChannels */,
                 );
 
                 // Get the summarizer node for this data store which tracks its referenced state.

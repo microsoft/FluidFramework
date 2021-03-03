@@ -76,6 +76,7 @@ export class DataStores implements IDisposable {
         private readonly submitAttachFn: (attachContent: any) => void,
         private readonly getCreateChildSummarizerNodeFn:
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
+        private readonly disableIsolatedChannels: boolean,
         baseLogger: ITelemetryBaseLogger,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
@@ -100,7 +101,8 @@ export class DataStores implements IDisposable {
                     this.runtime,
                     this.runtime.storage,
                     this.runtime.scope,
-                    this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }));
+                    this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
+                    this.disableIsolatedChannels);
             } else {
                 let pkgFromSnapshot: string[];
                 if (typeof value !== "object") {
@@ -134,7 +136,9 @@ export class DataStores implements IDisposable {
                     // If there is no isRootDataStore in the attributes blob, set it to true. This ensures that data
                     // stores in older documents are not garbage collected incorrectly. This may lead to additional
                     // roots in the document but they won't break.
-                    attributes.isRootDataStore ?? true);
+                    attributes.isRootDataStore ?? true,
+                    this.disableIsolatedChannels,
+                );
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
         }
@@ -185,9 +189,10 @@ export class DataStores implements IDisposable {
                     type: CreateSummarizerNodeSource.FromAttach,
                     sequenceNumber: message.sequenceNumber,
                     snapshot: attachMessage.snapshot ?? {
-                        entries: [createAttributesBlob(pkg, true /* isRootDataStore */)],
+                        entries: [createAttributesBlob(pkg, true /* isRootDataStore */, this.disableIsolatedChannels)],
                     },
                 }),
+            this.disableIsolatedChannels,
             pkg);
 
         // Resolve pending gets and store off any new ones
@@ -233,6 +238,7 @@ export class DataStores implements IDisposable {
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
             isRoot,
+            this.disableIsolatedChannels,
         );
         this.contexts.addUnbound(context);
         return context;
@@ -249,6 +255,7 @@ export class DataStores implements IDisposable {
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
             isRoot,
+            this.disableIsolatedChannels,
             props,
         );
         this.contexts.addUnbound(context);
