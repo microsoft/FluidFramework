@@ -180,7 +180,8 @@ export async function waitContainerToCatchUp(container: Container) {
         container.on("closed", reject);
 
         const waitForOps = () => {
-            assert(container.connectionState !== ConnectionState.Disconnected);
+            assert(container.connectionState !== ConnectionState.Disconnected,
+                "Container disconnected while waiting for ops!");
             const hasCheckpointSequenceNumber = deltaManager.hasCheckpointSequenceNumber;
 
             const connectionOpSeqNumber = deltaManager.lastKnownSeqNumber;
@@ -672,7 +673,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 error,
             );
         } else {
-            assert(this.loaded);
+            assert(this.loaded, "Container in non-loaded state before close!");
             this.logger.sendTelemetryEvent({ eventName: "ContainerClose" });
         }
 
@@ -1617,7 +1618,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private setConnectionState(
         value: ConnectionState,
         reason?: string) {
-        assert(value !== ConnectionState.Connecting);
+        assert(value !== ConnectionState.Connecting, "Trying to set connection state while container is connecting!");
         if (this.connectionState === value) {
             // Already in the desired state - exit early
             this.logger.sendErrorEvent({ eventName: "setConnectionStateSame", value });

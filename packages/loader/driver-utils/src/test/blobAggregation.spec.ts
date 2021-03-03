@@ -49,13 +49,13 @@ class InMemoryStorage {
     constructor(private readonly blobSizeLimit: number | undefined) {}
 
     async uploadSummaryWithContext(summary: ISummaryTree, context) {
-        assert(!this.summaryWritten);
+        assert(!this.summaryWritten, "Trying to upload summary when summary already written!");
         this.summaryWritten = summary;
         return "handle";
     }
 
     async getSnapshotTree(version) {
-        assert(this.summaryWritten !== undefined);
+        assert(this.summaryWritten !== undefined, "Missing summary to build tree from");
         return buildSnapshotTree(convertSummaryTreeToITree(this.summaryWritten).entries, this.blobs);
     }
 
@@ -133,19 +133,23 @@ async function prep(allowPacking: boolean, blobSizeLimit: number | undefined) {
     });
 
     const snapshot = await aggregator.getSnapshotTree();
-    assert(!!snapshot);
+    assert(!!snapshot, "Missing snapshot tree!");
 
     const service = new FlattenedStorageService(snapshot, aggregator);
-    assert(Object.keys(service.flattenedTree).length === 5);
+    assert(Object.keys(service.flattenedTree).length === 5,
+        `Unexpected flattened tree size: ${Object.keys(service.flattenedTree).length}`);
     assert (service.flattenedTree.blob1 !== undefined);
     assert (service.flattenedTree["dataStore1/blob2"] !== undefined);
     assert (service.flattenedTree["dataStore1/blob3"] !== undefined);
     assert (service.flattenedTree["dataStore1/channel1/blob4"] !== undefined);
     assert (service.flattenedTree["dataStore2/channel2/blob5"] !== undefined);
 
-    assert(await service.read("dataStore1/blob2") === "small string 2");
-    assert(await service.read("dataStore1/blob3") === "not very small string - exceeding 40 bytes limit for sure");
-    assert(await service.read("dataStore1/channel1/blob4") === "small string again");
+    assert(await service.read("dataStore1/blob2") === "small string 2",
+        "Unexpected dataStore1/blob2 read");
+    assert(await service.read("dataStore1/blob3") === "not very small string - exceeding 40 bytes limit for sure",
+        "Unexpected dataStore1/blob3 read");
+    assert(await service.read("dataStore1/channel1/blob4") === "small string again",
+        "Unexpected dataStore1/channel1/blob4 read");
 
     return { service, storage, snapshot};
 }
@@ -155,27 +159,31 @@ describe("BlobAggregationStorage", () => {
         const { storage } = await prep(false, 2048);
 
         // NUmber of actual blobs in storage should be 4 - no aggregation!
-        assert(storage.blobs.size === 5);
+        assert(storage.blobs.size === 5,
+            `Unexpected blob storage size: ${storage.blobs.size} vs expected 5`);
     });
 
     it("Noop aggregation (driver does not know about aggregation", async () => {
         const { storage } = await prep(true, undefined);
 
         // NUmber of actual blobs in storage should be 4 - no aggregation!
-        assert(storage.blobs.size === 5);
+        assert(storage.blobs.size === 5,
+            `Unexpected blob storage size: ${storage.blobs.size} vs expected 5`);
     });
 
     it("aggregation above 2K", async () => {
         const { storage } = await prep(true, 2048);
 
         // Number of actual blobs in storage should be 2!
-        assert(storage.blobs.size === 3);
+        assert(storage.blobs.size === 3,
+            `Unexpected blob storage size: ${storage.blobs.size} vs expected 3`);
     });
 
     it("aggregation above 40 bytes only", async () => {
         const { storage } = await prep(true, 40);
 
         // Should skip one blob that is bigger than 40 bytes.
-        assert(storage.blobs.size === 4);
+        assert(storage.blobs.size === 4,
+            `Unexpected blob storage size: ${storage.blobs.size} vs expected 4`);
     });
 });
