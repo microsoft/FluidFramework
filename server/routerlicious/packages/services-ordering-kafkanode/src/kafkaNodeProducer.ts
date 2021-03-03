@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/server-services-core";
 import * as kafka from "kafka-node";
 import { ensureTopics } from "./kafkaTopics";
+import winston from "winston";
 
 /**
  * Kafka producer using the kafka-node library
@@ -195,8 +196,7 @@ export class KafkaNodeProducer implements IProducer {
         }
 
         this.connecting = this.connected = false;
-
-        this.events.emit("error", error);
+        winston.error(error);
         this.connect();
     }
 }
