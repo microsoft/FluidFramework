@@ -140,13 +140,6 @@ function writeTree(treeNode: Node, tree: ISnapshotTree, mapping: Map<string, num
             treeNode.addNumber(mapping.get(id));
         }
     }
-
-    if (tree.props) {
-        for (const [path, value] of Object.entries(tree.props)) {
-            treeNode.addNumber(mapping.get(path));
-            treeNode.addString(value);
-        }
-    }
 }
 
 /**
@@ -168,16 +161,13 @@ function readTree(treeNode: Node, mapping: string[]) {
 
         if (child instanceof Node) {
             tree.trees[path] = readTree(child, mapping);
-        } else if (typeof child == "number") {
+        } else {
+            assert (typeof child == "number");
             const id = mapping[child];
             assert(id !== undefined);
             tree.blobs[path] = id;
-        } else {
-            assert(child instanceof BlobCore);
-            tree.props[path] = child.toString();
         }
     }
-}
 
     return tree;
 }
@@ -199,10 +189,6 @@ function buildDictionary(tree: ISnapshotTree, dict: Set<string>) {
         dict.add(path);
         // Some blob payload might be missing, so their IDs will only show up in the tree
         dict.add(value);
-    }
-
-    for (const path of Object.keys(tree.props)) {
-        dict.add(path);
     }
 }
 
