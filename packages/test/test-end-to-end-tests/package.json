@@ -1,7 +1,6 @@
 {
-  "name": "@fluid-internal/end-to-end-tests",
+  "name": "@fluidframework/test-end-to-end-tests",
   "version": "0.36.0",
-  "private": true,
   "description": "End to end tests",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -59,11 +58,10 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluid-internal/test-loader-utils": "^0.36.0",
     "@fluidframework/agent-scheduler": "^0.36.0",
     "@fluidframework/aqueduct": "^0.36.0",
     "@fluidframework/base-host": "^0.36.0",
-    "@fluidframework/build-common": "^0.20.0-0",
+    "@fluidframework/build-common": "^0.20.0",
     "@fluidframework/cell": "^0.36.0",
     "@fluidframework/common-utils": "^0.27.0",
     "@fluidframework/container-definitions": "^0.36.0",
@@ -78,7 +76,7 @@
     "@fluidframework/driver-base": "^0.36.0",
     "@fluidframework/driver-definitions": "^0.36.0",
     "@fluidframework/driver-utils": "^0.36.0",
-    "@fluidframework/eslint-config-fluid": "^0.23.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/ink": "^0.36.0",
     "@fluidframework/local-driver": "^0.36.0",
     "@fluidframework/map": "^0.36.0",
@@ -99,6 +97,7 @@
     "@fluidframework/telemetry-utils": "^0.36.0",
     "@fluidframework/test-driver-definitions": "^0.36.0",
     "@fluidframework/test-drivers": "^0.36.0",
+    "@fluidframework/test-loader-utils": "^0.36.0",
     "@fluidframework/test-runtime-utils": "^0.36.0",
     "@fluidframework/test-utils": "^0.36.0",
     "@types/assert": "^1.5.2",
