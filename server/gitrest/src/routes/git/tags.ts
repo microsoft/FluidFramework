@@ -5,7 +5,7 @@
 
 import { ICreateTagParams, ITag } from "@fluidframework/gitresources";
 import { Router } from "express";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import git from "nodegit";
 import * as utils from "../../utils";
 

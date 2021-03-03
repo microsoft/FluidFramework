@@ -10,6 +10,7 @@ import {
 import { IEvent } from "@fluidframework/common-definitions";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
 import {
     FluidObjectMap,
@@ -97,7 +98,9 @@ export abstract class SyncedDataObject<
      */
     public get dataProps() {
         return {
-            runtime: this.runtime,
+            // The return type is defined explicitly here to prevent TypeScript from generating dynamic imports
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+            runtime: this.runtime as IFluidDataStoreRuntime,
             fluidObjectMap: this.fluidObjectMap,
         };
     }

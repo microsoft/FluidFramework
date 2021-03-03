@@ -14,6 +14,7 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
+    IFluidConfiguration,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -104,12 +105,14 @@ import {
     IRootSummarizerNodeWithGC,
     requestFluidObject,
     RequestParser,
+    create404Response,
+    exceptionToResponse,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
-import { ISummarizerRuntime, ISummarizerInternalsProvider, Summarizer } from "./summarizer";
+import { ISummarizerRuntime, ISummarizerInternalsProvider, Summarizer, IGenerateSummaryOptions } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
@@ -862,7 +865,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return undefined;
     }
 
-    public get IFluidConfiguration() {
+    public get IFluidConfiguration(): IFluidConfiguration {
         return this.context.configuration;
     }
 
@@ -871,25 +874,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param request - Request made to the handler.
      */
     public async request(request: IRequest): Promise<IResponse> {
-        const parser = RequestParser.create(request);
-        const id = parser.pathParts[0];
+        try {
+            const parser = RequestParser.create(request);
+            const id = parser.pathParts[0];
 
-        if (id === "_summarizer" && parser.pathParts.length === 1) {
-            return {
-                status: 200,
-                mimeType: "fluid/object",
-                value: this.summarizer,
-            };
-        }
-        if (this.requestHandler !== undefined) {
-            return this.requestHandler(parser, this);
-        }
+            if (id === "_summarizer" && parser.pathParts.length === 1) {
+                return {
+                    status: 200,
+                    mimeType: "fluid/object",
+                    value: this.summarizer,
+                };
+            }
+            if (this.requestHandler !== undefined) {
+                return this.requestHandler(parser, this);
+            }
 
-        return {
-            status: 404,
-            mimeType: "text/plain",
-            value: "resource not found",
-        };
+            return create404Response(request);
+        } catch (error) {
+            return exceptionToResponse(error);
+        }
     }
 
     /**
@@ -897,45 +900,41 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param request - Request made to the handler.
      */
     public async resolveHandle(request: IRequest): Promise<IResponse> {
-        const requestParser = RequestParser.create(request);
-        const id = requestParser.pathParts[0];
+        try {
+            const requestParser = RequestParser.create(request);
+            const id = requestParser.pathParts[0];
 
-        if (id === "_channels") {
-            return this.resolveHandle(requestParser.createSubRequest(1));
-        }
-
-        if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
-            const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
-            if (handle) {
-                return {
-                    status: 200,
-                    mimeType: "fluid/object",
-                    value: handle.get(),
-                };
-            } else {
-                return {
-                    status: 404,
-                    mimeType: "text/plain",
-                    value: "blob not found",
-                };
+            if (id === "_channels") {
+                return this.resolveHandle(requestParser.createSubRequest(1));
             }
-        } else if (requestParser.pathParts.length > 0) {
-            const wait =
-                typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const dataStore = await this.getDataStore(id, wait);
-            const subRequest = requestParser.createSubRequest(1);
-            // We always expect createSubRequest to include a leading slash, but asserting here to protect against
-            // unintentionally modifying the url if that changes.
-            assert(subRequest.url.startsWith("/"), "Expected createSubRequest url to include a leading slash");
-            return dataStore.IFluidRouter.request(subRequest);
+            if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
+                const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
+                if (handle) {
+                    return {
+                        status: 200,
+                        mimeType: "fluid/object",
+                        value: handle.get(),
+                    };
+                } else {
+                    return create404Response(request);
+                }
+            } else if (requestParser.pathParts.length > 0) {
+                const wait =
+                    typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
+
+                const dataStore = await this.getDataStore(id, wait);
+                const subRequest = requestParser.createSubRequest(1);
+                // We always expect createSubRequest to include a leading slash, but asserting here to protect against
+                // unintentionally modifying the url if that changes.
+                assert(subRequest.url.startsWith("/"), "Expected createSubRequest url to include a leading slash");
+                return dataStore.IFluidRouter.request(subRequest);
+            }
+
+            return create404Response(request);
+        } catch (error) {
+            return exceptionToResponse(error);
         }
-
-        return {
-            status: 404,
-            mimeType: "text/plain",
-            value: "resource not found",
-        };
     }
 
     /**
@@ -1332,27 +1331,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.submitSignalFn(envelope);
     }
 
-    /**
-     * Returns a summary of the runtime at the current sequence number.
-     * @param fullTree - true to bypass optimizations and force a full summary tree.
-     * @param trackState - This tells whether we should track state from this summary.
-     */
-    private async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IChannelSummarizeResult> {
-        const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
-        assert(summarizeResult.summary.type === SummaryType.Tree,
-            "Container Runtime's summarize should always return a tree");
-        return summarizeResult as IChannelSummarizeResult;
-    }
-
-    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
-        const summarizeResult = await this.dataStores.summarize(fullTree, trackState);
-        this.addContainerBlobsToSummary(summarizeResult);
-        return {
-            ...summarizeResult,
-            id: "",
-        };
-    }
-
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
         if (attachState === AttachState.Attaching) {
             assert(this.attachState === AttachState.Attaching,
@@ -1379,12 +1357,77 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.getAbsoluteUrl(relativeUrl);
     }
 
-    /** Implementation of ISummarizerInternalsProvider.generateSummary */
-    public async generateSummary(
-        fullTree: boolean = false,
-        safe: boolean = false,
+    public async collectGarbage(logger: ITelemetryLogger) {
+        await PerformanceEvent.timedExecAsync(logger, { eventName: "GarbageCollection" }, async (event) => {
+            const gcStats: { totalGCNodes?: number; deletedGCNodes?: number } = {};
+            try {
+                // Get the container's GC data and run GC on the reference graph in it.
+                const gcData = await this.dataStores.getGCData(this.runtimeOptions.runFullGC === true);
+                const { referencedNodeIds, deletedNodeIds } = runGarbageCollection(
+                    gcData.gcNodes, [ "/" ],
+                    this.logger,
+                );
+
+                // Update stats to be reported in the peformance event.
+                gcStats.deletedGCNodes = deletedNodeIds.length;
+                gcStats.totalGCNodes = referencedNodeIds.length + gcStats.deletedGCNodes;
+
+                // Update our summarizer node's used routes. Updating used routes in summarizer node before
+                // summarizing is required and asserted by the the summarizer node. We are the root and are
+                // always referenced, so the used routes is only self-route (empty string).
+                this.summarizerNode.updateUsedRoutes([""]);
+
+                // Remove this node's route ("/") and notify data stores of routes that are used in it.
+                const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
+                this.dataStores.updateUsedRoutes(usedRoutes);
+            } catch (error) {
+                event.cancel(gcStats, error);
+                throw error;
+            }
+            event.end(gcStats);
+        });
+    }
+
+    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
+        const summarizeResult = await this.dataStores.summarize(fullTree, trackState);
+        this.addContainerBlobsToSummary(summarizeResult);
+        return {
+            ...summarizeResult,
+            id: "",
+        };
+    }
+
+    /**
+     * Returns a summary of the runtime at the current sequence number.
+     * @param options - summarize options
+     */
+    public async summarize(options: {
+        /** True to run garbage collection before summarizing */
+        runGC: boolean,
+        /** True to generate the full tree with no handle reuse optimizations; defaults to false */
+        fullTree?: boolean,
+        /** True to track the state for this summary in the SummarizerNodes */
+        trackState: boolean,
+        /** Logger to use for correlated summary events */
         summaryLogger: ITelemetryLogger,
-    ): Promise<GenerateSummaryData | undefined> {
+    }): Promise<IChannelSummarizeResult> {
+        const { runGC, fullTree = false, trackState, summaryLogger } = options;
+
+        if (runGC) {
+            await this.collectGarbage(summaryLogger);
+        }
+
+        const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
+        assert(summarizeResult.summary.type === SummaryType.Tree,
+            "Container Runtime's summarize should always return a tree");
+
+        return summarizeResult as IChannelSummarizeResult;
+    }
+
+    /** Implementation of ISummarizerInternalsProvider.generateSummary */
+    public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData | undefined> {
+        const { fullTree, refreshLatestAck, summaryLogger } = options;
+
         const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
         const message =
             `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
@@ -1404,41 +1447,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { ...attemptData, reason: "disconnected" };
             }
 
-            if (!this.runtimeOptions.disableGC) {
-                const perfEvent = PerformanceEvent.start(summaryLogger, {
-                    eventName: "GarbageCollection",
-                });
-
-                const gcStats: { totalGCNodes?: number; deletedGCNodes?: number } = {};
-                try {
-                    // Get the container's GC data and run GC on the reference graph in it.
-                    const gcData = await this.dataStores.getGCData(this.runtimeOptions.runFullGC === true);
-                    const { referencedNodeIds, deletedNodeIds } = runGarbageCollection(
-                        gcData.gcNodes, [ "/" ],
-                        this.logger,
-                    );
-
-                    // Update stats to be reported in the peformance event.
-                    gcStats.deletedGCNodes = deletedNodeIds.length;
-                    gcStats.totalGCNodes = referencedNodeIds.length + gcStats.deletedGCNodes;
-
-                    // Update our summarizer node's used routes. Updating used routes in summarizer node before
-                    // summarizing is required and asserted by the the summarizer node. We are the root and are
-                    // always referenced, so the used routes is only self-route (empty string).
-                    this.summarizerNode.updateUsedRoutes([""]);
-
-                    // Remove this node's route ("/") and notify data stores of routes that are used in it.
-                    const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
-                    this.dataStores.updateUsedRoutes(usedRoutes);
-                } catch (error) {
-                    perfEvent.cancel(gcStats, error);
-                    throw error;
-                }
-                perfEvent.end(gcStats);
-            }
-
             const trace = Trace.start();
-            const summarizeResult = await this.summarize(fullTree || safe, true /* trackState */);
+            const summarizeResult = await this.summarize({
+                runGC: !this.runtimeOptions.disableGC,
+                fullTree,
+                trackState: true,
+                summaryLogger,
+            });
 
             const generateData: IGeneratedSummaryData = {
                 summaryStats: summarizeResult.stats,
@@ -1460,8 +1475,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 summarizeResult.summary,
                 { ... this.latestSummaryAck, referenceSequenceNumber: summaryRefSeqNum });
 
-            // safe mode refreshes the latest summary ack
-            if (safe) {
+            if (refreshLatestAck) {
                 const version = await this.getVersionFromStorage(this.id);
                 await this.refreshLatestSummaryAck(
                     undefined,
@@ -1471,11 +1485,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 );
             }
 
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const parent = this.latestSummaryAck.ackHandle!;
+            const parent = this.latestSummaryAck.ackHandle;
             const summaryMessage: ISummaryContent = {
                 handle,
-                head: parent,
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                head: parent!,
                 message,
                 parents: parent ? [parent] : [],
             };
