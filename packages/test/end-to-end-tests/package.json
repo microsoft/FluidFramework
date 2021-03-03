@@ -1,5 +1,5 @@
 {
-  "name": "@fluidframework/test-end-to-end-tests",
+  "name": "@fluidframework/test-end-to-end",
   "version": "0.36.0",
   "description": "End to end tests",
   "homepage": "https://fluidframework.com",

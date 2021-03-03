@@ -1,4 +1,4 @@
-# @fluidframework/end-to-end-tests
+# @fluidframework/test-end-to-end
 
 These tests can be written by using the [test-utils](../test-utils/src).
 
