@@ -354,16 +354,17 @@ export class MultiSinkLogger extends TelemetryLogger {
  * Helper class to log performance events
  */
 export class PerformanceEvent {
-    public static start(logger: ITelemetryLogger, event: ITelemetryGenericEvent) {
-        return new PerformanceEvent(logger, event);
+    public static start(logger: ITelemetryLogger, event: ITelemetryGenericEvent, reportStartEvent = true) {
+        return new PerformanceEvent(logger, event, reportStartEvent);
     }
 
     public static timedExec<T>(
         logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
         callback: (event: PerformanceEvent) => T,
+        reportStartEvent = true,
     ) {
-        const perfEvent = PerformanceEvent.start(logger, event);
+        const perfEvent = PerformanceEvent.start(logger, event, reportStartEvent);
         try {
             const ret = callback(perfEvent);
             // Event might have been cancelled or ended in the callback
@@ -381,8 +382,9 @@ export class PerformanceEvent {
         logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
         callback: (event: PerformanceEvent) => Promise<T>,
+        reportStartEvent = true,
     ) {
-        const perfEvent = PerformanceEvent.start(logger, event);
+        const perfEvent = PerformanceEvent.start(logger, event, reportStartEvent);
         try {
             const ret = await callback(perfEvent);
             // Event might have been cancelled or ended in the callback
@@ -403,9 +405,12 @@ export class PerformanceEvent {
     protected constructor(
         private readonly logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
+        reportStartEvent: boolean,
     ) {
         this.event = { ...event };
-        this.reportEvent("start");
+        if (reportStartEvent) {
+            this.reportEvent("start");
+        }
 
         if (typeof window === "object" && window != null && window.performance) {
             this.startMark = `${event.eventName}-start`;

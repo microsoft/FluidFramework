@@ -16,7 +16,7 @@ import {
     IThrottlingWarning,
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
-import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, Deferred, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import { PerformanceEvent, TelemetryLogger, safeRaiseEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
@@ -65,7 +65,7 @@ const MaxReconnectDelaySeconds = 8;
 const InitialReconnectDelaySeconds = 1;
 const MissingFetchDelaySeconds = 0.1;
 const MaxFetchDelaySeconds = 10;
-const MaxBatchDeltas = 2000;
+const MaxBatchDeltas = 5000;
 const DefaultChunkSize = 16 * 1024;
 
 function getNackReconnectInfo(nackContent: INackContent) {
@@ -137,6 +137,102 @@ class NoDeltaStream extends TypedEventEmitter<IDocumentDeltaConnectionEvents> im
         });
     }
     close(): void {
+    }
+}
+
+export class ParallelRequests<T> {
+    private latestRequested: number;
+    private latestDelivered: number;
+    private readonly results: Map<number, T> = new Map();
+    private state: "working" | "waiting" | "done" = "working";
+    private requestsInFlight = 0;
+    private readonly endEvent = new Deferred<void>();
+
+    constructor(
+        private readonly requestCallback: (from: number, to: number) => Promise<[number, T]>,
+        private readonly responseCallback: (payload: T) => void,
+        private concurrency: number,
+        private readonly payloadSize: number,
+        from: number,
+        private readonly to?: number)
+    {
+        this.latestRequested = from;
+        this.latestDelivered = from;
+    }
+
+    private dispatch() {
+        while (this.state !== "done") {
+            const value = this.results.get(this.latestDelivered);
+            if (value === undefined) {
+                break;
+            }
+            this.results.delete(this.latestDelivered);
+            this.latestDelivered += this.payloadSize;
+            this.responseCallback(value);
+        }
+
+        if (this.requestsInFlight === 0) {
+            assert(this.results.size === 0);
+            this.state = "done";
+            this.endEvent.resolve();
+        }
+    }
+
+    private addRequest() {
+        if (this.state !== "working") {
+            return;
+        }
+        const from = this.latestRequested;
+        this.latestRequested += this.payloadSize;
+        if (this.to !== undefined) {
+            this.latestRequested = Math.min(this.to, this.latestRequested);
+        }
+
+        // both are exclusive! We need to ask for something
+        if (this.latestRequested - from <= 1) {
+            this.state = "waiting";
+            return;
+        }
+
+        this.addRequestCore(from, this.latestRequested).catch((error) => {
+            this.state = "done";
+            this.endEvent.reject(error);
+        });
+    }
+
+    private async addRequestCore(from: number, to: number) {
+        // to & from are exclusive
+        const requestedLength = to - from - 1;
+        assert(requestedLength > 0);
+
+        this.requestsInFlight++;
+        const [length, value] = await this.requestCallback(from, to);
+        this.requestsInFlight--;
+
+        if (this.state === "working") {
+            if (length !== 0) {
+                this.results.set(from, value);
+            }
+
+            assert(requestedLength <= length);
+            if (requestedLength === length) {
+                this.addRequest();
+            } else {
+                this.state = "waiting";
+            }
+        }
+
+        // should be last one - for correctness, but also for perf.
+        this.dispatch();
+    }
+
+    public async run() {
+        while (this.concurrency > 0) {
+            this.concurrency--;
+            this.addRequest();
+        }
+        this.dispatch();// will recalculate and trigger this.endEvent if needed
+        return this.endEvent.promise;
     }
 }
 
@@ -786,32 +882,55 @@ export class DeltaManager
     private async getDeltas(
         telemetryEventSuffix: string,
         fromInitial: number,
-        to: number | undefined,
-        callback: (messages: ISequencedDocumentMessage[]) => void) {
-        let retry: number = 0;
-        let from: number = fromInitial;
-        let deltas: ISequencedDocumentMessage[] = [];
-        let deltasRetrievedTotal = 0;
-
+        toInitial: number | undefined,
+        callback: (messages: ISequencedDocumentMessage[]) => void)
+    {
         const docService = this.serviceProvider();
         if (docService === undefined) {
             throw new Error("Delta manager is not attached");
         }
 
+        if (this.deltaStorageP === undefined) {
+            this.deltaStorageP = docService.connectToDeltaStorage();
+        }
+
         const telemetryEvent = PerformanceEvent.start(this.logger, {
             eventName: `GetDeltas_${telemetryEventSuffix}`,
-            from,
-            to,
+            from: fromInitial,
+            to: toInitial,
         });
 
+        const manager = new ParallelRequests<ISequencedDocumentMessage[]>(
+            async (from: number, to: number) => this.singleTurn(from, to, telemetryEvent),
+            (deltas: ISequencedDocumentMessage[]) => {
+                PerformanceEvent.timedExec(
+                    this.logger,
+                    { eventName: "GetDeltas_OpProcessing", count: deltas.length},
+                    () => callback(deltas),
+                    false /* reportStartEvent */);
+                },
+            2, // concurrency
+            MaxBatchDeltas,
+            fromInitial,
+            toInitial);
+
+        await manager.run();
+    }
+
+    async singleTurn(fromArg: number, fetchTo: number, telemetryEvent: PerformanceEvent):
+        Promise<[number, ISequencedDocumentMessage[]]>
+    {
+        // Promise<[number, ISequencedDocumentMessage[]]>
         let requests = 0;
         let deltaStorage: IDocumentDeltaStorageService | undefined;
         let lastSuccessTime: number | undefined;
+        let from = fromArg;
+
+        let retry: number = 0;
+        const deltas: ISequencedDocumentMessage[] = [];
+        let deltasRetrievedTotal = 0;
 
         while (!this.closed) {
-            const maxFetchTo = from + MaxBatchDeltas;
-            const fetchTo = to === undefined ? maxFetchTo : Math.min(maxFetchTo, to);
-
             let deltasRetrievedLast = 0;
             let canRetry = false;
             let retryAfter: number | undefined;
@@ -825,9 +944,6 @@ export class DeltaManager
             try {
                 // Connect to the delta storage endpoint
                 if (deltaStorage === undefined) {
-                    if (this.deltaStorageP === undefined) {
-                        this.deltaStorageP = docService.connectToDeltaStorage();
-                    }
                     deltaStorage = await this.deltaStorageP;
                 }
 
@@ -835,22 +951,15 @@ export class DeltaManager
 
                 // Issue async request for deltas - limit the number fetched to MaxBatchDeltas
                 canRetry = true;
+                assert(deltaStorage !== undefined);
                 const deltasP = deltaStorage.get(from, fetchTo);
 
-                // Return previously fetched deltas, for processing while we are waiting for new request.
-                if (deltas.length > 0) {
-                    callback(deltas);
-                }
-
-                // Now wait for request to come back
                 const { messages, partialResult } = await deltasP;
-                deltas = messages;
+                deltas.push(...messages);
 
-                // Note that server (or driver code) can push here something unexpected, like undefined
-                // Exception thrown as result of it will result in us retrying
-                deltasRetrievedLast = deltas.length;
+                deltasRetrievedLast = messages.length;
                 deltasRetrievedTotal += deltasRetrievedLast;
-                const lastFetch = deltasRetrievedLast > 0 ? deltas[deltasRetrievedLast - 1].sequenceNumber : from;
+                const lastFetch = deltasRetrievedLast > 0 ? messages[deltasRetrievedLast - 1].sequenceNumber : from;
 
                 // If we have no upper bound, then need to check partialResult flag. Different caching layers will
                 // return whatever ops they have and we need to keep asking until we get to the end.
@@ -861,10 +970,9 @@ export class DeltaManager
                 // of doing it, and we know we have a gap on our knowledge and can't proceed further without these ops.
                 // Note #1: we can get more ops than what we asked for - need to account for that!
                 // Note #2: from & to are exclusive! I.e. we actually expect [from + 1, to - 1] range of ops back!
-                if (to === undefined ? (!partialResult && lastFetch < maxFetchTo - 1) : to - 1 <= lastFetch) {
-                    callback(deltas);
+                if (fetchTo === undefined ? (!partialResult && lastFetch < fetchTo - 1) : fetchTo - 1 <= lastFetch) {
                     telemetryEvent.end({ lastFetch, deltasRetrievedTotal, requests });
-                    return;
+                    return [deltasRetrievedLast, deltas];
                 }
 
                 // Attempt to fetch more deltas. If we didn't receive any in the previous call we up our retry
@@ -890,13 +998,13 @@ export class DeltaManager
                         requests,
                         deltasRetrievedTotal,
                         replayFrom: from,
-                        to,
+                        to: fetchTo,
                     });
                     this.close(createGenericNetworkError(
                         "Failed to retrieve ops from storage: giving up after too many retries",
                         false /* canRetry */,
                     ));
-                    return;
+                    return [0, []];
                 }
             } catch (origError) {
                 canRetry = canRetry && canRetryOnError(origError);
@@ -919,7 +1027,7 @@ export class DeltaManager
                     // It's game over scenario.
                     telemetryEvent.cancel({ category: "error" }, origError);
                     this.close(error);
-                    return;
+                    return [0, []];
                 }
                 retryAfter = getRetryDelayFromError(origError);
 
@@ -928,7 +1036,7 @@ export class DeltaManager
                 }
             }
 
-            if (to !== undefined && this.lastQueuedSequenceNumber >= to) {
+            if (fetchTo !== undefined && this.lastQueuedSequenceNumber >= fetchTo) {
                 // the client caught up while we were trying to fetch ops from storage
                 // bail out since we no longer need to request these ops
                 telemetryEvent.end({
@@ -936,7 +1044,7 @@ export class DeltaManager
                     requests,
                     lastQueuedSequenceNumber: this.lastQueuedSequenceNumber,
                 });
-                return;
+                return [0, []];
             }
 
             telemetryEvent.reportProgress({
@@ -955,6 +1063,7 @@ export class DeltaManager
         // Might need to change to non-error event
         this.logger.sendErrorEvent({ eventName: "GetDeltasClosedConnection" });
         telemetryEvent.cancel({ error: "container closed" });
+        return [0, []];
     }
 
     /**
