@@ -1,8 +1,13 @@
 ## 0.36 Breaking changes
+<<<<<<< HEAD
 - [Some `ILoader` APIs moved to `IHostLoader`](#Some-ILoader-APIs-moved-to-IHostLoader)
+- [taskManager member removed from DataObject](#taskManager-member-removed-from-DataObject)
 
 ### Some `ILoader` APIs moved to `IHostLoader`
 The `createDetachedContainer` and `rehydrateDetachedContainerFromSnapshot` APIs are removed from the `ILoader` interface, and have been moved to the new `IHostLoader` interface.  The `Loader` class now implements `IHostLoader` instead, and consumers who need these methods should operate on an `IHostLoader` instead of an `ILoader`, such as by creating a `Loader`.
+
+### taskManager member removed from DataObject
+The `taskManager` member has been removed from DataObject.  It can still be accessed through the `ContainerRuntime`, e.g. `await this.context.containerRuntime.getTaskManager()`, though we expect it will be deprecated and removed in a future release.
 
 ## 0.35 Breaking changes
 - [Removed some api implementations from odsp driver](#Removed-some-api-implemenations-from-odsp-driver)
