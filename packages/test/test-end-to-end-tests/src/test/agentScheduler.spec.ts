@@ -29,7 +29,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         beforeEach(async () => {
             const container = await args.makeTestContainer();
             scheduler = await requestFluidObject<IAgentScheduler>(container, taskSchedulerId)
-                .then((taskManager) => taskManager.IAgentScheduler);
+                .then((agentScheduler) => agentScheduler.IAgentScheduler);
 
             const dataObject = await requestFluidObject<TestDataObject>(container, "default");
 
@@ -109,7 +109,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             // Create a new Container for the first document.
             container1 = await args.makeTestContainer();
             scheduler1 = await requestFluidObject<IAgentScheduler>(container1, taskSchedulerId)
-                .then((taskManager) => taskManager.IAgentScheduler);
+                .then((agentScheduler) => agentScheduler.IAgentScheduler);
             const dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
 
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
@@ -124,7 +124,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             // Load existing Container for the second document.
             container2 = await args.loadTestContainer();
             scheduler2 = await requestFluidObject<IAgentScheduler>(container2, taskSchedulerId)
-                .then((taskManager) => taskManager.IAgentScheduler);
+                .then((agentScheduler) => agentScheduler.IAgentScheduler);
             const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
 
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick

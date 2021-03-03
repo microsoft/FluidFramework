@@ -20,7 +20,6 @@ import {
     IFluidDataStoreFactory,
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
-import { create404Response } from "@fluidframework/runtime-utils";
 import debug from "debug";
 import { v4 as uuid } from "uuid";
 
@@ -369,11 +368,9 @@ class AgentSchedulerRuntime extends FluidDataStoreRuntime {
     public async request(request: IRequest) {
         const response = await super.request(request);
         if (response.status === 404) {
-            const agentScheduler = await this.agentSchedulerP;
             if (request.url === "" || request.url === "/") {
+                const agentScheduler = await this.agentSchedulerP;
                 return { status: 200, mimeType: "fluid/object", value: agentScheduler };
-            } else {
-                return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
             }
         }
         return response;
