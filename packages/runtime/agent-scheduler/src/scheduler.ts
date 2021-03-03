@@ -10,7 +10,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
-import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
+import { FluidDataStoreRuntime, FluidObjectHandle, ISharedObjectRegistry } from "@fluidframework/datastore";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
@@ -395,6 +395,22 @@ export class TaskManager implements ITaskManager {
     }
 }
 
+class TaskManagerRuntimeClass extends FluidDataStoreRuntime {
+    private readonly taskManagerP: Promise<TaskManager>;
+    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry) {
+        super(dataStoreContext, sharedObjectRegistry);
+        this.taskManagerP = TaskManager.load(this, dataStoreContext);
+    }
+    public async request(request: IRequest) {
+        const response  = await super.request(request);
+        if (response.status === 404) {
+            const taskManager = await this.taskManagerP;
+            return taskManager.request(request);
+        }
+        return response;
+    }
+}
+
 export class TaskManagerFactory implements IFluidDataStoreFactory {
     public static readonly type = "_scheduler";
     public readonly type = TaskManagerFactory.type;
@@ -412,14 +428,7 @@ export class TaskManagerFactory implements IFluidDataStoreFactory {
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
 
-        const runtimeClass = mixinRequestHandler(
-            async (request: IRequest) => {
-                const router = await routerP;
-                return router.request(request);
-            });
-
-        const runtime = new runtimeClass(context, dataTypes);
-        const routerP = TaskManager.load(runtime, context);
+        const runtime = new TaskManagerRuntimeClass(context, dataTypes);
 
         return runtime;
     }
