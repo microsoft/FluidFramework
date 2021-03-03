@@ -7,7 +7,6 @@ import { EventEmitter } from "events";
 import { assert } from "@fluidframework/common-utils";
 import {
     IFluidHandle,
-    IFluidRunnable,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -380,7 +379,6 @@ export class TaskManager implements ITaskManager {
 
     protected readonly taskUrl = "_tasks";
 
-    private readonly taskMap = new Map<string, IFluidRunnable>();
     constructor(
         private readonly scheduler: IAgentScheduler,
         private readonly runtime: IFluidDataStoreRuntime,
@@ -391,18 +389,8 @@ export class TaskManager implements ITaskManager {
     public async request(request: IRequest): Promise<IResponse> {
         if (request.url === "" || request.url === "/") {
             return { status: 200, mimeType: "fluid/object", value: this };
-        } else if (!request.url.startsWith(this.taskUrl)) {
-            return create404Response(request);
         } else {
-            const trimmedUrl = request.url.substr(this.taskUrl.length);
-            const taskUrl = trimmedUrl.length > 0 && trimmedUrl.startsWith("/")
-                ? trimmedUrl.substr(1)
-                : "";
-            if (taskUrl === "" || !this.taskMap.has(taskUrl)) {
-                return create404Response(request);
-            } else {
-                return { status: 200, mimeType: "fluid/object", value: this.taskMap.get(taskUrl) };
-            }
+            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         }
     }
 }
