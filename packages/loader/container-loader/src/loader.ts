@@ -17,6 +17,7 @@ import {
 import {
     ICodeLoader,
     IContainer,
+    IHostLoader,
     ILoader,
     ILoaderOptions,
     IProxyLoaderFactory,
@@ -98,14 +99,6 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         }
 
         return this.loader.request(request);
-    }
-
-    public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
-        throw new Error("Relative loader should not create a detached container");
-    }
-
-    public async rehydrateDetachedContainerFromSnapshot(source: string): Promise<Container> {
-        throw new Error("Relative loader should not create a detached container from snapshot");
     }
 
     public resolveContainer(container: Container) {
@@ -228,7 +221,7 @@ export interface ILoaderServices {
 /**
  * Manages Fluid resource loading
  */
-export class Loader extends EventEmitter implements ILoader {
+export class Loader extends EventEmitter implements IHostLoader {
     private readonly containers = new Map<string, Promise<Container>>();
     public readonly services: ILoaderServices;
     private readonly logger: ITelemetryLogger;
