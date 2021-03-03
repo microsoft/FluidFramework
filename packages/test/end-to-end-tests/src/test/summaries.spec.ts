@@ -83,7 +83,7 @@ describe("Summaries", () => {
         await opProcessingController.process();
 
         const { gcData, stats, summary } = await containerRuntime.summarize({
-            runGc: false,
+            runGC: false,
             fullTree: false,
             trackState: false,
             summaryLogger: new TelemetryNullLogger(),
