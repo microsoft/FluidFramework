@@ -430,7 +430,7 @@ export class FluidPackageCheck {
             "**/*.tsbuildinfo",
             "**/_api-extractor-temp/**",
         ]
-        const expected = pkg.name.startsWith("@fluid-internal/") ?
+        const expected = pkg.name.startsWith("@fluidframework/test-") ?
             expectedCommon :
             [...expectedCommon,
                 "src/test",

@@ -14,7 +14,7 @@ import { Container, ConnectionState, Loader, ILoaderProps } from "@fluidframewor
 import {
     IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
-import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
+import { MockDocumentDeltaConnection } from "@fluidframework/test-loader-utils";
 import { LocalCodeLoader, TestObjectProvider, LoaderContainerTracker } from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
