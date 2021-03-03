@@ -213,7 +213,7 @@ export async function setUpLocalServerTestSharedTree(
 	const dataObject = await requestFluidObject<ITestFluidObject>(container, 'default');
 	const tree = await dataObject.getSharedObject<SharedTree>(treeId);
 
-	if (initialTree !== undefined && testObjectProvider === null) {
+	if (initialTree !== undefined && testObjectProvider === undefined) {
 		setTestTree(tree, initialTree, setupEditId);
 	}
 
