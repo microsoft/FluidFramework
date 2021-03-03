@@ -1795,6 +1795,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async getTaskManager(): Promise<IProvideAgentScheduler> {
         console.error("getTaskManager is deprecated.  Please move to getScheduler.");
         const agentScheduler = await this.getScheduler();
+        // Prior versions would return a TaskManager, which was an IProvideAgentScheduler -- returning this for back
+        // compat.  Wrapping the agentScheduler in an IProvideAgentScheduler will help catch any cases where customers
+        // try to call other TaskManager functionality.
         return { IAgentScheduler: agentScheduler };
     }
 

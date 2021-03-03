@@ -34,7 +34,7 @@ export class Clicker extends DataObject implements IFluidHTMLView {
     protected async hasInitialized() {
         const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
         this._counter = await counterHandle?.get();
-        await this.setupAgent();
+        this.setupAgent();
     }
 
     // #region IFluidHTMLView
@@ -53,14 +53,16 @@ export class Clicker extends DataObject implements IFluidHTMLView {
 
     // #endregion IFluidHTMLView
 
-    public async setupAgent() {
-        const agentScheduler = await this.context.containerRuntime.getScheduler();
+    public setupAgent() {
         const agentTaskId = "agent";
         const clickerAgent = new ClickerAgent(this.counter);
-        await agentScheduler.pick(agentTaskId, async () => {
-            console.log(`Picked`);
-            await clickerAgent.run();
-        });
+
+        this.context.containerRuntime.getScheduler().then(async (agentScheduler) => {
+            await agentScheduler.pick(agentTaskId, async () => {
+                console.log(`Picked`);
+                await clickerAgent.run();
+            });
+        }).catch((err) => { console.error(err); });
     }
 
     private get counter() {
