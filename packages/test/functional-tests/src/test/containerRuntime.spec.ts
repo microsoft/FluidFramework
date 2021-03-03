@@ -31,7 +31,7 @@ describe("Container Runtime", () => {
         let batchEnd: number = 0;
 
         async function startDeltaManager() {
-            await deltaManager.connect();
+            await deltaManager.connect({ reason: "test" });
             deltaManager.inbound.resume();
             deltaManager.outbound.resume();
             deltaManager.inboundSignal.resume();

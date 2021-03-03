@@ -30,7 +30,7 @@ describe("Loader", () => {
             const realSetTimeout = setTimeout;
 
             async function startDeltaManager() {
-                await deltaManager.connect();
+                await deltaManager.connect({ reason: "test" });
                 deltaManager.inbound.resume();
                 deltaManager.outbound.resume();
                 deltaManager.inboundSignal.resume();
