@@ -1,8 +1,8 @@
 ## 0.36 Breaking changes
-- [`ILoader` API trimmed down](#ILoader-API-trimmed-down)
+- [Some `ILoader` APIs moved to `IHostLoader`](#Some-ILoader-APIs-moved-to-IHostLoader)
 
-### ILoader API trimmed down
-The `createDetachedContainer` and `rehydrateDetachedContainerFromSnapshot` APIs are removed from the `ILoader` interface.  They are still available on the `Loader` class, and consumers who need these methods should operate on a `Loader` instead of an `ILoader`
+### Some `ILoader` APIs moved to `IHostLoader`
+The `createDetachedContainer` and `rehydrateDetachedContainerFromSnapshot` APIs are removed from the `ILoader` interface, and have been moved to the new `IHostLoader` interface.  The `Loader` class now implements `IHostLoader` instead, and consumers who need these methods should operate on an `IHostLoader` instead of an `ILoader`, such as by creating a `Loader`.
 
 ## 0.35 Breaking changes
 - [Removed some api implementations from odsp driver](#Removed-some-api-implemenations-from-odsp-driver)

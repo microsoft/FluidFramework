@@ -17,6 +17,7 @@ import {
 import {
     ICodeLoader,
     IContainer,
+    IHostLoader,
     ILoader,
     ILoaderOptions,
     IProxyLoaderFactory,
@@ -220,7 +221,7 @@ export interface ILoaderServices {
 /**
  * Manages Fluid resource loading
  */
-export class Loader extends EventEmitter implements ILoader {
+export class Loader extends EventEmitter implements IHostLoader {
     private readonly containers = new Map<string, Promise<Container>>();
     public readonly services: ILoaderServices;
     private readonly logger: ITelemetryLogger;
@@ -265,10 +266,6 @@ export class Loader extends EventEmitter implements ILoader {
 
     public get IFluidRouter(): IFluidRouter { return this; }
 
-    /**
-     * Creates a new container using the specified chaincode but in an unattached state. While unattached all
-     * updates will only be local until the user explicitly attaches the container to a service provider.
-     */
     public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<Container> {
         debug(`Container creating in detached state: ${performance.now()} `);
 
@@ -290,10 +287,6 @@ export class Loader extends EventEmitter implements ILoader {
         return container;
     }
 
-    /**
-     * Creates a new container using the specified snapshot but in an unattached state. While unattached all
-     * updates will only be local until the user explicitly attaches the container to a service provider.
-     */
     public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<Container> {
         debug(`Container creating in detached state: ${performance.now()} `);
 

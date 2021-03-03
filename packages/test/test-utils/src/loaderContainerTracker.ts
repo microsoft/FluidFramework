@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer } from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 
 export class LoaderContainerTracker {
     private readonly containers = new Set<IContainer>();
 
-    public add<LoaderType extends Loader>(loader: LoaderType) {
+    public add<LoaderType extends IHostLoader>(loader: LoaderType) {
         const patch = <T, C extends IContainer>(fn: (...args: T[]) => Promise<C>) => {
             const boundFn = fn.bind(loader);
             return async (...args: T[]) => {

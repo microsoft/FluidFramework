@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { ConnectionState, Container, Loader } from "@fluidframework/container-loader";
 import {
     ContainerMessageType,
@@ -61,7 +61,7 @@ describe("Ops on Reconnect", () => {
         await new Promise<void>((resolve) => container.once("connected", () => resolve()));
     }
 
-    async function createLoader(): Promise<Loader> {
+    async function createLoader(): Promise<IHostLoader> {
         const factory: TestFluidObjectFactory = new TestFluidObjectFactory(
             [
                 [map1Id, SharedMap.getFactory()],

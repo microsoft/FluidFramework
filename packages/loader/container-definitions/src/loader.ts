@@ -181,7 +181,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 }
 
 /**
- * The Host's view of the Loader, used for loading Containers
+ * The Runtime's view of the Loader, used for loading Containers
  */
 export interface ILoader extends IFluidRouter {
     /**
@@ -192,6 +192,23 @@ export interface ILoader extends IFluidRouter {
      * a request against the server found from the resolve step.
      */
     resolve(request: IRequest): Promise<IContainer>;
+}
+
+/**
+ * The Host's view of the Loader, used for loading Containers
+ */
+export interface IHostLoader extends ILoader {
+    /**
+     * Creates a new container using the specified chaincode but in an unattached state. While unattached all
+     * updates will only be local until the user explicitly attaches the container to a service provider.
+     */
+    createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer>;
+
+    /**
+     * Creates a new container using the specified snapshot but in an unattached state. While unattached all
+     * updates will only be local until the user explicitly attaches the container to a service provider.
+     */
+    rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
 }
 
 export type ILoaderOptions = {
