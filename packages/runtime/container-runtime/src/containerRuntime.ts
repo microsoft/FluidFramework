@@ -720,6 +720,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
         );
 
+        if (this.context.baseSnapshot) {
+            this.summarizerNode.loadBaseSummaryWithoutDifferential(this.context.baseSnapshot);
+        }
+
         this.dataStores = new DataStores(
             getSnapshotForDataStores(context.baseSnapshot, metadata.snapshotFormatVersion),
             this,

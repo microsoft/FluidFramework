@@ -103,6 +103,12 @@ export interface ISummarizerNode {
      */
     summarize(fullTree: boolean): Promise<ISummarizeResult>;
     /**
+     * Checks if there are any additional path parts for children that need to
+     * be loaded from the base summary.
+     * @param snapshot - the base summary to parse
+     */
+    loadBaseSummaryWithoutDifferential(snapshot: ISnapshotTree): void;
+    /**
      * Checks if the base snapshot was created as a failure summary. If it has
      * the base summary handle + outstanding ops blob, then this will return the
      * innermost base summary, and update the state by tracking the outstanding ops.
