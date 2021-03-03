@@ -442,7 +442,7 @@ export class OdspSummaryUploadManager {
             let entry: SnapshotTreeEntry;
 
             if (value) {
-                assert(id === undefined);
+                assert(id === undefined, "Snapshot entry has both a tree value and a referenced id!");
                 entry = {
                     value,
                     ...baseEntry,
