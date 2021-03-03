@@ -11,7 +11,7 @@ import {
     IDeltasFetchResult,
 } from "@fluidframework/driver-definitions";
 import Axios from "axios";
-import * as uuid from "uuid";
+import { v4 as uuid } from "uuid";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -55,7 +55,7 @@ export class DeltaStorageService implements IDeltaStorageService {
     constructor(
         private readonly url: string,
         private readonly tokenProvider: ITokenProvider,
-        private readonly logger: ITelemetryLogger | undefined) {
+        private readonly logger: ITelemetryLogger) {
     }
 
     public async get(
@@ -66,7 +66,7 @@ export class DeltaStorageService implements IDeltaStorageService {
         const query = querystring.stringify({ from, to });
 
         const headers: OutgoingHttpHeaders = {
-            "x-correlation-id": uuid.v4(),
+            "x-correlation-id": uuid(),
         };
 
         const storageToken = await this.tokenProvider.fetchStorageToken(
@@ -81,12 +81,10 @@ export class DeltaStorageService implements IDeltaStorageService {
         const ops = await Axios.get<ISequencedDocumentMessage[]>(
             `${this.url}?${query}`, { headers });
 
-        if (this.logger) {
-            this.logger.sendTelemetryEvent({
-                eventName: "R11sDriverToServer",
-                correlationId: headers["x-correlation-id"] as string,
-            });
-        }
+        this.logger.sendTelemetryEvent({
+            eventName: "R11sDriverToServer",
+            correlationId: headers["x-correlation-id"] as string,
+        });
 
         // It is assumed that server always returns all the ops that it has in the range that was requested.
         // This may change in the future, if so, we need to adjust and receive "end" value from server in such case.
