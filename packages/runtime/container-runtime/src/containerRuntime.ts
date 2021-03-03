@@ -1789,14 +1789,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    private async getTaskManager(): Promise<ITaskManager> {
-        return requestFluidObject<ITaskManager>(
-            await this.getDataStore(taskSchedulerId, true),
-            "");
-    }
-
     public async getScheduler(): Promise<IAgentScheduler> {
-        const taskManager = await this.getTaskManager();
+        const taskManager = await requestFluidObject<ITaskManager>(
+            await this.getDataStore(taskSchedulerId, true),
+            "",
+        );
         return taskManager.IAgentScheduler;
     }
 
