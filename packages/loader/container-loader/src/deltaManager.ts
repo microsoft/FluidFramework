@@ -1181,7 +1181,7 @@ export class DeltaManager
             connection.initialSignals ?? [],
             this.connectFirstConnection ? "InitialOps" : "ReconnectOps");
 
-        // If we got some initial ops, then we know the gep and call above fetched ops to fill it.
+        // If we got some initial ops, then we know the gap and call above fetched ops to fill it.
         // Same is true for "write" mode even if we have no ops - we will get self "join" ops very very soon.
         // However if we are connecting as view-only, then there is no good signal to realize if client is behind.
         // Thus we have to hit storage to see if any ops are there.

@@ -10,7 +10,7 @@ import { IOdspResolvedUrl } from "../contracts";
 import { EpochTrackerWithRedemption } from "../epochTracker";
 import { ICacheEntry, LocalPersistentCache, LocalPersistentCacheAdapter } from "../odspCache";
 import { getHashedDocumentId } from "../odspUtils";
-import { mockFetchCore, mockFetch, notFound } from "./mockFetch";
+import { mockFetchCore, mockFetchMultiple, okResponse, notFound } from "./mockFetch";
 
 class DeferralWithCallback extends Deferred<void> {
     private epochCallback: () => Promise<any> = async () => {};
@@ -65,10 +65,10 @@ describe("Tests for Epoch Tracker With Redemption", () => {
             epochCallback.setCallback(async () => epochTracker.fetchFromCache(cacheEntry1, undefined, "other"));
 
             // Initial joinSession call will return 404 but after the timeout, the call will be retried and succeed
-            await mockFetch(
-                {},
+            await mockFetchMultiple(
+                [notFound(), okResponse({ "x-fluid-epoch": "epoch1" }, {})],
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
-                { "x-fluid-epoch": "epoch1" });
+            );
         } catch (error) {
             success = false;
         }
