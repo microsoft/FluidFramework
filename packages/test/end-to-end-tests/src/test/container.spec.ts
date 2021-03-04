@@ -206,6 +206,7 @@ describe("Container", () => {
             createPrimedDataStoreFactory());
 
         const localTestObjectProvider = new TestObjectProvider(
+            Loader,
             driver,
             runtimeFactory);
 

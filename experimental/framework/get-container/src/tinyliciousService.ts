@@ -7,9 +7,20 @@ import {
     IContainer,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { InsecureTinyliciousTokenProvider, InsecureTinyliciousUrlResolver } from "@fluidframework/tinylicious-driver";
-import { getContainer } from "./getContainer";
+import { getContainer, IGetContainerService } from "./getContainer";
+
+export class TinyliciousService implements IGetContainerService {
+    public readonly documentServiceFactory: IDocumentServiceFactory;
+    public readonly urlResolver: IUrlResolver = new InsecureTinyliciousUrlResolver();
+
+    constructor() {
+        const tokenProvider = new InsecureTinyliciousTokenProvider();
+        this.documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
+    }
+}
 
 /**
  * Connect to the Tinylicious service and retrieve a Container with the given ID running the given code.
@@ -21,17 +32,12 @@ export async function getTinyliciousContainer(
     containerRuntimeFactory: IRuntimeFactory,
     createNew: boolean,
 ): Promise<IContainer> {
-    const tokenProvider = new InsecureTinyliciousTokenProvider();
-    const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
-
-    const urlResolver = new InsecureTinyliciousUrlResolver();
+    const service = new TinyliciousService();
 
     return getContainer(
+        service,
         documentId,
-        createNew,
-        { url: documentId },
-        urlResolver,
-        documentServiceFactory,
         containerRuntimeFactory,
+        createNew,
     );
 }

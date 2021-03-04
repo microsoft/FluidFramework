@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
@@ -13,20 +12,23 @@ import {
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
 
+export interface IGetContainerService {
+    documentServiceFactory: IDocumentServiceFactory;
+    urlResolver: IUrlResolver;
+}
+
 export async function getContainer(
-    documentId: string,
-    createNew: boolean,
-    request: IRequest,
-    urlResolver: IUrlResolver,
-    documentServiceFactory: IDocumentServiceFactory,
+    getContainerService: IGetContainerService,
+    containerId: string,
     containerRuntimeFactory: IRuntimeFactory,
+    createNew: boolean,
 ): Promise<Container> {
     const module = { fluidExport: containerRuntimeFactory };
     const codeLoader = { load: async () => module };
 
-    const loader = new Loader ({
-        urlResolver,
-        documentServiceFactory,
+    const loader = new Loader({
+        urlResolver: getContainerService.urlResolver,
+        documentServiceFactory: getContainerService.documentServiceFactory,
         codeLoader,
     });
 
@@ -37,10 +39,10 @@ export async function getContainer(
         // proposal), but the Container will only give us a NullRuntime if there's no proposal.  So we'll use a fake
         // proposal.
         container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
-        await container.attach({ url: documentId });
+        await container.attach({ url: containerId });
     } else {
         // Request must be appropriate and parseable by resolver.
-        container = await loader.resolve(request);
+        container = await loader.resolve({ url: containerId });
         // If we didn't create the container properly, then it won't function correctly.  So we'll throw if we got a
         // new container here, where we expect this to be loading an existing container.
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions

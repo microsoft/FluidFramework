@@ -205,12 +205,14 @@ export class DeliLambda implements IPartitionLambda {
                 this.checkpointContext.checkpoint(checkpoint);
             },
             (error) => {
-                const messageMetaData = {
-                    documentId: this.documentId,
-                    tenantId: this.tenantId,
-                };
-                this.context.log.error(
-                    `Could not send message to scriptorium: ${JSON.stringify(error)}`, { messageMetaData });
+                this.context.log?.error(
+                    `Could not send message to scriptorium: ${JSON.stringify(error)}`,
+                    {
+                        messageMetaData: {
+                            documentId: this.documentId,
+                            tenantId: this.tenantId,
+                        },
+                    });
                 this.context.error(error, {
                     restart: true,
                     tenantId: this.tenantId,
@@ -407,11 +409,12 @@ export class DeliLambda implements IPartitionLambda {
             const controlMessage = systemContent as IControlMessage;
             switch (controlMessage.type) {
                 case ControlMessageType.UpdateDSN: {
-                    const messageMetaData = {
-                        documentId: this.documentId,
-                        tenantId: this.tenantId,
-                    };
-                    this.context.log.info(`Update DSN: ${JSON.stringify(controlMessage)}`, { messageMetaData });
+                    this.context.log?.info(`Update DSN: ${JSON.stringify(controlMessage)}`, {
+                        messageMetaData: {
+                            documentId: this.documentId,
+                            tenantId: this.tenantId,
+                        },
+                    });
 
                     const controlContents = controlMessage.contents as IUpdateDSNControlMessageContents;
                     const dsn = controlContents.durableSequenceNumber;
@@ -420,7 +423,12 @@ export class DeliLambda implements IPartitionLambda {
                         if (controlContents.clearCache && this.noActiveClients) {
                             instruction = InstructionType.ClearCache;
                             this.canClose = true;
-                            this.context.log.info(`Deli cache will be cleared`, { messageMetaData });
+                            this.context.log?.info(`Deli cache will be cleared`, {
+                                messageMetaData: {
+                                    documentId: this.documentId,
+                                    tenantId: this.tenantId,
+                                },
+                            });
                         }
 
                         this.durableSequenceNumber = dsn;
@@ -533,11 +541,11 @@ export class DeliLambda implements IPartitionLambda {
         if (clientSequenceNumber === expectedClientSequenceNumber) {
             return IncomingMessageOrder.ConsecutiveOrSystem;
         } else if (clientSequenceNumber > expectedClientSequenceNumber) {
-            this.context.log.info(
+            this.context.log?.info(
                 `Gap ${clientId}:${expectedClientSequenceNumber} > ${clientSequenceNumber}`, { messageMetaData });
             return IncomingMessageOrder.Gap;
         } else {
-            this.context.log.info(
+            this.context.log?.info(
                 `Duplicate ${clientId}:${expectedClientSequenceNumber} < ${clientSequenceNumber}`, { messageMetaData });
             return IncomingMessageOrder.Duplicate;
         }
@@ -550,11 +558,15 @@ export class DeliLambda implements IPartitionLambda {
 
     private sendToAlfred(message: IRawOperationMessage) {
         this.reverseProducer.send([message], message.tenantId, message.documentId).catch((error) => {
-            const messageMetaData = {
-                documentId: this.documentId,
-                tenantId: this.tenantId,
-            };
-            this.context.log.error(`Could not send message to alfred: ${JSON.stringify(error)}`, { messageMetaData });
+            this.context.log?.error(
+                `Could not send message to alfred: ${JSON.stringify(error)}`,
+                {
+                    messageMetaData: {
+                        documentId: this.documentId,
+                        tenantId: this.tenantId,
+
+                    },
+                });
             this.context.error(error, {
                 restart: true,
                 tenantId: this.tenantId,

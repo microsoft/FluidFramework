@@ -741,7 +741,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             const resolvedUrl = this.service.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
             this._resolvedUrl = resolvedUrl;
-            const url = await this.getAbsoluteUrl("");
+            const url = await this.urlResolver.getAbsoluteUrl(
+                resolvedUrl,
+                "",
+                this._context?.codeDetails,
+            );
             assert(url !== undefined, "Container url undefined");
             this.containerUrl = url;
             const parsedUrl = parseUrl(resolvedUrl.url);
@@ -863,7 +867,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public raiseContainerWarning(warning: ContainerWarning) {
         // Some "warning" events come from outside the container and are logged
         // elsewhere (e.g. summarizing container). We shouldn't log these here.
-        if ((warning as any).logged !== true) {
+        if (warning.logged !== true) {
             this.logContainerError(warning);
         }
         this.emit("warning", warning);
@@ -917,7 +921,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.deltaManager.inbound.pause(),
             this.deltaManager.inboundSignal.pause()]);
 
-        if (await this.context.satisfies(codeDetails) === true) {
+        if ((await this.context.satisfies(codeDetails) === true) && !this.hasNullRuntime()) {
             this.deltaManager.inbound.resume();
             this.deltaManager.inboundSignal.resume();
             return;

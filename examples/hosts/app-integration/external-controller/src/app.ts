@@ -9,6 +9,7 @@ import {
     KeyValueInstantiationFactory,
 } from "@fluid-experimental/data-objects";
 import { Fluid } from "@fluid-experimental/fluid-static";
+import { TinyliciousService } from "@fluid-experimental/get-container";
 import { DiceRollerController } from "./controller";
 import { renderDiceRoller } from "./view";
 
@@ -23,10 +24,11 @@ document.title = documentId;
 const dataObjectId = "dice";
 
 async function start(): Promise<void> {
+    const service = new TinyliciousService();
     // Get or create the document
     const fluidDocument = createNew
-        ? await Fluid.createDocument(documentId, [KeyValueInstantiationFactory.registryEntry])
-        : await Fluid.getDocument(documentId, [KeyValueInstantiationFactory.registryEntry]);
+        ? await Fluid.createDocument(service, documentId, [KeyValueInstantiationFactory.registryEntry])
+        : await Fluid.getDocument(service, documentId, [KeyValueInstantiationFactory.registryEntry]);
 
     // We'll create the data object when we create the new document.
     const keyValueDataObject: IKeyValueDataObject = createNew

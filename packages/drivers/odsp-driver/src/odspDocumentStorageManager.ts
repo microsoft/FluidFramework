@@ -315,7 +315,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     event.end({
                         blobId: res.content.id,
                         serverRetries: res.headers.get("x-fluid-retries") ?? undefined,
-                        sprequestguid: response.headers.get("sprequestguid") ?? undefined,
+                        sprequestguid: res.headers.get("sprequestguid") ?? undefined,
                     });
                     return res;
                 },
@@ -349,12 +349,22 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     async (event) => {
                         const res = await this.epochTracker.fetchResponse(url, { headers }, "blob");
                         blob = await res.arrayBuffer();
+                        const sprequestguid = res.headers.get("sprequestguid") ?? undefined;
                         event.end({
                             size: blob.byteLength,
                             serverRetries: res.headers.get("x-fluid-retries") ?? undefined,
                             waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
-                            sprequestguid: res.headers.get("sprequestguid") ?? undefined,
+                            sprequestguid,
                         });
+                        const cacheControl = res.headers.get("cache-control") ?? undefined;
+                        if (cacheControl === undefined || !(cacheControl.includes("private") || cacheControl.includes("public"))) {
+                            this.logger.sendErrorEvent({
+                                eventName: "NonCacheableBlob",
+                                cacheControl,
+                                blobId,
+                                sprequestguid,
+                            });
+                        }
                         return blob;
                     },
                 );

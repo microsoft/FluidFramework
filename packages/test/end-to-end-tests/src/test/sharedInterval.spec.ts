@@ -178,7 +178,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
                     assertIntervals([{ start: 0, end: 2 }]);
                 }
 
-                await args.opProcessingController.process();
+                await args.ensureSynchronized();
             }
         });
     });
@@ -206,7 +206,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             const container2 = await args.loadTestContainer(testContainerConfig);
             const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
 
             const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
             const intervals2 = await sharedString2.getIntervalCollection("intervals").getView();
@@ -218,7 +218,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             sharedString2.insertText(4, "x");
             assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 7 }]);
 
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
         });
     });
@@ -261,7 +261,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         // This functionality is used in Word and FlowView's "add comment" functionality.
         it("Can store shared objects in a shared string's interval collection via properties", async () => {
             sharedMap1.set("outerString", SharedString.create(dataObject1.runtime).handle);
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
 
             const outerString1 = await sharedMap1.get<IFluidHandle<SharedString>>("outerString")?.get();
             const outerString2 = await sharedMap2.get<IFluidHandle<SharedString>>("outerString")?.get();
@@ -273,7 +273,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             outerString1.insertText(0, "outer string");
 
             const intervalCollection1 = outerString1.getIntervalCollection("comments");
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
 
             const intervalCollection2 = outerString2.getIntervalCollection("comments");
             const intervalCollection3 = outerString3.getIntervalCollection("comments");
@@ -290,7 +290,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             const nestedMap = SharedMap.create(dataObject1.runtime);
             nestedMap.set("nestedKey", "nestedValue");
             intervalCollection1.add(8, 9, IntervalType.SlideOnRemove, { story: nestedMap.handle });
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
 
             const serialized1 = intervalCollection1.serializeInternal();
             const serialized2 = intervalCollection2.serializeInternal();

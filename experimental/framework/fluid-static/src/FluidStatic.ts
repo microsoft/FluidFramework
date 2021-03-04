@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getTinyliciousContainer } from "@fluid-experimental/get-container";
+import { getContainer, IGetContainerService } from "@fluid-experimental/get-container";
 import { getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
@@ -27,10 +27,12 @@ export class FluidDocument {
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Fluid {
     public static async createDocument(
+        getContainerService: IGetContainerService,
         docId: string,
         registryEntries: NamedFluidDataStoreRegistryEntry[],
     ): Promise<FluidDocument> {
-        const container = await getTinyliciousContainer(
+        const container = await getContainer(
+            getContainerService,
             docId,
             new DOProviderContainerRuntimeFactory(registryEntries),
             true, /* createNew */
@@ -38,11 +40,14 @@ export class Fluid {
         const document = new FluidDocument(container, true /* createNew */);
         return document;
     }
+
     public static async getDocument(
+        getContainerService: IGetContainerService,
         docId: string,
         registryEntries: NamedFluidDataStoreRegistryEntry[],
     ): Promise<FluidDocument> {
-        const container = await getTinyliciousContainer(
+        const container = await getContainer(
+            getContainerService,
             docId,
             new DOProviderContainerRuntimeFactory(registryEntries),
             false, /* createNew */

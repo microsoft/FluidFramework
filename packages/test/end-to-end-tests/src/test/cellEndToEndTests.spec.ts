@@ -61,7 +61,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         // Set a starting value in the cell
         sharedCell1.set(initialCellValue);
 
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
     });
 
     function verifyCellValue(cell: ISharedCell, expectedValue, index: number) {
@@ -100,7 +100,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     it("can set and get cell data in 3 containers correctly", async () => {
         sharedCell2.set(newCellValue);
 
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         verifyCellValues(newCellValue, newCellValue, newCellValue);
     });
@@ -108,7 +108,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     it("can delete cell data in 3 containers correctly", async () => {
         sharedCell3.delete();
 
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         verifyCellEmpty(true, true, true);
     });
@@ -134,7 +134,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         sharedCell1.set(newCellValue);
 
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         assert.equal(user1ValueChangedCount, 1, "Incorrect number of valueChanged op received in container 1");
         assert.equal(user2ValueChangedCount, 1, "Incorrect number of valueChanged op received in container 2");
@@ -151,7 +151,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         verifyCellValues("value1", "value2", "value3");
 
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         verifyCellValues("value3", "value3", "value3");
     });
@@ -164,7 +164,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         verifyCellValues("value1.1", undefined, "value1.3");
 
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         verifyCellValues("value1.3", "value1.3", "value1.3");
     });
@@ -181,7 +181,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         sharedCell2.set("value2.2");
         verifyCellValues("value2.1", "value2.2", "value2.3");
 
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         verifyCellValues("value2.2", "value2.2", "value2.2");
     });
@@ -195,7 +195,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         verifyCellValues("value3.1", "value3.2", undefined);
         verifyCellEmpty(false, false, true);
 
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         verifyCellValues(undefined, undefined, undefined);
         verifyCellEmpty(true, true, true);
@@ -209,7 +209,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         detachedCell1.set(detachedCell2.handle);
         sharedCell1.set(detachedCell1.handle);
 
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         async function getCellDataStore(cellP: Promise<ISharedCell>): Promise<ISharedCell> {
             const cell = await cellP;

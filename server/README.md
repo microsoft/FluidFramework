@@ -32,10 +32,7 @@ To get started with Routerlicious and the Fluid reference implementation, you mu
 
 1. Download and install [Docker](https://docs.docker.com/desktop/)
 2. Configure Docker to have 4gb of RAM
-3. Find and connect to our Docker Image registry
-  - Microsoft-internal: run `docker login prague.azurecr.io` and provide the correct username/password
-  - Public access: Coming soon!
-4. Start the Container with `npm run start:docker` from the repo root, which does this:
+3. Start the docker container with `npm run start:docker` from the repo root, which does this:
   ```
   "start:docker": "docker-compose -f server/docker-compose.yml up"
   ```
@@ -50,6 +47,9 @@ For development, you'll also need to give docker access to your drive (Shared Dr
   * An intermittent failure most frequent on Windows, best solved by reinstalling
 * Not Enough RAM
   * Allocate more RAM
+
+### Using older version of published docker images
+By default the [docker compose](./docker-compose.yml) file pulls the latest published images. If you want to use a specific version for testing, you can make a copy of `docker-compose.yml` and change the tag from `latest` to a specific version number.
 
 ## Routerlicious for Local Development
 ### With Webpack Dev Server && the Webpack Fluid Loader (Yo-Fluid Output)

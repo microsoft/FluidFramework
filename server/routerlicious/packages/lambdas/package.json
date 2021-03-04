@@ -8,9 +8,6 @@
   "author": "Microsoft",
   "sideEffects": false,
   "main": "dist/index.js",
-  "browser": {
-    "winston": false
-  },
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
@@ -24,7 +21,7 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "test": "mocha --recursive dist/test --unhandled-rejections=strict",
-    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
+    "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
@@ -61,7 +58,7 @@
     "double-ended-queue": "^2.1.0-0",
     "json-stringify-safe": "^5.0.1",
     "jsonwebtoken": "^8.4.0",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "nconf": "^0.11.0",
     "semver": "^6.3.0",
     "uuid": "^8.3.1"

@@ -4,10 +4,9 @@
  */
 
 import { Deferred } from "@fluidframework/common-utils";
-import { IConsumer, IContextErrorData, IPartitionLambdaFactory } from "@fluidframework/server-services-core";
+import { IConsumer, IContextErrorData, ILogger, IPartitionLambdaFactory } from "@fluidframework/server-services-core";
 import { IRunner } from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
-import * as winston from "winston";
 import { PartitionManager } from "./partitionManager";
 
 export class KafkaRunner implements IRunner {
@@ -21,7 +20,7 @@ export class KafkaRunner implements IRunner {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public start(): Promise<void> {
+    public start(logger: ILogger | undefined): Promise<void> {
         if (this.deferred) {
             throw new Error("Already started");
         }
@@ -38,7 +37,7 @@ export class KafkaRunner implements IRunner {
             deferred.reject(error);
         });
 
-        this.partitionManager = new PartitionManager(this.factory, this.consumer, this.config, winston);
+        this.partitionManager = new PartitionManager(this.factory, this.consumer, this.config, logger);
         this.partitionManager.on("error", (error, errorData: IContextErrorData) => {
             deferred.reject(error);
         });
@@ -53,8 +52,6 @@ export class KafkaRunner implements IRunner {
         if (!this.deferred) {
             return;
         }
-
-        winston.info("Stop requested");
 
         // Stop listening for new updates
         await this.consumer.pause();

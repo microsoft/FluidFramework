@@ -175,11 +175,6 @@ export class ScribeLambda extends SequencedLambda {
                     this.processFromPending(this.minSequenceNumber);
                 }
 
-                const messageMetaData = {
-                    documentId: this.documentId,
-                    tenantId: this.tenantId,
-                };
-
                 this.clearCache = false;
                 if (value.operation.type === MessageType.Summarize) {
                     // Process up to the summary op ref seq to get the protocol state at the summary op.
@@ -216,15 +211,25 @@ export class ScribeLambda extends SequencedLambda {
                                     await this.sendSummaryAck(summaryResponse.message as ISummaryAck);
                                     await this.sendSummaryConfirmationMessage(operation.sequenceNumber, false);
                                     this.protocolHead = this.protocolHandler.sequenceNumber;
-                                    this.context.log.info(
+                                    this.context.log?.info(
                                         `Client summary success @${value.operation.sequenceNumber}`,
-                                        { messageMetaData },
+                                        {
+                                            messageMetaData: {
+                                                documentId: this.documentId,
+                                                tenantId: this.tenantId,
+                                            },
+                                        },
                                     );
                                 } else {
                                     await this.sendSummaryNack(summaryResponse.message as ISummaryNack);
-                                    this.context.log.error(
+                                    this.context.log?.error(
                                         `Client summary failure @${value.operation.sequenceNumber}`,
-                                        { messageMetaData },
+                                        {
+                                            messageMetaData: {
+                                                documentId: this.documentId,
+                                                tenantId: this.tenantId,
+                                            },
+                                        },
                                     );
                                     this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
                                 }
@@ -273,15 +278,28 @@ export class ScribeLambda extends SequencedLambda {
                                 await this.sendSummaryConfirmationMessage(
                                     operation.sequenceNumber,
                                     this.serviceConfiguration.scribe.clearCacheAfterServiceSummary);
-                                this.context.log.info(
-                                    `Service summary success @${operation.sequenceNumber}`, { messageMetaData });
+                                this.context.log?.info(
+                                    `Service summary success @${operation.sequenceNumber}`,
+                                    {
+                                        messageMetaData: {
+                                            documentId: this.documentId,
+                                            tenantId: this.tenantId,
+                                        },
+                                    },
+                                );
                             }
                         } catch (ex) {
                             // If this flag is set, we should ignore any storage speciic error and move forward
                             // to process the next message.
                             if (this.serviceConfiguration.scribe.ignoreStorageException) {
-                                this.context.log.error(
-                                    `Service summary failure @${operation.sequenceNumber}`, { messageMetaData });
+                                this.context.log?.error(
+                                    `Service summary failure @${operation.sequenceNumber}`,
+                                    {
+                                        messageMetaData: {
+                                            documentId: this.documentId,
+                                            tenantId: this.tenantId,
+                                        },
+                                    });
                             } else {
                                 throw ex;
                             }
@@ -331,7 +349,7 @@ export class ScribeLambda extends SequencedLambda {
                     this.protocolHandler.processMessage(message, false);
                 }
             } catch (error) {
-                this.context.log.error(`Protocol error ${error}`,
+                this.context.log?.error(`Protocol error ${error}`,
                     {
                         documentId: this.documentId,
                         tenantId: this.tenantId,

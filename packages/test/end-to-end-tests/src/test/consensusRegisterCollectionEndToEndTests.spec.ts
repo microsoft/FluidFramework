@@ -114,7 +114,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             const write2P = collection2.write("key1", "value2");
             const write3P = collection3.write("key1", "value3");
             await Promise.all([write1P, write2P, write3P]);
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             const versions = collection1.readVersions("key1");
             assert(versions);
             assert.strictEqual(versions.length, 3, "Concurrent updates were not preserved");
@@ -144,28 +144,28 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             const write2P = collection2.write("key1", "value2");
             const write3P = collection3.write("key1", "value3");
             await Promise.all([write1P, write2P, write3P]);
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
 
             const versions = collection1.readVersions("key1");
             assert(versions);
             assert.strictEqual(versions.length, 3, "Concurrent updates were not preserved");
 
             await collection3.write("key1", "value4");
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             const versions2 = collection1.readVersions("key1");
             assert(versions2);
             assert.strictEqual(versions2.length, 1, "Happened after value did not overwrite");
             assert.strictEqual(versions2[0], "value4", "Happened after value did not overwrite");
 
             await collection2.write("key1", "value5");
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             const versions3 = collection1.readVersions("key1");
             assert(versions3);
             assert.strictEqual(versions3.length, 1, "Happened after value did not overwrite");
             assert.strictEqual(versions3[0], "value5", "Happened after value did not overwrite");
 
             await collection1.write("key1", "value6");
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             const versions4 = collection1.readVersions("key1");
             assert(versions4);
             assert.strictEqual(versions4.length, 1, "Happened after value did not overwrite");
@@ -175,7 +175,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             const write8P = collection2.write("key1", "value8");
             const write9P = collection3.write("key1", "value9");
             await Promise.all([write7P, write8P, write9P]);
-            await args.opProcessingController.process();
+            await args.ensureSynchronized();
             const versions5 = collection3.readVersions("key1");
             assert(versions5);
             assert.strictEqual(versions5.length, 3, "Concurrent happened after updates should overwrite and preserve");

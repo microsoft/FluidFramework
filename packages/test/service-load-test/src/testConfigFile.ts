@@ -13,6 +13,7 @@ export interface ITestConfig {
 export interface ITestTenant {
     server: string,
     username: string,
+    driveId: string,
 }
 
 /** Type modeling the profile sub-structure of the testConfig.json file */

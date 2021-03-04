@@ -41,13 +41,23 @@ export interface IOdspTestDriverConfig extends IClientConfig, IOdspTestLoginInfo
 
 export class OdspTestDriver implements ITestDriver {
     public static createFromEnv() {
+        return this.create(
+            process.env.testuser!,
+            process.env.testpwd!,
+            process.env.testserver!,
+            process.env.testDriveId!,
+            new Date().toISOString().replace(/:/g, "."),
+        );
+    }
+
+    public static create(username: string, password: string, server: string, driveId: string, directory: string) {
         const config: IOdspTestDriverConfig = {
-            username: process.env.testuser!,
-            password: process.env.testpwd!,
-            server: process.env.testserver!,
-            directory: new Date().toISOString().replace(/:/g, "."),
+            username,
+            password,
+            server,
+            directory,
             ...getMicrosoftConfiguration(),
-            driveId: process.env.testDriveId!,
+            driveId,
         };
 
         if (process.env.BUILD_BUILD_ID !== undefined) {

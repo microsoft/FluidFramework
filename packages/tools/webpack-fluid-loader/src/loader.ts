@@ -183,6 +183,14 @@ async function createWebLoader(
     });
 }
 
+const containers: Container[] = [];
+// A function for testing to make sure the containers are not dirty and in sync (at the same seq num)
+export function isSynchronized() {
+    if (containers.length === 0) { return true; }
+    const seqNum = containers[0].deltaManager.lastSequenceNumber;
+    return containers.every((c) => !c.isDirty && c.deltaManager.lastSequenceNumber === seqNum);
+}
+
 export async function start(
     id: string,
     packageJson: IFluidPackage,
@@ -220,10 +228,12 @@ export async function start(
     if (autoAttach || manualAttach) {
         // For new documents, create a detached container which will be attached later.
         container1 = await loader1.createDetachedContainer(codeDetails);
+        containers.push(container1);
     } else {
         // For existing documents, we try to load the container with the given documentId.
         const documentUrl = `${window.location.origin}/${documentId}`;
         container1 = await loader1.resolve({ url: documentUrl });
+        containers.push(container1);
 
         /**
          * For existing documents, the container should already exist. If it doesn't, we treat this as the new
@@ -287,6 +297,7 @@ export async function start(
         // Create a new request url from the resolvedUrl of the first container.
         const requestUrl2 = await urlResolver.getAbsoluteUrl(container1.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
+        containers.push(container2);
 
         await getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv);
         // Handle the code upgrade scenario (which fires contextChanged)

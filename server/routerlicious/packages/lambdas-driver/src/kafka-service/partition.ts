@@ -46,7 +46,7 @@ export class Partition extends EventEmitter {
         const partitionConfig = new Provider({}).defaults(clonedConfig).use("memory");
 
         this.checkpointManager = new CheckpointManager(id, consumer);
-        this.context = new Context(this.checkpointManager);
+        this.context = new Context(this.checkpointManager, this.logger);
         this.context.on("error", (error: any, errorData: IContextErrorData) => {
             this.emit("error", error, errorData);
         });

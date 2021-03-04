@@ -41,7 +41,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         const secondContainer = await args.loadTestContainer();
         secondContainerObject1 = await requestFluidObject<TestDataObject>(secondContainer, "default");
 
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
     });
 
     it("should generate the absolute path for ContainerRuntime correctly", () => {
@@ -90,7 +90,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         // Add the handle to the root DDS of `firstContainerObject1`.
         firstContainerObject1._root.set("sharedMap", sharedMapHandle);
 
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         // Get the handle in the remote client.
         const remoteSharedMapHandle = secondContainerObject1._root.get<IFluidHandle<SharedMap>>("sharedMap");
@@ -121,7 +121,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         // Add the handle to the root DDS of `firstContainerObject1` so that the FluidDataObjectRuntime is different.
         firstContainerObject1._root.set("sharedMap", sharedMap.handle);
 
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         // Get the handle in the remote client.
         const remoteSharedMapHandle = secondContainerObject1._root.get<IFluidHandle<SharedMap>>("sharedMap");
@@ -149,7 +149,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         // FluidDataObjectRuntime is different.
         firstContainerObject1._root.set("dataObject2", firstContainerObject2.handle);
 
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         // Get the handle in the remote client.
         const remoteDataObjectHandle =

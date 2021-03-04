@@ -9,6 +9,7 @@ export { IDocumentServiceFactory, IUrlResolver } from "old-driver-definitions";
 export { LocalResolver } from "old-local-driver";
 export { IFluidDataStoreFactory } from "old-runtime-definitions";
 export { OpProcessingController } from "old-test-utils";
+export const versionString = "N-1";
 
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
@@ -33,9 +34,8 @@ import {
     createLocalLoader,
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
-    TestObjectProvider,
 } from "old-test-utils";
-import { LoaderContainerTracker } from "@fluidframework/test-utils";
+import { Loader } from "old-container-loader";
 
 import {
     createRuntimeFactory,
@@ -176,37 +176,9 @@ export function createTestObjectProvider(
     if (driver === undefined) {
         throw new Error("Must provide a driver when using the current loader");
     }
-    if (oldLoader) {
-        const oldProvider = new newVer.TestObjectProvider(
-            driver,
-            containerFactoryFn as () => newVer.IRuntimeFactory);
 
-        // Remove once the older version support container tracking (for close)
-        if (!(TestObjectProvider as any).patchLoader) {
-            const loaderContainerTracker = new LoaderContainerTracker();
-            const oldMakeTestLoader = oldProvider.makeTestLoader.bind(oldProvider);
-            oldProvider.makeTestLoader = (testContainerConfig?: unknown) => {
-                const testLoader = oldMakeTestLoader(testContainerConfig);
-                loaderContainerTracker.add(testLoader as any);
-
-                // Also patch the loader.resolve to deal with url being a Promise from
-                // the new ITestDriver.createcontainerUrl
-                const oldResolve = testLoader.resolve.bind(testLoader);
-                testLoader.resolve = async (request: newVer.IRequest) => {
-                    request.url = await ((request as any).url as Promise<string>);
-                    return oldResolve(request);
-                };
-                return testLoader;
-            };
-            const oldReset = oldProvider.reset.bind(oldProvider);
-            oldProvider.reset = () => {
-                loaderContainerTracker.reset();
-                oldReset();
-            };
-        }
-        return oldProvider as unknown as  ITestObjectProvider;
-    } else {
-        return new newVer.TestObjectProvider(
-            driver, containerFactoryFn as () => newVer.IRuntimeFactory);
-    }
+    return new newVer.TestObjectProvider(
+        oldLoader ? Loader as unknown as typeof newVer.Loader : newVer.Loader,
+        driver,
+        containerFactoryFn as () => newVer.IRuntimeFactory);
 }

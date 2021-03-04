@@ -60,7 +60,7 @@ describe("sharedText", () => {
         await page.type('[class=flow-view]', word, { delay: 10 });
 
         // wait for all changes to propagate
-        await new Promise((resolve)=>setTimeout(resolve, 10));
+        await page.waitFor(() => window["FluidLoader"].isSynchronized());
 
         // The text returned has extra spaces so remove the extra spaces
         let textLeft = await getText(0);

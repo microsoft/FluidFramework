@@ -13,7 +13,6 @@ import {
 import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";
 import { Provider } from "nconf";
-import * as winston from "winston";
 import { DocumentContext } from "./documentContext";
 
 export class DocumentPartition {
@@ -53,7 +52,6 @@ export class DocumentPartition {
                 } catch (error) {
                     // TODO dead letter queue for bad messages, etc... when the lambda is throwing an exception
                     // for now we will simply continue on to keep the queue flowing
-                    winston.error("Error processing partition message", error);
                     context.error(error, { restart: false, tenantId, documentId });
                     this.corrupt = true;
                 }
