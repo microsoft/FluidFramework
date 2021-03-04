@@ -1790,10 +1790,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * @deprecated starting in 0.36, use getScheduler() instead.  To be removed in 0.38.
+     * @deprecated starting in 0.36. The AgentScheduler can be requested directly, though this will also be removed in
+     * a future release when an alternative is available: containerRuntime.request({ url: "/_scheduler" }).
+     * getTaskManager should be removed in 0.38.
      */
     public async getTaskManager(): Promise<IProvideAgentScheduler> {
-        console.error("getTaskManager is deprecated.  Please move to getScheduler.");
+        console.error("getTaskManager is deprecated.");
         const agentScheduler = await this.getScheduler();
         // Prior versions would return a TaskManager, which was an IProvideAgentScheduler -- returning this for back
         // compat.  Wrapping the agentScheduler in an IProvideAgentScheduler will help catch any cases where customers
@@ -1801,12 +1803,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return { IAgentScheduler: agentScheduler };
     }
 
-    public async getScheduler(): Promise<IAgentScheduler> {
-        const agentScheduler = await requestFluidObject<IAgentScheduler>(
+    private async getScheduler(): Promise<IAgentScheduler> {
+        return requestFluidObject<IAgentScheduler>(
             await this.getDataStore(taskSchedulerId, true),
             "",
         );
-        return agentScheduler.IAgentScheduler;
     }
 
     private updateLeader(leadership: boolean) {

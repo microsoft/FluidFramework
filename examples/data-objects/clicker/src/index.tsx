@@ -6,6 +6,7 @@
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
+import { IAgentScheduler } from "@fluidframework/runtime-definitions";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
@@ -57,7 +58,11 @@ export class Clicker extends DataObject implements IFluidHTMLView {
         const agentTaskId = "agent";
         const clickerAgent = new ClickerAgent(this.counter);
 
-        this.context.containerRuntime.getScheduler().then(async (agentScheduler) => {
+        this.context.containerRuntime.request({ url: "/_scheduler" }).then(async (agentSchedulerResponse) => {
+            if (agentSchedulerResponse.status === 404) {
+                throw new Error("Agent scheduler not found");
+            }
+            const agentScheduler = agentSchedulerResponse.value as IAgentScheduler;
             await agentScheduler.pick(agentTaskId, async () => {
                 console.log(`Picked`);
                 await clickerAgent.run();

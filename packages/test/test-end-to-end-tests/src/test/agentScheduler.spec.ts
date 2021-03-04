@@ -28,6 +28,8 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         beforeEach(async () => {
             const container = await args.makeTestContainer();
+            // Back-compat: querying for IAgentScheduler since this request would return an ITaskManager prior to 0.36.
+            // Remove the query in 0.38 when back compat is no longer a concern.
             scheduler = await requestFluidObject<IAgentScheduler>(container, taskSchedulerId)
                 .then((agentScheduler) => agentScheduler.IAgentScheduler);
 
@@ -108,6 +110,8 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         beforeEach(async () => {
             // Create a new Container for the first document.
             container1 = await args.makeTestContainer();
+            // Back-compat: querying for IAgentScheduler since this request would return an ITaskManager prior to 0.36.
+            // Remove the query in 0.38 when back compat is no longer a concern.
             scheduler1 = await requestFluidObject<IAgentScheduler>(container1, taskSchedulerId)
                 .then((agentScheduler) => agentScheduler.IAgentScheduler);
             const dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
@@ -123,6 +127,8 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             }
             // Load existing Container for the second document.
             container2 = await args.loadTestContainer();
+            // Back-compat: querying for IAgentScheduler since this request would return an ITaskManager prior to 0.36.
+            // Remove the query in 0.38 when back compat is no longer a concern.
             scheduler2 = await requestFluidObject<IAgentScheduler>(container2, taskSchedulerId)
                 .then((agentScheduler) => agentScheduler.IAgentScheduler);
             const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");

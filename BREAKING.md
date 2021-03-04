@@ -6,7 +6,7 @@
 The `createDetachedContainer` and `rehydrateDetachedContainerFromSnapshot` APIs are removed from the `ILoader` interface, and have been moved to the new `IHostLoader` interface.  The `Loader` class now implements `IHostLoader` instead, and consumers who need these methods should operate on an `IHostLoader` instead of an `ILoader`, such as by creating a `Loader`.
 
 ### TaskManager removed
-The `TaskManager` has been removed, as well as methods to access it (e.g. the `.taskManager` member on `DataObject`).  The `AgentScheduler` should be used instead for the time being and can be accessed through the `ContainerRuntime` (e.g. `await this.context.containerRuntime.getScheduler()`), though we expect this will also be deprecated and removed in a future release when an alternative is made available (see #4413).
+The `TaskManager` has been removed, as well as methods to access it (e.g. the `.taskManager` member on `DataObject`).  The `AgentScheduler` should be used instead for the time being and can be accessed via a request on the `ContainerRuntime` (e.g. `await this.context.containerRuntime.request({ url: "/_scheduler" })`), though we expect this will also be deprecated and removed in a future release when an alternative is made available (see #4413).
 
 ## 0.35 Breaking changes
 - [Removed some api implementations from odsp driver](#Removed-some-api-implemenations-from-odsp-driver)

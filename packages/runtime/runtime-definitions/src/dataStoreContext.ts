@@ -38,7 +38,6 @@ import {
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
 } from "./summary";
-import { IAgentScheduler } from "./agent";
 
 /**
  * Runtime flush mode handling
@@ -126,8 +125,6 @@ export interface IContainerRuntimeBase extends
      * @param relativeUrl - A relative request within the container
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-
-    getScheduler(): Promise<IAgentScheduler>;
 
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 
