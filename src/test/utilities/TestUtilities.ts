@@ -16,10 +16,11 @@ import {
 import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
-	LocalTestObjectProvider,
+	TestObjectProvider,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 } from '@fluidframework/test-utils';
+import { LocalServerTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
 import { fail } from '../../Common';
@@ -151,8 +152,8 @@ export interface ITestContainerConfig {
 
 /** Objects returned by setUpLocalServerTestSharedTree */
 export interface LocalServerSharedTreeTestingComponents {
-	/** The LocalTestObjectProvider created if one was not set in the options. */
-	localTestObjectProvider: LocalTestObjectProvider<ITestContainerConfig>;
+	/** The testObjectProvider created if one was not set in the options. */
+	testObjectProvider: TestObjectProvider<ITestContainerConfig>;
 	/** The SharedTree created and set up. */
 	tree: SharedTree;
 }
@@ -161,14 +162,14 @@ export interface LocalServerSharedTreeTestingComponents {
 export interface LocalServerSharedTreeTestingOptions {
 	/**
 	 * Id for the SharedTree to be created.
-	 * If two SharedTrees have the same id and the same localTestObjectProvider,
+	 * If two SharedTrees have the same id and the same testObjectProvider,
 	 * they will collaborate (send edits to each other)
 	 */
 	id?: string;
 	/** Node to initialize the SharedTree with. */
 	initialTree?: ChangeNode;
 	/** If set, uses the provider to create the container and create the SharedTree. */
-	localTestObjectProvider?: LocalTestObjectProvider<ITestContainerConfig>;
+	testObjectProvider?: TestObjectProvider<ITestContainerConfig>;
 	/**
 	 * If not set, full history will be preserved.
 	 */
@@ -181,12 +182,14 @@ export interface LocalServerSharedTreeTestingOptions {
 
 /**
  * Sets up and returns an object of components useful for testing SharedTree with a local server.
- * Required for tests that involve the uploadBlob API
+ * Required for tests that involve the uploadBlob API.
+ *
+ * If using this method, be sure to clean up server state by calling `reset` on the TestObjectProvider.
  */
 export async function setUpLocalServerTestSharedTree(
 	options: LocalServerSharedTreeTestingOptions
 ): Promise<LocalServerSharedTreeTestingComponents> {
-	const { id, initialTree, localTestObjectProvider, setupEditId, summarizer } = options;
+	const { id, initialTree, testObjectProvider, setupEditId, summarizer } = options;
 
 	const treeId = id || 'test';
 	const registry: ChannelFactoryRegistry = [[treeId, SharedTree.getFactory()]];
@@ -195,21 +198,22 @@ export async function setUpLocalServerTestSharedTree(
 			initialSummarizerDelayMs: 0,
 		});
 
-	let provider: LocalTestObjectProvider<ITestContainerConfig>;
+	let provider: TestObjectProvider<ITestContainerConfig>;
 	let container: Container;
 
-	if (localTestObjectProvider !== undefined) {
-		provider = localTestObjectProvider;
+	if (testObjectProvider !== undefined) {
+		provider = testObjectProvider;
 		container = await provider.loadTestContainer();
 	} else {
-		provider = new LocalTestObjectProvider(runtimeFactory);
+		const driver = new LocalServerTestDriver();
+		provider = new TestObjectProvider(driver, runtimeFactory);
 		container = (await provider.makeTestContainer()) as Container;
 	}
 
 	const dataObject = await requestFluidObject<ITestFluidObject>(container, 'default');
 	const tree = await dataObject.getSharedObject<SharedTree>(treeId);
 
-	if (initialTree !== undefined && localTestObjectProvider === null) {
+	if (initialTree !== undefined && testObjectProvider === undefined) {
 		setTestTree(tree, initialTree, setupEditId);
 	}
 
@@ -217,7 +221,7 @@ export async function setUpLocalServerTestSharedTree(
 		tree.summarizer = summarizer;
 	}
 
-	return { tree, localTestObjectProvider: provider };
+	return { tree, testObjectProvider: provider };
 }
 
 /** Sets testTrait to contain `node`. */

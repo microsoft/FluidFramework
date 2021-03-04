@@ -10,6 +10,7 @@ import { assertArrayOfOne, assertNotUndefined, isSharedTreeEvent } from '../Comm
 import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers';
 import { SharedTreeEvent } from '../SharedTree';
 import { Change, ChangeType, EditNode, Delete, Insert, ChangeNode, StablePlace, StableRange } from '../PersistedTypes';
+import { editsPerChunk } from '../EditLog';
 import { deepCompareNodes, newEdit } from '../EditUtilities';
 import { noHistorySummarizer, serialize } from '../Summary';
 import { Snapshot } from '../Snapshot';
@@ -529,6 +530,35 @@ describe('SharedTree', () => {
 			// It will contain a single entry setting the tree to equal the head revision.
 			expect(tree.edits.length).to.equal(1);
 			expect(await tree.edits.tryGetEdit(editID)).to.be.undefined;
+		});
+
+		it('does not swallow errors in asynchronous blob uploading', async () => {
+			const errorMessage = 'Simulated exception in uploadBlob';
+			const { tree, componentRuntime, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
+			componentRuntime.uploadBlob = async () => {
+				throw new Error(errorMessage);
+			};
+
+			let treeErrorEventWasInvoked = false;
+			tree.on('error', (error: unknown) => {
+				treeErrorEventWasInvoked = true;
+				expect(error).to.have.property('message').which.equals(errorMessage);
+			});
+
+			// Generate enough edits to cause a chunk upload.
+			for (let i = 0; i < editsPerChunk / 2 + 1; i++) {
+				const insertee = makeEmptyNode();
+				tree.editor.insert(insertee, StablePlace.before(left));
+				tree.editor.delete(StableRange.only(insertee));
+			}
+
+			containerRuntimeFactory.processAllMessages();
+			tree.saveSummary();
+
+			// Just waiting for the ChunksEmitted event here isn't sufficient, as the SharedTree error
+			// will propagate in a separate promise chain.
+			await new Promise((resolve) => setTimeout(resolve, 0));
+			expect(treeErrorEventWasInvoked).to.equal(true, 'SharedTree error was never raised');
 		});
 	});
 

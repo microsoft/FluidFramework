@@ -151,7 +151,7 @@ const loadedChunkCacheSize = Number.POSITIVE_INFINITY;
  * @param edit - The edit that was added to the log
  * @param isLocal - true iff this edit was generated locally
  */
-export type EditAddedHandler = (edit: Edit, isLocal: boolean) => void;
+export type EditAddedHandler = (edit: Edit, isLocal: boolean, wasLocal: boolean) => void;
 
 /**
  * Event fired when an edit is added to an `EditLog`.
@@ -409,7 +409,7 @@ export class EditLog implements OrderedEditSet {
 		this.sequencedEditIds.push(id);
 		const sequencedEditId: SequencedOrderedEditId = { index: this.numberOfSequencedEdits - 1, isLocal: false };
 		this.allEditIds.set(id, sequencedEditId);
-		this.emitAdd(edit, false);
+		this.emitAdd(edit, false, encounteredEditId !== undefined);
 	}
 
 	/**
@@ -420,12 +420,12 @@ export class EditLog implements OrderedEditSet {
 		this.localEdits.push(edit);
 		const localEditId: LocalOrderedEditId = { localSequence: this.localEditSequence++, isLocal: true };
 		this.allEditIds.set(edit.id, localEditId);
-		this.emitAdd(edit, true);
+		this.emitAdd(edit, true, false);
 	}
 
-	private emitAdd(editAdded: Edit, isLocal: boolean): void {
+	private emitAdd(editAdded: Edit, isLocal: boolean, wasLocal: boolean): void {
 		for (const handler of this.editAddedHandlers) {
-			handler(editAdded, isLocal);
+			handler(editAdded, isLocal, wasLocal);
 		}
 	}
 
