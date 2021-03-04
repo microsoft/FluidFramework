@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { TaskManagerFactory } from "@fluidframework/agent-scheduler";
+import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
@@ -91,8 +91,8 @@ import {
     ISummaryStats,
     ISummaryTreeWithStats,
     ISummarizeInternalResult,
+    IProvideAgentScheduler,
     IAgentScheduler,
-    ITaskManager,
     IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
@@ -450,7 +450,7 @@ class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
     constructor(namedEntries: NamedFluidDataStoreRegistryEntries) {
         super([
             ...namedEntries,
-            TaskManagerFactory.registryEntry,
+            AgentSchedulerFactory.registryEntry,
         ]);
     }
 }
@@ -535,7 +535,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Create all internal data stores if not already existing on storage or loaded a detached
         // container from snapshot(ex. draft mode).
         if (!context.existing) {
-            await runtime.createRootDataStore(TaskManagerFactory.type, taskSchedulerId);
+            await runtime.createRootDataStore(AgentSchedulerFactory.type, taskSchedulerId);
         }
 
         runtime.subscribeToLeadership();
@@ -1826,15 +1826,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    public async getTaskManager(): Promise<ITaskManager> {
-        return requestFluidObject<ITaskManager>(
-            await this.getDataStore(taskSchedulerId, true),
-            "");
+    /**
+     * @deprecated starting in 0.36. The AgentScheduler can be requested directly, though this will also be removed in
+     * a future release when an alternative is available: containerRuntime.request(\{ url: "/_scheduler" \}).
+     * getTaskManager should be removed in 0.38.
+     */
+    public async getTaskManager(): Promise<IProvideAgentScheduler> {
+        console.error("getTaskManager is deprecated.");
+        const agentScheduler = await this.getScheduler();
+        // Prior versions would return a TaskManager, which was an IProvideAgentScheduler -- returning this for back
+        // compat.  Wrapping the agentScheduler in an IProvideAgentScheduler will help catch any cases where customers
+        // try to call other TaskManager functionality.
+        return { IAgentScheduler: agentScheduler };
     }
 
-    public async getScheduler(): Promise<IAgentScheduler> {
-        const taskManager = await this.getTaskManager();
-        return taskManager.IAgentScheduler;
+    private async getScheduler(): Promise<IAgentScheduler> {
+        return requestFluidObject<IAgentScheduler>(
+            await this.getDataStore(taskSchedulerId, true),
+            "",
+        );
     }
 
     private updateLeader(leadership: boolean) {
