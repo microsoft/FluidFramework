@@ -63,14 +63,22 @@ export function compareWithReferenceSnapshot(
      * Before replace - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
      * After replace  - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
      */
-    const packageVersionRegex = /\\"packageversion\\":\\".+\\"/gi;
+    const packageVersionRegex = /\\"packageversion\\":\\"[^"]+\\"/gi;
     const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X\\\"";
 
+    // The snapshotFormatVersion could vary. Replace all with -1 like packageVersion.
+    const snapshotFormatVersionRegex = /\\"snapshotformatversion\\":(\\"[^"]+\\"|\d+)/gi;
+    const snapshotFormatVersionPlaceholder = "\\\"snapshotFormatVersion\\\":-1";
+
     const normalizedSnapshot = JSON.parse(
-        JSON.stringify(snapshot, undefined, 2).replace(packageVersionRegex, packageVersionPlaceholder),
+        JSON.stringify(snapshot, undefined, 2)
+            .replace(packageVersionRegex, packageVersionPlaceholder)
+            .replace(snapshotFormatVersionRegex, snapshotFormatVersionPlaceholder),
     );
     const normalizedReferenceSnapshot = JSON.parse(
-        JSON.stringify(referenceSnapshot, undefined, 2).replace(packageVersionRegex, packageVersionPlaceholder),
+        JSON.stringify(referenceSnapshot, undefined, 2)
+            .replace(packageVersionRegex, packageVersionPlaceholder)
+            .replace(snapshotFormatVersionRegex, snapshotFormatVersionPlaceholder),
     );
 
     // Put the assert in a try catch block, so that we can report errors, if any.

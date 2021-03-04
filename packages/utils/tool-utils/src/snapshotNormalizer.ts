@@ -92,12 +92,16 @@ function getSortedBlobContent(content: string): string {
  * Helper function that normalizes the given snapshot tree. It sorts objects and arrays in the snapshot. It also
  * normalizes certain blob contents for which the order of content does not matter. For example, garbage collection
  * blobs contains objects / arrays whose element order do not matter.
+ * We also promote any .channels subtrees, and exclude the root .metadata blob for backwards compatibility.
+ * In a future version, once we can reasonably expect most/all of our test criteria to have the new format with
+ * .channels subtrees and .metadata blob, we should invert this logic to expect .channels and .metadata,
+ * and add specifically for the tests (if any) that are in the older format.
  * @param snapshot - The snapshot tree to normalize.
  * @param config - Configs to use when normalizing snapshot. For example, it can contain paths of blobs whose contents
  * should be normalized as well.
  * @returns a copy of the normalized snapshot tree.
  */
-export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormalizerConfig): ITree {
+export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormalizerConfig, depth = 0): ITree {
     // Merge blobs to normalize in the config with runtime blobs to normalize. The contents of these blobs will be
     // parsed and deep sorted.
     const blobsToNormalize = [ ...runtimeBlobsToNormalize, ...config?.blobsToNormalize ?? [] ];
@@ -106,6 +110,10 @@ export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormali
     for (const entry of snapshot.entries) {
         switch (entry.type) {
             case TreeEntry.Blob: {
+                if (depth === 0 && entry.path === ".metadata") {
+                    // Ignore the root .metadata blob
+                    continue;
+                }
                 let contents = entry.value.contents;
                 // If this blob has to be normalized, parse and sort the blob contents first.
                 if (blobsToNormalize.includes(entry.path)) {
@@ -115,7 +123,15 @@ export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormali
                 break;
             }
             case TreeEntry.Tree: {
-                normalizedEntries.push(new TreeTreeEntry(entry.path, getNormalizedSnapshot(entry.value, config)));
+                const normalizedSubtree = getNormalizedSnapshot(entry.value, config, depth + 1);
+                if (entry.path === ".channels") {
+                    // These special subtrees get promoted.
+                    for (const subTreeEntry of normalizedSubtree.entries) {
+                        normalizedEntries.push(subTreeEntry);
+                    }
+                } else {
+                    normalizedEntries.push(new TreeTreeEntry(entry.path, normalizedSubtree));
+                }
                 break;
             }
             case TreeEntry.Attachment: {
