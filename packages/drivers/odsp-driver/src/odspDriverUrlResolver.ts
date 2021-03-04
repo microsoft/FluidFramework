@@ -183,8 +183,8 @@ function decodeOdspUrl(url: string): {
 } {
     const [siteUrl] = url.split("?");
     const parsedUrl = new URL(url);
-    let urlPath = parsedUrl.pathname ?? "";
-    if (urlPath !== "") {
+    let urlPath = parsedUrl.pathname;
+    if (urlPath !== "" && !urlPath.endsWith("/")) {
         urlPath += "/";
     }
 
