@@ -133,14 +133,14 @@ function runLogViewerCorrectnessTests(viewerCreator: (log: EditLog, baseTree?: C
 			const viewer = viewerCreator(logWithLocalEdits, initialSimpleTree);
 			expectSnapshotsAreEqual(logWithLocalEdits, viewer);
 
-			// Add a remote sequenced edit
-			logWithLocalEdits.addSequencedEdit(
-				newEdit(Insert.create([makeEmptyNode()], StablePlace.atStartOf(rightTraitLocation)))
-			);
-			expectSnapshotsAreEqual(logWithLocalEdits, viewer);
-
 			// Sequence the existing local edits and ensure viewer generates the correct snapshots
 			while (logWithLocalEdits.numberOfLocalEdits > 0) {
+				// Add a remote sequenced edit
+				logWithLocalEdits.addSequencedEdit(
+					newEdit(Insert.create([makeEmptyNode()], StablePlace.atStartOf(rightTraitLocation)))
+				);
+				expectSnapshotsAreEqual(logWithLocalEdits, viewer);
+				// Sequence a local edit
 				logWithLocalEdits.addSequencedEdit(
 					logWithLocalEdits.getEditInSessionAtIndex(logWithLocalEdits.numberOfSequencedEdits)
 				);
@@ -219,7 +219,7 @@ describe('CachingLogViewer', () => {
 		expect(editsProcessed).to.equal(log.length);
 	});
 
-	it('caches snapshots for local revisions only for the HEAD revision', async () => {
+	it('caches snapshots for local revisions', async () => {
 		const logWithLocalEdits = getSimpleLogWithLocalEdits();
 		let editsProcessed = 0;
 		const viewer = getCachingLogViewer(logWithLocalEdits, initialSimpleTree, () => editsProcessed++);
@@ -227,16 +227,49 @@ describe('CachingLogViewer', () => {
 		await viewer.getSnapshot(Number.POSITIVE_INFINITY);
 		expect(editsProcessed).to.equal(logWithLocalEdits.length);
 
-		// HEAD snapshot should be cached, even though it is a local revision.
+		// Local edits should now be cached until next remote sequenced edit arrives
 		editsProcessed = 0;
-		await viewer.getSnapshot(Number.POSITIVE_INFINITY);
-		expect(editsProcessed).to.equal(0);
+		for (let i = logWithLocalEdits.numberOfSequencedEdits + 1; i <= logWithLocalEdits.length; i++) {
+			await viewer.getSnapshot(i);
+			expect(editsProcessed).to.equal(0);
+		}
 
-		// Get the snapshot associated with the first local edit. Caching of non-HEAD snapshots associated with local edits is
-		// not supported and will thus require recomputation.
+		// Add a new local edit, and request the latest view.
+		// This should apply only a single edit, as the most recent HEAD should be cached.
 		editsProcessed = 0;
-		await viewer.getSnapshot(logWithLocalEdits.numberOfSequencedEdits + 1);
+		logWithLocalEdits.addLocalEdit(
+			newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation)))
+		);
+		await viewer.getSnapshot(Number.POSITIVE_INFINITY);
 		expect(editsProcessed).to.equal(1);
+
+		editsProcessed = 0;
+		while (logWithLocalEdits.numberOfLocalEdits > 0) {
+			logWithLocalEdits.addSequencedEdit(
+				logWithLocalEdits.getEditInSessionAtIndex(logWithLocalEdits.numberOfSequencedEdits)
+			);
+			await viewer.getSnapshot(Number.POSITIVE_INFINITY);
+			expect(editsProcessed).to.equal(0);
+		}
+	});
+
+	it('invalidates cached snapshots for local revisions when remote edits are received', () => {
+		const logWithLocalEdits = getSimpleLogWithLocalEdits();
+		let editsProcessed = 0;
+		const viewer = getCachingLogViewer(logWithLocalEdits, initialSimpleTree, () => editsProcessed++);
+
+		// Request twice, should only process edits once
+		viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
+		viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
+		expect(editsProcessed).to.equal(logWithLocalEdits.length);
+
+		// Remote edit arrives
+		editsProcessed = 0;
+		logWithLocalEdits.addSequencedEdit(
+			newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation)))
+		);
+		viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
+		expect(editsProcessed).to.equal(logWithLocalEdits.numberOfLocalEdits + 1);
 	});
 
 	describe('Telemetry', () => {

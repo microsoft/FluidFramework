@@ -23,9 +23,16 @@ import { Transaction } from './Transaction';
 
 /**
  * Creates the changes required to revert the given edit associated with respect to the supplied view.
+ * @param edit - the edit to produce an inverse of
+ * @param before - a snapshot before `edit` is applied to use as context for generating the inverse.
+ * @returns a sequences of changes, that if applied to the output of applying `edit` to `before`, will produce `before`.
+ * The resulting changes can be use on other snapshots,
+ * however there is a chance they will fail to apply, or may not be a true semantic inverse.
+ *
+ * TODO: what should this do if `edit` fails to apply to `before`?
  * @public
  */
-export function revert(edit: Edit, view: Snapshot): Change[] {
+export function revert(edit: Edit, before: Snapshot): Change[] {
 	const result: Change[] = [];
 
 	const builtNodes = new Map<DetachedSequenceId, NodeId[]>();
@@ -33,9 +40,10 @@ export function revert(edit: Edit, view: Snapshot): Change[] {
 	const insertSources = new Set<DetachedSequenceId>();
 
 	// Open edit on revision to update it as changes are walked through
-	const editor = new Transaction(view);
-	// Roll back target edit
+	const editor = new Transaction(before);
+	// Apply `edit`, generating an inverse as we go.
 	for (const change of edit.changes) {
+		// Generate an inverse of each change
 		switch (change.type) {
 			case ChangeType.Build: {
 				// Save nodes added to the detached state for use in future changes
