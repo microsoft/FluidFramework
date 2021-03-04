@@ -80,7 +80,8 @@ export enum SharedTreeEvent {
 	 */
 	EditCommitted = 'committedEdit',
 	/**
-	 * Upload has completed for a set of edit chunks.
+	 * Upload has completed successfully for a set of edit chunks, or failed for at least one chunk in the set.
+	 * If any chunk upload failed, the error will be raised on the SharedTree instance.
 	 * This event is used exclusively for testing.
 	 * @internal
 	 */
@@ -328,14 +329,17 @@ export class SharedTree extends SharedObject {
 	private async initiateEditChunkUpload(): Promise<void> {
 		// Initiate upload of any edit chunks not yet uploaded.
 		const editChunks = this.editLog.getEditLogSummary(true).editChunks;
-		await Promise.all(
-			editChunks.map(async ({ key, chunk }) => {
-				if (Array.isArray(chunk) && chunk.length === editsPerChunk) {
-					await this.uploadEditChunk(chunk, key);
-				}
-			})
-		);
-		this.emit(SharedTreeEvent.ChunksUploaded);
+		try {
+			await Promise.all(
+				editChunks.map(async ({ key, chunk }) => {
+					if (Array.isArray(chunk) && chunk.length === editsPerChunk) {
+						await this.uploadEditChunk(chunk, key);
+					}
+				})
+			);
+		} finally {
+			this.emit(SharedTreeEvent.ChunksUploaded);
+		}
 	}
 
 	/**
@@ -378,7 +382,7 @@ export class SharedTree extends SharedObject {
 			this.editLog.sequenceLocalEdits();
 		}
 
-		void this.initiateEditChunkUpload();
+		this.initiateEditChunkUpload().catch((error: unknown) => this.emit('error', error));
 		return this.summarizer(this.editLog, this.currentView);
 	}
 
