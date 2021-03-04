@@ -1673,7 +1673,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         type: MessageType,
         contents: any) {
         this.verifyNotClosed();
-        assert(this.connected);
+        assert(this.connected, "Container disconnected when trying to submit system message");
 
         // System message should not be sent in the middle of the batch.
         // That said, we can preserve existing behavior by not flushing existing buffer.
@@ -1788,7 +1788,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private updateLeader(leadership: boolean) {
         this._leader = leadership;
         if (this.leader) {
-            assert(this.clientId === undefined || this.connected && this.deltaManager && this.deltaManager.active);
+            assert(this.clientId === undefined || this.connected && this.deltaManager && this.deltaManager.active,
+                "Leader must either have undefined clientId or be connected with active delta manager!");
             this.emit("leader");
         } else {
             this.emit("notleader");

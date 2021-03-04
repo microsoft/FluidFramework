@@ -81,7 +81,7 @@ export async function requestFluidObject<T = IFluidObject>(
         throw responseToException(response, request);
     }
 
-    assert(response.value, "Invalid response value for fluid object request");
+    assert(response.value, "Invalid response value for Fluid object request");
     return response.value as T;
 }
 
