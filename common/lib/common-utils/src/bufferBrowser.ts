@@ -45,9 +45,28 @@ export const bufferToString = (blob: ArrayBufferLike, encoding: string): string 
      IsoBuffer.from(blob).toString(encoding);
 
 /**
+ * Determines if an object is an array buffer
+ * @param obj - The object to determine if it is an ArrayBuffer
+ */
+export function isArrayBuffer(obj: any): obj is ArrayBuffer {
+    const maybe = obj as Partial<ArrayBuffer> | undefined;
+    return obj instanceof ArrayBuffer
+    || (typeof maybe === "object"
+        && typeof maybe.byteLength === "number"
+        && typeof maybe.slice === "function");
+}
+
+/**
  * Minimal implementation of Buffer for our usages in the browser environment.
  */
 export class IsoBuffer extends Uint8Array {
+    private readonly ___isIsoBuffer___  = true;
+
+    public static isIsoBuffer(obj: any): obj is IsoBuffer {
+        const maybe = obj as IsoBuffer;
+        return maybe.___isIsoBuffer___ === true;
+    }
+
     // Need to have ctor for it to be in proto chain for instanceof check in from() method to work
     public constructor(buffer: ArrayBufferLike, byteOffset?: number, length?: number) {
         super(buffer, byteOffset, length);
@@ -71,9 +90,9 @@ export class IsoBuffer extends Uint8Array {
     static from(value, encodingOrOffset?, length?): IsoBuffer {
         if (typeof value === "string") {
             return IsoBuffer.fromString(value, encodingOrOffset as string | undefined);
-        } else if (value instanceof IsoBuffer) {
+        } else if (this.isIsoBuffer(value)) {
             return value;
-        } else if (value instanceof ArrayBuffer) {
+        } else if (isArrayBuffer(value)) {
             return IsoBuffer.fromArrayBuffer(value, encodingOrOffset as number | undefined, length);
         } else {
             throw new TypeError();
