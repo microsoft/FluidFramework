@@ -51,6 +51,7 @@ function gatesAllowPacking() {
  * To be removed once bufferToString is fixed!
 */
 function bufferToString2(blob: ArrayBufferLike, encoding: "utf-8" | "base64"): string {
+    // TODO: maybe unsafe
     if (blob instanceof Uint8Array) { // IsoBuffer does not have ctor, so it's not in proto chain :(
         return Uint8ArrayToString(blob, encoding);
     }

@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Deferred, bufferToString, assert } from "@fluidframework/common-utils";
+import { Deferred, fromBase64ToUtf8, assert } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { IValueChanged, MapKernel } from "@fluidframework/map";
@@ -495,8 +495,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
      */
     protected async loadCore(storage: IChannelStorageService) {
         if (await storage.contains(snapshotFileName)) {
-            const blob = await storage.readBlob(snapshotFileName);
-            const header = bufferToString(blob, "utf8");
+            const header = await storage.read(snapshotFileName);
+
+            const data: string = header ? fromBase64ToUtf8(header) : undefined;
+            this.intervalMapKernel.populate(data);
             this.intervalMapKernel.populate(header);
         }
 

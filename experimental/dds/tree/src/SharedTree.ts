@@ -9,7 +9,7 @@ import { IFluidDataStoreRuntime, IChannelStorageService } from '@fluidframework/
 import { AttachState } from '@fluidframework/container-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { bufferToString, IsoBuffer } from '@fluidframework/common-utils';
+import { IsoBuffer, fromBase64ToUtf8 } from '@fluidframework/common-utils';
 import { ChildLogger } from '@fluidframework/telemetry-utils';
 import { assert, fail, SharedTreeTelemetryProperties } from './Common';
 import { EditHandle, editsPerChunk, EditLog, OrderedEditSet } from './EditLog';
@@ -432,8 +432,8 @@ export class SharedTree extends SharedObject {
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
-		const header = await storage.readBlob(snapshotFileName);
-		const summary = deserialize(bufferToString(header, 'utf8'));
+		const header = await storage.read(snapshotFileName);
+		const summary = deserialize(fromBase64ToUtf8(header));
 		if (typeof summary === 'string') {
 			fail(summary);
 		}

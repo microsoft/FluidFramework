@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import util from "util";
-import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -37,7 +37,7 @@ interface IFetchedBlob {
     treePath: string;
     filename: string;
     blobId: string;
-    blob: Promise<ArrayBufferLike | undefined>;
+    blob: Promise<string | undefined>;
     reused: boolean;
 }
 
@@ -45,7 +45,7 @@ interface IFetchedTree {
     treePath: string;
     blobId: string;
     filename: string;
-    blob: ArrayBufferLike;
+    blob: string;
 
     reused: false;
 
@@ -56,9 +56,9 @@ function isFetchedTree(fetchedData: IFetchedData): fetchedData is IFetchedTree {
     return "patched" in fetchedData;
 }
 
-const blobCache = new Map<string, Promise<ArrayBufferLike>>();
-let blobCachePrevious = new Map<string, Promise<ArrayBufferLike>>();
-let blobCacheCurrent = new Map<string, Promise<ArrayBufferLike>>();
+const blobCache = new Map<string, Promise<string>>();
+let blobCachePrevious = new Map<string, Promise<string>>();
+let blobCacheCurrent = new Map<string, Promise<string>>();
 
 function fetchBlobs(prefix: string,
     tree: ISnapshotTree,
@@ -76,7 +76,7 @@ function fetchBlobs(prefix: string,
                 reused = false;
                 blob = blobCache.get(blobId);
                 if (blob === undefined) {
-                    blob = storage.readBlob(blobId);
+                    blob = storage.read(blobId);
                     blobCache.set(blobId, blob);
                 }
             }
@@ -101,10 +101,10 @@ function fetchBlobs(prefix: string,
 
 function createTreeBlob(tree: ISnapshotTree, prefix: string, patched: boolean): IFetchedTree {
     const id = tree.id ?? "original";
-    const blob = stringToBuffer(JSON.stringify(tree),"utf8");
+    const content = JSON.stringify(tree);
     const filename = patched ? "tree" : `tree-${id}`;
     const treePath = `${prefix}${filename}`;
-    return { treePath, blobId: "original tree $id", filename, blob, patched, reused: false };
+    return { treePath, blobId: "original tree $id", filename, blob:content, patched, reused: false };
 }
 
 async function fetchBlobsFromSnapshotTree(
@@ -120,7 +120,7 @@ async function fetchBlobsFromSnapshotTree(
 
     if (prefix === "/") {
         blobCachePrevious = blobCacheCurrent;
-        blobCacheCurrent = new Map<string, Promise<ArrayBufferLike>>();
+        blobCacheCurrent = new Map<string, Promise<string>>();
     }
 
     // Create the tree info before fetching blobs (which will modify it)
@@ -190,11 +190,10 @@ async function dumpSnapshotTreeVerbose(name: string, fetchedData: IFetchedData[]
     console.log(`${"Blob Path".padEnd(nameLength)} | Reused |      Bytes`);
     console.log("-".repeat(nameLength + 26));
     for (const item of sorted) {
-        const buffer = await item.blob;
-        if (buffer === undefined) {
+        const blob = await item.blob;
+        if (blob === undefined) {
             continue;
         }
-        const blob = bufferToString(buffer,"utf8");
         // eslint-disable-next-line max-len
         console.log(`${item.treePath.padEnd(nameLength)} |    ${item.reused ? "X" : " "}   | ${formatNumber(blob.length).padStart(10)}`);
         size += blob.length;
@@ -211,11 +210,10 @@ async function dumpSnapshotTree(name: string, fetchedData: IFetchedData[]): Prom
     const sorted = getDumpFetchedData(fetchedData);
 
     for (const item of sorted) {
-        const buffer = await item.blob;
-        if (buffer === undefined) {
+        const blob = await item.blob;
+        if (blob === undefined) {
             continue;
         }
-        const blob = bufferToString(buffer, "utf8");
         if (!item.reused) {
             sizeNew += blob.length;
             blobCountNew++;
@@ -232,16 +230,15 @@ async function saveSnapshot(name: string, fetchedData: IFetchedData[], saveDir: 
 
     await mkdir(`${outDir}/decoded`, { recursive: true });
     await Promise.all(fetchedData.map(async (item) => {
-        const buffer = await item.blob;
-        if (buffer === undefined) {
+        const blob = await item.blob;
+        if (blob === undefined) {
             console.error(`ERROR: Unable to get data for blob ${item.blobId}`);
             return;
         }
-        const data = bufferToString(buffer,"base64");
 
         if (!isFetchedTree(item)) {
-            fs.writeFileSync(`${outDir}/${item.filename}`, data);
-            const decoded = bufferToString(buffer,"utf8");
+            fs.writeFileSync(`${outDir}/${item.filename}`, blob);
+            const decoded = fromBase64ToUtf8(blob);
             try {
                 const object = JSON.parse(decoded);
                 fs.writeFileSync(`${outDir}/decoded/${item.filename}.json`, JSON.stringify(object, undefined, 2));
@@ -250,10 +247,8 @@ async function saveSnapshot(name: string, fetchedData: IFetchedData[], saveDir: 
             }
         } else {
             // Write out same data for tree
-            fs.writeFileSync(`${outDir}/${item.filename}.json`, data);
-            const decoded = bufferToString(buffer,"utf8");
-            fs.writeFileSync(`${outDir}/decoded/${item.filename}.json`,
-                JSON.stringify(JSON.parse(decoded), undefined, 2));
+            fs.writeFileSync(`${outDir}/${item.filename}.json`, blob);
+            fs.writeFileSync(`${outDir}/decoded/${item.filename}.json`, JSON.stringify(JSON.parse(blob), undefined, 2));
         }
     }));
 }

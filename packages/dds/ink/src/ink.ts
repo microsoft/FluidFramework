@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
@@ -213,11 +213,10 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const blob = await storage.readBlob(snapshotFileName);
-        const header = bufferToString(blob, "utf8");
+        const header = await storage.read(snapshotFileName);
         if (header !== undefined) {
             this.inkData = new InkData(
-                JSON.parse(header) as ISerializableInk,
+                JSON.parse(fromBase64ToUtf8(header)) as ISerializableInk,
             );
         }
     }
