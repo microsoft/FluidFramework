@@ -16,6 +16,7 @@ import {
     ISequencedDocumentMessage,
     SummaryType,
     ISnapshotTree,
+    SummaryObject,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
@@ -29,6 +30,7 @@ import {
     IInitialSummary,
     ISummarizerNodeRootContract,
     parseSummaryForSubtrees,
+    parseSummaryTreeForSubtrees,
     ReadAndParseBlob,
     seqFromTree,
     SummaryNode,
@@ -363,8 +365,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
     public loadBaseSummaryWithoutDifferential(snapshot: ISnapshotTree) {
         const { childrenPathPart } = parseSummaryForSubtrees(snapshot);
-        if (childrenPathPart !== undefined) {
-            assert(!!this.latestSummary, "Should have latest summary defined during loadBaseSummary");
+        if (childrenPathPart !== undefined && this.latestSummary !== undefined) {
             this.latestSummary.additionalPath = EscapedPath.create(childrenPathPart);
         }
     }
@@ -381,8 +382,7 @@ export class SummarizerNode implements IRootSummarizerNode {
             decodedSummary.pathParts.push(childrenPathPart);
         }
 
-        if (decodedSummary.pathParts.length > 0) {
-            assert(!!this.latestSummary, "Should have latest summary defined during loadBaseSummary");
+        if (decodedSummary.pathParts.length > 0 && this.latestSummary !== undefined) {
             this.latestSummary.additionalPath = EscapedPath.createAndConcat(decodedSummary.pathParts);
         }
 
@@ -536,9 +536,17 @@ export class SummarizerNode implements IRootSummarizerNode {
             case CreateSummarizerNodeSource.Local: {
                 const parentInitialSummary = this.initialSummary;
                 if (parentInitialSummary !== undefined) {
-                    const childSummary = parentInitialSummary.summary?.summary.tree[id];
+                    let childSummary: SummaryObject | undefined;
+                    if (parentInitialSummary.summary !== undefined) {
+                        const { childrenTree } = parseSummaryTreeForSubtrees(parentInitialSummary.summary.summary);
+                        assert(
+                            childrenTree.type === SummaryType.Tree,
+                            "Parent summary object is not a tree",
+                        );
+                        childSummary = childrenTree.tree[id];
+                    }
                     if (createParam.type === CreateSummarizerNodeSource.FromSummary) {
-                        // Locally created would not have subtree.
+                        // Locally created would not have differential subtree.
                         assert(!!childSummary, "Missing child summary tree");
                     }
                     let childSummaryWithStats: ISummaryTreeWithStats | undefined;
