@@ -16,6 +16,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import {
     createAndAttachContainer,
     createDocumentId,
@@ -27,7 +28,6 @@ import {
 import { Loader } from "@fluidframework/container-loader";
 import * as old from "./oldVersion";
 import * as old2 from "./oldVersion2";
-import { ITestDriver } from "./newVersion";
 
 // A simple dataStore with runtime/root exposed for testing purposes. Two
 // different versions (defined below) are used to test context reload.
