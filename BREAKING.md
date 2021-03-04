@@ -1,3 +1,13 @@
+## 0.36 Breaking changes
+- [Some `ILoader` APIs moved to `IHostLoader`](#Some-ILoader-APIs-moved-to-IHostLoader)
+- [TaskManager removed](#TaskManager-removed)
+
+### Some `ILoader` APIs moved to `IHostLoader`
+The `createDetachedContainer` and `rehydrateDetachedContainerFromSnapshot` APIs are removed from the `ILoader` interface, and have been moved to the new `IHostLoader` interface.  The `Loader` class now implements `IHostLoader` instead, and consumers who need these methods should operate on an `IHostLoader` instead of an `ILoader`, such as by creating a `Loader`.
+
+### TaskManager removed
+The `TaskManager` has been removed, as well as methods to access it (e.g. the `.taskManager` member on `DataObject`).  The `AgentScheduler` should be used instead for the time being and can be accessed via a request on the `ContainerRuntime` (e.g. `await this.context.containerRuntime.request({ url: "/_scheduler" })`), though we expect this will also be deprecated and removed in a future release when an alternative is made available (see #4413).
+
 ## 0.35 Breaking changes
 - [Removed some api implementations from odsp driver](#Removed-some-api-implemenations-from-odsp-driver)
 - [get-tinylicious-container and get-session-storage-container moved](#get-tinylicious-container-and-get-session-storage-container-moved)
@@ -5,6 +15,7 @@
 - [Refactored token fetcher types in odsp-driver](#refactored-token-fetcher-types-in-odsp-driver)
 - [DeltaManager `readonly` and `readOnlyPermissions` properties deprecated](#DeltaManager-`readonly`-and-`readOnlyPermissions`-properties-deprecated)
 - [DirtyDocument events and property](#DirtyDocument-events-and-property)
+- [Removed `createDocumentService` and `createDocumentService2` from r11s driver](#Removed-`createDocumentService`-and-`createDocumentService2`-from-r11s-driver)
 
 ### Removed-some-api-implementations-from-odsp-driver
 Removed `authorizedFetchWithRetry`, `AuthorizedRequestTokenPolicy`, `AuthorizedFetchProps`, `asyncWithCache`, `asyncWithRetry`,
@@ -28,6 +39,9 @@ The following 3 names have been deprecated - please use new names:
 "dirtyDocument" event -> "dirty" event
 "savedDocument" event -> "saved" event
 isDocumentDirty property -> isDirty property
+
+### Removed `createDocumentService` and `createDocumentService2` from r11s driver
+Removed the deprecated methods `createDocumentService` and `createDocumentService2`. Please use `DocumentServiceFactory.createDocumentService` instead.
 
 ## 0.34 Breaking changes
 - [Aqueduct writeBlob() and BlobHandle implementation removed](#Aqueduct-writeBlob-and-BlobHandle-implementation-removed)

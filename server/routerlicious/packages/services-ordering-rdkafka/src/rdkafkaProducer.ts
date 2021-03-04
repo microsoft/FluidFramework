@@ -74,9 +74,10 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			...this.producerOptions.additionalOptions,
 		};
 
-		this.producer = new kafka.HighLevelProducer(options, this.producerOptions.topicConfig);
+		const producer: kafkaTypes.Producer = this.producer =
+			new kafka.HighLevelProducer(options, this.producerOptions.topicConfig);
 
-		this.producer.on("ready", () => {
+		producer.on("ready", () => {
 			this.connected = true;
 			this.connecting = false;
 
@@ -85,30 +86,30 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			this.sendPendingMessages();
 		});
 
-		this.producer.on("disconnected", () => {
+		producer.on("disconnected", () => {
 			this.connected = false;
 			this.connecting = false;
 
 			this.emit("disconnected");
 		});
 
-		this.producer.on("connection.failure", (error) => {
+		producer.on("connection.failure", (error) => {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.handleError(error);
 		});
 
-		this.producer.on("event.error", (error) => {
+		producer.on("event.error", (error) => {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.handleError(error);
 		});
 
-		this.producer.on("event.throttle", (event) => {
+		producer.on("event.throttle", (event) => {
 			this.emit("throttled", event);
 		});
 
-		this.producer.connect();
+		producer.connect();
 
-		this.producer.setPollInterval(this.producerOptions.pollIntervalMs);
+		producer.setPollInterval(this.producerOptions.pollIntervalMs);
 	}
 
 	public async close(reconnecting: boolean = false): Promise<void> {

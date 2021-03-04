@@ -20,9 +20,7 @@ npm start
 
 Then navigate to <http://localhost:8080.> This will redirect you to <http://localhost:8080/example> but you can change
 'example' to any string you'd like and a new document will be created under that name. By default a new Flow View
-will be created but by specifying the chaincode query parameter any of the packages on
-<https://packages.wu2.prague.office-int.com> can be loaded - i.e.
-<http://localhost:8080/new-document?chaincode=@fluid-example/smde@0.18.1>
+will be created.
 
 ## The Code
 

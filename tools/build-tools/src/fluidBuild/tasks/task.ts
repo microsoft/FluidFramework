@@ -18,9 +18,8 @@ export interface TaskExec {
 
 export abstract class Task {
     public static createTaskQueue(): AsyncPriorityQueue<TaskExec> {
-        return priorityQueue(async (taskExec: TaskExec, callback) => {
+        return priorityQueue(async (taskExec: TaskExec) => {
             taskExec.resolve(await taskExec.task.exec());
-            callback();
         }, options.concurrency);
     }
 
@@ -62,8 +61,8 @@ export abstract class Task {
     public abstract get isLeaf(): boolean;
     public abstract matchTask(command: string, options?: any): Task | undefined;
     public abstract collectLeafTasks(leafTasks: LeafTask[]): void;
-    protected abstract async checkIsUpToDate(): Promise<boolean>;
-    protected abstract async runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult>;
+    protected abstract checkIsUpToDate(): Promise<boolean>;
+    protected abstract runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult>;
 
     public get forced() {
         return options.force && (options.matchedOnly !== true || this.package.matched);

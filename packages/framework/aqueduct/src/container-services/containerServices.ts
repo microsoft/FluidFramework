@@ -6,7 +6,11 @@
 import { IResponse, IFluidObject, IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
-import { RequestParser } from "@fluidframework/runtime-utils";
+import {
+    RequestParser,
+    create404Response,
+    createResponseError,
+} from "@fluidframework/runtime-utils";
 
 // TODO: should this just be "s"?
 export const serviceRoutePathRoot = "_services";
@@ -68,21 +72,13 @@ export const generateContainerServicesRequestHandler =
 
             if (request.pathParts.length < 2) {
                 // If there is not service to route to then return a failure
-                return {
-                    status: 400,
-                    mimeType: "text/plain",
-                    value: `request url: [${request.url}] did not specify a service to route to`,
-                };
+                return createResponseError(400, "request did not specify a service to route to", request);
             }
 
             const factory = factories.get(request.pathParts[1]);
             if (!factory) {
                 // If we can't find a registry entry then return
-                return Promise.resolve({
-                    status: 404,
-                    mimeType: "text/plain",
-                    value: `Could not find a valid service for request url: [${request.url}]`,
-                });
+                return create404Response(request);
             }
 
             const service = await factory.getService(runtime);
@@ -94,11 +90,7 @@ export const generateContainerServicesRequestHandler =
 
             if (!request.isLeaf(2)) {
                 // If there is not terminating route but a sub-route was requested then we will fail.
-                return {
-                    status: 400,
-                    mimeType: "text/plain",
-                    value: `request sub-url: [${subRequest}] for service that doesn't support routing`,
-                };
+                return createResponseError(400, "request sub-url for service that doesn't support routing", request);
             }
 
             // Otherwise we will just return the service
