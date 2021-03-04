@@ -1791,7 +1791,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     /**
      * @deprecated starting in 0.36. The AgentScheduler can be requested directly, though this will also be removed in
-     * a future release when an alternative is available: containerRuntime.request({ url: "/_scheduler" }).
+     * a future release when an alternative is available: containerRuntime.request(\{ url: "/_scheduler" \}).
      * getTaskManager should be removed in 0.38.
      */
     public async getTaskManager(): Promise<IProvideAgentScheduler> {
