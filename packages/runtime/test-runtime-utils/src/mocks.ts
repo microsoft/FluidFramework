@@ -176,7 +176,8 @@ export class MockContainerRuntime {
         const local = this.clientId === message.clientId;
         if (local) {
             const pendingMessage = this.pendingMessages.shift();
-            assert(pendingMessage.clientSequenceNumber === message.clientSequenceNumber);
+            assert(pendingMessage.clientSequenceNumber === message.clientSequenceNumber,
+                "Unexpected client sequence number from message");
             localOpMetadata = pendingMessage.localOpMetadata;
         }
         return [local, localOpMetadata];
@@ -569,7 +570,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
     }
 
     public submit(messageContent: any): number {
-        assert(false);
+        assert(false, "Throw submit error on mock empty delta connection");
         return 0;
     }
 
@@ -585,7 +586,7 @@ export class MockObjectStorageService implements IChannelStorageService {
     public async read(path: string): Promise<string> {
         const content = this.contents[path];
         // Do we have such blob?
-        assert(content !== undefined);
+        assert(content !== undefined, "Undefined content for mock storage service read");
         return fromUtf8ToBase64(content);
     }
 
@@ -612,7 +613,8 @@ export class MockSharedObjectServices implements IChannelServices {
     public static createFromSummary(summaryTree: ISummaryTree) {
         const contents: { [key: string]: string } = {};
         for (const [key, value] of Object.entries(summaryTree.tree)) {
-            assert(value.type === SummaryType.Blob);
+            assert(value.type === SummaryType.Blob,
+                `Unexpected summary type on mock createFromSummary: ${value.type}`);
             contents[key] = value.content as string;
         }
         return new MockSharedObjectServices(contents);

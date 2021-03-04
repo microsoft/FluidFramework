@@ -37,7 +37,8 @@ export function analyzeTasks(
     if (unhandledTasks.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const runnerClient = clients.get(runnerClientId)!;
-        assert(!!runnerClient);   // assume runnerClientId must be in the clients list.
+        // Assume runnerClientId must be in the clients list:
+        assert(!!runnerClient, "runner client for task analysis must be in clients list");
         const permission = runnerClient.client && runnerClient.client.permission ? runnerClient.client.permission : [];
         const allowedTasks = unhandledTasks.filter((task) => permission && permission.includes(task));
         const robotNeeded = unhandledTasks.filter((task) => permission && !permission.includes(task));

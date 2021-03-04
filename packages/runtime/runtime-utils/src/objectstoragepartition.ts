@@ -12,7 +12,7 @@ import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 export class ObjectStoragePartition implements IChannelStorageService {
     constructor(private readonly storage: IChannelStorageService, private readonly path: string) {
         // `path` must not include the trailing separator.
-        assert(!path.endsWith("/"));
+        assert(!path.endsWith("/"), "storage service path has trailing separator");
     }
 
     public async read(path: string): Promise<string> {
