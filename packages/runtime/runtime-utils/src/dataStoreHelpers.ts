@@ -91,7 +91,7 @@ export function createResponseError(status: number, value: string, request: IReq
     return {
         mimeType: "text/plain",
         status,
-        value : request.url === undefined ? value : `${value}: ${request.url}`,
+        value: request.url === undefined ? value : `${value}: ${request.url}`,
         stack: getStack(),
     };
 }

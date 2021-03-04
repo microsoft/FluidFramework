@@ -43,9 +43,11 @@ async function requestObjectStoreFromId<T>(request: RequestParser, runtime: ICon
         url: ``,
         headers: request.headers,
     });
-    return requestFluidObject<T>(
-        await runtime.getRootDataStore(id),
-        coordinateRequest);
+    const dataStoreRuntime = await runtime.getRootDataStore(id);
+    if (dataStoreRuntime === undefined) {
+        throw new Error(`Data store ${id} does not exist`);
+    }
+    return requestFluidObject<T>(dataStoreRuntime, coordinateRequest);
 }
 
 /**

@@ -88,11 +88,12 @@ export interface IContainerRuntime extends
     readonly attachState: AttachState;
 
     /**
-     * Returns the runtime of the data store.
+     * Retrieves the runtime of the root data store with the given id.
      * @param id - Id supplied during creating the data store.
      * @param wait - True if you want to wait for it.
+     * @returns The data store runtime if it exists; undefined otherwise.
      */
-    getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
+    getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter | undefined>;
 
     /**
      * Creates root data store in container. Such store is automatically bound to container, and thus is

@@ -78,9 +78,13 @@ export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultData
     protected async containerHasInitialized(runtime: IContainerRuntime) {
         // Load the last edited tracker fluidObject (done by the setup method below). This fluidObject
         // provides container level tracking of last edit and has to be loaded before any other fluidObject.
-        const tracker = await requestFluidObject<IFluidLastEditedTracker>(
-            await runtime.getRootDataStore(ContainerRuntimeFactoryWithDefaultDataStore.defaultDataStoreId),
-            "");
+        const dataStoreRuntime =
+            await runtime.getRootDataStore(ContainerRuntimeFactoryWithDefaultDataStore.defaultDataStoreId);
+        if (dataStoreRuntime === undefined) {
+            throw new Error(
+                `Data store ${ContainerRuntimeFactoryWithDefaultDataStore.defaultDataStoreId} doesn't exist`);
+        }
+        const tracker = await requestFluidObject<IFluidLastEditedTracker>(dataStoreRuntime, "");
 
         setupLastEditedTrackerForContainer(tracker.IFluidLastEditedTracker, runtime);
     }
