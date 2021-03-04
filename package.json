@@ -7,7 +7,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration"
+		"url": "https://dev.azure.com/intentional/intent/_git/typescript-pipe"
 	},
 	"license": "MIT",
 	"author": "Microsoft",
