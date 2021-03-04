@@ -91,20 +91,11 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 },
             };
         }
-        const {
-            siteUrl,
-            urlPath,
-            driveId,
-            itemId,
-            path,
-            containerPackageName,
-            fileVersion,
-        } = decodeOdspUrl(request.url);
+        const { siteUrl, driveId, itemId, path, containerPackageName, fileVersion } = decodeOdspUrl(request.url);
         const hashedDocumentId = getHashedDocumentId(driveId, itemId);
         assert(!hashedDocumentId.includes("/"), "Docid should not contain slashes!!");
 
-        const fullPath = `${removeBeginningSlash(urlPath)}${removeBeginningSlash(path)}`;
-        let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${fullPath}`;
+        let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(path)}`;
 
         if (request.url.length > 0) {
             // In case of any additional parameters add them back to the url
@@ -149,7 +140,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         }
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
         let odspUrl = `${odspResolvedUrl.siteUrl}/${url}?driveId=${encodeURIComponent(odspResolvedUrl.driveId,
-            )}&itemId=${encodeURIComponent(odspResolvedUrl.itemId)}&path=${encodeURIComponent("/")}`;
+            )}&itemId=${encodeURIComponent(odspResolvedUrl.itemId)}&path=${encodeURIComponent(url)}`;
         const packageName = isFluidPackage(codeDetails?.package) ? codeDetails?.package.name : codeDetails?.package ??
              odspResolvedUrl.codeHint?.containerPackageName;
         if (packageName) {
@@ -174,25 +165,21 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 
 function decodeOdspUrl(url: string): {
     siteUrl: string;
-    urlPath: string;
     driveId: string;
     itemId: string;
     path: string;
     containerPackageName?: string;
     fileVersion?: string;
 } {
-    const [siteUrl] = url.split("?");
-    const parsedUrl = new URL(url);
-    let urlPath = parsedUrl.pathname;
-    if (urlPath !== "" && !urlPath.endsWith("/")) {
-        urlPath += "/";
-    }
+    const [siteUrl, queryString] = url.split("?");
 
-    const driveId = parsedUrl.searchParams.get("driveId");
-    const itemId = parsedUrl.searchParams.get("itemId");
-    const path = parsedUrl.searchParams.get("path");
-    const containerPackageName = parsedUrl.searchParams.get("containerPackageName");
-    const fileVersion = parsedUrl.searchParams.get("fileVersion");
+    const searchParams = new URLSearchParams(queryString);
+
+    const driveId = searchParams.get("driveId");
+    const itemId = searchParams.get("itemId");
+    const path = searchParams.get("path");
+    const containerPackageName = searchParams.get("containerPackageName");
+    const fileVersion = searchParams.get("fileVersion");
 
     if (driveId === null) {
         throw new Error("ODSP URL did not contain a drive id");
@@ -208,7 +195,6 @@ function decodeOdspUrl(url: string): {
 
     return {
         siteUrl,
-        urlPath,
         driveId: decodeURIComponent(driveId),
         itemId: decodeURIComponent(itemId),
         path: decodeURIComponent(path),
