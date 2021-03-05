@@ -207,7 +207,7 @@ export class PromiseTimer implements IPromiseTimer {
 
     public async start(ms?: number, handler?: () => void): Promise<IPromiseTimerResult> {
         this.clear();
-        this.deferred = new Deferred<void>();
+        this.deferred = new Deferred<IPromiseTimerResult>();
         this.timer.start(ms, handler ? () => this.wrapHandler(handler) : undefined);
         return this.deferred.promise;
     }
