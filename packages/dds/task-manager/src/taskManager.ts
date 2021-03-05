@@ -174,7 +174,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     // TODO Remove or hide from interface, this is just for debugging
-    public getTaskQueues() {
+    public _getTaskQueues() {
         return this.taskQueues;
     }
 
