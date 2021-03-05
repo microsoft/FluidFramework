@@ -54,7 +54,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.27.0",
+    "@fluidframework/common-utils": "^0.27.2",
     "@fluidframework/odsp-doclib-utils": "^0.35.4",
     "@fluidframework/protocol-base": "^0.1019.0",
     "@fluidframework/protocol-definitions": "^0.1019.0",

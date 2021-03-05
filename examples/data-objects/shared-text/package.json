@@ -50,7 +50,7 @@
     "@fluid-internal/client-api": "^0.35.4",
     "@fluidframework/aqueduct": "^0.35.4",
     "@fluidframework/cell": "^0.35.4",
-    "@fluidframework/common-utils": "^0.27.0",
+    "@fluidframework/common-utils": "^0.27.2",
     "@fluidframework/container-definitions": "^0.35.4",
     "@fluidframework/container-runtime": "^0.35.4",
     "@fluidframework/core-interfaces": "^0.35.4",
