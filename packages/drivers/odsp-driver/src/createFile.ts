@@ -90,9 +90,11 @@ export async function createNewFluidFile(
                 }
                 event.end({
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
+                    ...fetchResponse.commonSpoHeaders,
                 });
                 return content.itemId;
-            });
+            },
+            true);
     });
 
     const odspUrl = createOdspUrl(newFileInfo.siteUrl, newFileInfo.driveId, itemId, "/");

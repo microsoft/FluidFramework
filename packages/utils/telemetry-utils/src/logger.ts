@@ -362,6 +362,7 @@ export class PerformanceEvent {
         logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
         callback: (event: PerformanceEvent) => T,
+        cancelAsError: boolean = false,
     ) {
         const perfEvent = PerformanceEvent.start(logger, event);
         try {
@@ -372,7 +373,11 @@ export class PerformanceEvent {
             }
             return ret;
         } catch (error) {
-            perfEvent.cancel(undefined, error);
+            if (cancelAsError) {
+                perfEvent.cancel({ category: "error" }, error);
+            } else {
+                perfEvent.cancel(undefined, error);
+            }
             throw error;
         }
     }
@@ -381,6 +386,7 @@ export class PerformanceEvent {
         logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
         callback: (event: PerformanceEvent) => Promise<T>,
+        cancelAsError: boolean = false,
     ) {
         const perfEvent = PerformanceEvent.start(logger, event);
         try {
@@ -391,7 +397,11 @@ export class PerformanceEvent {
             }
             return ret;
         } catch (error) {
-            perfEvent.cancel(undefined, error);
+            if (cancelAsError) {
+                perfEvent.cancel({ category: "error" }, error);
+            } else {
+                perfEvent.cancel(undefined, error);
+            }
             throw error;
         }
     }
