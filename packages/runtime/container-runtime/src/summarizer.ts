@@ -458,7 +458,7 @@ export class RunningSummarizer implements IDisposable {
 
         // GenerateSummary could take some time
         // mark that we are currently summarizing to prevent concurrent summarizing
-        this.summarizing = new Deferred();
+        this.summarizing = new Deferred<void>();
 
         (async () => {
             const result = await this.summarize(reason, false);

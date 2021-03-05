@@ -55,10 +55,10 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.27.0",
+    "@fluidframework/common-utils": "^0.28.0-0",
     "@fluidframework/odsp-doclib-utils": "^0.36.0",
-    "@fluidframework/protocol-base": "^0.1020.0",
-    "@fluidframework/protocol-definitions": "^0.1020.0",
+    "@fluidframework/protocol-base": "^0.1021.0-0",
+    "@fluidframework/protocol-definitions": "^0.1021.0-0",
     "debug": "^4.1.1",
     "jwt-decode": "^2.2.0",
     "proper-lockfile": "^4.1.1"
