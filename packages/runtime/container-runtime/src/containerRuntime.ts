@@ -61,7 +61,6 @@ import {
 import {
     IClientDetails,
     IDocumentMessage,
-    IHelpMessage,
     IQuorum,
     ISequencedDocumentMessage,
     ISignalMessage,
@@ -114,7 +113,6 @@ import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
 import { ISummarizerRuntime, ISummarizerInternalsProvider, Summarizer, IGenerateSummaryOptions } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
-import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
@@ -622,11 +620,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private latestSummaryAck: Omit<ISummaryContext, "referenceSequenceNumber">;
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
-
-    private tasks: string[] = [];
-
-    // Back-compat: version decides between loading document and chaincode.
-    private version: string | undefined;
 
     private _flushMode = FlushMode.Automatic;
     private needsFlush = false;
@@ -1255,20 +1248,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * Notifies this object to register tasks to be performed.
-     * @param tasks - List of tasks.
-     * @param version - Version of the Fluid package.
-     */
-    public registerTasks(tasks: string[], version?: string) {
-        this.verifyNotClosed();
-        this.tasks = tasks;
-        this.version = version;
-        if (this.leader) {
-            this.runTaskAnalyzer();
-        }
-    }
-
-    /**
      * @deprecated - // back-compat: marked deprecated in 0.35
      * Returns true of document is dirty, i.e. there are some pending local changes that
      * either were not sent out to delta stream or were not yet acknowledged.
@@ -1780,12 +1759,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }).catch((err) => {
                 this.closeFn(CreateContainerError(err));
             });
-
-            this.context.quorum.on("removeMember", () => {
-                if (this.leader) {
-                    this.runTaskAnalyzer();
-                }
-            });
         }
     }
 
@@ -1820,44 +1793,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         this.dataStores.updateLeader();
-
-        if (this.leader) {
-            this.runTaskAnalyzer();
-        }
-    }
-
-    /**
-     * On a client joining/departure, decide whether this client is the new leader.
-     * If so, calculate if there are any unhandled tasks for browsers and remote agents.
-     * Emit local help message for this browser and submits a remote help message for agents.
-     */
-    private runTaskAnalyzer() {
-        // Analyze the current state and ask for local and remote help separately.
-        // If called for detached container, the clientId would not be assigned and it is disconnected. In this
-        // case, all tasks are run by the detached container. Called only if a leader. If we have a clientId,
-        // then we should be connected as leadership is lost on losing connection.
-        const helpTasks = this.clientId === undefined ?
-            { browser: this.tasks, robot: [] } :
-            analyzeTasks(this.clientId, this.getQuorum().getMembers(), this.tasks);
-
-        if (helpTasks && (helpTasks.browser.length > 0 || helpTasks.robot.length > 0)) {
-            if (helpTasks.browser.length > 0) {
-                const localHelpMessage: IHelpMessage = {
-                    tasks: helpTasks.browser,
-                    version: this.version,   // Back-compat
-                };
-                debug(`Requesting local help for ${helpTasks.browser}`);
-                this.emit("localHelp", localHelpMessage);
-            }
-            if (helpTasks.robot.length > 0) {
-                const remoteHelpMessage: IHelpMessage = {
-                    tasks: helpTasks.robot,
-                    version: this.version,   // Back-compat
-                };
-                debug(`Requesting remote help for ${helpTasks.robot}`);
-                this.submitSystemMessage(MessageType.RemoteHelp, remoteHelpMessage);
-            }
-        }
     }
 
     /** Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck */
