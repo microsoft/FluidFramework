@@ -796,7 +796,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             await this.deltaManager.inbound.pause();
             await this.snapshotCore(tagMessage, fullTree);
         } catch (ex) {
-            this.logger.logException({ eventName: "SnapshotExceptionError" }, ex);
+            this.logger.sendErrorEvent({ eventName: "SnapshotExceptionError" }, ex);
             throw ex;
         } finally {
             this.deltaManager.inbound.resume();

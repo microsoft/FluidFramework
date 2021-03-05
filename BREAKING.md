@@ -24,7 +24,7 @@ Method for generating share link is no longer exported.
 ShareLinkTokenFetchOptions has been removed and OdspDriverUrlResolverForShareLink constructor has been changed to accept tokenFetcher parameter which will pass OdspResourceTokenFetchOptions instead of ShareLin   kTokenFetchOptions.
 
 ### ITelemetryLogger redundant method deprecation
-Deprecate `shipAssert` `debugAssert` `logException` `logGenericError` `sendErrorEvent` in favor of `sendTelemetryEvent` with `error` provided  as they provide the same behavior and semantics as `sendTelemetryEvent` with `error` provided and in general are relatively unused.
+Deprecate `shipAssert` `debugAssert` `logException` `logGenericError` in favor of `sendErrorEvent` as they provide the same behavior and semantics as `sendErrorEvent`and in general are relatively unused.
 
 ## 0.35 Breaking changes
 - [Removed some api implementations from odsp driver](#Removed-some-api-implemenations-from-odsp-driver)

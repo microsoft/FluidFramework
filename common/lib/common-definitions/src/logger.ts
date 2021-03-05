@@ -46,9 +46,13 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
 /**
  * Error telemetry event.
  * Maps to category = "error"
- * @deprecated - Use ITelemetryGenericEvent with category === "error"
  */
-export type ITelemetryErrorEvent = ITelemetryGenericEvent;
+export type ITelemetryErrorEvent = Omit<ITelemetryGenericEvent, "category"> & {
+    /**
+     * @deprecated - category will always be error
+     */
+    category?: TelemetryEventCategory;
+};
 
 /**
  * Performance telemetry event.
@@ -79,7 +83,6 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
     sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
 
     /**
-     *  @deprecated - Use sendTelemetryEvent with error
      * Send error telemetry event
      * @param event - Event to send
      */
@@ -92,7 +95,7 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
     sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
 
     /**
-     *  @deprecated - Use sendTelemetryEvent with error
+     *  @deprecated - use sendErrorEvent
      * Helper method to log generic errors
      * @param eventName - Name of the event
      * @param error - the error object to include in the event, require to be JSON-able
@@ -100,7 +103,7 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
     logGenericError(eventName: string, error: any): void;
 
     /**
-     *  @deprecated - Use sendTelemetryEvent with error
+     *  @deprecated - use sendErrorEvent
      * Helper method to log exceptions
      * @param event - the event to send
      * @param exception - Exception object to add to an event
@@ -108,7 +111,7 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
     logException(event: ITelemetryErrorEvent, exception: any): void;
 
     /**
-     *  @deprecated - Use sendTelemetryEvent with error
+     *  @deprecated - use sendErrorEvent
      * Report ignorable errors in code logic or data integrity.
      * Hosting app / container may want to optimize out these call sites and make them no-op.
      * It may also show assert dialog in non-production builds of application.
@@ -118,7 +121,7 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
     debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void;
 
     /**
-     * @deprecated - Use sendTelemetryEvent with error
+     * @deprecated - use sendErrorEvent
      * Report ignorable errors in code logic or data integrity.
      * Similar to debugAssert(), but is not supposed to be optimized out.
      * @param condition - If false, assert is logged.
