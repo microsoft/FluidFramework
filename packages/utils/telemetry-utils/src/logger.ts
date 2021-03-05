@@ -119,7 +119,10 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
     public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
-        const newEvent: ITelemetryBaseEvent = { ...event, category: event.category ? event.category : "generic" };
+        const newEvent: ITelemetryBaseEvent = {
+            ...event,
+            category: event.category ?? error === undefined ?  "generic" : "error"
+        };
         if (error !== undefined) {
             TelemetryLogger.prepareErrorObject(newEvent, error, false);
         }
