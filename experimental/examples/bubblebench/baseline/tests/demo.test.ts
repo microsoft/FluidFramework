@@ -6,7 +6,7 @@
 import { globals } from "../jest.config";
 
 describe("Bubblebench", () => {
-    describe("SharedTree", () => {
+    describe("Baseline", () => {
         beforeAll(async () => {
             // Wait for the page to load first before running any tests
             // so this time isn't attributed to the first test
