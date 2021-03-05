@@ -159,7 +159,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
     (event: "push" | "op", listener: (task: T) => void);
     /**
-     * @param count - number of elements (T) processed before becoming idle
+     * @param count - number of events (T) processed before becoming idle
      * @param duration - amount of time it took to process elements (milliseconds).
      */
     (event: "idle", listener: (count: number, duration: number) => void);
