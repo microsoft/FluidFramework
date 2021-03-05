@@ -31,6 +31,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
             async (options: TokenFetchOptions, name?: string) => "token",
             logger,
             epochTracker,
+            { blobDeduping: true },
         );
     });
 

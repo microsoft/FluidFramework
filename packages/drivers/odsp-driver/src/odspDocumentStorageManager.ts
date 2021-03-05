@@ -280,7 +280,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             docId: this.documentId,
         };
 
-        this.odspSummaryUploadManager = new OdspSummaryUploadManager(this.snapshotUrl, getStorageToken, logger, epochTracker);
+        this.odspSummaryUploadManager = new OdspSummaryUploadManager(this.snapshotUrl, getStorageToken, logger, epochTracker, this.hostPolicy);
     }
 
     public get repositoryUrl(): string {
@@ -476,7 +476,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             finalTree = this.combineProtocolAndAppSnapshotTree(appTree, protocolTree);
         }
 
-        if (this.hostPolicy.summarizerClient) {
+        if (this.hostPolicy.summarizerClient && this.hostPolicy.blobDeduping) {
             await this.odspSummaryUploadManager.buildCachesForDedup(finalTree, this.blobCache.value);
         }
         return finalTree;
