@@ -119,7 +119,10 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
     public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
-        const newEvent: ITelemetryBaseEvent = { ...event, category: event.category ? event.category : "generic" };
+        const newEvent: ITelemetryBaseEvent = {
+            ...event,
+            category: event.category ?? (error === undefined ?  "generic" : "error"),
+        };
         if (error !== undefined) {
             TelemetryLogger.prepareErrorObject(newEvent, error, false);
         }
@@ -133,9 +136,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
     public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
-        const newEvent: ITelemetryBaseEvent = { ...event, category: "error" };
-        TelemetryLogger.prepareErrorObject(newEvent, error, true);
-        this.send(newEvent);
+        this.sendTelemetryEvent({ ...event, category: "error" }, error);
     }
 
     /**
@@ -161,6 +162,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     /**
+     * @deprecated - use sendErrorEvent
      * Log generic error with the logger
      *
      * @param eventName - the name of the event
@@ -171,6 +173,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     /**
+     * @deprecated - use sendErrorEvent
      * Helper method to log exceptions
      * @param event - the event to send
      * @param exception - Exception object to add to an event
@@ -180,6 +183,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     /**
+     * @deprecated - use sendErrorEvent
+
      * Log an debug assert with the logger
      *
      * @param condition - the condition to assert on
@@ -190,6 +195,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     /**
+     * @deprecated - use sendErrorEvent
      * Log an ship assert with the logger
      *
      * @param condition - the condition to assert on

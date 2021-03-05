@@ -4,6 +4,7 @@
 - [ContainerRuntime registerTasks removed](#ContainerRuntime-registerTasks-removed)
 - [getRootDataStore](#getRootDataStore)
 - [Share link generation no longer exposed externally](#Share-link-generation-no-longer-exposed-externally)
+- [ITelemetryLogger redundant method deprecation](#ITelemetryLogger-redundant-method-deprecation)
 
 ### Some `ILoader` APIs moved to `IHostLoader`
 The `createDetachedContainer` and `rehydrateDetachedContainerFromSnapshot` APIs are removed from the `ILoader` interface, and have been moved to the new `IHostLoader` interface.  The `Loader` class now implements `IHostLoader` instead, and consumers who need these methods should operate on an `IHostLoader` instead of an `ILoader`, such as by creating a `Loader`.
@@ -21,6 +22,9 @@ IContainerRuntime.getRootDataStore() used to have a backdoor allowing accessing 
 Share link generation implementation has been refactored to remove options for generating share links of various kinds.
 Method for generating share link is no longer exported.
 ShareLinkTokenFetchOptions has been removed and OdspDriverUrlResolverForShareLink constructor has been changed to accept tokenFetcher parameter which will pass OdspResourceTokenFetchOptions instead of ShareLin   kTokenFetchOptions.
+
+### ITelemetryLogger redundant method deprecation
+Deprecate `shipAssert` `debugAssert` `logException` `logGenericError` in favor of `sendErrorEvent` as they provide the same behavior and semantics as `sendErrorEvent`and in general are relatively unused.
 
 ## 0.35 Breaking changes
 - [Removed some api implementations from odsp driver](#Removed-some-api-implemenations-from-odsp-driver)
