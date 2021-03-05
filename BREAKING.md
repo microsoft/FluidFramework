@@ -3,6 +3,7 @@
 - [TaskManager removed](#TaskManager-removed)
 - [ContainerRuntime registerTasks removed](#ContainerRuntime-registerTasks-removed)
 - [getRootDataStore](#getRootDataStore)
+- [Share link generation no longer exposed externally](#Share-link-generation-no-longer-exposed-externally)
 
 ### Some `ILoader` APIs moved to `IHostLoader`
 The `createDetachedContainer` and `rehydrateDetachedContainerFromSnapshot` APIs are removed from the `ILoader` interface, and have been moved to the new `IHostLoader` interface.  The `Loader` class now implements `IHostLoader` instead, and consumers who need these methods should operate on an `IHostLoader` instead of an `ILoader`, such as by creating a `Loader`.
@@ -15,6 +16,11 @@ The `registerTasks` method has been removed from `ContainerRuntime`.  The `Agent
 
 ### getRootDataStore
 IContainerRuntime.getRootDataStore() used to have a backdoor allowing accessing any store, including non-root stores. This back door is removed - you can only access root data stores using this API.
+
+### Share link generation no longer exposed externally
+Share link generation implementation has been refactored to remove options for generating share links of various kinds.
+Method for generating share link is no longer exported.
+ShareLinkTokenFetchOptions has been removed and OdspDriverUrlResolverForShareLink constructor has been changed to accept tokenFetcher parameter which will pass OdspResourceTokenFetchOptions instead of ShareLin   kTokenFetchOptions.
 
 ## 0.35 Breaking changes
 - [Removed some api implementations from odsp driver](#Removed-some-api-implemenations-from-odsp-driver)
@@ -60,7 +66,7 @@ Removed the deprecated methods `createDocumentService` and `createDocumentServic
 
 ### Connected events raised on registration
 Connected / disconnected listeners are called on registration.
-Pleas see [Connectivity events](packages/loader/container-loader/README.md#Connectivity-events) section of Loader readme.md for more details
+Please see [Connectivity events](packages/loader/container-loader/README.md#Connectivity-events) section of Loader readme.md for more details
 
 ## 0.33 Breaking changes
 - [Normalizing enum ContainerErrorType](#normalizing-enum-containererrortype)
