@@ -48,7 +48,7 @@ async function delay(timeMs: number): Promise<void> {
     return new Promise((resolve) => setTimeout(() => resolve(), timeMs));
 }
 
-// Store cached rsponses for the lifetime of web session as file link remains the same for given file item
+// Store cached responses for the lifetime of web session as file link remains the same for given file item
 const fileLinkCache = new PromiseCache<string, string | undefined>();
 
 /**
@@ -144,10 +144,10 @@ async function getFileLinkCore(
                         ...headers,
                     },
                 };
-                const response = await fetchHelper(url, requestInit);
-                additionalProps = await getRequestIdsFromResponse(new Map(response.headers));
-                if (response.ok) {
-                    const sharingInfo = await response.json();
+                const { content } = await fetchHelper(url, requestInit);
+                additionalProps = await getRequestIdsFromResponse(new Map(content.headers));
+                if (content.ok) {
+                    const sharingInfo = await content.json();
                     return sharingInfo?.d?.directUrl as string;
                 }
                 return undefined;
@@ -187,10 +187,10 @@ async function getFileItemLite(
                     tokenFromResponse(token),
                 );
                 const requestInit = { method: "GET", headers };
-                const response = await fetchHelper(url, requestInit);
-                additionalProps = await getRequestIdsFromResponse(new Map(response.headers));
-                if (response.ok) {
-                    return await response.json() as FileItemLite;
+                const { content }  = await fetchHelper(url, requestInit);
+                additionalProps = await getRequestIdsFromResponse(new Map(content.headers));
+                if (content.ok) {
+                    return await content.json() as FileItemLite;
                 }
                 return undefined;
             });
