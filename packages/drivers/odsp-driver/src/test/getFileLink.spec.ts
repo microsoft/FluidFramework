@@ -41,12 +41,9 @@ describe("getFileLink", () => {
 
     it("should return share link with existing access for Enterprise user", async () => {
         const result = await mockFetchMultiple(
-            [
-                [fileItemResponse,  okResponse],
-                [{ d: { directUrl: "sharelink" } }, okResponse],
-            ], async () => {
-            return getFileLink(storageTokenFetcher, siteUrl, driveId, "itemId4", "Enterprise", logger);
-        });
+            [okResponse({}, fileItemResponse), okResponse({}, { d: { directUrl: "sharelink" } })],
+            async () => getFileLink(storageTokenFetcher, siteUrl, driveId, "itemId4", "Enterprise", logger),
+        );
         assert.strictEqual(
             result, "sharelink", "File link for Enterprise user should match url returned from sharing information");
     });
