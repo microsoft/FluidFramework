@@ -1,159 +1,174 @@
 # Change Log
 
+## 0.67.0
+
+* chore: Fix repo / bugs properties in package.json files
+  * Associated pull request: [28635](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28635)
+  * Commit: [3edd2eaf1aca7ee1ba42eb820d9d73624d6b3d52](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/3edd2eaf1aca7ee1ba42eb820d9d73624d6b3d52)
+* feat: Cache snapshots for local edits
+  * Associated pull request: [28564](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28564)
+  * Commit: [01069dace9ac6a9c752f64cd49b434cfbec743c7](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/01069dace9ac6a9c752f64cd49b434cfbec743c7)
+* build: BREAKING CHANGE: Adopt @fluidframework@0.35.x
+  * Associated pull request: [28603](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28603)
+  * Commit: [1db7da945e9b67524c9172d267b3c28531d10435](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/1db7da945e9b67524c9172d267b3c28531d10435)
+* test: Scalable summary format read and write tests
+  * Associated pull request: [28330](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28330)
+  * Commit: [db76ba9956e6f97b3807de9b56bad111a0660215](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/db76ba9956e6f97b3807de9b56bad111a0660215)
+
 ## 0.60.2
 
 * build: BREAKING CHANGE update fluid packages to version 0.34.1
-  * Associated pull request: [28269](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28269)
-  * Commit: [466a8bb115301bbc65b1b10f88fc0fbd75aa90c8](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/466a8bb115301bbc65b1b10f88fc0fbd75aa90c8)
+  * Associated pull request: [28269](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28269)
+  * Commit: [466a8bb115301bbc65b1b10f88fc0fbd75aa90c8](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/466a8bb115301bbc65b1b10f88fc0fbd75aa90c8)
 * refactor: prepare PrefetchingCheckout so async outbound Edit processing will be posible
-  * Associated pull request: [28309](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28309)
-  * Commit: [f00b25caa726a0bcf94055357bf5e02cc79bcdab](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/f00b25caa726a0bcf94055357bf5e02cc79bcdab)
+  * Associated pull request: [28309](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28309)
+  * Commit: [f00b25caa726a0bcf94055357bf5e02cc79bcdab](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f00b25caa726a0bcf94055357bf5e02cc79bcdab)
 * add EditCommitted tests
-  * Commit: [73004086181b24b0f9d87e1401e944fce9ff99d4](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/73004086181b24b0f9d87e1401e944fce9ff99d4)
+  * Commit: [73004086181b24b0f9d87e1401e944fce9ff99d4](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/73004086181b24b0f9d87e1401e944fce9ff99d4)
 * fix: Resolve issues with LocalTestObjectProvider tests
-  * Associated pull request: [28326](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28326)
-  * Commit: [71fbc8b2b3af91a976a9259cc94e9fe57efdc2ed](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/71fbc8b2b3af91a976a9259cc94e9fe57efdc2ed)
+  * Associated pull request: [28326](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28326)
+  * Commit: [71fbc8b2b3af91a976a9259cc94e9fe57efdc2ed](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/71fbc8b2b3af91a976a9259cc94e9fe57efdc2ed)
 * docs: Update package docs formatting for package name
-  * Associated pull request: [28299](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28299)
-  * Commit: [272d535ae1d3919727860de9b34b4d1c16b5f4e3](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/272d535ae1d3919727860de9b34b4d1c16b5f4e3)
+  * Associated pull request: [28299](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28299)
+  * Commit: [272d535ae1d3919727860de9b34b4d1c16b5f4e3](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/272d535ae1d3919727860de9b34b4d1c16b5f4e3)
 * fix undo/redo for prefetching checkout
-  * Commit: [29171ced2240f8393ad9a10c9f3085ada80889c4](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/29171ced2240f8393ad9a10c9f3085ada80889c4)
+  * Commit: [29171ced2240f8393ad9a10c9f3085ada80889c4](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/29171ced2240f8393ad9a10c9f3085ada80889c4)
 * inital support. broken undo
-  * Commit: [9b4663581c0eac252f60f714e80b5fa5142c5024](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/9b4663581c0eac252f60f714e80b5fa5142c5024)
+  * Commit: [9b4663581c0eac252f60f714e80b5fa5142c5024](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/9b4663581c0eac252f60f714e80b5fa5142c5024)
 * improvement: Propagate error events on Checkout to SharedTree
-  * Associated pull request: [28238](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28238)
-  * Commit: [09b417d44183e405662bbedf63e7086b04c9e277](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/09b417d44183e405662bbedf63e7086b04c9e277)
+  * Associated pull request: [28238](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28238)
+  * Commit: [09b417d44183e405662bbedf63e7086b04c9e277](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/09b417d44183e405662bbedf63e7086b04c9e277)
 * build: Add missing dev dependency on `copyfiles`
-  * Associated pull request: [28243](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28243)
-  * Commit: [731b0c8c10c0a3e5722bfbcb5b8d5c4af21a06b1](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/731b0c8c10c0a3e5722bfbcb5b8d5c4af21a06b1)
+  * Associated pull request: [28243](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28243)
+  * Commit: [731b0c8c10c0a3e5722bfbcb5b8d5c4af21a06b1](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/731b0c8c10c0a3e5722bfbcb5b8d5c4af21a06b1)
 * fix: Listen for the correct event in a checkout test
-  * Associated pull request: [28239](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28239)
-  * Commit: [2a9b525e9ccdb05296e0ece874aaf901fdae35e0](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/2a9b525e9ccdb05296e0ece874aaf901fdae35e0)
+  * Associated pull request: [28239](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28239)
+  * Commit: [2a9b525e9ccdb05296e0ece874aaf901fdae35e0](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/2a9b525e9ccdb05296e0ece874aaf901fdae35e0)
 
 ## 0.55.2
 
 * docs: Update change logs with newest `release-tools`
-  * Associated pull request: [28163](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28163)
-  * Commit: [4302d051af4d80cf964ae37ca25d971391923d15](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/4302d051af4d80cf964ae37ca25d971391923d15)
+  * Associated pull request: [28163](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28163)
+  * Commit: [4302d051af4d80cf964ae37ca25d971391923d15](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4302d051af4d80cf964ae37ca25d971391923d15)
 * docs: Remove outdated TODOs and add enum member documentation
-  * Associated pull request: [28146](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28146)
-  * Commit: [f69fe933b0ca01cf0ebf1c7c225336c45b61d869](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/f69fe933b0ca01cf0ebf1c7c225336c45b61d869)
+  * Associated pull request: [28146](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28146)
+  * Commit: [f69fe933b0ca01cf0ebf1c7c225336c45b61d869](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f69fe933b0ca01cf0ebf1c7c225336c45b61d869)
 * refactor: BREAKING CHANGE: move PrefetchingCheckout from shared-tree to fluid-document-store
-  * Associated pull request: [28057](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28057)
-  * Commit: [11a95dd4bb4a306f06b8f54fbba120990af93d5f](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/11a95dd4bb4a306f06b8f54fbba120990af93d5f)
+  * Associated pull request: [28057](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28057)
+  * Commit: [11a95dd4bb4a306f06b8f54fbba120990af93d5f](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/11a95dd4bb4a306f06b8f54fbba120990af93d5f)
 * test: SharedTree history virtualization
-  * Associated pull request: [27710](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27710)
-  * Commit: [a06643ab9c1d1300aa42036cb67029f332d90dec](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/a06643ab9c1d1300aa42036cb67029f332d90dec)
+  * Associated pull request: [27710](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27710)
+  * Commit: [a06643ab9c1d1300aa42036cb67029f332d90dec](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/a06643ab9c1d1300aa42036cb67029f332d90dec)
 * refactor: Cleanup payload copy
-  * Associated pull request: [28023](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28023)
-  * Commit: [3949b49227eec6c218b958e913c7d952292ece88](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/3949b49227eec6c218b958e913c7d952292ece88)
+  * Associated pull request: [28023](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28023)
+  * Commit: [3949b49227eec6c218b958e913c7d952292ece88](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/3949b49227eec6c218b958e913c7d952292ece88)
 * Fix lint error
-  * Commit: [051838cef240586ca86c250bdf795e150abd3141](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/051838cef240586ca86c250bdf795e150abd3141)
+  * Commit: [051838cef240586ca86c250bdf795e150abd3141](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/051838cef240586ca86c250bdf795e150abd3141)
 * Fix set up code
-  * Commit: [4c59cfd3150e2b58a4bb6d6e4c5e834aacd947cf](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/4c59cfd3150e2b58a4bb6d6e4c5e834aacd947cf)
+  * Commit: [4c59cfd3150e2b58a4bb6d6e4c5e834aacd947cf](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4c59cfd3150e2b58a4bb6d6e4c5e834aacd947cf)
 * Fix file name
-  * Commit: [71a9b928e410dc49115e9d03a52718cbd60d2e48](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/71a9b928e410dc49115e9d03a52718cbd60d2e48)
+  * Commit: [71a9b928e410dc49115e9d03a52718cbd60d2e48](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/71a9b928e410dc49115e9d03a52718cbd60d2e48)
 * Use catch up function
-  * Commit: [34abba5176ff55100c2a11aac9ecaa77465e45fb](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/34abba5176ff55100c2a11aac9ecaa77465e45fb)
+  * Commit: [34abba5176ff55100c2a11aac9ecaa77465e45fb](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/34abba5176ff55100c2a11aac9ecaa77465e45fb)
 * Split out summary format tests
-  * Commit: [bc1b092b6e5b5693c895ecee7fc7e10471ace4dd](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/bc1b092b6e5b5693c895ecee7fc7e10471ace4dd)
+  * Commit: [bc1b092b6e5b5693c895ecee7fc7e10471ace4dd](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/bc1b092b6e5b5693c895ecee7fc7e10471ace4dd)
 * Change payload
-  * Commit: [e07c59f7830afb487336d9505173292b65e7168d](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/e07c59f7830afb487336d9505173292b65e7168d)
+  * Commit: [e07c59f7830afb487336d9505173292b65e7168d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/e07c59f7830afb487336d9505173292b65e7168d)
 * Merge remote-tracking branch 'origin/master' into jennle/shared-tree-summary-0.1.0-write
-  * Commit: [7835f575a245dfcd080e3bed0a7881806ddcc4ba](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/7835f575a245dfcd080e3bed0a7881806ddcc4ba)
+  * Commit: [7835f575a245dfcd080e3bed0a7881806ddcc4ba](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/7835f575a245dfcd080e3bed0a7881806ddcc4ba)
 * Create summary format read and write tests
-  * Commit: [3325191710e9b95555715d9746bbb12317ae4657](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/3325191710e9b95555715d9746bbb12317ae4657)
+  * Commit: [3325191710e9b95555715d9746bbb12317ae4657](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/3325191710e9b95555715d9746bbb12317ae4657)
 * Assertion changes
-  * Commit: [e7fea86eb11375e0a905f5e34a79ba2869aa6594](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/e7fea86eb11375e0a905f5e34a79ba2869aa6594)
+  * Commit: [e7fea86eb11375e0a905f5e34a79ba2869aa6594](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/e7fea86eb11375e0a905f5e34a79ba2869aa6594)
 * Remove assert
-  * Commit: [266b5e03c7fa8e5af8ad4ca8551304df055db27b](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/266b5e03c7fa8e5af8ad4ca8551304df055db27b)
+  * Commit: [266b5e03c7fa8e5af8ad4ca8551304df055db27b](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/266b5e03c7fa8e5af8ad4ca8551304df055db27b)
 * Fix lint
-  * Commit: [15905bb13ac3ec72fe9b5d2e355de1d0942baade](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/15905bb13ac3ec72fe9b5d2e355de1d0942baade)
+  * Commit: [15905bb13ac3ec72fe9b5d2e355de1d0942baade](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/15905bb13ac3ec72fe9b5d2e355de1d0942baade)
 * Test changes
-  * Commit: [02870241385936287319277b8c92d2cd07d47ac1](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/02870241385936287319277b8c92d2cd07d47ac1)
+  * Commit: [02870241385936287319277b8c92d2cd07d47ac1](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/02870241385936287319277b8c92d2cd07d47ac1)
 * Deep compare and rename chunk variables
-  * Commit: [a10a0d4c933cc11604ef0501d6a7094666dc0c8f](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/a10a0d4c933cc11604ef0501d6a7094666dc0c8f)
+  * Commit: [a10a0d4c933cc11604ef0501d6a7094666dc0c8f](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/a10a0d4c933cc11604ef0501d6a7094666dc0c8f)
 * Update api docs
-  * Commit: [911a51f1250cef1f00180ca091ac294148f27771](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/911a51f1250cef1f00180ca091ac294148f27771)
+  * Commit: [911a51f1250cef1f00180ca091ac294148f27771](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/911a51f1250cef1f00180ca091ac294148f27771)
 * Make event internal
-  * Commit: [25f5b179ef50ab0460783719e753d20936f302ff](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/25f5b179ef50ab0460783719e753d20936f302ff)
+  * Commit: [25f5b179ef50ab0460783719e753d20936f302ff](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/25f5b179ef50ab0460783719e753d20936f302ff)
 * Fix linting
-  * Commit: [98bd54bb888d62e981480acf059e8ca6c0a5532c](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/98bd54bb888d62e981480acf059e8ca6c0a5532c)
+  * Commit: [98bd54bb888d62e981480acf059e8ca6c0a5532c](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/98bd54bb888d62e981480acf059e8ca6c0a5532c)
 * Document default behavior
-  * Commit: [ad963dbf47a66744307593bccfd0de7c371b1be1](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/ad963dbf47a66744307593bccfd0de7c371b1be1)
+  * Commit: [ad963dbf47a66744307593bccfd0de7c371b1be1](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/ad963dbf47a66744307593bccfd0de7c371b1be1)
 * Merge branch 'jennle/shared-tree-summary-0.1.0-write' of https://intentional.visualstudio.com/intent/_git/typescript-pipe into jennle/shared-tree-summary-0.1.0-write
-  * Commit: [1e4a75906d5dcc46e25056a04b5f5392e1c9f292](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/1e4a75906d5dcc46e25056a04b5f5392e1c9f292)
+  * Commit: [1e4a75906d5dcc46e25056a04b5f5392e1c9f292](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/1e4a75906d5dcc46e25056a04b5f5392e1c9f292)
 * Clean up edit log constructor
-  * Commit: [5dedc9e2ee2b2431268b93e82a40d44903d6a341](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/5dedc9e2ee2b2431268b93e82a40d44903d6a341)
+  * Commit: [5dedc9e2ee2b2431268b93e82a40d44903d6a341](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/5dedc9e2ee2b2431268b93e82a40d44903d6a341)
 * Apply suggestions from code review
-  * Commit: [a2b9e2e6488eb47a6a875d4025e9b1aae9c0b75b](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/a2b9e2e6488eb47a6a875d4025e9b1aae9c0b75b)
+  * Commit: [a2b9e2e6488eb47a6a875d4025e9b1aae9c0b75b](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/a2b9e2e6488eb47a6a875d4025e9b1aae9c0b75b)
 * Use default param
-  * Commit: [46f8814156bc255a2ecee3858d4ce577b2a6973c](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/46f8814156bc255a2ecee3858d4ce577b2a6973c)
+  * Commit: [46f8814156bc255a2ecee3858d4ce577b2a6973c](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/46f8814156bc255a2ecee3858d4ce577b2a6973c)
 * Change parameter and doc
-  * Commit: [2230c6c44065e7ca8a11325d86936b06a426bf41](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/2230c6c44065e7ca8a11325d86936b06a426bf41)
+  * Commit: [2230c6c44065e7ca8a11325d86936b06a426bf41](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/2230c6c44065e7ca8a11325d86936b06a426bf41)
 * Make initiateChunkUpload private
-  * Commit: [1768f4f863dba62133cad395ade9ee066d1ea1d9](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/1768f4f863dba62133cad395ade9ee066d1ea1d9)
+  * Commit: [1768f4f863dba62133cad395ade9ee066d1ea1d9](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/1768f4f863dba62133cad395ade9ee066d1ea1d9)
 * Mark initiateEditChunkUpload internal
-  * Commit: [1d88c921f873378aa3cdac56f0085561d529bdbf](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/1d88c921f873378aa3cdac56f0085561d529bdbf)
+  * Commit: [1d88c921f873378aa3cdac56f0085561d529bdbf](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/1d88c921f873378aa3cdac56f0085561d529bdbf)
 * Add comments
-  * Commit: [6e467e3f4f811a414d4324203949af77a6037ed0](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/6e467e3f4f811a414d4324203949af77a6037ed0)
+  * Commit: [6e467e3f4f811a414d4324203949af77a6037ed0](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/6e467e3f4f811a414d4324203949af77a6037ed0)
 * Fix lint errors
-  * Commit: [64a2e01be9beee5703fbd7059371efbad7453d53](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/64a2e01be9beee5703fbd7059371efbad7453d53)
+  * Commit: [64a2e01be9beee5703fbd7059371efbad7453d53](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/64a2e01be9beee5703fbd7059371efbad7453d53)
 * Merge remote-tracking branch 'origin/master' into jennle/shared-tree-summary-0.1.0-write
-  * Commit: [411fcc7acf8ae79332a4e5e3eab6c30f8c8e4e4b](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/411fcc7acf8ae79332a4e5e3eab6c30f8c8e4e4b)
+  * Commit: [411fcc7acf8ae79332a4e5e3eab6c30f8c8e4e4b](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/411fcc7acf8ae79332a4e5e3eab6c30f8c8e4e4b)
 * Merge branch 'jennle/sharedtree-history-virtualization' into jennle/shared-tree-summary-0.1.0-write
-  * Commit: [4db9d9408c3f25115608ffbb1eb2815bab54fb7d](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/4db9d9408c3f25115608ffbb1eb2815bab54fb7d)
+  * Commit: [4db9d9408c3f25115608ffbb1eb2815bab54fb7d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4db9d9408c3f25115608ffbb1eb2815bab54fb7d)
 * Add test
-  * Commit: [0ebe14e4e7af569e88649c939beeb0cc7f0b6a38](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/0ebe14e4e7af569e88649c939beeb0cc7f0b6a38)
+  * Commit: [0ebe14e4e7af569e88649c939beeb0cc7f0b6a38](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/0ebe14e4e7af569e88649c939beeb0cc7f0b6a38)
 * Merge branch 'jennle/sharedtree-history-virtualization' into jennle/shared-tree-summary-0.1.0-write
-  * Commit: [c2d3f885169f3f96323bb8ed1585d3e91c51bdfe](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/c2d3f885169f3f96323bb8ed1585d3e91c51bdfe)
+  * Commit: [c2d3f885169f3f96323bb8ed1585d3e91c51bdfe](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c2d3f885169f3f96323bb8ed1585d3e91c51bdfe)
 * factor out change processing
-  * Commit: [cc9f81378e940c868fe3878e9022f3b3d9bcff4d](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/cc9f81378e940c868fe3878e9022f3b3d9bcff4d)
+  * Commit: [cc9f81378e940c868fe3878e9022f3b3d9bcff4d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/cc9f81378e940c868fe3878e9022f3b3d9bcff4d)
 * Fix package version
-  * Commit: [23db6b29a6d93d2e438e1b7c00633264af62fd9d](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/23db6b29a6d93d2e438e1b7c00633264af62fd9d)
+  * Commit: [23db6b29a6d93d2e438e1b7c00633264af62fd9d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/23db6b29a6d93d2e438e1b7c00633264af62fd9d)
 * Fix edit log call
-  * Commit: [f8ac70308705a6bd3a1457da70a74a9e5cee22c9](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/f8ac70308705a6bd3a1457da70a74a9e5cee22c9)
+  * Commit: [f8ac70308705a6bd3a1457da70a74a9e5cee22c9](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f8ac70308705a6bd3a1457da70a74a9e5cee22c9)
 * Merge branch 'jennle/sharedtree-history-virtualization' into jennle/shared-tree-summary-0.1.0-write
-  * Commit: [4230179733b56e412ddc5118f6ab608b3185e5df](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/4230179733b56e412ddc5118f6ab608b3185e5df)
+  * Commit: [4230179733b56e412ddc5118f6ab608b3185e5df](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4230179733b56e412ddc5118f6ab608b3185e5df)
 * fix import
-  * Commit: [03bf8f51bd9f925950e595b7b20d27886a508e65](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/03bf8f51bd9f925950e595b7b20d27886a508e65)
+  * Commit: [03bf8f51bd9f925950e595b7b20d27886a508e65](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/03bf8f51bd9f925950e595b7b20d27886a508e65)
 * Merge branch 'jennle/sharedtree-history-virtualization' into jennle/shared-tree-summary-0.1.0-write
-  * Commit: [3d241d70c89093d4ad3259c28a3453e69a292e35](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/3d241d70c89093d4ad3259c28a3453e69a292e35)
+  * Commit: [3d241d70c89093d4ad3259c28a3453e69a292e35](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/3d241d70c89093d4ad3259c28a3453e69a292e35)
 * Remove extra deps
-  * Commit: [d9244ba25ef3e9f176e17cb55ec0f452d6f8eb4f](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/d9244ba25ef3e9f176e17cb55ec0f452d6f8eb4f)
+  * Commit: [d9244ba25ef3e9f176e17cb55ec0f452d6f8eb4f](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d9244ba25ef3e9f176e17cb55ec0f452d6f8eb4f)
 * Get test passing
-  * Commit: [7945a12961c36d104718de94ef74d6598ce76d5e](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/7945a12961c36d104718de94ef74d6598ce76d5e)
+  * Commit: [7945a12961c36d104718de94ef74d6598ce76d5e](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/7945a12961c36d104718de94ef74d6598ce76d5e)
 * Add chunking
-  * Commit: [0b43b6091ef48444645ab108c2b28092e87f9bf2](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/0b43b6091ef48444645ab108c2b28092e87f9bf2)
+  * Commit: [0b43b6091ef48444645ab108c2b28092e87f9bf2](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/0b43b6091ef48444645ab108c2b28092e87f9bf2)
 * Add prelim virtualization test
-  * Commit: [17b5cf36c96ead67e3fc536bb1ea95a9863f37ab](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/commit/17b5cf36c96ead67e3fc536bb1ea95a9863f37ab)
+  * Commit: [17b5cf36c96ead67e3fc536bb1ea95a9863f37ab](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/17b5cf36c96ead67e3fc536bb1ea95a9863f37ab)
 
 ## 0.49.0
 
 * feat: Add demandTree() to TreeNodeHandle
-  * Associated pull request: [28004](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/28004)
+  * Associated pull request: [28004](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28004)
 * chore: Replace usages of `del-cli` with `rimraf`
-  * Associated pull request: [27947](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27947)
+  * Associated pull request: [27947](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27947)
 * test: Detach of the root should be invalid
-  * Associated pull request: [27943](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27943)
+  * Associated pull request: [27943](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27943)
 * build: Update dependencies
-  * Associated pull request: [27930](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27930)
+  * Associated pull request: [27930](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27930)
 * refactor: make createFluidDocumentStore async, and make expensiveValidation internal
-  * Associated pull request: [27170](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27170)
+  * Associated pull request: [27170](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27170)
 * build: Updated packages to use `version.json` files to track their recorded versions
-  * Associated pull request: [27776](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27776)
+  * Associated pull request: [27776](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27776)
 
 ## 0.42.0
 
 * feat: SharedTree reads summary format 0.1.0 which supports history virtualization
-  * Associated pull request: [27284](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27284)
+  * Associated pull request: [27284](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27284)
 * Add missing export
 * refactor: don't use immtuable.js
-  * Associated pull request: [27072](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27072)
+  * Associated pull request: [27072](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27072)
 * Document key
 * Clean up test
 * fix: type of TreeNodeHandle.node
-  * Associated pull request: [27693](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27693)
+  * Associated pull request: [27693](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27693)
 * comments about immutability
 * fix lint
 * Rename
@@ -226,17 +241,17 @@
 ## 0.35.0
 
 * feat: Add telemetry properties for all SharedTree events
-  * Associated pull request: [27538](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27538)
+  * Associated pull request: [27538](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27538)
 * merge: releases/2021.01.4 into master
-  * Associated pull request: [27448](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27448)
+  * Associated pull request: [27448](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27448)
 * feat: Add TreeNodeHandles
-  * Associated pull request: [27070](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27070)
+  * Associated pull request: [27070](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27070)
 * merge: Integrate changes from fluidframework
-  * Associated pull request: [27398](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27398)
+  * Associated pull request: [27398](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27398)
 * merge: releases/2021.01.4 into master
-  * Associated pull request: [27409](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27409)
+  * Associated pull request: [27409](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27409)
 * fix: Export summarizers
-  * Associated pull request: [27410](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27410)
+  * Associated pull request: [27410](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27410)
 * Merge commit '93a143f412116b05963422aa3a04a42e62469602' from fluid into integrations/shared-tree
 * Merge branch 'master' into integrations/shared-tree
 * Split 'packages/shared-tree/' into commit '6227d08860d73c64c8b82fa34a3fca58565298c7'
@@ -248,45 +263,45 @@
 ## 0.22.1
 
 * build: update and audit deps
-  * Associated pull request: [27395](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27395)
+  * Associated pull request: [27395](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27395)
 * feat: Add telemetry for invalid/malformed edits to SharedTree
-  * Associated pull request: [27318](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27318)
+  * Associated pull request: [27318](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27318)
 * build: Fixed cross-package incremental build for `fluid-document-store`
-  * Associated pull request: [27285](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27285)
+  * Associated pull request: [27285](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27285)
 * feat: "replace" affordance on FluidDocumentStore
-  * Associated pull request: [27213](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27213)
+  * Associated pull request: [27213](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27213)
 
 ## 0.19.2
 
 * chore: Add dispose functionality to FluidDocumentStore, Checkout and SharedTree
-  * Associated pull request: [26952](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26952)
+  * Associated pull request: [26952](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/26952)
 * build: update fluid to 0.32.1
-  * Associated pull request: [27217](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27217)
+  * Associated pull request: [27217](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27217)
 * run api extractor
 * fix lint errors
 * move handler to contstructor
 * chore: Cleanup of shared-tree resulting from development tooling
-  * Associated pull request: [27186](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27186)
+  * Associated pull request: [27186](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27186)
 * improvement: ensure payloads do not appear as a property when empty
-  * Associated pull request: [27166](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27166)
+  * Associated pull request: [27166](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27166)
 * chore: Added API documentation generation to the build + misc. tooling cleanup
-  * Associated pull request: [27148](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27148)
+  * Associated pull request: [27148](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27148)
 * code review updates
 * remove dispose from basiccheckout as it has been added to parent abstract class
 * Squashed 'packages/shared-tree/' changes from 13a0d61e6..fa5bc426b
 * test: Add unit tests for LogViewer
-  * Associated pull request: [26985](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26985)
+  * Associated pull request: [26985](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/26985)
 * improvment: minor forest related code cleanup and normalize package-lock
-  * Associated pull request: [27083](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27083)
+  * Associated pull request: [27083](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27083)
 * build: Add missing dev dependencies in `fluid-document-store` and `shared-tree`
-  * Associated pull request: [27097](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27097)
+  * Associated pull request: [27097](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27097)
 * docs: Merged changes from wikiMaster
-  * Associated pull request: [27077](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27077)
+  * Associated pull request: [27077](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27077)
 * docs: Fixed mermaid syntax
 * merge: merge releases/2021.01.2 into master
-  * Associated pull request: [27067](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/27067)
+  * Associated pull request: [27067](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/27067)
 * improvement: invalidate the dependents of all nodes within deleted document subtrees
-  * Associated pull request: [26984](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26984)
+  * Associated pull request: [26984](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/26984)
 
 ## 0.17.1
 
@@ -296,7 +311,7 @@ _Version update only._
 
 * Merged PR 26944: Factor out NodeData
 * fix: Correct shared-tree lint configuration to not pick up Whiteboard settings
-  * Associated pull request: [26987](https://dev.azure.com/intentional/intent/_git/whiteboard-collaboration/pullrequest/26987)
+  * Associated pull request: [26987](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/26987)
 * run API extractor
 * Merge branch 'master' of https://intentional.visualstudio.com/intent/_git/typescript-pipe into user/coclauso/update-fluid-packages
 * ChangeNodeSequence -> TreeNodeSequence
