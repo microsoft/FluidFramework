@@ -68,7 +68,7 @@
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/mocha-test-setup": "^0.36.0",
     "@types/mocha": "^5.2.5",
-    "@types/node": "^10.17.24",
+    "@types/node": "^12.17.0",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
     "concurrently": "^5.2.0",

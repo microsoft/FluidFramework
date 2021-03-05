@@ -137,7 +137,7 @@
     "@types/mocha": "^5.2.5",
     "@types/morgan": "^1.7.35",
     "@types/nconf": "^0.10.0",
-    "@types/node": "^10.17.24",
+    "@types/node": "^12.17.0",
     "@types/passport": "^0.4.5",
     "@types/passport-jwt": "^3.0.1",
     "@types/passport-local": "^1.0.33",

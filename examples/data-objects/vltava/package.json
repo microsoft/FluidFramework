@@ -64,7 +64,7 @@
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/test-tools": "^0.2.3074",
     "@fluidframework/webpack-fluid-loader": "^0.36.0",
-    "@types/node": "^10.17.24",
+    "@types/node": "^12.17.0",
     "@types/react": "^16.9.15",
     "@types/react-dom": "^16.9.4",
     "@types/uuid": "^8.3.0",
