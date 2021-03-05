@@ -1426,7 +1426,7 @@ export class DeltaManager
         }
 
         // Add final ack trace.
-        if (message.traces?.length > 0) {
+        if (message.traces !== undefined && message.traces.length > 0) {
             const service = this.clientDetails.type === undefined || this.clientDetails.type === ""
                 ? "unknown"
                 : this.clientDetails.type;

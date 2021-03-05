@@ -351,19 +351,32 @@ export class MultiSinkLogger extends TelemetryLogger {
 }
 
 /**
+ * Describes what events PerformanceEvent should log
+ * By default, all events are logged, but client can override this behavior
+ * For example, there is rarely a need to record start event, as we really after
+ * success / failure tracking, including duration (on success).
+ */
+export interface IPerformanceEventMarkers {
+    start?: true;
+    end?: true;
+    cancel?: "generic" | "error"; // tells wether to issue "generic" or "error" category cancel event
+}
+
+/**
  * Helper class to log performance events
  */
 export class PerformanceEvent {
-    public static start(logger: ITelemetryLogger, event: ITelemetryGenericEvent) {
-        return new PerformanceEvent(logger, event);
+    public static start(logger: ITelemetryLogger, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers) {
+        return new PerformanceEvent(logger, event, markers);
     }
 
     public static timedExec<T>(
         logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
         callback: (event: PerformanceEvent) => T,
+        markers?: IPerformanceEventMarkers,
     ) {
-        const perfEvent = PerformanceEvent.start(logger, event);
+        const perfEvent = PerformanceEvent.start(logger, event, markers);
         try {
             const ret = callback(perfEvent);
             // Event might have been cancelled or ended in the callback
@@ -381,8 +394,9 @@ export class PerformanceEvent {
         logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
         callback: (event: PerformanceEvent) => Promise<T>,
+        markers?: IPerformanceEventMarkers,
     ) {
-        const perfEvent = PerformanceEvent.start(logger, event);
+        const perfEvent = PerformanceEvent.start(logger, event, markers);
         try {
             const ret = await callback(perfEvent);
             // Event might have been cancelled or ended in the callback
@@ -403,9 +417,12 @@ export class PerformanceEvent {
     protected constructor(
         private readonly logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
+        private readonly markers: IPerformanceEventMarkers = {start: true, end: true, cancel: "generic"},
     ) {
         this.event = { ...event };
-        this.reportEvent("start");
+        if (this.markers.start) {
+            this.reportEvent("start");
+        }
 
         if (typeof window === "object" && window != null && window.performance) {
             this.startMark = `${event.eventName}-start`;
@@ -418,8 +435,8 @@ export class PerformanceEvent {
     }
 
     public end(props?: ITelemetryProperties, eventNameSuffix = "end"): void {
-        if (!this.reportEvent(eventNameSuffix, props)) {
-            return;
+        if (this.markers.end) {
+            this.reportEvent(eventNameSuffix, props);
         }
 
         if (this.startMark && this.event) {
@@ -433,20 +450,21 @@ export class PerformanceEvent {
     }
 
     public cancel(props?: ITelemetryProperties, error?: any): void {
-        this.reportEvent("cancel", props, error);
+        if (this.markers.cancel !== undefined) {
+            this.reportEvent("cancel", {category: this.markers.cancel, ...props}, error);
+        }
         this.event = undefined;
     }
 
     /**
      * Report the event, if it hasn't already been reported.
-     * Returns a boolean indicating if it was reported this time.
      */
-    public reportEvent(eventNameSuffix: string, props?: ITelemetryProperties, error?: any): boolean {
+    public reportEvent(eventNameSuffix: string, props?: ITelemetryProperties, error?: any) {
         // There are strange sequences involving muliple Promise chains
         // where the event can be cancelled and then later a callback is invoked
         // and the caller attempts to end directly, e.g. issue #3936. Just return.
         if (!this.event) {
-            return false;
+            return;
         }
 
         const event: ITelemetryPerformanceEvent = { ...this.event, ...props };
@@ -456,7 +474,6 @@ export class PerformanceEvent {
         }
 
         this.logger.sendPerformanceEvent(event, error);
-        return true;
     }
 }
 
