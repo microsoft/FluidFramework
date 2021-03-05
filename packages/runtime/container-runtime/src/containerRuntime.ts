@@ -1122,11 +1122,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
-        return this.dataStores.getDataStore(id, wait);
+        const context = await this.dataStores.getDataStore(id, wait);
+        assert(await context.isRoot());
+        return context.realize();
     }
 
     protected async getDataStore(id: string, wait = true): Promise<IFluidRouter> {
-        return this.dataStores.getDataStore(id, wait);
+        return (await this.dataStores.getDataStore(id, wait)).realize();
     }
 
     public notifyDataStoreInstantiated(context: IFluidDataStoreContext) {
