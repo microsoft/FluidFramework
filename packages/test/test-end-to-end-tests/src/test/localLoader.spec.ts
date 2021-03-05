@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct";
-import { IContainer, ILoader } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 import { IFluidHandle, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -100,7 +100,7 @@ describe("LocalLoader", () => {
     let opProcessingController: OpProcessingController;
 
     async function createContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
-        const loader: ILoader = createLoader(
+        const loader = createLoader(
             [[codeDetails, factory]],
             driver.createDocumentServiceFactory(),
             driver.createUrlResolver());
@@ -109,7 +109,7 @@ describe("LocalLoader", () => {
     }
 
     async function loadContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
-        const loader: ILoader = createLoader(
+        const loader = createLoader(
             [[codeDetails, factory]],
             driver.createDocumentServiceFactory(),
             driver.createUrlResolver());

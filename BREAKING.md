@@ -1,3 +1,21 @@
+## 0.36 Breaking changes
+- [Some `ILoader` APIs moved to `IHostLoader`](#Some-ILoader-APIs-moved-to-IHostLoader)
+- [TaskManager removed](#TaskManager-removed)
+- [ContainerRuntime registerTasks removed](#ContainerRuntime-registerTasks-removed)
+- [getRootDataStore](#getRootDataStore)
+
+### Some `ILoader` APIs moved to `IHostLoader`
+The `createDetachedContainer` and `rehydrateDetachedContainerFromSnapshot` APIs are removed from the `ILoader` interface, and have been moved to the new `IHostLoader` interface.  The `Loader` class now implements `IHostLoader` instead, and consumers who need these methods should operate on an `IHostLoader` instead of an `ILoader`, such as by creating a `Loader`.
+
+### TaskManager removed
+The `TaskManager` has been removed, as well as methods to access it (e.g. the `.taskManager` member on `DataObject`).  The `AgentScheduler` should be used instead for the time being and can be accessed via a request on the `ContainerRuntime` (e.g. `await this.context.containerRuntime.request({ url: "/_scheduler" })`), though we expect this will also be deprecated and removed in a future release when an alternative is made available (see #4413).
+
+### ContainerRuntime registerTasks removed
+The `registerTasks` method has been removed from `ContainerRuntime`.  The `AgentScheduler` should be used instead for task scheduling.
+
+### getRootDataStore
+IContainerRuntime.getRootDataStore() used to have a backdoor allowing accessing any store, including non-root stores. This back door is removed - you can only access root data stores using this API.
+
 ## 0.35 Breaking changes
 - [Removed some api implementations from odsp driver](#Removed-some-api-implemenations-from-odsp-driver)
 - [get-tinylicious-container and get-session-storage-container moved](#get-tinylicious-container-and-get-session-storage-container-moved)
