@@ -12,6 +12,7 @@ import * as ts from "typescript";
 import * as TscUtils from "../../tscUtils";
 import * as fs from "fs";
 const isEqual = require("lodash.isequal");
+const lstatSync: (path: fs.PathLike) => fs.Stats = fs.lstatSync;
 
 interface ITsBuildInfo {
     program: {
@@ -129,7 +130,7 @@ export class TscTask extends LeafTask {
     private remapSrcDeclFile(fullPath: string) {
         if (!this._sourceStats) {
             const config = this.readTsConfig();
-            this._sourceStats = config ? config.fileNames.map(fs.lstatSync) : [];
+            this._sourceStats = config ? config.fileNames.map(lstatSync) : [];
         }
 
         const parsed = path.parse(fullPath);

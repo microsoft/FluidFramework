@@ -60,8 +60,8 @@ export async function execAsync(command: string, options: child_process.ExecOpti
         });
 
         if (pipeStdIn) {
-            p.stdin.write(pipeStdIn);
-            p.stdin.end();
+            p.stdin!.write(pipeStdIn);
+            p.stdin!.end();
         }
     });
 }

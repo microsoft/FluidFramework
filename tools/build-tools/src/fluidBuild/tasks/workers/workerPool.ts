@@ -51,8 +51,8 @@ export class WorkerPool {
         const setupWorker = (worker: Worker | ChildProcess, res: (value: WorkerExecResultWithOutput) => void) => {
             let stdout = "";
             let stderr = "";
-            installTemporaryListener(worker.stdout, "data", (chunk: any) => { stdout += chunk; });
-            installTemporaryListener(worker.stderr, "data", (chunk: any) => { stderr += chunk; });
+            installTemporaryListener(worker.stdout!, "data", (chunk: any) => { stdout += chunk; });
+            installTemporaryListener(worker.stderr!, "data", (chunk: any) => { stderr += chunk; });
             worker.once("message", (result: WorkerExecResult) => {
                 res({ ...result, stdout, stderr });
             });
