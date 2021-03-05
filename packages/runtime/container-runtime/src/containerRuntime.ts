@@ -944,7 +944,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @returns the data store runtime if the data store exists and is initially referenced; undefined otherwise.
      */
     private async getDataStoreIfInitiallyReferenced(id: string, wait = true) {
-        const dataStoreContext = await this.dataStores.getDataStoreContext(id, wait);
+        const dataStoreContext = await this.dataStores.getDataStore(id, wait);
         if (dataStoreContext !== undefined) {
             // The data store is referenced if used routes in the initial summary has a route to self.
             // Older documents may not have used routes in the summary. They are considered referenced.
@@ -1140,14 +1140,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dataStores.processSignal(envelope.address, transformed, local);
     }
 
-    public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
+    public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter | undefined> {
         const context = await this.dataStores.getDataStore(id, wait);
+        if (context === undefined) {
+            return context;
+        }
         assert(await context.isRoot());
         return context.realize();
     }
 
-    protected async getDataStore(id: string, wait = true): Promise<IFluidRouter> {
-        return (await this.dataStores.getDataStore(id, wait)).realize();
+    protected async getDataStore(id: string, wait = true): Promise<IFluidRouter | undefined> {
+        const context = await this.dataStores.getDataStore(id, wait);
+        return context?.realize();
     }
 
     public notifyDataStoreInstantiated(context: IFluidDataStoreContext) {
@@ -1805,10 +1809,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private async getScheduler(): Promise<IAgentScheduler> {
-        return requestFluidObject<IAgentScheduler>(
-            await this.getDataStore(taskSchedulerId, true),
-            "",
-        );
+        const taskScheduler = await this.getDataStore(taskSchedulerId, true);
+        assert(taskScheduler !== undefined, "Task scheduler does not exist");
+        return requestFluidObject<IAgentScheduler>(taskScheduler, "");
     }
 
     private updateLeader(leadership: boolean) {

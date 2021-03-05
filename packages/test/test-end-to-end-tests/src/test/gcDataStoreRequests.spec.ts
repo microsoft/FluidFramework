@@ -9,7 +9,7 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
-import { IContainer, ILoader } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import { LocalResolver } from "@fluidframework/local-driver";
 import {
@@ -88,12 +88,12 @@ describe("GC Data Store Requests", () => {
     let container1: IContainer;
 
     async function createContainer(): Promise<IContainer> {
-        const loader: ILoader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
+        const loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
         return createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(): Promise<IContainer> {
-        const loader: ILoader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
+        const loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
         return loader.resolve({ url: documentLoadUrl });
     }
 
