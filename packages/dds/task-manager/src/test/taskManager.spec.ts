@@ -7,34 +7,32 @@ import { strict as assert } from "assert";
 // import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
 import {
     MockFluidDataStoreRuntime,
-//     MockContainerRuntimeFactory,
+    MockContainerRuntimeFactory,
 //     MockContainerRuntimeFactoryForReconnection,
 //     MockContainerRuntimeForReconnection,
-//     MockStorage,
+    MockStorage,
 //     MockSharedObjectServices,
 } from "@fluidframework/test-runtime-utils";
 import { TaskManager } from "../taskManager";
 import { TaskManagerFactory } from "../taskManagerFactory";
-// import { ITaskQueue } from "../interfaces";
+import { ITaskManager } from "../interfaces";
 
-// function createConnectedCell(id: string, runtimeFactory: MockContainerRuntimeFactory) {
-//     // Create and connect a second SharedCell.
-//     const dataStoreRuntime = new MockFluidDataStoreRuntime();
-//     const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
-//     const services = {
-//         deltaConnection: containerRuntime.createDeltaConnection(),
-//         objectStorage: new MockStorage(),
-//     };
+function createConnectedTaskManager(id: string, runtimeFactory: MockContainerRuntimeFactory) {
+    // Create and connect a TaskManager.
+    const dataStoreRuntime = new MockFluidDataStoreRuntime();
+    const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
+    const services = {
+        deltaConnection: containerRuntime.createDeltaConnection(),
+        objectStorage: new MockStorage(),
+    };
 
-//     const cell = new TaskQueue(id, dataStoreRuntime, TaskQueueFactory.Attributes);
-//     cell.connect(services);
-//     return cell;
-// }
-
-function createLocalTaskManager(id: string) {
-    const subCell = new TaskManager(id, new MockFluidDataStoreRuntime(), TaskManagerFactory.Attributes);
-    return subCell;
+    const taskManager = new TaskManager(id, dataStoreRuntime, TaskManagerFactory.Attributes);
+    taskManager.connect(services);
+    return taskManager;
 }
+
+const createLocalTaskManager = (id: string) =>
+    new TaskManager(id, new MockFluidDataStoreRuntime(), TaskManagerFactory.Attributes);
 
 // function createCellForReconnection(id: string, runtimeFactory: MockContainerRuntimeFactoryForReconnection) {
 //     const dataStoreRuntime = new MockFluidDataStoreRuntime();
@@ -62,6 +60,15 @@ describe("TaskManager", () => {
                 assert.ok(taskManager, "Could not create a task manager");
             });
 
+            // it("Can lock a task", async () => {
+            //     const taskId = "taskId";
+            //     const lockTaskP = taskManager.lockTask(taskId);
+            //     assert.ok(taskManager.queued(taskId), "Not queued");
+            //     await lockTaskP;
+            //     assert.ok(!taskManager.queued(taskId), "Not queued");
+            //     assert.ok(taskManager.haveTaskLock(taskId), "Don't have lock");
+            // });
+
             // it("Can set and get cell data", () => {
             //     cell.set("testValue");
             //     assert.equal(cell.get(), "testValue", "Could not retrieve cell value");
@@ -86,74 +93,58 @@ describe("TaskManager", () => {
             //     assert.equal(cell2.get(), "testValue", "Could not load SharedCell from snapshot");
             // });
         });
-
-//         describe("Op processing in local state", () => {
-//              it("should correctly process a set operation sent in local state", async () => {
-//                 const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-//                 const cell1 = new TaskQueue("cell1", dataStoreRuntime1, TaskQueueFactory.Attributes);
-//                 // Set a value in local state.
-//                 const value = "testValue";
-//                 cell1.set(value);
-
-//                 // Load a new SharedCell in connected state from the snapshot of the first one.
-//                 const containerRuntimeFactory = new MockContainerRuntimeFactory();
-//                 const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-//                 const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-//                 const services2 = MockSharedObjectServices.createFromSummary(cell1.summarize().summary);
-//                 services2.deltaConnection = containerRuntime2.createDeltaConnection();
-
-//                 const cell2 = new TaskQueue("cell2", dataStoreRuntime2, TaskQueueFactory.Attributes);
-//                 await cell2.load(services2);
-
-//                 // Now connect the first SharedCell
-//                 dataStoreRuntime1.local = false;
-//                 const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
-//                 const services1 = {
-//                     deltaConnection: containerRuntime1.createDeltaConnection(),
-//                     objectStorage: new MockStorage(),
-//                 };
-//                 cell1.connect(services1);
-
-//                 // Verify that both the cells have the value.
-//                 assert.equal(cell1.get(), value, "The first cell does not have the key");
-//                 assert.equal(cell2.get(), value, "The second cell does not have the key");
-
-//                 // Set a new value in the second SharedCell.
-//                 const newValue = "newvalue";
-//                 cell2.set(newValue);
-
-//                 // Process the message.
-//                 containerRuntimeFactory.processAllMessages();
-
-//                 // Verify that both the cells have the new value.
-//                 assert.equal(cell1.get(), newValue, "The first cell did not get the new value");
-//                 assert.equal(cell2.get(), newValue, "The second cell did not get the new value");
-//             });
-//         });
     });
 
-//     describe("Connected state", () => {
-//         let cell1: ITaskQueue;
-//         let cell2: ITaskQueue;
-//         let containerRuntimeFactory: MockContainerRuntimeFactory;
+    describe("Connected state", () => {
+        let taskManager1: ITaskManager;
+        let taskManager2: ITaskManager;
+        let containerRuntimeFactory: MockContainerRuntimeFactory;
 
-//         describe("APIs", () => {
-//             beforeEach(() => {
-//                 containerRuntimeFactory = new MockContainerRuntimeFactory();
-//                 // Connect the first SharedCell.
-//                 cell1 = createConnectedCell("cell1", containerRuntimeFactory);
-//                 // Create a second SharedCell.
-//                 cell2 = createConnectedCell("cell2", containerRuntimeFactory);
-//             });
+        describe("APIs", () => {
+            beforeEach(() => {
+                containerRuntimeFactory = new MockContainerRuntimeFactory();
+                taskManager1 = createConnectedTaskManager("taskManager1", containerRuntimeFactory);
+                taskManager2 = createConnectedTaskManager("taskManager2", containerRuntimeFactory);
+            });
 
-//             it("Can set and get cell data", () => {
-//                 cell1.set("testValue");
+            it("Can lock a task", async () => {
+                const taskId = "taskId";
+                const lockTaskP = taskManager1.lockTask(taskId);
+                assert.ok(taskManager1.queued(taskId), "Not queued");
+                assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
+                containerRuntimeFactory.processAllMessages();
+                await lockTaskP;
+                assert.ok(taskManager1.queued(taskId), "Not queued");
+                assert.ok(taskManager1.haveTaskLock(taskId), "Don't have lock");
+            });
 
-//                 containerRuntimeFactory.processAllMessages();
+            it("Can wait for a task", async () => {
+                const taskId = "taskId";
+                const lockTaskP1 = taskManager1.lockTask(taskId);
+                const lockTaskP2 = taskManager2.lockTask(taskId);
 
-//                 assert.equal(cell1.get(), "testValue", "Could not retrieve cell value");
-//                 assert.equal(cell2.get(), "testValue", "Could not retrieve cell value from remote client");
-//             });
+                assert.ok(taskManager1.queued(taskId), "Task manager 1 not queued");
+                assert.ok(!taskManager1.haveTaskLock(taskId), "Task manager 1 should not have lock");
+                assert.ok(taskManager2.queued(taskId), "Task manager 2 not queued");
+                assert.ok(!taskManager2.haveTaskLock(taskId), "Task manager 2 should not have lock");
+
+                containerRuntimeFactory.processAllMessages();
+                await lockTaskP1;
+
+                assert.ok(taskManager1.queued(taskId), "Task manager 1 not queued");
+                assert.ok(taskManager1.haveTaskLock(taskId), "Task manager 1 does not have lock");
+                assert.ok(taskManager2.queued(taskId), "Task manager 2 not queued");
+                assert.ok(!taskManager2.haveTaskLock(taskId), "Task manager 2 should not have lock");
+
+                taskManager1.abandon(taskId);
+                containerRuntimeFactory.processAllMessages();
+                await lockTaskP2;
+
+                assert.ok(!taskManager1.queued(taskId), "Task manager 1 not queued");
+                assert.ok(!taskManager1.haveTaskLock(taskId), "Task manager 1 should not have lock");
+                assert.ok(taskManager2.queued(taskId), "Task manager 2 not queued");
+                assert.ok(taskManager2.haveTaskLock(taskId), "Task manager 2 should not have lock");
+            });
 
 //             it("can delete cell data", () => {
 //                 cell1.set("testValue");
@@ -170,15 +161,15 @@ describe("TaskManager", () => {
 //                 assert.equal(cell1.get(), undefined, "Could not delete cell value");
 //                 assert.equal(cell2.get(), undefined, "Could not delete cell value from remote client");
 //             });
-//         });
-//     });
+        });
+    });
 
 //     describe("Reconnection", () => {
 //         let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 //         let containerRuntime1: MockContainerRuntimeForReconnection;
 //         let containerRuntime2: MockContainerRuntimeForReconnection;
-//         let cell1: ITaskQueue;
-//         let cell2: ITaskQueue;
+//         let cell1: ITaskManager;
+//         let cell2: ITaskManager;
 
 //         beforeEach(() => {
 //             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
