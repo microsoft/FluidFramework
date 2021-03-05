@@ -115,7 +115,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         });
 
         runtime.getQuorum().on("removeMember", (clientId: string) => {
-            console.log("Quorum alerts removal", clientId);
             this.removeClientFromAllQueues(clientId);
         });
 
@@ -144,7 +143,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             taskId,
         };
         this.pendingTaskQueues.add(taskId);
-        console.log("Queueing self", taskId, this.runtime.clientId);
         this.submitLocalMessage(op);
     }
 
@@ -224,7 +222,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      */
     protected snapshotCore(serializer: IFluidSerializer): ITree {
         const content = [...this.taskQueues.entries()];
-        console.log("Generating snapshot", content);
 
         // And then construct the tree for it
         const tree: ITree = {
@@ -258,7 +255,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             this.taskQueues.set(taskId, clientIdQueue);
         });
         this.scrubClientsNotInQuorum();
-        console.log("loadCore complete", this.taskQueues);
     }
 
     protected initializeLocalCore() { }
@@ -280,7 +276,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
             const op = message.contents as ITaskManagerOperation;
-            console.log("Processing incoming", op.taskId, message.clientId);
 
             switch (op.type) {
                 case "volunteer":
@@ -311,7 +306,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
         const oldLockHolder = clientQueue[0];
         clientQueue.push(clientId);
-        console.log(`Added ${clientId}`, clientQueue);
         const newLockHolder = clientQueue[0];
         this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
 
@@ -333,7 +327,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         const clientIdIndex = clientQueue.indexOf(clientId);
         if (clientIdIndex !== -1) {
             clientQueue.splice(clientIdIndex, 1);
-            console.log(`Removed ${clientId}`, clientQueue);
             // Clean up the queue if there are no more clients in it.
             if (clientQueue.length === 0) {
                 this.taskQueues.delete(taskId);
