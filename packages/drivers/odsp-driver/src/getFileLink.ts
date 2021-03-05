@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PromiseCache } from "@fluidframework/common-utils";
 import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
@@ -15,31 +15,6 @@ import {
     TokenFetcher,
     tokenFromResponse,
 } from "./tokenFetch";
-
-async function getRequestIdsFromResponse(headers: Map<string, string>): Promise<ITelemetryProperties> {
-    interface LoggingHeader {
-        headerName: string;
-        logName: string;
-    }
-    // We rename headers so that otel doesn't scrub them away. Otel doesn't allow
-    // certain characters in headers including '-'
-    const headersToLog: LoggingHeader[] = [
-        { headerName: "sprequestguid", logName: "spRequestGuid" },
-        { headerName: "request-id", logName: "requestId" },
-        { headerName: "client-request-id", logName: "clientRequestId" },
-        { headerName: "x-msedge-ref", logName: "xMsedgeRef" },
-    ];
-    const additionalProps: ITelemetryProperties = {};
-    if (headers) {
-        headersToLog.forEach((header) => {
-            const headerValue = headers.get(header.headerName);
-            if (headerValue !== undefined) {
-                additionalProps[header.logName] = headerValue;
-            }
-        });
-    }
-    return additionalProps;
-}
 
 /**
  * returns a promise that resolves after timeMs
@@ -122,15 +97,15 @@ async function getFileLinkCore(
         return fileItem.webUrl;
     }
 
-    let tries = 0;
-    let additionalProps;
     // ODSP link requires extra call to return link that is resistant to file being renamed or moved to different folder
     return PerformanceEvent.timedExecAsync(
         logger,
         { eventName: "odspFileLink", requestName: "getSharingInformation" },
         async (event) => {
+            let attempts = 0;
+            let additionalProps;
             const fileLink = await getWithRetryForTokenRefresh(async (options) => {
-                tries++;
+                attempts++;
                 const token = await getToken({ ...options, siteUrl });
                 const { url, headers } = getUrlAndHeadersWithAuth(
                     `${siteUrl}/_api/web/GetFileByUrl(@a1)/ListItemAllFields/GetSharingInformation?@a1=${
@@ -144,15 +119,15 @@ async function getFileLinkCore(
                         ...headers,
                     },
                 };
-                const { content } = await fetchHelper(url, requestInit);
-                additionalProps = await getRequestIdsFromResponse(new Map(content.headers));
-                if (content.ok) {
-                    const sharingInfo = await content.json();
+                const response = await fetchHelper(url, requestInit);
+                additionalProps = response.commonSpoHeaders;
+                if (response.content.ok) {
+                    const sharingInfo = await response.content.json();
                     return sharingInfo?.d?.directUrl as string;
                 }
                 return undefined;
             });
-            event.end({ ...additionalProps, tries });
+            event.end({ ...additionalProps, attempts });
             return fileLink;
         },
     );
@@ -173,28 +148,28 @@ async function getFileItemLite(
     itemId: string,
     logger: ITelemetryLogger,
 ): Promise<FileItemLite | undefined> {
-    let tries = 0;
-    let additionalProps;
     return PerformanceEvent.timedExecAsync(
         logger,
         { eventName: "odspFileLink", requestName: "getFileItemLite" },
         async (event) => {
+            let attempts = 0;
+            let additionalProps;
             const fileItem = await getWithRetryForTokenRefresh(async (options) => {
-                tries++;
+                attempts++;
                 const token = await getToken({ ...options, siteUrl });
                 const { url, headers } = getUrlAndHeadersWithAuth(
                     `${siteUrl}/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl`,
                     tokenFromResponse(token),
                 );
                 const requestInit = { method: "GET", headers };
-                const { content }  = await fetchHelper(url, requestInit);
-                additionalProps = await getRequestIdsFromResponse(new Map(content.headers));
-                if (content.ok) {
-                    return await content.json() as FileItemLite;
+                const response = await fetchHelper(url, requestInit);
+                additionalProps = response.commonSpoHeaders;
+                if (response.content.ok) {
+                    return await response.content.json() as FileItemLite;
                 }
                 return undefined;
             });
-            event.end({ ...additionalProps, tries });
+            event.end({ ...additionalProps, attempts });
             if (fileItem && fileItem.webDavUrl && fileItem.webUrl) {
                 return fileItem;
             }
