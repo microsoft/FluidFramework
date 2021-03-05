@@ -65,7 +65,7 @@ const MaxReconnectDelaySeconds = 8;
 const InitialReconnectDelaySeconds = 1;
 const MissingFetchDelaySeconds = 0.1;
 const MaxFetchDelaySeconds = 10;
-const MaxBatchDeltas = 2000;
+const MaxBatchDeltas = 5000; // Please see Issue #5211 for data around batch sizing
 const DefaultChunkSize = 16 * 1024;
 
 function getNackReconnectInfo(nackContent: INackContent) {
