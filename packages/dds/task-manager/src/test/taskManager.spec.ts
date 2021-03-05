@@ -1,20 +1,20 @@
-// /*!
-//  * Copyright (c) Microsoft Corporation. All rights reserved.
-//  * Licensed under the MIT License.
-//  */
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
-// import { strict as assert } from "assert";
+import { strict as assert } from "assert";
 // import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
-// import {
-//     MockFluidDataStoreRuntime,
+import {
+    MockFluidDataStoreRuntime,
 //     MockContainerRuntimeFactory,
 //     MockContainerRuntimeFactoryForReconnection,
 //     MockContainerRuntimeForReconnection,
 //     MockStorage,
 //     MockSharedObjectServices,
-// } from "@fluidframework/test-runtime-utils";
-// import { TaskQueue } from "../taskQueue";
-// import { TaskQueueFactory } from "../taskQueueFactory";
+} from "@fluidframework/test-runtime-utils";
+import { TaskManager } from "../taskManager";
+import { TaskManagerFactory } from "../taskManagerFactory";
 // import { ITaskQueue } from "../interfaces";
 
 // function createConnectedCell(id: string, runtimeFactory: MockContainerRuntimeFactory) {
@@ -31,10 +31,10 @@
 //     return cell;
 // }
 
-// function createLocalCell(id: string) {
-//     const subCell = new TaskQueue("cell", new MockFluidDataStoreRuntime(), TaskQueueFactory.Attributes);
-//     return subCell;
-// }
+function createLocalTaskManager(id: string) {
+    const subCell = new TaskManager(id, new MockFluidDataStoreRuntime(), TaskManagerFactory.Attributes);
+    return subCell;
+}
 
 // function createCellForReconnection(id: string, runtimeFactory: MockContainerRuntimeFactoryForReconnection) {
 //     const dataStoreRuntime = new MockFluidDataStoreRuntime();
@@ -49,43 +49,43 @@
 //     return { cell, containerRuntime };
 // }
 
-// describe("Cell", () => {
-//     describe("Local state", () => {
-//         let cell: TaskQueue;
+describe("TaskManager", () => {
+    describe("Local state", () => {
+        let taskManager: TaskManager;
 
-//         beforeEach(() => {
-//             cell = createLocalCell("cell");
-//         });
+        beforeEach(() => {
+            taskManager = createLocalTaskManager("taskmanager");
+        });
 
-//         describe("APIs", () => {
-//             it("Can create a cell", () => {
-//                 assert.ok(cell, "Could not create a cell");
-//             });
+        describe("APIs", () => {
+            it("Can create a TaskManager", () => {
+                assert.ok(taskManager, "Could not create a task manager");
+            });
 
-//             it("Can set and get cell data", () => {
-//                 cell.set("testValue");
-//                 assert.equal(cell.get(), "testValue", "Could not retrieve cell value");
-//             });
+            // it("Can set and get cell data", () => {
+            //     cell.set("testValue");
+            //     assert.equal(cell.get(), "testValue", "Could not retrieve cell value");
+            // });
 
-//             it("can delete cell data", () => {
-//                 cell.set("testValue");
-//                 assert.equal(cell.get(), "testValue", "Could not retrieve cell value");
+            // it("can delete cell data", () => {
+            //     cell.set("testValue");
+            //     assert.equal(cell.get(), "testValue", "Could not retrieve cell value");
 
-//                 cell.delete();
-//                 assert.equal(cell.get(), undefined, "Could not delete cell value");
-//             });
+            //     cell.delete();
+            //     assert.equal(cell.get(), undefined, "Could not delete cell value");
+            // });
 
-//             it("can load a SharedCell from snapshot", async () => {
-//                 cell.set("testValue");
-//                 assert.equal(cell.get(), "testValue", "Could not retrieve cell value");
+            // it("can load a SharedCell from snapshot", async () => {
+            //     cell.set("testValue");
+            //     assert.equal(cell.get(), "testValue", "Could not retrieve cell value");
 
-//                 const services = MockSharedObjectServices.createFromSummary(cell.summarize().summary);
-//                 const cell2 = new TaskQueue("cell2", new MockFluidDataStoreRuntime(), TaskQueueFactory.Attributes);
-//                 await cell2.load(services);
+            //     const services = MockSharedObjectServices.createFromSummary(cell.summarize().summary);
+            //     const cell2 = new TaskQueue("cell2", new MockFluidDataStoreRuntime(), TaskQueueFactory.Attributes);
+            //     await cell2.load(services);
 
-//                 assert.equal(cell2.get(), "testValue", "Could not load SharedCell from snapshot");
-//             });
-//         });
+            //     assert.equal(cell2.get(), "testValue", "Could not load SharedCell from snapshot");
+            // });
+        });
 
 //         describe("Op processing in local state", () => {
 //              it("should correctly process a set operation sent in local state", async () => {
@@ -130,7 +130,7 @@
 //                 assert.equal(cell2.get(), newValue, "The second cell did not get the new value");
 //             });
 //         });
-//     });
+    });
 
 //     describe("Connected state", () => {
 //         let cell1: ITaskQueue;
@@ -262,4 +262,4 @@
 //             assert.equal(cell2.get(), undefined, "The second client did not process the delete");
 //         });
 //     });
-// });
+});
