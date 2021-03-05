@@ -94,7 +94,7 @@ export async function createNewFluidFile(
                 });
                 return content.itemId;
             },
-            true);
+            { cancel: "error" });
     });
 
     const odspUrl = createOdspUrl(newFileInfo.siteUrl, newFileInfo.driveId, itemId, "/");
