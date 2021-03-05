@@ -44,23 +44,64 @@ const snapshotFileName = "header";
 /**
  * The TaskManager distributed data structure tracks queues of clients that want to exclusively run a task.
  *
+ * It is still experimental and under development.  Please do try it out, but expect breaking changes in the future.
+ *
  * @remarks
  * ### Creation
  *
  * To create a `TaskManager`, call the static create method:
  *
  * ```typescript
- * const myQueue = TaskManager.create(this.runtime, id);
+ * const taskManager = TaskManager.create(this.runtime, id);
  * ```
  *
  * ### Usage
  *
- * TODO
+ * To volunteer for a task, use the `lockTask()` method.  This returns a Promise that will resolve once the client
+ * has acquired exclusive rights to run the task, or reject if the client is removed from the queue without acquiring
+ * the rights.
+ *
+ * ```typescript
+ * taskManager.lockTask("NameOfTask")
+ *     .then(() => { doTheTask(); })
+ *     .catch((err) => { console.error(err); });
+ * ```
+ *
+ * To release the rights to the task, use the `abandon()` method.  The next client in the queue will then get the
+ * rights to run the task.
+ *
+ * ```typescript
+ * taskManager.abandon("NameOfTask");
+ * ```
+ *
+ * To inspect your state in the queue, you can use the `queued()` and `haveTaskLock()` methods.
+ *
+ * ```typescript
+ * if (taskManager.queued("NameOfTask")) {
+ *     console.log("This client is somewhere in the queue, potentially even having the lock");
+ * }
+ *
+ * if (taskManager.queued("NameOfTask")) {
+ *     console.log("This client currently has the rights to run the task");
+ * }
+ * ```
  *
  * ### Eventing
  *
- * `TaskManager` is an `EventEmitter`, and will emit events when other clients make modifications. You should
- * register for these events and respond appropriately as the data is modified. TODO details.
+ * `TaskManager` is an `EventEmitter`, and will emit events when a task is assigned to the client or released.
+ *
+ * ```typescript
+ * taskManager.on("assigned", (taskId: string) => {
+ *     console.log(`Client was assigned task: ${taskId}`);
+ * });
+ *
+ * taskManager.on("lost", (taskId: string) => {
+ *     console.log(`Client released task: ${taskId}`);
+ * });
+ * ```
+ *
+ * These can be useful if the logic to volunteer for a task is separated from the logic to perform the task and it's
+ * not convenient to pass the Promise around.
  */
 export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
     /**
@@ -120,7 +161,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
         this.queueWatcher.on("queueChange", (taskId: string, oldLockHolder: string, newLockHolder: string) => {
             if (this.runtime.clientId === undefined) {
-                // TODO should we do something different in the disconnected case?
+                // TODO handle disconnected case
                 return;
             }
 
@@ -169,7 +210,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         });
 
         if (!this.queued(taskId)) {
-            // TODO What should be done if we are not attached?  Treat like auto-ack?
+            // TODO simulate auto-ack in detached scenario
             this.submitVolunteerOp(taskId);
         }
 
@@ -189,7 +230,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         if (!this.queued(taskId)) {
             return;
         }
-        // TODO: Can't abandon if detached?  Or maybe should just treat as auto-ack?
+        // TODO simulate auto-ack in detached scenario
         if (!this.isAttached()) {
             return;
         }
@@ -262,7 +303,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     protected registerCore() { }
 
     protected onDisconnect() {
-        // TODO knock ourselves out of the queues here?
+        // TODO knock ourselves out of the queues here probably
     }
 
     /**
@@ -309,7 +350,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         const newLockHolder = clientQueue[0];
         this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
 
-        // TODO remove
+        // TODO remove, just for debugging
         this.emit("changed");
     }
 
@@ -335,13 +376,15 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         const newLockHolder = clientQueue[0];
         this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
 
-        // TODO remove
+        // TODO remove, just for debugging
         this.emit("changed");
     }
 
     private removeClientFromAllQueues(clientId: string) {
         if (clientId === this.runtime.clientId) {
-            // TODO is this correct?
+            // TODO consider whether this should:
+            // 1. remove from ONLY queues we have been ack'd in OR
+            // 2. remove from pending queues as well, and also send abandons if we get ack'd
             this.pendingTaskQueues.clear();
         }
         for (const taskId of this.taskQueues.keys()) {
@@ -361,7 +404,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 } else {
                     this.taskQueues.set(taskId, filteredClientQueue);
                 }
-                // TODO remove
+                // TODO remove, just for debugging
                 this.emit("changed");
                 this.queueWatcher.emit("queueChange", taskId);
             }

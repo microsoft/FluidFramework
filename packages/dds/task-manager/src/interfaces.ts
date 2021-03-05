@@ -17,25 +17,25 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
     /**
      * Try to lock the task.  Promise resolves when the lock is acquired, or rejects if we are removed from the
      * queue without acquiring the lock for any reason.
-     * @param taskId
+     * @param taskId - Identifier for the task
      */
     lockTask(taskId: string): Promise<void>;
 
     /**
-     * Exit the queue, I immediately drop assigned/queued status
-     * @param taskId
+     * Exit the queue immediately.
+     * @param taskId - Identifier for the task
      */
     abandon(taskId: string): void;
 
     /**
-     * Am I the currently assigned client?
-     * @param taskId
+     * Check whether this client is the current assignee for the task.
+     * @param taskId - Identifier for the task
      */
     haveTaskLock(taskId: string): boolean;
 
     /**
-     * Are we already trying to acquire the task lock?
-     * @param taskId
+     * Check whether this client is either the current assignee for the task or is waiting in line.
+     * @param taskId - Identifier for the task
      */
     queued(taskId: string): boolean;
 }
