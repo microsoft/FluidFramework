@@ -369,7 +369,7 @@ async function attachContainer(
 
     let currentContainer = container;
     let currentLeftDiv = leftDiv;
-    const attached = new Deferred();
+    const attached = new Deferred<void>();
     // To test orderer, we use local driver as wrapper for actual document service. So create request
     // using local resolver.
     const attachUrl = testOrderer ? new LocalResolver().createCreateNewRequest(documentId)
