@@ -137,7 +137,7 @@ jobs:
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
       inputs:
         command: 'custom'
-        workingDir: packages/test/end-to-end-tests
+        workingDir: packages/test/test-end-to-end-tests
         customCommand: 'run test:realsvc:routerlicious:report'
 
     # end-to-end tests odsp
@@ -152,7 +152,7 @@ jobs:
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
       inputs:
         command: 'custom'
-        workingDir: packages/test/end-to-end-tests
+        workingDir: packages/test/test-end-to-end-tests
         customCommand: 'run test:realsvc:odsp:report'
 
     # Run Stress Tests
