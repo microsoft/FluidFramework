@@ -13,13 +13,13 @@ import { IOdspResolvedUrl, OdspDocumentInfo, OdspFluidDataStoreLocator, SharingL
 import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 import { createOdspUrl } from "./createOdspUrl";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { getShareLink } from "./graph";
 import {
     IdentityType,
     isTokenFromCache,
-    SharingLinkTokenFetchOptions,
+    OdspResourceTokenFetchOptions,
     TokenFetcher,
 } from "./tokenFetch";
+import { getFileLink } from "./getFileLink";
 
 /**
  * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
@@ -29,16 +29,15 @@ import {
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     private readonly logger: ITelemetryLogger;
     private readonly sharingLinkCache = new PromiseCache<string, string>();
-    private readonly getSharingLinkToken: TokenFetcher<SharingLinkTokenFetchOptions>;
+    private readonly instrumentedTokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>;
     public constructor(
-        tokenFetcher: TokenFetcher<SharingLinkTokenFetchOptions>,
+        tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
         private readonly identityType: IdentityType = "Enterprise",
         logger?: ITelemetryBaseLogger,
         private readonly appName?: string,
-        private readonly msGraphOrigin?: string,
     ) {
         this.logger = ChildLogger.create(logger, "OdspDriver");
-        this.getSharingLinkToken = this.toInstrumentedTokenFetcher(this.logger, tokenFetcher);
+        this.instrumentedTokenFetcher = this.toInstrumentedTokenFetcher(this.logger, tokenFetcher);
     }
 
     public createCreateNewRequest(
@@ -112,7 +111,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             odspResolvedUrl.sharingLinkToRedeem = request.url.split("?")[0];
         }
         if (odspResolvedUrl.itemId) {
-            // Kick start the sharing link request if we don't already have it already as a performance optimization.
+            // Kick start the sharing link request if we don't have it already as a performance optimization.
             // For detached create new, we don't have an item id yet and therefore cannot generate a share link
             this.getShareLinkPromise(odspResolvedUrl).catch(() => {});
         }
@@ -121,9 +120,9 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 
     private toInstrumentedTokenFetcher(
         logger: ITelemetryLogger,
-        tokenFetcher: TokenFetcher<SharingLinkTokenFetchOptions>,
-    ): TokenFetcher<SharingLinkTokenFetchOptions> {
-        return async (options: SharingLinkTokenFetchOptions) => {
+        tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
+    ): TokenFetcher<OdspResourceTokenFetchOptions> {
+        return async (options: OdspResourceTokenFetchOptions) => {
             return PerformanceEvent.timedExecAsync(
                 logger,
                 { eventName: "GetSharingLinkToken" },
@@ -139,30 +138,26 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             throw new Error("Failed to get share link because necessary information is missing " +
                 "(e.g. siteUrl, driveId or itemId)");
         }
+
         const key = this.getKey(resolvedUrl);
         const cachedLinkPromise = this.sharingLinkCache.get(key);
         if (cachedLinkPromise) {
             return cachedLinkPromise;
         }
-        const newLinkPromise = getShareLink(
-            this.getSharingLinkToken,
+        const newLinkPromise = getFileLink(
+            this.instrumentedTokenFetcher,
             resolvedUrl.siteUrl,
             resolvedUrl.driveId,
             resolvedUrl.itemId,
             this.identityType,
             this.logger,
-            "existingAccess",
-            undefined,
-            this.msGraphOrigin,
-        ).then((shareLink) => {
-                if (!shareLink) {
-                    throw new Error("Failed to get share link");
-                }
-                return shareLink;
-        }).catch((error) => {
-            if (this.logger) {
-                this.logger.sendErrorEvent({ eventName: "FluidFileUrlError" }, error);
+        ).then((fileLink) => {
+            if (!fileLink) {
+                throw new Error("Failed to get share link");
             }
+            return fileLink;
+        }).catch((error) => {
+            this.logger.sendErrorEvent({ eventName: "FluidFileUrlError" }, error);
             this.sharingLinkCache.remove(key);
             throw error;
         });
