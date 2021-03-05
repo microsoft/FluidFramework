@@ -450,7 +450,7 @@ export class PerformanceEvent {
     }
 
     public cancel(props?: ITelemetryProperties, error?: any): void {
-        if (this.markers.cancel !== undefined) {
+        if (this.markers.cancel) {
             this.reportEvent("cancel", {category: this.markers.cancel, ...props}, error);
         }
         this.event = undefined;
