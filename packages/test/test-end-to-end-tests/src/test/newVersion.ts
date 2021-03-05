@@ -25,7 +25,6 @@ export { IClientConfiguration } from "@fluidframework/protocol-definitions";
 export { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 export { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 export { SharedString, SparseMatrix } from "@fluidframework/sequence";
-export { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 export { ITestDriver } from "@fluidframework/test-driver-definitions";
 export {
     ChannelFactoryRegistry,
