@@ -53,7 +53,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 
         // if we got full batch, and did not fully satisfy original request, then there is likely more...
         // Note that it's not disallowed to return more ops than requested!
-        if (result.messages.length !== length && batchLength !== length) {
+        if (result.messages.length >= batchLength && result.messages.length !== length) {
             result.partialResult = true;
         }
         return result;
