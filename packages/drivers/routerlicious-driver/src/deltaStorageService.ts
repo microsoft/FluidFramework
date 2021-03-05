@@ -18,6 +18,8 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ITokenProvider } from "./tokens";
 import { DocumentStorageService } from "./documentStorageService";
 
+const MaxBatchDeltas = 2000; // Maximum number of ops we can fetch at a time
+
 /**
  * Storage service limited to only being able to fetch documents for a specific document
  */
@@ -44,7 +46,17 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
                 return { messages, partialResult: true };
             }
         }
-        return this.storageService.get(this.tenantId, this.id, from, to);
+
+        const length = to - from - 1; // to & from are exclusive!
+        const batchLength = Math.min(MaxBatchDeltas, length); // limit number of ops we retrieve at once
+        const result = await this.storageService.get(this.tenantId, this.id, from, from + batchLength + 1);
+
+        // if we got full batch, and did not fully satisfy original request, then there is likely more...
+        // Note that it's not disallowed to return more ops than requested!
+        if (result.messages.length >= batchLength && result.messages.length !== length) {
+            result.partialResult = true;
+        }
+        return result;
     }
 }
 
