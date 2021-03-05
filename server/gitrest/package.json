@@ -48,7 +48,7 @@
     "@types/mocha": "^2.2.48",
     "@types/morgan": "^1.7.32",
     "@types/nconf": "^0.10.0",
-    "@types/node": "^12.12.54",
+    "@types/node": "12.17.0",
     "@types/nodegit": "^0.26.7",
     "@types/rimraf": "^2.0.2",
     "@types/supertest": "^2.0.7",
