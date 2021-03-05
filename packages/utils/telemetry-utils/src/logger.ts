@@ -359,7 +359,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 export interface IPerformanceEventMarkers {
     start?: true;
     end?: true;
-    cancel?: true;
+    cancel?: "generic" | "error"; // tells wether to issue "generic" or "error" category cancel event
 }
 
 /**
@@ -417,7 +417,7 @@ export class PerformanceEvent {
     protected constructor(
         private readonly logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
-        private readonly markers: IPerformanceEventMarkers = {start: true, end: true, cancel: true},
+        private readonly markers: IPerformanceEventMarkers = {start: true, end: true, cancel: "generic"},
     ) {
         this.event = { ...event };
         if (this.markers.start) {
@@ -450,8 +450,8 @@ export class PerformanceEvent {
     }
 
     public cancel(props?: ITelemetryProperties, error?: any): void {
-        if (this.markers.cancel) {
-            this.reportEvent("cancel", props, error);
+        if (this.markers.cancel !== undefined) {
+            this.reportEvent("cancel", {category: this.markers.cancel, ...props}, error);
         }
         this.event = undefined;
     }
