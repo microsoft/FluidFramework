@@ -31,6 +31,8 @@ import {
      convertSnapshotTreeToSummaryTree,
      convertSummaryTreeToITree,
      convertToSummaryTree,
+     create404Response,
+     responseToException,
      SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -279,8 +281,15 @@ export class DataStores implements IDisposable {
         context.process(transformed, local, localMessageMetadata);
     }
 
-    public async getDataStore(id: string, wait: boolean): Promise<FluidDataStoreContext | undefined> {
-        return this.contexts.getBoundOrRemoted(id, wait);
+    public async getDataStore(id: string, wait: boolean): Promise<FluidDataStoreContext> {
+        const context = await this.contexts.getBoundOrRemoted(id, wait);
+
+        if (context === undefined) {
+            // The requested data store does not exits. Throw a 404 response exception.
+            throw responseToException(create404Response());
+        }
+
+        return context;
     }
 
     public processSignal(address: string, message: IInboundSignalMessage, local: boolean) {

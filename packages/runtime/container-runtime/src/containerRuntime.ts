@@ -106,6 +106,7 @@ import {
     RequestParser,
     create404Response,
     exceptionToResponse,
+    responseToException,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -919,14 +920,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 const dataStore = request.headers?.errorOnUnreferencedResources
                     ? await this.getDataStoreIfInitiallyReferenced(id, wait)
                     : await this.getDataStore(id, wait);
-
-                 if (dataStore !== undefined) {
-                    const subRequest = requestParser.createSubRequest(1);
-                    // We always expect createSubRequest to include a leading slash, but asserting here to protect
-                    // against unintentionally modifying the url if that change
-                    assert(subRequest.url.startsWith("/"), "Expected createSubRequest url to include a leading slash");
-                    return dataStore.IFluidRouter.request(subRequest);
-                }
+                const subRequest = requestParser.createSubRequest(1);
+                // We always expect createSubRequest to include a leading slash, but asserting here to protect
+                // against unintentionally modifying the url if that change
+                assert(subRequest.url.startsWith("/"), "Expected createSubRequest url to include a leading slash");
+                return dataStore.IFluidRouter.request(subRequest);
             }
 
             return create404Response(request);
@@ -943,17 +941,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param wait - True if you want to wait for it.
      * @returns the data store runtime if the data store exists and is initially referenced; undefined otherwise.
      */
-    private async getDataStoreIfInitiallyReferenced(id: string, wait = true) {
+    private async getDataStoreIfInitiallyReferenced(id: string, wait = true): Promise<IFluidRouter> {
         const dataStoreContext = await this.dataStores.getDataStore(id, wait);
-        if (dataStoreContext !== undefined) {
-            // The data store is referenced if used routes in the initial summary has a route to self.
-            // Older documents may not have used routes in the summary. They are considered referenced.
-            const usedRoutes = (await dataStoreContext.getInitialGCSummaryDetails()).usedRoutes;
-            if (usedRoutes === undefined || usedRoutes.includes("") || usedRoutes.includes("/")) {
-                return dataStoreContext.realize();
-            }
+        // The data store is referenced if used routes in the initial summary has a route to self.
+        // Older documents may not have used routes in the summary. They are considered referenced.
+        const usedRoutes = (await dataStoreContext.getInitialGCSummaryDetails()).usedRoutes;
+        if (usedRoutes === undefined || usedRoutes.includes("") || usedRoutes.includes("/")) {
+            return dataStoreContext.realize();
         }
-        return undefined;
+
+        // The data store is unreferenced. Throw a 404 response exception.
+        throw responseToException(create404Response());
     }
 
     /**
@@ -1140,18 +1138,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dataStores.processSignal(envelope.address, transformed, local);
     }
 
-    public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter | undefined> {
+    public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
         const context = await this.dataStores.getDataStore(id, wait);
-        if (context === undefined) {
-            return context;
-        }
         assert(await context.isRoot());
         return context.realize();
     }
 
-    protected async getDataStore(id: string, wait = true): Promise<IFluidRouter | undefined> {
-        const context = await this.dataStores.getDataStore(id, wait);
-        return context?.realize();
+    protected async getDataStore(id: string, wait = true): Promise<IFluidRouter> {
+        return (await this.dataStores.getDataStore(id, wait)).realize();
     }
 
     public notifyDataStoreInstantiated(context: IFluidDataStoreContext) {
@@ -1809,9 +1803,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private async getScheduler(): Promise<IAgentScheduler> {
-        const taskScheduler = await this.getDataStore(taskSchedulerId, true);
-        assert(taskScheduler !== undefined, "Task scheduler does not exist");
-        return requestFluidObject<IAgentScheduler>(taskScheduler, "");
+        return requestFluidObject<IAgentScheduler>(
+            await this.getDataStore(taskSchedulerId, true),
+            "",
+        );
     }
 
     private updateLeader(leadership: boolean) {
