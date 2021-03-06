@@ -106,7 +106,7 @@ async function getFileLinkCore(
             let additionalProps;
             const fileLink = await getWithRetryForTokenRefresh(async (options) => {
                 attempts++;
-                const token = await getToken({ ...options, siteUrl });
+                const token = await getToken({ ...options, siteUrl, driveId, itemId });
                 const { url, headers } = getUrlAndHeadersWithAuth(
                     `${siteUrl}/_api/web/GetFileByUrl(@a1)/ListItemAllFields/GetSharingInformation?@a1=${
                         encodeURIComponent(`'${fileItem.webDavUrl}'`)
@@ -156,7 +156,7 @@ async function getFileItemLite(
             let additionalProps;
             const fileItem = await getWithRetryForTokenRefresh(async (options) => {
                 attempts++;
-                const token = await getToken({ ...options, siteUrl });
+                const token = await getToken({ ...options, siteUrl, driveId, itemId });
                 const { url, headers } = getUrlAndHeadersWithAuth(
                     `${siteUrl}/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl`,
                     tokenFromResponse(token),
