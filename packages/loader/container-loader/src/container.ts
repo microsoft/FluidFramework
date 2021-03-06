@@ -574,9 +574,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     clientType, // Differentiating summarizer container from main container
                     loaderVersion: pkgVersion,
                     containerId: uuid(),
-                },
-                defaultGetters:
-                {
                     docId: () => this.id,
                     containerAttachState: () => this._attachState,
                     containerLoaded: () => this.loaded,

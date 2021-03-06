@@ -179,7 +179,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         this.logger = ChildLogger.create(
             parentLogger,
             "SummaryManager",
-            {defaultGetters:{ clientId: () => this.latestClientId }});
+            {default:{ clientId: () => this.latestClientId }});
 
         this.connected = context.connected;
         if (this.connected) {

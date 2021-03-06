@@ -15,15 +15,12 @@ import {
 } from "@fluidframework/common-definitions";
 import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
 
-export interface ITelemetryPropertyGetters {
-    [index: string]: () => TelemetryEventPropertyType;
+export interface ITelemetryLoggerProperty {
+    [index: string]: TelemetryEventPropertyType | (() => TelemetryEventPropertyType);
 }
-
 export interface ITelemetryLoggerProperties{
-    readonly default?: ITelemetryProperties,
-    readonly defaultGetters?: ITelemetryPropertyGetters,
-    readonly error?: ITelemetryProperties,
-    readonly errorGetters?: ITelemetryPropertyGetters
+    readonly default?: ITelemetryLoggerProperty,
+    readonly error?: ITelemetryLoggerProperty,
 }
 
 /**
@@ -106,7 +103,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         return stack;
     }
 
-    protected constructor(
+    public constructor(
         protected readonly namespace?: string,
         protected readonly properties?: ITelemetryLoggerProperties) {
     }
@@ -219,31 +216,30 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
         const includeErrorProps = event.category === "error" || event.error !== undefined;
         const newEvent: ITelemetryBaseEvent = {
-            ...this.properties?.default,
-            ... (includeErrorProps ? this.properties?.error : undefined),
             ...event,
         };
         if (this.namespace !== undefined) {
             newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
         }
-        const propertyGetters: ITelemetryPropertyGetters[] = [];
-        if(this.properties?.defaultGetters) {
-            propertyGetters.push(this.properties.defaultGetters);
-        }
-        if(includeErrorProps && this.properties?.errorGetters) {
-            propertyGetters.push(this.properties?.errorGetters);
-        }
-        for(const propGetter of propertyGetters) {
-            for (const key of Object.keys(propGetter)) {
-                if (event[key] !== undefined) {
-                    // Properties directly on the event take priority
-                    continue;
-                }
-                const getter = propGetter[key];
-                // If this throws, hopefully it is handled elsewhere
-                const value = getter();
-                if (value !== undefined) {
-                    newEvent[key] = value;
+        if(this.properties) {
+            const properties: (undefined | ITelemetryLoggerProperty)[] = [];
+            properties.push(this.properties.default);
+            if(includeErrorProps) {
+                properties.push(this.properties.error);
+            }
+            for(const props of properties) {
+                if(props !== undefined) {
+                    for (const key of Object.keys(props)) {
+                        if (event[key] !== undefined) {
+                            continue;
+                        }
+                        const getterOrValue = props[key];
+                        // If this throws, hopefully it is handled elsewhere
+                        const value = typeof getterOrValue === "function" ? getterOrValue() : getterOrValue;
+                        if (value !== undefined) {
+                            newEvent[key] = value;
+                        }
+                    }
                 }
             }
         }
@@ -281,22 +277,10 @@ export class ChildLogger extends TelemetryLogger {
                             ... extendedProps.default,
                         };
                     }
-                    if(extendedProps.defaultGetters !== undefined) {
-                        combinedProperties.defaultGetters = {
-                            ... combinedProperties.defaultGetters,
-                            ... extendedProps.defaultGetters,
-                        };
-                    }
                     if(extendedProps.error !== undefined) {
                         combinedProperties.error = {
                             ... combinedProperties.error,
                             ... extendedProps.error,
-                        };
-                    }
-                    if(extendedProps.errorGetters !== undefined) {
-                        combinedProperties.errorGetters = {
-                            ... combinedProperties.errorGetters,
-                            ... extendedProps.errorGetters,
                         };
                     }
                 }
@@ -354,8 +338,7 @@ export class MultiSinkLogger extends TelemetryLogger {
      */
     constructor(
         namespace?: string,
-        properties?: ITelemetryProperties,
-        propertyGetters?: ITelemetryLoggerProperties) {
+        properties?: ITelemetryLoggerProperties) {
         super(namespace, properties);
     }
 
