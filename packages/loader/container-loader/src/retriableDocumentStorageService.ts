@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { performance } from "@fluidframework/common-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     IDocumentStorageService,
