@@ -17,6 +17,7 @@ export interface IResponse {
     status: number;
     value: any;
     headers?: { [key: string]: any };
+    stack?: string;
 }
 
 export const IFluidRouter: keyof IProvideFluidRouter = "IFluidRouter";

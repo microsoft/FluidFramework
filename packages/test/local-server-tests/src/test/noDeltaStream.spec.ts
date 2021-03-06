@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, ILoader } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import {
     createLocalResolverCreateNewRequest,
@@ -41,7 +41,7 @@ describe("No Delta Stream", () => {
     let opc: OpProcessingController;
 
     async function createContainer(): Promise<IContainer> {
-        const loader: ILoader = createLoader(
+        const loader = createLoader(
             [[codeDetails, factory]],
             new LocalDocumentServiceFactory(deltaConnectionServer),
             new LocalResolver());
@@ -54,7 +54,7 @@ describe("No Delta Stream", () => {
     }
 
     async function loadContainer(storageOnly: boolean): Promise<IContainer> {
-        const loader: ILoader = createLoader(
+        const loader = createLoader(
             [[codeDetails, factory]],
             new LocalDocumentServiceFactory(deltaConnectionServer, { storageOnly }),
             new LocalResolver());

@@ -9,14 +9,13 @@ import {
     IResponse,
 } from "@fluidframework/core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
-import { ITaskManager } from "@fluidframework/runtime-definitions";
-import { RequestParser } from "@fluidframework/runtime-utils";
+import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
 import { IEvent } from "@fluidframework/common-definitions";
 import { PureDataObject } from "./pureDataObject";
 
 /**
- * DataObject is a base data store that is primed with a root directory and task manager. It
- * ensures that both are created and ready before you can access it.
+ * DataObject is a base data store that is primed with a root directory. It
+ * ensures that it is created and ready before you can access it.
  *
  * Having a single root directory allows for easier development. Instead of creating
  * and registering channels with the runtime any new DDS that is set on the root
@@ -32,21 +31,19 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
     extends PureDataObject<O, S, E>
 {
     private internalRoot: ISharedDirectory | undefined;
-    private internalTaskManager: ITaskManager | undefined;
     private readonly rootDirectoryId = "root";
 
     public async request(request: IRequest): Promise<IResponse> {
-        const url = request.url;
-        const requestParser = RequestParser.create({ url: request.url });
+        const requestParser = RequestParser.create(request);
         const itemId = requestParser.pathParts[0];
         if (itemId === "bigBlobs") {
             const value = this.root.get<string>(requestParser.pathParts.join("/"));
             if (value === undefined) {
-                return { mimeType: "text/plain", status: 404, value: `request ${url} not found` };
+                return create404Response(requestParser);
             }
             return { mimeType: "fluid/object", status: 200, value };
         } else {
-            return super.request(request);
+            return super.request(requestParser);
         }
     }
 
@@ -63,24 +60,10 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
     }
 
     /**
-     * Returns the built-in task manager responsible for scheduling tasks.
-     */
-    protected get taskManager(): ITaskManager {
-        if (!this.internalTaskManager) {
-            throw new Error(this.getUninitializedErrorString(`taskManager`));
-        }
-
-        return this.internalTaskManager;
-    }
-
-    /**
      * Initializes internal objects and calls initialization overrides.
      * Caller is responsible for ensuring this is only invoked once.
      */
     public async initializeInternal(): Promise<void> {
-        // Initialize task manager.
-        this.internalTaskManager = await this.context.containerRuntime.getTaskManager();
-
         if (!this.runtime.existing) {
             // Create a root directory and register it before calling initializingFirstTime
             this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
