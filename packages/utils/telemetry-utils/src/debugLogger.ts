@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
 import { debug as registerDebug, IDebugger } from "debug";
-import { TelemetryLogger, ITelemetryPropertyGetters, MultiSinkLogger, ChildLogger } from "./logger";
+import { TelemetryLogger, MultiSinkLogger, ChildLogger, ITelemetryLoggerProperties } from "./logger";
 
 /**
  * Implementation of debug logger
@@ -25,7 +25,6 @@ export class DebugLogger extends TelemetryLogger {
     public static create(
         namespace: string,
         properties?: ITelemetryProperties,
-        propertyGetters?: ITelemetryPropertyGetters,
     ): TelemetryLogger {
         // Setup base logger upfront, such that host can disable it (if needed)
         const debug = registerDebug(namespace);
@@ -34,7 +33,7 @@ export class DebugLogger extends TelemetryLogger {
         debugErr.log = console.error.bind(console);
         debugErr.enabled = true;
 
-        return new DebugLogger(debug, debugErr, properties, propertyGetters);
+        return new DebugLogger(debug, debugErr, properties);
     }
 
     /**
@@ -49,13 +48,12 @@ export class DebugLogger extends TelemetryLogger {
         namespace: string,
         baseLogger?: ITelemetryBaseLogger,
         properties?: ITelemetryProperties,
-        propertyGetters?: ITelemetryPropertyGetters,
     ): TelemetryLogger {
         if (!baseLogger) {
-            return DebugLogger.create(namespace, properties, propertyGetters);
+            return DebugLogger.create(namespace, properties);
         }
 
-        const multiSinkLogger = new MultiSinkLogger(undefined, properties, propertyGetters);
+        const multiSinkLogger = new MultiSinkLogger(undefined, properties);
         multiSinkLogger.addLogger(DebugLogger.create(namespace));
         multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace));
 
@@ -65,10 +63,9 @@ export class DebugLogger extends TelemetryLogger {
     constructor(
         private readonly debug: IDebugger,
         private readonly debugErr: IDebugger,
-        properties?: ITelemetryProperties,
-        propertyGetters?: ITelemetryPropertyGetters,
+        properties?: ITelemetryLoggerProperties,
     ) {
-        super(undefined, properties, propertyGetters);
+        super(undefined, properties);
     }
 
     /**

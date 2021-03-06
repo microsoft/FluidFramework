@@ -118,7 +118,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // We should remove the null check once that is done
         this.logger = ChildLogger.create(
             // eslint-disable-next-line no-null/no-null
-            runtime !== null ? runtime.logger : undefined, undefined, { sharedObjectId: uuid() });
+            runtime !== null ? runtime.logger : undefined, undefined, {default:{ sharedObjectId: uuid() }});
 
         this._serializer = new FluidSerializer(this.runtime.channelsRoutingContext);
 
@@ -242,7 +242,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      */
     public getGCData(fullGC: boolean = false): IGarbageCollectionData {
         // We run the full summarize logic to get the list of outbound routes from this object. This is a little
-        // expensive but its okay for now. It will be udpated to not use full summarize and make it more efficient.
+        // expensive but its okay for now. It will be updated to not use full summarize and make it more efficient.
         // See: https://github.com/microsoft/FluidFramework/issues/4547
 
         // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created below)

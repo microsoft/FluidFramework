@@ -312,7 +312,8 @@ export class RunningSummarizer implements IDisposable {
         private readonly raiseSummarizingError: (description: string) => void,
         summaryCollection: SummaryCollection,
     ) {
-        this.logger = new ChildLogger(baseLogger, "Running", undefined, { summaryGenTag: () => this.summarizeCount });
+        this.logger = ChildLogger.create(
+            baseLogger, "Running", {defaultGetters:{ summaryGenTag: () => this.summarizeCount }});
 
         this.heuristics = new SummarizerHeuristics(
             configuration,

@@ -200,7 +200,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     ) {
         super();
 
-        this.logger = ChildLogger.create(dataStoreContext.containerRuntime.logger, undefined, { dataStoreId: uuid() });
+        this.logger = ChildLogger.create(
+            dataStoreContext.containerRuntime.logger, undefined, {default:{ dataStoreId: uuid() }});
         this.documentId = dataStoreContext.documentId;
         this.id = dataStoreContext.id;
         this.existing = dataStoreContext.existing;

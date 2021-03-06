@@ -179,7 +179,9 @@ export class OdspDocumentService implements IDocumentService {
         this.logger = ChildLogger.create(logger,
             undefined,
             {
-                odc: this.isOdc,
+                default: {
+                    odc: this.isOdc,
+                },
             });
 
         this.hostPolicy = hostPolicy;
