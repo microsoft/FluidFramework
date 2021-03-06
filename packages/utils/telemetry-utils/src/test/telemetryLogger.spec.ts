@@ -11,7 +11,7 @@ class TestTelemetryLogger  extends TelemetryLogger {
 
 const emptyPropertyCases: ITelemetryLoggerProperties[] = [
     {},
-    {default: {}},
+    {all: {}},
     {error: {}},
 ];
 

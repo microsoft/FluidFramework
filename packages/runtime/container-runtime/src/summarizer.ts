@@ -313,7 +313,7 @@ export class RunningSummarizer implements IDisposable {
         summaryCollection: SummaryCollection,
     ) {
         this.logger = ChildLogger.create(
-            baseLogger, "Running", {default:{ summaryGenTag: () => this.summarizeCount }});
+            baseLogger, "Running", {all:{ summaryGenTag: () => this.summarizeCount }});
 
         this.heuristics = new SummarizerHeuristics(
             configuration,

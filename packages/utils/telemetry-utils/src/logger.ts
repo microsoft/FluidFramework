@@ -19,7 +19,7 @@ export interface ITelemetryLoggerProperty {
     [index: string]: TelemetryEventPropertyType | (() => TelemetryEventPropertyType);
 }
 export interface ITelemetryLoggerProperties{
-    readonly default?: ITelemetryLoggerProperty,
+    readonly all?: ITelemetryLoggerProperty,
     readonly error?: ITelemetryLoggerProperty,
 }
 
@@ -223,7 +223,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         }
         if(this.properties) {
             const properties: (undefined | ITelemetryLoggerProperty)[] = [];
-            properties.push(this.properties.default);
+            properties.push(this.properties.all);
             if(includeErrorProps) {
                 properties.push(this.properties.error);
             }
@@ -271,10 +271,10 @@ export class ChildLogger extends TelemetryLogger {
             const combinedProperties: any = {};
             for(const extendedProps of [baseLogger.properties, properties]) {
                 if(extendedProps !== undefined) {
-                    if(extendedProps.default !== undefined) {
+                    if(extendedProps.all !== undefined) {
                         combinedProperties.default = {
                             ... combinedProperties.default,
-                            ... extendedProps.default,
+                            ... extendedProps.all,
                         };
                     }
                     if(extendedProps.error !== undefined) {

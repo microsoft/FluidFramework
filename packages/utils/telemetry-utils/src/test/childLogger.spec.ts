@@ -22,7 +22,7 @@ describe("ChildLogger", () => {
             logger,
             "test1",
             {
-                default:{
+                all:{
                     testProperty: true,
                     testGetter: ()=>true,
                 },
@@ -63,7 +63,7 @@ describe("ChildLogger", () => {
             childLogger1,
             "test2",
             {
-                default:
+                all:
                 {
                     testProperty: true,
                     testGetter: ()=>true,
@@ -92,7 +92,7 @@ describe("ChildLogger", () => {
             logger,
             "test1",
             {
-                default:
+                all:
                 {
                     testProperty1: true,
                 },
@@ -103,7 +103,7 @@ describe("ChildLogger", () => {
             childLogger1,
             "test2",
             {
-                default:
+                all:
                 {
                     testProperty2: true,
                 },
@@ -130,7 +130,7 @@ describe("ChildLogger", () => {
             logger,
             "test1",
             {
-                default:
+                all:
                 {
                     testGetter1: ()=> true,
                 },
@@ -141,7 +141,7 @@ describe("ChildLogger", () => {
             childLogger1,
             "test2",
             {
-                default:
+                all:
                 {
                     testGetter2: ()=> true,
                 },

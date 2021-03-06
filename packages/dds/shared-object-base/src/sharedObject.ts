@@ -118,7 +118,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // We should remove the null check once that is done
         this.logger = ChildLogger.create(
             // eslint-disable-next-line no-null/no-null
-            runtime !== null ? runtime.logger : undefined, undefined, {default:{ sharedObjectId: uuid() }});
+            runtime !== null ? runtime.logger : undefined, undefined, {all:{ sharedObjectId: uuid() }});
 
         this._serializer = new FluidSerializer(this.runtime.channelsRoutingContext);
 

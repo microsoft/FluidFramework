@@ -480,7 +480,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         containerScope: IFluidObject = context.scope,
     ): Promise<ContainerRuntime> {
         const logger = ChildLogger.create(context.logger, undefined, {
-            default: {
+            all: {
                 runtimeVersion: pkgVersion,
             },
         });
@@ -1463,7 +1463,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 await this.refreshLatestSummaryAck(
                     undefined,
                     version.id,
-                    ChildLogger.create(summaryLogger, undefined, {default: { safeSummary: true }}),
+                    ChildLogger.create(summaryLogger, undefined, {all: { safeSummary: true }}),
                     version,
                 );
             }

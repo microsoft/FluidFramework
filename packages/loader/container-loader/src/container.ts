@@ -570,7 +570,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             loader.services.subLogger,
             undefined,
             {
-                default:{
+                all:{
                     clientType, // Differentiating summarizer container from main container
                     loaderVersion: pkgVersion,
                     containerId: uuid(),

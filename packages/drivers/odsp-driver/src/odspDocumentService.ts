@@ -179,7 +179,7 @@ export class OdspDocumentService implements IDocumentService {
         this.logger = ChildLogger.create(logger,
             undefined,
             {
-                default: {
+                all: {
                     odc: this.isOdc,
                 },
             });
