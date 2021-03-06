@@ -93,3 +93,5 @@ jobs:
           app_artifact_location: "public" # Built app content directory - optional
           routes_location: "/docs"
           ###### End of Repository/Build Configurations ######
+        env: # Add environment variables here
+          HUGO_PARAMS_APPINSIGHTKEY: ${{ secrets.APP_INSIGHTS_KEY }}

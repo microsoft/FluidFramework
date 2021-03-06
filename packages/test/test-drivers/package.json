@@ -49,15 +49,16 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
+    "@fluidframework/common-utils": "^0.28.0-0",
     "@fluidframework/core-interfaces": "^0.36.0",
     "@fluidframework/driver-definitions": "^0.36.0",
     "@fluidframework/local-driver": "^0.36.0",
     "@fluidframework/odsp-doclib-utils": "^0.36.0",
     "@fluidframework/odsp-driver": "^0.36.0",
     "@fluidframework/odsp-urlresolver": "^0.36.0",
-    "@fluidframework/protocol-definitions": "^0.1019.0-0",
+    "@fluidframework/protocol-definitions": "^0.1021.0-0",
     "@fluidframework/routerlicious-driver": "^0.36.0",
-    "@fluidframework/server-local-server": "^0.1019.0-0",
+    "@fluidframework/server-local-server": "^0.1021.0-0",
     "@fluidframework/test-driver-definitions": "^0.36.0",
     "@fluidframework/test-runtime-utils": "^0.36.0",
     "@fluidframework/tinylicious-driver": "^0.36.0",
@@ -66,9 +67,9 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.20.0-0",
-    "@fluidframework/eslint-config-fluid": "^0.23.0-0",
-    "@microsoft/api-extractor": "^7.7.2",
+    "@fluidframework/build-common": "^0.20.0",
+    "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@microsoft/api-extractor": "^7.13.1",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~4.14.0",

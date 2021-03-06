@@ -39,14 +39,14 @@
   "dependencies": {
     "@fluidframework/aqueduct": "^0.36.0",
     "@fluidframework/base-host": "^0.36.0",
-    "@fluidframework/common-utils": "^0.27.0",
+    "@fluidframework/common-utils": "^0.28.0-0",
     "@fluidframework/runtime-utils": "^0.36.0",
     "@fluidframework/view-interfaces": "^0.36.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
-    "@fluidframework/eslint-config-fluid": "^0.23.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/test-tools": "^0.2.3074",
     "@fluidframework/webpack-fluid-loader": "^0.36.0",
     "@types/jest": "22.2.3",

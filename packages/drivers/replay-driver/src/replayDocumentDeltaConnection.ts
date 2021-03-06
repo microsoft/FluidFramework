@@ -204,8 +204,6 @@ export class ReplayDocumentDeltaConnection
             initialClients: [],
             maxMessageSize: ReplayDocumentDeltaConnection.ReplayMaxMessageSize,
             mode: "read",
-            // Back-compat, removal tracked with issue #4346
-            parentBranch: null,
             serviceConfiguration: {
                 blockSize: 64436,
                 maxMessageSize: 16 * 1024,

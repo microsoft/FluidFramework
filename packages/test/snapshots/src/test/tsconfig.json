@@ -9,7 +9,6 @@
         ],
         "declaration": false,
         "declarationMap": false,
-        "strict": false
     },
     "include": [
         "./**/*"

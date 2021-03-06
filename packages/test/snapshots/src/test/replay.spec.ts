@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { describe } from "mocha";
 import { Mode, processContent } from "../replayMultipleFiles";
 
 describe("Snapshots", function() {
