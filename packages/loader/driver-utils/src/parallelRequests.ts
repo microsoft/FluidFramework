@@ -6,8 +6,10 @@ import { assert, Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 
 /**
- * Boundaries:
- * Left is inclusive, Right is exclusive.
+ * Helper class to organize parallel fetching of data
+ * It can be used to concurrently do many requests, while consuming
+ * data in the right order. Take a look at UT for examples.
+ * Boundaries: Left is inclusive, Right is exclusive.
  * I.e. [5, 10) in math terms - 5..9.
  */
  export class ParallelRequests<T> {
@@ -37,6 +39,19 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
     public cancel() {
         this.working = false;
         this.endEvent.resolve();
+    }
+
+    public async run(concurrency: number) {
+        assert(concurrency > 0);
+        assert(this.working);
+
+        let c = concurrency;
+        while (c > 0) {
+            c--;
+            this.addRequest();
+        }
+        this.dispatch();// will recalculate and trigger this.endEvent if needed
+        return this.endEvent.promise;
     }
 
     private done() {
@@ -228,21 +243,12 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
         this.requestsInFlight--;
         this.dispatch();
     }
-
-    public async run(concurrency: number) {
-        assert(concurrency > 0);
-        assert(this.working);
-
-        let c = concurrency;
-        while (c > 0) {
-            c--;
-            this.addRequest();
-        }
-        this.dispatch();// will recalculate and trigger this.endEvent if needed
-        return this.endEvent.promise;
-    }
 }
 
+/**
+ * Helper queue class to allow async push / pull
+ * It's essentially a pipe allowing multiple writers, and single reader
+ */
 export class Queue<T> {
     private readonly queue: T[] = [];
     private deferred: Deferred<T | undefined> | undefined;
