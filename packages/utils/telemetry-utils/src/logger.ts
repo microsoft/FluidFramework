@@ -13,7 +13,7 @@ import {
     ITelemetryProperties,
     TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
-import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
+import { assert, BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
 
 export interface ITelemetryPropertyGetters {
     [index: string]: () => TelemetryEventPropertyType;
@@ -509,5 +509,33 @@ export class LoggingError extends Error {
             props[key] = this[key];
         }
         return props;
+    }
+}
+
+/**
+ * Logger that is useful for UT
+ * It can be used in places where logger instance is required, but events should be not send over.
+ */
+ export class TelemetryUTLogger implements ITelemetryLogger {
+    public send(event: ITelemetryBaseEvent): void {
+    }
+    public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
+    }
+    public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
+        assert(false, "errorEvent in UT logger!");
+    }
+    public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
+    }
+    public logGenericError(eventName: string, error: any) {
+        assert(false, "geenricError in UT logger!");
+    }
+    public logException(event: ITelemetryErrorEvent, exception: any): void {
+        assert(false, "exception in UT logger!");
+    }
+    public debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
+        assert(false, "debugAssert in UT logger!");
+    }
+    public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
+        assert(false, "shipAssert in UT logger!");
     }
 }

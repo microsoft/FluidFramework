@@ -9,10 +9,15 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
  * Helper class to organize parallel fetching of data
  * It can be used to concurrently do many requests, while consuming
  * data in the right order. Take a look at UT for examples.
- * Boundaries: Left is inclusive, Right is exclusive.
- * I.e. [5, 10) in math terms - 5..9.
+ * @param concurrency - level of concurrency
+ * @param from - starting point of fetching data (inclusive)
+ * @param to  - ending point of fetching data. exclusive, or undefined if unknown
+ * @param payloadSize - batch size
+ * @param logger - logger to use
+ * @param requestCallback - callback to request batches
+ * @returns - Queue that can be used to retrieve data
  */
- export class ParallelRequests<T> {
+export class ParallelRequests<T> {
     private latestRequested: number;
     private nextToDeliver: number;
     private readonly results: Map<number, T[]> = new Map();
@@ -246,15 +251,36 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 }
 
 /**
+ * Read interface for the Queue
+ */
+export interface IReadPipe<T> {
+    pop(): Promise<T | undefined>;
+}
+
+/**
  * Helper queue class to allow async push / pull
  * It's essentially a pipe allowing multiple writers, and single reader
  */
-export class Queue<T> {
-    private readonly queue: T[] = [];
+export class Queue<T> implements IReadPipe<T> {
+    private readonly queue: Promise<T | undefined>[] = [];
     private deferred: Deferred<T | undefined> | undefined;
     private done = false;
 
-    public push(value: T) {
+    public pushValue(value: T) {
+        this.pushCore(Promise.resolve(value));
+    }
+
+    public pushError(error: any) {
+        this.pushCore(Promise.reject(error));
+        this.done = true;
+    }
+
+    public pushDone() {
+        this.pushCore(Promise.resolve(undefined));
+        this.done = true;
+    }
+
+    protected pushCore(value: Promise<T | undefined>) {
         assert(!this.done);
         if (this.deferred) {
             assert(this.queue.length === 0);
@@ -271,19 +297,43 @@ export class Queue<T> {
         if (el !== undefined) {
             return el;
         }
-        if (this.done) {
-            return undefined;
-        }
+        assert(!this.done);
         this.deferred = new Deferred<T>();
         return this.deferred.promise;
     }
+}
 
-    public end() {
-        assert(!this.done);
-        this.done = true;
-        if (this.deferred) {
-            assert(this.queue.length === 0);
-            this.deferred.resolve(undefined);
-        }
-    }
+/**
+ * Helper function to expose ParallelRequests through IReadPipe interface
+ * @param concurrency - level of concurrency
+ * @param from - starting point of fetching data (inclusive)
+ * @param to  - ending point of fetching data. exclusive, or undefined if unknown
+ * @param payloadSize - batch size
+ * @param logger - logger to use
+ * @param requestCallback - callback to request batches
+ * @returns - Queue that can be used to retrieve data
+ */
+export function parallel<T>(
+    concurrency: number,
+    from: number,
+    to: number | undefined,
+    payloadSize: number,
+    logger: ITelemetryLogger,
+    requestCallback: (request: number, from: number, to: number) =>
+        Promise<{ partial: boolean, cancel: boolean, payload: T[] }>,
+): IReadPipe<T[]> {
+    const queue = new Queue<T[]>();
+    const manager = new ParallelRequests<T>(
+        from,
+        to,
+        payloadSize,
+        logger,
+        requestCallback,
+        (messages: T[]) => queue.pushValue(messages));
+
+    manager.run(concurrency)
+        .then(() => queue.pushDone())
+        .catch((error) => queue.pushError(error));
+
+    return queue;
 }

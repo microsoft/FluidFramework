@@ -4,7 +4,8 @@
  */
 
 import fs from "fs";
-import { assert, TelemetryNullLogger } from "@fluidframework/common-utils";
+import { assert} from "@fluidframework/common-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -15,7 +16,7 @@ import {
     MessageType,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { ParallelRequests, Queue } from "@fluidframework/driver-utils";
+import { parallel } from "@fluidframework/driver-utils";
 import { printMessageStats } from "./fluidAnalyzeMessages";
 import {
     connectToWebSocket,
@@ -32,18 +33,7 @@ async function loadChunk(from: number, to: number, deltaStorage: IDocumentDeltaS
     console.log(`Loading ops at ${from}`);
     for (let iter = 0; iter < 3; iter++) {
         try {
-            const { messages, partialResult } = await deltaStorage.get(from, to);
-            // This parsing of message contents happens in delta manager. But when we analyze messages
-            // for message stats, we skip that path. So parsing of json contents needs to happen here.
-            for (const message of messages) {
-                if (typeof message.contents === "string"
-                    && message.contents !== ""
-                    && message.type !== MessageType.ClientLeave
-                ) {
-                    message.contents = JSON.parse(message.contents);
-                }
-            }
-            return { messages, partialResult };
+            return await deltaStorage.get(from, to);
         } catch (error) {
             console.error("Hit error while downloading ops. Retrying");
             console.error(error);
@@ -91,38 +81,46 @@ async function* loadAllSequencedMessages(
     let requests = 0;
     let opsStorage = 0;
 
-    const queue = new Queue<ISequencedDocumentMessage[]>();
+    const concurrency = 4;
 
-    const manager = new ParallelRequests<ISequencedDocumentMessage>(
+    const queue = parallel<ISequencedDocumentMessage>(
+        concurrency,
         lastSeq + 1, // inclusive left
         undefined, // to
         batch,
-        new TelemetryNullLogger(),
+        new TelemetryUTLogger(),
         async (_request: number, from: number, to: number) => {
-            requests++;
             const { messages, partialResult } = await loadChunk(from - 1, to, deltaStorage);
             return {partial: partialResult, cancel: false, payload: messages};
         },
-        (messages: ISequencedDocumentMessage[]) => {
-            opsStorage += messages.length;
-            lastSeq = messages[messages.length - 1].sequenceNumber;
-            queue.push(messages);
-        },
     );
-
-    const concurrency = 4;
-    const promise = manager.run(concurrency).then(() => queue.end());
 
     while (true) {
         const messages = await queue.pop();
         if (messages === undefined) {
             break;
         }
+        requests++;
+
+        // Empty buckets should never be returned
+        assert(messages.length !== 0);
+        console.log(`Loaded ops at ${messages[0].sequenceNumber}`);
+
+        // This parsing of message contents happens in delta manager. But when we analyze messages
+        // for message stats, we skip that path. So parsing of json contents needs to happen here.
+        for (const message of messages) {
+            if (typeof message.contents === "string"
+                && message.contents !== ""
+                && message.type !== MessageType.ClientLeave
+            ) {
+                message.contents = JSON.parse(message.contents);
+            }
+        }
+
+        opsStorage += messages.length;
+        lastSeq = messages[messages.length - 1].sequenceNumber;
         yield messages;
     }
-
-    // catch any errors
-    await promise;
 
     if (requests > 0) {
         // eslint-disable-next-line max-len

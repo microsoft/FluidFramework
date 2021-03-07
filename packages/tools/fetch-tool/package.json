@@ -39,6 +39,7 @@
     "@fluidframework/routerlicious-driver": "^0.36.0",
     "@fluidframework/routerlicious-urlresolver": "^0.36.0",
     "@fluidframework/runtime-definitions": "^0.36.0",
+    "@fluidframework/telemetry-utils": "^0.36.0",
     "@fluidframework/tool-utils": "^0.36.0",
     "assert": "^2.0.0"
   },

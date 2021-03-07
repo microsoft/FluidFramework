@@ -786,8 +786,8 @@ export class DeltaManager
 
     private async getDeltas(
         telemetryEventSuffix: string,
-        fromInitial: number,
-        toInitial: number | undefined,
+        from: number, // exclusive
+        to: number | undefined, // exclusive
         callback: (messages: ISequencedDocumentMessage[]) => void)
     {
         const docService = this.serviceProvider();
@@ -801,8 +801,8 @@ export class DeltaManager
 
         const telemetryEvent = PerformanceEvent.start(this.logger, {
             eventName: `GetDeltas_${telemetryEventSuffix}`,
-            from: fromInitial,
-            to: toInitial,
+            from,
+            to,
         });
 
         let deltasRetrievedTotal = 0;
@@ -811,13 +811,13 @@ export class DeltaManager
         let lastFetch: number | undefined;
 
         const manager = new ParallelRequests<ISequencedDocumentMessage>(
-            fromInitial + 1, // fromInitial is exclusive, but ParallelRequests uses inclusive left
-            toInitial, // exclusive right
+            from + 1, // from is exclusive, but ParallelRequests uses inclusive left
+            to, // exclusive right
             MaxBatchDeltas,
             this.logger,
-            async (request: number, from: number, to: number) => {
+            async (request: number, _from: number, _to: number) => {
                 requests++;
-                return this.singleTurn(request, from, to, telemetryEvent);
+                return this.getSingleOpBatch(request, _from, _to, telemetryEvent);
             },
             (deltas: ISequencedDocumentMessage[]) => {
                 deltasRetrievedTotal += deltas.length;
@@ -848,7 +848,7 @@ export class DeltaManager
      * @param telemetryEvent - telemetry event used to track consecutive batch of requests
      * @returns - an object with resulting ops and cancellation / partial result flags
      */
-    async singleTurn(
+    async getSingleOpBatch(
         request: number,
         from: number,
         to: number,

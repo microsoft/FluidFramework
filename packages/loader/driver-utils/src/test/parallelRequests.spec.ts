@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ParallelRequests } from "../parallelRequests";
 
 describe("Parallel Requests", () => {
@@ -25,7 +25,7 @@ describe("Parallel Requests", () => {
             from,
             knownTo ? to : undefined,
             payloadSize,
-            new TelemetryNullLogger(),
+            new TelemetryUTLogger(),
             async (request: number, _from: number, _to: number) => {
                 let length = _to - _from;
                 requests++;
@@ -81,7 +81,7 @@ describe("Parallel Requests", () => {
             from,
             to,
             payloadSize,
-            new TelemetryNullLogger(),
+            new TelemetryUTLogger(),
             async (request: number, _from: number, _to: number) => {
                 const length = _to - _from;
                 requests++;
