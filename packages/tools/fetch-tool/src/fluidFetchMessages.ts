@@ -33,7 +33,7 @@ async function loadChunk(from: number, to: number, deltaStorage: IDocumentDeltaS
     console.log(`Loading ops at ${from}`);
     for (let iter = 0; iter < 3; iter++) {
         try {
-            return await deltaStorage.get(from, to);
+            return await deltaStorage.get(from - 1, to); // from is exclusive for get()
         } catch (error) {
             console.error("Hit error while downloading ops. Retrying");
             console.error(error);
@@ -90,7 +90,7 @@ async function* loadAllSequencedMessages(
         batch,
         new TelemetryUTLogger(),
         async (_request: number, from: number, to: number) => {
-            const { messages, partialResult } = await loadChunk(from - 1, to, deltaStorage);
+            const { messages, partialResult } = await loadChunk(from, to, deltaStorage);
             return {partial: partialResult, cancel: false, payload: messages};
         },
     );
@@ -104,7 +104,7 @@ async function* loadAllSequencedMessages(
 
         // Empty buckets should never be returned
         assert(messages.length !== 0);
-        console.log(`Loaded ops at ${messages[0].sequenceNumber}`);
+        // console.log(`Loaded ops at ${messages[0].sequenceNumber}`);
 
         // This parsing of message contents happens in delta manager. But when we analyze messages
         // for message stats, we skip that path. So parsing of json contents needs to happen here.
@@ -122,10 +122,8 @@ async function* loadAllSequencedMessages(
         yield messages;
     }
 
-    if (requests > 0) {
-        // eslint-disable-next-line max-len
-        console.log(`\n${Math.floor((Date.now() - timeStart) / 1000)} seconds to retrieve ${opsStorage} ops in ${requests} requests`);
-    }
+    // eslint-disable-next-line max-len
+    console.log(`\n${Math.floor((Date.now() - timeStart) / 1000)} seconds to retrieve ${opsStorage} ops in ${requests} requests, using ${concurrency} parallel requests`);
 
     if (connectToWebSocket) {
         let logMsg = "";

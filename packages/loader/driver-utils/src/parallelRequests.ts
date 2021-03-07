@@ -177,13 +177,15 @@ export class ParallelRequests<T> {
                 // If it pops into our view a lot, we would need to reconsider how we approach it.
                 // Note that this is not visible to user other than potentially not hitting 100% of
                 // what we can in perf domain.
-                this.logger.sendErrorEvent({
-                    eventName: "ParallelRequests_GotExtra",
-                    from,
-                    to,
-                    end: this.to,
-                    length: payload.length,
-                });
+                if (payload.length !== 0) {
+                    this.logger.sendErrorEvent({
+                        eventName: "ParallelRequests_GotExtra",
+                        from,
+                        to,
+                        end: this.to,
+                        length: payload.length,
+                    });
+                }
 
                 break;
             }

@@ -13,7 +13,7 @@ import {
     ITelemetryProperties,
     TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
-import { assert, BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
+import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
 
 export interface ITelemetryPropertyGetters {
     [index: string]: () => TelemetryEventPropertyType;
@@ -522,20 +522,30 @@ export class LoggingError extends Error {
     public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
     }
     public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
-        assert(false, "errorEvent in UT logger!");
+        this.reportError("errorEvent in UT logger!", event, error);
     }
     public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
     }
     public logGenericError(eventName: string, error: any) {
-        assert(false, "geenricError in UT logger!");
+        this.reportError(`genericError in UT logger!`, { eventName }, error);
     }
     public logException(event: ITelemetryErrorEvent, exception: any): void {
-        assert(false, "exception in UT logger!");
+        this.reportError("exception in UT logger!", event, exception);
     }
     public debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
-        assert(false, "debugAssert in UT logger!");
+        this.reportError("debugAssert in UT logger!");
     }
     public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
-        assert(false, "shipAssert in UT logger!");
+        this.reportError("shipAssert in UT logger!");
+    }
+
+    private reportError(message: string, event?: ITelemetryErrorEvent, err?: any) {
+        const error = new Error(message);
+        (error as any).error = error;
+        (error as any).event = event;
+        // report to console as exception can be eaten
+        console.error(message);
+        console.error(error);
+        throw error;
     }
 }
