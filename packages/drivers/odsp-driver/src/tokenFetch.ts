@@ -47,26 +47,6 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
 }
 
 /**
- * Represents access token fetch options for ODSP resource addressable via Graph API
- */
-export interface GraphResourceTokenFetchOptions extends OdspResourceTokenFetchOptions {
-    type: "Graph";
-}
-
-/**
- * Represents access token fetch options for ODSP resource addressable via Vroom API
- */
-export interface OneDriveResourceTokenFetchOptions extends OdspResourceTokenFetchOptions {
-    type: "OneDrive";
-}
-
-/**
- * Represents access token fetch options for sharing link. Either Graph or Vroom or both tokens might be
- * needed to generate sharing link.
- */
-export type SharingLinkTokenFetchOptions = GraphResourceTokenFetchOptions | OneDriveResourceTokenFetchOptions;
-
-/**
  * Method signature for callback method used to fetch access token
  * @param options - token fetch options
  * @returns If successful, TokenResponse object representing token value along with flag indicating

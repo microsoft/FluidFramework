@@ -10,7 +10,7 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IContainer, ILoader, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidCodeDetails, IRequest,
     IResponse } from "@fluidframework/core-interfaces";
@@ -94,7 +94,7 @@ describe("Loader.request", () => {
 
     let dataStore1: TestSharedDataObject1;
     let dataStore2: TestSharedDataObject2;
-    let loader: ILoader;
+    let loader: IHostLoader;
     let opProcessingController: OpProcessingController;
 
     async function createContainer(documentId: string): Promise<IContainer> {

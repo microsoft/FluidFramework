@@ -6,7 +6,7 @@
 import {
     ICodeLoader,
     IContainer,
-    ILoader,
+    IHostLoader,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -26,7 +26,7 @@ export function createLocalLoader(
     deltaConnectionServer: ILocalDeltaConnectionServer,
     urlResolver: IUrlResolver,
     options?: ILoaderOptions,
-): ILoader {
+): IHostLoader {
     const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
 
     return createLoader(
@@ -47,7 +47,7 @@ export function createLoader(
     documentServiceFactory: IDocumentServiceFactory,
     urlResolver: IUrlResolver,
     options?: ILoaderOptions,
-): ILoader {
+): IHostLoader {
     const codeLoader: ICodeLoader = new LocalCodeLoader(packageEntries);
 
     return new Loader({
@@ -67,7 +67,7 @@ export function createLoader(
 
 export async function createAndAttachContainer(
     source: IFluidCodeDetails,
-    loader: ILoader,
+    loader: IHostLoader,
     attachRequest: IRequest,
 ): Promise<IContainer> {
     const container = await loader.createDetachedContainer(source);
