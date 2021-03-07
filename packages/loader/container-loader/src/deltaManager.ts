@@ -16,7 +16,7 @@ import {
     IThrottlingWarning,
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
-import { assert, Deferred, performance, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import { PerformanceEvent, TelemetryLogger, safeRaiseEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
@@ -49,6 +49,7 @@ import {
     createWriteError,
     createGenericNetworkError,
     getRetryDelayFromError,
+    ParallelRequests,
 } from "@fluidframework/driver-utils";
 import {
     CreateContainerError,
@@ -137,238 +138,6 @@ class NoDeltaStream extends TypedEventEmitter<IDocumentDeltaConnectionEvents> im
         });
     }
     close(): void {
-    }
-}
-
-/**
- * Boundaries:
- * Left is inclusive, Right is exclusive.
- * I.e. [5, 10) in math terms - 5..9.
- */
-export class ParallelRequests<T> {
-    private latestRequested: number;
-    private nextToDeliver: number;
-    private readonly results: Map<number, T[]> = new Map();
-    private working = true;
-    private requestsInFlight = 0;
-    private readonly endEvent = new Deferred<void>();
-    private requests = 0;
-    private readonly knewTo: boolean;
-
-    constructor(
-        from: number,
-        private to: number | undefined,
-        private readonly payloadSize: number,
-        private readonly logger: ITelemetryLogger,
-        private readonly requestCallback: (request: number, from: number, to: number) =>
-            Promise<{ partial: boolean, cancel: boolean, payload: T[] }>,
-        private readonly responseCallback: (payload: T[]) => void)
-    {
-        this.latestRequested = from;
-        this.nextToDeliver = from;
-        this.knewTo = (to !== undefined);
-    }
-
-    public cancel() {
-        this.working = false;
-        this.endEvent.resolve();
-    }
-
-    private done() {
-        // We should satisfy request fully.
-        assert(this.to !== undefined);
-        assert(this.nextToDeliver === this.to);
-        this.working = false;
-        this.endEvent.resolve();
-    }
-
-    private fail(error) {
-        this.working = false;
-        this.endEvent.reject(error);
-    }
-
-    private dispatch() {
-        while (this.working) {
-            const value = this.results.get(this.nextToDeliver);
-            if (value === undefined) {
-                break;
-            }
-            this.results.delete(this.nextToDeliver);
-            this.nextToDeliver += value.length;
-            this.responseCallback(value);
-        }
-
-        // Account for cancellation - state might be not in consistent state on cancelling operation
-        if (this.working) {
-            assert(this.requestsInFlight !== 0 || this.results.size === 0);
-
-            if (this.requestsInFlight === 0) {
-                // we should have dispatched everything, no matter whether we knew about the end or not.
-                // see comment in addRequestCore() around throwing away chunk if it's above this.to
-                assert(this.results.size === 0);
-                this.done();
-            } else if (this.to !== undefined && this.nextToDeliver >= this.to) {
-                // Learned about the end and dispatched all the ops up to it.
-                // Ignore all the in-flight requests above boundary - unblock caller sooner.
-                assert(!this.knewTo);
-                this.done();
-            }
-        }
-    }
-
-    private getNextChunk() {
-        if (!this.working) {
-            return undefined;
-        }
-
-        const from = this.latestRequested;
-        if (this.to !== undefined) {
-            if (this.to <= from) {
-                return undefined;
-            }
-        }
-
-        // this.latestRequested
-        // inclusive on the right side! Exclusive on the left.
-        this.latestRequested += this.payloadSize;
-
-        if (this.to !== undefined) {
-            this.latestRequested = Math.min(this.to, this.latestRequested);
-        }
-
-        assert(from < this.latestRequested);
-
-        return { from, to: this.latestRequested};
-    }
-
-    private addRequest() {
-        const chunk = this.getNextChunk();
-        if (chunk === undefined) {
-            return;
-        }
-        this.addRequestCore(chunk.from, chunk.to).catch(this.fail.bind(this));
-    }
-
-    private async addRequestCore(fromArg: number, toArg: number) {
-        assert(this.working);
-
-        let from = fromArg;
-        let to = toArg;
-
-        // to & from are exclusive
-        this.requestsInFlight++;
-        while (this.working) {
-            const requestedLength = to - from;
-            assert(requestedLength > 0);
-
-            // We should not be wasting time asking for something useless.
-            assert(this.to === undefined || from < this.to);
-
-            this.requests++;
-
-            const promise = this.requestCallback(this.requests, from, to);
-
-            // dispatch any prior received data
-            this.dispatch();
-
-            const { payload, cancel, partial } = await promise;
-
-            if (cancel) {
-                this.cancel();
-            }
-
-            if (this.to !== undefined && from >= this.to) {
-                // while we were waiting for response, we learned on what is the boundary
-                // We can get here (with actual result!) if situation changed while this request was in
-                // flight, i.e. the end was extended over what we learn in some other request
-                // While it's useful not to throw this result, this is very corner cases and makes logic
-                // (including consistency checks) much harder to write correctly.
-                // So for now, we are throwing this result out the window.
-                assert(!this.knewTo);
-                // Learn how often it happens and if it's too wasteful to throw these chunks.
-                // If it pops into our view a lot, we would need to reconsider how we approach it.
-                // Note that this is not visible to user other than potentially not hitting 100% of
-                // what we can in perf domain.
-                this.logger.sendErrorEvent({
-                    eventName: "ParallelRequests_GotExtra",
-                    from,
-                    to,
-                    end: this.to,
-                    length: payload.length,
-                });
-
-                break;
-            }
-
-            if (this.working) {
-                if (payload.length !== 0) {
-                    this.results.set(from, payload);
-                } else {
-                    // 1. empty (partial) chunks should not be returned by various caching / adapter layers -
-                    //    they should fall back to next layer. This might be important invariant to hold to ensure
-                    //    that we are less likely have bugs where such layer would keep returning empty partial
-                    //    result on each call.
-                    // 2. Current invariant is that callback does retries until it gets something,
-                    //    with the goal of failing if zero data is retrieved in given amount of time.
-                    //    This is very specific property of storage / ops, so this logic is not here, but given only
-                    //    one user of this class, we assert that to catch issues earlier.
-                    // These invariant can be relaxed if needed.
-                    assert(!partial);
-                    assert(this.to === undefined);
-                }
-
-                let fullChunk = (requestedLength <= payload.length); // we can possible get more than we asked.
-                from += payload.length;
-
-                if (!partial && !fullChunk) {
-                    if (this.to === undefined) {
-                        // The END
-                        this.to = from;
-                        break;
-                    }
-                    // We know that there are more items to be retrieved (this.to !== undefined)
-                    // Can we get partial chunk? Ideally storage indicates that's not a full chunk
-                    // Note that it's possible that not all ops hit storage yet.
-                    // We will come back to request more, and if we can't get any more ops soon, it's
-                    // catastrophic failure (see comment above on responsibility of callback to return something)
-                    // This layer will just keep trying until it gets full set.
-                    this.logger.sendErrorEvent({
-                        eventName: "ParallelRequestsPartial",
-                        from,
-                        to,
-                        length: payload.length,
-                    });
-                }
-
-                if (to === this.latestRequested) {
-                    // we can go after full chunk at the end if we received partial chunk, or more than asked
-                    this.latestRequested = from;
-                    fullChunk = true;
-                }
-
-                if (fullChunk) {
-                    const chunk = this.getNextChunk();
-                    if (chunk === undefined) { break; }
-                    from = chunk.from;
-                    to = chunk.to;
-                }
-            }
-        }
-        this.requestsInFlight--;
-        this.dispatch();
-    }
-
-    public async run(concurrency: number) {
-        assert(concurrency > 0);
-        assert(this.working);
-
-        let c = concurrency;
-        while (c > 0) {
-            c--;
-            this.addRequest();
-        }
-        this.dispatch();// will recalculate and trigger this.endEvent if needed
-        return this.endEvent.promise;
     }
 }
 
@@ -1057,7 +826,7 @@ export class DeltaManager
                     this.logger,
                     { eventName: "GetDeltas_OpProcessing", count: deltas.length},
                     () => callback(deltas),
-                    false /* reportStartEvent */);
+                    { end: true, cancel: "error" });
             },
         );
 
@@ -1112,7 +881,7 @@ export class DeltaManager
                 assert(deltaStorage !== undefined);
                 // left is inclusive for ParallelRequests, but exclusive for IDocumentDeltaStorageService
                 // right is exclusive for both
-                const deltasP = deltaStorage.get(from + 1, to);
+                const deltasP = deltaStorage.get(from - 1, to);
 
                 const { messages, partialResult } = await deltasP;
                 deltas.push(...messages);

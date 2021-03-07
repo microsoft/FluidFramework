@@ -4,7 +4,7 @@
  */
 
 import fs from "fs";
-import { assert } from "@fluidframework/common-utils";
+import { assert, TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -15,6 +15,7 @@ import {
     MessageType,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
+import { ParallelRequests, Queue } from "@fluidframework/driver-utils";
 import { printMessageStats } from "./fluidAnalyzeMessages";
 import {
     connectToWebSocket,
@@ -89,17 +90,39 @@ async function* loadAllSequencedMessages(
     let timeStart = Date.now();
     let requests = 0;
     let opsStorage = 0;
+
+    const queue = new Queue<ISequencedDocumentMessage[]>();
+
+    const manager = new ParallelRequests<ISequencedDocumentMessage>(
+        lastSeq + 1, // inclusive left
+        undefined, // to
+        batch,
+        new TelemetryNullLogger(),
+        async (_request: number, from: number, to: number) => {
+            requests++;
+            const { messages, partialResult } = await loadChunk(from - 1, to, deltaStorage);
+            return {partial: partialResult, cancel: false, payload: messages};
+        },
+        (messages: ISequencedDocumentMessage[]) => {
+            opsStorage += messages.length;
+            lastSeq = messages[messages.length - 1].sequenceNumber;
+            queue.push(messages);
+        },
+    );
+
+    const concurrency = 4;
+    const promise = manager.run(concurrency).then(() => queue.end());
+
     while (true) {
-        requests++;
-        const { messages, partialResult } = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
-        if (messages.length === 0) {
-            assert(!partialResult);
+        const messages = await queue.pop();
+        if (messages === undefined) {
             break;
         }
         yield messages;
-        opsStorage += messages.length;
-        lastSeq = messages[messages.length - 1].sequenceNumber;
     }
+
+    // catch any errors
+    await promise;
 
     if (requests > 0) {
         // eslint-disable-next-line max-len

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { ParallelRequests } from "../deltaManager";
+import { ParallelRequests } from "../parallelRequests";
 
 describe("Parallel Requests", () => {
     async function test(
