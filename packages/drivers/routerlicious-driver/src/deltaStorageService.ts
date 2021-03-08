@@ -3,20 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { OutgoingHttpHeaders } from "http";
-import querystring from "querystring";
 import {
     IDeltaStorageService,
     IDocumentDeltaStorageService,
     IDeltasFetchResult,
 } from "@fluidframework/driver-definitions";
-import Axios from "axios";
-import { v4 as uuid } from "uuid";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ITokenProvider } from "./tokens";
 import { DocumentStorageService } from "./documentStorageService";
+import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 
 const MaxBatchDeltas = 2000; // Maximum number of ops we can fetch at a time
 
@@ -75,31 +72,12 @@ export class DeltaStorageService implements IDeltaStorageService {
         id: string,
         from: number,
         to: number): Promise<IDeltasFetchResult> {
-        const query = querystring.stringify({ from, to });
-
-        const headers: OutgoingHttpHeaders = {
-            "x-correlation-id": uuid(),
-        };
-
-        const storageToken = await this.tokenProvider.fetchStorageToken(
-            tenantId,
-            id,
-        );
-
-        if (storageToken) {
-            headers.Authorization = `Basic ${storageToken.jwt}`;
-        }
-
-        const ops = await Axios.get<ISequencedDocumentMessage[]>(
-            `${this.url}?${query}`, { headers });
-
-        this.logger.sendTelemetryEvent({
-            eventName: "R11sDriverToServer",
-            correlationId: headers["x-correlation-id"] as string,
-        });
+        const ordererRestWrapper = new RouterliciousOrdererRestWrapper(tenantId, id, this.tokenProvider, this.logger);
+        await ordererRestWrapper.load();
+        const ops = await ordererRestWrapper.get<ISequencedDocumentMessage[]>(this.url, { from, to });
 
         // It is assumed that server always returns all the ops that it has in the range that was requested.
         // This may change in the future, if so, we need to adjust and receive "end" value from server in such case.
-        return {messages: ops.data, partialResult: false };
+        return {messages: ops, partialResult: false };
     }
 }
