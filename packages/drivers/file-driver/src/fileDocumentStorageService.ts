@@ -4,7 +4,7 @@
  */
 
 import fs from "fs";
-import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { assert, bufferToString } from "@fluidframework/common-utils";
 import {
     IDocumentStorageService,
     IDocumentStorageServicePolicies,
@@ -115,13 +115,13 @@ export type ReaderConstructor = new (...args: any[]) => IDocumentStorageService;
 export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(Base: TBase) =>
     class extends Base implements ISnapshotWriterStorage {
         // Note: if variable name has same name as in base class, it overrides it!
-        public blobsWriter = new Map<string, string>();
+        public blobsWriter = new Map<string, ArrayBufferLike>();
         public commitsWriter: { [key: string]: api.ITree } = {};
         public latestWriterTree?: api.ISnapshotTree;
         public docId?: string;
 
         public reset() {
-            this.blobsWriter = new Map<string, string>();
+            this.blobsWriter = new Map<string, ArrayBufferLike>();
             this.commitsWriter = {};
             this.latestWriterTree = undefined;
             this.docId = undefined;
@@ -137,7 +137,7 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
         public async readBlob(sha: string): Promise<ArrayBufferLike> {
             const blob = this.blobsWriter.get(sha);
             if (blob !== undefined) {
-                return stringToBuffer(blob, "base64");
+                return blob;
             }
             return super.readBlob(sha);
         }
