@@ -3,34 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export {
-    ContainerRuntimeFactoryWithDefaultDataStore,
-    DataObject,
-    DataObjectFactory,
-} from "@fluidframework/aqueduct";
 export { SharedCell } from "@fluidframework/cell";
-export * from "@fluidframework/container-definitions";
-export { Container, Loader } from "@fluidframework/container-loader";
-export { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-export * from "@fluidframework/core-interfaces";
 export { SharedCounter } from "@fluidframework/counter";
-export { IChannelFactory } from "@fluidframework/datastore-definitions";
-export { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 export { Ink } from "@fluidframework/ink";
-export { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 export { SharedDirectory, SharedMap } from "@fluidframework/map";
 export { SharedMatrix } from "@fluidframework/matrix";
 export { ConsensusQueue } from "@fluidframework/ordered-collection";
-export { IClientConfiguration } from "@fluidframework/protocol-definitions";
 export { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-export { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 export { SharedString, SparseMatrix } from "@fluidframework/sequence";
-export { ITestDriver } from "@fluidframework/test-driver-definitions";
-export {
-    ChannelFactoryRegistry,
-    LocalCodeLoader,
-    OpProcessingController,
-    TestContainerRuntimeFactory,
-    TestFluidObjectFactory,
-    TestObjectProvider,
-} from "@fluidframework/test-utils";
+export { ChannelFactoryRegistry } from "@fluidframework/test-utils";
