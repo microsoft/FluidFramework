@@ -213,9 +213,6 @@ export interface IContainerRuntimeOptions {
     // This defaults to true and must be explicitly set to false to disable.
     generateSummaries?: boolean;
 
-    // Experimental flag that will execute tasks in web worker if connected to a service that supports them.
-    enableWorker?: boolean;
-
     // Delay before first attempt to spawn summarizing container
     initialSummarizerDelayMs?: number;
 
@@ -675,7 +672,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         chunks: [string, string[]][],
         private readonly runtimeOptions: IContainerRuntimeOptions = {
             generateSummaries: true,
-            enableWorker: false,
         },
         private readonly containerScope: IFluidObject,
         public readonly logger: ITelemetryLogger,
@@ -789,7 +785,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summaryManager = new SummaryManager(
             context,
             this.runtimeOptions.generateSummaries !== false,
-            !!this.runtimeOptions.enableWorker,
             this.logger,
             (summarizer) => { this.nextSummarizerP = summarizer; },
             this.previousState.nextSummarizerP,
