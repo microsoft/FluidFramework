@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
