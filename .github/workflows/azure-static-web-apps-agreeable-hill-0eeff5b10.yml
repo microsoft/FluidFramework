@@ -11,7 +11,7 @@ on:
     - main
     - "docs/next"
     paths:
-    - "docs/**
+    - "docs/**"
 
 jobs:
   build_and_deploy_job:
