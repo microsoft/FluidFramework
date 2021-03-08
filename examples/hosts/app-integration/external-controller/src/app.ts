@@ -18,25 +18,25 @@ if (location.hash.length === 0) {
     createNew = true;
     location.hash = Date.now().toString();
 }
-const documentId = location.hash.substring(1);
-document.title = documentId;
+const containerId = location.hash.substring(1);
+document.title = containerId;
 
 const dataObjectId = "dice";
 
 async function start(): Promise<void> {
     const service = new TinyliciousService();
     // Get or create the document
-    const fluidDocument = createNew
-        ? await Fluid.createDocument(service, documentId, [KeyValueInstantiationFactory.registryEntry])
-        : await Fluid.getDocument(service, documentId, [KeyValueInstantiationFactory.registryEntry]);
+    const fluidContainer = createNew
+        ? await Fluid.createContainer(service, containerId, [KeyValueInstantiationFactory.registryEntry])
+        : await Fluid.getContainer(service, containerId, [KeyValueInstantiationFactory.registryEntry]);
 
     // We'll create the data object when we create the new document.
     const keyValueDataObject: IKeyValueDataObject = createNew
-        ? await fluidDocument.createDataObject<KeyValueDataObject>(KeyValueInstantiationFactory.type, dataObjectId)
-        : await fluidDocument.getDataObject<KeyValueDataObject>(dataObjectId);
+        ? await fluidContainer.createDataObject<KeyValueDataObject>(KeyValueInstantiationFactory.type, dataObjectId)
+        : await fluidContainer.getDataObject<KeyValueDataObject>(dataObjectId);
 
     // Our controller manipulates the data object (model).
-    const diceRollerController = new DiceRollerController(fluidDocument, keyValueDataObject);
+    const diceRollerController = new DiceRollerController(fluidContainer, keyValueDataObject);
     await diceRollerController.initialize(createNew);
 
     // We render a view which uses the controller.

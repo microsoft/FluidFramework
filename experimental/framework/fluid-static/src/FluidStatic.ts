@@ -12,7 +12,7 @@ import { IUser } from "@fluidframework/protocol-definitions";
 import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
 import { DOProviderContainerRuntimeFactory } from "./containerCode";
 
-export class FluidDocument extends EventEmitter {
+export class FluidContainer extends EventEmitter {
     audience: IAudience;
     constructor(private readonly container: Container, public readonly createNew: boolean) {
         super();
@@ -66,33 +66,31 @@ export class FluidDocument extends EventEmitter {
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Fluid {
-    public static async createDocument(
+    public static async createContainer(
         getContainerService: IGetContainerService,
         docId: string,
         registryEntries: NamedFluidDataStoreRegistryEntry[],
-    ): Promise<FluidDocument> {
+    ): Promise<FluidContainer> {
         const container = await getContainer(
             getContainerService,
             docId,
             new DOProviderContainerRuntimeFactory(registryEntries),
             true, /* createNew */
         );
-        const document = new FluidDocument(container, true /* createNew */);
-        return document;
+        return new FluidContainer(container, true /* createNew */);
     }
 
-    public static async getDocument(
+    public static async getContainer(
         getContainerService: IGetContainerService,
         docId: string,
         registryEntries: NamedFluidDataStoreRegistryEntry[],
-    ): Promise<FluidDocument> {
+    ): Promise<FluidContainer> {
         const container = await getContainer(
             getContainerService,
             docId,
             new DOProviderContainerRuntimeFactory(registryEntries),
             false, /* createNew */
         );
-        const document = new FluidDocument(container, false /* createNew */);
-        return document;
+        return new FluidContainer(container, false /* createNew */);
     }
 }

@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { IKeyValueDataObject } from "@fluid-experimental/data-objects";
-import { FluidDocument } from "@fluid-experimental/fluid-static";
+import { FluidContainer } from "@fluid-experimental/fluid-static";
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.
@@ -39,10 +39,10 @@ const diceValueKey = "diceValue";
  */
 export class DiceRollerController extends EventEmitter implements IDiceRollerController {
     constructor(
-        private readonly fluidDocument: FluidDocument,
+        private readonly fluidContainer: FluidContainer,
         private readonly kvPairDataObject: IKeyValueDataObject) {
         super();
-        this.fluidDocument.on("membersChanged", (members) => {
+        this.fluidContainer.on("membersChanged", (members) => {
             this.emit("membersChanged", members);
         });
         this.kvPairDataObject.on("changed", (changed) => {
@@ -90,7 +90,7 @@ export class DiceRollerController extends EventEmitter implements IDiceRollerCon
 
     public get members() {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.fluidDocument.getMembers();
+        return this.fluidContainer.getMembers();
     }
 
     public get value() {
