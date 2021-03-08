@@ -47,7 +47,7 @@ export class VectorUndoProvider {
             // For SharedMatrix, each IRevertibles always holds a single row/col operation.
             // Therefore, 'currentOp' must either be undefined or equal to the current op.
             assert(this.currentOp === undefined || this.currentOp === operation,
-                `On vector undo, unexpected 'currentOp' type/state: '${this.currentOp}'!`);
+                "On vector undo, unexpected 'currentOp' type/state!");
 
             switch (operation) {
                 case MergeTreeDeltaType.INSERT:

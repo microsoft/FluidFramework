@@ -337,8 +337,7 @@ export class Client {
      * @returns True if the remove was applied. False if it could not be.
      */
     private applyRemoveRangeOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
-        assert(opArgs.op.type === ops.MergeTreeDeltaType.REMOVE,
-            `Unexpected op type on range remove: '${opArgs.op.type}'!`);
+        assert(opArgs.op.type === ops.MergeTreeDeltaType.REMOVE, "Unexpected op type on range remove!");
         const op = opArgs.op;
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);
@@ -376,8 +375,7 @@ export class Client {
      * @returns True if the annotate was applied. False if it could not be.
      */
     private applyAnnotateRangeOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
-        assert(opArgs.op.type === ops.MergeTreeDeltaType.ANNOTATE,
-            `Unexpected op type on range annotate: '${opArgs.op.type}'!`);
+        assert(opArgs.op.type === ops.MergeTreeDeltaType.ANNOTATE, "Unexpected op type on range annotate!");
         const op = opArgs.op;
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);
@@ -412,8 +410,7 @@ export class Client {
      * @returns True if the insert was applied. False if it could not be.
      */
     private applyInsertOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
-        assert(opArgs.op.type === ops.MergeTreeDeltaType.INSERT,
-            `Unexpected op type on range insert: '${opArgs.op.type}'!`);
+        assert(opArgs.op.type === ops.MergeTreeDeltaType.INSERT, "Unexpected op type on range insert!");
         const op = opArgs.op;
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);

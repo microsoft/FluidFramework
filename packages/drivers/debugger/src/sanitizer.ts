@@ -448,7 +448,7 @@ export class Sanitizer {
      * @param contents - contents object to fix
      */
     fixAttachContents(contents: any): any {
-        assert(typeof contents === "object", `Unexpected type on contents for fix of an attach: '${typeof contents}'.`);
+        assert(typeof contents === "object", "Unexpected type on contents for fix of an attach!");
         if (!this.objectMatchesSchema(contents, attachContentsSchema)) {
             this.replaceObject(contents);
         } else {

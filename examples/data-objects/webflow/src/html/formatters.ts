@@ -111,8 +111,7 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
     }
 
     public visit(layout: Layout, state: Readonly<IInclusionState>) {
-        assert(getDocSegmentKind(layout.segment) === DocSegmentKind.inclusion,
-            `Layout segment has unexpected kind: '${getDocSegmentKind(layout.segment)}'!`);
+        assert(getDocSegmentKind(layout.segment) === DocSegmentKind.inclusion, "Layout segment has unexpected kind!");
         layout.popFormat();
         return { state, consumed: true };
     }

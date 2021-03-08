@@ -613,8 +613,7 @@ export class MockSharedObjectServices implements IChannelServices {
     public static createFromSummary(summaryTree: ISummaryTree) {
         const contents: { [key: string]: string } = {};
         for (const [key, value] of Object.entries(summaryTree.tree)) {
-            assert(value.type === SummaryType.Blob,
-                `Unexpected summary type on mock createFromSummary: ${value.type}`);
+            assert(value.type === SummaryType.Blob, "Unexpected summary type on mock createFromSummary");
             contents[key] = value.content as string;
         }
         return new MockSharedObjectServices(contents);

@@ -561,8 +561,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                 this.rows.applyMsg(msg);
                 break;
             default: {
-                assert(contents.type === MatrixOp.set,
-                    `SharedMatrix message contents have unexpected type: '${contents.type}'!`);
+                assert(contents.type === MatrixOp.set, "SharedMatrix message contents have unexpected type!");
 
                 const { referenceSequenceNumber: refSeq, clientId } = rawMessage;
                 const { row, col } = contents;

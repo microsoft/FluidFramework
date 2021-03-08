@@ -147,8 +147,7 @@ export class ProseMirrorTransactionBuilder {
                 i = this.splitAt(position, i);
                 let length = range.segment.cachedLength;
                 while (length > 0) {
-                    assert(this.things[i].type === "ether",
-                        `Current thing does not have 'ether' node type! Has '${this.things[i].type}' type.`);
+                    assert(this.things[i].type === "ether", "Current thing does not have 'ether' node type!");
 
                     if (this.things[i].length <= length) {
                         // Ether node is fully encompasing
@@ -191,8 +190,7 @@ export class ProseMirrorTransactionBuilder {
                 i = this.splitAt(position, i);
                 let length = range.segment.cachedLength;
                 while (length > 0) {
-                    assert(this.things[i].type === "ether",
-                        `Current thing does not have 'ether' node type! Has '${this.things[i].type}' type.`);
+                    assert(this.things[i].type === "ether", "Current thing does not have 'ether' node type!");
 
                     if (this.things[i].length <= length) {
                         // Ether node is fully encompasing
