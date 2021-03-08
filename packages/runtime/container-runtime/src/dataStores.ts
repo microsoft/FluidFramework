@@ -164,7 +164,7 @@ export class DataStores implements IDisposable {
             throw error;
         }
 
-        const flatBlobs = new Map<string, string>();
+        const flatBlobs = new Map<string, ArrayBufferLike>();
         let snapshotTree: ISnapshotTree | undefined;
         if (attachMessage.snapshot) {
             snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
@@ -279,14 +279,14 @@ export class DataStores implements IDisposable {
         context.process(transformed, local, localMessageMetadata);
     }
 
-    public async getDataStore(id: string, wait: boolean): Promise<IFluidDataStoreChannel> {
+    public async getDataStore(id: string, wait: boolean): Promise<FluidDataStoreContext> {
         const context = await this.contexts.getBoundOrRemoted(id, wait);
 
         if (context === undefined) {
             throw new Error(`DataStore ${id} does not yet exist or is not yet bound`);
         }
 
-        return context.realize();
+        return context;
     }
 
     public processSignal(address: string, message: IInboundSignalMessage, local: boolean) {

@@ -260,10 +260,6 @@ export class ContainerContext implements IContainerContext {
         return this.runtime.request(path);
     }
 
-    public registerTasks(tasks: string[]): any {
-        return;
-    }
-
     public async reloadContext(): Promise<void> {
         return this.container.reloadContext();
     }

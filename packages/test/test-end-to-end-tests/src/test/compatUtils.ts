@@ -7,17 +7,16 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
     IContainer,
     ILoader,
-    IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IContainerRuntimeOptions, ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IClientConfiguration } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import {
     ChannelFactoryRegistry,
-    TestContainerRuntimeFactory,
+    createTestContainerRuntimeFactory,
     TestFluidObjectFactory,
     OpProcessingController,
     TestObjectProvider,
@@ -91,14 +90,6 @@ const createTestFluidDataStoreFactory = (registry: ChannelFactoryRegistry = []):
     return new TestFluidObjectFactory(registry);
 };
 
-export const createRuntimeFactory = (
-    type: string,
-    dataStoreFactory: IFluidDataStoreFactory,
-    runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
-): IRuntimeFactory => {
-    return new TestContainerRuntimeFactory(type, dataStoreFactory, runtimeOptions);
-};
-
 export function getDataStoreFactory(containerOptions?: ITestContainerConfig) {
     switch (containerOptions?.fluidDataObjectType) {
         case undefined:
@@ -115,12 +106,13 @@ export function createTestObjectProvider(
     type: string,
     driver: ITestDriver,
     LoaderConstructor = Loader,
-    createRuntimeFactoryFn = createRuntimeFactory,
+    ContainerRuntimeConstructor = ContainerRuntime,
     getDataStoreFactoryFn = getDataStoreFactory,
 ): ITestObjectProvider {
     const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
         const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
-        return createRuntimeFactoryFn(type, dataStoreFactory, containerOptions?.runtimeOptions);
+        const factoryCtor = createTestContainerRuntimeFactory(ContainerRuntimeConstructor);
+        return new factoryCtor(type, dataStoreFactory, containerOptions?.runtimeOptions);
     };
 
     return new TestObjectProvider(LoaderConstructor, driver, containerFactoryFn);
@@ -131,7 +123,7 @@ export const generateNonCompatTest = (
 ) => {
     describe("non-compat", () => {
         tests(() => {
-             // Run with all current versions
+            // Run with all current versions
             const driver = getFluidTestDriver();
             return createTestObjectProvider(TestDataObject.type, driver as any);
         });
@@ -163,7 +155,7 @@ export const generateCompatTest = (
                     TestDataObject.type,
                     driver as any,
                     Loader,
-                    oldApi.createRuntimeFactory as any,
+                    oldApi.ContainerRuntime as any,
                     oldApi.getDataStoreFactory as any,
                 );
             });
@@ -176,7 +168,7 @@ export const generateCompatTest = (
                     TestDataObject.type,
                     driver as any,
                     Loader,
-                    createRuntimeFactory,
+                    ContainerRuntime,
                     oldApi.getDataStoreFactory as any,
                 );
             });
@@ -189,7 +181,7 @@ export const generateCompatTest = (
                     TestDataObject.type,
                     driver as any,
                     oldApi.Loader as any,
-                    oldApi.createRuntimeFactory as any,
+                    oldApi.ContainerRuntime as any,
                     getDataStoreFactory,
                 );
             });

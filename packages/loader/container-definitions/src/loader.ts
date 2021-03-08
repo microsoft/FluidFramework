@@ -244,7 +244,6 @@ export enum LoaderHeader {
     cache = "fluid-cache",
 
     clientDetails = "fluid-client-details",
-    executionContext = "execution-context",
 
     /**
      * Start the container in a paused, unconnected state. Defaults to false
@@ -269,7 +268,6 @@ export interface ILoaderHeader {
     [LoaderHeader.cache]: boolean;
     [LoaderHeader.clientDetails]: IClientDetails;
     [LoaderHeader.pause]: boolean;
-    [LoaderHeader.executionContext]: string;
     [LoaderHeader.sequenceNumber]: number;
     [LoaderHeader.reconnect]: boolean;
     [LoaderHeader.version]: string | undefined | null;

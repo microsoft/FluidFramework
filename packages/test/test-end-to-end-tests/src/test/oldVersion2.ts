@@ -4,6 +4,7 @@
  */
 
 export { Loader } from "old-container-loader2";
+export { ContainerRuntime } from "old-container-runtime2";
 export const versionString = "N-2";
 
 import {
@@ -13,7 +14,6 @@ import {
 } from "old-aqueduct2";
 import { SharedCell } from "old-cell2";
 import { IRuntimeFactory } from "old-container-definitions2";
-import { IContainerRuntimeOptions } from "old-container-runtime2";
 import { SharedCounter } from "old-counter2";
 import { IChannelFactory } from "old-datastore-definitions2";
 import { Ink } from "old-ink2";
@@ -25,7 +25,6 @@ import { IFluidDataStoreFactory } from "old-runtime-definitions2";
 import { SharedString, SparseMatrix } from "old-sequence2";
 import {
     ChannelFactoryRegistry,
-    TestContainerRuntimeFactory,
     TestFluidObjectFactory,
 } from "old-test-utils2";
 
@@ -99,14 +98,6 @@ export function getDataStoreFactory(containerOptions?: ITestContainerConfig) {
             throw new Error("unknown data store factory type");
     }
 }
-
-export const createRuntimeFactory = (
-    type: string,
-    dataStoreFactory: newVer.IFluidDataStoreFactory | IFluidDataStoreFactory,
-    runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
-): IRuntimeFactory => {
-    return new TestContainerRuntimeFactory(type, dataStoreFactory as IFluidDataStoreFactory, runtimeOptions);
-};
 
 export function createOldRuntimeFactory(dataStore): IRuntimeFactory {
     const type = OldTestDataObject.type;
