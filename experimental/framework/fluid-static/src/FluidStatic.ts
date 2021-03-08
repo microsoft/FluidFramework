@@ -6,13 +6,18 @@
 import { getContainer, IGetContainerService } from "@fluid-experimental/get-container";
 import { getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
-import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory, NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
 import { DOProviderContainerRuntimeFactory } from "./containerCode";
+
+export interface IFluidStaticDataObjectClass {
+    factory: IFluidDataStoreFactory;
+}
 
 export class FluidContainer {
     constructor(private readonly container: IContainer, public readonly createNew: boolean) { }
 
-    public async createDataObject<T = any>(type: string, id: string) {
+    public async createDataObject<T = any>(dataObjectClass: IFluidStaticDataObjectClass, id: string) {
+        const type = dataObjectClass.factory.type;
         await this.container.request({ url: `/create/${type}/${id}` });
         const dataObject = await this.getDataObject<T>(id);
         return dataObject;
@@ -24,13 +29,18 @@ export class FluidContainer {
     }
 }
 
+const dataObjectClassToRegistryEntry =
+    (dataObjectClass: IFluidStaticDataObjectClass): NamedFluidDataStoreRegistryEntry =>
+        [dataObjectClass.factory.type, Promise.resolve(dataObjectClass.factory)];
+
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Fluid {
     public static async createContainer(
         getContainerService: IGetContainerService,
         docId: string,
-        registryEntries: NamedFluidDataStoreRegistryEntry[],
+        dataObjectClasses: IFluidStaticDataObjectClass[],
     ): Promise<FluidContainer> {
+        const registryEntries = dataObjectClasses.map(dataObjectClassToRegistryEntry);
         const container = await getContainer(
             getContainerService,
             docId,
@@ -43,8 +53,9 @@ export class Fluid {
     public static async getContainer(
         getContainerService: IGetContainerService,
         docId: string,
-        registryEntries: NamedFluidDataStoreRegistryEntry[],
+        dataObjectClasses: IFluidStaticDataObjectClass[],
     ): Promise<FluidContainer> {
+        const registryEntries = dataObjectClasses.map(dataObjectClassToRegistryEntry);
         const container = await getContainer(
             getContainerService,
             docId,
