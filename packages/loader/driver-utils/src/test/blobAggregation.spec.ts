@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { assert, TelemetryNullLogger, stringToBuffer, bufferToString } from "@fluidframework/common-utils";
+import { TelemetryNullLogger, stringToBuffer, bufferToString } from "@fluidframework/common-utils";
 import { ISummaryTree, SummaryType, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { BlobAggregationStorage } from "../blobAggregationStorage";
