@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
-import { ISharedObjectRegistry, mixinRequestHandler } from "@fluidframework/datastore";
+import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { FluidDataStoreRuntime, ISharedObjectRegistry, mixinRequestHandler } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
@@ -36,7 +36,6 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
         if (storeFactories !== undefined) {
             this.IFluidDataStoreRegistry = new FluidDataStoreRegistry(
                 storeFactories.map(
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     (factory) => [factory.type, factory]) as NamedFluidDataStoreRegistryEntries);
         }
 
@@ -48,7 +47,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
 
     public get IFluidDataStoreFactory() { return this; }
 
-    public async instantiateDataStore(context: IFluidDataStoreContext) {
+    public async instantiateDataStore(context: IFluidDataStoreContext): Promise<FluidDataStoreRuntime> {
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const router = await instance;
@@ -65,7 +64,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
         return runtime;
     }
 
-    public async create(parentContext: IFluidDataStoreContext, props?: any) {
+    public async create(parentContext: IFluidDataStoreContext, props?: any): Promise<IFluidObject> {
         const { containerRuntime, packagePath } = parentContext;
 
         const router = await containerRuntime.createDataStore(packagePath.concat(this.type));

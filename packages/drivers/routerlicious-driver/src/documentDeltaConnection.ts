@@ -11,7 +11,7 @@ import {
     createGenericNetworkError,
 } from "@fluidframework/driver-utils";
 import { IClient, IConnect } from "@fluidframework/protocol-definitions";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 
 export enum R11sErrorType {
     authorizationError = "authorizationError",
@@ -66,6 +66,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection impleme
         io: SocketIOClientStatic,
         client: IClient,
         url: string,
+        logger: ITelemetryLogger,
         timeoutMs = 20000): Promise<IDocumentDeltaConnection> {
         const socket = io(
             url,
@@ -88,7 +89,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection impleme
             versions: protocolVersions,
         };
 
-        const deltaConnection = new R11sDocumentDeltaConnection(socket, id, new TelemetryNullLogger());
+        const deltaConnection = new R11sDocumentDeltaConnection(socket, id, logger);
 
         await deltaConnection.initialize(connectMessage, timeoutMs);
         return deltaConnection;

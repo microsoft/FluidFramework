@@ -4,18 +4,18 @@
  */
 
 import {
+    IFluidCodeDetails,
     IFluidRouter,
     IFluidRunnable,
     IRequest,
     IResponse,
-    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
-import { IContainer, ILoader, ILoaderOptions } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import * as Comlink from "comlink";
 
 // Proxy loader that proxies request to web worker.
-interface IProxyLoader extends ILoader, IFluidRunnable {
+interface IProxyLoader extends IHostLoader, IFluidRunnable {
     // eslint-disable-next-line @typescript-eslint/no-misused-new
     new(id: string,
         options: ILoaderOptions,
@@ -28,7 +28,7 @@ interface IProxyLoader extends ILoader, IFluidRunnable {
 /**
  * Proxies requests to web worker loader.
  */
-export class WebWorkerLoader implements ILoader, IFluidRunnable, IFluidRouter {
+export class WebWorkerLoader implements IHostLoader, IFluidRunnable, IFluidRouter {
     public static async load(
         id: string,
         options: ILoaderOptions,

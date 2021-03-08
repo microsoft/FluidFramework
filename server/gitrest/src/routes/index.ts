@@ -4,7 +4,7 @@
  */
 
 import { Router } from "express";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import { IExternalStorageManager } from "../externalStorageManager";
 import * as utils from "../utils";
 /* eslint-disable import/no-internal-modules */

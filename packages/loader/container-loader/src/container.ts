@@ -28,6 +28,8 @@ import {
     ContainerWarning,
     AttachState,
     IThrottlingWarning,
+    ReadOnlyInfo,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import {
@@ -444,7 +446,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     /**
      * {@inheritDoc DeltaManager.readOnlyInfo}
      */
-    public get readOnlyInfo() {
+    public get readOnlyInfo(): ReadOnlyInfo {
         return this._deltaManager.readOnlyInfo;
     }
 
@@ -539,7 +541,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private get serviceFactory() {return this.loader.services.documentServiceFactory;}
     private get urlResolver() {return this.loader.services.urlResolver;}
-    public get options() { return this.loader.services.options;}
+    public get options(): ILoaderOptions { return this.loader.services.options; }
     private get scope() { return this.loader.services.scope;}
     private get codeLoader() { return this.loader.services.codeLoader;}
     constructor(
@@ -795,7 +797,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             await this.deltaManager.inbound.pause();
             await this.snapshotCore(tagMessage, fullTree);
         } catch (ex) {
-            this.logger.logException({ eventName: "SnapshotExceptionError" }, ex);
+            this.logger.sendErrorEvent({ eventName: "SnapshotExceptionError" }, ex);
             throw ex;
         } finally {
             this.deltaManager.inbound.resume();
@@ -836,11 +838,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public resume() {
         if (!this.closed) {
-            this.resumeInternal();
+            this.resumeInternal({ reason: "DocumentOpenResume" });
         }
     }
 
-    protected resumeInternal(args: IConnectionArgs = {}) {
+    protected resumeInternal(args: IConnectionArgs) {
         assert(!this.closed, "Attempting to setAutoReconnect() a closed DeltaManager");
 
         // Resume processing ops
@@ -1093,7 +1095,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    private async connectToDeltaStream(args: IConnectionArgs = {}) {
+    private async connectToDeltaStream(args: IConnectionArgs) {
         this.recordConnectStartTime();
 
         // All agents need "write" access, including summarizer.
@@ -1130,7 +1132,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // connections to same file) in two ways:
         // A) creation flow breaks (as one of the clients "sees" file as existing, and hits #2 above)
         // B) Once file is created, transition from view-only connection to write does not work - some bugs to be fixed.
-        const connectionArgs: IConnectionArgs = { mode: "write" };
+        const connectionArgs: IConnectionArgs = { reason: "DocumentOpen", mode: "write" };
 
         // Start websocket connection as soon as possible. Note that there is no op handler attached yet, but the
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.

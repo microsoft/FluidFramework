@@ -105,13 +105,16 @@ export class BasicRestWrapper extends RestWrapper {
         private readonly axios: AxiosInstance = Axios,
         private readonly refreshDefaultQueryString?: () => Record<string, unknown>,
         private readonly refreshDefaultHeaders?: () => Record<string, unknown>,
+        private readonly getCorrelationId?: () => string | undefined,
     ) {
         super(baseurl, defaultQueryString, maxContentLength);
     }
 
     protected async request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry = true): Promise<T> {
         const options = { ...requestConfig };
-        options.headers = this.generateHeaders(options.headers, uuid());
+        options.headers = this.generateHeaders(
+            options.headers,
+            (this.getCorrelationId && this.getCorrelationId()) || uuid());
 
         return new Promise<T>((resolve, reject) => {
             this.axios.request<T>(options)

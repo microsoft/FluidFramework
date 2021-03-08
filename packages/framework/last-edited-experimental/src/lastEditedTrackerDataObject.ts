@@ -4,10 +4,11 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
+import type { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { LastEditedTracker } from "./lastEditedTracker";
+import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
 import { IProvideFluidLastEditedTracker } from "./interfaces";
+import { LastEditedTracker } from "./lastEditedTracker";
 
 /**
  * LastEditedTrackerDataObject creates a LastEditedTracker that keeps track of the latest edits to the document.
@@ -22,7 +23,9 @@ export class LastEditedTrackerDataObject extends DataObject
         undefined,
     );
 
-    public static getFactory() {
+    // The return type is defined explicitly here to prevent TypeScript from generating dynamic imports
+    // eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/no-unnecessary-type-arguments
+    public static getFactory(): DataObjectFactory<LastEditedTrackerDataObject, object, undefined, IEvent> {
         return LastEditedTrackerDataObject.factory;
     }
 
