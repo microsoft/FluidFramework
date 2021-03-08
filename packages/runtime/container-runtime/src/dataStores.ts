@@ -286,7 +286,8 @@ export class DataStores implements IDisposable {
 
         if (context === undefined) {
             // The requested data store does not exits. Throw a 404 response exception.
-            throw responseToException(create404Response());
+            const request = { url: id };
+            throw responseToException(create404Response(request), request);
         }
 
         return context;

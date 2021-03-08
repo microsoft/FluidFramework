@@ -121,7 +121,7 @@ describe("GC Data Store Requests", () => {
         opProcessingController.addDeltaManagers(container1.deltaManager);
     });
 
-    it("should fail requests with errorOnUnreferencedResources for unreferenced data stores", async () => {
+    it("should fail requests with externalRequest flag for unreferenced data stores", async () => {
         const dataStore1 = await requestFluidObject<TestDataObject>(container1, "default");
 
         // Create a second data store (dataStore2) and add its handle to mark it as referenced.
@@ -141,7 +141,7 @@ describe("GC Data Store Requests", () => {
         // dataStore2 will have it marked as unreferenced.
         const container2 = await loadContainer();
 
-        // Request dataStore2 without errorOnUnreferencedResources header and verify that we can load it.
+        // Request dataStore2 without externalRequest header and verify that we can load it.
         const request: IRequest = { url: dataStore2.id };
         let response = await container2.request(request);
         assert(
@@ -149,13 +149,13 @@ describe("GC Data Store Requests", () => {
             "dataStore2 should have successfully loaded",
         );
 
-        // Add errorOnUnreferencedResources = true to the header and verify that we are unable to load dataStore2.
-        request.headers = { errorOnUnreferencedResources: true };
+        // Add externalRequest = true to the header and verify that we are unable to load dataStore2.
+        request.headers = { externalRequest: true };
         response = await container2.request(request);
         assert(response.status === 404, "dataStore2 should have failed to load");
     });
 
-    it("should succeed requests with errorOnUnreferencedResources for data stores that are re-referenced", async () => {
+    it("should succeed requests with externalRequest flag for data stores that are re-referenced", async () => {
         const dataStore1 = await requestFluidObject<TestDataObject>(container1, "default");
 
         // Create a second data store (dataStore2) and add its handle to mark it as referenced.
@@ -175,11 +175,11 @@ describe("GC Data Store Requests", () => {
         // dataStore2 will have it marked as unreferenced.
         const container2 = await loadContainer();
 
-        // Request dataStore2 with errorOnUnreferencedResources = true to the header and verify that we are unable to
+        // Request dataStore2 with externalRequest = true to the header and verify that we are unable to
         // load dataStore2.
         const request: IRequest = {
             url: dataStore2.id,
-            headers: { errorOnUnreferencedResources: true },
+            headers: { externalRequest: true },
         };
         let response = await container2.request(request);
         assert(response.status === 404, "dataStore2 should have failed to load");

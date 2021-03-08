@@ -92,7 +92,7 @@ export interface IContainerRuntime extends
      * @param id - Id supplied during creating the data store.
      * @param wait - True if you want to wait for it.
      */
-     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
+    getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
 
     /**
      * Creates root data store in container. Such store is automatically bound to container, and thus is
