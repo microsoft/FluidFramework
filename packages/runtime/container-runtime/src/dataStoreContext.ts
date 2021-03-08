@@ -65,6 +65,7 @@ import { ContainerRuntime } from "./containerRuntime";
 import {
     dataStoreAttributesBlobName,
     DataStoreSummaryFormatVersion,
+    summaryFormatVersionToNumber,
     wrapSummaryInChannelsTree,
 } from "./summaryFormat";
 
@@ -792,6 +793,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         private readonly snapshotTree: ISnapshotTree | undefined,
         protected readonly isRootDataStore: boolean,
         disableIsolatedChannels: boolean,
+        protected readonly summaryFormatVersion: DataStoreSummaryFormatVersion,
         /**
          * @deprecated 0.16 Issue #1635, #3631
          */
@@ -861,9 +863,10 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         assert(this.pkg !== undefined, "pkg should be available in local data store");
         assert(this.isRootDataStore !== undefined, "isRootDataStore should be available in local data store");
+        const versionNumber = summaryFormatVersionToNumber(this.summaryFormatVersion);
         return {
             pkg: this.pkg,
-            snapshot: this.snapshotTree,
+            snapshot: versionNumber < 2 ? this.snapshotTree : this.snapshotTree?.trees[channelsTreeName],
             isRootDataStore: this.isRootDataStore,
         };
     }
@@ -892,6 +895,7 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
         snapshotTree: ISnapshotTree | undefined,
         isRootDataStore: boolean,
         disableIsolatedChannels: boolean,
+        summaryFormatVersion: DataStoreSummaryFormatVersion,
         /**
          * @deprecated 0.16 Issue #1635, #3631
          */
@@ -908,6 +912,7 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
             snapshotTree,
             isRootDataStore,
             disableIsolatedChannels,
+            summaryFormatVersion,
             createProps);
     }
 }
@@ -945,6 +950,7 @@ export class LocalDetachedFluidDataStoreContext
             snapshotTree,
             isRootDataStore,
             disableIsolatedChannels,
+            disableIsolatedChannels ? "0.1" : 2,
         );
         this.detachedRuntimeCreation = true;
     }

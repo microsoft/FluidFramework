@@ -576,7 +576,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         await defPromise.promise;
     });
 
-    it.skip("Fire ops during container attach for shared matrix", async () => {
+    it("Fire ops during container attach for shared matrix", async () => {
         const op = { pos1: 0, seg: 9, type: 0, target: "rows" };
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(args.defaultCodeDetails);

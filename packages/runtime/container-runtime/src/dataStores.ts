@@ -138,6 +138,7 @@ export class DataStores implements IDisposable {
                     // roots in the document but they won't break.
                     attributes.isRootDataStore ?? true,
                     this.disableIsolatedChannels,
+                    attributes.snapshotFormatVersion,
                 );
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);

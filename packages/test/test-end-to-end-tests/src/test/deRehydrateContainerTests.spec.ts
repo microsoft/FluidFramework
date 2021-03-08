@@ -15,7 +15,7 @@ import {
     LoaderContainerTracker,
 } from "@fluidframework/test-utils";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
+import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { SharedString, SparseMatrix } from "@fluidframework/sequence";
@@ -29,6 +29,38 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 const detachedContainerRefSeqNumber = 0;
+
+function assertSubtree(tree: ISnapshotTree, key: string, msg?: string): ISnapshotTree {
+    const subTree = tree.trees[key];
+    assert(subTree, msg ?? `${key} subtree not present`);
+    return subTree;
+}
+
+const assertChannelsTree = (root: ISnapshotTree) => assertSubtree(root, ".channels");
+const assertProtocolTree = (root: ISnapshotTree) => assertSubtree(root, ".protocol");
+
+function assertChannelTree(rootOrDatastore: ISnapshotTree, key: string, msg?: string) {
+    const channelsTree = assertChannelsTree(rootOrDatastore);
+    return {
+        channelsTree,
+        datastoreTree: assertSubtree(channelsTree, key, msg ?? `${key} channel not present`),
+    };
+}
+const assertDatastoreTree = (root: ISnapshotTree, key: string, msg?: string) =>
+    assertChannelTree(root, key, `${key} datastore not present`);
+
+const assertSchedulerTree = (root: ISnapshotTree) => assertDatastoreTree(root, "_scheduler");
+
+function assertBlobContents<T>(subtree: ISnapshotTree, key: string): T {
+    const id = subtree.blobs[key];
+    assert(id, `blob id for ${key} missing`);
+    const contents = subtree.blobs[id];
+    assert(contents, `blob contents for ${key} missing`);
+    return JSON.parse(fromBase64ToUtf8(contents)) as T;
+}
+
+const assertProtocolAttributes = (s: ISnapshotTree) =>
+    assertBlobContents<IDocumentAttributes>(assertProtocolTree(s), "attributes");
 
 describe(`Dehydrate Rehydrate Container Test`, () => {
     let driver: ITestDriver;
@@ -115,58 +147,52 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
     it("Dehydrated container snapshot", async () => {
         const { container } =
             await createDetachedContainerAndGetRootDataStore();
-        const snapshotTree = JSON.parse(container.serialize());
+        const snapshotTree: ISnapshotTree = JSON.parse(container.serialize());
 
-        assert.ok(snapshotTree.trees[".protocol"], "protocol tree not present");
-        assert.ok(snapshotTree.trees.default, "default dataStore tree not present");
-        assert.ok(snapshotTree.trees._scheduler, "scheduler tree not present");
-        assert.strictEqual(Object.keys(snapshotTree.trees[".protocol"].blobs).length, 8,
-            "4 protocol blobs should be there(8 mappings)");
+        // Check for scheduler
+        assertSchedulerTree(snapshotTree);
 
         // Check for protocol attributes
-        const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
-        const protocolAttributes: IDocumentAttributes =
-            JSON.parse(fromBase64ToUtf8(snapshotTree.trees[".protocol"].blobs[protocolAttributesBlobId]));
+        const protocolTree = assertProtocolTree(snapshotTree);
+        assert.strictEqual(Object.keys(protocolTree.blobs).length, 8,
+            "4 protocol blobs should be there(8 mappings)");
+
+        const protocolAttributes = assertProtocolAttributes(snapshotTree);
         assert.strictEqual(protocolAttributes.sequenceNumber, detachedContainerRefSeqNumber, "initial aeq #");
         assert(
             protocolAttributes.minimumSequenceNumber <= protocolAttributes.sequenceNumber,
             "Min Seq # <= seq #");
 
         // Check for default dataStore
-        const defaultDataStoreBlobId = snapshotTree.trees.default.blobs[".component"];
-        const dataStoreAttributes =
-            JSON.parse(fromBase64ToUtf8(snapshotTree.trees.default.blobs[defaultDataStoreBlobId]));
-        assert.strictEqual(dataStoreAttributes.pkg, JSON.stringify(["default"]), "Package name should be default");
+        const { datastoreTree: defaultDatastore } = assertDatastoreTree(snapshotTree, "default");
+        const datastoreAttributes = assertBlobContents<{ pkg: string }>(defaultDatastore, ".component");
+        assert.strictEqual(datastoreAttributes.pkg, JSON.stringify(["default"]), "Package name should be default");
     });
 
     it("Dehydrated container snapshot 2 times with changes in between", async () => {
         const { container, defaultDataStore } =
             await createDetachedContainerAndGetRootDataStore();
-        const snapshotTree1 = JSON.parse(container.serialize());
+        const snapshotTree1: ISnapshotTree = JSON.parse(container.serialize());
         // Create a channel
         const channel = defaultDataStore.runtime.createChannel("test1",
             "https://graph.microsoft.com/types/map") as SharedMap;
         channel.bindToContext();
-        const snapshotTree2 = JSON.parse(container.serialize());
+        const snapshotTree2: ISnapshotTree = JSON.parse(container.serialize());
 
         assert.strictEqual(JSON.stringify(Object.keys(snapshotTree1.trees)),
             JSON.stringify(Object.keys(snapshotTree2.trees)),
             "3 trees should be there(protocol, default dataStore, scheduler");
 
         // Check for protocol attributes
-        const protocolAttributesBlobId1 = snapshotTree1.trees[".protocol"].blobs.attributes;
-        const protocolAttributesBlobId2 = snapshotTree2.trees[".protocol"].blobs.attributes;
-        const protocolAttributes1: IDocumentAttributes =
-            JSON.parse(fromBase64ToUtf8(snapshotTree1.trees[".protocol"].blobs[protocolAttributesBlobId1]));
-        const protocolAttributes2: IDocumentAttributes =
-            JSON.parse(fromBase64ToUtf8(snapshotTree2.trees[".protocol"].blobs[protocolAttributesBlobId2]));
+        const protocolAttributes1 = assertProtocolAttributes(snapshotTree1);
+        const protocolAttributes2 = assertProtocolAttributes(snapshotTree2);
         assert.strictEqual(JSON.stringify(protocolAttributes1), JSON.stringify(protocolAttributes2),
             "Protocol attributes should be same as no change happened");
 
         // Check for newly create channel
-        assert.strictEqual(snapshotTree1.trees.default.trees.test1, undefined,
-            "Test channel 1 should not be present in snapshot 1");
-        assert(snapshotTree2.trees.default.trees.test1,
+        const defaultChannelsTree1 = assertChannelsTree(assertDatastoreTree(snapshotTree1, "default").datastoreTree);
+        assert(defaultChannelsTree1.trees.test1 === undefined, "Test channel 1 should not be present in snapshot 1");
+        assertChannelTree(assertDatastoreTree(snapshotTree2, "default").datastoreTree, "test1",
             "Test channel 1 should be present in snapshot 2");
     });
 
@@ -182,18 +208,18 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
         rootOfDataStore1.set("dataStore2", dataStore2.handle);
 
-        const snapshotTree = JSON.parse(container.serialize());
+        const snapshotTree: ISnapshotTree = JSON.parse(container.serialize());
 
-        assert.ok(snapshotTree.trees[".protocol"], "protocol tree not present");
-        assert.ok(snapshotTree.trees.default, "default dataStore tree not present");
-        assert.ok(snapshotTree.trees._scheduler, "scheduler tree not present");
-        assert.ok(
+        assertProtocolTree(snapshotTree);
+        const { channelsTree } = assertSchedulerTree(snapshotTree);
+        assertDatastoreTree(snapshotTree, "default");
+        assert(
             // eslint-disable-next-line unicorn/no-unsafe-regex
-            Object.keys(snapshotTree.trees).some((key) => /^(?:\w+-){4}\w+$/.test(key)),
+            Object.keys(channelsTree.trees).some((key) => /^(?:\w+-){4}\w+$/.test(key)),
             "peer data store tree not present",
         );
 
-        assert(snapshotTree.trees[dataStore2.runtime.id], "Handle Bounded dataStore should be in summary");
+        assertDatastoreTree(snapshotTree, dataStore2.runtime.id, "Handle Bounded dataStore should be in summary");
     });
 
     it("Rehydrate container from snapshot and check contents before attach", async () => {
@@ -546,12 +572,12 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
 
         const snapshotTree = JSON.parse(container.serialize());
 
-        assert.ok(snapshotTree.trees[".protocol"], "protocol tree not present");
-        assert.ok(snapshotTree.trees.default, "default dataStore tree not present");
-        assert.ok(snapshotTree.trees._scheduler, "scheduler tree not present");
+        assertProtocolTree(snapshotTree);
+        const { channelsTree } = assertSchedulerTree(snapshotTree);
+        assertDatastoreTree(snapshotTree, "default");
         assert.ok(
             // eslint-disable-next-line unicorn/no-unsafe-regex
-            !Object.keys(snapshotTree.trees).some((key) => /^(?:\w+-){4}\w+$/.test(key)),
+            !Object.keys(channelsTree.trees).some((key) => /^(?:\w+-){4}\w+$/.test(key)),
             "unbounded/unreferenced data store tree present",
         );
     });

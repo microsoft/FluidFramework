@@ -122,7 +122,8 @@ describe("Data Store Creation Tests", () => {
                 attachCb,
                 undefined,
                 false /* isRootDataStore */,
-                false /* disableIsolatedChannels */);
+                false /* disableIsolatedChannels */,
+                2);
 
             try {
                 await context.realize();
@@ -147,7 +148,9 @@ describe("Data Store Creation Tests", () => {
                 attachCb,
                 undefined,
                 false /* isRootDataStore */,
-                false /* disableIsolatedChannels */);
+                false /* disableIsolatedChannels */,
+                2,
+                2);
 
             try {
                 await context.realize();
@@ -172,7 +175,8 @@ describe("Data Store Creation Tests", () => {
                 attachCb,
                 undefined,
                 false /* isRootDataStore */,
-                false /* disableIsolatedChannels */);
+                false /* disableIsolatedChannels */,
+                2);
 
             try {
                 await contextA.realize();
@@ -197,7 +201,8 @@ describe("Data Store Creation Tests", () => {
                 attachCb,
                 undefined,
                 false /* isRootDataStore */,
-                false /* disableIsolatedChannels */);
+                false /* disableIsolatedChannels */,
+                2);
 
             try {
                 await contextB.realize();
@@ -222,7 +227,8 @@ describe("Data Store Creation Tests", () => {
                 attachCb,
                 undefined,
                 false /* isRootDataStore */,
-                false /* disableIsolatedChannels */);
+                false /* disableIsolatedChannels */,
+                2);
 
             try {
                 await contextB.realize();
@@ -244,7 +250,8 @@ describe("Data Store Creation Tests", () => {
                 attachCb,
                 undefined,
                 false /* isRootDataStore */,
-                false /* disableIsolatedChannels */);
+                false /* disableIsolatedChannels */,
+                2);
 
             try {
                 await contextC.realize();
@@ -269,7 +276,8 @@ describe("Data Store Creation Tests", () => {
                 attachCb,
                 undefined,
                 false /* isRootDataStore */,
-                false /* disableIsolatedChannels */);
+                false /* disableIsolatedChannels */,
+                2);
 
             try {
                 await contextFake.realize();
@@ -294,7 +302,8 @@ describe("Data Store Creation Tests", () => {
                 attachCb,
                 undefined,
                 false /* isRootDataStore */,
-                false /* disableIsolatedChannels */);
+                false /* disableIsolatedChannels */,
+                2);
 
             try {
                 await contextFake.realize();
@@ -319,7 +328,8 @@ describe("Data Store Creation Tests", () => {
                 attachCb,
                 undefined,
                 false /* isRootDataStore */,
-                false /* disableIsolatedChannels */);
+                false /* disableIsolatedChannels */,
+                2);
 
             try {
                 await contextC.realize();

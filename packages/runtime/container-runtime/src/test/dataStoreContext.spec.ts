@@ -100,7 +100,8 @@ describe("Data Store Context Tests", () => {
                     attachCb,
                     undefined,
                     true /* isRootDataStore */,
-                    false /* disableIsolatedChannels */);
+                    false /* disableIsolatedChannels */,
+                    2);
 
                 await localDataStoreContext.realize();
                 const attachMessage = localDataStoreContext.generateAttachMessage();
@@ -139,7 +140,8 @@ describe("Data Store Context Tests", () => {
                     attachCb,
                     undefined,
                     false /* isRootDataStore */,
-                    false /* disableIsolatedChannels */);
+                    false /* disableIsolatedChannels */,
+                    2);
 
                 await localDataStoreContext.realize()
                     .catch((error) => {
@@ -172,7 +174,8 @@ describe("Data Store Context Tests", () => {
                     attachCb,
                     undefined,
                     false /* isRootDataStore */,
-                    false /* disableIsolatedChannels */);
+                    false /* disableIsolatedChannels */,
+                    2);
 
                 await localDataStoreContext.realize();
 
@@ -210,7 +213,8 @@ describe("Data Store Context Tests", () => {
                     attachCb,
                     undefined,
                     true /* isRootDataStore */,
-                    false /* disableIsolatedChannels */);
+                    false /* disableIsolatedChannels */,
+                    2);
 
                 const isRootNode = await localDataStoreContext.isRoot();
                 assert.strictEqual(isRootNode, true, "The data store should be root.");
@@ -227,7 +231,8 @@ describe("Data Store Context Tests", () => {
                     attachCb,
                     undefined,
                     false /* isRootDataStore */,
-                    false /* disableIsolatedChannels */);
+                    false /* disableIsolatedChannels */,
+                    2);
 
                 const isRootNode = await localDataStoreContext.isRoot();
                 assert.strictEqual(isRootNode, false, "The data store should not be root.");
@@ -246,7 +251,8 @@ describe("Data Store Context Tests", () => {
                     attachCb,
                     undefined,
                     true /* isRootDataStore */,
-                    false /* disableIsolatedChannels */);
+                    false /* disableIsolatedChannels */,
+                    2);
 
                 const gcData = await localDataStoreContext.getGCData();
                 assert.deepStrictEqual(gcData, emptyGCData, "GC data from getGCData should be empty.");
@@ -272,7 +278,8 @@ describe("Data Store Context Tests", () => {
                     attachCb,
                     undefined,
                     false /* isRootDataStore */,
-                    false /* disableIsolatedChannels */);
+                    false /* disableIsolatedChannels */,
+                    2);
 
                 // Get the summarizer node for this data store which tracks its referenced state.
                 const dataStoreSummarizerNode = summarizerNode.getChild(dataStoreId);
