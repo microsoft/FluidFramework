@@ -5,6 +5,7 @@
 
 import { EventEmitter } from "events";
 import { IKeyValueDataObject } from "@fluid-experimental/data-objects";
+import { FluidDocument } from "@fluid-experimental/fluid-static";
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.
@@ -15,6 +16,8 @@ export interface IDiceRollerController extends EventEmitter {
      */
     readonly value: number;
 
+    readonly members: any[];
+
     /**
      * Roll the dice.  Will cause a "diceRolled" event to be emitted.
      */
@@ -24,6 +27,8 @@ export interface IDiceRollerController extends EventEmitter {
      * The diceRolled event will fire whenever someone rolls the device, either locally or remotely.
      */
     on(event: "diceRolled", listener: () => void): this;
+
+    on(event: "membersChanged", listener: (members) => void): this;
 }
 
 // The data is stored in a key-value pair data object, so we'll use this key for storing the value.
@@ -33,8 +38,13 @@ const diceValueKey = "diceValue";
  * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
 export class DiceRollerController extends EventEmitter implements IDiceRollerController {
-    constructor(private readonly kvPairDataObject: IKeyValueDataObject) {
+    constructor(
+        private readonly fluidDocument: FluidDocument,
+        private readonly kvPairDataObject: IKeyValueDataObject) {
         super();
+        this.fluidDocument.on("membersChanged", (members) => {
+            this.emit("membersChanged", members);
+        });
         this.kvPairDataObject.on("changed", (changed) => {
             if (changed.key === diceValueKey) {
                 // When we see the dice value change, we'll emit the diceRolled event we specified in our interface.
@@ -76,6 +86,11 @@ export class DiceRollerController extends EventEmitter implements IDiceRollerCon
         } else {
             return this.initializeFromExisting();
         }
+    }
+
+    public get members() {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return this.fluidDocument.getMembers();
     }
 
     public get value() {

@@ -24,7 +24,9 @@ export function renderDiceRoller(diceRoller: IDiceRollerController, div: HTMLDiv
     // Call the roll method to modify the shared data when the button is clicked.
     rollButton.addEventListener("click", diceRoller.roll);
 
-    wrapperDiv.append(diceCharDiv, rollButton);
+    const numMembers = document.createElement("div");
+
+    wrapperDiv.append(diceCharDiv, rollButton, numMembers);
 
     // Get the current value of the shared data to update the view whenever it changes.
     const updateDiceChar = () => {
@@ -34,6 +36,15 @@ export function renderDiceRoller(diceRoller: IDiceRollerController, div: HTMLDiv
     };
     updateDiceChar();
 
+    // Get the current value of the shared data to update the view whenever it changes.
+    const updateMembers = (members?: any[]) => {
+        const numberOfMembers = members ? members.length : 0;
+        numMembers.textContent = `${numberOfMembers} members`;
+    };
+
+    updateMembers(diceRoller.members);
+
     // Use the diceRolled event to trigger the rerender whenever the value changes.
     diceRoller.on("diceRolled", updateDiceChar);
+    diceRoller.on("membersChanged", updateMembers);
 }

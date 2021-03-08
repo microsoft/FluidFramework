@@ -3,14 +3,29 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { getContainer, IGetContainerService } from "@fluid-experimental/get-container";
 import { getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IAudience } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { IUser } from "@fluidframework/protocol-definitions";
 import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
 import { DOProviderContainerRuntimeFactory } from "./containerCode";
 
-export class FluidDocument {
-    constructor(private readonly container: IContainer, public readonly createNew: boolean) { }
+export class FluidDocument extends EventEmitter {
+    audience: IAudience;
+    constructor(private readonly container: Container, public readonly createNew: boolean) {
+        super();
+        this.audience = this.container.audience;
+        // Consolidating the members changed around a single event which returns
+        this.audience.on("addMember", () => {
+            this.emit("membersChanged", this.getMembers());
+        });
+
+        this.audience.on("removeMember", () => {
+            this.emit("membersChanged", this.getMembers());
+        });
+    }
 
     public async createDataObject<T = any>(type: string, id: string) {
         await this.container.request({ url: `/create/${type}/${id}` });
@@ -21,6 +36,31 @@ export class FluidDocument {
     public async getDataObject<T = any>(id: string) {
         const dataObject = await getObjectWithIdFromContainer<T>(id, this.container);
         return dataObject;
+    }
+
+    public getMembers(): IUser[] {
+        // Get all the current human members
+        const fluidUsers = Array.from(this.audience.getMembers().values()).filter((member) => {
+            // filter out non-human members
+            // In fluid we use agents to save snapshots of the document back to the file
+            return member.details.capabilities.interactive;
+        });
+
+        const users: IUser[] = [];
+        fluidUsers.forEach((member: any) => {
+            users.push({
+                id: member.user.id ?? "",
+            });
+        });
+        return users;
+    }
+
+    public getId() {
+        return this.container.clientId;
+    }
+
+    public getMember(id: string) {
+        return this.audience.getMember(id);
     }
 }
 

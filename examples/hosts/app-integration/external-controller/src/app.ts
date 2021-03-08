@@ -36,7 +36,7 @@ async function start(): Promise<void> {
         : await fluidDocument.getDataObject<KeyValueDataObject>(dataObjectId);
 
     // Our controller manipulates the data object (model).
-    const diceRollerController = new DiceRollerController(keyValueDataObject);
+    const diceRollerController = new DiceRollerController(fluidDocument, keyValueDataObject);
     await diceRollerController.initialize(createNew);
 
     // We render a view which uses the controller.
