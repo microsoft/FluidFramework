@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, ILoader } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { MessageType } from "@fluidframework/protocol-definitions";
@@ -40,13 +40,13 @@ describe("LocalTestServer", () => {
     let sharedString2: SharedString;
 
     async function createContainer(): Promise<IContainer> {
-        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
         return createAndAttachContainer(
             codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(): Promise<IContainer> {
-        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
         return loader.resolve({ url: documentLoadUrl });
     }
 

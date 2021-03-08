@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import util from "util";
-import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { assert, bufferToString, stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -14,6 +14,7 @@ import {
     ISnapshotTree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
+import { BlobAggregationStorage } from "@fluidframework/driver-utils";
 import { formatNumber } from "./fluidAnalyzeMessages";
 import {
     dumpSnapshotStats,
@@ -21,6 +22,7 @@ import {
     dumpSnapshotVersions,
     paramNumSnapshotVersions,
     paramSnapshotVersionIndex,
+    paramUnpackAggregatedBlobs,
 } from "./fluidFetchArgs";
 import { latestVersionsId } from "./fluidFetchInit";
 
@@ -275,7 +277,10 @@ async function reportErrors<T>(message: string, res: Promise<T>) {
     }
 }
 
-export async function fluidFetchSnapshot(documentService?: IDocumentService, saveDir?: string) {
+export async function fluidFetchSnapshot(
+    documentService?: IDocumentService,
+    saveDir?: string,
+    ) {
     if (!dumpSnapshotStats && !dumpSnapshotTrees && !dumpSnapshotVersions && saveDir === undefined) {
         return;
     }
@@ -289,7 +294,11 @@ export async function fluidFetchSnapshot(documentService?: IDocumentService, sav
 
     console.log("\n");
 
-    const storage = await documentService.connectToStorage();
+    let storage = await documentService.connectToStorage();
+    if (paramUnpackAggregatedBlobs) {
+        storage = BlobAggregationStorage.wrap(storage, new TelemetryNullLogger(), false /* allowPacking */);
+    }
+
     let version: IVersion | undefined;
     const versions = await reportErrors(
         `getVersions ${latestVersionsId}`,

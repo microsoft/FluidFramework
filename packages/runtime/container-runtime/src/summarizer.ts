@@ -54,13 +54,18 @@ export interface IProvideSummarizer {
     readonly ISummarizer: ISummarizer;
 }
 
+export interface IGenerateSummaryOptions {
+    /** True to generate the full tree with no handle reuse optimizations; defaults to false */
+    fullTree?: boolean,
+    /** True to ask the server what the latest summary is first */
+    refreshLatestAck: boolean,
+    /** Logger to use for correlated summary events */
+    summaryLogger: ITelemetryLogger,
+}
+
 export interface ISummarizerInternalsProvider {
     /** Encapsulates the work to walk the internals of the running container to generate a summary */
-    generateSummary(
-        full: boolean,
-        safe: boolean,
-        summaryLogger: ITelemetryLogger,
-    ): Promise<GenerateSummaryData | undefined>;
+    generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData | undefined>;
 
     /** Callback whenever a new SummaryAck is received, to update internal tracking state */
     refreshLatestSummaryAck(
@@ -453,7 +458,7 @@ export class RunningSummarizer implements IDisposable {
 
         // GenerateSummary could take some time
         // mark that we are currently summarizing to prevent concurrent summarizing
-        this.summarizing = new Deferred();
+        this.summarizing = new Deferred<void>();
 
         (async () => {
             const result = await this.summarize(reason, false);
@@ -561,7 +566,11 @@ export class RunningSummarizer implements IDisposable {
         // Wait for generate/send summary
         let summaryData: GenerateSummaryData | undefined;
         try {
-            summaryData = await this.internalsProvider.generateSummary(this.immediateSummary, safe, this.logger);
+            summaryData = await this.internalsProvider.generateSummary({
+                fullTree: this.immediateSummary || safe,
+                refreshLatestAck: safe,
+                summaryLogger: this.logger,
+            });
         } catch (error) {
             summarizingEvent.cancel({ category: "error" }, error);
             return;
@@ -840,11 +849,11 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     }
 
     /** Implementation of SummarizerInternalsProvider.generateSummary */
-    public async generateSummary(
-        full: boolean,
-        safe: boolean,
+    public async generateSummary(options: {
+        fullTree: boolean,
+        refreshLatestAck: boolean,
         summaryLogger: ITelemetryLogger,
-    ): Promise<GenerateSummaryData | undefined> {
+    }): Promise<GenerateSummaryData | undefined> {
         if (this.onBehalfOfClientId !== this.runtime.summarizerClientId
             && this.runtime.clientId !== this.runtime.summarizerClientId) {
             // We are no longer the summarizer; a different client is, so we should stop ourself
@@ -852,7 +861,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             return undefined;
         }
 
-        return this.internalsProvider.generateSummary(full, safe, summaryLogger);
+        return this.internalsProvider.generateSummary(options);
     }
 
     private async handleSummaryAcks() {
