@@ -10,6 +10,8 @@ on:
     branches:
     - main
     - "docs/next"
+    paths:
+    - "docs/**
 
 jobs:
   build_and_deploy_job:
