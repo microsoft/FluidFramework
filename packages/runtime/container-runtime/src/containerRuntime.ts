@@ -231,6 +231,7 @@ export interface IContainerRuntimeOptions {
 
     // Flag that disables putting channels in isolated subtrees for each data store
     // and the root node when generating a summary if set to true.
+    // Defaults to TRUE (disabled) for now.
     disableIsolatedChannels?: boolean;
 }
 
@@ -669,13 +670,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly chunkMap: Map<string, string[]>;
 
     private readonly dataStores: DataStores;
+    private readonly runtimeOptions: Readonly<IContainerRuntimeOptions>;
 
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
         metadata: IContainerRuntimeMetadata = { snapshotFormatVersion: undefined },
         chunks: [string, string[]][],
-        private readonly runtimeOptions: IContainerRuntimeOptions = {
+        runtimeOptions: IContainerRuntimeOptions = {
             generateSummaries: true,
         },
         private readonly containerScope: IFluidObject,
@@ -684,6 +686,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private _storage?: IDocumentStorageService,
     ) {
         super();
+
+        this.runtimeOptions = {
+            ...{ disableIsolatedChannels: false },
+            ...runtimeOptions,
+        };
 
         this._connected = this.context.connected;
         this.chunkMap = new Map<string, string[]>(chunks);
