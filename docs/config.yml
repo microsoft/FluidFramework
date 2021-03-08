@@ -21,21 +21,21 @@ params:
 
 menu:
   main:
-  - name: "Get started"
+  - name: "Getting started"
     url: "/docs/get-started/quick-start/"
     weight: -90
   - name: "Recipes"
-    url: "/apis/"
+    url: "/docs/recipes/"
     weight: -80
   - name: "Docs"
-    url: "/docs/"
-    weight: -80
+    url: "/apis/"
+    weight: -70
   - name: "Community"
     url: "/community/"
-    weight: -40
+    weight: -60
   - name: "Playground"
     url: "/playground/"
-    weight: -40
+    weight: -50
 
   docs:
   - identifier: "get-started"
@@ -44,6 +44,9 @@ menu:
   - identifier: "concepts"
     name: "Learn"
     weight: -300
+  - identifier: "recipes"
+    name: "Recipes"
+    weight: -250
   - identifier: "advanced"
     name: "Advanced concepts"
     weight: -200
