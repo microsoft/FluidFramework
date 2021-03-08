@@ -41,11 +41,11 @@ menu:
   - identifier: "get-started"
     name: "Get Started"
     weight: -500
-  - identifier: "concepts"
-    name: "Learn"
-    weight: -300
   - identifier: "recipes"
     name: "Recipes"
+    weight: -300
+  - identifier: "concepts"
+    name: "Concepts"
     weight: -250
   - identifier: "advanced"
     name: "Advanced concepts"
