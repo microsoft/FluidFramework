@@ -104,12 +104,14 @@ function resolveVersion(requested: string) {
     }
 }
 
+// Assuming this file is in dist\test, so go to ..\..\node_modules\.legacy as the install location
+const getModulePath = (version: string) => path.join(__dirname, "..", "..", "node_modules", ".legacy", version);
+
 async function ensureInstalled(requested: string) {
     const version = resolveVersion(requested);
     let release = await lock(__dirname, { retries: { forever: true } });
     try {
-        // Assuming this file is in dist\test, so go to ..\..\node_modules\.legacy as the install location
-        const modulePath = path.join(__dirname, "..", "..", "node_modules", ".legacy", version);
+        const modulePath = getModulePath(version);
         if (existsSync(modulePath)) {
             // assume it is valid if it exists
             return { version, modulePath };
@@ -162,7 +164,7 @@ export const mochaGlobalSetup = async () => Promise.all(
 
 function checkInstalled(requested: string) {
     const version = resolveVersion(requested);
-    const modulePath = path.join(__dirname, "..", "..", "node_modules", ".legacy", version);
+    const modulePath = getModulePath(version);
     if (existsSync(modulePath)) {
         // assume it is valid if it exists
         return { version, modulePath };
