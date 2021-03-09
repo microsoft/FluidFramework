@@ -9,7 +9,6 @@ on:
     types: [opened, synchronize, reopened, closed]
     branches:
     - main
-    - "docs/next"
     paths:
     - "docs/**"
 
