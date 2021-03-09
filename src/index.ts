@@ -17,7 +17,14 @@
 // API Exports
 
 export { initialTree } from './InitialTree';
-export { BlobId, EditCommittedHandler, SharedTree, SharedTreeEvent, SharedTreeEditor } from './SharedTree';
+export {
+	BlobId,
+	EditCommittedHandler,
+	ISharedTreeEvents,
+	SharedTree,
+	SharedTreeEvent,
+	SharedTreeEditor,
+} from './SharedTree';
 export { TreeNodeHandle } from './TreeNodeHandle';
 export { Delta } from './Forest';
 export { SharedTreeSummaryBase, SharedTreeSummarizer, fullHistorySummarizer, noHistorySummarizer } from './Summary';
@@ -66,5 +73,5 @@ export {
 } from './Snapshot';
 export { setTrait, newEdit } from './EditUtilities';
 export { LogViewer } from './LogViewer';
-export { Checkout, CheckoutEvent } from './Checkout';
+export { Checkout, CheckoutEvent, ICheckoutEvents } from './Checkout';
 export { BasicCheckout } from './BasicCheckout';

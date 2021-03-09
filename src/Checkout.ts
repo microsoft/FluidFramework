@@ -4,23 +4,24 @@
  */
 
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable, IErrorEvent } from '@fluidframework/common-definitions';
 import { assert } from './Common';
-import { EditId } from './Identifiers';
+import { EditId, NodeId } from './Identifiers';
 import { Change, Edit, EditResult } from './PersistedTypes';
 import { newEdit } from './EditUtilities';
 import { EditValidationResult, Snapshot } from './Snapshot';
 import { Transaction } from './Transaction';
 import { EditCommittedHandler, SharedTree, SharedTreeEvent } from './SharedTree';
+import type { Delta } from './Forest';
 
 /**
- * An event emitted by a `Checkout` to indicate a state change.
+ * An event emitted by a `Checkout` to indicate a state change. See {@link ICheckoutEvents} for event argument information.
  * @public
  */
 export enum CheckoutEvent {
 	/**
 	 * `currentView` has changed.
-	 * Passed `NodeId[]` of all nodes changed since the last ViewChange event.
+	 * Passed `Delta<NodeId>` of all nodes changed since the last ViewChange event.
 	 */
 	ViewChange = 'viewChange',
 	/**
@@ -42,6 +43,13 @@ export enum CheckoutEvent {
 }
 
 /**
+ * Events which may be emitted by `Checkout`. See {@link CheckoutEvent} for documentation of event semantics.
+ */
+export interface ICheckoutEvents extends IErrorEvent {
+	(event: 'viewChange', listener: (delta: Delta<NodeId>) => void);
+}
+
+/**
  * A mutable Checkout of a SharedTree, allowing viewing and interactive transactional editing.
  * Provides (snapshot-isolation)[https://en.wikipedia.org/wiki/Snapshot_isolation] while editing.
  *
@@ -57,7 +65,7 @@ export enum CheckoutEvent {
  * @public
  * @sealed
  */
-export abstract class Checkout extends EventEmitterWithErrorHandling implements IDisposable {
+export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEvents> implements IDisposable {
 	/**
 	 * The view of the latest committed revision.
 	 * Does not include changes from any open edits.

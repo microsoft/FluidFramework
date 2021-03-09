@@ -10,6 +10,7 @@ import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
+import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -77,7 +78,7 @@ export enum ChangeType {
 }
 
 // @public @sealed
-export abstract class Checkout extends EventEmitterWithErrorHandling implements IDisposable {
+export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEvents> implements IDisposable {
     protected constructor(tree: SharedTree, currentView: Snapshot, onEditCommitted: EditCommittedHandler);
     abortEdit(): void;
     applyChanges(...changes: Change[]): void;
@@ -221,6 +222,12 @@ export interface EditWithoutId extends EditBase {
 export function fullHistorySummarizer(editLog: OrderedEditSet, currentView: Snapshot): SharedTreeSummary_0_0_2;
 
 // @public
+export interface ICheckoutEvents extends IErrorEvent {
+    // (undocumented)
+    (event: 'viewChange', listener: (delta: Delta<NodeId>) => void): any;
+}
+
+// @public
 export const initialTree: ChangeNode;
 
 // @public
@@ -237,6 +244,12 @@ export interface Insert {
 export const Insert: {
     create: (nodes: EditNode[], destination: StablePlace) => Change[];
 };
+
+// @public
+export interface ISharedTreeEvents extends IErrorEvent {
+    // (undocumented)
+    (event: 'committedEdit', listener: EditCommittedHandler): any;
+}
 
 // @public
 export function isSharedTreeEvent(event: ITelemetryBaseEvent): boolean;
@@ -334,7 +347,7 @@ export interface SetValue {
 }
 
 // @public @sealed
-export class SharedTree extends SharedObject {
+export class SharedTree extends SharedObject<ISharedTreeEvents> {
     constructor(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean);
     // @internal
     applyEdit(...changes: Change[]): EditId;

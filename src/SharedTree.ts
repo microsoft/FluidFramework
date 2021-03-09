@@ -9,7 +9,7 @@ import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from '@fluidfra
 import { IFluidDataStoreRuntime, IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { IErrorEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger } from '@fluidframework/telemetry-utils';
 import { assert, fail, SharedTreeTelemetryProperties } from './Common';
 import { EditHandle, editsPerChunk, EditLog, OrderedEditSet } from './EditLog';
@@ -66,7 +66,7 @@ const initialSummary: SharedTreeSummary = {
 };
 
 /**
- * An event emitted by a `SharedTree` to indicate a state change
+ * An event emitted by a `SharedTree` to indicate a state change. See {@link ISharedTreeEvents} for event argument information.
  * @public
  */
 export enum SharedTreeEvent {
@@ -86,6 +86,13 @@ export enum SharedTreeEvent {
 	 * @internal
 	 */
 	ChunksUploaded = 'uploadedChunks',
+}
+
+/**
+ * Events which may be emitted by `SharedTree`. See {@link SharedTreeEvent} for documentation of event semantics.
+ */
+export interface ISharedTreeEvents extends IErrorEvent {
+	(event: 'committedEdit', listener: EditCommittedHandler);
 }
 
 /**
@@ -196,7 +203,7 @@ const sharedTreeTelemetryProperties: SharedTreeTelemetryProperties = { isSharedT
  * @public
  * @sealed
  */
-export class SharedTree extends SharedObject {
+export class SharedTree extends SharedObject<ISharedTreeEvents> {
 	/**
 	 * Create a new SharedTree. It will contain the default value (see initialTree).
 	 */
