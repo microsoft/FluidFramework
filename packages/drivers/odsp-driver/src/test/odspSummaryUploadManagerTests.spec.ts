@@ -458,4 +458,78 @@ describe("Odsp Summary Upload Manager Tests", () => {
         assert(serializedTree.includes("\"id\":\"ackHandle/.app/default/header/component\""),
             "Component blob should be deduped");
     });
+
+    it("Should not dedup any blob with deduping disabled", async () => {
+        // Disable blob deduping
+        odspSummaryUploadManager["hostPolicy"]["blobDeduping"] = false;
+        const rootBlob: api.ISummaryBlob = {
+            type: api.SummaryType.Blob,
+            content: JSON.stringify("root"),
+        };
+        const componentBlob: api.ISummaryBlob = {
+            type: api.SummaryType.Blob,
+            content: JSON.stringify("component"),
+        };
+
+        const appSummary: api.ISummaryTree = {
+            type: api.SummaryType.Tree,
+            tree: {
+                default: {
+                    type: api.SummaryType.Tree,
+                    tree: {
+                        header: {
+                            type: api.SummaryType.Tree,
+                            tree: {
+                                component: componentBlob,
+                                root: rootBlob,
+                            },
+                        },
+                    },
+                },
+            },
+        };
+
+        const blobTreeDedupCaches: IDedupCaches = {
+            blobShaToPath: new Map(),
+            pathToBlobSha: new Map(),
+            treesPathToTree: new Map(),
+        };
+        await odspSummaryUploadManager["convertSummaryToSnapshotTree"](
+            undefined,
+            cloneDeep(appSummary),
+            blobTreeDedupCaches,
+            ".app",
+            true,
+        );
+
+        // Now insert another blob with same content as component blob
+        appSummary.tree.default2 = {
+            type: api.SummaryType.Tree,
+            tree: {
+                component2: componentBlob,
+                header: {
+                    type: api.SummaryType.Blob,
+                    content: JSON.stringify("headerBlob"),
+                },
+            },
+        };
+        appSummary.tree.default = {
+            type: api.SummaryType.Handle,
+            handle: "default",
+            handleType: api.SummaryType.Tree,
+        };
+        odspSummaryUploadManager["blobTreeDedupCaches"] = blobTreeDedupCaches;
+        const { snapshotTree, blobs, reusedBlobs } = await odspSummaryUploadManager["convertSummaryToSnapshotTree"](
+            "ackHandle",
+            appSummary,
+            blobTreeDedupCaches,
+            ".app",
+            true,
+        );
+        const serializedTree = JSON.stringify(snapshotTree);
+        assert.strictEqual(reusedBlobs, 0, "0 reused blobs should be there");
+        assert.strictEqual(blobs, 2, "All blobs should be present as is");
+        assert(serializedTree.includes("\"id\":\"ackHandle/.app/default\""),
+            "Handle should be present for default datastore");
+    });
 });

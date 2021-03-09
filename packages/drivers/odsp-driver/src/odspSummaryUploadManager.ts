@@ -387,7 +387,7 @@ export class OdspSummaryUploadManager {
                         blobs++;
                     } else {
                         if (!blobDedupingEnabled) {
-                            assert(false, "Blob deduping is disabled.")
+                            assert(false, "Blob deduping is disabled");
                         }
                         reusedBlobs++;
                         id = `${parentHandle}/${cachedPath}`;
