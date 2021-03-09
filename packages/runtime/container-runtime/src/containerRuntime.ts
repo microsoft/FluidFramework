@@ -951,7 +951,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async snapshot(): Promise<ITree> {
         const root: ITree = { entries: [] };
 
-        if (!this.runtimeOptions.disableIsolatedChannels) {
+        if (this.runtimeOptions.disableIsolatedChannels) {
+            root.entries = root.entries.concat(await this.dataStores.snapshot());
+        } else {
             root.entries.push(new TreeTreeEntry(
                 channelsTreeName,
                 { entries: await this.dataStores.snapshot() },
