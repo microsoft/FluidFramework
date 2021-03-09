@@ -140,6 +140,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
             logger.sendErrorEvent({
                 eventName: "R11sRestWrapperLoadFailure",
             }, e);
+            await restWrapper.load();
         }
         return restWrapper;
     }
@@ -177,6 +178,7 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
             logger.sendErrorEvent({
                 eventName: "R11sRestWrapperLoadFailure",
             }, e);
+            await restWrapper.load();
         }
         return restWrapper;
     }
