@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import {
-    ContainerErrorType,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
@@ -86,7 +85,7 @@ describe("Errors Types", () => {
 
             assert.fail("Error expected");
         } catch (error) {
-            assert.equal(error.errorType, ContainerErrorType.genericError, "Error should be a genericError");
+            assert.equal(error.errorType, DriverErrorType.genericNetworkError, "Error should be a genericNetworkError");
         }
     });
 

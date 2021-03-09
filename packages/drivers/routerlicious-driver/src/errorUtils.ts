@@ -35,11 +35,14 @@ export function createR11sNetworkError(
         case 404:
             return new NetworkErrorBasic(
                 errorMessage, R11sErrorType.fileNotFoundOrAccessDeniedError, false, statusCode);
+        case 429:
+            return createGenericNetworkError(
+                errorMessage, true, retryAfterSeconds, statusCode);
         case 500:
             return new GenericNetworkError(errorMessage, true, statusCode);
         default:
             return createGenericNetworkError(
-                errorMessage, true, retryAfterSeconds, statusCode);
+                errorMessage, false, retryAfterSeconds, statusCode);
     }
 }
 

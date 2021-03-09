@@ -46,11 +46,11 @@ describe("ErrorUtils", () => {
             assert.strictEqual(error.errorType, DriverErrorType.genericNetworkError);
             assert.strictEqual(error.canRetry, true);
         });
-        it("creates retriable error on anything else", () => {
+        it("creates non-retriable error on anything else", () => {
             const message = "test error";
             const error = createR11sNetworkError(message);
             assert.strictEqual(error.errorType, DriverErrorType.genericNetworkError);
-            assert.strictEqual(error.canRetry, true);
+            assert.strictEqual(error.canRetry, false);
         });
     });
     describe("throwR11sNetworkError()", () => {
@@ -109,13 +109,13 @@ describe("ErrorUtils", () => {
                 canRetry: true,
             });
         });
-        it("throws retriable error on anything else", () => {
+        it("throws non-retriable error on anything else", () => {
             const message = "test error";
             assert.throws(() => {
                 throwR11sNetworkError(message);
             }, {
                 errorType: DriverErrorType.genericNetworkError,
-                canRetry: true,
+                canRetry: false,
             });
         });
     });
