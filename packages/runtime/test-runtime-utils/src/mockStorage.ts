@@ -60,12 +60,6 @@ export class MockStorage implements IChannelStorageService {
     constructor(protected tree?: ITree) {
     }
 
-    public async read(path: string): Promise<string> {
-        const blob = MockStorage.readCore(this.tree, path.split("/"));
-        assert(blob !== undefined, `Blob does not exist: ${path}`);
-        return blob;
-    }
-
     public async readBlob(path: string): Promise<ArrayBufferLike> {
         const blob = MockStorage.readBlobCore(this.tree, path.split("/"));
         assert(blob !== undefined, `Blob does not exist: ${path}`);

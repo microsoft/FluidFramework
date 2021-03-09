@@ -79,7 +79,6 @@ export class DocumentStorageService implements IDocumentStorageService {
             treeId: commit.commit.tree.sha,
         }));
     }
-
     public async read(blobId: string): Promise<string> {
         const value = await this.manager.getBlob(blobId);
         this.blobsShaCache.set(value.sha, "");
