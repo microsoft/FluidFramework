@@ -688,7 +688,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         super();
 
         this.runtimeOptions = {
-            ...{ disableIsolatedChannels: false },
+            ...{ disableIsolatedChannels: true },
             ...runtimeOptions,
         };
 
