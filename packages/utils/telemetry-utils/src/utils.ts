@@ -15,7 +15,7 @@ import {
  * @param event - The string or event to log
  * @returns - The outcome of the condition
  */
-export function attest(
+export function logIfFalse(
     logger: ITelemetryBaseLogger,
     condition: any,
     event: string | ITelemetryGenericEvent,
