@@ -10,7 +10,7 @@ import { IFluidDataStoreFactory, NamedFluidDataStoreRegistryEntry } from "@fluid
 import { DOProviderContainerRuntimeFactory } from "./containerCode";
 
 export interface IFluidStaticDataObjectClass {
-    factory: IFluidDataStoreFactory;
+    readonly factory: IFluidDataStoreFactory;
 }
 
 export class FluidContainer {
