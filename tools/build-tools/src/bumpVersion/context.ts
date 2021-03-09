@@ -33,6 +33,7 @@ export class Context {
 
     constructor(
         public readonly gitRepo: GitRepo,
+        public readonly originRemotePartialUrl: string,
         public readonly originalBranchName: string
     ) {
         this.timer = new Timer(commonOptions.timer);

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-
 import { strict as assert } from "assert";
 import { Context, VersionChangeType } from "./context";
 import { getRepoStateChange } from "./versionBag";
@@ -12,12 +11,9 @@ import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import * as semver from "semver";
 
-
 /**
  * Functions and utilities to update the package versions
  */
-
-
 export async function bumpVersion(context: Context, bump: string[], version: VersionChangeType, packageShortNames: string, commit?: string) {
     console.log(`Bumping ${packageShortNames} to ${version}`);
 
@@ -64,7 +60,6 @@ export async function bumpVersion(context: Context, bump: string[], version: Ver
     }
 }
 
-
 /**
  * Bump version of packages in the repo
  *
@@ -100,10 +95,11 @@ export async function bumpRepo(context: Context, versionBump: VersionChangeType,
     return context.collectVersions(true);
 }
 
-async function bumpLegacyDependencies(context:Context, versionBump: VersionChangeType) {
+async function bumpLegacyDependencies(context: Context, versionBump: VersionChangeType) {
     if (versionBump !== "patch") {
         // Assumes that we want N/N-1 testing
-        const pkg = context.fullPackageMap.get("@fluid-internal/end-to-end-tests");
+        const pkg = context.fullPackageMap.get("@fluidframework/test-end-to-end-tests")
+            || context.fullPackageMap.get("@fluid-internal/end-to-end-tests");
         if (!pkg) {
             fatal("Unable to find package @fluid-internal/end-to-end-tests");
         }

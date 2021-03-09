@@ -25,9 +25,21 @@ export function getPackageShortName(pkgName: string) {
  * If --commit or --release is specified, the bumpped version changes will be committed and a release branch will be created
  */
 export async function releaseVersion(context: Context, releaseName: string, updateLock: boolean, releaseVersion?: VersionBumpType) {
-    const versionBump = await getVersionBumpKind(context, releaseVersion);
-    if (versionBump !== "patch") {
-        fatal(`Can't do ${versionBump} release on '${releaseName.toLowerCase()}' packages, only patch release is allowed`);
+    if (releaseVersion === undefined) {
+        if (!context.originalBranchName.startsWith("release/")) {
+            fatal(`Patch release should only be done on 'release/*' branches, but current branch is '${context.originalBranchName}'`);
+        }
+    } else if (releaseVersion !== "patch") {
+        fatal(`Only patch release is allowed. ${releaseVersion} specified`);
+    }
+
+    const remote = await context.gitRepo.getRemote(context.originRemotePartialUrl);
+    if (!remote) {
+        fatal(`Unable to find remote for '${context.originRemotePartialUrl}'`)
+    }
+
+    if (!await context.gitRepo.isBranchUpToDate(context.originalBranchName, remote)) {
+        fatal(`Local '${context.originalBranchName}' branch not up to date with remote. Please pull from '${remote}'.`);
     }
 
     const depVersions = await context.collectBumpInfo(releaseName);
@@ -70,22 +82,6 @@ export async function releaseVersion(context: Context, releaseName: string, upda
         return releaseMonoRepo(context, monoRepo, updateLock);
     }
     return releasePackages(context, packages, updateLock);
-}
-
-/**
- * Determine either we want to bump minor on main or patch version on release/* based on branch name
- */
-async function getVersionBumpKind(context: Context, releaseVersion?: VersionBumpType): Promise<VersionBumpType> {
-    if (releaseVersion !== undefined) {
-        return releaseVersion;
-    }
-
-    // Determine the kind of bump
-    const branchName = context.originalBranchName;
-    if (branchName !== "main" && !branchName!.startsWith("release/")) {
-        fatal(`Unrecognized branch '${branchName}'`);
-    }
-    return branchName === "main" ? "minor" : "patch";
 }
 
 /**
