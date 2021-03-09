@@ -16,7 +16,6 @@ import {
     IAudience,
     IDeltaManager,
     ContainerWarning,
-    ILoader,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -256,7 +255,6 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     readonly baseSnapshot: ISnapshotTree | undefined;
-    readonly loader: ILoader;
     /**
      * Indicates the attachment state of the data store to a host service.
      */

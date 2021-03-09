@@ -14,7 +14,6 @@ import {
     IAudience,
     IDeltaManager,
     ContainerWarning,
-    ILoader,
     BindState,
     AttachState,
     ILoaderOptions,
@@ -144,10 +143,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public get leader(): boolean {
         return this._containerRuntime.leader;
-    }
-
-    public get loader(): ILoader {
-        return this._containerRuntime.loader;
     }
 
     public get containerRuntime(): IContainerRuntime {

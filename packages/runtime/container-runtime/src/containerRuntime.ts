@@ -22,7 +22,6 @@ import {
     IContainerContext,
     IDeltaManager,
     IDeltaSender,
-    ILoader,
     IRuntime,
     IRuntimeState,
     ContainerWarning,
@@ -581,10 +580,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public get closeFn(): (error?: ICriticalContainerError) => void {
         return this.context.closeFn;
-    }
-
-    public get loader(): ILoader {
-        return this.context.loader;
     }
 
     public get flushMode(): FlushMode {

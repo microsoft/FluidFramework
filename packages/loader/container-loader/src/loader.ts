@@ -6,6 +6,7 @@
 import { EventEmitter } from "events";
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { assert, Deferred, performance } from "@fluidframework/common-utils";
 import {
     IFluidObject,
     IRequest,
@@ -23,7 +24,6 @@ import {
     IProxyLoaderFactory,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
-import { Deferred, performance } from "@fluidframework/common-utils";
 import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
@@ -49,6 +49,10 @@ function canUseCache(request: IRequest): boolean {
     return request.headers[LoaderHeader.cache] !== false;
 }
 
+/**
+ * Loader used internally by the Container that expects all requests
+ * to route into the Container itself (urls must begin with "/")
+ */
 export class RelativeLoader extends EventEmitter implements ILoader {
     // Because the loader is passed to the container during construction we need to resolve the target container
     // after construction.
@@ -68,30 +72,24 @@ export class RelativeLoader extends EventEmitter implements ILoader {
     public get IFluidRouter(): IFluidRouter { return this; }
 
     public async resolve(request: IRequest): Promise<IContainer> {
-        if (request.url.startsWith("/")) {
-            // If no headers are set that require a reload make use of the same object
-            const container = await this.containerDeferred.promise;
-            return container;
-        }
-
-        return this.loader.resolve(request);
+        assert(request.url.startsWith("/"));
+        // If no headers are set that require a reload make use of the same object
+        return this.containerDeferred.promise;
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        const containerUrl = this.containerUrl();
-        if (request.url.startsWith("/")) {
-            let container: IContainer;
-            if (canUseCache(request)) {
-                container = await this.containerDeferred.promise;
-            } else if (containerUrl === undefined) {
-                throw new Error("Container url is not provided");
-            } else {
-                container = await this.loader.resolve({ url: containerUrl, headers: request.headers });
-            }
-            return container.request(request);
-        }
+        assert(request.url.startsWith("/"));
 
-        return this.loader.request(request);
+        const containerUrl = this.containerUrl();
+        let container: IContainer;
+        if (canUseCache(request)) {
+            container = await this.containerDeferred.promise;
+        } else if (containerUrl === undefined) {
+            throw new Error("Container url is not provided");
+        } else {
+            container = await this.loader.resolve({ url: containerUrl, headers: request.headers });
+        }
+        return container.request(request);
     }
 
     public resolveContainer(container: Container) {
