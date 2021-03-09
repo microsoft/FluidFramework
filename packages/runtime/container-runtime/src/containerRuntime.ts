@@ -108,6 +108,7 @@ import {
     RequestParser,
     create404Response,
     exceptionToResponse,
+    responseToException,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -927,10 +928,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     return create404Response(request);
                 }
             } else if (requestParser.pathParts.length > 0) {
-                const wait =
-                    typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
-
-                const dataStore = await this.getDataStore(id, wait);
+                /**
+                 * If this an external app request with "externalRequest" header, we need to return an error if the
+                 * data store being requested is marked as unreferenced as per the data store's initial summary.
+                 *
+                 * This is a workaround to handle scenarios where a data store shared with an external app is deleted
+                 * and marked as unreferenced by GC. Returning an error will fail to load the data store for the app.
+                 */
+                const wait = typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
+                const dataStore = request.headers?.externalRequest
+                    ? await this.getDataStoreIfInitiallyReferenced(id, wait)
+                    : await this.getDataStore(id, wait);
                 const subRequest = requestParser.createSubRequest(1);
                 // We always expect createSubRequest to include a leading slash, but asserting here to protect against
                 // unintentionally modifying the url if that changes.
@@ -942,6 +950,28 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         } catch (error) {
             return exceptionToResponse(error);
         }
+    }
+
+    /**
+     * Retrieves the runtime for a data store if it's referenced as per the initially summary that it is loaded with.
+     * This is a workaround to handle scenarios where a data store shared with an external app is deleted and marked
+     * as unreferenced by GC.
+     * @param id - Id supplied during creating the data store.
+     * @param wait - True if you want to wait for it.
+     * @returns the data store runtime if the data store exists and is initially referenced; undefined otherwise.
+     */
+    private async getDataStoreIfInitiallyReferenced(id: string, wait = true): Promise<IFluidRouter> {
+        const dataStoreContext = await this.dataStores.getDataStore(id, wait);
+        // The data store is referenced if used routes in the initial summary has a route to self.
+        // Older documents may not have used routes in the summary. They are considered referenced.
+        const usedRoutes = (await dataStoreContext.getInitialGCSummaryDetails()).usedRoutes;
+        if (usedRoutes === undefined || usedRoutes.includes("") || usedRoutes.includes("/")) {
+            return dataStoreContext.realize();
+        }
+
+        // The data store is unreferenced. Throw a 404 response exception.
+        const request = { url: id };
+        throw responseToException(create404Response(request), request);
     }
 
     /**

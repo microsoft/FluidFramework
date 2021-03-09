@@ -8,15 +8,19 @@ import { assert, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedObjectSequence } from "@fluidframework/sequence";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createAndAttachContainer, createLocalLoader, OpProcessingController } from "@fluidframework/test-utils";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import {
+    createAndAttachContainer,
+    createDocumentId,
+    createLoader,
+    OpProcessingController,
+} from "@fluidframework/test-utils";
 
 const defaultDataStoreId = "default";
 
@@ -27,13 +31,12 @@ class TestDataObject extends DataObject {
     public readonly getContext = () => this.context;
 }
 
-async function createContainer(options: {
-    documentId: string;
-    runtimeOptions: Omit<IContainerRuntimeOptions, "generateSummaries">;
-}): Promise<{
+async function createContainer(runtimeOptions: Omit<IContainerRuntimeOptions, "generateSummaries">): Promise<{
     container: IContainer;
     opProcessingController: OpProcessingController;
 }> {
+    const documentId = createDocumentId();
+    const driver = getFluidTestDriver() as unknown as ITestDriver;
     const codeDetails: IFluidCodeDetails = {
         package: "summarizerTestPackage",
     };
@@ -47,7 +50,7 @@ async function createContainer(options: {
 
     const thisRuntimeOptions: IContainerRuntimeOptions = {
         ...{ generateSummaries: false },
-        ...options.runtimeOptions,
+        ...runtimeOptions,
     };
 
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
@@ -61,15 +64,15 @@ async function createContainer(options: {
         thisRuntimeOptions,
     );
 
-    const deltaConnectionServer = LocalDeltaConnectionServer.create();
-
-    const urlResolver = new LocalResolver();
-
-    const loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
+    const loader = createLoader(
+        [[codeDetails, runtimeFactory]],
+        driver.createDocumentServiceFactory(),
+        driver.createUrlResolver(),
+    );
     const container = await createAndAttachContainer(
         codeDetails,
         loader,
-        urlResolver.createCreateNewRequest(options.documentId));
+        driver.createCreateNewRequest(documentId));
 
     const opProcessingController = new OpProcessingController();
     opProcessingController.addDeltaManagers(container.deltaManager);
@@ -79,10 +82,7 @@ async function createContainer(options: {
 
 describe("Summaries", () => {
     it("Should generate summary tree", async () => {
-        const { container, opProcessingController } = await createContainer({
-            documentId: "summaryTest",
-            runtimeOptions: { disableIsolatedChannels: false },
-        });
+        const { container, opProcessingController } = await createContainer({ disableIsolatedChannels: false });
         const defaultDataStore = await requestFluidObject<TestDataObject>(container, defaultDataStoreId);
         const containerRuntime = defaultDataStore.getContext().containerRuntime as ContainerRuntime;
 
@@ -132,10 +132,7 @@ describe("Summaries", () => {
     });
 
     it("Should generate summary tree with isolated channels disabled", async () => {
-        const { container, opProcessingController } = await createContainer({
-            documentId: "summaryTestWithoutIsolatedChannels",
-            runtimeOptions: { disableIsolatedChannels: true },
-        });
+        const { container, opProcessingController } = await createContainer({ disableIsolatedChannels: true });
         const defaultDataStore = await requestFluidObject<TestDataObject>(container, defaultDataStoreId);
         const containerRuntime = defaultDataStore.getContext().containerRuntime as ContainerRuntime;
 

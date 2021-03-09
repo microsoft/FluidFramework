@@ -6,7 +6,6 @@
 import {
     IKeyValueDataObject,
     KeyValueDataObject,
-    KeyValueInstantiationFactory,
 } from "@fluid-experimental/data-objects";
 import { Fluid } from "@fluid-experimental/fluid-static";
 import { TinyliciousService } from "@fluid-experimental/get-container";
@@ -27,12 +26,12 @@ async function start(): Promise<void> {
     const service = new TinyliciousService();
     // Get or create the document
     const fluidContainer = createNew
-        ? await Fluid.createContainer(service, containerId, [KeyValueInstantiationFactory.registryEntry])
-        : await Fluid.getContainer(service, containerId, [KeyValueInstantiationFactory.registryEntry]);
+        ? await Fluid.createContainer(service, containerId, [KeyValueDataObject])
+        : await Fluid.getContainer(service, containerId, [KeyValueDataObject]);
 
     // We'll create the data object when we create the new document.
     const keyValueDataObject: IKeyValueDataObject = createNew
-        ? await fluidContainer.createDataObject<KeyValueDataObject>(KeyValueInstantiationFactory.type, dataObjectId)
+        ? await fluidContainer.createDataObject<KeyValueDataObject>(KeyValueDataObject, dataObjectId)
         : await fluidContainer.getDataObject<KeyValueDataObject>(dataObjectId);
 
     // Our controller manipulates the data object (model).
