@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/garbage-collector";
-export const pkgVersion = "0.35.4";
+export const pkgVersion = "0.35.5";
