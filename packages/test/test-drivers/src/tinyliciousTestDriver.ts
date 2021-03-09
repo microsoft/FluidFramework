@@ -9,7 +9,7 @@ import {
     createTinyliciousCreateNewRequest,
     InsecureTinyliciousTokenProvider,
     InsecureTinyliciousUrlResolver,
-    defaultTinyliciousPort
+    defaultTinyliciousPort,
 } from "@fluidframework/tinylicious-driver";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { pkgVersion } from "./packageVersion";
