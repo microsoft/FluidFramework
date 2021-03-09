@@ -164,7 +164,7 @@ export class DataStores implements IDisposable {
             throw error;
         }
 
-        const flatBlobs = new Map<string, string>();
+        const flatBlobs = new Map<string, ArrayBufferLike>();
         let snapshotTree: ISnapshotTree | undefined;
         if (attachMessage.snapshot) {
             snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
