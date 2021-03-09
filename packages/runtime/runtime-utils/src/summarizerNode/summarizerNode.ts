@@ -134,9 +134,8 @@ export class SummarizerNode implements IRootSummarizerNode {
                 // No base summary to reference
                 throw error;
             }
-            this.wipSummaryLogger.logException({
+            this.wipSummaryLogger.sendErrorEvent({
                 eventName: "SummarizingWithBasePlusOps",
-                category: "error",
             },
             error);
             const summary = encodeSummary(encodeParam, this.outstandingOps);

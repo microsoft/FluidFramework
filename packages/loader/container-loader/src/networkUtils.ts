@@ -25,11 +25,8 @@ export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErr
     // But if we  are offline, log non-error event - we will remove
     // it in the future once confident it's right thing to do.
     // Note: Unfortunately false positives happen in here (i.e. cable disconnected, but it reports true)!
-    if (newEvent.online === OnlineStatus.Online) {
-        logger.logException(newEvent, error);
-    } else {
-        logger.sendTelemetryEvent(newEvent, error);
-    }
+    newEvent.category = newEvent.online === OnlineStatus.Online ? "error" : "generic";
+    logger.sendTelemetryEvent(newEvent, error);
 }
 
 /**

@@ -10,7 +10,7 @@ import express from "express";
 // eslint-disable-next-line @typescript-eslint/no-duplicate-imports, import/no-duplicates
 import { Express } from "express";
 import morgan from "morgan";
-import * as nconf from "nconf";
+import nconf from "nconf";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import split = require("split");
 import * as winston from "winston";

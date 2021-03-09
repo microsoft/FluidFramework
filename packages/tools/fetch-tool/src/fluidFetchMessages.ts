@@ -55,7 +55,7 @@ async function* loadAllSequencedMessages(
     documentService?: IDocumentService,
     dir?: string,
     files?: string[]) {
-    const batch = 2000;
+    const batch = 20000; // see data in issue #5211 on possible sizes we can use.
     let lastSeq = 0;
 
     // If we have local save, read ops from there first

@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 
 /**
  * The Request Parser takes an IRequest provides parsing and sub request creation
@@ -51,7 +51,7 @@ export class RequestParser implements IRequest {
         return this.request.url;
     }
 
-    public get headers() {
+    public get headers(): IRequestHeader | undefined {
         return this.request.headers;
     }
 

@@ -5,7 +5,7 @@
 
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import { IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
-import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
+import { FluidObjectHandle, FluidDataStoreRuntime, mixinRequestHandler } from "@fluidframework/datastore";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
 import {
     IFluidDataStoreContext,
@@ -131,7 +131,7 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
     constructor(private readonly factoryEntries: ChannelFactoryRegistry,
         public readonly type = "TestFluidObjectFactory") { }
 
-    public async instantiateDataStore(context: IFluidDataStoreContext) {
+    public async instantiateDataStore(context: IFluidDataStoreContext): Promise<FluidDataStoreRuntime> {
         const dataTypes = new Map<string, IChannelFactory>();
 
         // Add SharedMap's factory which will be used to create the root map.
