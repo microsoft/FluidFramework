@@ -63,14 +63,13 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 
         const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
-        const ordererRestWrapper = new RouterliciousOrdererRestWrapper(
+        const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
             tenantId,
             id,
             this.tokenProvider,
             logger2,
             resolvedUrl.endpoints.ordererUrl,
         );
-        await ordererRestWrapper.load();
         await ordererRestWrapper.post(
             `/documents/${tenantId}`,
             {

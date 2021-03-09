@@ -93,14 +93,14 @@ export class RouterliciousRestWrapper extends RestWrapper {
 }
 
 export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
-    constructor(
+    public static async load(
         tenantId: string,
         documentId: string,
         tokenProvider: ITokenProvider,
         logger: ITelemetryLogger,
         baseurl?: string,
         directCredentials?: ICredentials,
-    ) {
+    ): Promise<RouterliciousStorageRestWrapper> {
         const defaultQueryString = {
             token: `${fromUtf8ToBase64(directCredentials?.user || tenantId)}`,
         };
@@ -122,18 +122,28 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
             }
             return getAuthorizationTokenFromCredentials(credentials);
         };
-        super(logger, getAuthorizationHeader, baseurl, defaultQueryString);
+
+        const restWrapper = new RouterliciousStorageRestWrapper(
+            logger, getAuthorizationHeader, baseurl, defaultQueryString);
+        try {
+            await restWrapper.load();
+        } catch (e) {
+            logger.sendErrorEvent({
+                eventName: "R11sRestWrapperLoadFailure",
+            }, e);
+        }
+        return restWrapper;
     }
 }
 
 export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
-    constructor(
+    public static async load(
         tenantId: string,
         documentId: string,
         tokenProvider: ITokenProvider,
         logger: ITelemetryLogger,
         baseurl?: string,
-    ) {
+    ): Promise<RouterliciousOrdererRestWrapper> {
         const getAuthorizationHeader: AuthorizationHeaderGetter = async (): Promise<string> => {
             const ordererToken = await tokenProvider.fetchOrdererToken(
                 tenantId,
@@ -141,6 +151,15 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
             );
             return `Basic ${ordererToken.jwt}`;
         };
-        super(logger, getAuthorizationHeader, baseurl);
+
+        const restWrapper = new RouterliciousOrdererRestWrapper(logger, getAuthorizationHeader, baseurl);
+        try {
+            await restWrapper.load();
+        } catch (e) {
+            logger.sendErrorEvent({
+                eventName: "R11sRestWrapperLoadFailure",
+            }, e);
+        }
+        return restWrapper;
     }
 }

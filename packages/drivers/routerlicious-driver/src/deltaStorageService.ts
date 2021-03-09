@@ -72,8 +72,8 @@ export class DeltaStorageService implements IDeltaStorageService {
         id: string,
         from: number,
         to: number): Promise<IDeltasFetchResult> {
-        const ordererRestWrapper = new RouterliciousOrdererRestWrapper(tenantId, id, this.tokenProvider, this.logger);
-        await ordererRestWrapper.load();
+        const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+            tenantId, id, this.tokenProvider, this.logger);
         const ops = await ordererRestWrapper.get<ISequencedDocumentMessage[]>(this.url, { from, to });
 
         // It is assumed that server always returns all the ops that it has in the range that was requested.

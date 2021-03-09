@@ -50,7 +50,7 @@ export class DocumentService implements api.IDocumentService {
             return new NullBlobStorageService();
         }
 
-        const storageRestWrapper = new RouterliciousStorageRestWrapper(
+        const storageRestWrapper = await RouterliciousStorageRestWrapper.load(
             this.tenantId,
             this.documentId,
             this.tokenProvider,
@@ -58,7 +58,6 @@ export class DocumentService implements api.IDocumentService {
             this.gitUrl,
             this.directCredentials,
         );
-        await storageRestWrapper.load();
         const historian = new Historian(
             this.gitUrl,
             this.historianApi,
