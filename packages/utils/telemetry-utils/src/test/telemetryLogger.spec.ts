@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerProperties, TelemetryLogger } from "../logger";
+import { ITelemetryLoggerProperties, ITelemetryLoggerProperty, TelemetryLogger } from "../logger";
 
 class TestTelemetryLogger  extends TelemetryLogger {
     public events: ITelemetryBaseEvent[]=[];
@@ -14,18 +14,19 @@ class TestTelemetryLogger  extends TelemetryLogger {
     }
 }
 
-const propertyCases: (ITelemetryLoggerProperties | undefined)[] = [
-    undefined,
-    {},
-    {all: {}},
-    {error: {}},
-    {all:{}, error: {}},
-    {all:{ test1: 1}, error: {}},
-    {all:{ test1: 1}, error: {test2: 2}},
-    {all:{ test1: ()=> 1}, error: {test2: 2}},
-    {all:{ test1:  1}, error: {test2: ()=> 2}},
+const allCases: (undefined | ITelemetryLoggerProperty)[] =
+    [undefined, {}, {allProp: 1}, {allGetter: () => 1}, {allProp: 1, allGetter: () => 1}];
+const errorCases: (undefined | ITelemetryLoggerProperty)[] =
+    [undefined, {}, {errorProp: 2}, {errorGetter: () => 2}, {errorProp: 2, errorGetter: () => 2}];
 
-];
+const propertyCases: (ITelemetryLoggerProperties | undefined)[] =
+    allCases.reduce<ITelemetryLoggerProperties[]>(
+        (pv, all)=> {
+            pv.push(... errorCases.map((error)=>({all, error})));
+            return pv;
+        },
+        []);
+propertyCases.push(undefined);
 
 describe("TelemetryLogger", () => {
     describe("Properties", ()=>{
@@ -39,7 +40,11 @@ describe("TelemetryLogger", () => {
                 assert.strictEqual(event.eventName, "namespace:whatever");
                 const eventKeys = Object.keys(event);
                 const propsKeys = Object.keys(props?.all ?? {});
-                assert.strictEqual(eventKeys.length, propsKeys.length + 2,JSON.stringify(event));
+                // +2 for category and event name
+                assert.strictEqual(
+                    eventKeys.length,
+                    propsKeys.length + 2,
+                    `actual:\n${JSON.stringify(event)}\nexpected:${props ? JSON.stringify(props) : "undefined"}`);
             }
         });
 
@@ -52,8 +57,13 @@ describe("TelemetryLogger", () => {
                 assert.strictEqual(event.category, "error");
                 assert.strictEqual(event.eventName, "namespace:whatever");
                 const eventKeys = Object.keys(event);
+                // should include error props too
                 const propsKeys = Object.keys({... props?.all, ... props?.error});
-                assert.strictEqual(eventKeys.length, propsKeys.length + 2,JSON.stringify(event));
+                // +2 for category and event name
+                assert.strictEqual(
+                    eventKeys.length,
+                    propsKeys.length + 2,
+                    `actual:\n${JSON.stringify(event)}\nexpected:${props ? JSON.stringify(props) : "undefined"}`);
             }
         });
 
@@ -67,7 +77,11 @@ describe("TelemetryLogger", () => {
                 assert.strictEqual(event.eventName, "namespace:whatever");
                 const eventKeys = Object.keys(event);
                 const propsKeys = Object.keys(props?.all ?? {});
-                assert.strictEqual(eventKeys.length, propsKeys.length + 2,JSON.stringify(event));
+                // +2 for category and event name
+                assert.strictEqual(
+                    eventKeys.length,
+                    propsKeys.length + 2,
+                    `actual:\n${JSON.stringify(event)}\nexpected:${props ? JSON.stringify(props) : "undefined"}`);
             }
         });
     });
