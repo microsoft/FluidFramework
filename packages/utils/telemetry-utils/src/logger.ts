@@ -142,7 +142,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         this.sendTelemetryEvent({ ...event, category: "error" }, error);
     }
 
-
     /**
      * Send a performance telemetry event with the logger
      *
