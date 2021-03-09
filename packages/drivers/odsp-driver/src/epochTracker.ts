@@ -205,7 +205,7 @@ export class EpochTracker {
 
     private async checkForEpochError(
         error: any,
-        epochFromResponse: string | null | undefined,
+        epochFromResponse: string | undefined,
         fetchType: FetchType,
         fromCache: boolean = false,
     ) {
@@ -234,7 +234,7 @@ export class EpochTracker {
         }
     }
 
-    private checkForEpochErrorCore(epochFromResponse: string | null | undefined, message?: string) {
+    private checkForEpochErrorCore(epochFromResponse: string | undefined, message?: string) {
         // If epoch is undefined, then don't compare it because initially for createNew or TreesLatest
         // initializes this value. Sometimes response does not contain epoch as it is still in
         // implementation phase at server side. In that case also, don't compare it with our epoch value.

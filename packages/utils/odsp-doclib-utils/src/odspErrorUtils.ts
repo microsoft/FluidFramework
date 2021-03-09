@@ -183,17 +183,17 @@ export function createOdspNetworkError(
 
     error.online = OnlineStatus[isOnline()];
 
-    const errorAsAny = error as any;
+    const errorTelemetryProps = error as unknown as ITelemetryProperties;
 
-    errorAsAny.response = responseText;
+    errorTelemetryProps.response = responseText;
     if (response) {
-        errorAsAny.responseType = response.type;
+        errorTelemetryProps.responseType = response.type;
         if (response.headers) {
             const headers = getSPOAndGraphRequestIdsFromResponse(response.headers);
             for (const key of Object.keys(headers))  {
-                errorAsAny[key] = headers[key];
+                errorTelemetryProps[key] = headers[key];
             }
-            errorAsAny.serverEpoch = response.headers.get("x-fluid-epoch");
+            errorTelemetryProps.serverEpoch = response.headers.get("x-fluid-epoch") ?? undefined;
         }
     }
     return error;
