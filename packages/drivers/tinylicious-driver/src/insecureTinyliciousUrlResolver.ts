@@ -28,6 +28,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
         const encodedDocId = encodeURIComponent(documentId);
         const documentRelativePath = url.slice(documentId.length);
 
+        // eslint-disable-next-line max-len
         const documentUrl = `fluid://localhost:${defaultTinyliciousPort}/tinylicious/${encodedDocId}${documentRelativePath}`;
         const deltaStorageUrl = `http://localhost:${defaultTinyliciousPort}/deltas/tinylicious/${encodedDocId}`;
         const storageUrl = `http://localhost:${defaultTinyliciousPort}/repos/tinylicious`;
@@ -46,7 +47,9 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
     }
 
     public async getAbsoluteUrl(resolvedUrl: IFluidResolvedUrl, relativeUrl: string): Promise<string> {
-        const documentId = decodeURIComponent(resolvedUrl.url.replace(`fluid://localhost:${defaultTinyliciousPort}/tinylicious/`, ""));
+        const documentId = decodeURIComponent(
+            resolvedUrl.url.replace(`fluid://localhost:${defaultTinyliciousPort}/tinylicious/`, ""),
+        );
         /*
          * The detached container flow will ultimately call getAbsoluteUrl() with the resolved.url produced by
          * resolve().  The container expects getAbsoluteUrl's return value to be a URL that can then be roundtripped
