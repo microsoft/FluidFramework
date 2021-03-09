@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert , bufferToString } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { IFluidSerializer, ISerializedHandle } from "@fluidframework/core-interfaces";
 
 import {
@@ -20,6 +20,7 @@ import {
     IChannelFactory,
     Serializable,
 } from "@fluidframework/datastore-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
 import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
 import { debug } from "./debug";
@@ -240,12 +241,8 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const blob = await storage.readBlob(snapshotFileName);
-        const rawContent = bufferToString(blob, "utf8");
-
-        const content = rawContent !== undefined
-            ? JSON.parse(rawContent) as ICellValue
-            : { type: ValueType[ValueType.Plain], value: undefined };
+        const content = await readAndParse<ICellValue>(storage, snapshotFileName) ??
+            { type: ValueType[ValueType.Plain], value: undefined };
 
         this.data = this.fromSerializable(content);
     }
