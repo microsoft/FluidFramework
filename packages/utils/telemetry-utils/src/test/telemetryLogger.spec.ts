@@ -14,10 +14,10 @@ class TestTelemetryLogger  extends TelemetryLogger {
     }
 }
 
-const allCases: (undefined | ITelemetryLoggerProperty)[] =
-    [undefined, {}, {allProp: 1}, {allGetter: () => 1}, {allProp: 1, allGetter: () => 1}];
-const errorCases: (undefined | ITelemetryLoggerProperty)[] =
-    [undefined, {}, {errorProp: 2}, {errorGetter: () => 2}, {errorProp: 2, errorGetter: () => 2}];
+const allCases: (ITelemetryLoggerProperty)[] =
+    [{}, {allProp: 1}, {allGetter: () => 1}, {allProp: 1, allGetter: () => 1}];
+const errorCases: (ITelemetryLoggerProperty)[] =
+    [{}, {errorProp: 2}, {errorGetter: () => 2}, {errorProp: 2, errorGetter: () => 2}];
 
 const propertyCases: (ITelemetryLoggerProperties | undefined)[] =
     allCases.reduce<ITelemetryLoggerProperties[]>(
@@ -26,6 +26,9 @@ const propertyCases: (ITelemetryLoggerProperties | undefined)[] =
             return pv;
         },
         []);
+propertyCases.push(...allCases.map((all)=>({all, error: all})));
+propertyCases.push(...allCases);
+propertyCases.push(...errorCases);
 propertyCases.push(undefined);
 
 describe("TelemetryLogger", () => {
