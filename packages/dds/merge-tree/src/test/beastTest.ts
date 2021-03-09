@@ -1076,7 +1076,7 @@ export function TestPack(verbose = true) {
         cli.insertTextLocal(0, "on the mat.");
         cli.startOrUpdateCollaboration("Fred1");
         for (const cname of clientNames) {
-            cli.addLongClientId(cname, null);
+            cli.addLongClientId(cname);
         }
         cli.insertTextRemote(0, "that ", undefined, 1, 0, "1");
         if (verbose) {
@@ -1128,7 +1128,7 @@ export function TestPack(verbose = true) {
         cli.insertTextLocal(0, " old sock!");
         cli.startOrUpdateCollaboration("Fred2");
         for (const cname of clientNames) {
-            cli.addLongClientId(cname, null);
+            cli.addLongClientId(cname);
         }
         cli.insertTextRemote(0, "abcde", undefined, 1, 0, "2");
         cli.insertTextRemote(0, "yyy", undefined, 2, 0, "1");
@@ -1159,7 +1159,7 @@ export function TestPack(verbose = true) {
         cli.insertTextLocal(0, "abcdefgh");
         cli.startOrUpdateCollaboration("Fred3");
         for (const cname of clientNames) {
-            cli.addLongClientId(cname, null);
+            cli.addLongClientId(cname);
         }
         cli.applyMsg(cli.makeOpMessage(createRemoveRangeOp(1, 3), 1, 0, "3"));
         if (verbose) {
