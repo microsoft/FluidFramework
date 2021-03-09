@@ -12,6 +12,9 @@ import {
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
+
+export const defaultTinyliciousPort = 35843;
+
 /**
  * InsecureTinyliciousUrlResolver knows how to get the URLs to the service (in this case Tinylicious) to use
  * for a given request.  This particular implementation has a goal to avoid imposing requirements on the app's
@@ -20,19 +23,19 @@ import { v4 as uuid } from "uuid";
  */
 export class InsecureTinyliciousUrlResolver implements IUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        const url = request.url.replace("http://localhost:3000/","");
+        const url = request.url.replace(`http://localhost:${defaultTinyliciousPort}/`, "");
         const documentId = url.split("/")[0];
         const encodedDocId = encodeURIComponent(documentId);
         const documentRelativePath = url.slice(documentId.length);
 
-        const documentUrl = `fluid://localhost:3000/tinylicious/${encodedDocId}${documentRelativePath}`;
-        const deltaStorageUrl = `http://localhost:3000/deltas/tinylicious/${encodedDocId}`;
-        const storageUrl = `http://localhost:3000/repos/tinylicious`;
+        const documentUrl = `fluid://localhost:${defaultTinyliciousPort}/tinylicious/${encodedDocId}${documentRelativePath}`;
+        const deltaStorageUrl = `http://localhost:${defaultTinyliciousPort}/deltas/tinylicious/${encodedDocId}`;
+        const storageUrl = `http://localhost:${defaultTinyliciousPort}/repos/tinylicious`;
 
         const response: IFluidResolvedUrl = {
             endpoints: {
                 deltaStorageUrl,
-                ordererUrl: "http://localhost:3000",
+                ordererUrl: `http://localhost:${defaultTinyliciousPort}`,
                 storageUrl,
             },
             tokens: { jwt: this.auth(documentId) },
@@ -43,7 +46,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
     }
 
     public async getAbsoluteUrl(resolvedUrl: IFluidResolvedUrl, relativeUrl: string): Promise<string> {
-        const documentId = decodeURIComponent(resolvedUrl.url.replace("fluid://localhost:3000/tinylicious/", ""));
+        const documentId = decodeURIComponent(resolvedUrl.url.replace(`fluid://localhost:${defaultTinyliciousPort}/tinylicious/`, ""));
         /*
          * The detached container flow will ultimately call getAbsoluteUrl() with the resolved.url produced by
          * resolve().  The container expects getAbsoluteUrl's return value to be a URL that can then be roundtripped
@@ -66,15 +69,15 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 
         const utf8Key = { utf8: "12345" };
         // eslint-disable-next-line no-null/no-null
-        return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, utf8Key);
+        return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg: "HS256", typ: "JWT" }), claims, utf8Key);
     }
 }
 
 export const createTinyliciousCreateNewRequest =
-    (documentId: string): IRequest=> (
+    (documentId: string): IRequest => (
         {
             url: documentId,
-            headers:{
+            headers: {
                 createNew: true,
             },
         }
