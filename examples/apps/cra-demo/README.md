@@ -28,12 +28,12 @@ Lastly, open up the `App.tsx` file, as that will be the only file we need to edi
 
 Fluid gives you access to methods to boostrap a new Fluid container and attach DataObjects to it.
 
-`KeyValueDataObject` will provide you with a fully scaffolded DDS to store your data and subscribe to change events. The `KeyValueInstantiationFactory` is required by `Fluid` to instantiate the `KeyValueDataObject`.
+`KeyValueDataObject` will provide you with a fully scaffolded DDS to store your data and subscribe to change events.
 
 ```js
 // App.tsx
 import { Fluid } from "@fluid-experimental/fluid-static";
-import { KeyValueDataObject, KeyValueInstantiationFactory } from "@fluid-experimental/data-objects";
+import { KeyValueDataObject } from "@fluid-experimental/data-objects";
 ```
 
 ### 3.a Add the `getContainerId` function
@@ -125,11 +125,11 @@ React.useEffect(() => {
 
     const load = async () => {
         const fluidDocument = isNew
-            ? await Fluid.createDocument(containerId, [KeyValueInstantiationFactory.registryEntry])
-            : await Fluid.getDocument(containerId, [KeyValueInstantiationFactory.registryEntry]);
+            ? await Fluid.createDocument(containerId, [KeyValueDataObject])
+            : await Fluid.getDocument(containerId, [KeyValueDataObject]);
 
         const keyValueDataObject: KeyValueDataObject = isNew
-            ? await fluidDocument.createDataObject(KeyValueInstantiationFactory.type, 'kvpairId')
+            ? await fluidDocument.createDataObject(KeyValueDataObject, 'kvpairId')
             : await fluidDocument.getDataObject('kvpairId');
 
         setDataObject(keyValueDataObject);
