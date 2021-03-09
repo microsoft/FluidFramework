@@ -9,7 +9,8 @@ class TestTelemetryLogger  extends TelemetryLogger {
     }
 }
 
-const emptyPropertyCases: ITelemetryLoggerProperties[] = [
+const emptyPropertyCases: (ITelemetryLoggerProperties | undefined)[] = [
+    undefined,
     {},
     {all: {}},
     {error: {}},

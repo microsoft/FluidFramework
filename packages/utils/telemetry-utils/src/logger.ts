@@ -19,8 +19,8 @@ export interface ITelemetryLoggerProperty {
     [index: string]: TelemetryEventPropertyType | (() => TelemetryEventPropertyType);
 }
 export interface ITelemetryLoggerProperties{
-    readonly all?: ITelemetryLoggerProperty,
-    readonly error?: ITelemetryLoggerProperty,
+    all?: ITelemetryLoggerProperty,
+    error?: ITelemetryLoggerProperty,
 }
 
 /**
@@ -141,6 +141,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
         this.sendTelemetryEvent({ ...event, category: "error" }, error);
     }
+
 
     /**
      * Send a performance telemetry event with the logger
@@ -268,12 +269,12 @@ export class ChildLogger extends TelemetryLogger {
         // if we are creating a child of a child, rather than nest, which will increase
         // the callstack overhead, just generate a new logger that includes everything from the previous
         if (baseLogger instanceof ChildLogger) {
-            const combinedProperties: any = {};
+            const combinedProperties: ITelemetryLoggerProperties = {};
             for(const extendedProps of [baseLogger.properties, properties]) {
                 if(extendedProps !== undefined) {
                     if(extendedProps.all !== undefined) {
-                        combinedProperties.default = {
-                            ... combinedProperties.default,
+                        combinedProperties.all = {
+                            ... combinedProperties.all,
                             ... extendedProps.all,
                         };
                     }
