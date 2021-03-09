@@ -44,7 +44,6 @@ describe("LocalChannelStorageService", () => {
 
         assert.strictEqual(await ss.contains("foo"), true);
         assert.deepStrictEqual(await ss.list(""), ["foo"]);
-        assert.strictEqual(await ss.read("foo"), "bar");
         assert.deepStrictEqual(await ss.readBlob("foo"), stringToBuffer("bar","utf8"));
     });
 
@@ -75,7 +74,6 @@ describe("LocalChannelStorageService", () => {
 
         assert.strictEqual(await ss.contains("nested/foo"), true);
         assert.deepStrictEqual(await ss.list("nested/"), ["foo"]);
-        assert.strictEqual(await ss.read("nested/foo"), "bar");
         assert.deepStrictEqual(await ss.readBlob("nested/foo"), stringToBuffer("bar","utf8"));
     });
 });

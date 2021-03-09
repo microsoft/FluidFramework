@@ -15,11 +15,16 @@ import * as semver from "semver";
  * Create release branch based on the repo state, bump minor version immediately
  * and push it to `main` and the new release branch to remote
  */
-export async function createReleaseBranch(context: Context, partialUrl: string) {
-    const url = "github.com/microsoft/FluidFramework";
-    const remote = await context.gitRepo.getRemote(partialUrl);
+export async function createReleaseBranch(context: Context) {
+    const remote = await context.gitRepo.getRemote(context.originRemotePartialUrl);
     if (!remote) {
-        fatal(`Unable to find remote for ${partialUrl}`)
+        fatal(`Unable to find remote for '${context.originRemotePartialUrl}'`)
+    }
+
+    if (context.originalBranchName !== "main") {
+        console.warn("WARNING: Bumping minor version outside of main branch is not normal!  Make sure you know what you are doing.")
+    } else if (!await context.gitRepo.isBranchUpToDate("main", remote)) {
+        fatal(`Local 'main' branch not up to date with remote. Please pull from '${remote}'.`);
     }
 
     // Create release branch based on client version

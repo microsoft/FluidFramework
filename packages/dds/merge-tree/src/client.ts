@@ -15,7 +15,6 @@ import * as Collections from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReference } from "./localReference";
 import {
-    ClientIds,
     compareStrings,
     elapsedMicroseconds,
     IConsensusInfo,
@@ -70,9 +69,8 @@ export class Client {
 
     protected readonly mergeTree: MergeTree;
 
-    private readonly clientNameToIds = new Collections.RedBlackTree<string, ClientIds>(compareStrings);
+    private readonly clientNameToIds = new Collections.RedBlackTree<string, number>(compareStrings);
     private readonly shortClientIdMap: string[] = [];
-    private readonly shortClientBranchIdMap: number[] = [];
     private readonly pendingConsensus = new Map<string, IConsensusInfo>();
 
     constructor(
@@ -83,7 +81,6 @@ export class Client {
     ) {
         this.mergeTree = new MergeTree(options);
         this.mergeTree.getLongClientId = (id) => this.getLongClientId(id);
-        this.mergeTree.clientIdToBranchId = this.shortClientBranchIdMap;
     }
 
     /**
@@ -655,14 +652,14 @@ export class Client {
         clone.mergeTree.root = newRoot;
         return clone;
     }
-    getOrAddShortClientId(longClientId: string, branchId = 0) {
+    getOrAddShortClientId(longClientId: string) {
         if (!this.clientNameToIds.get(longClientId)) {
-            this.addLongClientId(longClientId, branchId);
+            this.addLongClientId(longClientId);
         }
         return this.getShortClientId(longClientId);
     }
     getShortClientId(longClientId: string) {
-        return this.clientNameToIds.get(longClientId)!.data.clientId;
+        return this.clientNameToIds.get(longClientId)!.data;
     }
     getLongClientId(shortClientId: number) {
         if (shortClientId >= 0) {
@@ -672,16 +669,9 @@ export class Client {
             return "original";
         }
     }
-    addLongClientId(longClientId: string, branchId = 0) {
-        this.clientNameToIds.put(longClientId, {
-            branchId,
-            clientId: this.shortClientIdMap.length,
-        });
+    addLongClientId(longClientId: string) {
+        this.clientNameToIds.put(longClientId, this.shortClientIdMap.length);
         this.shortClientIdMap.push(longClientId);
-        this.shortClientBranchIdMap.push(branchId);
-    }
-    getBranchId(clientId: number) {
-        return this.shortClientBranchIdMap[clientId];
     }
 
     /**
@@ -818,11 +808,7 @@ export class Client {
 
     public applyMsg(msg: ISequencedDocumentMessage) {
         // Ensure client ID is registered
-        // TODO support for more than two branch IDs
-        // The existence of msg.origin means we are a branch message - and so should be marked as 0
-        // The non-existence of msg.origin indicates we are local - and should inherit the collab mode ID
-        const branchId = msg.origin ? 0 : this.mergeTree.localBranchId;
-        this.getOrAddShortClientId(msg.clientId, branchId);
+        this.getOrAddShortClientId(msg.clientId);
         // Apply if an operation message
         if (msg.type === MessageType.Operation) {
             const opArgs: IMergeTreeDeltaOpArgs = {
@@ -1070,7 +1056,7 @@ export class Client {
 
     getLength() { return this.mergeTree.length; }
 
-    startOrUpdateCollaboration(longClientId: string | undefined, minSeq = 0, currentSeq = 0, branchId = 0) {
+    startOrUpdateCollaboration(longClientId: string | undefined, minSeq = 0, currentSeq = 0) {
         // we should always have a client id if we are collaborating
         // if the client id is undefined we are likely bound to a detached
         // container, so we should keep going in local mode. once
@@ -1079,15 +1065,15 @@ export class Client {
         if (longClientId !== undefined) {
             if (this.longClientId === undefined) {
                 this.longClientId = longClientId;
-                this.addLongClientId(this.longClientId, branchId);
+                this.addLongClientId(this.longClientId);
                 this.mergeTree.startCollaboration(
-                    this.getShortClientId(this.longClientId), minSeq, currentSeq, branchId);
+                    this.getShortClientId(this.longClientId), minSeq, currentSeq);
             } else {
                 const oldClientId = this.longClientId;
                 const oldData = this.clientNameToIds.get(oldClientId)!.data;
                 this.longClientId = longClientId;
                 this.clientNameToIds.put(longClientId, oldData);
-                this.shortClientIdMap[oldData.clientId] = longClientId;
+                this.shortClientIdMap[oldData] = longClientId;
             }
         }
     }

@@ -28,7 +28,7 @@ export class BlobCacheStorageService extends DocumentStorageServiceProxy {
             return bufferToString(blob, "base64");
         }
 
-        return this.internalStorageService.read(id);
+        return bufferToString(await this.internalStorageService.readBlob(id), "base64");
     }
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {

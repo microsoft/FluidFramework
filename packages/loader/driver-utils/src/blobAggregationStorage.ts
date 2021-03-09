@@ -269,7 +269,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
     public async read(id: string): Promise<string> {
         // optimize it a bit to avoid unneeded conversions while we transition to using readBlob everywhere.
         if (this.isRealStorageId(id)) {
-            return this.storage.read(id);
+            return bufferToString2(await this.storage.readBlob(id),"base64");
         }
         const blob = await this.readBlob(id);
         return bufferToString2(blob, "base64");

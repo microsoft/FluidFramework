@@ -32,9 +32,9 @@ export class FlattenedStorageService {
         FlattenedStorageService.flattenTree("", tree, this.flattenedTree);
     }
 
-    public async read(path: string): Promise<string> {
+    public async readBlob(path: string): Promise<ArrayBufferLike> {
         const id = this.flattenedTree[path];
-        return bufferToString(await this.storage.readBlob(id), "utf-8");
+        return  this.storage.readBlob(id);
     }
 }
 
@@ -140,9 +140,11 @@ async function prep(allowPacking: boolean, blobSizeLimit: number | undefined) {
     assert (service.flattenedTree["dataStore1/channel1/blob4"] !== undefined);
     assert (service.flattenedTree["dataStore2/channel2/blob5"] !== undefined);
 
-    assert(await service.read("dataStore1/blob2") === "small string 2");
-    assert(await service.read("dataStore1/blob3") === "not very small string - exceeding 40 bytes limit for sure");
-    assert(await service.read("dataStore1/channel1/blob4") === "small string again");
+    assert(bufferToString(await service.readBlob("dataStore1/blob2"),"utf8") === "small string 2", "blob2 failed");
+    assert(bufferToString(await service.readBlob("dataStore1/blob3"),"utf8") ===
+        "not very small string - exceeding 40 bytes limit for sure", "blob3 failed");
+    assert(bufferToString(await service.readBlob("dataStore1/channel1/blob4"),"utf8") === "small string again"
+        ,"blob4 failed");
 
     return { service, storage, snapshot};
 }
