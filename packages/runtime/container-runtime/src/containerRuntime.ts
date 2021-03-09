@@ -921,8 +921,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     ? await this.getDataStoreIfInitiallyReferenced(id, wait)
                     : await this.getDataStore(id, wait);
                 const subRequest = requestParser.createSubRequest(1);
-                // We always expect createSubRequest to include a leading slash, but asserting here to protect
-                // against unintentionally modifying the url if that change
+                // We always expect createSubRequest to include a leading slash, but asserting here to protect against
+                // unintentionally modifying the url if that changes.
                 assert(subRequest.url.startsWith("/"), "Expected createSubRequest url to include a leading slash");
                 return dataStore.IFluidRouter.request(subRequest);
             }
