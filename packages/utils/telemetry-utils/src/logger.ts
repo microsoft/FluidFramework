@@ -481,6 +481,7 @@ export class PerformanceEvent {
 export enum TelemetryDataTag {
     None,
     CodeArtifact,
+    OtherPii,
 }
 
 // Note - this should move to common-definitions package
@@ -498,65 +499,51 @@ export interface ILoggingError extends Error {
 export const IsILoggingError = (x: any): x is ILoggingError => typeof x.getTelemetryProperties === "function";
 
 /**
- * - Helper class for error tracking that can be used to log an error in telemetry.
- * - Care needs to be taken not to log PII information!
- * - Callers may only add PII via the constructor so it's stripped out when properties are queried
- * - This allows additional properties to be logged because object of this instance will record all of their properties
- *   when logged with a logger.
- * - Logger ignores all properties from any other error objects (not implementing ILoggingError), with exception of
- *   'message' & 'stack' properties if they exists on error object.
- * - In other words, logger logs only what it knows about and has good confidence it does not contain PII information.
+ * Helper class for error tracking that can be used to log an error in telemetry.
+ * The props passed in (and any set directly on the object after the fact) will be
+ * logged in accordance with the given TelemetryDataTag, if present.
+ *
+ * PLEASE take care to properly tag properties set on this object
  */
 export class LoggingError extends Error implements ILoggingError {
     constructor(
         message: string,
-        props?: ITelemetryProperties,
-        private taggedProps?: ITaggableTelemetryProperties,
+        props?: ITaggableTelemetryProperties,
     ) {
         super(message);
         Object.assign(this, props);
     }
 
-    // ////////////////////////////////////////////////////////////////////
-    //* NEXT STEP: Figure out how to merge taggedProps and props
-
     public getTelemetryProperties(): ITelemetryProperties {
-        const props: ITelemetryProperties = {};
-        // Could not use {...this} because it does not return properties of base class.
-        for (const key of Object.getOwnPropertyNames(this)) {
-            props[key] = this[key];
-        }
-        this.handleTaggedProps(props);
-        return props;
-    }
-
-    private handleTaggedProps(props: ITelemetryProperties) {
-        const propsAsLoggingError = props as unknown as LoggingError;
-        if (propsAsLoggingError.taggedProps === undefined) {
-            return;
-        }
-
-        const taggedProps = propsAsLoggingError.taggedProps;
-        for (const key of Object.keys(taggedProps)) {
-            const taggedProp = taggedProps[key];
-            const { value, tag } = typeof taggedProp === "object"
-                ? taggedProp
-                : { value: taggedProp, tag: TelemetryDataTag.None };
-            switch (tag) {
-                case TelemetryDataTag.None:
-                case TelemetryDataTag.CodeArtifact:
-                    // For Microsoft applications, Code Artifacts are safe for now
-                    // But this determination really belongs in the host layer
-                    if (props[key] === undefined) {
-                        props[key] = value;
-                    }
-                    break;
-                default:
-                    unreachableCase(tag, `unexpected value ${tag} for TelemetryDataTag`);
+        // Copy non-enumerable props inherited from Error
+        const props: ITelemetryProperties = {
+            stack: this.stack,
+            message: this.message,
+            name: this.name,
+        };
+        const taggableProps = this as unknown as ITaggableTelemetryProperties; // See call to Object.assign in ctor
+        for (const key of Object.keys(taggableProps)) {
+            const taggableProp = taggableProps[key];
+            const { value, tag } = typeof taggableProp === "object"
+                ? taggableProp
+                : { value: taggableProp, tag: TelemetryDataTag.None };
+                switch (tag) {
+                    case TelemetryDataTag.None:
+                    case TelemetryDataTag.CodeArtifact:
+                        // For Microsoft applications, Code Artifacts are safe for now
+                        // But this determination really belongs in the host layer
+                        if (props[key] === undefined) {
+                            props[key] = value;
+                        }
+                        break;
+                    case TelemetryDataTag.OtherPii:
+                        // Strip out anything tagged explicitly as PII. Alternate strategy would be to hash these props
+                        props[key] = undefined;
+                        break;
+                    default:
+                        unreachableCase(tag, `unexpected value ${tag} for TelemetryDataTag`);
+                }
             }
-        }
-
-        // Remove taggedProps property itself since it could contain PII
-        propsAsLoggingError.taggedProps = undefined;
+        return props;
     }
 }
