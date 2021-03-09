@@ -31,13 +31,13 @@ function useKVPair(): [KVData, SetKVPair | undefined] {
 
         const load = async () => {
             const service = new TinyliciousService();
-            const fluidDocument = isNew
+            const fluidContainer = isNew
                 ? await Fluid.createContainer(service, containerId, [KeyValueDataObject])
                 : await Fluid.getContainer(service, containerId, [KeyValueDataObject]);
 
             const keyValueDataObject: KeyValueDataObject = isNew
-                ? await fluidDocument.createDataObject(KeyValueDataObject, 'kvpairId')
-                : await fluidDocument.getDataObject('kvpairId');
+                ? await fluidContainer.createDataObject(KeyValueDataObject, 'kvpairId')
+                : await fluidContainer.getDataObject('kvpairId');
 
             setDataObject(keyValueDataObject);
         }
