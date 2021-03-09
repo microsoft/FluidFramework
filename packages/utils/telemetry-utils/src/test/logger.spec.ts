@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { LoggingError, TelemetryLogger } from "../logger";
+import { LoggingError, TelemetryLogger, TelemetryDataTag } from "../logger";
 
 describe("Logger", () => {
     describe("Error Logging", () => {
@@ -78,40 +78,54 @@ describe("Logger", () => {
         });
         describe("LoggingError", () => {
             it("props are assigned to the object which extends Error", () => {
-                const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
+                const loggingError = new LoggingError(
+                    "myMessage",
+                    { p1: 1, p2: "two", p3: true, tagged: { value: 4, tag: TelemetryDataTag.CodeArtifact }});
                 assert.strictEqual(loggingError.name, "Error");
                 assert.strictEqual(loggingError.message, "myMessage");
                 const errorAsAny = loggingError as any;
                 assert.strictEqual(errorAsAny.p1, 1);
                 assert.strictEqual(errorAsAny.p2, "two");
                 assert.strictEqual(errorAsAny.p3, true);
+                assert.deepStrictEqual(errorAsAny.tagged, { value: 4, tag: TelemetryDataTag.CodeArtifact });
             });
-            it("getTelemetryProperties extracts all props", () => {
+            it("getTelemetryProperties extracts all untagged props", () => {
                 const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
                 const props = loggingError.getTelemetryProperties();
                 assert.strictEqual(props.message, "myMessage");
                 assert.strictEqual(typeof props.stack, "string");
-                assert.strictEqual(props.name, undefined, "Error's name prop is not cloned by getTelemetryProperties");
+                assert.strictEqual(props.name, "Error");
                 assert.strictEqual(props.p1, 1);
                 assert.strictEqual(props.p2, "two");
                 assert.strictEqual(props.p3, true);
             });
-            it("pii object is removed", () => {
-                const loggingError = new LoggingError("myMessage", {}, { pii1: 1, pii2: "two", pii3: true});
+            it("getTelemetryProperties overwrites Error fields if passed in as props", () => {
+                const loggingError = new LoggingError(
+                    "myMessage",
+                    { message: "surprise1", stack: "surprise2", name: "surprise3"});
                 const props = loggingError.getTelemetryProperties();
-                assert(typeof ((loggingError as any).pii) === "object", "pii field should be present on loggingError");
-                assert.strictEqual(props.pii, undefined, "pii field should not be present on props");
+                assert.strictEqual(props.message, "surprise1");
+                assert.strictEqual(props.stack, "surprise2");
+                assert.strictEqual(props.name, "surprise3");
             });
-            it("pii property passed in - Overwrites pii param", () => {
-                const loggingError = new LoggingError("myMessage", { pii: "BAM" }, { pii1: 1, pii2: "two", pii3: true});
+            it("getTelemetryProperties - tagged TelemetryDataTag.OtherPii is removed", () => {
+                const loggingError = new LoggingError(
+                    "myMessage",
+                    { somePii: { value: "very personal", tag: TelemetryDataTag.OtherPii }});
                 const props = loggingError.getTelemetryProperties();
-                assert((loggingError as any).pii === "BAM", "pii field can be overwritten via props");
-                assert.strictEqual(props.pii, undefined, "pii field should not be present on props");
+                assert.strictEqual(props.somePii, undefined, "somePii should not exist on props");
+                assert(typeof ((loggingError as any).somePii) === "object", "somePii should remain on loggingError");
             });
-            it("pii property contains packageName - packageName restored from pii", () => {
-                const loggingError = new LoggingError("myMessage", {}, { packageName: "fooPkg" });
+            it("getTelemetryProperties - tagged TelemetryDataTag.None/CodeArtifact are preserved", () => {
+                const loggingError = new LoggingError(
+                    "myMessage",
+                    {
+                        boring: { value: "boring", tag: TelemetryDataTag.None },
+                        packageName: { value: "myPkg", tag: TelemetryDataTag.CodeArtifact },
+                    });
                 const props = loggingError.getTelemetryProperties();
-                assert.strictEqual(props.packageName, "fooPkg");
+                assert.strictEqual(props.boring, "boring");
+                assert.strictEqual(props.packageName, "myPkg");
             });
         });
     });

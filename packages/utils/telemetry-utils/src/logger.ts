@@ -51,8 +51,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
     /**
      * Take an unknown error object and add the appropriate info from it to the event
-     * NOTE - message and stack will be copied over from the error object, along with other telemetry properties
-     * if it's an instance of LoggingError
+     * NOTE - message and stack will be copied over from the error object,
+     * along with other telemetry properties if it's an ILoggingError
      * @param event - Event being logged
      * @param error - Error to extract info from
      * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
@@ -532,9 +532,7 @@ export class LoggingError extends Error implements ILoggingError {
                     case TelemetryDataTag.CodeArtifact:
                         // For Microsoft applications, Code Artifacts are safe for now
                         // But this determination really belongs in the host layer
-                        if (props[key] === undefined) {
-                            props[key] = value;
-                        }
+                        props[key] = value;
                         break;
                     case TelemetryDataTag.OtherPii:
                         // Strip out anything tagged explicitly as PII. Alternate strategy would be to hash these props
