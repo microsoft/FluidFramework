@@ -28,12 +28,12 @@ Lastly, open up the `App.tsx` file, as that will be the only file we need to edi
 
 Fluid gives you access to methods to boostrap a new Fluid container and attach DataObjects to it.
 
-`KeyValueDataObject` will provide you with a fully scaffolded DDS to store your data and subscribe to change events. The `KeyValueInstantiationFactory` is required by `Fluid` to instantiate the `KeyValueDataObject`.
+`KeyValueDataObject` will provide you with a fully scaffolded DDS to store your data and subscribe to change events.
 
 ```js
 // App.tsx
 import { Fluid } from "@fluid-experimental/fluid-static";
-import { KeyValueDataObject, KeyValueInstantiationFactory } from "@fluid-experimental/data-objects";
+import { KeyValueDataObject } from "@fluid-experimental/data-objects";
 ```
 
 ### 3.a Add the `getContainerId` function
@@ -112,10 +112,10 @@ Since we're working with async functions, we will need a place to store our KeyV
 const [dataObject, setDataObject] = React.useState<KeyValueDataObject>();
 ```
 
-### 6.b Create/Load the Fluid document and data object
+### 6.b Create/Load the Fluid container and data object
 Now that we have a setter method, we need to make sure that our create/get flow runs just once, on app load. Here we'll use React's `useEffect` because it allows code to be ran as soon as the component loads, and re-run only when specific values change, which by setting the dependency array to `[]`, means never.
 
-The bulk of this `useEffect` hooks is the async `load` function that starts by getting or creating the `fluidDocument`. The `FluidDocument` class then allows use to get or create one or more data objects. This could be multiple KVPairs, or other DataObjects that you define.
+The bulk of this `useEffect` hooks is the async `load` function that starts by getting or creating the `fluidContainer`. The `FluidContainer` class then allows use to get or create one or more data objects. This could be multiple KVPairs, or other DataObjects that you define.
 
 
 ```jsx
@@ -124,13 +124,13 @@ React.useEffect(() => {
     const { containerId, isNew } = getContainerId();
 
     const load = async () => {
-        const fluidDocument = isNew
-            ? await Fluid.createDocument(containerId, [KeyValueInstantiationFactory.registryEntry])
-            : await Fluid.getDocument(containerId, [KeyValueInstantiationFactory.registryEntry]);
+        const fluidContainer = isNew
+            ? await Fluid.createContainer(containerId, [KeyValueDataObject])
+            : await Fluid.getContainer(containerId, [KeyValueDataObject]);
 
         const keyValueDataObject: KeyValueDataObject = isNew
-            ? await fluidDocument.createDataObject(KeyValueInstantiationFactory.type, 'kvpairId')
-            : await fluidDocument.getDataObject('kvpairId');
+            ? await fluidContainer.createDataObject(KeyValueDataObject, 'kvpairId')
+            : await fluidContainer.getDataObject('kvpairId');
 
         setDataObject(keyValueDataObject);
     }
