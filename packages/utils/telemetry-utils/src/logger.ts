@@ -479,13 +479,13 @@ export class PerformanceEvent {
 }
 
 export enum TelemetryDataTag {
-    Safe,
-    FirstPartySafe,
+    None,
+    CodeArtifact,
 }
 
 // Note - this should move to common-definitions package
-export interface ITaggedTelemetryProperties {
-    [name: string]: { value: TelemetryEventPropertyType, tag: TelemetryDataTag };
+export interface ITaggableTelemetryProperties {
+    [name: string]: TelemetryEventPropertyType | { value: TelemetryEventPropertyType, tag: TelemetryDataTag };
 }
 
 /**
@@ -511,12 +511,14 @@ export class LoggingError extends Error implements ILoggingError {
     constructor(
         message: string,
         props?: ITelemetryProperties,
-        private taggedProps?: ITaggedTelemetryProperties,
+        private taggedProps?: ITaggableTelemetryProperties,
     ) {
         super(message);
         Object.assign(this, props);
-        const pkg: ITaggedTelemetryProperties = { packageName: { value: "afd", tag: TelemetryDataTag.FirstPartySafe }};
     }
+
+    // ////////////////////////////////////////////////////////////////////
+    //* NEXT STEP: Figure out how to merge taggedProps and props
 
     public getTelemetryProperties(): ITelemetryProperties {
         const props: ITelemetryProperties = {};
@@ -536,11 +538,15 @@ export class LoggingError extends Error implements ILoggingError {
 
         const taggedProps = propsAsLoggingError.taggedProps;
         for (const key of Object.keys(taggedProps)) {
-            const { value, tag } = taggedProps[key];
+            const taggedProp = taggedProps[key];
+            const { value, tag } = typeof taggedProp === "object"
+                ? taggedProp
+                : { value: taggedProp, tag: TelemetryDataTag.None };
             switch (tag) {
-                case TelemetryDataTag.Safe:
-                case TelemetryDataTag.FirstPartySafe:
-                    // These are both ok to leave in for now - only 1P scenarios are supported
+                case TelemetryDataTag.None:
+                case TelemetryDataTag.CodeArtifact:
+                    // For Microsoft applications, Code Artifacts are safe for now
+                    // But this determination really belongs in the host layer
                     if (props[key] === undefined) {
                         props[key] = value;
                     }
@@ -550,7 +556,7 @@ export class LoggingError extends Error implements ILoggingError {
             }
         }
 
-        // Remove taggedProps property altogether since it could contain PII
+        // Remove taggedProps property itself since it could contain PII
         propsAsLoggingError.taggedProps = undefined;
     }
 }

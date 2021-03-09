@@ -248,7 +248,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     private rejectDeferredRealize(reason: string, packageName?: string): never {
-        throw new LoggingError(reason, {}, { packageName: { value: packageName, tag: TelemetryDataTag.FirstPartySafe }});
+        throw new LoggingError(reason, {}, { packageName: { value: packageName, tag: TelemetryDataTag.CodeArtifact }});
     }
 
     public async realize(): Promise<IFluidDataStoreChannel> {
