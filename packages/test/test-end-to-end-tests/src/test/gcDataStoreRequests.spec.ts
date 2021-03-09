@@ -11,16 +11,13 @@ import {
 import { assert } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
-import { LocalResolver } from "@fluidframework/local-driver";
-import {
-    IClientConfiguration,
-    ISummaryConfiguration,
-} from "@fluidframework/protocol-definitions";
+import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import {
     createAndAttachContainer,
-    createLocalLoader,
+    createDocumentId,
+    createLoader,
     OpProcessingController,
 } from "@fluidframework/test-utils";
 
@@ -39,8 +36,7 @@ class TestDataObject extends DataObject {
 }
 
 describe("GC Data Store Requests", () => {
-    const documentId = "garbageCollection";
-    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
+    let documentId: string;
     const codeDetails: IFluidCodeDetails = {
         package: "garbageCollectionTestPackage",
         config: {},
@@ -50,10 +46,17 @@ describe("GC Data Store Requests", () => {
         TestDataObject,
         [],
         []);
+
+    const IdleDetectionTime = 100;
+    const summaryConfigOverrides: Partial<ISummaryConfiguration> = {
+        idleTime: IdleDetectionTime,
+        maxTime: IdleDetectionTime * 12,
+    };
     const runtimeOptions = {
         generateSummaries: true,
         enableWorker: false,
         initialSummarizerDelayMs: 10,
+        summaryConfigOverrides,
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         factory,
@@ -65,36 +68,25 @@ describe("GC Data Store Requests", () => {
         runtimeOptions,
     );
 
-    const IdleDetectionTime = 100;
-
-    const summaryConfig: ISummaryConfiguration = {
-        idleTime: IdleDetectionTime,
-
-        maxTime: IdleDetectionTime * 12,
-
-        // Snapshot if 1000 ops received since last snapshot.
-        maxOps: 1000,
-
-        // Wait 10 minutes for summary ack
-        maxAckWaitTime: 600000,
-    };
-    const serviceConfig: Partial<IClientConfiguration> = {
-        summary: summaryConfig,
-    };
-
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let urlResolver: LocalResolver;
+    let driver: ITestDriver;
     let opProcessingController: OpProcessingController;
     let container1: IContainer;
 
     async function createContainer(): Promise<IContainer> {
-        const loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
-        return createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
+        const loader = createLoader(
+            [[codeDetails, runtimeFactory]],
+            driver.createDocumentServiceFactory(),
+            driver.createUrlResolver());
+        return createAndAttachContainer(
+            codeDetails, loader, driver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(): Promise<IContainer> {
-        const loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
-        return loader.resolve({ url: documentLoadUrl });
+        const loader = createLoader(
+            [[codeDetails, runtimeFactory]],
+            driver.createDocumentServiceFactory(),
+            driver.createUrlResolver());
+        return loader.resolve({ url: await driver.createContainerUrl(documentId) });
     }
 
     async function waitForSummary(container: IContainer): Promise<string | undefined> {
@@ -112,9 +104,9 @@ describe("GC Data Store Requests", () => {
     }
 
     beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create(undefined, serviceConfig);
-        urlResolver = new LocalResolver();
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        documentId = createDocumentId();
+        driver = getFluidTestDriver() as unknown as ITestDriver;
+        opProcessingController = new OpProcessingController();
 
         // Create a Container for the first client.
         container1 = await createContainer();
@@ -195,9 +187,5 @@ describe("GC Data Store Requests", () => {
         const container3 = await loadContainer();
         response = await container3.request(request);
         assert(response.status === 200, "dataStore2 should successfully load now");
-    });
-
-    afterEach(async () => {
-        await deltaConnectionServer.webSocketServer.close();
     });
 });
