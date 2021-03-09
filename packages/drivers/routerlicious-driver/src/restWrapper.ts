@@ -93,6 +93,15 @@ export class RouterliciousRestWrapper extends RestWrapper {
 }
 
 export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
+    private constructor(
+        logger: ITelemetryLogger,
+        getAuthorizationHeader: AuthorizationHeaderGetter,
+        baseurl?: string,
+        defaultQueryString: Record<string, unknown> = {},
+    ) {
+        super(logger, getAuthorizationHeader, baseurl, defaultQueryString);
+    }
+
     public static async load(
         tenantId: string,
         documentId: string,
@@ -137,6 +146,15 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 }
 
 export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
+    private constructor(
+        logger: ITelemetryLogger,
+        getAuthorizationHeader: AuthorizationHeaderGetter,
+        baseurl?: string,
+        defaultQueryString: Record<string, unknown> = {},
+    ) {
+        super(logger, getAuthorizationHeader, baseurl, defaultQueryString);
+    }
+
     public static async load(
         tenantId: string,
         documentId: string,
