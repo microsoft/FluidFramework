@@ -227,7 +227,7 @@ export class KafkaOrdererFactory {
         return orderer;
     }
 
-    public async delete(tenantId: string, documentId: string): Promise<boolean> {
-        return this.ordererMap.delete(`${tenantId}/${documentId}`);
+    public delete(tenantId: string, documentId: string): void {
+        this.ordererMap.delete(`${tenantId}/${documentId}`);
     }
 }
