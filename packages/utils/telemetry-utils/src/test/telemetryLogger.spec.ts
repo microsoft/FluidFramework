@@ -29,7 +29,7 @@ const propertyCases: (ITelemetryLoggerProperties | undefined)[] = [
 
 describe("TelemetryLogger", () => {
     describe("Properties", ()=>{
-        it("send",()=>{
+        it("send", ()=>{
             for(const props of propertyCases) {
                 const logger = new TestTelemetryLogger("namespace", props);
                 logger.send({category: "anything", eventName: "whatever"});
