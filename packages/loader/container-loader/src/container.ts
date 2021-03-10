@@ -574,7 +574,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             loader.services.subLogger,
             undefined,
             {
-                all:{
+                all: {
                     clientType, // Differentiating summarizer container from main container
                     loaderVersion: pkgVersion,
                     containerId: uuid(),
@@ -582,7 +582,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     containerAttachState: () => this._attachState,
                     containerLoaded: () => this.loaded,
                 },
-                error:{
+                error: {
                     initialSequenceNumber: () => this._deltaManager?.initialSequenceNumber,
                     lastKnownSeqNumber: () => this._deltaManager?.lastKnownSeqNumber,
                     lastSequenceNumber: () => this._deltaManager?.lastSequenceNumber,
