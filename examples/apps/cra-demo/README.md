@@ -136,6 +136,7 @@ function App() {
         } else {
         // Second time: set our local state with a query from the KeyValueDataObject
             const updateData = () => setData(dataObject.query());
+            updateData();
             dataObject.on("changed", updateData);
             return () => { dataObject.off("change", updateData) }
         }
@@ -181,6 +182,7 @@ function App() {
             load();
         } else {
             const updateData = () => setData(dataObject.query());
+            updateData();
             dataObject.on("changed", updateData);
             return () => { dataObject.off("change", updateData) }
         }
