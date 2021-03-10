@@ -9,7 +9,23 @@ import { getRepoStateChange } from "./versionBag";
 import { fatal, exec } from "./utils";
 import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
+import { getPackageShortName } from "./releaseVersion";
 import * as semver from "semver";
+
+export async function bumpVersionCommand(context:Context, bump: string, version: VersionChangeType, commit: boolean) {
+    const bumpBranch = `bump_${version}_${Date.now()}`;
+    if (commit) {
+        console.log(`Creating branch ${bumpBranch}`);
+        await context.createBranch(bumpBranch);
+    }
+
+    await bumpVersion(context, [bump], version, getPackageShortName(bump), commit ? "" : undefined);
+
+    if (commit) {
+        console.log("======================================================================================================");
+        console.log(`Please create PR for branch ${bumpBranch} targeting ${context.originalBranchName}`);
+    }
+}
 
 /**
  * Functions and utilities to update the package versions
@@ -56,7 +72,7 @@ export async function bumpVersion(context: Context, bump: string[], version: Ver
     console.log(bumpRepoState);
 
     if (commit !== undefined) {
-        await context.gitRepo.commit(`[bump] package version for ${packageShortNames}\n${bumpRepoState}${commit}`, "create bumped version commit");
+        await context.gitRepo.commit(`[bump] package version for ${packageShortNames} (${version})\n${bumpRepoState}${commit}`, "create bumped version commit");
     }
 }
 
@@ -105,7 +121,7 @@ async function bumpLegacyDependencies(context: Context, versionBump: VersionChan
         }
 
         // The dependency names don't have an enforced pattern, but they do retain a stable ordering
-        // Keep a count of how many times we've encounted each dependency to properly set N-1, N-2, etc
+        // Keep a count of how many times we've encountered each dependency to properly set N-1, N-2, etc
         const pkgFrequencies = new Map<string, number>();
         for (const { name, version, dev } of pkg.combinedDependencies) {
             if (!version.startsWith("npm:")) {

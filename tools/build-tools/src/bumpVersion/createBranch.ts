@@ -4,6 +4,7 @@
  */
 
 import { Context, VersionBumpType } from "./context";
+import { getReleasedPrereleaseDependencies } from "./bumpDependencies";
 import { bumpRepo } from "./bumpVersion";
 import { ReferenceVersionBag, getRepoStateChange } from "./versionBag";
 import { fatal } from "./utils";
@@ -27,25 +28,32 @@ export async function createReleaseBranch(context: Context) {
         fatal(`Local 'main' branch not up to date with remote. Please pull from '${remote}'.`);
     }
 
+    const releasedPrereleaseDependencies = getReleasedPrereleaseDependencies(context);
+    if (releasedPrereleaseDependencies.size !== 0) {
+        fatal(`Prelease dependencies for released package found. `
+            + `Run 'bump-version --update' and submit the PR to update the dependencies first.`
+            + `\n  ${Array.from(releasedPrereleaseDependencies.keys()).join("\n  ")}`);
+    }
+
     // Create release branch based on client version
     const releaseName = MonoRepoKind[MonoRepoKind.Client];
 
     const depVersions = await context.collectBumpInfo(releaseName);
     const releaseVersion = depVersions.repoVersions.get(releaseName);
     if (!releaseVersion) {
-        fatal(`Missing ${releaseName} packages`);
+        fatal(`Missing ${ releaseName } packages`);
     }
 
     // creating the release branch and bump the version
-    const releaseBranchVersion = `${semver.major(releaseVersion)}.${semver.minor(releaseVersion)}`;
-    const releaseBranch = `release/${releaseBranchVersion}`;
+    const releaseBranchVersion = `${ semver.major(releaseVersion) }.${ semver.minor(releaseVersion) }`;
+    const releaseBranch = `release / ${ releaseBranchVersion }`;
     const commit = await context.gitRepo.getShaForBranch(releaseBranch);
     if (commit) {
-        fatal(`${releaseBranch} already exists`);
+        fatal(`${ releaseBranch } already exists`);
     }
 
-    const bumpBranch = `minor_bump_${releaseBranchVersion}_${Date.now()}`;
-    console.log(`Creating branch ${bumpBranch}`);
+    const bumpBranch = `minor_bump_${ releaseBranchVersion }_${ Date.now() }`;
+    console.log(`Creating branch ${ bumpBranch }`);
 
     await context.createBranch(bumpBranch);
 
@@ -59,9 +67,9 @@ export async function createReleaseBranch(context: Context) {
     console.log(await bumpCurrentBranch(context, "minor", releaseName, depVersions));
 
     console.log("======================================================================================================");
-    console.log(`Please create PR for branch ${bumpBranch} targeting ${context.originalBranchName}`);
-    console.log(`After PR is merged, create branch ${releaseBranch} one commit before the merged PR and push to the repo.`);
-    console.log(`Then --release can be use to start the release.`);
+    console.log(`Please create PR for branch ${ bumpBranch } targeting ${ context.originalBranchName } `);
+    console.log(`After PR is merged, create branch ${ releaseBranch } one commit before the merged PR and push to the repo.`);
+    console.log(`Then--release can be use to start the release.`);
 }
 
 /**
@@ -96,7 +104,7 @@ async function bumpCurrentBranch(context: Context, versionBump: VersionBumpType,
 
     const releaseNewVersion = newVersions.get(releaseName);
     const currentBranchName = await context.gitRepo.getCurrentBranchName();
-    console.log(`  Committing ${releaseName} version bump to ${releaseNewVersion} into ${currentBranchName}`);
-    await context.gitRepo.commit(`[bump] package version to ${releaseNewVersion} for development after ${releaseName.toLowerCase()} release\n${repoState}`, "create bumped version commit");
-    return `Repo Versions in branch ${currentBranchName}:${repoState}`;
+    console.log(`  Committing ${ releaseName } version bump to ${ releaseNewVersion } into ${ currentBranchName } `);
+    await context.gitRepo.commit(`[bump] package version to ${ releaseNewVersion } for development after ${ releaseName.toLowerCase() } release\n${ repoState } `, "create bumped version commit");
+    return `Repo Versions in branch ${ currentBranchName }: ${ repoState } `;
 }
