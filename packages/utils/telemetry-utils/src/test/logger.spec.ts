@@ -115,14 +115,14 @@ describe("Logger", () => {
             it("ctor props are assigned to the object", () => {
                 const loggingError = new LoggingError(
                     "myMessage",
-                    { p1: 1, p2: "two", p3: true, tagged: { value: 4, tag: TelemetryDataTag.CodeArtifact }});
+                    { p1: 1, p2: "two", p3: true, tagged: { value: 4, tag: TelemetryDataTag.PackageData }});
                 assert.strictEqual(loggingError.name, "Error");
                 assert.strictEqual(loggingError.message, "myMessage");
                 const errorAsAny = loggingError as any;
                 assert.strictEqual(errorAsAny.p1, 1);
                 assert.strictEqual(errorAsAny.p2, "two");
                 assert.strictEqual(errorAsAny.p3, true);
-                assert.deepStrictEqual(errorAsAny.tagged, { value: 4, tag: TelemetryDataTag.CodeArtifact });
+                assert.deepStrictEqual(errorAsAny.tagged, { value: 4, tag: TelemetryDataTag.PackageData });
             });
             it("getTelemetryProperties extracts all untagged ctor props", () => {
                 const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
@@ -182,7 +182,7 @@ describe("Logger", () => {
             it("getTelemetryProperties - tagged TelemetryDataTag.OtherPii is removed", () => {
                 const loggingError = new LoggingError(
                     "myMessage",
-                    { somePii: { value: "very personal", tag: TelemetryDataTag.OtherPii }});
+                    { somePii: { value: "very personal", tag: TelemetryDataTag.UserData }});
                 const props = loggingError.getTelemetryProperties();
                 assert.strictEqual(props.somePii, undefined, "somePii should not exist on props");
                 assert(typeof ((loggingError as any).somePii) === "object", "somePii should remain on loggingError");
@@ -192,7 +192,7 @@ describe("Logger", () => {
                     "myMessage",
                     {
                         boring: { value: "boring", tag: TelemetryDataTag.None },
-                        packageName: { value: "myPkg", tag: TelemetryDataTag.CodeArtifact },
+                        packageName: { value: "myPkg", tag: TelemetryDataTag.PackageData },
                     });
                 const props = loggingError.getTelemetryProperties();
                 assert.strictEqual(props.boring, "boring");

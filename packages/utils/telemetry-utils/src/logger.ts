@@ -479,21 +479,38 @@ export class PerformanceEvent {
 }
 
 // Note - these Telemetry types should move to common-definitions package
+
+/**
+ * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
+ * Please do not modify existing entries for backwards compatibility.
+ */
 export enum TelemetryDataTag {
+    /** Non-sensitive data that can be logged plainly */
     None,
-    CodeArtifact,
-    OtherPii,
+    /** Data containing terms from code packages that may have been dynamically loaded */
+    PackageData,
+    /** Personal data of a variety of classifications that pertains to the user */
+    UserData,
 }
 
+/**
+ * A property to be logged to telemetry containing both the value and the tag
+ */
 export interface ITaggedTelemetryPropertyType {
     value: TelemetryEventPropertyType,
     tag: TelemetryDataTag
 }
 
+/**
+ * Property bag containing a mix of value literals and wrapped values along with a tag
+ */
 export interface ITaggableTelemetryProperties {
     [name: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 }
 
+/**
+ * Type guard to identify if a particular value appears to be a tagged telemetry property
+ */
 export function IsTaggedTelemetryPropertyValue(val: any): val is ITaggedTelemetryPropertyType {
     const valAsTagged: ITaggedTelemetryPropertyType = val;
     return (typeof(valAsTagged?.value) !== "object" && typeof(valAsTagged?.tag) === "number");
@@ -579,12 +596,12 @@ export class LoggingError extends Error implements ILoggingError {
                 : { value: taggableProp, tag: TelemetryDataTag.None };
             switch (tag) {
                 case TelemetryDataTag.None:
-                case TelemetryDataTag.CodeArtifact:
-                    // For Microsoft applications, Code Artifacts are safe for now (we don't load 3P code in 1P apps)
+                case TelemetryDataTag.PackageData:
+                    // For Microsoft applications, PackageData is safe for now (we don't load 3P code in 1P apps)
                     // But this determination really belongs in the host layer
                     props[key] = value;
                     break;
-                case TelemetryDataTag.OtherPii:
+                case TelemetryDataTag.UserData:
                     // Strip out anything tagged explicitly as PII. Alternate strategy would be to hash these props
                     props[key] = undefined;
                     break;
@@ -595,6 +612,7 @@ export class LoggingError extends Error implements ILoggingError {
                     // If we encounter a tag we don't recognize (e.g. due to interaction between different versions)
                     // then we must assume we should scrub.
                     props[key] = undefined;
+                    break;
             }
         }
         return props;
