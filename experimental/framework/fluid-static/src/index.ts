@@ -7,8 +7,9 @@ import { Fluid } from "./FluidStatic";
 export * from "./containerCode";
 export {
     IFluidStaticDataObjectClass,
-    FluidInstance,
     FluidContainer,
+    FluidContainerConfig,
+    FluidInstance,
 } from "./FluidStatic";
 
 // eslint-disable-next-line import/no-default-export

@@ -13,10 +13,9 @@ export interface IFluidStaticDataObjectClass {
     readonly factory: IFluidDataStoreFactory;
 }
 
-export interface FluidContainerProps {
+export interface FluidContainerConfig {
     id: string,
     dataObjects: IFluidStaticDataObjectClass[],
-    initialDataObjects: [id: string, dataObject: IFluidStaticDataObjectClass],
 }
 
 export class FluidContainer {
@@ -55,7 +54,8 @@ export class FluidContainer {
 }
 
 /**
- * A FluidInstance defines the service that this will be connect
+ * FluidInstance provides the ability to have a Fluid object with a specific backing server outside of the
+ * global context.
  */
 export class FluidInstance {
     private readonly containerService: IGetContainerService;
@@ -69,21 +69,21 @@ export class FluidInstance {
         this.containerService = getContainerService;
     }
 
-    public async createContainer(id: string, dataObjects: IFluidStaticDataObjectClass[]): Promise<FluidContainer> {
-        const registryEntries = this.getRegistryEntries(dataObjects);
+    public async createContainer(config: FluidContainerConfig): Promise<FluidContainer> {
+        const registryEntries = this.getRegistryEntries(config.dataObjects);
         const container = await getContainer(
             this.containerService,
-            id,
+            config.id,
             new DOProviderContainerRuntimeFactory(registryEntries),
             true, /* createNew */
         );
         return new FluidContainer(container, registryEntries, true /* createNew */);
     }
-    public async getContainer(id: string, dataObjects: IFluidStaticDataObjectClass[]): Promise<FluidContainer> {
-        const registryEntries = this.getRegistryEntries(dataObjects);
+    public async getContainer(config: FluidContainerConfig): Promise<FluidContainer> {
+        const registryEntries = this.getRegistryEntries(config.dataObjects);
         const container = await getContainer(
             this.containerService,
-            id,
+            config.id,
             new DOProviderContainerRuntimeFactory(registryEntries),
             false, /* createNew */
         );
@@ -103,6 +103,9 @@ export class FluidInstance {
     }
 }
 
+/**
+ * Singular global instance that lets the developer define the fluid server across all instances of Containers.
+ */
 let globalFluid: FluidInstance | undefined;
 export const Fluid = {
     init(getContainerService: IGetContainerService) {
@@ -111,16 +114,16 @@ export const Fluid = {
         }
         globalFluid = new FluidInstance(getContainerService);
     },
-    async createContainer(id: string, dataObjects: IFluidStaticDataObjectClass[]): Promise<FluidContainer> {
+    async createContainer(config: FluidContainerConfig): Promise<FluidContainer> {
         if (!globalFluid) {
             throw new Error("Fluid has not been properly initialized before attempting to create a container");
         }
-        return globalFluid.createContainer(id, dataObjects);
+        return globalFluid.createContainer(config);
     },
-    async getContainer(id: string, dataObjects: IFluidStaticDataObjectClass[]): Promise<FluidContainer> {
+    async getContainer(config: FluidContainerConfig): Promise<FluidContainer> {
         if (!globalFluid) {
             throw new Error("Fluid has not been properly initialized before attempting to get a container");
         }
-        return globalFluid.getContainer(id, dataObjects);
+        return globalFluid.getContainer(config);
     },
 };
