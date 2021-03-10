@@ -19,7 +19,21 @@ export interface ContainerConfig {
 
 export interface ContainerCreateConfig extends ContainerConfig {
     /**
-     * initial DataObjects will be created when the Container is first created.
+     * initialDataObjects defines dataObjects that will be created when the Container
+     * is first created. It uses the key as the id and the value and the DataObject to create.
+     *
+     * In the example below two DataObjects will be created when the Container is first
+     * created. One with id "foo1" that will return a `Foo` DataObject and the other with
+     * id "bar2" that will return a `Bar` DataObject.
+     *
+     * ```
+     * {
+     *   ["foo1"]: Foo,
+     *   ["bar2"]: Bar,
+     * }
+     * ```
+     *
+     * To get these DataObjects uses `container.getDataObject` passing in one of the ids.
      */
     initialDataObjects?: IdToDataObjectCollection;
 }
@@ -87,7 +101,7 @@ export class FluidInstance {
         return new FluidContainer(container, registryEntries, true /* createNew */);
     }
 
-    public async getContainer(id: string, config: ContainerCreateConfig): Promise<FluidContainer> {
+    public async getContainer(id: string, config: ContainerConfig): Promise<FluidContainer> {
         const registryEntries = this.getRegistryEntries(config.dataObjects);
         const container = await getContainer(
             this.containerService,
@@ -130,7 +144,7 @@ export const Fluid = {
         return globalFluid.createContainer(id, config);
     },
     async getContainer(
-        id, config: ContainerCreateConfig): Promise<FluidContainer> {
+        id, config: ContainerConfig): Promise<FluidContainer> {
         if (!globalFluid) {
             throw new Error("Fluid has not been properly initialized before attempting to get a container");
         }

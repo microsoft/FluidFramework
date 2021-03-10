@@ -8,7 +8,7 @@ import { TinyliciousService } from "@fluid-experimental/get-container";
 import { DiceRollerController } from "./controller";
 import { renderDiceRoller } from "./view";
 
-// Define the server we will be using and initialize our Fluid instance
+// Define the server we will be using and initialize Fluid
 const service = new TinyliciousService();
 Fluid.init(service);
 
@@ -23,12 +23,13 @@ document.title = containerId;
 const dataObjectId = "dice";
 
 async function start(): Promise<void> {
-    // Define the configuration of the container
-    // This includes the DataObjects we support and any initial dataObjects we want created
+    // Define the configuration of our Container.
+    // This includes the DataObjects we support and any initial DataObjects we want created
     // when the container is first created.
     const containerConfig = {
         dataObjects: [KeyValueDataObject],
         initialDataObjects: {
+            /* [id]: DataObject */
             [dataObjectId]: KeyValueDataObject,
         },
     };
