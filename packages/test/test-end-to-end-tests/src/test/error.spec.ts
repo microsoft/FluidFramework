@@ -86,7 +86,10 @@ describe("Errors Types", () => {
 
             assert.fail("Error expected");
         } catch (error) {
-            assert.equal(error.errorType, ContainerErrorType.genericError, "Error should be a genericError");
+            assert(
+                [DriverErrorType.genericNetworkError, ContainerErrorType.genericError].includes(error.errorType),
+                `${error.errorType} should be genericError or genericNetworkError`,
+            );
         }
     });
 
