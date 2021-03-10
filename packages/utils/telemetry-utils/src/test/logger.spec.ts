@@ -112,19 +112,19 @@ describe("Logger", () => {
             });
         });
         describe("LoggingError", () => {
-            it("props are NOT assigned to the object which extends Error", () => {
+            it("ctor props are assigned to the object", () => {
                 const loggingError = new LoggingError(
                     "myMessage",
                     { p1: 1, p2: "two", p3: true, tagged: { value: 4, tag: TelemetryDataTag.CodeArtifact }});
                 assert.strictEqual(loggingError.name, "Error");
                 assert.strictEqual(loggingError.message, "myMessage");
                 const errorAsAny = loggingError as any;
-                assert.strictEqual(errorAsAny.p1, undefined);
-                assert.strictEqual(errorAsAny.p2, undefined);
-                assert.strictEqual(errorAsAny.p3, undefined);
-                assert.strictEqual(errorAsAny.tagged, undefined);
+                assert.strictEqual(errorAsAny.p1, 1);
+                assert.strictEqual(errorAsAny.p2, "two");
+                assert.strictEqual(errorAsAny.p3, true);
+                assert.deepStrictEqual(errorAsAny.tagged, { value: 4, tag: TelemetryDataTag.CodeArtifact });
             });
-            it("getTelemetryProperties extracts all untagged props", () => {
+            it("getTelemetryProperties extracts all untagged ctor props", () => {
                 const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
                 const props = loggingError.getTelemetryProperties();
                 assert.strictEqual(props.message, "myMessage");
@@ -134,18 +134,43 @@ describe("Logger", () => {
                 assert.strictEqual(props.p2, "two");
                 assert.strictEqual(props.p3, true);
             });
-            it("addTelemetryProperties overwrites props passed to constructor", () => {
-                assert.fail("NYI");
+            it("addTelemetryProperties - adds to object, returned from getTelemetryProperties, overwrites", () => {
+                const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
+                loggingError.addTelemetryProperties({p1: "one", p4: 4, p5: { value: 5, tag: 0 } });
+                const props = loggingError.getTelemetryProperties();
+                assert.strictEqual(props.p1, "one");
+                assert.strictEqual(props.p4, 4);
+                assert.strictEqual(props.p5, 5);
+                const errorAsAny = loggingError as any;
+                assert.strictEqual(errorAsAny.p1, "one");
+                assert.strictEqual(errorAsAny.p4, 4);
+                assert.deepStrictEqual(errorAsAny.p5, { value: 5, tag: 0 });
             });
-            it("getTelemetryProperties includes valid own properties", () => {
-                // coverage for addOwnTaggableProps
-                assert.fail("NYI");
+            it("Set valid props via 'as any' - returned from getTelemetryProperties, overwrites", () => {
+                const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
+                const errorAsAny = loggingError as any;
+                errorAsAny.p1 = "one";
+                errorAsAny.p4 = 4;
+                errorAsAny.p5 = { value: 5, tag: 0 };
+                errorAsAny.pii6 = { value: 5, tag: 2 };
+                const props = loggingError.getTelemetryProperties();
+                assert.strictEqual(props.p1, "one");
+                assert.strictEqual(props.p4, 4);
+                assert.deepStrictEqual(props.p5, 5);
+                assert.strictEqual(props.pii6, undefined);
             });
-            it("getTelemetryProperties excludes non-telemetry own properties", () => {
-                // e.g. null valued
-                assert.fail("NYI");
+            it("Set invalid props via 'as any' - excluded from getTelemetryProperties, overwrites", () => {
+                const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
+                const errorAsAny = loggingError as any;
+                errorAsAny.p1 = { one: 1 };
+                errorAsAny.p4 = null;
+                errorAsAny.p5 = ["a", "b", "c"];
+                const props = loggingError.getTelemetryProperties();
+                assert.strictEqual(props.p1, undefined);
+                assert.strictEqual(props.p4, undefined);
+                assert.deepStrictEqual(props.p5, undefined);
             });
-            it("getTelemetryProperties overwrites Error fields if passed in as props", () => {
+            it("ctor props - overwrites base class Error fields", () => {
                 const loggingError = new LoggingError(
                     "myMessage",
                     { message: "surprise1", stack: "surprise2", name: "surprise3"});
@@ -160,7 +185,6 @@ describe("Logger", () => {
                     { somePii: { value: "very personal", tag: TelemetryDataTag.OtherPii }});
                 const props = loggingError.getTelemetryProperties();
                 assert.strictEqual(props.somePii, undefined, "somePii should not exist on props");
-                //* Revisit this
                 assert(typeof ((loggingError as any).somePii) === "object", "somePii should remain on loggingError");
             });
             it("getTelemetryProperties - tagged TelemetryDataTag.None/CodeArtifact are preserved", () => {
@@ -174,13 +198,12 @@ describe("Logger", () => {
                 assert.strictEqual(props.boring, "boring");
                 assert.strictEqual(props.packageName, "myPkg");
             });
-            it("getTelemetryProperties - unrecognized tag is removed", () => {
+            it("getTelemetryProperties - tagged [unrecognized tag] are removed", () => {
                 const loggingError = new LoggingError(
                     "myMessage",
                     { somePii: { value: "very personal", tag: 9999 }});
                 const props = loggingError.getTelemetryProperties();
                 assert.strictEqual(props.somePii, undefined, "somePii should not exist on props");
-                //* Revisit this
                 assert(typeof ((loggingError as any).somePii) === "object", "somePii should remain on loggingError");
             });
         });

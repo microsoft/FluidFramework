@@ -531,13 +531,11 @@ export class LoggingError extends Error implements ILoggingError {
         Object.assign(this, props);
     }
 
-    //* FIX THIS COMMENT
     /**
-     * Some code casts an error to any and sets properties on it, expecting them to be logged.
-     * So enumerate this object's own properties to find any taggable props and add them to this.props.
-     * This functionality may eventually be deprecated, requiring addTelemetryProperties to be called directly instead
+     * Enumerate this object's own properties to find those fit for telemetry.
+     * This protects us when someone sets a non-loggable field on this object (via 'as any')
      */
-    private getOwnTaggableProps() {
+    private getOwnValidTelemetryProps(): ITaggableTelemetryProperties {
         const props: ITaggableTelemetryProperties = {};
         for (const key of Object.keys(this)) {
             const val = this[key];
@@ -570,22 +568,19 @@ export class LoggingError extends Error implements ILoggingError {
             name: this.name,
         };
 
-        //* FIX THIS COMMENT
-        // Before walking over this.props, add any taggableProps that were set directly on the object,
-        // not via addTelemetryProperties
-        const taggableProps = this.getOwnTaggableProps();
-
-        // Note - Once ITelemetryBaseLogger is updated to use ITaggableTelemetryProperties,
-        // this loop will go away and we can just return a clone of this.props as-is
+        // Walk the object's telemetry props, respecting the tags and converting them to ITelemetryProperties
+        // Note: Once ITelemetryBaseLogger is updated to use ITaggableTelemetryProperties,
+        // this loop will go away and we can just return the taggable properties directly for the host to deal with
+        const taggableProps = this.getOwnValidTelemetryProps();
         for (const key of Object.keys(taggableProps)) {
             const taggableProp = taggableProps[key];
-            const { value, tag } = typeof taggableProp === "object"
+            const { value, tag } = (typeof taggableProp === "object")
                 ? taggableProp
                 : { value: taggableProp, tag: TelemetryDataTag.None };
             switch (tag) {
                 case TelemetryDataTag.None:
                 case TelemetryDataTag.CodeArtifact:
-                    // For Microsoft applications, Code Artifacts are safe for now
+                    // For Microsoft applications, Code Artifacts are safe for now (we don't load 3P code in 1P apps)
                     // But this determination really belongs in the host layer
                     props[key] = value;
                     break;
@@ -593,14 +588,13 @@ export class LoggingError extends Error implements ILoggingError {
                     // Strip out anything tagged explicitly as PII. Alternate strategy would be to hash these props
                     props[key] = undefined;
                     break;
-                default: {
+                default:
                     // This will help us keep this switch statement up to date
                     (function(_: never) {})(tag);
 
                     // If we encounter a tag we don't recognize (e.g. due to interaction between different versions)
                     // then we must assume we should scrub.
                     props[key] = undefined;
-                }
             }
         }
         return props;
