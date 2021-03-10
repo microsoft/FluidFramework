@@ -19,7 +19,7 @@
  * The legacy version are installed in their own version folder
  * .\..\node_modules\.legacy\<version> (current package root's node_module directory).
  *
- * All legacy package for all API category are installed all at once regardness what category is requested.
+ * All legacy package for all API category are installed all at once regardless of what category is requested.
  * (See `packageList` variable below).
  *
  * For now, the current version are statically bound to also provide type.  Although it can be switch to
