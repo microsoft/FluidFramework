@@ -43,6 +43,7 @@ function App() {
             load();
         } else {
             const updateData = () => setData(dataObject.query());
+            updateData();
             dataObject.on("changed", updateData);
             return () => { dataObject.off("change", updateData) }
         }
