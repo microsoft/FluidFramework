@@ -8,7 +8,7 @@ export * from "./containerCode";
 export {
     FluidContainer,
     ContainerConfig,
-    CreateContainerConfig,
+    ContainerCreateConfig,
     FluidInstance,
 } from "./FluidStatic";
 

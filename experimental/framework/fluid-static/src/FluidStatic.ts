@@ -7,17 +7,21 @@ import { getContainer, IGetContainerService } from "@fluid-experimental/get-cont
 import { DataObject, getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
-import { DOProviderContainerRuntimeFactory, IFluidStaticDataObjectClass } from "./containerCode";
+import {
+    IdToDataObjectCollection,
+    DOProviderContainerRuntimeFactory,
+    IFluidStaticDataObjectClass,
+} from "./containerCode";
 
 export interface ContainerConfig {
-    dataObjects: IFluidStaticDataObjectClass[],
+    dataObjects: IFluidStaticDataObjectClass[];
 }
 
-export interface CreateContainerConfig extends ContainerConfig {
+export interface ContainerCreateConfig extends ContainerConfig {
     /**
      * initial DataObjects will be created when the Container is first created.
      */
-    initialDataObjects?: [string, IFluidStaticDataObjectClass][]
+    initialDataObjects?: IdToDataObjectCollection;
 }
 
 export class FluidContainer {
@@ -71,7 +75,7 @@ export class FluidInstance {
         this.containerService = getContainerService;
     }
 
-    public async createContainer(id: string, config: CreateContainerConfig): Promise<FluidContainer> {
+    public async createContainer(id: string, config: ContainerCreateConfig): Promise<FluidContainer> {
         const registryEntries = this.getRegistryEntries(config.dataObjects);
         const container = await getContainer(
             this.containerService,
@@ -81,7 +85,7 @@ export class FluidInstance {
         );
         return new FluidContainer(container, registryEntries, true /* createNew */);
     }
-    public async getContainer(id: string, config: CreateContainerConfig): Promise<FluidContainer> {
+    public async getContainer(id: string, config: ContainerCreateConfig): Promise<FluidContainer> {
         const registryEntries = this.getRegistryEntries(config.dataObjects);
         const container = await getContainer(
             this.containerService,
@@ -117,14 +121,14 @@ export const Fluid = {
         globalFluid = new FluidInstance(getContainerService);
     },
     async createContainer(
-        id: string, config: CreateContainerConfig): Promise<FluidContainer> {
+        id: string, config: ContainerCreateConfig): Promise<FluidContainer> {
         if (!globalFluid) {
             throw new Error("Fluid has not been properly initialized before attempting to create a container");
         }
         return globalFluid.createContainer(id, config);
     },
     async getContainer(
-        id, config: CreateContainerConfig): Promise<FluidContainer> {
+        id, config: ContainerCreateConfig): Promise<FluidContainer> {
         if (!globalFluid) {
             throw new Error("Fluid has not been properly initialized before attempting to get a container");
         }
