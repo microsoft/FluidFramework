@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import {attest} from "../utils";
+import {logIfFalse} from "../utils";
 
 class TestLogger implements ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent): void {
