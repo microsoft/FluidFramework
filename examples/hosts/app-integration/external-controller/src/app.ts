@@ -7,10 +7,13 @@ import {
     IKeyValueDataObject,
     KeyValueDataObject,
 } from "@fluid-experimental/data-objects";
-import { Fluid } from "@fluid-experimental/fluid-static";
+import Fluid from "@fluid-experimental/fluid-static";
 import { TinyliciousService } from "@fluid-experimental/get-container";
 import { DiceRollerController } from "./controller";
 import { renderDiceRoller } from "./view";
+
+const service = new TinyliciousService();
+Fluid.init([KeyValueDataObject], service);
 
 let createNew = false;
 if (location.hash.length === 0) {
@@ -23,11 +26,10 @@ document.title = containerId;
 const dataObjectId = "dice";
 
 async function start(): Promise<void> {
-    const service = new TinyliciousService();
     // Get or create the document
     const fluidContainer = createNew
-        ? await Fluid.createContainer(service, containerId, [KeyValueDataObject])
-        : await Fluid.getContainer(service, containerId, [KeyValueDataObject]);
+        ? await Fluid.createContainer(containerId)
+        : await Fluid.getContainer(containerId);
 
     // We'll create the data object when we create the new document.
     const keyValueDataObject: IKeyValueDataObject = createNew

@@ -33,35 +33,48 @@ const dataObjectClassToRegistryEntry =
     (dataObjectClass: IFluidStaticDataObjectClass): NamedFluidDataStoreRegistryEntry =>
         [dataObjectClass.factory.type, Promise.resolve(dataObjectClass.factory)];
 
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class Fluid {
-    public static async createContainer(
-        getContainerService: IGetContainerService,
-        docId: string,
-        dataObjectClasses: IFluidStaticDataObjectClass[],
-    ): Promise<FluidContainer> {
-        const registryEntries = dataObjectClasses.map(dataObjectClassToRegistryEntry);
+let hasInit: boolean = false;
+let registryEntries: NamedFluidDataStoreRegistryEntry[];
+let containerService: IGetContainerService;
+
+export const Fluid = {
+    init(dataObjectClasses: IFluidStaticDataObjectClass[], getContainerService: IGetContainerService) {
+        if (hasInit) {
+            throw new Error("Fluid cannot be initialized more than once");
+        }
+        if (dataObjectClasses.length === 0) {
+            throw new Error("Fluid cannot be initialized without DataObjects");
+        }
+        if (getContainerService === undefined) {
+            throw new Error("Fluid cannot be initialized without a ContainerService");
+        }
+
+        hasInit = true;
+        registryEntries = dataObjectClasses.map(dataObjectClassToRegistryEntry);
+        containerService = getContainerService;
+    },
+    async createContainer(docId: string): Promise<FluidContainer> {
+        if (!hasInit) {
+            throw new Error("Fluid has not been properly initialized before attempting to create a container.");
+        }
         const container = await getContainer(
-            getContainerService,
+            containerService,
             docId,
             new DOProviderContainerRuntimeFactory(registryEntries),
             true, /* createNew */
         );
         return new FluidContainer(container, true /* createNew */);
-    }
-
-    public static async getContainer(
-        getContainerService: IGetContainerService,
-        docId: string,
-        dataObjectClasses: IFluidStaticDataObjectClass[],
-    ): Promise<FluidContainer> {
-        const registryEntries = dataObjectClasses.map(dataObjectClassToRegistryEntry);
+    },
+    async getContainer(docId: string): Promise<FluidContainer> {
+        if (!hasInit) {
+            throw new Error("Fluid has not been properly initialized before attempting to get a container.");
+        }
         const container = await getContainer(
-            getContainerService,
+            containerService,
             docId,
             new DOProviderContainerRuntimeFactory(registryEntries),
             false, /* createNew */
         );
         return new FluidContainer(container, false /* createNew */);
-    }
-}
+    },
+};
