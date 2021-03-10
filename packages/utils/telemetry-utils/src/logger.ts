@@ -13,7 +13,7 @@ import {
     ITelemetryProperties,
     TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
-import { BaseTelemetryNullLogger, performance, unreachableCase } from "@fluidframework/common-utils";
+import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
 
 export interface ITelemetryPropertyGetters {
     [index: string]: () => TelemetryEventPropertyType;
@@ -590,7 +590,7 @@ export class LoggingError extends Error implements ILoggingError {
                     break;
                 default: {
                     // This will help us keep this switch statement up to date
-                    const _: never = tag;
+                    (function(_: never) {})(tag);
 
                     // If we encounter a tag we don't recognize (e.g. due to interaction between different versions)
                     // then we must assume we should scrub.
