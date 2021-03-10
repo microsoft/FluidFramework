@@ -44,6 +44,13 @@ export interface IKeyValueDataObject extends EventEmitter {
 export class KeyValueDataObject
     extends DataObject
     implements IKeyValueDataObject {
+    public static readonly factory = new DataObjectFactory(
+        "keyvalue-dataobject",
+        KeyValueDataObject,
+        [],
+        {},
+    );
+
     /**
      * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
      * DataObject, by registering an event listener for changes in data.
@@ -89,9 +96,4 @@ export class KeyValueDataObject
  * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
-export const KeyValueInstantiationFactory = new DataObjectFactory(
-    "keyvalue-dataobject",
-    KeyValueDataObject,
-    [],
-    {},
-);
+export const KeyValueInstantiationFactory = KeyValueDataObject.factory;

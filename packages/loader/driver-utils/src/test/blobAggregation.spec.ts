@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { TelemetryNullLogger, stringToBuffer, bufferToString } from "@fluidframework/common-utils";
+import { TelemetryNullLogger, bufferToString } from "@fluidframework/common-utils";
 import { ISummaryTree, SummaryType, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { BlobAggregationStorage } from "../blobAggregationStorage";
@@ -33,15 +33,15 @@ export class FlattenedStorageService {
         FlattenedStorageService.flattenTree("", tree, this.flattenedTree);
     }
 
-    public async read(path: string): Promise<string> {
+    public async readBlob(path: string): Promise<ArrayBufferLike> {
         const id = this.flattenedTree[path];
-        return bufferToString(await this.storage.readBlob(id), "utf-8");
+        return  this.storage.readBlob(id);
     }
 }
 
 class InMemoryStorage {
     private summaryWritten: ISummaryTree | undefined;
-    public readonly blobs = new Map<string, string>();
+    public readonly blobs = new Map<string, ArrayBufferLike>();
 
     public get policies() {
         return { minBlobSize: this.blobSizeLimit };
@@ -62,11 +62,8 @@ class InMemoryStorage {
 
     async readBlob(id: string) {
         const blob = this.blobs.get(id);
-        if (blob !== undefined) {
-            return stringToBuffer(blob, "base64");
-        }
-
-        throw new Error("unknown blob id");
+        assert(blob !== undefined, "unknown blob id");
+        return blob;
     }
 }
 
@@ -145,12 +142,11 @@ async function prep(allowPacking: boolean, blobSizeLimit: number | undefined) {
     assert (service.flattenedTree["dataStore1/channel1/blob4"] !== undefined);
     assert (service.flattenedTree["dataStore2/channel2/blob5"] !== undefined);
 
-    assert(await service.read("dataStore1/blob2") === "small string 2",
-        "Unexpected dataStore1/blob2 read");
-    assert(await service.read("dataStore1/blob3") === "not very small string - exceeding 40 bytes limit for sure",
-        "Unexpected dataStore1/blob3 read");
-    assert(await service.read("dataStore1/channel1/blob4") === "small string again",
-        "Unexpected dataStore1/channel1/blob4 read");
+    assert(bufferToString(await service.readBlob("dataStore1/blob2"),"utf8") === "small string 2", "blob2 failed");
+    assert(bufferToString(await service.readBlob("dataStore1/blob3"),"utf8") ===
+        "not very small string - exceeding 40 bytes limit for sure", "blob3 failed");
+    assert(bufferToString(await service.readBlob("dataStore1/channel1/blob4"),"utf8") === "small string again"
+        ,"blob4 failed");
 
     return { service, storage, snapshot};
 }

@@ -42,7 +42,7 @@ export function exceptionToResponse(err: any): IResponse {
         const responseErr: IResponseException = err;
         return {
             mimeType: "text/plain",
-            status,
+            status: responseErr.code,
             value: responseErr.message,
             stack: responseErr.stack ?? getStack(),
         };
@@ -50,7 +50,7 @@ export function exceptionToResponse(err: any): IResponse {
     return {
         mimeType: "text/plain",
         status,
-        value : `${err}`,
+        value: `${err}`,
         stack: getStack(),
     };
 }
@@ -91,7 +91,7 @@ export function createResponseError(status: number, value: string, request: IReq
     return {
         mimeType: "text/plain",
         status,
-        value : request.url === undefined ? value : `${value}: ${request.url}`,
+        value: request.url === undefined ? value : `${value}: ${request.url}`,
         stack: getStack(),
     };
 }

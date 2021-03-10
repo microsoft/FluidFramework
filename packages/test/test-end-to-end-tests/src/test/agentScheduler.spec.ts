@@ -9,7 +9,7 @@ import { taskSchedulerId } from "@fluidframework/container-runtime";
 import { IAgentScheduler } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { timeoutPromise, defaultTimeoutDurationMs } from "@fluidframework/test-utils";
-import { generateTest, ITestObjectProvider, TestDataObject } from "./compatUtils";
+import { generateTest, ITestObjectProvider, ITestDataObject } from "./compatUtils";
 
 const tests = (argsFactory: () => ITestObjectProvider) => {
     let leaderTimeout = defaultTimeoutDurationMs;
@@ -33,7 +33,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             scheduler = await requestFluidObject<IAgentScheduler>(container, taskSchedulerId)
                 .then((agentScheduler) => agentScheduler.IAgentScheduler);
 
-            const dataObject = await requestFluidObject<TestDataObject>(container, "default");
+            const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
 
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
@@ -114,7 +114,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             // Remove the query in 0.38 when back compat is no longer a concern.
             scheduler1 = await requestFluidObject<IAgentScheduler>(container1, taskSchedulerId)
                 .then((agentScheduler) => agentScheduler.IAgentScheduler);
-            const dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
+            const dataObject1 = await requestFluidObject<ITestDataObject>(container1, "default");
 
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
@@ -131,7 +131,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             // Remove the query in 0.38 when back compat is no longer a concern.
             scheduler2 = await requestFluidObject<IAgentScheduler>(container2, taskSchedulerId)
                 .then((agentScheduler) => agentScheduler.IAgentScheduler);
-            const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
+            const dataObject2 = await requestFluidObject<ITestDataObject>(container2, "default");
 
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
