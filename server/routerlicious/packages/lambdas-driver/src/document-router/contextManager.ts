@@ -58,7 +58,7 @@ export class DocumentContextManager extends EventEmitter {
 
     /**
      * Updates the head to the new offset. The head offset will not be updated if it stays the same or moves backwards.
-     * @returns True if the head was update, false if it wasn't
+     * @returns True if the head was updated, false if it was not.
      */
     public setHead(head: IQueuedMessage) {
         if (head.offset > this.head.offset) {
