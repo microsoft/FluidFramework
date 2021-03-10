@@ -12,6 +12,7 @@ import { IClientConfiguration } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ISharedDirectory } from "@fluidframework/map";
+import { unreachableCase } from "@fluidframework/common-utils";
 
 import {
     ChannelFactoryRegistry,
@@ -98,7 +99,8 @@ function createGetDataStoreFactoryFunction(api: DataRuntimeApiType) {
 
     return function(containerOptions?: ITestContainerConfig) {
         const registry = convertRegistry(containerOptions?.registry);
-        switch (containerOptions?.fluidDataObjectType) {
+        const fluidDataObjectType = containerOptions?.fluidDataObjectType;
+        switch (fluidDataObjectType) {
             case undefined:
             case DataObjectFactoryType.Primed:
                 return new api.DataObjectFactory(
@@ -109,7 +111,8 @@ function createGetDataStoreFactoryFunction(api: DataRuntimeApiType) {
             case DataObjectFactoryType.Test:
                 return new api.TestFluidObjectFactory(registry);
             default:
-                throw new Error("unknown data store factory type");
+                unreachableCase(fluidDataObjectType,
+                    `Unknown data store factory type ${fluidDataObjectType}`);
         }
     };
 }
