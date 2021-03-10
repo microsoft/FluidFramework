@@ -44,6 +44,12 @@ export interface TokenFetchOptions {
 export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
     /** Site url representing ODSP resource location */
     siteUrl: string;
+
+    /** ODSP drive id where resource resides. Optional, used only when fetching token to access ODSP file */
+    driveId?: string;
+
+    /** ODSP item id representing resource. Optional, used only when fetching token to access ODSP file */
+    itemId?: string;
 }
 
 /**

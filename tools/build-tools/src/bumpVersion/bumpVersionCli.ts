@@ -207,6 +207,41 @@ function parseOptions(argv: string[]) {
     }
 }
 
+function checkFlagsConflicts() {
+    let command = undefined;
+    if (paramBranch) {
+        command = "branch";
+    }
+    if (paramBumpDepPackages.size) {
+        if (command !== undefined) {
+            fatal(`Conflicting switches --dep and --${command}`);
+        }
+        command = "dep";
+    }
+    if (paramReleaseName) {
+        if (command !== undefined) {
+            fatal(`Conflicting switches --release and --${command}`);
+        }
+        command = "release";
+    }
+    if (paramVersionName) {
+        if (command !== undefined) {
+            fatal(`Conflicting switches --version and --${command}`);
+        }
+        command = "version";
+    }
+    if (paramBumpName) {
+        if (command !== undefined) {
+            fatal(`Conflicting switches --bump and --${command}`);
+        }
+        command = "bump";
+    }
+    if (command === undefined) {
+        fatal("Missing command flags --branch/--release/--dep/--bump/--version");
+    }
+    return command;
+}
+
 /**
  * Load the repo and either do version bump or dependencies bump
  */
@@ -215,53 +250,34 @@ async function main() {
     const resolvedRoot = await getResolvedFluidRoot();
     console.log(`Repo: ${resolvedRoot}`);
     const gitRepo = new GitRepo(resolvedRoot);
-    const context = new Context(gitRepo, await gitRepo.getCurrentBranchName());
-
+    const context = new Context(gitRepo, "github.com/microsoft/FluidFramework", await gitRepo.getCurrentBranchName());
     try {
-        if (paramBranch) {
-            if (paramBumpDepPackages.size) {
-                fatal("Conflicting switches --dep and --branch");
-            }
-            if (paramReleaseName) {
-                fatal("Conflicting switches --release and --branch");
-            }
-            if (paramVersionName) {
-                fatal("Conflicting switches --version and --branch");
-            }
-            if (paramBumpName) {
-                fatal("Conflicting switches --bump and --branch");
-            }
-            await createReleaseBranch(context, "github.com/microsoft/FluidFramework");
-        } else if (paramBumpDepPackages.size) {
-            if (paramReleaseName) {
-                fatal("Conflicting switches --release and --dep");
-            }
-            if (paramVersionName) {
-                fatal("Conflicting switches --version and --dep");
-            }
-            if (paramBumpName) {
-                fatal("Conflicting switches --bump and --dep");
-            }
-            console.log("Bumping dependencies");
+        const command = checkFlagsConflicts();
 
-            await bumpDependencies(context, "Bump dependencies version", paramBumpDepPackages, paramPublishCheck, paramCommit);
-        } else if (paramReleaseName) {
-            if (paramVersionName) {
-                fatal("Conflicting switches --release and --version");
-            }
-            if (paramBumpName) {
-                fatal("Conflicting switches --release and --bump");
-            }
-            await releaseVersion(context, paramReleaseName, paramPublishCheck, paramReleaseVersion);
-        } else if (paramVersionName) {
-            if (paramBumpName) {
-                fatal("Conflicting switches --version and --bump");
-            }
-            await showVersions(context, paramVersionName, paramVersion);
-        } else if (paramBumpName) {
-            await bumpVersion(context, [paramBumpName], paramBumpVersion ?? "patch", getPackageShortName(paramBumpName), paramCommit ? "" : undefined);
-        } else {
-            fatal("Missing command flags --release/--dep/--bump/--version");
+        // Make sure we are operating on a clean repo
+        const status = await context.gitRepo.getStatus();
+        if (status !== "") {
+            fatal(`Local repo is dirty\n${status}`);
+        }
+
+        switch (command) {
+            case "branch":
+                await createReleaseBranch(context);
+                break;
+            case "dep":
+                console.log("Bumping dependencies");
+                await bumpDependencies(context, "Bump dependencies version", paramBumpDepPackages, paramPublishCheck, paramCommit);
+                break;
+            case "release":
+                await releaseVersion(context, paramReleaseName!, paramPublishCheck, paramReleaseVersion);
+                break;
+            case "version":
+                await showVersions(context, paramVersionName!, paramVersion);
+                break;
+            case "bump":
+                await bumpVersion(context, [paramBumpName!], paramBumpVersion ?? "patch",
+                    getPackageShortName(paramBumpName!), paramCommit ? "" : undefined);
+                break;
         }
     } catch (e) {
         if (!e.fatal) { throw e; }

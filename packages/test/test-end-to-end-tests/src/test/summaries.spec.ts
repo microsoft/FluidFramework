@@ -8,14 +8,18 @@ import { assert, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedObjectSequence } from "@fluidframework/sequence";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createAndAttachContainer, createLocalLoader, OpProcessingController } from "@fluidframework/test-utils";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import {
+    createAndAttachContainer,
+    createDocumentId,
+    createLoader,
+    OpProcessingController,
+} from "@fluidframework/test-utils";
 
 const defaultDataStoreId = "default";
 
@@ -30,8 +34,8 @@ async function createContainer(): Promise<{
     container: IContainer;
     opProcessingController: OpProcessingController;
 }> {
-    const documentId = "summarizerTest";
-
+    const documentId = createDocumentId();
+    const driver = getFluidTestDriver() as unknown as ITestDriver;
     const codeDetails: IFluidCodeDetails = {
         package: "summarizerTestPackage",
     };
@@ -58,15 +62,15 @@ async function createContainer(): Promise<{
         runtimeOptions,
     );
 
-    const deltaConnectionServer = LocalDeltaConnectionServer.create();
-
-    const urlResolver = new LocalResolver();
-
-    const loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
+    const loader = createLoader(
+        [[codeDetails, runtimeFactory]],
+        driver.createDocumentServiceFactory(),
+        driver.createUrlResolver(),
+    );
     const container = await createAndAttachContainer(
         codeDetails,
         loader,
-        urlResolver.createCreateNewRequest(documentId));
+        driver.createCreateNewRequest(documentId));
 
     const opProcessingController = new OpProcessingController();
     opProcessingController.addDeltaManagers(container.deltaManager);
