@@ -176,6 +176,8 @@ async function ensureInstalled(requested: string) {
                 ),
             );
         } catch (e) {
+            // rmdirSync recursive flags introduced in Node v12.10
+            // Remove the `as any` cast once node typing is updated.
             try { (rmdirSync as any)(modulePath, { recursive: true }); } catch (ex) { }
             throw new Error(`Unable to install version ${version}\n${e}`);
         }
