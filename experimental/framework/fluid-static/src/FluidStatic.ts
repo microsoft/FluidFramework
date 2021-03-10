@@ -107,7 +107,7 @@ export class FluidInstance {
 }
 
 /**
- * Singular global instance that lets the developer define the fluid server across all instances of Containers.
+ * Singular global instance that lets the developer define the Fluid server across all instances of Containers.
  */
 let globalFluid: FluidInstance | undefined;
 export const Fluid = {
