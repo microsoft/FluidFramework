@@ -6,8 +6,12 @@
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { innerRequestHandler, RuntimeRequestHandler } from "@fluidframework/request-handler";
-import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory, NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
+
+export interface IFluidStaticDataObjectClass {
+    readonly factory: IFluidDataStoreFactory;
+}
 
 /**
  * We'll allow root data stores to be created by requesting a url like /create/dropletType/dataStoreId
@@ -27,7 +31,19 @@ const createRequestHandler: RuntimeRequestHandler =
  * These can then be retrieved via container.request("/dataObjectId").
  */
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
-    constructor(registryEntries: NamedFluidDataStoreRegistryEntry[]) {
+    constructor(
+        registryEntries: NamedFluidDataStoreRegistryEntry[],
+        private readonly initialDataObjects: [string, IFluidStaticDataObjectClass][] = []) {
         super(registryEntries, [], [createRequestHandler, innerRequestHandler]);
+    }
+
+    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+        // If the developer provides additional DataObjects we will create them
+        for (const dataObject of this.initialDataObjects) {
+            await runtime.createRootDataStore(
+                dataObject[1].factory.type,
+                dataObject[0],
+            );
+        }
     }
 }

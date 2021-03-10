@@ -6,16 +6,19 @@
 import { getContainer, IGetContainerService } from "@fluid-experimental/get-container";
 import { DataObject, getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
-import { IFluidDataStoreFactory, NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
-import { DOProviderContainerRuntimeFactory } from "./containerCode";
-
-export interface IFluidStaticDataObjectClass {
-    readonly factory: IFluidDataStoreFactory;
-}
+import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
+import { DOProviderContainerRuntimeFactory, IFluidStaticDataObjectClass } from "./containerCode";
 
 export interface FluidContainerConfig {
     id: string,
     dataObjects: IFluidStaticDataObjectClass[],
+}
+
+export interface FluidCreateContainerConfig extends FluidContainerConfig {
+    /**
+     * initial DataObjects will be created when the Container is first created.
+     */
+    initialDataObjects?: [string, IFluidStaticDataObjectClass][]
 }
 
 export class FluidContainer {
@@ -69,12 +72,12 @@ export class FluidInstance {
         this.containerService = getContainerService;
     }
 
-    public async createContainer(config: FluidContainerConfig): Promise<FluidContainer> {
+    public async createContainer(config: FluidCreateContainerConfig): Promise<FluidContainer> {
         const registryEntries = this.getRegistryEntries(config.dataObjects);
         const container = await getContainer(
             this.containerService,
             config.id,
-            new DOProviderContainerRuntimeFactory(registryEntries),
+            new DOProviderContainerRuntimeFactory(registryEntries, config.initialDataObjects),
             true, /* createNew */
         );
         return new FluidContainer(container, registryEntries, true /* createNew */);
@@ -114,7 +117,7 @@ export const Fluid = {
         }
         globalFluid = new FluidInstance(getContainerService);
     },
-    async createContainer(config: FluidContainerConfig): Promise<FluidContainer> {
+    async createContainer(config: FluidCreateContainerConfig): Promise<FluidContainer> {
         if (!globalFluid) {
             throw new Error("Fluid has not been properly initialized before attempting to create a container");
         }

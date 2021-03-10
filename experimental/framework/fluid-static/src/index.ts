@@ -6,9 +6,9 @@ import { Fluid } from "./FluidStatic";
 
 export * from "./containerCode";
 export {
-    IFluidStaticDataObjectClass,
     FluidContainer,
     FluidContainerConfig,
+    FluidCreateContainerConfig,
     FluidInstance,
 } from "./FluidStatic";
 

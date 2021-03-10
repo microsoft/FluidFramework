@@ -2,11 +2,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-    IKeyValueDataObject,
-    KeyValueDataObject,
-} from "@fluid-experimental/data-objects";
-import Fluid from "@fluid-experimental/fluid-static";
+import { KeyValueDataObject } from "@fluid-experimental/data-objects";
+import Fluid, { FluidCreateContainerConfig } from "@fluid-experimental/fluid-static";
 import { TinyliciousService } from "@fluid-experimental/get-container";
 import { DiceRollerController } from "./controller";
 import { renderDiceRoller } from "./view";
@@ -25,19 +22,18 @@ document.title = containerId;
 const dataObjectId = "dice";
 
 async function start(): Promise<void> {
-    const containerConfig = {
+    const containerConfig: FluidCreateContainerConfig = {
         id: containerId,
         dataObjects: [KeyValueDataObject],
+        initialDataObjects: [[dataObjectId, KeyValueDataObject]],
     };
     // Get or create the document
     const fluidContainer = createNew
         ? await Fluid.createContainer(containerConfig)
         : await Fluid.getContainer(containerConfig);
 
-    // We'll create the data object when we create the new document.
-    const keyValueDataObject: IKeyValueDataObject = createNew
-        ? await fluidContainer.createDataObject<KeyValueDataObject>(KeyValueDataObject, dataObjectId)
-        : await fluidContainer.getDataObject<KeyValueDataObject>(dataObjectId);
+    // We now get the DataObject from the container
+    const keyValueDataObject = await fluidContainer.getDataObject<KeyValueDataObject>(dataObjectId);
 
     // Our controller manipulates the data object (model).
     const diceRollerController = new DiceRollerController(keyValueDataObject);
