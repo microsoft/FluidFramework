@@ -521,6 +521,7 @@ export class LoggingError extends Error implements ILoggingError {
         private readonly props: ITaggableTelemetryProperties = {},
     ) {
         super(message);
+        Object.assign(this, props); // Back compat - Some code expects props to be assigned
     }
 
     /**
