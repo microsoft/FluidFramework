@@ -26,7 +26,7 @@ export interface ContainerCreateConfig extends ContainerConfig {
 
 export class FluidContainer {
     private readonly types: Set<string>;
-    constructor(
+    public constructor(
         private readonly container: IContainer,
         namedRegistryEntries: NamedFluidDataStoreRegistryEntry[],
         public readonly createNew: boolean) {
@@ -45,7 +45,8 @@ export class FluidContainer {
         const type = dataObjectClass.factory.type;
         // This is a runtime check to ensure the developer doesn't try to create something they have not defined.
         if (!this.types.has(type)) {
-            throw new Error("Trying to create a DataObject that was not defined in the Fluid.init");
+            throw new Error(
+                `Trying to create a DataObject with type ${type} that was not defined in Container initialization`);
         }
 
         await this.container.request({ url: `/create/${type}/${id}` });
@@ -67,7 +68,7 @@ export class FluidInstance {
     private readonly containerService: IGetContainerService;
 
     public constructor(getContainerService: IGetContainerService) {
-        // check for non-typescript usages
+        // This check is for non-typescript usages
         if (getContainerService === undefined) {
             throw new Error("Fluid cannot be initialized without a ContainerService");
         }
@@ -85,6 +86,7 @@ export class FluidInstance {
         );
         return new FluidContainer(container, registryEntries, true /* createNew */);
     }
+
     public async getContainer(id: string, config: ContainerCreateConfig): Promise<FluidContainer> {
         const registryEntries = this.getRegistryEntries(config.dataObjects);
         const container = await getContainer(

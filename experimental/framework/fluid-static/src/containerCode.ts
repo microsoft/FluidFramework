@@ -10,9 +10,7 @@ import { innerRequestHandler, RuntimeRequestHandler } from "@fluidframework/requ
 import { IFluidDataStoreFactory, NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
 
-export type IdToDataObjectCollection = {
-    [P in string]: IFluidStaticDataObjectClass
-};
+export type IdToDataObjectCollection = Record<string, IFluidStaticDataObjectClass>;
 
 export interface IFluidStaticDataObjectClass {
     readonly factory: IFluidDataStoreFactory;
