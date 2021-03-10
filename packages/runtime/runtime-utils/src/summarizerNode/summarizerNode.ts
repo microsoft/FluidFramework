@@ -252,7 +252,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
         const snapshotTree = await getSnapshot();
         const referenceSequenceNumber = await seqFromTree(snapshotTree, readAndParseBlob);
-        return this.refreshLatestSummaryFromSnapshot(
+        await this.refreshLatestSummaryFromSnapshot(
             referenceSequenceNumber,
             snapshotTree,
             undefined,
@@ -363,6 +363,8 @@ export class SummarizerNode implements IRootSummarizerNode {
     }
 
     public loadBaseSummaryWithoutDifferential(snapshot: ISnapshotTree) {
+        // Check base summary to see if it has any additional path parts
+        // separating child SummarizerNodes. Checks for .channels subtrees.
         const { childrenPathPart } = parseSummaryForSubtrees(snapshot);
         if (childrenPathPart !== undefined && this.latestSummary !== undefined) {
             this.latestSummary.additionalPath = EscapedPath.create(childrenPathPart);

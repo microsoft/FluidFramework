@@ -121,9 +121,7 @@ describe("Data Store Creation Tests", () => {
                 getCreateSummarizerNodeFn(dataStoreId),
                 attachCb,
                 undefined,
-                false /* isRootDataStore */,
-                false /* disableIsolatedChannels */,
-                2);
+                false /* isRootDataStore */);
 
             try {
                 await context.realize();
@@ -148,8 +146,6 @@ describe("Data Store Creation Tests", () => {
                 attachCb,
                 undefined,
                 false /* isRootDataStore */,
-                false /* disableIsolatedChannels */,
-                2,
                 2);
 
             try {
@@ -174,9 +170,7 @@ describe("Data Store Creation Tests", () => {
                 getCreateSummarizerNodeFn(dataStoreId),
                 attachCb,
                 undefined,
-                false /* isRootDataStore */,
-                false /* disableIsolatedChannels */,
-                2);
+                false /* isRootDataStore */);
 
             try {
                 await contextA.realize();
@@ -200,9 +194,7 @@ describe("Data Store Creation Tests", () => {
                 getCreateSummarizerNodeFn(dataStoreId),
                 attachCb,
                 undefined,
-                false /* isRootDataStore */,
-                false /* disableIsolatedChannels */,
-                2);
+                false /* isRootDataStore */);
 
             try {
                 await contextB.realize();
@@ -226,9 +218,7 @@ describe("Data Store Creation Tests", () => {
                 getCreateSummarizerNodeFn(dataStoreBId),
                 attachCb,
                 undefined,
-                false /* isRootDataStore */,
-                false /* disableIsolatedChannels */,
-                2);
+                false /* isRootDataStore */);
 
             try {
                 await contextB.realize();
@@ -249,9 +239,7 @@ describe("Data Store Creation Tests", () => {
                 getCreateSummarizerNodeFn(dataStoreCId),
                 attachCb,
                 undefined,
-                false /* isRootDataStore */,
-                false /* disableIsolatedChannels */,
-                2);
+                false /* isRootDataStore */);
 
             try {
                 await contextC.realize();
@@ -275,9 +263,7 @@ describe("Data Store Creation Tests", () => {
                 getCreateSummarizerNodeFn(dataStoreId),
                 attachCb,
                 undefined,
-                false /* isRootDataStore */,
-                false /* disableIsolatedChannels */,
-                2);
+                false /* isRootDataStore */);
 
             try {
                 await contextFake.realize();
@@ -301,9 +287,7 @@ describe("Data Store Creation Tests", () => {
                 getCreateSummarizerNodeFn(dataStoreId),
                 attachCb,
                 undefined,
-                false /* isRootDataStore */,
-                false /* disableIsolatedChannels */,
-                2);
+                false /* isRootDataStore */);
 
             try {
                 await contextFake.realize();
@@ -327,9 +311,7 @@ describe("Data Store Creation Tests", () => {
                 getCreateSummarizerNodeFn(dataStoreId),
                 attachCb,
                 undefined,
-                false /* isRootDataStore */,
-                false /* disableIsolatedChannels */,
-                2);
+                false /* isRootDataStore */);
 
             try {
                 await contextC.realize();

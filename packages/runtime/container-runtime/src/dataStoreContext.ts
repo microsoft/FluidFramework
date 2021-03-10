@@ -24,7 +24,6 @@ import {
     Deferred,
     LazyPromise,
     TypedEventEmitter,
-    unreachableCase,
 } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
@@ -65,6 +64,7 @@ import { ContainerRuntime } from "./containerRuntime";
 import {
     dataStoreAttributesBlobName,
     DataStoreSummaryFormatVersion,
+    hasIsolatedChannels,
     summaryFormatVersionToNumber,
     wrapSummaryInChannelsTree,
 } from "./summaryFormat";
@@ -77,8 +77,9 @@ function createAttributes(
     const stringifiedPkg = JSON.stringify(pkg);
     return {
         pkg: stringifiedPkg,
-        snapshotFormatVersion: disableIsolatedChannels ? "0.1" : 2,
+        snapshotFormatVersion: 2,
         isRootDataStore,
+        disableIsolatedChannels: disableIsolatedChannels || undefined,
     };
 }
 export function createAttributesBlob(
@@ -104,6 +105,8 @@ export interface IFluidDataStoreAttributes {
      * true. This will ensure that older data stores are incorrectly collected.
      */
     readonly isRootDataStore?: boolean;
+    /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
+    readonly disableIsolatedChannels?: true;
 }
 
 interface ISnapshotDetails {
@@ -200,7 +203,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected readonly summarizerNode: ISummarizerNodeWithGC;
 
     constructor(
-        private readonly _containerRuntime: ContainerRuntime,
+        protected readonly _containerRuntime: ContainerRuntime,
         public readonly id: string,
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
@@ -209,7 +212,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         private bindState: BindState,
         public readonly isLocalDataStore: boolean,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
-        protected readonly disableIsolatedChannels: boolean,
         protected pkg?: readonly string[],
     ) {
         super();
@@ -394,7 +396,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         const summarizeResult = await this.channel!.summarize(fullTree, trackState);
         let pathPartsForChildren: string[] | undefined;
 
-        if (!this.disableIsolatedChannels) {
+        if (!this._containerRuntime.disableIsolatedChannels) {
             // Wrap dds summaries in .channels subtree.
             wrapSummaryInChannelsTree(summarizeResult);
             pathPartsForChildren = [channelsTreeName];
@@ -402,7 +404,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         // Add data store's attributes to the summary.
         const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
-        const attributes = createAttributes(pkg, isRootDataStore, this.disableIsolatedChannels);
+        const attributes = createAttributes(pkg, isRootDataStore, this._containerRuntime.disableIsolatedChannels);
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // Add GC details to the summary.
@@ -663,7 +665,6 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         storage: IDocumentStorageService,
         scope: IFluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
-        disableIsolatedChannels: boolean,
         pkg?: string[],
     ) {
         super(
@@ -678,7 +679,6 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             () => {
                 throw new Error("Already attached");
             },
-            disableIsolatedChannels,
             pkg,
         );
     }
@@ -710,29 +710,16 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
 
             let pkgFromSnapshot: string[];
             // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
-            // For snapshotFormatVersion = "0.1" or above, pkg is jsonified, otherwise it is just a string.
-            switch (attributes.snapshotFormatVersion) {
-                case undefined: {
-                    if (attributes.pkg.startsWith("[\"") && attributes.pkg.endsWith("\"]")) {
-                        pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
-                    } else {
-                        pkgFromSnapshot = [attributes.pkg];
-                    }
-                    break;
-                }
-                case 2: {
-                    tree = tree.trees[channelsTreeName];
-                    // Intentional fallthrough, since package is still JSON
-                }
-                case "0.1": {
+            // For snapshotFormatVersion = "0.1" (1) or above, pkg is jsonified, otherwise it is just a string.
+            const formatVersion = summaryFormatVersionToNumber(attributes.snapshotFormatVersion);
+            if (formatVersion < 1) {
+                if (attributes.pkg.startsWith("[\"") && attributes.pkg.endsWith("\"]")) {
                     pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
-                    break;
+                } else {
+                    pkgFromSnapshot = [attributes.pkg];
                 }
-                default: {
-                    unreachableCase(
-                        attributes.snapshotFormatVersion,
-                        `Invalid snapshot format version ${attributes.snapshotFormatVersion}`);
-                }
+            } else {
+                pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
             }
             this.pkg = pkgFromSnapshot;
 
@@ -742,6 +729,10 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
              * roots in the document but they won't break.
              */
             isRootDataStore = attributes.isRootDataStore ?? true;
+
+            if (hasIsolatedChannels(attributes)) {
+                tree = tree.trees[channelsTreeName];
+            }
         }
 
         return {
@@ -792,8 +783,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
         protected readonly isRootDataStore: boolean,
-        disableIsolatedChannels: boolean,
-        protected readonly summaryFormatVersion: DataStoreSummaryFormatVersion,
         /**
          * @deprecated 0.16 Issue #1635, #3631
          */
@@ -809,7 +798,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
             snapshotTree ? BindState.Bound : BindState.NotBound,
             true,
             bindChannel,
-            disableIsolatedChannels,
             pkg);
         this.attachListeners();
     }
@@ -832,13 +820,17 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
         const summarizeResult = this.channel.getAttachSummary();
 
-        if (!this.disableIsolatedChannels) {
+        if (!this._containerRuntime.disableIsolatedChannels) {
             // Wrap dds summaries in .channels subtree.
             wrapSummaryInChannelsTree(summarizeResult);
         }
 
         // Add data store's attributes to the summary.
-        const attributes = createAttributes(this.pkg, this.isRootDataStore, this.disableIsolatedChannels);
+        const attributes = createAttributes(
+            this.pkg,
+            this.isRootDataStore,
+            this._containerRuntime.disableIsolatedChannels,
+        );
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // Add GC details to the summary.
@@ -863,10 +855,13 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         assert(this.pkg !== undefined, "pkg should be available in local data store");
         assert(this.isRootDataStore !== undefined, "isRootDataStore should be available in local data store");
-        const versionNumber = summaryFormatVersionToNumber(this.summaryFormatVersion);
+        const snapshot = this._containerRuntime.disableIsolatedChannels
+            ? this.snapshotTree
+            : this.snapshotTree?.trees[channelsTreeName];
         return {
             pkg: this.pkg,
-            snapshot: versionNumber < 2 ? this.snapshotTree : this.snapshotTree?.trees[channelsTreeName],
+            snapshot: this._containerRuntime.disableIsolatedChannels ? this.snapshotTree :
+            snapshot,
             isRootDataStore: this.isRootDataStore,
         };
     }
@@ -894,8 +889,6 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         snapshotTree: ISnapshotTree | undefined,
         isRootDataStore: boolean,
-        disableIsolatedChannels: boolean,
-        summaryFormatVersion: DataStoreSummaryFormatVersion,
         /**
          * @deprecated 0.16 Issue #1635, #3631
          */
@@ -911,8 +904,6 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
             bindChannel,
             snapshotTree,
             isRootDataStore,
-            disableIsolatedChannels,
-            summaryFormatVersion,
             createProps);
     }
 }
@@ -937,7 +928,6 @@ export class LocalDetachedFluidDataStoreContext
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         snapshotTree: ISnapshotTree | undefined,
         isRootDataStore: boolean,
-        disableIsolatedChannels: boolean,
     ) {
         super(
             id,
@@ -949,8 +939,6 @@ export class LocalDetachedFluidDataStoreContext
             bindChannel,
             snapshotTree,
             isRootDataStore,
-            disableIsolatedChannels,
-            disableIsolatedChannels ? "0.1" : 2,
         );
         this.detachedRuntimeCreation = true;
     }

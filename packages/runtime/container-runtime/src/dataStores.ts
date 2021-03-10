@@ -53,9 +53,11 @@ import {
     LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
 import {
-    ContainerRuntimeSummaryFormatVersion,
     dataStoreAttributesBlobName,
+    IContainerRuntimeMetadata,
     nonDataStorePaths,
+    rootHasIsolatedChannels,
+    summaryFormatVersionToNumber,
 } from "./summaryFormat";
 
  /**
@@ -78,7 +80,6 @@ export class DataStores implements IDisposable {
         private readonly submitAttachFn: (attachContent: any) => void,
         private readonly getCreateChildSummarizerNodeFn:
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
-        private readonly disableIsolatedChannels: boolean,
         baseLogger: ITelemetryBaseLogger,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
@@ -103,10 +104,8 @@ export class DataStores implements IDisposable {
                     this.runtime,
                     this.runtime.storage,
                     this.runtime.scope,
-                    this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
-                    this.disableIsolatedChannels);
+                    this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }));
             } else {
-                let pkgFromSnapshot: string[];
                 if (typeof value !== "object") {
                     throw new Error("Snapshot should be there to load from!!");
                 }
@@ -116,15 +115,12 @@ export class DataStores implements IDisposable {
                         snapshotTree.blobs,
                         snapshotTree.blobs[dataStoreAttributesBlobName]);
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
-                // For snapshotFormatVersion = "0.1" or above, pkg is jsonified, otherwise it is just a string.
+                // For snapshotFormatVersion = "0.1" (1) or above, pkg is jsonified, otherwise it is just a string.
                 // However the feature of loading a detached container from snapshot, is added when the
-                // snapshotFormatVersion is at least "0.1", so we don't expect it to be anything else.
-                if (attributes.snapshotFormatVersion === "0.1"
-                    || attributes.snapshotFormatVersion === 2) {
-                    pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
-                } else {
-                    throw new Error(`Invalid snapshot format version ${attributes.snapshotFormatVersion}`);
-                }
+                // snapshotFormatVersion is at least "0.1" (1), so we don't expect it to be anything else.
+                const formatVersion = summaryFormatVersionToNumber(attributes.snapshotFormatVersion);
+                assert(formatVersion > 0, `Invalid snapshot format version ${attributes.snapshotFormatVersion}`);
+                const pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
 
                 dataStoreContext = new LocalFluidDataStoreContext(
                     key,
@@ -139,7 +135,6 @@ export class DataStores implements IDisposable {
                     // stores in older documents are not garbage collected incorrectly. This may lead to additional
                     // roots in the document but they won't break.
                     attributes.isRootDataStore ?? true,
-                    this.disableIsolatedChannels,
                     attributes.snapshotFormatVersion,
                 );
             }
@@ -192,10 +187,13 @@ export class DataStores implements IDisposable {
                     type: CreateSummarizerNodeSource.FromAttach,
                     sequenceNumber: message.sequenceNumber,
                     snapshot: attachMessage.snapshot ?? {
-                        entries: [createAttributesBlob(pkg, true /* isRootDataStore */, this.disableIsolatedChannels)],
+                        entries: [createAttributesBlob(
+                            pkg,
+                            true /* isRootDataStore */,
+                            this.runtime.disableIsolatedChannels,
+                        )],
                     },
                 }),
-            this.disableIsolatedChannels,
             pkg);
 
         // Resolve pending gets and store off any new ones
@@ -241,7 +239,6 @@ export class DataStores implements IDisposable {
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
             isRoot,
-            this.disableIsolatedChannels,
         );
         this.contexts.addUnbound(context);
         return context;
@@ -258,7 +255,6 @@ export class DataStores implements IDisposable {
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
             isRoot,
-            this.disableIsolatedChannels,
             props,
         );
         this.contexts.addUnbound(context);
@@ -511,29 +507,29 @@ export class DataStores implements IDisposable {
     }
 }
 
-export function getSnapshotForDataStores(
+export function getSummaryForDatastores(
     snapshot: ISnapshotTree | undefined,
-    snapshotFormatVersion: ContainerRuntimeSummaryFormatVersion,
+    metadata: IContainerRuntimeMetadata,
 ): ISnapshotTree | undefined {
     if (!snapshot) {
         return undefined;
     }
 
-    if (snapshotFormatVersion !== undefined) {
-        const dataStoresSnapshot = snapshot.trees[channelsTreeName];
-        assert(!!dataStoresSnapshot, `expected ${channelsTreeName} tree in snapshot`);
-        return dataStoresSnapshot;
+    if (rootHasIsolatedChannels(metadata)) {
+        const datastoresSnapshot = snapshot.trees[channelsTreeName];
+        assert(!!datastoresSnapshot, `expected ${channelsTreeName} tree in snapshot`);
+        return datastoresSnapshot;
     } else {
         // back-compat: strip out all non-datastore paths before giving to DataStores object.
-        const dataStoresTrees: ISnapshotTree["trees"] = {};
+        const datastoresTrees: ISnapshotTree["trees"] = {};
         for (const [key, value] of Object.entries(snapshot.trees)) {
             if (!nonDataStorePaths.includes(key)) {
-                dataStoresTrees[key] = value;
+                datastoresTrees[key] = value;
             }
         }
         return {
             ...snapshot,
-            trees: dataStoresTrees,
+            trees: datastoresTrees,
         };
     }
 }

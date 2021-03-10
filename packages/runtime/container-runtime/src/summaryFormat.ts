@@ -5,6 +5,7 @@
 
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreAttributes } from "./dataStoreContext";
 
 export type ContainerRuntimeSummaryFormatVersion =
     /**
@@ -52,7 +53,19 @@ export const chunksBlobName = ".chunks";
 export const blobsTreeName = ".blobs";
 
 export interface IContainerRuntimeMetadata {
-    snapshotFormatVersion: ContainerRuntimeSummaryFormatVersion;
+    readonly summaryFormatVersion: ContainerRuntimeSummaryFormatVersion;
+    /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
+    readonly disableIsolatedChannels?: true;
+}
+
+export function rootHasIsolatedChannels(metadata: IContainerRuntimeMetadata | undefined): boolean {
+    const version = summaryFormatVersionToNumber(metadata?.summaryFormatVersion);
+    return version >= 1 && !metadata?.disableIsolatedChannels;
+}
+
+export function hasIsolatedChannels(attributes: IFluidDataStoreAttributes | undefined): boolean {
+    const version = summaryFormatVersionToNumber(attributes?.snapshotFormatVersion);
+    return version >= 2 && !attributes?.disableIsolatedChannels;
 }
 
 export const protocolTreeName = ".protocol";

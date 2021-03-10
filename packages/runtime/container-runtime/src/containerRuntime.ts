@@ -122,7 +122,7 @@ import { SummaryCollection } from "./summaryCollection";
 import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager } from "./blobManager";
-import { DataStores, getSnapshotForDataStores } from "./dataStores";
+import { DataStores, getSummaryForDatastores } from "./dataStores";
 import {
     blobsTreeName,
     chunksBlobName,
@@ -611,6 +611,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.attachState;
     }
 
+    /**
+     * Returns true if generating summaries with isolated channels is
+     * explicitly disabled. This only affects how summaries are written.
+     */
+    public get disableIsolatedChannels(): boolean {
+        return !!this.runtimeOptions.disableIsolatedChannels;
+    }
+
     public nextSummarizerP?: Promise<Summarizer>;
     public nextSummarizerD?: Deferred<Summarizer>;
 
@@ -676,7 +684,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
-        metadata: IContainerRuntimeMetadata = { snapshotFormatVersion: undefined },
+        metadata: IContainerRuntimeMetadata = { summaryFormatVersion: undefined },
         chunks: [string, string[]][],
         runtimeOptions: IContainerRuntimeOptions = {
             generateSummaries: true,
@@ -732,7 +740,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         this.dataStores = new DataStores(
-            getSnapshotForDataStores(context.baseSnapshot, metadata.snapshotFormatVersion),
+            getSummaryForDatastores(context.baseSnapshot, metadata),
             this,
             (attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
             (id: string, createParam: CreateChildSummarizerNodeParam) => (
@@ -747,7 +755,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     getGCDataFn,
                     getInitialGCSummaryDetailsFn,
                 ),
-            !!this.runtimeOptions.disableIsolatedChannels,
             this._logger);
 
         this.blobManager = new BlobManager(
@@ -952,6 +959,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    private formMetadata(): IContainerRuntimeMetadata {
+        return {
+            summaryFormatVersion: 1,
+            disableIsolatedChannels: this.disableIsolatedChannels || undefined,
+        };
+    }
+
     /**
      * Retrieves the runtime for a data store if it's referenced as per the initially summary that it is loaded with.
      * This is a workaround to handle scenarios where a data store shared with an external app is deleted and marked
@@ -981,7 +995,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async snapshot(): Promise<ITree> {
         const root: ITree = { entries: [] };
 
-        if (this.runtimeOptions.disableIsolatedChannels) {
+        if (this.disableIsolatedChannels) {
             root.entries = root.entries.concat(await this.dataStores.snapshot());
         } else {
             root.entries.push(new TreeTreeEntry(
@@ -989,7 +1003,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 { entries: await this.dataStores.snapshot() },
             ));
 
-            const metadata: IContainerRuntimeMetadata = { snapshotFormatVersion: 1 };
+            const metadata = this.formMetadata();
             root.entries.push(new BlobTreeEntry(metadataBlobName, JSON.stringify(metadata)));
         }
 
@@ -1001,10 +1015,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {
-        if (!this.runtimeOptions.disableIsolatedChannels) {
-            const metadata: IContainerRuntimeMetadata = { snapshotFormatVersion: 1 };
-            addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
-        }
+        const metadata = this.formMetadata();
+        addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
         if (this.chunkMap.size > 0) {
             const content = JSON.stringify([...this.chunkMap]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
@@ -1384,7 +1396,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public createSummary(): ISummaryTree {
         const summarizeResult = this.dataStores.createSummary();
-        if (!this.runtimeOptions.disableIsolatedChannels) {
+        if (!this.disableIsolatedChannels) {
             // Wrap data store summaries in .channels subtree.
             wrapSummaryInChannelsTree(summarizeResult);
         }
@@ -1437,7 +1449,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const summarizeResult = await this.dataStores.summarize(fullTree, trackState);
         let pathPartsForChildren: string[] | undefined;
 
-        if (!this.runtimeOptions.disableIsolatedChannels) {
+        if (!this.disableIsolatedChannels) {
             // Wrap data store summaries in .channels subtree.
             wrapSummaryInChannelsTree(summarizeResult);
             pathPartsForChildren = [channelsTreeName];
