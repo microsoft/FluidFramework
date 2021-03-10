@@ -860,7 +860,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
             : this.snapshotTree?.trees[channelsTreeName];
         return {
             pkg: this.pkg,
-            snapshot: this._containerRuntime.disableIsolatedChannels ? this.snapshotTree :
             snapshot,
             isRootDataStore: this.isRootDataStore,
         };

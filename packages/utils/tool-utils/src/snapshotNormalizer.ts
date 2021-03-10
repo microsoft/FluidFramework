@@ -105,6 +105,7 @@ export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormali
     // Merge blobs to normalize in the config with runtime blobs to normalize. The contents of these blobs will be
     // parsed and deep sorted.
     const blobsToNormalize = [ ...runtimeBlobsToNormalize, ...config?.blobsToNormalize ?? [] ];
+    const attributesToIgnore = ["disableIsolatedChannels"];
     const normalizedEntries: ITreeEntry[] = [];
 
     for (const entry of snapshot.entries) {
@@ -118,6 +119,14 @@ export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormali
                 // If this blob has to be normalized, parse and sort the blob contents first.
                 if (blobsToNormalize.includes(entry.path)) {
                     contents = getSortedBlobContent(contents);
+                }
+                if (entry.path === ".component") {
+                    // Ignore the following properties from datastore attributes.
+                    const attributes: Record<string, unknown> = JSON.parse(contents);
+                    for (const attributeToIgnore of attributesToIgnore) {
+                        attributes[attributeToIgnore] = undefined;
+                    }
+                    contents = JSON.stringify(attributes);
                 }
                 normalizedEntries.push(new BlobTreeEntry(entry.path, contents));
                 break;

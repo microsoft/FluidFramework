@@ -66,7 +66,7 @@ export function compareWithReferenceSnapshot(
     const packageVersionRegex = /\\"packageversion\\":\\"[^"]+\\"/gi;
     const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X\\\"";
 
-    // The snapshotFormatVersion could vary. Replace all with -1 like packageVersion.
+    // The summaryFormatVersion and snapshotFormatVersion could vary. Replace all with -1 like packageVersion.
     const snapshotFormatVersionRegex = /\\"snapshotformatversion\\":(\\"[^"]+\\"|\d+)/gi;
     const snapshotFormatVersionPlaceholder = "\\\"snapshotFormatVersion\\\":-1";
 
