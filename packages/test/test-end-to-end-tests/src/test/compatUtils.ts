@@ -3,29 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import {
-    IContainer,
-    ILoader,
-} from "@fluidframework/container-definitions";
+import { IContainer, ILoader } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions, ContainerRuntime } from "@fluidframework/container-runtime";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidLoadable, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IClientConfiguration } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+import { ISharedDirectory } from "@fluidframework/map";
+import { unreachableCase } from "@fluidframework/common-utils";
+
 import {
     ChannelFactoryRegistry,
     createTestContainerRuntimeFactory,
-    TestFluidObjectFactory,
     OpProcessingController,
     TestObjectProvider,
 } from "@fluidframework/test-utils";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
-import * as old from "./oldVersion";
-import * as old2 from "./oldVersion2";
-
-type OldApi = typeof old | typeof old2;
+import { getLoaderApi, getContainerRuntimeApi, getDataRuntimeApi, DataRuntimeApiType } from "./testApi";
 
 export interface ITestObjectProvider {
     /**
@@ -50,9 +46,6 @@ export interface ITestObjectProvider {
 
 export interface ITestOptions {
     serviceConfiguration?: Partial<IClientConfiguration>,
-
-    // The old apis to use if running against an older version
-    oldApis?: OldApi[],
 }
 
 export enum DataObjectFactoryType {
@@ -71,36 +64,60 @@ export interface ITestContainerConfig {
     runtimeOptions?: IContainerRuntimeOptions,
 }
 
-export class TestDataObject extends DataObject {
-    public static readonly type = "@fluid-example/test-dataStore";
-    public get _context() { return this.context; }
-    public get _runtime() { return this.runtime; }
-    public get _root() { return this.root; }
+export const TestDataObjectType = "@fluid-example/test-dataStore";
+
+export interface ITestDataObject extends IFluidLoadable {
+    _context: IFluidDataStoreContext;
+    _runtime: IFluidDataStoreRuntime;
+    _root: ISharedDirectory;
 }
 
-const createPrimedDataStoreFactory = (registry?: ChannelFactoryRegistry): IFluidDataStoreFactory => {
-    return new DataObjectFactory(
-        TestDataObject.type,
-        TestDataObject,
-        [...registry ?? []].map((r) => r[1]),
-        {});
-};
-
-const createTestFluidDataStoreFactory = (registry: ChannelFactoryRegistry = []): IFluidDataStoreFactory => {
-    return new TestFluidObjectFactory(registry);
-};
-
-export function getDataStoreFactory(containerOptions?: ITestContainerConfig) {
-    switch (containerOptions?.fluidDataObjectType) {
-        case undefined:
-        case DataObjectFactoryType.Primed:
-            return createPrimedDataStoreFactory(containerOptions?.registry);
-        case DataObjectFactoryType.Test:
-            return createTestFluidDataStoreFactory(containerOptions?.registry);
-        default:
-            throw new Error("unknown data store factory type");
+function createGetDataStoreFactoryFunction(api: DataRuntimeApiType) {
+    class TestDataObject extends api.DataObject implements ITestDataObject {
+        public get _context() { return this.context; }
+        public get _runtime() { return this.runtime; }
+        public get _root() { return this.root; }
     }
+
+    const registryMapping = {};
+    for (const value of Object.values(api.dds)) {
+        registryMapping[value.getFactory().type] = value.getFactory();
+    }
+
+    function convertRegistry(registry: ChannelFactoryRegistry = []): ChannelFactoryRegistry {
+        const oldRegistry: [string | undefined, IChannelFactory][] = [];
+        for (const [key, factory] of registry) {
+            const oldFactory = registryMapping[factory.type];
+            if (oldFactory === undefined) {
+                throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
+            }
+            oldRegistry.push([key, oldFactory]);
+        }
+
+        return oldRegistry;
+    }
+
+    return function(containerOptions?: ITestContainerConfig) {
+        const registry = convertRegistry(containerOptions?.registry);
+        const fluidDataObjectType = containerOptions?.fluidDataObjectType;
+        switch (fluidDataObjectType) {
+            case undefined:
+            case DataObjectFactoryType.Primed:
+                return new api.DataObjectFactory(
+                    TestDataObjectType,
+                    TestDataObject,
+                    [...registry].map((r) => r[1]),
+                    {});
+            case DataObjectFactoryType.Test:
+                return new api.TestFluidObjectFactory(registry);
+            default:
+                unreachableCase(fluidDataObjectType,
+                    `Unknown data store factory type ${fluidDataObjectType}`);
+        }
+    };
 }
+
+export const getDataStoreFactory = createGetDataStoreFactoryFunction(getDataRuntimeApi());
 
 export function createTestObjectProvider(
     type: string,
@@ -125,7 +142,7 @@ export const generateNonCompatTest = (
         tests(() => {
             // Run with all current versions
             const driver = getFluidTestDriver();
-            return createTestObjectProvider(TestDataObject.type, driver as any);
+            return createTestObjectProvider(TestDataObjectType, driver as any);
         });
     });
 };
@@ -135,53 +152,56 @@ export const generateCompatTest = (
     options: ITestOptions = {},
 ) => {
     // Run against all currently supported versions by default
-    const oldApis = options.oldApis ?? [old, old2];
-    oldApis.forEach((oldApi: OldApi) => {
-        describe(`compat ${oldApi.versionString} - old loader, new runtime`, function() {
+    const compatVersions = [-1, -2];
+    compatVersions.forEach((compatVersion: number) => {
+        const oldLoaderApi = getLoaderApi(compatVersion);
+        const oldContainerRuntimeApi = getContainerRuntimeApi(compatVersion);
+        const oldDataRuntimeApi = getDataRuntimeApi(compatVersion);
+        describe(`compat N${compatVersion} - old loader, new runtime`, function() {
             tests(() => {
                 const driver = getFluidTestDriver();
                 return createTestObjectProvider(
-                    TestDataObject.type,
+                    TestDataObjectType,
                     driver as any,
-                    oldApi.Loader as any,
+                    oldLoaderApi.Loader,
                 );
             });
         });
 
-        describe(`compat ${oldApi.versionString} - new loader, old runtime`, function() {
+        describe(`compat N${compatVersion} - new loader, old runtime`, function() {
             tests(() => {
                 const driver = getFluidTestDriver();
                 return createTestObjectProvider(
-                    TestDataObject.type,
+                    TestDataObjectType,
                     driver as any,
                     Loader,
-                    oldApi.ContainerRuntime as any,
-                    oldApi.getDataStoreFactory as any,
+                    oldContainerRuntimeApi.ContainerRuntime,
+                    createGetDataStoreFactoryFunction(oldDataRuntimeApi),
                 );
             });
         });
 
-        describe(`compat ${oldApi.versionString} - new ContainerRuntime, old DataStoreRuntime`, function() {
+        describe(`compat N${compatVersion} - new ContainerRuntime, old DataStoreRuntime`, function() {
             tests(() => {
                 const driver = getFluidTestDriver();
                 return createTestObjectProvider(
-                    TestDataObject.type,
+                    TestDataObjectType,
                     driver as any,
                     Loader,
                     ContainerRuntime,
-                    oldApi.getDataStoreFactory as any,
+                    createGetDataStoreFactoryFunction(oldDataRuntimeApi),
                 );
             });
         });
 
-        describe(`compat ${oldApi.versionString} - old ContainerRuntime, new DataStoreRuntime`, function() {
+        describe(`compat N${compatVersion} - old ContainerRuntime, new DataStoreRuntime`, function() {
             tests(() => {
                 const driver = getFluidTestDriver();
                 return createTestObjectProvider(
-                    TestDataObject.type,
+                    TestDataObjectType,
                     driver as any,
-                    oldApi.Loader as any,
-                    oldApi.ContainerRuntime as any,
+                    oldLoaderApi.Loader,
+                    oldContainerRuntimeApi.ContainerRuntime,
                     getDataStoreFactory,
                 );
             });
