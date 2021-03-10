@@ -154,9 +154,14 @@ export const generateCompatTest = (
     // Run against all currently supported versions by default
     const compatVersions = [-1, -2];
     compatVersions.forEach((compatVersion: number) => {
-        const oldLoaderApi = getLoaderApi(compatVersion);
-        const oldContainerRuntimeApi = getContainerRuntimeApi(compatVersion);
-        const oldDataRuntimeApi = getDataRuntimeApi(compatVersion);
+        let oldLoaderApi: ReturnType<typeof getLoaderApi>;
+        let oldContainerRuntimeApi: ReturnType<typeof getContainerRuntimeApi>;
+        let oldDataRuntimeApi: ReturnType<typeof getDataRuntimeApi>;
+        before(async () => {
+            oldLoaderApi = getLoaderApi(compatVersion);
+            oldContainerRuntimeApi = getContainerRuntimeApi(compatVersion);
+            oldDataRuntimeApi = getDataRuntimeApi(compatVersion);
+        });
         describe(`compat N${compatVersion} - old loader, new runtime`, function() {
             tests(() => {
                 const driver = getFluidTestDriver();

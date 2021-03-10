@@ -32,7 +32,7 @@
 
 import { exec, execSync } from "child_process";
 import * as path from "path";
-import { existsSync, mkdirSync, unlinkSync } from "fs";
+import { existsSync, mkdirSync, rmdirSync } from "fs";
 
 // Loader API
 import { Loader } from "@fluidframework/container-loader";
@@ -169,14 +169,14 @@ async function ensureInstalled(requested: string) {
                     { cwd: modulePath },
                     (error, stdout, stderr) => {
                         if (error) {
-                            rej(new Error(`Failed to install in ${modulePath}`));
+                            rej(new Error(`Failed to install in ${modulePath}\n${stderr}`));
                         }
                         res();
                     },
                 ),
             );
         } catch (e) {
-            try { unlinkSync(modulePath); } catch (ex) { }
+            try { (rmdirSync as any)(modulePath, { recursive: true }); } catch (ex) { }
             throw new Error(`Unable to install version ${version}\n${e}`);
         }
         return { version, modulePath };
@@ -185,9 +185,16 @@ async function ensureInstalled(requested: string) {
     }
 }
 
-export const mochaGlobalSetup = async () => Promise.all(
-    [ensureInstalled(getRequestedRange(-1)), ensureInstalled(getRequestedRange(-2))],
-);
+export async function mochaGlobalSetup() {
+    // Make sure we wait for both before returning, even if one of them is rejected
+    const p1 = ensureInstalled(getRequestedRange(-1));
+    const p2 = ensureInstalled(getRequestedRange(-2));
+    try {
+        await p1;
+    } finally {
+        await p2;
+    }
+}
 
 function checkInstalled(requested: string) {
     const version = resolveVersion(requested);
