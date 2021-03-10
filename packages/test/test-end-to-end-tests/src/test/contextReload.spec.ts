@@ -288,19 +288,25 @@ describe("context reload (hot-swap)", function() {
 
     const compatVersions = [-1, -2];
     compatVersions.forEach((compatVersion) => {
-        const oldLoaderApi = getLoaderApi(compatVersion);
-        const oldContainerRuntimeApi = getContainerRuntimeApi(compatVersion);
-        const oldDataStoreRuntimeApi = getDataRuntimeApi(compatVersion);
+        let oldLoaderApi: ReturnType<typeof getLoaderApi>;
+        let oldContainerRuntimeApi: ReturnType<typeof getContainerRuntimeApi>;
+        let oldDataRuntimeApi: ReturnType<typeof getDataRuntimeApi>;
+        let oldDataStoreClasses: ReturnType<typeof getTestDataStoreClasses>;
+        before(async () => {
+            oldLoaderApi = getLoaderApi(compatVersion);
+            oldContainerRuntimeApi = getContainerRuntimeApi(compatVersion);
+            oldDataRuntimeApi = getDataRuntimeApi(compatVersion);
+            oldDataStoreClasses = getTestDataStoreClasses(oldDataRuntimeApi);
+        });
         function createOldRuntimeFactory(dataStore): IRuntimeFactory {
             const type = TestDataObjectType;
-            const factory = new oldDataStoreRuntimeApi.DataObjectFactory(type, dataStore, [], {});
+            const factory = new oldDataRuntimeApi.DataObjectFactory(type, dataStore, [], {});
             return new oldContainerRuntimeApi.ContainerRuntimeFactoryWithDefaultDataStore(
                 factory,
-                [[type, Promise.resolve(new oldDataStoreRuntimeApi.DataObjectFactory(type, dataStore, [], {}))]],
+                [[type, Promise.resolve(new oldDataRuntimeApi.DataObjectFactory(type, dataStore, [], {}))]],
             );
         }
 
-        const oldDataStoreClasses = getTestDataStoreClasses(oldDataStoreRuntimeApi);
         describe(`compat N${compatVersions} - old loader, new runtime`, () => {
             beforeEach(async function() {
                 const documentId = createDocumentId();
