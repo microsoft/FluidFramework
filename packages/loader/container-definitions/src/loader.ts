@@ -282,7 +282,14 @@ export interface ILoaderHeader {
     [LoaderHeader.version]: string | undefined | null;
 }
 
+interface IProvideLoader {
+    readonly ILoader: ILoader;
+}
+
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IRequestHeader extends Partial<ILoaderHeader> { }
+
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideLoader>> { }
 }
