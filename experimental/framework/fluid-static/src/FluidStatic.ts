@@ -9,12 +9,11 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
 import { DOProviderContainerRuntimeFactory, IFluidStaticDataObjectClass } from "./containerCode";
 
-export interface FluidContainerConfig {
-    id: string,
+export interface ContainerConfig {
     dataObjects: IFluidStaticDataObjectClass[],
 }
 
-export interface FluidCreateContainerConfig extends FluidContainerConfig {
+export interface CreateContainerConfig extends ContainerConfig {
     /**
      * initial DataObjects will be created when the Container is first created.
      */
@@ -72,21 +71,21 @@ export class FluidInstance {
         this.containerService = getContainerService;
     }
 
-    public async createContainer(config: FluidCreateContainerConfig): Promise<FluidContainer> {
+    public async createContainer(id: string, config: CreateContainerConfig): Promise<FluidContainer> {
         const registryEntries = this.getRegistryEntries(config.dataObjects);
         const container = await getContainer(
             this.containerService,
-            config.id,
+            id,
             new DOProviderContainerRuntimeFactory(registryEntries, config.initialDataObjects),
             true, /* createNew */
         );
         return new FluidContainer(container, registryEntries, true /* createNew */);
     }
-    public async getContainer(config: FluidContainerConfig): Promise<FluidContainer> {
+    public async getContainer(id: string, config: CreateContainerConfig): Promise<FluidContainer> {
         const registryEntries = this.getRegistryEntries(config.dataObjects);
         const container = await getContainer(
             this.containerService,
-            config.id,
+            id,
             new DOProviderContainerRuntimeFactory(registryEntries),
             false, /* createNew */
         );
@@ -95,7 +94,7 @@ export class FluidInstance {
 
     private getRegistryEntries(dataObjects: IFluidStaticDataObjectClass[]) {
         if (dataObjects.length === 0) {
-            throw new Error("Fluid cannot be initialized without DataObjects");
+            throw new Error("Container cannot be initialized without DataObjects");
         }
 
         const dataObjectClassToRegistryEntry = (
@@ -117,16 +116,18 @@ export const Fluid = {
         }
         globalFluid = new FluidInstance(getContainerService);
     },
-    async createContainer(config: FluidCreateContainerConfig): Promise<FluidContainer> {
+    async createContainer(
+        id: string, config: CreateContainerConfig): Promise<FluidContainer> {
         if (!globalFluid) {
             throw new Error("Fluid has not been properly initialized before attempting to create a container");
         }
-        return globalFluid.createContainer(config);
+        return globalFluid.createContainer(id, config);
     },
-    async getContainer(config: FluidContainerConfig): Promise<FluidContainer> {
+    async getContainer(
+        id, config: CreateContainerConfig): Promise<FluidContainer> {
         if (!globalFluid) {
             throw new Error("Fluid has not been properly initialized before attempting to get a container");
         }
-        return globalFluid.getContainer(config);
+        return globalFluid.getContainer(id, config);
     },
 };

@@ -39,10 +39,10 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
         // If the developer provides additional DataObjects we will create them
-        for (const dataObject of this.initialDataObjects) {
+        for (const [id, dataObject]  of this.initialDataObjects) {
             await runtime.createRootDataStore(
-                dataObject[1].factory.type,
-                dataObject[0],
+                dataObject.factory.type,
+                id,
             );
         }
     }

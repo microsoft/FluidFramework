@@ -23,14 +23,13 @@ const dataObjectId = "dice";
 
 async function start(): Promise<void> {
     const containerConfig: FluidCreateContainerConfig = {
-        id: containerId,
         dataObjects: [KeyValueDataObject],
         initialDataObjects: [[dataObjectId, KeyValueDataObject]],
     };
     // Get or create the document
     const fluidContainer = createNew
-        ? await Fluid.createContainer(containerConfig)
-        : await Fluid.getContainer(containerConfig);
+        ? await Fluid.createContainer(containerId, containerConfig)
+        : await Fluid.getContainer(containerId, [KeyValueDataObject]);
 
     // We now get the DataObject from the container
     const keyValueDataObject = await fluidContainer.getDataObject<KeyValueDataObject>(dataObjectId);

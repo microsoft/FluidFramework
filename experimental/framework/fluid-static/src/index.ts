@@ -7,8 +7,8 @@ import { Fluid } from "./FluidStatic";
 export * from "./containerCode";
 export {
     FluidContainer,
-    FluidContainerConfig,
-    FluidCreateContainerConfig,
+    ContainerConfig,
+    CreateContainerConfig,
     FluidInstance,
 } from "./FluidStatic";
 
