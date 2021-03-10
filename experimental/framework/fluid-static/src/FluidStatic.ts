@@ -13,21 +13,30 @@ export interface IFluidStaticDataObjectClass {
     readonly factory: IFluidDataStoreFactory;
 }
 
+export interface FluidContainerProps {
+    id: string,
+    dataObjects: IFluidStaticDataObjectClass[],
+    initialDataObjects: [id: string, dataObject: IFluidStaticDataObjectClass],
+}
+
 export class FluidContainer {
     private readonly types: Set<string>;
     constructor(
         private readonly container: IContainer,
         namedRegistryEntries: NamedFluidDataStoreRegistryEntry[],
         public readonly createNew: boolean) {
-            this.types = new Set();
-            namedRegistryEntries.forEach((value: NamedFluidDataStoreRegistryEntry) => {
-                this.types.add(value[0]);
-            });
-        }
+        this.types = new Set();
+        namedRegistryEntries.forEach((value: NamedFluidDataStoreRegistryEntry) => {
+            const type = value[0];
+            if (this.types.has(type)) {
+                throw new Error(`Multiple DataObjects share the same type identifier ${value}`);
+            }
+            this.types.add(type);
+        });
+    }
 
     public async createDataObject<T extends DataObject>(
-        dataObjectClass: IFluidStaticDataObjectClass, id: string): Promise<T>
-    {
+        dataObjectClass: IFluidStaticDataObjectClass, id: string): Promise<T> {
         const type = dataObjectClass.factory.type;
         // This is a runtime check to ensure the developer doesn't try to create something they have not defined.
         if (!this.types.has(type)) {
@@ -45,66 +54,73 @@ export class FluidContainer {
     }
 }
 
+/**
+ * A FluidInstance defines the service that this will be connect
+ */
 export class FluidInstance {
-    private readonly registryEntries: NamedFluidDataStoreRegistryEntry[];
     private readonly containerService: IGetContainerService;
 
-    public constructor(dataObjectClasses: IFluidStaticDataObjectClass[], getContainerService: IGetContainerService) {
-        if (dataObjectClasses.length === 0) {
-            throw new Error("Fluid cannot be initialized without DataObjects");
-        }
-
+    public constructor(getContainerService: IGetContainerService) {
         // check for non-typescript usages
         if (getContainerService === undefined) {
             throw new Error("Fluid cannot be initialized without a ContainerService");
         }
 
-        const dataObjectClassToRegistryEntry = (
-            dataObjectClass: IFluidStaticDataObjectClass): NamedFluidDataStoreRegistryEntry =>
-                [dataObjectClass.factory.type, Promise.resolve(dataObjectClass.factory)];
-
-        this.registryEntries = dataObjectClasses.map(dataObjectClassToRegistryEntry);
         this.containerService = getContainerService;
     }
 
-    public async createContainer(docId: string): Promise<FluidContainer> {
+    public async createContainer(id: string, dataObjects: IFluidStaticDataObjectClass[]): Promise<FluidContainer> {
+        const registryEntries = this.getRegistryEntries(dataObjects);
         const container = await getContainer(
             this.containerService,
-            docId,
-            new DOProviderContainerRuntimeFactory(this.registryEntries),
+            id,
+            new DOProviderContainerRuntimeFactory(registryEntries),
             true, /* createNew */
         );
-        return new FluidContainer(container, this.registryEntries, true /* createNew */);
+        return new FluidContainer(container, registryEntries, true /* createNew */);
     }
-    public async getContainer(docId: string): Promise<FluidContainer> {
+    public async getContainer(id: string, dataObjects: IFluidStaticDataObjectClass[]): Promise<FluidContainer> {
+        const registryEntries = this.getRegistryEntries(dataObjects);
         const container = await getContainer(
             this.containerService,
-            docId,
-            new DOProviderContainerRuntimeFactory(this.registryEntries),
+            id,
+            new DOProviderContainerRuntimeFactory(registryEntries),
             false, /* createNew */
         );
-        return new FluidContainer(container, this.registryEntries, false /* createNew */);
+        return new FluidContainer(container, registryEntries, false /* createNew */);
+    }
+
+    private getRegistryEntries(dataObjects: IFluidStaticDataObjectClass[]) {
+        if (dataObjects.length === 0) {
+            throw new Error("Fluid cannot be initialized without DataObjects");
+        }
+
+        const dataObjectClassToRegistryEntry = (
+            dataObjectClass: IFluidStaticDataObjectClass): NamedFluidDataStoreRegistryEntry =>
+            [dataObjectClass.factory.type, Promise.resolve(dataObjectClass.factory)];
+
+        return dataObjects.map(dataObjectClassToRegistryEntry);
     }
 }
 
 let globalFluid: FluidInstance | undefined;
 export const Fluid = {
-    init(dataObjectClasses: IFluidStaticDataObjectClass[], getContainerService: IGetContainerService) {
+    init(getContainerService: IGetContainerService) {
         if (globalFluid) {
             throw new Error("Fluid cannot be initialized more than once");
         }
-        globalFluid = new FluidInstance(dataObjectClasses, getContainerService);
+        globalFluid = new FluidInstance(getContainerService);
     },
-    async createContainer(docId: string): Promise<FluidContainer> {
+    async createContainer(id: string, dataObjects: IFluidStaticDataObjectClass[]): Promise<FluidContainer> {
         if (!globalFluid) {
-            throw new Error("Fluid has not been properly initialized before attempting to create a container.");
+            throw new Error("Fluid has not been properly initialized before attempting to create a container");
         }
-        return globalFluid.createContainer(docId);
+        return globalFluid.createContainer(id, dataObjects);
     },
-    async getContainer(docId: string): Promise<FluidContainer> {
+    async getContainer(id: string, dataObjects: IFluidStaticDataObjectClass[]): Promise<FluidContainer> {
         if (!globalFluid) {
-            throw new Error("Fluid has not been properly initialized before attempting to get a container.");
+            throw new Error("Fluid has not been properly initialized before attempting to get a container");
         }
-        return globalFluid.getContainer(docId);
+        return globalFluid.getContainer(id, dataObjects);
     },
 };

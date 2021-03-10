@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import { DataObjectFactory } from "@fluidframework/aqueduct";
 import {
     IKeyValueDataObject,
     KeyValueDataObject,
@@ -12,8 +12,18 @@ import { TinyliciousService } from "@fluid-experimental/get-container";
 import { DiceRollerController } from "./controller";
 import { renderDiceRoller } from "./view";
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+class Foo {
+    public static readonly factory = new DataObjectFactory(
+        "foo-dataobject",
+        KeyValueDataObject,
+        [],
+        {},
+    );
+}
+
 const service = new TinyliciousService();
-Fluid.init([KeyValueDataObject], service);
+Fluid.init(service);
 
 let createNew = false;
 if (location.hash.length === 0) {
@@ -28,8 +38,8 @@ const dataObjectId = "dice";
 async function start(): Promise<void> {
     // Get or create the document
     const fluidContainer = createNew
-        ? await Fluid.createContainer(containerId)
-        : await Fluid.getContainer(containerId);
+        ? await Fluid.createContainer(containerId, [Foo])
+        : await Fluid.getContainer(containerId, [Foo]);
 
     // We'll create the data object when we create the new document.
     const keyValueDataObject: IKeyValueDataObject = createNew
