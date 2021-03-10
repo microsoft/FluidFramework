@@ -7,7 +7,7 @@ import fs from "fs";
 import child_process from "child_process";
 import assert from "assert";
 import commander from "commander";
-import { Loader } from "@fluidframework/container-loader";
+import { Loader, Container } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { ITestDriver, TestDriverTypes, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
@@ -58,11 +58,23 @@ async function initialize(testDriver: ITestDriver) {
     return testId;
 }
 
-async function load(testDriver: ITestDriver, testId: string) {
-    const loader = createLoader(testDriver);
-    const url =  await testDriver.createContainerUrl(testId);
-    const container = await loader.resolve({ url });
-    return requestFluidObject<ILoadTest>(container,"/");
+function createReloader(testDriver: ITestDriver, testId: string) {
+    let cachedContainer: Container;
+
+    async function reconnect(delayMs: number = 0) {
+        cachedContainer?.close();
+
+        await new Promise((res) => setTimeout(res, delayMs));
+
+        const loader = createLoader(testDriver);
+        const url =  await testDriver.createContainerUrl(testId);
+        const container = await loader.resolve({ url });
+
+        cachedContainer = container;
+        return requestFluidObject<ILoadTest>(container,"/");
+    }
+
+    return reconnect;
 }
 
 const createTestDriver =
@@ -71,6 +83,13 @@ const createTestDriver =
             directory: "stress",
         },
     });
+
+function randomBetween(value: number, other: number) {
+    const diff = other - value;
+    return Number.isFinite(diff) ? value + diff * Math.random() : value;
+}
+
+const randomIntBetween = (value: number, other: number) => Math.floor(randomBetween(value, other));
 
 async function main() {
     if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {
@@ -150,21 +169,55 @@ async function runnerProcess(
     testId: string,
 ): Promise<number> {
     try {
+        const beganMs = Date.now();
         const runConfig: IRunConfig = {
             runId,
             testConfig: profile,
+            leaveDelayMs: randomIntBetween(15000, 25000),
         };
+        // TODO: consider moving "magic" numbers to JSON file
+        const offlineChance = 0.375;
+        const offlineMs = 2 * runConfig.leaveDelayMs;
+        const joinDelayMs = randomIntBetween(4500, 2500);
+        const joinLeaveCycleGoal = 5;
+        let joinLeaveCycles = 0;
+        let offlineLimit = 1;
 
         const testDriver = await createTestDriver(driver);
+        const reconnect = createReloader(testDriver, testId);
 
-        const stressTest = await load(testDriver, testId);
-        await stressTest.run(runConfig);
-        console.log(`${runId.toString().padStart(3)}> exit`);
+        do {
+            let offlineDelayMs = 0;
+
+            if (offlineLimit > 0 && randomBetween(0, 1) < offlineChance) {
+                offlineLimit -= 1;
+                offlineDelayMs = offlineMs;
+            }
+
+            const stressTestP = reconnect(joinDelayMs + offlineDelayMs);
+            if (offlineDelayMs) {
+                stdout("offline", `for ${Math.floor(0.001 * offlineDelayMs)}s`);
+            }
+            const stressTest = await stressTestP;
+
+            await stressTest.run(runConfig);
+        } while (++joinLeaveCycles < joinLeaveCycleGoal);
+
+        const runtimeSeconds = Math.floor(0.001 * (Date.now() - beganMs));
+        stdout("exit", `after ${runtimeSeconds}s`);
         return 0;
     } catch (e) {
-        console.error(`${runId.toString().padStart(3)}> error: loading test`);
+        stdout("error", "loading test");
         console.error(e);
         return -1;
+    }
+
+    function stdout(tag: string, message: any = undefined) {
+        console.error(
+            message !== undefined
+                ? `${runId.toString().padStart(3)}> ${tag}: ${message}`
+                : `${runId.toString().padStart(3)}> ${tag}`,
+        );
     }
 }
 
@@ -198,6 +251,9 @@ async function orchestratorProcess(
             const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
             childArgs.unshift(`--inspect-brk=${debugPort}`);
         }
+        // TODO: should be able to run multiple clients per process (responsible for joining/leaving)
+        // TODO: remove "load" from names (prefer "stress")
+        // TODO: separate orchestrator and child script files
         const process = child_process.spawn(
             "node",
             childArgs,

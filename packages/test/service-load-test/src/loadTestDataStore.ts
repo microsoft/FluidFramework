@@ -12,7 +12,8 @@ import { ILoadTestConfig } from "./testConfigFile";
 
 export interface IRunConfig {
     runId: number,
-    testConfig: ILoadTestConfig
+    testConfig: ILoadTestConfig,
+    leaveDelayMs: number,
 }
 
 export interface ILoadTest {
@@ -56,16 +57,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
     }
 
     public async run(config: IRunConfig) {
-        // Wait for all runners to join
-        console.log(`${config.runId.toString().padStart(3)}> waiting`);
-        await new Promise<void>((resolve) => {
-            let memberCount = this.context.getQuorum().getMembers().size;
-            if (memberCount >= config.testConfig.numClients) { resolve(); }
-            this.context.getQuorum().on("addMember", () => {
-                memberCount++;
-                if (memberCount >= config.testConfig.numClients) { resolve(); }
-            });
-        });
         console.log(`${config.runId.toString().padStart(3)}> begin`);
 
         // At every moment, we want half the client to be concurrent writers, and start and stop
@@ -93,10 +84,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         };
         t = setTimeout(printProgress, config.testConfig.progressIntervalMs);
 
-        const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
         const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
         const opsGapMs = cycleMs / opsPerCycle;
-        while (this.sentCount < clientSendCount) {
+        while (Date.now() - startTimeMs < config.leaveDelayMs) {
             await this.runStep();
             // Send cycle worth of Ops
             if (this.sentCount % opsPerCycle === 0) {
