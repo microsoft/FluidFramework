@@ -518,25 +518,27 @@ export const IsILoggingError = (x: any): x is ILoggingError => typeof x.getTelem
 export class LoggingError extends Error implements ILoggingError {
     constructor(
         message: string,
-        private readonly props: ITaggableTelemetryProperties = {},
+        props?: ITaggableTelemetryProperties,
     ) {
         super(message);
-        Object.assign(this, props); // Back compat - Some code expects props to be assigned
+        this.addTelemetryProperties(props);
     }
 
     /**
      * Add additional properties to be logged
      */
-    public addTelemetryProperties(props: ITaggableTelemetryProperties) {
-        Object.assign(this.props, props);
+    public addTelemetryProperties(props?: ITaggableTelemetryProperties) {
+        Object.assign(this, props);
     }
 
+    //* FIX THIS COMMENT
     /**
      * Some code casts an error to any and sets properties on it, expecting them to be logged.
      * So enumerate this object's own properties to find any taggable props and add them to this.props.
      * This functionality may eventually be deprecated, requiring addTelemetryProperties to be called directly instead
      */
-    private addOwnTaggableProps() {
+    private getOwnTaggableProps() {
+        const props: ITaggableTelemetryProperties = {};
         for (const key of Object.keys(this)) {
             const val = this[key];
             switch (typeof val) {
@@ -544,16 +546,17 @@ export class LoggingError extends Error implements ILoggingError {
                 case "number":
                 case "boolean":
                 case "undefined":
-                    this.addTelemetryProperties({ key: val });
+                    props[key] = val;
                     break;
                 default: {
                     if (IsTaggedTelemetryPropertyValue(val)) {
-                        this.addTelemetryProperties({ key: val });
+                        props[key] = val;
                     }
                     break;
                 }
             }
         }
+        return props;
     }
 
     /**
@@ -567,14 +570,15 @@ export class LoggingError extends Error implements ILoggingError {
             name: this.name,
         };
 
+        //* FIX THIS COMMENT
         // Before walking over this.props, add any taggableProps that were set directly on the object,
         // not via addTelemetryProperties
-        this.addOwnTaggableProps();
+        const taggableProps = this.getOwnTaggableProps();
 
         // Note - Once ITelemetryBaseLogger is updated to use ITaggableTelemetryProperties,
         // this loop will go away and we can just return a clone of this.props as-is
-        for (const key of Object.keys(this.props)) {
-            const taggableProp = this.props[key];
+        for (const key of Object.keys(taggableProps)) {
+            const taggableProp = taggableProps[key];
             const { value, tag } = typeof taggableProp === "object"
                 ? taggableProp
                 : { value: taggableProp, tag: TelemetryDataTag.None };
