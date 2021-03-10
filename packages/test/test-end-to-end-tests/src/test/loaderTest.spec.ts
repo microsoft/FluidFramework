@@ -248,11 +248,9 @@ describe("Loader.request", () => {
         dataStore1.inspectRequest = true;
         const url = await container.getAbsoluteUrl("");
         assert(url, "url is undefined");
-        const testUrl = new URL(url);
-        testUrl.searchParams.append("query1", "1");
-        testUrl.searchParams.append("query2", "2");
+        const testUrl = `${url}${url.includes("?") ? "&query1=1&query2=2" : "?query1=1&query2=2"}`;
 
-        const response = await loader.request({ url: testUrl.toString() });
+        const response = await loader.request({ url: testUrl });
         const searchParams = new URLSearchParams(response.value);
         assert.strictEqual(searchParams.get("query1"), "1", "request did not pass the right query to the data store");
         assert.strictEqual(searchParams.get("query2"), "2", "request did not pass the right query to the data store");
