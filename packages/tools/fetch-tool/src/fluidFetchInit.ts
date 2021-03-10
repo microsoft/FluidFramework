@@ -54,10 +54,10 @@ async function initializeODSPCore(
   item:   ${itemId}
   docId:  ${docId}`);
 
-    const getStorageTokenStub = async (siteUrl: string, refresh: boolean, _claims?: string) => {
+    const getStorageTokenStub = async (options: odsp.OdspResourceTokenFetchOptions) => {
         return resolveWrapper(
             async (authRequestInfo: IOdspAuthRequestInfo) => {
-                if ((refresh || !authRequestInfo.accessToken) && authRequestInfo.refreshTokenFn) {
+                if ((options.refresh || !authRequestInfo.accessToken) && authRequestInfo.refreshTokenFn) {
                     return authRequestInfo.refreshTokenFn();
                 }
                 return authRequestInfo.accessToken;
@@ -69,7 +69,7 @@ async function initializeODSPCore(
         );
     };
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    const getWebsocketTokenStub = (_refresh: boolean, _claims?: string) => Promise.resolve("");
+    const getWebsocketTokenStub = (_options: odsp.OdspResourceTokenFetchOptions) => Promise.resolve("");
     const odspDocumentServiceFactory = new odsp.OdspDocumentServiceFactory(
         getStorageTokenStub,
         getWebsocketTokenStub);
@@ -103,14 +103,8 @@ async function initializeR11s(server: string, pathname: string, r11sResolvedUrl:
 
     console.log(`Connecting to r11s: tenantId=${tenantId} id:${documentId}`);
     const tokenProvider = new r11s.DefaultTokenProvider(paramJWT);
-    return r11s.createDocumentService(
-        r11sResolvedUrl,
-        r11sResolvedUrl.endpoints.ordererUrl,
-        r11sResolvedUrl.endpoints.deltaStorageUrl,
-        r11sResolvedUrl.endpoints.storageUrl,
-        tokenProvider,
-        tenantId,
-        documentId);
+    const r11sDocumentServiceFactory = new r11s.RouterliciousDocumentServiceFactory(tokenProvider);
+    return r11sDocumentServiceFactory.createDocumentService(r11sResolvedUrl);
 }
 
 async function resolveUrl(url: string): Promise<IResolvedUrl | undefined> {

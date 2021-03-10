@@ -20,7 +20,7 @@ const LastCheckpointedOffset: IQueuedMessage = {
  * from them.
  */
 export class DocumentContextManager extends EventEmitter {
-    private readonly contexts: DocumentContext[] = [];
+    private readonly contexts: Set<DocumentContext> = new Set();
 
     // Head and tail represent our processing position of the queue. Head is the latest message seen and
     // tail is the last message processed
@@ -41,11 +41,15 @@ export class DocumentContextManager extends EventEmitter {
         assert(head.offset > this.tail.offset && head.offset <= this.head.offset);
 
         // Create the new context and register for listeners on it
-        const context = new DocumentContext(head, () => this.tail);
-        this.contexts.push(context);
+        const context = new DocumentContext(head, this.partitionContext.log, () => this.tail);
+        this.contexts.add(context);
         context.addListener("checkpoint", () => this.updateCheckpoint());
         context.addListener("error", (error, errorData: IContextErrorData) => this.emit("error", error, errorData));
         return context;
+    }
+
+    public removeContext(context: DocumentContext): void {
+        this.contexts.delete(context);
     }
 
     public setHead(head: IQueuedMessage) {
@@ -68,6 +72,10 @@ export class DocumentContextManager extends EventEmitter {
         for (const context of this.contexts) {
             context.close();
         }
+
+        this.contexts.clear();
+
+        this.removeAllListeners();
     }
 
     private updateCheckpoint() {

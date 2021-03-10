@@ -67,10 +67,6 @@ export class ReplayControllerStatic extends ReplayController {
         return version ? Promise.reject(new Error("Invalid operation")) : null;
     }
 
-    public async read(blobId: string): Promise<string> {
-        return Promise.reject(new Error("Invalid operation"));
-    }
-
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
         return Promise.reject(new Error("Invalid operation"));
     }
@@ -201,15 +197,13 @@ export class ReplayDocumentDeltaConnection
         controller: ReplayController): IDocumentDeltaConnection {
         const connection: IConnected = {
             claims: ReplayDocumentDeltaConnection.claims,
-            clientId: "",
+            clientId: "PseudoClientId",
             existing: true,
             initialMessages: [],
             initialSignals: [],
             initialClients: [],
             maxMessageSize: ReplayDocumentDeltaConnection.ReplayMaxMessageSize,
-            mode: "write",
-            // Back-compat, removal tracked with issue #4346
-            parentBranch: null,
+            mode: "read",
             serviceConfiguration: {
                 blockSize: 64436,
                 maxMessageSize: 16 * 1024,
@@ -236,7 +230,7 @@ export class ReplayDocumentDeltaConnection
 
     private static readonly claims: ITokenClaims = {
         documentId: ReplayDocumentId,
-        scopes: [ScopeType.DocRead, ScopeType.DocWrite],
+        scopes: [ScopeType.DocRead],
         tenantId: "",
         user: {
             id: "",

@@ -63,11 +63,24 @@ export interface IDocumentDeltaStorageService {
     get(from: number, to: number): Promise<IDeltasFetchResult>;
 }
 
+export interface IDocumentStorageServicePolicies {
+    readonly caching?: LoaderCachingPolicy;
+
+    // If this policy is provided, it tells runtime on ideal size for blobs
+    // Blobs that are smaller than that size should be aggregated into bigger blobs
+    readonly minBlobSize?: number;
+}
+
 /**
  * Interface to provide access to snapshots saved for a shared object
  */
 export interface IDocumentStorageService {
     repositoryUrl: string;
+
+    /**
+     * Policies implemented/instructed by driver.
+     */
+    readonly policies?: IDocumentStorageServicePolicies;
 
     /**
      * Returns the snapshot tree.
@@ -80,11 +93,6 @@ export interface IDocumentStorageService {
     getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
 
     /**
-     * Reads the object with the given ID, returns content in base64
-     */
-    read(id: string): Promise<string>;
-
-    /**
      * Writes to the object with the given ID
      */
     write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
@@ -94,6 +102,9 @@ export interface IDocumentStorageService {
      */
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
 
+    /**
+     * Reads the object with the given ID, returns content in arrayBufferLike
+     */
     readBlob(id: string): Promise<ArrayBufferLike>;
 
     /**
@@ -209,7 +220,10 @@ export enum LoaderCachingPolicy {
 }
 
 export interface IDocumentServicePolicies {
-    readonly caching?: LoaderCachingPolicy;
+    /**
+     * Do not connect to delta stream
+     */
+    readonly storageOnly?: boolean;
 }
 
 export interface IDocumentService {
@@ -276,4 +290,6 @@ export interface ISummaryContext {
      * Parent summary acked handle (from summary ack)
      */
     readonly ackHandle: string | undefined;
+
+    readonly referenceSequenceNumber: number;
 }

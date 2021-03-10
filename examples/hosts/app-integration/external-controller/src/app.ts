@@ -3,36 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import { DiceRollerController } from "./controller";
 import {
-    Fluid,
     IKeyValueDataObject,
     KeyValueDataObject,
-    KeyValueInstantiationFactory,
-} from "./kvpair-dataobject";
+} from "@fluid-experimental/data-objects";
+import { Fluid } from "@fluid-experimental/fluid-static";
+import { TinyliciousService } from "@fluid-experimental/get-container";
+import { DiceRollerController } from "./controller";
 import { renderDiceRoller } from "./view";
-// import { renderDiceRoller } from "./reactView";
 
 let createNew = false;
 if (location.hash.length === 0) {
     createNew = true;
     location.hash = Date.now().toString();
 }
-const documentId = location.hash.substring(1);
-document.title = documentId;
+const containerId = location.hash.substring(1);
+document.title = containerId;
 
 const dataObjectId = "dice";
 
 async function start(): Promise<void> {
+    const service = new TinyliciousService();
     // Get or create the document
-    const fluidDocument = createNew
-        ? await Fluid.createDocument(documentId)
-        : await Fluid.getDocument(documentId);
+    const fluidContainer = createNew
+        ? await Fluid.createContainer(service, containerId, [KeyValueDataObject])
+        : await Fluid.getContainer(service, containerId, [KeyValueDataObject]);
 
     // We'll create the data object when we create the new document.
     const keyValueDataObject: IKeyValueDataObject = createNew
-        ? await fluidDocument.createDataObject<KeyValueDataObject>(KeyValueInstantiationFactory.type, dataObjectId)
-        : await fluidDocument.getDataObject<KeyValueDataObject>(dataObjectId);
+        ? await fluidContainer.createDataObject<KeyValueDataObject>(KeyValueDataObject, dataObjectId)
+        : await fluidContainer.getDataObject<KeyValueDataObject>(dataObjectId);
 
     // Our controller manipulates the data object (model).
     const diceRollerController = new DiceRollerController(keyValueDataObject);

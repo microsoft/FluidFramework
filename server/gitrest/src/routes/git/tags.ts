@@ -5,7 +5,7 @@
 
 import { ICreateTagParams, ITag } from "@fluidframework/gitresources";
 import { Router } from "express";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import git from "nodegit";
 import * as utils from "../../utils";
 
@@ -38,6 +38,7 @@ async function createTag(
     tag: ICreateTagParams): Promise<ITag> {
     const date = Date.parse(tag.tagger.date);
     if (isNaN(date)) {
+        // eslint-disable-next-line prefer-promise-reject-errors
         return Promise.reject("Invalid input");
     }
 

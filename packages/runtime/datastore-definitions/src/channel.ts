@@ -38,8 +38,9 @@ export interface IChannel extends IFluidLoadable {
     /**
      * Returns the GC data for this channel. It contains a list of GC nodes that contains references to
      * other GC nodes.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    getGCData(): IGarbageCollectionData;
+    getGCData(fullGC?: boolean): IGarbageCollectionData;
 }
 
 /**
@@ -106,11 +107,10 @@ export interface IDeltaConnection {
  */
 export interface IChannelStorageService {
     /**
-     * Reads the object contained at the given path. Returns a base64 string representation for the object.
+     * Reads the object contained at the given path. Returns a buffer representation for the object.
      */
-    read(path: string): Promise<string>;
-
     readBlob(path: string): Promise<ArrayBufferLike>;
+
     /**
      * Determines if there is an object contained at the given path.
      */

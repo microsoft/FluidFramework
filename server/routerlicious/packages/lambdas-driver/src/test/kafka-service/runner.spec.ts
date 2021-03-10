@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TestConsumer, TestKafka, TestProducer } from "@fluidframework/server-test-utils";
+import { DebugLogger, TestConsumer, TestKafka, TestProducer } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import { Provider } from "nconf";
 import { KafkaRunner } from "../../kafka-service/runner";
@@ -28,7 +28,7 @@ describe("kafka-service", () => {
 
         describe(".start", () => {
             it("Should be able to stop after processing messages", async () => {
-                const startP = testRunner.start();
+                const startP = testRunner.start(DebugLogger.create("fluid-server:TestRunner"));
                 testConsumer.rebalance();
 
                 const messageCount = 10;
@@ -54,7 +54,7 @@ describe("kafka-service", () => {
             }
 
             it("Should resolve start promise on kafka error ", async () => {
-                const startP = testRunner.start();
+                const startP = testRunner.start(DebugLogger.create("fluid-server:TestRunner"));
                 testConsumer.rebalance();
 
                 testProducer.send([{}], "test");
@@ -64,7 +64,7 @@ describe("kafka-service", () => {
             });
 
             it("Should resolve start promise on lambda error ", async () => {
-                const startP = testRunner.start();
+                const startP = testRunner.start(DebugLogger.create("fluid-server:TestRunner"));
                 testFactory.setThrowHandler(true);
                 testConsumer.rebalance();
 

@@ -11,6 +11,7 @@ import { v4 as uuid } from "uuid";
 export interface IParsedUrl {
     id: string;
     path: string;
+    query: string;
     /**
      * Null means do not use snapshots, undefined means load latest snapshot
      * otherwise it's version ID passed to IDocumentStorageService.getVersions() to figure out what snapshot to use.
@@ -24,12 +25,11 @@ export function parseUrl(url: string): IParsedUrl | undefined {
     if (typeof parsed.pathname !== "string") {
         throw new Error("Failed to parse pathname");
     }
-
+    const query = parsed.search ?? "";
     const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
     const match = regex.exec(parsed.pathname);
-
     return (match?.length === 3)
-        ? { id: match[1], path: match[2], version: parsed.query.version as string }
+        ? { id: match[1], path: match[2], query, version: parsed.query.version as string }
         : undefined;
 }
 

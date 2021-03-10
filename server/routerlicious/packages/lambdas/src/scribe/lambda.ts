@@ -42,9 +42,9 @@ export class ScribeLambda extends SequencedLambda {
     private lastOffset: number;
 
     // Pending checkpoint information
-    private pendingCheckpointScribe: IScribe;
-    private pendingCheckpointOffset: IQueuedMessage;
-    private pendingP: Promise<void>;
+    private pendingCheckpointScribe: IScribe | undefined;
+    private pendingCheckpointOffset: IQueuedMessage | undefined;
+    private pendingP: Promise<void> | undefined;
     private readonly pendingCheckpointMessages = new Deque<ISequencedOperationMessage>();
 
     // Messages not yet processed by protocolHandler
@@ -55,7 +55,7 @@ export class ScribeLambda extends SequencedLambda {
     private minSequenceNumber = 0;
 
     // Ref of the last client generated summary
-    private lastClientSummaryHead: string;
+    private lastClientSummaryHead: string | undefined;
 
     // Indicates whether cache needs to be cleaned after processing a message
     private clearCache: boolean = false;
@@ -133,9 +133,7 @@ export class ScribeLambda extends SequencedLambda {
                     continue;
                 }
 
-                const lastSequenceNumber = this.pendingMessages.length > 0 ?
-                    this.pendingMessages.peekBack().sequenceNumber :
-                    this.sequenceNumber;
+                const lastSequenceNumber = this.pendingMessages.peekBack()?.sequenceNumber ?? this.sequenceNumber;
 
                 // Handles a partial checkpoint case where messages were inserted into DB but checkpointing failed.
                 if (value.operation.sequenceNumber <= lastSequenceNumber) {
@@ -177,11 +175,6 @@ export class ScribeLambda extends SequencedLambda {
                     this.processFromPending(this.minSequenceNumber);
                 }
 
-                const messageMetaData = {
-                    documentId: this.documentId,
-                    tenantId: this.tenantId,
-                };
-
                 this.clearCache = false;
                 if (value.operation.type === MessageType.Summarize) {
                     // Process up to the summary op ref seq to get the protocol state at the summary op.
@@ -218,15 +211,25 @@ export class ScribeLambda extends SequencedLambda {
                                     await this.sendSummaryAck(summaryResponse.message as ISummaryAck);
                                     await this.sendSummaryConfirmationMessage(operation.sequenceNumber, false);
                                     this.protocolHead = this.protocolHandler.sequenceNumber;
-                                    this.context.log.info(
+                                    this.context.log?.info(
                                         `Client summary success @${value.operation.sequenceNumber}`,
-                                        { messageMetaData },
+                                        {
+                                            messageMetaData: {
+                                                documentId: this.documentId,
+                                                tenantId: this.tenantId,
+                                            },
+                                        },
                                     );
                                 } else {
                                     await this.sendSummaryNack(summaryResponse.message as ISummaryNack);
-                                    this.context.log.error(
+                                    this.context.log?.error(
                                         `Client summary failure @${value.operation.sequenceNumber}`,
-                                        { messageMetaData },
+                                        {
+                                            messageMetaData: {
+                                                documentId: this.documentId,
+                                                tenantId: this.tenantId,
+                                            },
+                                        },
                                     );
                                     this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
                                 }
@@ -275,15 +278,28 @@ export class ScribeLambda extends SequencedLambda {
                                 await this.sendSummaryConfirmationMessage(
                                     operation.sequenceNumber,
                                     this.serviceConfiguration.scribe.clearCacheAfterServiceSummary);
-                                this.context.log.info(
-                                    `Service summary success @${operation.sequenceNumber}`, { messageMetaData });
+                                this.context.log?.info(
+                                    `Service summary success @${operation.sequenceNumber}`,
+                                    {
+                                        messageMetaData: {
+                                            documentId: this.documentId,
+                                            tenantId: this.tenantId,
+                                        },
+                                    },
+                                );
                             }
                         } catch (ex) {
                             // If this flag is set, we should ignore any storage speciic error and move forward
                             // to process the next message.
                             if (this.serviceConfiguration.scribe.ignoreStorageException) {
-                                this.context.log.error(
-                                    `Service summary failure @${operation.sequenceNumber}`, { messageMetaData });
+                                this.context.log?.error(
+                                    `Service summary failure @${operation.sequenceNumber}`,
+                                    {
+                                        messageMetaData: {
+                                            documentId: this.documentId,
+                                            tenantId: this.tenantId,
+                                        },
+                                    });
                             } else {
                                 throw ex;
                             }
@@ -318,8 +334,10 @@ export class ScribeLambda extends SequencedLambda {
     // is crucial and the document is essentially corrupted at this point. We should start logging this and
     // have a better understanding of all failure modes.
     private processFromPending(target: number) {
-        while (this.pendingMessages.length > 0 && this.pendingMessages.peekFront().sequenceNumber <= target) {
-            const message = this.pendingMessages.shift();
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        while (this.pendingMessages.length > 0 && this.pendingMessages.peekFront()!.sequenceNumber <= target) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const message = this.pendingMessages.shift()!;
             try {
                 if (message.contents &&
                     typeof message.contents === "string" &&
@@ -331,7 +349,7 @@ export class ScribeLambda extends SequencedLambda {
                     this.protocolHandler.processMessage(message, false);
                 }
             } catch (error) {
-                this.context.log.error(`Protocol error ${error}`,
+                this.context.log?.error(`Protocol error ${error}`,
                     {
                         documentId: this.documentId,
                         tenantId: this.tenantId,
@@ -377,9 +395,9 @@ export class ScribeLambda extends SequencedLambda {
                 this.pendingP = undefined;
                 this.context.checkpoint(queuedMessage);
 
-                if (this.pendingCheckpointScribe) {
-                    const pendingScribe = this.pendingCheckpointScribe;
-                    const pendingOffset = this.pendingCheckpointOffset;
+                const pendingScribe = this.pendingCheckpointScribe;
+                const pendingOffset = this.pendingCheckpointOffset;
+                if (pendingScribe && pendingOffset) {
                     this.pendingCheckpointScribe = undefined;
                     this.pendingCheckpointOffset = undefined;
                     this.checkpointCore(pendingScribe, pendingOffset, clearCache);
@@ -402,7 +420,8 @@ export class ScribeLambda extends SequencedLambda {
             // or in memory. In other words, we can only remove messages from memory once there is a copy in the DB
             const lastInsertedSeqNumber = inserts[inserts.length - 1].operation.sequenceNumber;
             while (this.pendingCheckpointMessages.length > 0 &&
-                this.pendingCheckpointMessages.peekFront().operation.sequenceNumber <= lastInsertedSeqNumber) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                this.pendingCheckpointMessages.peekFront()!.operation.sequenceNumber <= lastInsertedSeqNumber) {
                 this.pendingCheckpointMessages.removeFront();
             }
         }

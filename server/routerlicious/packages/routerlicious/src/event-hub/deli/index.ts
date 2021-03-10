@@ -8,6 +8,7 @@ import { create as createDocumentRouter } from "@fluidframework/server-lambdas-d
 import { LocalKafka, LocalContext, LocalLambdaController } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
+import { EventHubProducer } from "@fluidframework/server-services-ordering-eventhub";
 import { Provider } from "nconf";
 import * as winston from "winston";
 
@@ -31,8 +32,8 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const collection = await client.collection<core.IDocument>(documentsCollectionName);
 
     const endpoint = config.get("eventHub:endpoint");
-    const forwardProducer = new services.EventHubProducer(endpoint, forwardSendTopic);
-    const reverseProducer = new services.EventHubProducer(endpoint, reverseSendTopic);
+    const forwardProducer = new EventHubProducer(endpoint, forwardSendTopic);
+    const reverseProducer = new EventHubProducer(endpoint, reverseSendTopic);
 
     const redisConfig = config.get("redis");
     const redisOptions: any = { password: redisConfig.pass };

@@ -6,7 +6,7 @@
 import { OutgoingHttpHeaders } from "http";
 import Axios from "axios";
 import safeStringify from "json-stringify-safe";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
 import * as uuid from "uuid";
 import * as winston from "winston";
@@ -40,6 +40,7 @@ export class ExternalStorageManager implements IExternalStorageManager {
             winston.info("External storage is not enabled");
             return false;
         }
+        let result = true;
         await Axios.post<void>(
             `${this.endpoint}/file/${tenantId}/${documentId}`,
             undefined,
@@ -50,10 +51,10 @@ export class ExternalStorageManager implements IExternalStorageManager {
             }).catch((error) => {
                 const messageMetaData = { tenantId, documentId };
                 winston.error(`Failed to read document: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
-                return false;
+                result = false;
             });
 
-        return true;
+        return result;
     }
 
     public async write(tenantId: string, ref: string, sha: string, update: boolean): Promise<void> {

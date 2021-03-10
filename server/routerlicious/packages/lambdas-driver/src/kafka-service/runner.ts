@@ -4,15 +4,14 @@
  */
 
 import { Deferred } from "@fluidframework/common-utils";
-import { IConsumer, IContextErrorData, IPartitionLambdaFactory } from "@fluidframework/server-services-core";
+import { IConsumer, IContextErrorData, ILogger, IPartitionLambdaFactory } from "@fluidframework/server-services-core";
 import { IRunner } from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
-import * as winston from "winston";
 import { PartitionManager } from "./partitionManager";
 
 export class KafkaRunner implements IRunner {
-    private deferred: Deferred<void>;
-    private partitionManager: PartitionManager;
+    private deferred: Deferred<void> | undefined;
+    private partitionManager: PartitionManager | undefined;
 
     constructor(
         private readonly factory: IPartitionLambdaFactory,
@@ -21,38 +20,47 @@ export class KafkaRunner implements IRunner {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public start(): Promise<void> {
-        this.deferred = new Deferred<void>();
+    public start(logger: ILogger | undefined): Promise<void> {
+        if (this.deferred) {
+            throw new Error("Already started");
+        }
+
+        const deferred = new Deferred<void>();
+
+        this.deferred = deferred;
 
         process.on("warning", (msg) => {
             console.trace("Warning", msg);
         });
 
         this.factory.on("error", (error) => {
-            this.deferred.reject(error);
+            deferred.reject(error);
         });
 
-        this.partitionManager = new PartitionManager(this.factory, this.consumer, this.config, winston);
+        this.partitionManager = new PartitionManager(this.factory, this.consumer, this.config, logger);
         this.partitionManager.on("error", (error, errorData: IContextErrorData) => {
-            this.deferred.reject(error);
+            deferred.reject(error);
         });
 
-        return this.deferred.promise;
+        return deferred.promise;
     }
 
     /**
      * Signals to stop the service
      */
     public async stop(): Promise<void> {
-        winston.info("Stop requested");
+        if (!this.deferred) {
+            return;
+        }
 
         // Stop listening for new updates
         await this.consumer.pause();
 
-        // Mark ourselves done once the topic manager has stopped processing
-        const stopP = this.partitionManager.stop();
-        this.deferred.resolve(stopP);
+        // Stop the partition manager
+        await this.partitionManager?.stop();
 
-        return this.deferred.promise;
+        // Mark ourselves done once the partition manager has stopped
+        this.deferred.resolve();
+        this.deferred = undefined;
     }
 }

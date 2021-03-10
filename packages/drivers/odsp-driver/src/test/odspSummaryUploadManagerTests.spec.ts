@@ -97,6 +97,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
         const summaryContext: ISummaryContext = {
             proposalHandle: "proposedHandle",
             ackHandle: "ackHandle",
+            referenceSequenceNumber: 5,
         };
         odspSummaryUploadManager["lastSummaryProposalHandle"] = summaryContext.proposalHandle;
         const rootBlob: api.ISummaryBlob = {

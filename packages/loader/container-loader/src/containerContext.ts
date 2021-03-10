@@ -62,10 +62,10 @@ export class ContainerContext implements IContainerContext {
         raiseContainerWarning: (warning: ContainerWarning) => void,
         submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
-        snapshotFn: (message: string) => Promise<void>,
         closeFn: (error?: ICriticalContainerError) => void,
         version: string,
         previousRuntimeState: IRuntimeState,
+        updateDirtyContainerState: (dirty: boolean) => void,
         pendingLocalState?: unknown,
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
@@ -81,10 +81,10 @@ export class ContainerContext implements IContainerContext {
             raiseContainerWarning,
             submitFn,
             submitSignalFn,
-            snapshotFn,
             closeFn,
             version,
             previousRuntimeState,
+            updateDirtyContainerState,
             pendingLocalState);
         await context.load();
         return context;
@@ -110,10 +110,6 @@ export class ContainerContext implements IContainerContext {
 
     public get branch(): string {
         return this.attributes.branch;
-    }
-
-    public get runtimeVersion(): string | undefined {
-        return this.runtime?.runtimeVersion;
     }
 
     public get connected(): boolean {
@@ -147,7 +143,7 @@ export class ContainerContext implements IContainerContext {
         return this._baseSnapshot;
     }
 
-    public get storage(): IDocumentStorageService | undefined | null {
+    public get storage(): IDocumentStorageService | undefined {
         return this.container.storage;
     }
 
@@ -193,11 +189,12 @@ export class ContainerContext implements IContainerContext {
         public readonly raiseContainerWarning: (warning: ContainerWarning) => void,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         public readonly submitSignalFn: (contents: any) => void,
-        public readonly snapshotFn: (message: string) => Promise<void>,
         public readonly closeFn: (error?: ICriticalContainerError) => void,
         public readonly version: string,
         public readonly previousRuntimeState: IRuntimeState,
+        public readonly updateDirtyContainerState: (dirty: boolean) => void,
         public readonly pendingLocalState?: unknown,
+
     ) {
         this.logger = container.subLogger;
         this.attachListener();
@@ -264,14 +261,6 @@ export class ContainerContext implements IContainerContext {
 
     public async request(path: IRequest): Promise<IResponse> {
         return this.runtime.request(path);
-    }
-
-    public async requestSnapshot(tagMessage: string): Promise<void> {
-        return this.snapshotFn(tagMessage);
-    }
-
-    public registerTasks(tasks: string[]): any {
-        return;
     }
 
     public async reloadContext(): Promise<void> {

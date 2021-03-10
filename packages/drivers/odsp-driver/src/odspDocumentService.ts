@@ -10,15 +10,15 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, performance } from "@fluidframework/common-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
-    LoaderCachingPolicy,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
     IResolvedUrl,
     IDocumentStorageService,
+    IDocumentServicePolicies,
 } from "@fluidframework/driver-definitions";
 import { canRetryOnError } from "@fluidframework/driver-utils";
-import { fetchTokenErrorCode } from "@fluidframework/odsp-doclib-utils";
+import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
     IErrorTrackingService,
@@ -39,7 +39,6 @@ import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { TokenFetchOptions } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
-import { throwOdspNetworkError } from "./odspError";
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
@@ -69,6 +68,15 @@ function isAfdCacheValid(): boolean {
 }
 
 /**
+ * Clear the AfdCache
+ */
+function clearAfdCache() {
+    if (localStorageAvailable) {
+        localStorage.removeItem(lastAfdConnectionTimeMsKey);
+    }
+}
+
+/**
  * Safely tries to write to local storage
  * Returns false if writing to localStorage fails. True otherwise
  *
@@ -91,10 +99,7 @@ function writeLocalStorage(key: string, value: string) {
 export class OdspDocumentService implements IDocumentService {
     protected updateUsageOpFrequency = startingUpdateUsageOpFrequency;
 
-    readonly policies = {
-        // By default, ODSP tells the container not to prefetch/cache.
-        caching: LoaderCachingPolicy.NoCaching,
-    };
+    readonly policies: IDocumentServicePolicies;
 
     /**
      * @param getStorageToken - function that can provide the storage token. This is is also referred to as
@@ -160,6 +165,11 @@ export class OdspDocumentService implements IDocumentService {
         hostPolicy: HostStoragePolicy,
         private readonly epochTracker: EpochTracker,
     ) {
+        this.policies = {
+            // load in storage-only mode if a file version is specified
+            storageOnly: odspResolvedUrl.fileVersion !== undefined,
+        };
+
         epochTracker.fileEntry = {
             resolvedUrl: odspResolvedUrl,
             docId: odspResolvedUrl.hashedDocumentId,
@@ -398,7 +408,7 @@ export class OdspDocumentService implements IDocumentService {
             } catch (connectionError) {
                 const endTime = performance.now();
                 // Clear cache since it failed
-                localStorage.removeItem(lastAfdConnectionTimeMsKey);
+                clearAfdCache();
                 // Log before throwing
                 const canRetry = canRetryOnError(connectionError);
                 this.logger.sendPerformanceEvent(

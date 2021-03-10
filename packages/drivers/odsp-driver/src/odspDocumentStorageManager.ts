@@ -9,21 +9,21 @@ import { v4 as uuid } from "uuid";
 import {
     assert,
     fromBase64ToUtf8,
-    fromUtf8ToBase64,
     IsoBuffer,
     performance,
+    stringToBuffer,
 } from "@fluidframework/common-utils";
 import {
     PerformanceEvent,
-    TelemetryLogger,
 } from "@fluidframework/telemetry-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import {
     ISummaryContext,
     IDocumentStorageService,
     DriverErrorType,
+    LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
-import { OdspErrorType } from "@fluidframework/odsp-doclib-utils";
+import { OdspErrorType, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IDocumentStorageGetVersionsResponse,
     IOdspResolvedUrl,
@@ -45,7 +45,6 @@ import {
     persistedCacheValueVersion,
 } from "./odspCache";
 import { getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
-import { throwOdspNetworkError } from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
@@ -201,6 +200,23 @@ class BlobCache {
 }
 
 export class OdspDocumentStorageService implements IDocumentStorageService {
+    readonly policies = {
+        // By default, ODSP tells the container not to prefetch/cache.
+        caching: LoaderCachingPolicy.NoCaching,
+
+        // ODSP storage works better if it has less number of blobs / edges
+        // Runtime creating many small blobs results in sub-optimal perf.
+        // 2K seems like the sweat spot:
+        // The smaller the number, less blobs we aggregate. Most storages are very likely to have notion
+        // of minimal "cluster" size, so having small blobs is wasteful
+        // At the same time increasing the limit ensure that more blobs with user content are aggregated,
+        // reducing possibility for de-duping of same blobs (i.e. .attributes rolled into aggregate blob
+        // are not reused across data stores, or even within data store, resulting in duplication of content)
+        // Note that duplication of content should not have significant impact for bytes over wire as
+        // compression of http payload mostly takes care of it, but it does impact storage size and in-memory sizes.
+        minBlobSize: 2048,
+    };
+
     private readonly treesCache: Map<string, ITree> = new Map();
 
     private readonly attributesBlobHandles: Set<string> = new Set();
@@ -294,7 +310,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         },
                         "createBlob",
                     );
-                    event.end({ blobId: res.content.id });
+                    event.end({
+                        blobId: res.content.id,
+                        ...res.commonSpoHeaders,
+                    });
                     return res;
                 },
             );
@@ -325,13 +344,22 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
                     },
                     async (event) => {
-                        const res = await this.epochTracker.fetchResponse(url, { headers }, "blob");
-                        blob = await res.arrayBuffer();
+                        const res = await this.epochTracker.fetchArray(url, { headers }, "blob");
                         event.end({
-                            size: blob.byteLength,
                             waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
+                            ...res.commonSpoHeaders,
+                            attempts: options.refresh ? 2 : 1,
                         });
-                        return blob;
+                        const cacheControl = res.headers.get("cache-control");
+                        if (cacheControl === undefined || !(cacheControl.includes("private") || cacheControl.includes("public"))) {
+                            this.logger.sendErrorEvent({
+                                eventName: "NonCacheableBlob",
+                                cacheControl,
+                                blobId,
+                                ...res.commonSpoHeaders,
+                            });
+                        }
+                        return res.content;
                     },
                 );
             });
@@ -369,26 +397,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (blob instanceof ArrayBuffer) {
             return blob;
         }
-        return IsoBuffer.from(blob.content, blob.encoding ?? "utf-8");
-    }
-
-    public async read(blobId: string): Promise<string> {
-        return this.readWithEncodingOutput(blobId, "base64");
-    }
-
-    private async readWithEncodingOutput(blobId: string, outputFormat: "base64" | "string"): Promise<string> {
-        const blob = await this.readBlobCore(blobId);
-
-        if (blob instanceof ArrayBuffer) {
-            return IsoBuffer.from(blob).toString(outputFormat === "base64" ? "base64" : "utf8");
-        }
-        if (outputFormat === blob.encoding || (outputFormat === "string" && blob.encoding === undefined))  {
-            return blob.content;
-        } else if (outputFormat === "base64") {
-            return fromUtf8ToBase64(blob.content);
-        } else {
-            return fromBase64ToUtf8(blob.content);
-        }
+        return stringToBuffer(blob.content, blob.encoding ?? "utf8");
     }
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
@@ -482,7 +491,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 if (tokenFetchOptions.refresh) {
                     // This is the most critical code path for boot.
                     // If we get incorrect / expired token first time, that adds up to latency of boot
-                    this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall", hasClaims: !!tokenFetchOptions.claims });
+                    this.logger.sendErrorEvent({
+                        eventName: "TreeLatest_SecondCall",
+                        hasClaims: !!tokenFetchOptions.claims,
+                        hasTenantId: !!tokenFetchOptions.tenantId,
+                    });
                 }
 
                 const hostSnapshotOptions = this.hostPolicy.snapshotOptions;
@@ -701,7 +714,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             let reqStToRespEndTime: number | undefined; // responseEnd - requestStart
             let networkTime: number | undefined; // responseEnd - startTime
             const spReqDuration = response.headers.get("sprequestduration");
-            const msEdge = response.headers.get("x-msedge-ref"); // To track Azure Front Door information of which the request came in at
 
             // getEntriesByType is only available in browser performance object
             const resources1 = performance.getEntriesByType?.("resource") ?? [];
@@ -728,7 +740,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
             const { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize } = this.evalBlobsAndTrees(snapshot);
             const clientTime = networkTime ? overallTime - networkTime : undefined;
-            const isAfd = msEdge !== undefined;
 
             assert(this._snapshotCacheEntry === undefined);
             this._snapshotCacheEntry = {
@@ -769,8 +780,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 seqNumber,
                 ops: snapshot.ops?.length ?? 0,
                 headers: Object.keys(headers).length !== 0 ? true : undefined,
-                sprequestguid: response.headers.get("sprequestguid"),
-                sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
                 redirecttime: redirectTime,
                 dnsLookuptime: dnstime,
                 responsenetworkTime: responseTime,
@@ -781,10 +790,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 overalltime: overallTime,
                 networktime: networkTime,
                 clienttime: clientTime,
-                msedge: msEdge,
-                isafd: isAfd,
-                contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
-                bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
+                ...response.commonSpoHeaders,
             });
             return snapshot;
         });

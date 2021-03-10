@@ -5,11 +5,18 @@ on:
     # all types
   workflow_dispatch:
     # all types
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+    - main
+    - "docs/next"
+    paths:
+    - "docs/**"
 
 jobs:
   build_and_deploy_job:
     name: Azure Static Web App
-    if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
+    if: (github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch') || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
 
     steps:
@@ -93,3 +100,17 @@ jobs:
           app_artifact_location: "public" # Built app content directory - optional
           routes_location: "/docs"
           ###### End of Repository/Build Configurations ######
+        env: # Add environment variables here
+          HUGO_PARAMS_APPINSIGHTKEY: ${{ secrets.APP_INSIGHTS_KEY }}
+
+  close_pull_request_job:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Close Pull Request Job
+    steps:
+      - name: Close Pull Request
+        id: closepullrequest
+        uses: Azure/static-web-apps-deploy@v0.0.1-preview
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AGREEABLE_HILL_0EEFF5B10 }}
+          action: "close"

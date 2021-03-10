@@ -5,7 +5,7 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
 import { strict as assert } from "assert";
-import { RequestParser } from "@fluidframework/runtime-utils";
+import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import {
@@ -27,7 +27,7 @@ class MockRuntime {
                     if (r.url === "/" || r.url === "/route") {
                         return createFluidObjectResponse({ route: r.url } as IFluidObject);
                     }
-                    return { status: 404, mimeType: "text/plain", value: "not found" };
+                    return create404Response(r);
                 },
             } as IFluidDataStoreChannel;
         }
@@ -47,7 +47,7 @@ class MockRuntime {
             const subRequest = requestParser.createSubRequest(1);
             return dataStore.request(subRequest);
         }
-        return { status: 404, mimeType: "text/plain", value: "not found" };
+        return create404Response(request);
     }
 }
 

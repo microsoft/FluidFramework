@@ -40,8 +40,7 @@ class OpPerfTelemetry {
         this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
         this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
 
-        // Back-compat: <= 0.28: Replace to "op" and remove "beforeOpProcessing" in the future.
-        this.deltaManager.on("beforeOpProcessing", (message) => this.beforeProcessingOp(message));
+        this.deltaManager.on("op", (message) => this.afterProcessingOp(message));
 
         this.deltaManager.on("connect", (details, opsBehind) => {
             this.clientId = details.clientId;
@@ -60,6 +59,22 @@ class OpPerfTelemetry {
             this.clientSequenceNumberForLatencyStatistics = undefined;
             this.connectionOpSeqNumber = undefined;
             this.firstConnection = false;
+        });
+
+        this.deltaManager.inbound.on("idle", (count: number, duration: number) => {
+            // Do not want to log zero for sure.
+            // We are more interested in aggregates, so logging only if we are processing some number of ops
+            // Cut-off is arbitrary - can be increased or decreased based on amount of data collected and questions we
+            // want to get answered
+            // back-compat: Once 0.36 loader version saturates (count & duration args were added there),
+            // we can remove typeof check.
+            if (typeof count === "number" && count >= 100) {
+                this.logger.sendPerformanceEvent({
+                    eventName: "GetDeltas_OpProcessing",
+                    count,
+                    duration,
+                });
+            }
         });
     }
 
@@ -96,7 +111,7 @@ class OpPerfTelemetry {
         }
     }
 
-    private beforeProcessingOp(message: ISequencedDocumentMessage) {
+    private afterProcessingOp(message: ISequencedDocumentMessage) {
         const sequenceNumber = message.sequenceNumber;
 
         if (sequenceNumber === this.connectionOpSeqNumber) {

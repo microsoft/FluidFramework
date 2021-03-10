@@ -11,9 +11,7 @@ import path from "path";
 import { Trace } from "@fluidframework/common-utils";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-// eslint-disable-next-line import/no-extraneous-dependencies
 import JsDiff from "diff";
-// eslint-disable-next-line import/no-extraneous-dependencies
 import random from "random-js";
 import * as MergeTree from "../";
 import * as Base from "../base";

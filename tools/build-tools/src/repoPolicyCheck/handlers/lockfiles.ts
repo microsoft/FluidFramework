@@ -13,7 +13,7 @@ const urlPattern = /(https?[^"@]+)(\/@.+|\/[^/]+\/-\/.+tgz)/g;
 
 export const handler: Handler = {
     name: "package-lockfiles",
-    match: /^.*?package-lock\.json$/i,
+    match: /^.*?[^_]package-lock\.json$/i, // Ignore _package-lock.json
     handler: file => {
         let content = readFile(file);
         const matches = content.match(urlPattern);

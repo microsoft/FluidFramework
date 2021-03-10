@@ -235,7 +235,7 @@ export class ConsensusRegisterCollection<T>
             const op: IIncomingRegisterOperation<T> = message.contents;
             switch (op.type) {
                 case "write": {
-                    // back-compat 0.13 refSeq
+                    // backward compatibility: File at rest written with runtime <= 0.13 do not have refSeq
                     // when the refSeq property didn't exist
                     if (op.refSeq === undefined) {
                         op.refSeq = message.referenceSequenceNumber;

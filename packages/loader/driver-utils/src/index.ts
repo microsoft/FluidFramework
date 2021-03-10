@@ -4,6 +4,7 @@
  */
 
 export * from "./blobCacheStorageService";
+export * from "./blobAggregationStorage";
 export * from "./buildSnapshotTree";
 export * from "./documentStorageServiceProxy";
 export * from "./multiDocumentServiceFactory";

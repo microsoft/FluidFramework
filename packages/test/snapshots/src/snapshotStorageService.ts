@@ -41,10 +41,6 @@ export class SnapshotStorageService extends FileSnapshotReader implements IDocum
         return Promise.reject(new Error("Invalid operation"));
     }
 
-    public async readBlob(blobId) {
-        return Promise.reject(new Error("Invalid operation"));
-    }
-
     public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
         return Promise.reject(new Error("Invalid operation"));
     }

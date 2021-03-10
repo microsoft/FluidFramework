@@ -83,7 +83,8 @@ export const getTextColor = (c: IColor) => {
 };
 
 export const getButtonStyles = (baseColor: string): IButtonStyles => {
-    const color = getColorFromString(baseColor);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const color = getColorFromString(baseColor)!;
     const colorHover = getColorFromHSV({
         h: color.h,
         s: color.s,

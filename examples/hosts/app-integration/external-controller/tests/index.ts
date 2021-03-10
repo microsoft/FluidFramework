@@ -4,11 +4,15 @@
  * Licensed under the MIT License.
  */
 
-import { getSessionStorageContainer } from "@fluidframework/get-session-storage-container";
+import {
+    KeyValueDataObject,
+    KeyValueInstantiationFactory
+} from "@fluid-experimental/data-objects";
+import { getSessionStorageContainer } from "@fluid-experimental/get-container";
 import { getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
 
 import { DiceRollerController } from "../src/controller";
-import { KeyValueContainerRuntimeFactory, KeyValueDataObject, KeyValueInstantiationFactory } from "../src/kvpair-dataobject";
+import { DOProviderContainerRuntimeFactory } from "@fluid-experimental/fluid-static";
 import { renderDiceRoller } from "../src/view";
 
 // Since this is a single page Fluid application we are generating a new document id
@@ -27,7 +31,11 @@ const documentId = window.location.hash.substring(1);
 export async function createContainerAndRenderInElement(element: HTMLDivElement, createNewFlag: boolean) {
     // The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
     // to store ops.
-    const container = await getSessionStorageContainer(documentId, KeyValueContainerRuntimeFactory, createNewFlag);
+    const container = await getSessionStorageContainer(
+        documentId,
+        new DOProviderContainerRuntimeFactory([KeyValueInstantiationFactory.registryEntry]),
+        createNewFlag,
+    );
 
     // Get the Default Object from the Container
     const dataObjectId = "dice";

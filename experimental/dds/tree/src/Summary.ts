@@ -4,27 +4,27 @@
  */
 
 import { TraitLabel } from './Identifiers';
-import { assert } from './Common';
-import { OrderedEditSet } from './EditLog';
+import { assert, assertNotUndefined } from './Common';
+import { EditLogSummary, OrderedEditSet } from './EditLog';
 import { newEdit, setTrait } from './EditUtilities';
 import { ChangeNode, Edit, Change } from './PersistedTypes';
 import { Snapshot } from './Snapshot';
 import { initialTree } from './InitialTree';
+import { readFormatVersion, SharedTreeSummary_0_0_2 } from './SummaryBackCompatibility';
 
 /**
- * Format version for summaries which is supported.
- * Currently no effort is made to support older/newer documents, and any mismatch is an error.
+ * Format version for summaries that are written.
  */
-export const formatVersion = '0.0.2';
+const formatVersion = '0.0.2';
 
 /**
  * Handler for summarizing the tree state.
- * The handler is invoked when saving a summary. It accepts a view of the current state of the tree and the sequenced edits known
- * to the SharedTree.
+ * The handler is invoked when saving a summary. It accepts a view of the current state of the tree, the sequenced edits known
+ * to the SharedTree, and optional helpers for serializing the edit information.
  * @returns a summary of the supplied state.
  * @public
  */
-export type SharedTreeSummarizer = (sequencedEdits: OrderedEditSet, currentView: Snapshot) => SharedTreeSummary;
+export type SharedTreeSummarizer = (editLog: OrderedEditSet, currentView: Snapshot) => SharedTreeSummaryBase;
 
 /**
  * A developer facing (non-localized) error message.
@@ -33,13 +33,9 @@ export type SharedTreeSummarizer = (sequencedEdits: OrderedEditSet, currentView:
 export type ErrorString = string;
 
 /**
- * The contents of a SharedTree summary: the current tree, and the edits needed to get from `initialTree` to the current tree.
- * @public
+ * The minimal information on a SharedTree summary. Contains the summary format version.
  */
-export interface SharedTreeSummary {
-	readonly currentTree: ChangeNode;
-	readonly sequencedEdits: readonly Edit[];
-
+export interface SharedTreeSummaryBase {
 	/**
 	 * Field on summary under which version is stored.
 	 */
@@ -47,52 +43,63 @@ export interface SharedTreeSummary {
 }
 
 /**
- * Serializes a SharedTree summary into a JSON string. This may later be used to initialize a SharedTree's state via `deserialize()`
+ * The contents of a SharedTree summary: the current tree, and the edits needed to get from `initialTree` to the current tree.
+ * @public
  */
-export function serialize(summary: SharedTreeSummary): string {
-	return JSON.stringify(summary);
+export interface SharedTreeSummary extends SharedTreeSummaryBase {
+	readonly currentTree: ChangeNode;
+
+	/**
+	 * Information that can populate an edit log.
+	 */
+	readonly editHistory?: EditLogSummary;
 }
 
 /**
- * Deserializes a JSON object produced by `serialize()` and uses it to initialize the tree with the encoded state.
- * @returns SharedTreeSummary that can be used to initialize a SharedTree, or an ErrorString if the summary could not be interpreted.
- * */
-export function deserialize(jsonSummary: string): SharedTreeSummary | ErrorString {
-	let summary: Partial<SharedTreeSummary>;
-	try {
-		summary = JSON.parse(jsonSummary);
-	} catch {
-		return 'Json syntax error in Summary';
-	}
-
-	if (typeof summary !== 'object') {
-		return 'Summary is not an object';
-	}
-
-	const { currentTree, sequencedEdits, version } = summary;
-
-	if (version !== formatVersion) {
-		return 'Summary format version not supported';
-	}
-
-	if (currentTree !== undefined && sequencedEdits !== undefined) {
-		// TODO:#45414: Add more robust validation of the summary's fields. Even if they are present, they may be malformed.
-		return { currentTree, sequencedEdits, version };
-	}
-
-	return 'Missing fields on summary';
+ * Serializes a SharedTree summary into a JSON string. This may later be used to initialize a SharedTree's state via `deserialize()`
+ */
+export function serialize(summary: SharedTreeSummaryBase): string {
+	return JSON.stringify(summary);
 }
 
 /**
  * Preserves the full history in the generated summary.
  * @public
  */
-export function fullHistorySummarizer(sequencedEdits: OrderedEditSet, currentView: Snapshot): SharedTreeSummary {
-	const edits = Array.from(sequencedEdits);
+export function fullHistorySummarizer(editLog: OrderedEditSet, currentView: Snapshot): SharedTreeSummary_0_0_2 {
+	const { editChunks, editIds } = editLog.getEditLogSummary();
+
+	const sequencedEdits: Edit[] = [];
+	let idIndex = 0;
+	editChunks.forEach(({ chunk }) => {
+		assert(
+			Array.isArray(chunk),
+			'Handles should not be included in the summary until format version 0.1.0 is being written.'
+		);
+
+		chunk.forEach(({ changes }) => {
+			sequencedEdits.push({
+				changes,
+				id: assertNotUndefined(editIds[idIndex++], 'Number of edits should match number of edit IDs.'),
+			});
+		});
+	});
+
 	return {
 		currentTree: currentView.getChangeNodeTree(),
-		sequencedEdits: edits,
+		sequencedEdits,
 		version: formatVersion,
+	};
+}
+
+/**
+ * Generates a summary with format version 0.1.0. This will prefer handles over edits in edit chunks where possible.
+ */
+export function fullHistorySummarizer_0_1_0(editLog: OrderedEditSet, currentView: Snapshot): SharedTreeSummary {
+	return {
+		currentTree: currentView.getChangeNodeTree(),
+		editHistory: editLog.getEditLogSummary(true),
+		version: readFormatVersion,
 	};
 }
 
@@ -101,7 +108,7 @@ export function fullHistorySummarizer(sequencedEdits: OrderedEditSet, currentVie
  * Instead, the history returned in the summary will contain a single change that creates a revision identical to the supplied view.
  * @public
  */
-export function noHistorySummarizer(_: OrderedEditSet, currentView: Snapshot): SharedTreeSummary {
+export function noHistorySummarizer(_editLog: OrderedEditSet, currentView: Snapshot): SharedTreeSummary_0_0_2 {
 	const currentTree = currentView.getChangeNodeTree();
 	const rootId = currentTree.identifier;
 	const changes: Change[] = [];
@@ -114,9 +121,11 @@ export function noHistorySummarizer(_: OrderedEditSet, currentView: Snapshot): S
 		currentTree.identifier === initialTree.identifier && currentTree.definition === initialTree.definition,
 		'root definition and identifier should be immutable.'
 	);
+	const edit = newEdit(changes);
+
 	return {
-		version: formatVersion,
-		sequencedEdits: [newEdit(changes)],
 		currentTree,
+		sequencedEdits: [{ id: edit.id, changes: edit.changes }],
+		version: formatVersion,
 	};
 }

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+ /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { assert } from "@fluidframework/common-utils";
 import {
     createInsertSegmentOp,
@@ -229,9 +231,9 @@ export class ProseMirrorTransactionBuilder {
     public build(): Transaction {
         console.log(JSON.stringify(this.things.map((t) => ({ type: t.type, length: t.length })), null, 2));
 
-        let currentGroup: IThingGroup;
+        let currentGroup: IThingGroup | undefined;
         const groups = new Array<IThingGroup>();
-        const annotations = [];
+        const annotations: { from: number, to: number, segment: ISegment, propertyDeltas?: any }[] = [];
         let position = 0;
 
         for (const thing of this.things) {
@@ -240,7 +242,7 @@ export class ProseMirrorTransactionBuilder {
                     annotations.push({
                         from: position,
                         to: position + thing.length,
-                        segment: thing.event.segment,
+                        segment: thing.event!.segment,
                         propertyDeltas: thing.annotations,
                     });
                 }
@@ -264,13 +266,13 @@ export class ProseMirrorTransactionBuilder {
             const group = groups[0];
 
             let removalSize = 0;
-            const insertSegments = [];
+            const insertSegments: ISegment[] = [];
 
             group.items.forEach((value) => {
                 if (value.type === "delete") {
-                    removalSize += value.event.segment.cachedLength;
+                    removalSize += value.event!.segment.cachedLength;
                 } else {
-                    insertSegments.push(value.event.segment);
+                    insertSegments.push(value.event!.segment);
                 }
             });
 
@@ -285,9 +287,9 @@ export class ProseMirrorTransactionBuilder {
                 group.position + removalSize,
                 slice);
         } else if (groups.length > 1) {
-            const removalSizes = [];
-            const insertSizes = [];
-            const insertSegments = [];
+            const removalSizes: number[] = [];
+            const insertSizes: number[] = [];
+            const insertSegments: ISegment[] = [];
 
             for (const group of groups) {
                 let removalSize = 0;
@@ -295,10 +297,10 @@ export class ProseMirrorTransactionBuilder {
 
                 group.items.forEach((value) => {
                     if (value.type === "delete") {
-                        removalSize += value.event.segment.cachedLength;
+                        removalSize += value.event!.segment.cachedLength;
                     } else {
-                        insertSegments.push(value.event.segment);
-                        groupSize += value.event.segment.cachedLength;
+                        insertSegments.push(value.event!.segment);
+                        groupSize += value.event!.segment.cachedLength;
                     }
                 });
 
@@ -328,7 +330,7 @@ export class ProseMirrorTransactionBuilder {
             const segment = annotation.segment;
             // An annotation should just be an immediate flush - I think
             for (const prop of Object.keys(annotation.propertyDeltas)) {
-                const value = segment.properties[prop];
+                const value = segment.properties![prop];
 
                 if (value) {
                     this.transaction.addMark(
@@ -465,7 +467,7 @@ function sliceToGroupOpsInternal(
                     content,
                     schema,
                     index === 0 ? openStart - 1 : -1,
-                    index === value.content.length - 1 ? openEnd - 1 : -1,
+                    index === value.content!.length - 1 ? openEnd - 1 : -1,
                     from + offset,
                     ops,
                     insert,
@@ -497,7 +499,7 @@ function generateFragment(segments: ISegment[]) {
     const nodeStack = new Array<IProseMirrorNode>();
     nodeStack.push({ type: "doc", content: [] });
 
-    let openTop: IProseMirrorNode;
+    let openTop: IProseMirrorNode | undefined;
 
     // TODO should I pre-seed the data structure based on the nodes to the left of the open?
 
@@ -520,19 +522,19 @@ function generateFragment(segments: ISegment[]) {
                 }
             }
 
-            top.content.push(nodeJson);
+            top.content!.push(nodeJson);
         } else if (Marker.is(segment)) {
-            const nodeType = segment.properties[nodeTypeKey];
+            const nodeType = segment.properties![nodeTypeKey];
             switch (segment.refType) {
                 case ReferenceType.NestBegin:
                     // Special case the open top
                     if (openTop) {
-                        top.content.push(openTop);
+                        top.content!.push(openTop);
                         openTop = undefined;
                     }
                     // Create the new node, add it to the top's content, and push it on the stack
-                    const newNode = { type: nodeType, content: [], _open: true };
-                    top.content.push(newNode);
+                    const newNode = { type: nodeType, content: [] as IProseMirrorNode[], _open: true };
+                    top.content!.push(newNode);
                     nodeStack.push(newNode);
                     break;
 
@@ -543,7 +545,7 @@ function generateFragment(segments: ISegment[]) {
                         nodeStack.pop();
                     } else {
                         // Unmatched open
-                        const newNode2 = { type: nodeType, content: [], _open: true };
+                        const newNode2 = { type: nodeType, content: [] as IProseMirrorNode[], _open: true };
                         if (openTop) {
                             newNode2.content.push(openTop);
                         }
@@ -556,8 +558,8 @@ function generateFragment(segments: ISegment[]) {
                 case ReferenceType.Simple:
                     // TODO consolidate the text segment and simple references
                     const nodeJson: IProseMirrorNode = {
-                        type: segment.properties.type,
-                        attrs: segment.properties.attrs,
+                        type: segment.properties!.type,
+                        attrs: segment.properties!.attrs,
                     };
 
                     if (segment.properties) {
@@ -572,7 +574,7 @@ function generateFragment(segments: ISegment[]) {
                         }
                     }
 
-                    top.content.push(nodeJson);
+                    top.content!.push(nodeJson);
                     break;
 
                 default:
@@ -583,7 +585,7 @@ function generateFragment(segments: ISegment[]) {
     }
 
     const doc = nodeStack[0];
-    const content = doc.content;
+    const content = doc.content!;
 
     // We do a fix up down the left edge for all the open nodes since we need to change the ordering. Likely
     // better way to do this but holding off until better understand slice use

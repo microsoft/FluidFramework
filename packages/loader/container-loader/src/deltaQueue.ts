@@ -4,7 +4,7 @@
  */
 
 import { IDeltaQueue, IDeltaQueueEvents } from "@fluidframework/container-definitions";
-import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import Deque from "double-ended-queue";
 
 export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> implements IDeltaQueue<T> {
@@ -94,16 +94,6 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         }
     }
 
-    // back-compat: usage removed in 0.33, remove in future versions
-    public async systemPause(): Promise<void> {
-        return this.pause();
-    }
-
-    // back-compat: usage removed in 0.33, remove in future versions
-    public systemResume(): void {
-        this.resume();
-    }
-
     /**
      * There are several actions that may need to kick off delta processing, so we want to guard against
      * accidental reentrancy. ensureProcessing can be called safely to start the processing loop if it is
@@ -128,11 +118,15 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
      * Executes the delta processing loop until a stop condition is reached.
      */
     private processDeltas() {
+        const start = performance.now();
+        let count = 0;
+
         // For grouping to work we must process all local messages immediately and in the single turn.
         // So loop over them until no messages to process, we have become paused, or hit an error.
         while (!(this.q.length === 0 || this.paused || this.error !== undefined)) {
             // Get the next message in the queue
             const next = this.q.shift();
+            count++;
             // Process the message.
             try {
                 // We know next is defined since we did a length check just prior to shifting.
@@ -146,7 +140,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         }
 
         if (this.q.length === 0) {
-            this.emit("idle");
+            this.emit("idle", count, performance.now() - start);
         }
     }
 }

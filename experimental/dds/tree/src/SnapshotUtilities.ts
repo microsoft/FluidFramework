@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { memoizeGetter } from './Common';
+import { copyPropertyIfDefined, memoizeGetter } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
-import { TraitMap, TreeNode, TreeNodeSequence } from './PersistedTypes';
+import { ChangeNode, TraitMap } from './PersistedTypes';
 import { Snapshot, SnapshotNode } from './Snapshot';
 
 /** Returns true if two `SnapshotNodes` are equivalent */
@@ -58,17 +58,13 @@ export function compareSnapshotNodes(nodeA: SnapshotNode, nodeB: SnapshotNode): 
  * @param lazyTraits - whether or not traits should be populated lazily.
  * If lazy, the subtrees under each trait will not be read until the trait is first accessed.
  */
-export function getTreeNodeFromSnapshotNode<TChild>(
-	snapshot: Snapshot,
-	nodeId: NodeId,
-	lazyTraits = false
-): TreeNode<TChild> {
+export function getChangeNodeFromSnapshot(snapshot: Snapshot, nodeId: NodeId, lazyTraits = false): ChangeNode {
 	const node = snapshot.getSnapshotNode(nodeId);
 	const nodeData = {
 		definition: node.definition,
 		identifier: node.identifier,
-		...(node.payload ? { payload: node.payload } : {}),
 	};
+	copyPropertyIfDefined(node, nodeData, 'payload');
 
 	if (lazyTraits) {
 		return {
@@ -86,31 +82,27 @@ export function getTreeNodeFromSnapshotNode<TChild>(
 }
 
 /** Given the traits of a SnapshotNode, return the corresponding traits on a Node */
-function makeTraits<TChild>(
+function makeTraits(
 	snapshot: Snapshot,
 	traits: ReadonlyMap<TraitLabel, readonly NodeId[]>,
 	lazyTraits = false
-): TraitMap<TChild> {
+): TraitMap<ChangeNode> {
 	const traitMap = {};
 	for (const [label, trait] of traits.entries()) {
 		if (lazyTraits) {
 			Object.defineProperty(traitMap, label, {
 				get() {
 					const treeNodeTrait = trait.map((nodeId) =>
-						getTreeNodeFromSnapshotNode<TChild>(snapshot, nodeId, lazyTraits)
+						getChangeNodeFromSnapshot(snapshot, nodeId, lazyTraits)
 					);
-					return memoizeGetter(
-						this as TraitMap<TChild>,
-						label,
-						(treeNodeTrait as unknown) as TreeNodeSequence<TChild>
-					);
+					return memoizeGetter(this as TraitMap<ChangeNode>, label, treeNodeTrait);
 				},
 				configurable: true,
 				enumerable: true,
 			});
 		} else {
 			Object.defineProperty(traitMap, label, {
-				value: trait.map((nodeId) => getTreeNodeFromSnapshotNode<TChild>(snapshot, nodeId, lazyTraits)),
+				value: trait.map((nodeId) => getChangeNodeFromSnapshot(snapshot, nodeId, lazyTraits)),
 				enumerable: true,
 			});
 		}

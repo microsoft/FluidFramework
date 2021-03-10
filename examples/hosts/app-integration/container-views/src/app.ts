@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { getTinyliciousContainer } from "@fluid-experimental/get-container";
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IContainer } from "@fluidframework/container-definitions";
-import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
 import { DiceRollerContainerRuntimeFactory } from "./containerCode";

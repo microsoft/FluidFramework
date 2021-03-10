@@ -416,9 +416,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
     protected snapshotCore(serializer: IFluidSerializer): ITree {
         const entries = [];
-        // TODO: once the change to conditionally read these has propagated
-        // conditionally write them as well
-        // if (this.intervalMapKernel.size > 0) {
+        // conditionally write the interval collection blob
+        // only if it has entries
+        if (this.intervalMapKernel.size > 0) {
             entries.push(
                 {
                     mode: FileMode.File,
@@ -429,7 +429,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                         encoding: "utf-8",
                     },
                 });
-        // }
+        }
         entries.push(
             {
                 mode: FileMode.Directory,

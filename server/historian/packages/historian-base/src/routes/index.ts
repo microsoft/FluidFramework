@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { AsyncLocalStorage } from "async_hooks";
 import { IThrottler } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import * as nconf from "nconf";
@@ -38,19 +39,20 @@ export function create(
     store: nconf.Provider,
     tenantService: ITenantService,
     cache: ICache,
-    throttler: IThrottler): IRoutes {
+    throttler: IThrottler,
+    asyncLocalStorage?: AsyncLocalStorage<string>): IRoutes {
     return {
         git: {
-            blobs: blobs.create(store, tenantService, cache, throttler),
-            commits: commits.create(store, tenantService, cache, throttler),
-            refs: refs.create(store, tenantService, cache, throttler),
-            tags: tags.create(store, tenantService, cache, throttler),
-            trees: trees.create(store, tenantService, cache, throttler),
+            blobs: blobs.create(store, tenantService, cache, throttler, asyncLocalStorage),
+            commits: commits.create(store, tenantService, cache, throttler, asyncLocalStorage),
+            refs: refs.create(store, tenantService, cache, throttler, asyncLocalStorage),
+            tags: tags.create(store, tenantService, cache, throttler, asyncLocalStorage),
+            trees: trees.create(store, tenantService, cache, throttler, asyncLocalStorage),
         },
         repository: {
-            commits: repositoryCommits.create(store, tenantService, cache, throttler),
-            contents: contents.create(store, tenantService, cache, throttler),
-            headers: headers.create(store, tenantService, cache, throttler),
+            commits: repositoryCommits.create(store, tenantService, cache, throttler, asyncLocalStorage),
+            contents: contents.create(store, tenantService, cache, throttler, asyncLocalStorage),
+            headers: headers.create(store, tenantService, cache, throttler, asyncLocalStorage),
         },
     };
 }

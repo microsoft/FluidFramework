@@ -93,6 +93,7 @@ export interface IContainerEvents extends IEvent {
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
+    (event: "dirty" | "saved", listener: (dirty: boolean) => void);
 }
 
 /**
@@ -130,6 +131,13 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * Returns true if the container has been closed, otherwise false
      */
     readonly closed: boolean;
+
+    /**
+     * Returns true if the container is dirty, i.e. there are user changes that has not been saved
+     * Closing container in this state results in data loss for user.
+     * Container usually gets into this situation due to loss of connectivity.
+     */
+    readonly isDirty: boolean;
 
     /**
      * Closes the container
@@ -179,7 +187,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 }
 
 /**
- * The Host's view of the Loader, used for loading Containers
+ * The Runtime's view of the Loader, used for loading Containers
  */
 export interface ILoader extends IFluidRouter {
     /**
@@ -190,7 +198,12 @@ export interface ILoader extends IFluidRouter {
      * a request against the server found from the resolve step.
      */
     resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
+}
 
+/**
+ * The Host's view of the Loader, used for loading Containers
+ */
+export interface IHostLoader extends ILoader {
     /**
      * Creates a new container using the specified chaincode but in an unattached state. While unattached all
      * updates will only be local until the user explicitly attaches the container to a service provider.
@@ -237,7 +250,6 @@ export enum LoaderHeader {
     cache = "fluid-cache",
 
     clientDetails = "fluid-client-details",
-    executionContext = "execution-context",
 
     /**
      * Start the container in a paused, unconnected state. Defaults to false
@@ -262,7 +274,6 @@ export interface ILoaderHeader {
     [LoaderHeader.cache]: boolean;
     [LoaderHeader.clientDetails]: IClientDetails;
     [LoaderHeader.pause]: boolean;
-    [LoaderHeader.executionContext]: string;
     [LoaderHeader.sequenceNumber]: number;
     [LoaderHeader.reconnect]: boolean;
     [LoaderHeader.version]: string | undefined | null;

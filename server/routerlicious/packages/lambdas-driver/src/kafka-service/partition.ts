@@ -25,10 +25,11 @@ import { Context } from "./context";
  */
 export class Partition extends EventEmitter {
     private q: AsyncQueue<IQueuedMessage>;
-    private readonly lambdaP: Promise<IPartitionLambda>;
-    private lambda: IPartitionLambda;
+    private lambdaP: Promise<IPartitionLambda> | undefined;
+    private lambda: IPartitionLambda | undefined;
     private readonly checkpointManager: CheckpointManager;
     private readonly context: Context;
+    private closed = false;
 
     constructor(
         private readonly id: number,
@@ -45,7 +46,7 @@ export class Partition extends EventEmitter {
         const partitionConfig = new Provider({}).defaults(clonedConfig).use("memory");
 
         this.checkpointManager = new CheckpointManager(id, consumer);
-        this.context = new Context(this.checkpointManager);
+        this.context = new Context(this.checkpointManager, this.logger);
         this.context.on("error", (error: any, errorData: IContextErrorData) => {
             this.emit("error", error, errorData);
         });
@@ -54,7 +55,8 @@ export class Partition extends EventEmitter {
         this.q = queue(
             (message: IQueuedMessage, callback) => {
                 try {
-                    this.lambda.handler(message);
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    this.lambda!.handler(message);
                     callback();
                 } catch (error) {
                     callback(error);
@@ -67,9 +69,14 @@ export class Partition extends EventEmitter {
         this.lambdaP.then(
             (lambda) => {
                 this.lambda = lambda;
+                this.lambdaP = undefined;
                 this.q.resume();
             },
             (error) => {
+                if (this.closed) {
+                    return;
+                }
+
                 const errorData: IContextErrorData = {
                     restart: true,
                 };
@@ -86,10 +93,16 @@ export class Partition extends EventEmitter {
     }
 
     public process(rawMessage: IQueuedMessage) {
+        if (this.closed) {
+            return;
+        }
+
         this.q.push(rawMessage);
     }
 
     public close(closeType: LambdaCloseType): void {
+        this.closed = true;
+
         // Stop any pending message processing
         this.q.kill();
 
@@ -97,16 +110,27 @@ export class Partition extends EventEmitter {
         this.checkpointManager.close();
         this.context.close();
 
-        // Notify the lambda (should it be resolved) of the close
-        this.lambdaP.then(
-            (lambda) => {
-                lambda.close(closeType);
-            },
-            (error) => {
-                // Lambda never existed - no need to close
-            });
+        // Notify the lambda of the close
+        if (this.lambda) {
+            this.lambda.close(closeType);
+            this.lambda = undefined;
+        } else if (this.lambdaP) {
+            // asynchronously close the lambda since it's not created yet
+            this.lambdaP
+                .then(
+                    (lambda) => {
+                        lambda.close(closeType);
+                    },
+                    (error) => {
+                        // Lambda never existed - no need to close
+                    })
+                .finally(() => {
+                    this.lambda = undefined;
+                    this.lambdaP = undefined;
+                });
+        }
 
-        return;
+        this.removeAllListeners();
     }
 
     /**

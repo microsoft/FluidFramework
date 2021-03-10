@@ -45,6 +45,7 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
     /**
      * Returns the GC data for this shared object. It contains a list of GC nodes that contains references to
      * other GC nodes.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    getGCData(): IGarbageCollectionData;
+    getGCData(fullGC?: boolean): IGarbageCollectionData;
 }

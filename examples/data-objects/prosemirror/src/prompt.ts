@@ -20,7 +20,7 @@ export function openPrompt(options) {
         if (wrapper.parentNode) { wrapper.parentNode.removeChild(wrapper); }
     };
 
-    const domFields = [];
+    const domFields: any[] = [];
     // eslint-disable-next-line guard-for-in, no-restricted-syntax
     for (const name in options.fields) {
         domFields.push(options.fields[name].render());
@@ -143,7 +143,7 @@ export class Field {
 
     // :: (any) → ?string
     // A field-type-specific validation function.
-    validateType(_value): string { return; }
+    validateType(_value): string | undefined { return; }
 
     validate(value) {
         if (!value && this.options.required) { return "Required field"; }

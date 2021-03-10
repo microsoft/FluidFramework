@@ -22,6 +22,12 @@ parameters:
   type: boolean
   default: false
 
+trigger:
+  batch: true
+  branches:
+    include:
+    - main
+    - release/*
 pr: none
 
 variables:
@@ -33,6 +39,8 @@ variables:
   - template: templates/include-vars.yml
     parameters:
       buildNumberInPatch: true
+  - name: diDir
+    value: '$(Build.SourcesDirectory)/tools/pipelines/dependency-injection'
 
 jobs:
   - job: run
@@ -44,6 +52,26 @@ jobs:
       clean: true
       lfs: ${{ parameters.checkoutSubmodules }}
       submodules: ${{ parameters.checkoutSubmodules }}
+
+    # Print parameters/Vars
+    - task: Bash@3
+      displayName: Print Parameters and Variables
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: |
+          # Show all task group conditions
+
+          echo "
+          Pipeline Parameters:
+            buildDirectory=${{ parameters.buildDirectory }}
+            taskBuild=${{ parameters.taskBuild }}
+            poolBuild=${{ parameters.poolBuild }}
+            checkoutSubmodules=${{ parameters.checkoutSubmodules }}
+
+          Pipeline Variables:
+            diDir=${{ variables.diDir }}
+          "
 
     # Install
     - task: UseNode@1
@@ -66,28 +94,77 @@ jobs:
         workingDir: ${{ parameters.buildDirectory }}
         customCommand: 'run ${{ parameters.taskBuild }}'
 
-    # Run End-to-end Tests
+    # [DI] Auth to internal feed
+    - task: npmAuthenticate@0
+      displayName: '[DI] npm authenticate (internal feed)'
+      inputs:
+        workingFile: ${{ variables.diDir }}/.npmrc
+
+    # [DI] Auth to Office feed
+    - task: npmAuthenticate@0
+      displayName: '[DI] npm authenticate (office feed)'
+      inputs:
+        workingFile: ${{ variables.diDir }}/.npmrc
+        customEndpoint: 'Office Packages - Readonly'
+
+    # [DI] Prep dependency-injection package for install
+    - task: Bash@3
+      displayName: '[DI] Prepare DI package'
+      inputs:
+        targetType: 'inline'
+        script: 'mv _package.json package.json'
+        workingDirectory: ${{ variables.diDir }}
+
+    # [DI] Install dependency-injection package
     - task: Npm@1
-      displayName: '[end-to-end tests] npm run ci:test:realsvc'
+      displayName: '[DI] npm install'
+      inputs:
+        command: 'custom'
+        workingDir: ${{ variables.diDir }}
+        customCommand: 'install'
+        customRegistry: 'useNpmrc'
+
+    # end-to-end tests routerlicious
+    - task: Npm@1
+      displayName: '[end-to-end tests] npm run test:realsvc:routerlicious:report'
       continueOnError: true
+      timeoutInMinutes: 15
       env:
         fluid__webpack__bearerSecret: $(fluid-webpack-bearerSecret)
         fluid__webpack__fluidHost: $(fluid-webpack-fluidHost)
         fluid__webpack__tenantId: $(fluid-webpack-tenantId)
         fluid__webpack__tenantSecret: $(fluid-webpack-tenantSecret)
+        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
       inputs:
         command: 'custom'
-        workingDir: packages/test/end-to-end-tests
-        customCommand: 'run ci:test:realsvc'
+        workingDir: packages/test/test-end-to-end-tests
+        customCommand: 'run test:realsvc:routerlicious:report'
+
+    # end-to-end tests odsp
+    - task: Npm@1
+      displayName: '[end-to-end tests] npm run test:realsvc:odsp:report'
+      continueOnError: true
+      timeoutInMinutes: 15
+      env:
+        login__microsoft__clientId: $(login-microsoft-clientId)
+        login__microsoft__secret: $(login-microsoft-secret)
+        login__odsp__test__accounts: $(login-odsp-test-accounts)
+        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+      inputs:
+        command: 'custom'
+        workingDir: packages/test/test-end-to-end-tests
+        customCommand: 'run test:realsvc:odsp:report'
 
     # Run Stress Tests
     - task: Npm@1
       displayName: '[stress tests] npm run start'
       continueOnError: true
+      timeoutInMinutes: 15
       env:
         login__microsoft__clientId: $(login-microsoft-clientId)
         login__microsoft__secret: $(login-microsoft-secret)
         login__odsp__test__accounts: $(login-odsp-test-accounts)
+        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
       inputs:
         command: 'custom'
         workingDir: packages/test/service-load-test
@@ -108,5 +185,5 @@ jobs:
         testResultsFormat: 'JUnit'
         testResultsFiles: '**/*junit-report.xml'
         searchFolder: ${{ parameters.buildDirectory }}/nyc
-        mergeTestResults: true
+        mergeTestResults: false
       condition: succeededOrFailed()

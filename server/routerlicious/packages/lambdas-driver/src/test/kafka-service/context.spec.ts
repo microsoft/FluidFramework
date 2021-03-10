@@ -4,7 +4,7 @@
  */
 
 import { IContextErrorData } from "@fluidframework/server-services-core";
-import { TestConsumer, TestKafka } from "@fluidframework/server-test-utils";
+import { DebugLogger, TestConsumer, TestKafka } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import { CheckpointManager } from "../../kafka-service/checkpointManager";
 import { Context } from "../../kafka-service/context";
@@ -19,7 +19,7 @@ describe("kafka-service", () => {
             const testKafka = new TestKafka();
             testConsumer = testKafka.createConsumer();
             checkpointManager = new CheckpointManager(0, testConsumer);
-            testContext = new Context(checkpointManager);
+            testContext = new Context(checkpointManager, DebugLogger.create("fluid-server:TestContext"));
         });
 
         describe(".checkpoint", () => {

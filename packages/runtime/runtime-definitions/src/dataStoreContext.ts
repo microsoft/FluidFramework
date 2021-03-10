@@ -38,7 +38,6 @@ import {
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
 } from "./summary";
-import { ITaskManager } from "./agent";
 
 /**
  * Runtime flush mode handling
@@ -127,8 +126,6 @@ export interface IContainerRuntimeBase extends
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
-    getTaskManager(): Promise<ITaskManager>;
-
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 
     /**
@@ -191,8 +188,9 @@ export interface IFluidDataStoreChannel extends
     /**
      * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context
      * including any of its children. Each node has a list of outbound routes to other GC nodes in the document.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    getGCData(): Promise<IGarbageCollectionData>;
+    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
 
     /**
      * After GC has run, called to notify this channel of routes that are used in it.
@@ -220,7 +218,7 @@ export interface IFluidDataStoreChannel extends
 
 export type CreateChildSummarizerNodeFn = (
     summarizeInternal: SummarizeInternalFn,
-    getGCDataFn: () => Promise<IGarbageCollectionData>,
+    getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
     getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
 ) => ISummarizerNodeWithGC;
 
@@ -259,7 +257,6 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
-    readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
     /**
@@ -268,12 +265,6 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
     readonly attachState: AttachState;
 
     readonly containerRuntime: IContainerRuntimeBase;
-    /**
-     * @deprecated 0.17 Issue #1888 Rename IHostRuntime to IContainerRuntime and refactor usages
-     * Use containerRuntime instead of hostRuntime
-     */
-    readonly hostRuntime: IContainerRuntimeBase;
-    readonly snapshotFn: (message: string) => Promise<void>;
 
     /**
      * @deprecated 0.16 Issue #1635, #3631

@@ -5,6 +5,7 @@
 
 export * from "./interfaces";
 export * from "./testObjectProvider";
+export * from "./loaderContainerTracker";
 export * from "./localLoader";
 export * from "./localCodeLoader";
 export * from "./opProcessingController";

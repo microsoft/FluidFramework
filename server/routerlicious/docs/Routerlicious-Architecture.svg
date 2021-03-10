@@ -603,7 +603,7 @@
 				<v:ud v:nameU="visVersion" v:prompt="" v:val="VT0(17):26"/>
 			</v:userDefs>
 			<title>Layered Box.1058</title>
-			<desc>Boardcaster</desc>
+			<desc>Broadcaster</desc>
 			<g id="shape1059-184" v:mID="1059" v:groupContext="shape" transform="translate(10.8446,0)">
 				<title>Rectangle.33</title>
 				<v:userDefs>
@@ -628,7 +628,7 @@
 			<g id="shape1058-190" v:mID="1058" v:groupContext="groupContent">
 				<v:textBlock v:margins="rect(4,4,4,4)"/>
 				<v:textRect cx="33.4633" cy="590.562" width="66.93" height="29.1236"/>
-				<text x="8.46" y="593.56" class="st9" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Boardcaster</text>			</g>
+				<text x="8.46" y="593.56" class="st9" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Broadcaster</text>			</g>
 		</g>
 		<g id="group1062-192" transform="translate(297,-142.5)" v:mID="1062" v:groupContext="group" v:layerMember="2">
 			<v:userDefs>

@@ -4,47 +4,29 @@
  */
 
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { LocalServerTestDriver } from "./localServerTestDriver";
-import { OdspTestDriver } from "./odspTestDriver";
-import { RouterliciousTestDriver } from "./routerliciousTestDriver";
-import { TinyliciousTestDriver } from "./tinyliciousTestDriver";
+import { createFluidTestDriver } from "./factory";
 
 const envVar = "FLUID_TEST_DRIVER";
-const fluidTestDriverType = process.env[envVar]?.toLocaleLowerCase() as TestDriverTypes | undefined | "";
-let fluidTestDriver: ITestDriver | undefined;
-const _global =  global as any;
+const _global = global as any;
+let fluidTestDriver: ITestDriver;
 _global.getFluidTestDriver = (): ITestDriver => {
-    if (fluidTestDriver === undefined) {
-        switch (fluidTestDriverType) {
-            case undefined:
-            case "":
-            case "local":
-                fluidTestDriver = new LocalServerTestDriver();
-                break;
-
-            case "tinylicious":
-                fluidTestDriver = new TinyliciousTestDriver();
-                break;
-
-            case "routerlicious":
-                fluidTestDriver = RouterliciousTestDriver.createFromEnv();
-                break;
-
-            case "odsp":
-                fluidTestDriver =  OdspTestDriver.createFromEnv();
-                break;
-
-            default:
-                throw new Error(`No Fluid test driver registered for type "${fluidTestDriverType}"`);
-        }
+    if(fluidTestDriver === undefined) {
+        throw new Error("Not test driver created. Make sure this mocha hook is configured.");
     }
     return fluidTestDriver;
 };
 
-// can be async or not
-export const mochaGlobalSetup = async function() {
-    if (_global.getFluidTestDriver === undefined
-        || _global.getFluidTestDriver() === undefined)  {
-        throw new Error("getFluidTestDriver does not exist or did not return a driver");
-    }
+export const mochaHooks = {
+    async beforeAll() {
+        const fluidTestDriverType = process.env[envVar]?.toLocaleLowerCase() as TestDriverTypes | undefined | "";
+        if(fluidTestDriver === undefined) {
+            fluidTestDriver = await createFluidTestDriver(
+                fluidTestDriverType === "" || fluidTestDriverType === undefined ? "local" : fluidTestDriverType);
+        }
+
+        if (_global.getFluidTestDriver === undefined
+            || _global.getFluidTestDriver() === undefined) {
+            throw new Error("getFluidTestDriver does not exist or did not return a driver");
+        }
+    },
 };

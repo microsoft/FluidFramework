@@ -55,12 +55,16 @@ describe("sharedText", () => {
         }
 
         const word: string = "sharedTextTest";
-        // Type a word in one of the documents. There are two classes with name "flow-view",
-        // one for each user. This will pick the first class it finds and type in that.
-        await page.type('[class=flow-view]', word, { delay: 10 });
+        // Issue #5331:  See if typing a character at a time will help with stability
+        // await page.type('[class=flow-view]', word, { delay: 10 });
+        for (const c of word) {
+            // Type a word in one of the documents. There are two classes with name "flow-view",
+            // one for each user. This will pick the first class it finds and type in that.
+            await page.type('[class=flow-view]', c, { delay: 10 });
+        }
 
         // wait for all changes to propagate
-        await new Promise((resolve)=>setTimeout(resolve, 10));
+        await page.waitFor(() => window["FluidLoader"].isSynchronized());
 
         // The text returned has extra spaces so remove the extra spaces
         let textLeft = await getText(0);

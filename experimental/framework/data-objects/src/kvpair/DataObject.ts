@@ -25,12 +25,32 @@ export interface IKeyValueDataObject extends EventEmitter {
      * Event on value change
      */
     on(event: "changed", listener: (args: IDirectoryValueChanged) => void): this;
+
+    /**
+     * Returns all the keys
+     */
+    keys(): string[];
+
+    /**
+     * By default, returns an object containing all key value pairs
+     * Filter test function can be passed to limit keys added to object
+     */
+    query(): (test?: string | ((value: string) => boolean)) => any | { [key: string]: any }
 }
 
 /**
  * The KeyValueDataObject is our data object that implements the IKeyValueDataObject interface.
  */
-export class KeyValueDataObject extends DataObject implements IKeyValueDataObject {
+export class KeyValueDataObject
+    extends DataObject
+    implements IKeyValueDataObject {
+    public static readonly factory = new DataObjectFactory(
+        "keyvalue-dataobject",
+        KeyValueDataObject,
+        [],
+        {},
+    );
+
     /**
      * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
      * DataObject, by registering an event listener for changes in data.
@@ -49,15 +69,31 @@ export class KeyValueDataObject extends DataObject implements IKeyValueDataObjec
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.root.get(key);
     };
+
+    public keys = (): string[] => {
+        return Array.from(this.root.keys());
+    };
+
+    public query = (test?: string | ((value: string) => boolean)): any | { [key: string]: any } => {
+        let keys: string[] = [];
+        if (!test) {
+            keys = this.keys();
+        } else if (typeof test === "string") {
+            keys = [test];
+        } else {
+            keys = this.keys().filter(test);
+        }
+
+        const newQuery: { [key: string]: any } = {};
+        keys.forEach((element: string) => {
+            newQuery[element] = this.get(element);
+        });
+        return newQuery;
+    };
 }
 
 /**
  * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
-export const KeyValueInstantiationFactory = new DataObjectFactory(
-    "keyvalue-dataobject",
-    KeyValueDataObject,
-    [],
-    {},
-);
+export const KeyValueInstantiationFactory = KeyValueDataObject.factory;

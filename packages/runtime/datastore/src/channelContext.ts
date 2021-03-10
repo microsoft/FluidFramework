@@ -33,8 +33,9 @@ export interface IChannelContext {
     /**
      * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context
      * including any of its children. Each node has a set of outbound routes to other GC nodes in the document.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    getGCData(): Promise<IGarbageCollectionData>;
+    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
 
     /**
      * After GC has run, called to notify this context of routes that are used in it. These are used for the following:
@@ -52,7 +53,7 @@ export function createServiceEndpoints(
     dirtyFn: () => void,
     storageService: IDocumentStorageService,
     tree?: ISnapshotTree,
-    extraBlobs?: Map<string, string>,
+    extraBlobs?: Map<string, ArrayBufferLike>,
 ) {
     const deltaConnection = new ChannelDeltaConnection(
         id,

@@ -6,7 +6,6 @@
 /* eslint-disable no-bitwise */
 
 import path from "path";
-// eslint-disable-next-line import/no-extraneous-dependencies
 import random from "random-js";
 import { Trace } from "@fluidframework/common-utils";
 import { LocalReference } from "../localReference";

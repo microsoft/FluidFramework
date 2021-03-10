@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { AsyncLocalStorage } from "async_hooks";
 import * as querystring from "querystring";
 import * as git from "@fluidframework/gitresources";
 import {
@@ -43,7 +44,8 @@ export class RestGitService {
     constructor(
         private readonly storage: ITenantStorage,
         private readonly cache: ICache,
-        private readonly writeToExternalStorage: boolean) {
+        private readonly writeToExternalStorage: boolean,
+        private readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
         if (storage.credentials) {
             const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
             this.authHeader = `Basic ${token.toString("base64")}`;
@@ -284,7 +286,7 @@ export class RestGitService {
         const options: request.OptionsWithUrl = {
             headers: {
                 "User-Agent": userAgent,
-                "x-correlation-id": getCorrelationId() || uuid.v4(),
+                "x-correlation-id": getCorrelationId(this.asyncLocalStorage) || uuid.v4(),
             },
             json: true,
             method: "GET",
@@ -301,7 +303,7 @@ export class RestGitService {
             headers: {
                 "Content-Type": "application/json",
                 "User-Agent": userAgent,
-                "x-correlation-id": getCorrelationId() || uuid.v4(),
+                "x-correlation-id": getCorrelationId(this.asyncLocalStorage) || uuid.v4(),
             },
             json: true,
             method: "POST",
@@ -316,7 +318,7 @@ export class RestGitService {
         const options: request.OptionsWithUrl = {
             headers: {
                 "User-Agent": userAgent,
-                "x-correlation-id": getCorrelationId() || uuid.v4(),
+                "x-correlation-id": getCorrelationId(this.asyncLocalStorage) || uuid.v4(),
             },
             method: "DELETE",
             url: `${this.storage.url}${url}`,
@@ -332,7 +334,7 @@ export class RestGitService {
             headers: {
                 "Content-Type": "application/json",
                 "User-Agent": userAgent,
-                "x-correlation-id": getCorrelationId() || uuid.v4(),
+                "x-correlation-id": getCorrelationId(this.asyncLocalStorage) || uuid.v4(),
             },
             json: true,
             method: "PATCH",

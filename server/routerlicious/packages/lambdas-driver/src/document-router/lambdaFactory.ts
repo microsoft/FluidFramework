@@ -4,15 +4,19 @@
  */
 
 import { EventEmitter } from "events";
-import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@fluidframework/server-services-core";
+import {
+    IContext,
+    IDocumentLambdaServerConfiguration,
+    IPartitionLambda,
+    IPartitionLambdaFactory,
+} from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { DocumentLambda } from "./documentLambda";
 
 export class DocumentLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
         private readonly documentLambdaFactory: IPartitionLambdaFactory,
-        private readonly partitionActivityTimeout?: number,
-        private readonly partitionActivityCheckInterval?: number,
+        private readonly documentLambdaServerConfiguration: IDocumentLambdaServerConfiguration,
     ) {
         super();
 
@@ -27,8 +31,7 @@ export class DocumentLambdaFactory extends EventEmitter implements IPartitionLam
             this.documentLambdaFactory,
             config,
             context,
-            this.partitionActivityTimeout,
-            this.partitionActivityCheckInterval);
+            this.documentLambdaServerConfiguration);
     }
 
     public async dispose(): Promise<void> {

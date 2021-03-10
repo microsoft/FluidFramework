@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { EventEmitter } from "events";
 import { assert } from "@fluidframework/common-utils";
 import { ILoader } from "@fluidframework/container-definitions";
@@ -56,7 +58,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
     public readonly plugin: Plugin;
     private readonly schema: Schema;
     private state: EditorState;
-    private editorView: EditorView;
+    private editorView: EditorView | undefined;
 
     constructor(private readonly text: SharedString, private readonly loader: ILoader) {
         super();
@@ -100,29 +102,29 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
                     }
                 }
 
-                top.content.push(nodeJson);
+                top.content!.push(nodeJson);
             } else if (Marker.is(segment)) {
                 // TODO are marks applied to the structural nodes as well? Or just inner text?
 
-                const nodeType = segment.properties[nodeTypeKey];
+                const nodeType = segment.properties![nodeTypeKey];
                 switch (segment.refType) {
                     case ReferenceType.NestBegin:
                         // Create the new node, add it to the top's content, and push it on the stack
                         const newNode = { type: nodeType, content: [] };
-                        top.content.push(newNode);
+                        top.content!.push(newNode);
                         nodeStack.push(newNode);
                         break;
 
                     case ReferenceType.NestEnd:
                         const popped = nodeStack.pop();
-                        assert(popped.type === nodeType);
+                        assert(popped!.type === nodeType);
                         break;
 
                     case ReferenceType.Simple:
                         // TODO consolidate the text segment and simple references
                         const nodeJson: IProseMirrorNode = {
-                            type: segment.properties.type,
-                            attrs: segment.properties.attrs,
+                            type: segment.properties!.type,
+                            attrs: segment.properties!.attrs,
                         };
 
                         if (segment.properties) {
@@ -137,7 +139,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
                             }
                         }
 
-                        top.content.push(nodeJson);
+                        top.content!.push(nodeJson);
                         break;
 
                     default:
@@ -156,7 +158,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
             enable: (state) => true,
             run: (state, _, view) => {
                 const { from, to } = state.selection;
-                let nodeAttrs = null;
+                let nodeAttrs: any = null;
                 if (state.selection instanceof NodeSelection && state.selection.node.type === fluidSchema.nodes.fluid) {
                     nodeAttrs = state.selection.node.attrs;
                 }
@@ -192,7 +194,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
             },
         }));
 
-        const doc = nodeStack.pop();
+        const doc = nodeStack.pop()!;
         console.log(JSON.stringify(doc, null, 2));
 
         const fluidDoc = this.schema.nodeFromJSON(doc);

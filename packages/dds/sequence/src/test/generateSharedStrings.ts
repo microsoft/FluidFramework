@@ -4,7 +4,6 @@
  */
 
 import { SnapshotLegacy as Snapshot } from "@fluidframework/merge-tree";
-// eslint-disable-next-line import/no-extraneous-dependencies
 import * as mocks from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";

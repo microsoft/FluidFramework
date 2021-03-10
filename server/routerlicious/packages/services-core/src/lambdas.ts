@@ -51,7 +51,7 @@ export interface IContext {
     /**
      * Used to log events / errors.
      */
-    readonly log: ILogger;
+    readonly log: ILogger | undefined;
 }
 
 export interface IPartitionLambda {

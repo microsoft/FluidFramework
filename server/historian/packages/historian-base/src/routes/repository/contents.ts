@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { AsyncLocalStorage } from "async_hooks";
 import { IThrottler } from "@fluidframework/server-services-core";
 import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
 import { Router } from "express";
@@ -15,7 +16,8 @@ export function create(
     store: nconf.Provider,
     tenantService: ITenantService,
     cache: ICache,
-    throttler: IThrottler): Router {
+    throttler: IThrottler,
+    asyncLocalStorage?: AsyncLocalStorage<string>): Router {
     const router: Router = Router();
 
     const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -28,7 +30,7 @@ export function create(
         authorization: string,
         path: string,
         ref: string): Promise<any> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
         return service.getContent(path, ref);
     }
 

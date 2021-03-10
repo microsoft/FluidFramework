@@ -20,7 +20,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
-import { assert, Lazy } from "@fluidframework/common-utils";
+import { assert, Lazy, stringToBuffer } from "@fluidframework/common-utils";
 import {
     createServiceEndpoints,
     IChannelContext,
@@ -55,10 +55,10 @@ export class LocalChannelContext implements IChannelContext {
         dirtyFn: (address: string) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
     ) {
-        let blobMap: Map<string, string> | undefined;
+        let blobMap: Map<string, ArrayBufferLike> | undefined;
         const clonedSnapshotTree = cloneDeep(this.snapshotTree);
         if (clonedSnapshotTree !== undefined) {
-            blobMap = new Map<string, string>();
+            blobMap = new Map<string, ArrayBufferLike>();
             this.collectExtraBlobsAndSanitizeSnapshot(clonedSnapshotTree, blobMap);
         }
         this.services = new Lazy(() => {
@@ -187,12 +187,12 @@ export class LocalChannelContext implements IChannelContext {
         this.attached = true;
     }
 
-    private collectExtraBlobsAndSanitizeSnapshot(snapshotTree: ISnapshotTree, blobMap: Map<string, string>) {
+    private collectExtraBlobsAndSanitizeSnapshot(snapshotTree: ISnapshotTree, blobMap: Map<string, ArrayBufferLike>) {
         const blobMapInitial = new Map(Object.entries(snapshotTree.blobs));
         for (const [blobName, blobId] of blobMapInitial.entries()) {
             const blobValue = blobMapInitial.get(blobId);
             if (blobValue !== undefined) {
-                blobMap.set(blobId, blobValue);
+                blobMap.set(blobId, stringToBuffer(blobValue, "base64"));
             } else {
                 // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                 delete snapshotTree.blobs[blobName];
@@ -207,10 +207,11 @@ export class LocalChannelContext implements IChannelContext {
      * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context.
      * Each node has a set of outbound routes to other GC nodes in the document. This should be called only after
      * the context has loaded.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    public async getGCData(): Promise<IGarbageCollectionData> {
+    public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
         assert(this.isLoaded && this.channel !== undefined, "Channel should be loaded to run GC");
-        return this.channel.getGCData();
+        return this.channel.getGCData(fullGC);
     }
 
     public updateUsedRoutes(usedRoutes: string[]) {

@@ -164,7 +164,7 @@ export class DataStores implements IDisposable {
             throw error;
         }
 
-        const flatBlobs = new Map<string, string>();
+        const flatBlobs = new Map<string, ArrayBufferLike>();
         let snapshotTree: ISnapshotTree | undefined;
         if (attachMessage.snapshot) {
             snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
@@ -292,14 +292,14 @@ export class DataStores implements IDisposable {
         context.process(transformed, local, localMessageMetadata);
     }
 
-    public async getDataStore(id: string, wait: boolean): Promise<IFluidDataStoreChannel> {
+    public async getDataStore(id: string, wait: boolean): Promise<FluidDataStoreContext> {
         const context = await this.contexts.getBoundOrRemoted(id, wait);
 
         if (context === undefined) {
             throw new Error(`DataStore ${id} does not yet exist or is not yet bound`);
         }
 
-        return context.realize();
+        return context;
     }
 
     public processSignal(address: string, message: IInboundSignalMessage, local: boolean) {
@@ -398,12 +398,9 @@ export class DataStores implements IDisposable {
                 const contextSummary = await context.summarize(fullTree, trackState);
                 summaryBuilder.addWithStats(contextId, contextSummary);
 
-                // back-compat 0.31 - Older versions will not have GC data in summary.
-                if (contextSummary.gcData !== undefined) {
-                    // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node to
-                    // be a path from the root.
-                    gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
-                }
+                // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node to
+                // be a path from the root.
+                gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
             }));
 
         // Get the outbound routes and add a GC node for this channel.
@@ -458,8 +455,9 @@ export class DataStores implements IDisposable {
      *    idenfied as belonging to the child.
      * 3. Adds a GC node for this channel to the nodes received from the children. All these nodes together represent
      *    the GC data of this channel.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    public async getGCData(): Promise<IGarbageCollectionData> {
+    public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
         const builder = new GCDataBuilder();
         // Iterate over each store and get their GC data.
         await Promise.all(Array.from(this.contexts)
@@ -468,7 +466,7 @@ export class DataStores implements IDisposable {
                 // graph so any references they might have won't be connected as well.
                 return context.attachState === AttachState.Attached;
             }).map(async ([contextId, context]) => {
-                const contextGCData = await context.getGCData();
+                const contextGCData = await context.getGCData(fullGC);
                 // Prefix the child's id to the ids of its GC nodes so they can be identified as belonging to the child.
                 // This also gradually builds the id of each node to be a path from the root.
                 builder.prefixAndAddNodes(contextId, contextGCData.gcNodes);

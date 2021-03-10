@@ -27,7 +27,7 @@ export class TinyliciousTestDriver implements ITestDriver {
     createCreateNewRequest(testId: string): IRequest {
         return createTinyliciousCreateNewRequest(testId);
     }
-    createContainerUrl(testId: string): string {
+    async createContainerUrl(testId: string): Promise<string> {
         return `http://localhost:3000/${testId}`;
     }
 }

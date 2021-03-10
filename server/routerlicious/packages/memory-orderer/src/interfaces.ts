@@ -50,8 +50,6 @@ export interface IConnectMessage {
 export interface IConnectedMessage {
     clientId: string;
     existing: boolean;
-    // Back-compat, removal tracked with issue #4346
-    parentBranch: null;
     maxMessageSize: number;
     serviceConfiguration: IServiceConfiguration;
 }

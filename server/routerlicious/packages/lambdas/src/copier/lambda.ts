@@ -16,7 +16,7 @@ import {
 export class CopierLambda implements IPartitionLambda {
     // Below, one job corresponds to the task of sending one batch to Mongo:
     private pendingJobs = new Map<string, IRawOperationMessageBatch[]>();
-    private pendingOffset: IQueuedMessage;
+    private pendingOffset: IQueuedMessage | undefined;
     private currentJobs = new Map<string, IRawOperationMessageBatch[]>();
 
     constructor(
@@ -39,10 +39,12 @@ export class CopierLambda implements IPartitionLambda {
         };
 
         // Write the batch directly to Mongo:
-        if (!this.pendingJobs.has(topic)) {
-            this.pendingJobs.set(topic, []);
+        let pendingJobs = this.pendingJobs.get(topic);
+        if (!pendingJobs) {
+            pendingJobs = [];
+            this.pendingJobs.set(topic, pendingJobs);
         }
-        this.pendingJobs.get(topic).push(submittedBatch);
+        pendingJobs.push(submittedBatch);
 
         // Update current offset (will be tied to this batch):
         this.pendingOffset = message;
@@ -68,7 +70,7 @@ export class CopierLambda implements IPartitionLambda {
         this.pendingJobs = temp;
         const batchOffset = this.pendingOffset;
 
-        const allProcessed = [];
+        const allProcessed: Promise<void>[] = [];
 
         // Process all current jobs on all current topics:
         for (const [, batch] of this.currentJobs) {
@@ -79,7 +81,8 @@ export class CopierLambda implements IPartitionLambda {
         Promise.all(allProcessed).then(
             () => {
                 this.currentJobs.clear();
-                this.context.checkpoint(batchOffset);
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+                this.context.checkpoint(batchOffset as IQueuedMessage);
                 this.sendPending();
             },
             (error) => {

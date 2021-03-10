@@ -1,6 +1,5 @@
 # Coverage
-.nyc_output
-coverage
+nyc
 
 # Build output
 dist

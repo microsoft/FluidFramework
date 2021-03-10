@@ -9,7 +9,7 @@
 	 */
 	"apiReport": {
 		"enabled": true,
-		"reportFolder": "<projectFolder>",
+		"reportFolder": "<projectFolder>/api",
 		"reportTempFolder": "<projectFolder>/_api-extractor-temp"
 	}
 }

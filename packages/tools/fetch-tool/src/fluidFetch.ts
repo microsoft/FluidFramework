@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import util from "util";
-import { isSharepointURL, IOdspDriveItem } from "@fluidframework/odsp-doclib-utils";
+import { isOdspHostname, IOdspDriveItem } from "@fluidframework/odsp-doclib-utils";
 import { paramSaveDir, paramURL, parseArguments } from "./fluidFetchArgs";
 import { connectionInfo, fluidFetchInit } from "./fluidFetchInit";
 import { fluidFetchMessages } from "./fluidFetchMessages";
@@ -73,7 +73,7 @@ async function fluidFetchMain() {
 
     const url = new URL(paramURL);
     const server = url.hostname;
-    if (isSharepointURL(server)) {
+    if (isOdspHostname(server)) {
         // See if the url already has the specific item
         const driveItem = getSharePointSpecificDriveItem(url);
         if (driveItem) {

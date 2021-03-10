@@ -130,9 +130,6 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
 
     // #region IFluidLoadable
 
-    // Back-compat <= 0.28
-    public get url() { return this.context.id; }
-
     // #endregion IFluidLoadable
 
     /**

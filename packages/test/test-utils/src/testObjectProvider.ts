@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
+import { IContainer } from "@fluidframework/container-definitions";
+import { Container, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
-import { v4 as uuid } from "uuid";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { v4 as uuid } from "uuid";
+import { LoaderContainerTracker } from "./loaderContainerTracker";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
 import { OpProcessingController } from "./opProcessingController";
@@ -17,12 +19,13 @@ const defaultCodeDetails: IFluidCodeDetails = {
     config: {},
 };
 
-export const createDocumentId = (): string=> uuid();
+export const createDocumentId = (): string => uuid();
 
 /**
  * Shared base class for test object provider.  Contain code for loader and container creation and loading
  */
-export  class TestObjectProvider<TestContainerConfigType> {
+export class TestObjectProvider<TestContainerConfigType> {
+    private readonly _loaderContainerTracker = new LoaderContainerTracker();
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _urlResolver: IUrlResolver | undefined;
     private _opProcessingController?: OpProcessingController;
@@ -34,11 +37,13 @@ export  class TestObjectProvider<TestContainerConfigType> {
      * and factory for TestFluidObject
      */
     constructor(
+        public readonly LoaderConstructor: typeof Loader,
         public readonly driver: ITestDriver,
         private readonly createFluidEntryPoint: (testContainerConfig?: TestContainerConfigType) => fluidEntryPoint,
     ) {
 
     }
+
     get documentServiceFactory() {
         if (!this._documentServiceFactory) {
             this._documentServiceFactory = this.driver.createDocumentServiceFactory();
@@ -73,7 +78,7 @@ export  class TestObjectProvider<TestContainerConfigType> {
 
     private createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>) {
         const codeLoader = new LocalCodeLoader(packageEntries);
-        return new Loader({
+        return new this.LoaderConstructor({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
@@ -86,7 +91,9 @@ export  class TestObjectProvider<TestContainerConfigType> {
      * @param testContainerConfig - optional configuring the test Container
      */
     public makeTestLoader(testContainerConfig?: TestContainerConfigType) {
-        return this.createLoader([[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]]);
+        const loader = this.createLoader([[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]]);
+        this._loaderContainerTracker.add(loader);
+        return loader;
     }
 
     /**
@@ -94,7 +101,7 @@ export  class TestObjectProvider<TestContainerConfigType> {
      * Container loaded is automatically added to the OpProcessingController to manage op flow
      * @param testContainerConfig - optional configuring the test Container
      */
-    public async makeTestContainer(testContainerConfig?: TestContainerConfigType) {
+    public async makeTestContainer(testContainerConfig?: TestContainerConfigType): Promise<IContainer> {
         const loader = this.makeTestLoader(testContainerConfig);
         const container =
             await createAndAttachContainer(
@@ -110,18 +117,24 @@ export  class TestObjectProvider<TestContainerConfigType> {
      * Container loaded is automatically added to the OpProcessingController to manage op flow
      * @param testContainerConfig - optional configuring the test Container
      */
-    public async loadTestContainer(testContainerConfig?: TestContainerConfigType) {
+    public async loadTestContainer(testContainerConfig?: TestContainerConfigType): Promise<Container> {
         const loader = this.makeTestLoader(testContainerConfig);
-        const container = await loader.resolve({ url: this.driver.createContainerUrl(this.documentId) });
+        const container = await loader.resolve({ url: await this.driver.createContainerUrl(this.documentId) });
         await waitContainerToCatchUp(container);
         this.opProcessingController.addDeltaManagers(container.deltaManager);
         return container;
     }
 
     public reset() {
+        this._loaderContainerTracker.reset();
         this._documentServiceFactory = undefined;
         this._urlResolver = undefined;
         this._opProcessingController = undefined;
         this._documentId = undefined;
+    }
+
+    public async ensureSynchronized() {
+        await this.opProcessingController.process();
+        return this._loaderContainerTracker.ensureSynchronized();
     }
 }
