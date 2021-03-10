@@ -31,7 +31,11 @@ import {
     ReadOnlyInfo,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
+import {
+    CreateContainerError,
+    DataCorruptionError,
+    extractSafePropertiesFromMessage,
+ } from "@fluidframework/container-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -577,6 +581,28 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     docId: () => this.id,
                     containerAttachState: () => this._attachState,
                     containerLoaded: () => this.loaded,
+                },
+                error:{
+                    initialSequenceNumber: () => this._deltaManager?.initialSequenceNumber,
+                    lastKnownSeqNumber: () => this._deltaManager?.lastKnownSeqNumber,
+                    lastSequenceNumber: () => this._deltaManager?.lastSequenceNumber,
+                    minimumSequenceNumber: () => this._deltaManager?.minimumSequenceNumber,
+                    connectionMode: () => this._deltaManager?.connectionMode,
+                    lastMessageSequenceNumber: ()=>this.deltaManager?.lastMessage?.sequenceNumber,
+                    lastMessageTimestamp: ()=>this.deltaManager?.lastMessage?.timestamp,
+                    lastMessageClientId: ()=>this.deltaManager?.lastMessage?.clientId,
+                    clientId: () => this.clientId,
+                    pendingClientId: () => this.pendingClientId,
+                    loadedFromVersionId: () => this.loadedFromVersion?.id,
+                    loadedFromVersionDate: () => this.loadedFromVersion?.date,
+                    isDirty: () => this.isDirty,
+                    attachInProgress: () => this.attachInProgress,
+                    connected: () => this.connected,
+                    connectionState: () => this.connectionState,
+                    existing: () => this.existing,
+                    firstConnection: () => this.firstConnection,
+                    manualReconnectInProgress: () => this.manualReconnectInProgress,
+                    messageCountAfterDisconnection: () => this.messageCountAfterDisconnection,
                 },
             });
 
@@ -1714,14 +1740,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             if (errorMsg !== undefined) {
                 const error = new DataCorruptionError(
                     errorMsg,
-                    {
-                        clientId: this._clientId,
-                        messageClientId: message.clientId,
-                        sequenceNumber: message.sequenceNumber,
-                        clientSequenceNumber: message.clientSequenceNumber,
-                        messageTimestamp: message.timestamp,
-                    },
-                );
+                    extractSafePropertiesFromMessage(message));
                 this.close(CreateContainerError(error));
             }
         }
