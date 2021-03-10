@@ -13,7 +13,8 @@ import {
 import {
     generateTest,
     ITestObjectProvider,
-    TestDataObject,
+    ITestDataObject,
+    TestDataObjectType,
 } from "./compatUtils";
 
 const tests = (argsFactory: () => ITestObjectProvider) => {
@@ -25,21 +26,21 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         args.reset();
     });
 
-    let firstContainerObject1: TestDataObject;
-    let firstContainerObject2: TestDataObject;
-    let secondContainerObject1: TestDataObject;
+    let firstContainerObject1: ITestDataObject;
+    let firstContainerObject2: ITestDataObject;
+    let secondContainerObject1: ITestDataObject;
 
     beforeEach(async () => {
         // Create a Container for the first client.
         const firstContainer = await args.makeTestContainer();
-        firstContainerObject1 = await requestFluidObject<TestDataObject>(firstContainer, "default");
+        firstContainerObject1 = await requestFluidObject<ITestDataObject>(firstContainer, "default");
         const containerRuntime1 = firstContainerObject1._context.containerRuntime;
-        const dataStore = await containerRuntime1.createDataStore(TestDataObject.type);
-        firstContainerObject2 = await requestFluidObject<TestDataObject>(dataStore, "");
+        const dataStore = await containerRuntime1.createDataStore(TestDataObjectType);
+        firstContainerObject2 = await requestFluidObject<ITestDataObject>(dataStore, "");
 
         // Load the Container that was created by the first client.
         const secondContainer = await args.loadTestContainer();
-        secondContainerObject1 = await requestFluidObject<TestDataObject>(secondContainer, "default");
+        secondContainerObject1 = await requestFluidObject<ITestDataObject>(secondContainer, "default");
 
         await args.ensureSynchronized();
     });
