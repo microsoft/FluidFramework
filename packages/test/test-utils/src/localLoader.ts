@@ -14,6 +14,7 @@ import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 
 /**
@@ -54,6 +55,7 @@ export function createLoader(
         urlResolver,
         documentServiceFactory,
         codeLoader,
+        logger: ChildLogger.create(getTestLogger?.(), undefined, {driverType: getFluidTestDriver?.()?.type}),
         options,
     });
 }
