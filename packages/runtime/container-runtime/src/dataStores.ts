@@ -135,7 +135,6 @@ export class DataStores implements IDisposable {
                     // stores in older documents are not garbage collected incorrectly. This may lead to additional
                     // roots in the document but they won't break.
                     attributes.isRootDataStore ?? true,
-                    attributes.snapshotFormatVersion,
                 );
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
