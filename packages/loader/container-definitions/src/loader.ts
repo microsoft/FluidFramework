@@ -259,6 +259,11 @@ export enum LoaderHeader {
      * otherwise, version sha to load snapshot
      */
     version = "version",
+
+    /**
+     * Max time container will wait for a leave message of a disconnected client.
+     */
+    maxClientLeaveWaitTime = "maxClientLeaveWaitTime",
 }
 
 /**
@@ -271,6 +276,7 @@ export interface ILoaderHeader {
     [LoaderHeader.sequenceNumber]: number;
     [LoaderHeader.reconnect]: boolean;
     [LoaderHeader.version]: string | undefined | null;
+    [LoaderHeader.maxClientLeaveWaitTime]: number;
 }
 
 declare module "@fluidframework/core-interfaces" {

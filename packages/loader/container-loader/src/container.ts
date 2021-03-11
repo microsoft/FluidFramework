@@ -9,7 +9,7 @@ import { v4 as uuid } from "uuid";
 import {
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
-import { assert, performance } from "@fluidframework/common-utils";
+import { assert, Deferred, performance } from "@fluidframework/common-utils";
 import {
     IRequest,
     IResponse,
@@ -30,6 +30,7 @@ import {
     IThrottlingWarning,
     ReadOnlyInfo,
     ILoaderOptions,
+    LoaderHeader,
 } from "@fluidframework/container-definitions";
 import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import {
@@ -126,6 +127,11 @@ export interface IContainerLoadOptions {
      * Loads the Container in paused state if true, unpaused otherwise.
      */
     pause?: boolean;
+
+    /**
+     * Max time container will wait for a leave message of a disconnected client.
+     */
+    maxClientLeaveWaitTime?: number;
 }
 
 export interface IContainerConfig {
@@ -141,6 +147,10 @@ export interface IContainerConfig {
      */
     clientDetailsOverride?: IClientDetails;
     id?: string;
+    /**
+     * Max time container will wait for a leave message of a disconnected client.
+     */
+    maxClientLeaveWaitTime?: number;
 }
 
 export enum ConnectionState {
@@ -288,6 +298,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 id: loadOptions.docId,
                 resolvedUrl: loadOptions.resolvedUrl,
                 canReconnect: loadOptions.canReconnect,
+                maxClientLeaveWaitTime: loadOptions.maxClientLeaveWaitTime,
             });
 
         return PerformanceEvent.timedExecAsync(container.logger, { eventName: "Load" }, async (event) => {
@@ -371,6 +382,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._storageService;
     }
 
+    private maxClientLeaveWaitTime: number | undefined;
+    private prevClientLeftP: Deferred<boolean> | undefined;
     private _clientId: string | undefined;
     private _id: string | undefined;
     private containerUrl: string | undefined;
@@ -555,6 +568,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.clientDetailsOverride = config.clientDetailsOverride;
         this._id = config.id;
         this._resolvedUrl = config.resolvedUrl;
+        this.maxClientLeaveWaitTime = config.maxClientLeaveWaitTime;
         if (config.canReconnect !== undefined) {
             this._canReconnect = config.canReconnect;
         }
@@ -767,7 +781,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._attachState = AttachState.Attached;
             this.emit("attached");
             this.cachedAttachSummary = undefined;
-
+            this.maxClientLeaveWaitTime = request.headers?.[LoaderHeader.maxClientLeaveWaitTime];
             // Propagate current connection state through the system.
             this.propagateConnectionState();
             if (!this.closed) {
@@ -1359,11 +1373,37 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         protocol.quorum.on("addMember", (clientId, details) => {
             // This is the only one that requires the pending client ID
             if (clientId === this.pendingClientId) {
-                this.setConnectionState(ConnectionState.Connected);
+                let startTime: number | undefined;
+                if (this.prevClientLeftP?.isCompleted === false) {
+                    startTime = performance.now();
+                }
+                // Wait for previous client to leave the quorum before firing "connected" event.
+                if (this.prevClientLeftP) {
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    this.prevClientLeftP.promise.then((leaveReceived: boolean) => {
+                        this.logger.sendTelemetryEvent({
+                            eventName: "ConnectedAfterWait",
+                            duration: startTime !== undefined ? performance.now() - startTime : 0,
+                            timeout: !leaveReceived,
+                            outstandingOps: this._deltaManager.clientSequenceNumber -
+                                this._deltaManager.clientSequenceNumberObserved,
+                        });
+                        this.setConnectionState(ConnectionState.Connected);
+                    });
+                } else {
+                    this.setConnectionState(ConnectionState.Connected);
+                }
             }
         });
 
-        protocol.quorum.on("addProposal",(proposal: IPendingProposal) => {
+        protocol.quorum.on("removeMember", (clientId) => {
+            // If the client which has left was us, then resolve the def. promise.
+            if (this.clientId === clientId && this.prevClientLeftP?.isCompleted === false) {
+                this.prevClientLeftP.resolve(true);
+            }
+        });
+
+        protocol.quorum.on("addProposal", (proposal: IPendingProposal) => {
             if (proposal.key === "code" || proposal.key === "code2") {
                 this.emit("codeDetailsProposed", proposal.value, proposal);
             }
@@ -1618,7 +1658,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private setConnectionState(value: ConnectionState.Connecting | ConnectionState.Connected);
     private setConnectionState(
         value: ConnectionState,
-        reason?: string) {
+        reason?: string,
+    ) {
         assert(value !== ConnectionState.Connecting);
         if (this.connectionState === value) {
             // Already in the desired state - exit early
@@ -1628,6 +1669,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const oldState = this._connectionState;
         this._connectionState = value;
+        // Set it to undefined in both "Disconnected" and "Connected" case as we only require it in
+        // transition from "Disconnected" to "Connected" and we cannot come here in "Connecting" event.
+        this.prevClientLeftP = undefined;
 
         if (value === ConnectionState.Connected) {
             // Mark our old client should have left in the quorum if it's still there
@@ -1642,6 +1686,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         } else if (value === ConnectionState.Disconnected) {
             // Important as we process our own joinSession message through delta request
             this.pendingClientId = undefined;
+            // Only wait for "leave" message if we have some outstanding ops and the client was write client as
+            // server would not accept ops from read client.
+            if (this._deltaManager.clientSequenceNumber - this._deltaManager.clientSequenceNumberObserved > 0
+                && this.client.mode === "write"
+            ) {
+                this.prevClientLeftP = new Deferred();
+                // Max time is 5 min for which we are going to wait for its own "leave" message.
+                setTimeout(() => {
+                    if (this.prevClientLeftP?.isCompleted === false) {
+                        this.prevClientLeftP.resolve(false);
+                    }
+                }, this.maxClientLeaveWaitTime ?? 300000);
+            }
         }
 
         if (this.loaded) {
