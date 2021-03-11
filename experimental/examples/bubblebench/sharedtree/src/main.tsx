@@ -81,8 +81,7 @@ export class Bubblebench extends DataObject implements IFluidHTMLView {
  * The DataObjectFactory declares the Fluid object and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
-export const BubblebenchInstantiationFactory =
-    new DataObjectFactory<Bubblebench, undefined, undefined, IEvent>(
+export const BubblebenchInstantiationFactory = new DataObjectFactory<Bubblebench, undefined, undefined, IEvent>(
     Bubblebench.Name,
     Bubblebench,
     [SharedTree.getFactory()],
