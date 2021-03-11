@@ -633,20 +633,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (this.hostPolicy.summarizerClient) {
             snapshotOptions.mds = undefined;
         }
-        let abortController: AbortController | undefined;
-        if (this.hostPolicy.summarizerClient !== true) {
-            abortController = new AbortController();
-            const timeout = setTimeout(
-                () => {
-                    clearTimeout(timeout);
-                    abortController?.abort();
-                },
-                snapshotOptions.timeout,
-            );
-        }
 
         try {
-            const odspSnapshot = await this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, abortController);
+            const odspSnapshot = await this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions);
             return odspSnapshot;
         } catch (error) {
             const errorType = error.errorType;
@@ -656,7 +645,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             }
             // If the first snapshot request was with blobs and we either timed out or the size was too big, then try to fetch without blobs.
             if ((errorType === OdspErrorType.snapshotTooBig || errorType === OdspErrorType.fetchTimeout) && snapshotOptions.blobs) {
-                const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: 0, mds: undefined };
+                this.logger.sendErrorEvent({
+                    eventName: "TreeLatest_SecondCall",
+                    errorType,
+                });
+                const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: 0, mds: undefined, timeout: undefined };
                 return this.fetchSnapshotCore(snapshotOptionsWithoutBlobs, tokenFetchOptions);
             }
             throw error;
@@ -666,7 +659,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private async fetchSnapshotCore(
         snapshotOptions: ISnapshotOptions,
         tokenFetchOptions: TokenFetchOptions,
-        controller?: AbortController,
     ): Promise<IOdspSnapshot> {
         const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
         const url = `${this.snapshotUrl}/trees/latest?ump=1`;
@@ -674,9 +666,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         let postBody = `--${formBoundary}\r\n`;
         postBody += `Authorization: Bearer ${storageToken}\r\n`;
         postBody += `X-HTTP-Method-Override: GET\r\n`;
+        const logOptions = {};
         Object.entries(snapshotOptions).forEach(([key, value]) => {
             if (value !== undefined) {
                 postBody += `${key}: ${value}\r\n`;
+                logOptions[`snapshotOption_${key}`] = value;
             }
         });
         if (this.redeemSharingLink) {
@@ -688,8 +682,24 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
         };
 
+        let controller: AbortController | undefined;
+        if (this.hostPolicy.summarizerClient !== true) {
+            controller = new AbortController();
+            setTimeout(
+                () => controller!.abort(),
+                snapshotOptions.timeout,
+            );
+        }
+
         // This event measures only successful cases of getLatest call (no tokens, no retries).
-        const odspSnapshot = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest", fetchTimeout: snapshotOptions.timeout, maxSnapshotSize: snapshotOptions.mds }, async (event) => {
+        return PerformanceEvent.timedExecAsync(
+            this.logger,
+            {
+                eventName: "TreesLatest",
+                ...logOptions,
+            },
+            async (event) =>
+        {
             const startTime = performance.now();
             const response: IOdspResponse<IOdspSnapshot> = await this.epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(
                 url,
@@ -794,7 +804,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             });
             return snapshot;
         });
-        return odspSnapshot;
     }
 
     private evalBlobsAndTrees(snapshot: IOdspSnapshot) {
