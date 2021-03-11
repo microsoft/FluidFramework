@@ -155,7 +155,7 @@ describe("Summaries", () => {
         // Validate summary
         assert(!summary.unreferenced, "Root summary should be referenced.");
 
-        assert(summary.tree[".metadata"] === undefined, "Unexpected .metadata blob in summary root.");
+        assert(summary.tree[".metadata"]?.type === SummaryType.Blob, "Expected .metadata blob in summary root.");
 
         assert(summary.tree[channelsTreeName] === undefined, "Unexpected .channels tree in summary root.");
 
