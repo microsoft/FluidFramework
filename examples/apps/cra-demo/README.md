@@ -107,7 +107,7 @@ Our `useEffect` will end up firing twice. The first time, on component load, it 
 
 > `TinyliciousService` is the service we are using to handle the Fluid data for this local demo. You'll use different services if you load your app in Azure, Teams or Sharepoint.
 
-The second time `useEffect` fires, the `dataObject` will have been set, so we set up a listener to call `updateData` each time the `changed` event is fired. `UpdateData` will sync the view state with the necessary Fluid data. For this example, we're just pulling in all of the data.
+The second time `useEffect` fires, the `dataObject` will have been set, so we set up a listener to call `updateData` each time the `changed` event is fired. `UpdateData` will sync the view state with the necessary Fluid data. For this example, we're just pulling all of the Fluid data.
 
 ```jsx
 function App() {
