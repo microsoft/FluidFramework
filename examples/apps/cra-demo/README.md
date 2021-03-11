@@ -80,7 +80,7 @@ const getContainerId = (): { containerId: string; isNew: boolean } => {
 
 Before we can actually render our view we need to create our Fluid container and data objects. We can do this within the React lifecycle by using the React hooks, `useState` and `useEffect`.
 
-`useState` provides storage that we can modify over the lifecycle of the component, and `useEffect` is a method that gets called as soon as the component renders, and any time state changes.
+`useState` provides storage that we can modify over the lifecycle of the component, and `useEffect` is a method that gets called as soon as the component renders, and again any time state changes.
 
 All of the code in step 4 will go before the `return` method.
 
