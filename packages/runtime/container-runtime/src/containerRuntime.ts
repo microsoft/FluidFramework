@@ -1002,10 +1002,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 channelsTreeName,
                 { entries: await this.dataStores.snapshot() },
             ));
-
-            const metadata = this.formMetadata();
-            root.entries.push(new BlobTreeEntry(metadataBlobName, JSON.stringify(metadata)));
         }
+
+        const metadata = this.formMetadata();
+        root.entries.push(new BlobTreeEntry(metadataBlobName, JSON.stringify(metadata)));
 
         if (this.chunkMap.size > 0) {
             root.entries.push(new BlobTreeEntry(chunksBlobName, JSON.stringify([...this.chunkMap])));
