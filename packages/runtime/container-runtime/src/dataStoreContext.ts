@@ -190,6 +190,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return (await this.getInitialSnapshotDetails()).isRootDataStore;
     }
 
+    protected get disableIsolatedChannels(): boolean {
+        return this._containerRuntime.disableIsolatedChannels;
+    }
+
     protected registry: IFluidDataStoreRegistry | undefined;
 
     protected detachedRuntimeCreation = false;
@@ -203,7 +207,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected readonly summarizerNode: ISummarizerNodeWithGC;
 
     constructor(
-        protected readonly _containerRuntime: ContainerRuntime,
+        private readonly _containerRuntime: ContainerRuntime,
         public readonly id: string,
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
@@ -396,7 +400,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         const summarizeResult = await this.channel!.summarize(fullTree, trackState);
         let pathPartsForChildren: string[] | undefined;
 
-        if (!this._containerRuntime.disableIsolatedChannels) {
+        if (!this.disableIsolatedChannels) {
             // Wrap dds summaries in .channels subtree.
             wrapSummaryInChannelsTree(summarizeResult);
             pathPartsForChildren = [channelsTreeName];
@@ -404,7 +408,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         // Add data store's attributes to the summary.
         const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
-        const attributes = createAttributes(pkg, isRootDataStore, this._containerRuntime.disableIsolatedChannels);
+        const attributes = createAttributes(pkg, isRootDataStore, this.disableIsolatedChannels);
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // Add GC details to the summary.
@@ -820,7 +824,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
         const summarizeResult = this.channel.getAttachSummary();
 
-        if (!this._containerRuntime.disableIsolatedChannels) {
+        if (!this.disableIsolatedChannels) {
             // Wrap dds summaries in .channels subtree.
             wrapSummaryInChannelsTree(summarizeResult);
         }
@@ -829,7 +833,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         const attributes = createAttributes(
             this.pkg,
             this.isRootDataStore,
-            this._containerRuntime.disableIsolatedChannels,
+            this.disableIsolatedChannels,
         );
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
@@ -855,7 +859,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         assert(this.pkg !== undefined, "pkg should be available in local data store");
         assert(this.isRootDataStore !== undefined, "isRootDataStore should be available in local data store");
-        const snapshot = this._containerRuntime.disableIsolatedChannels
+        const snapshot = this.disableIsolatedChannels
             ? this.snapshotTree
             : this.snapshotTree?.trees[channelsTreeName];
         return {
