@@ -242,12 +242,18 @@ export class Loader extends EventEmitter implements IHostLoader {
 
     constructor(loaderProps: ILoaderProps) {
         super();
+
+        const scope = { ...loaderProps.scope };
+        if (loaderProps.options?.provideScopeLoader === true) {
+            scope.ILoader = this;
+        }
+
         this.services = {
             urlResolver: createCachedResolver(MultiUrlResolver.create(loaderProps.urlResolver)),
             documentServiceFactory: MultiDocumentServiceFactory.create(loaderProps.documentServiceFactory),
             codeLoader: loaderProps.codeLoader,
             options: loaderProps.options ?? {},
-            scope: loaderProps.scope ?? {},
+            scope,
             subLogger: DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { loaderId: uuid() }),
             proxyLoaderFactories: loaderProps.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
         };

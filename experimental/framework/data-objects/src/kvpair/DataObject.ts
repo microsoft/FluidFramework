@@ -5,6 +5,7 @@
 
 import { EventEmitter } from "events";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { IDirectoryValueChanged, IValueChanged } from "@fluidframework/map";
 
 /**
@@ -44,7 +45,7 @@ export interface IKeyValueDataObject extends EventEmitter {
 export class KeyValueDataObject
     extends DataObject
     implements IKeyValueDataObject {
-    public static readonly factory = new DataObjectFactory(
+    public static readonly factory = new DataObjectFactory<KeyValueDataObject, undefined, undefined, IEvent>(
         "keyvalue-dataobject",
         KeyValueDataObject,
         [],
