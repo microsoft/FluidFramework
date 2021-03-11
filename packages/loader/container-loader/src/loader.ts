@@ -242,9 +242,9 @@ export class Loader extends EventEmitter implements IHostLoader {
     constructor(loaderProps: ILoaderProps) {
         super();
 
-        const scope = loaderProps.scope ?? {};
+        const scope = { ...loaderProps.scope };
         if (loaderProps.options?.provideScopeLoader === true) {
-            (scope as any).ILoader = this;
+            scope.ILoader = this;
         }
 
         this.services = {
