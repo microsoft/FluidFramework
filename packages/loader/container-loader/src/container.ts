@@ -396,7 +396,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._protocolHandler;
     }
 
-    private resumedOpProcessingAfterLoad = false;
     private firstConnection = true;
     private manualReconnectInProgress = false;
     private readonly connectionTransitionTimes: number[] = [];
@@ -818,7 +817,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // If container state is not attached and resumed, then don't connect to delta stream. Also don't set the
         // manual reconnection flag to true as we haven't made the initial connection yet.
-        if (reconnect && this._attachState === AttachState.Attached && this.resumedOpProcessingAfterLoad) {
+        if (reconnect && this._attachState === AttachState.Attached) {
             if (this._connectionState === ConnectionState.Disconnected) {
                 // Only track this as a manual reconnection if we are truly the ones kicking it off.
                 this.manualReconnectInProgress = true;
@@ -837,20 +836,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public resume() {
         if (!this.closed) {
-            this.resumeInternal({ reason: "DocumentOpenResume" });
+            // Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
+            // If there is gap, we will learn about it once connected, but the gap should be small (if any),
+            // assuming that resume() is called quickly after initial container boot.
+            this.resumeInternal({ reason: "DocumentOpenResume", fetchOpsFromStorage: false });
         }
     }
 
     protected resumeInternal(args: IConnectionArgs) {
         assert(!this.closed, "Attempting to setAutoReconnect() a closed DeltaManager");
-
-        // Resume processing ops
-        if (!this.resumedOpProcessingAfterLoad) {
-            this.resumedOpProcessingAfterLoad = true;
-            this._deltaManager.inbound.resume();
-            this._deltaManager.outbound.resume();
-            this._deltaManager.inboundSignal.resume();
-        }
 
         // Ensure connection to web socket
         // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
@@ -1189,6 +1183,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Internal context is fully loaded at this point
         this.loaded = true;
+
+        // We might have hit some failure that did not manifest itself in exception in this flow,
+        // do not start op processing in such case - static version of Container.load() will handle it correctly.
+        if (!this.closed) {
+            // Note: This will start processing of ops we have, but it will be on clean stack (next micro-task)
+            this._deltaManager.inbound.resume();
+            this._deltaManager.outbound.resume();
+            this._deltaManager.inboundSignal.resume();
+        }
 
         return {
             existing: this._existing,

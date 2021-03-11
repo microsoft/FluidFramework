@@ -1,3 +1,10 @@
+## 0.37 Breaking changes
+- [Paused container](#Paused-container)
+
+### Paused container
+When host passes "pause" header (LoaderHeader.pause), Container used to not process any ops until Container.resume() is called. Behavior and semantics of this header changed. Op processing is not paused and container will process all incoming ops, however it will wait to connect to ordering service until Container.resume() is called. This means that Container will catch up to latest state using ops from storage, but once it reaches the end of the log, it will not process any more ops until Container.resume() is called. This ensures that Container is as close (and gets there as fast as possible) to latest state as observed in storage, but does not collaborate with other clients until resumed.
+Please note that this adds a bit of variability into when ops are processed. This may result in some bugs being discovered where async code may not expect that state might change.
+
 ## 0.36 Breaking changes
 - [Some `ILoader` APIs moved to `IHostLoader`](#Some-ILoader-APIs-moved-to-IHostLoader)
 - [TaskManager removed](#TaskManager-removed)
