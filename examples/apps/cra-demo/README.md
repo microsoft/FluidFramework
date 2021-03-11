@@ -35,7 +35,7 @@ npx create-react-app my-app-name --template typescript
 cd my-app-name
 ```
 
-## 2. Install Fluid and Fluid Data Objects
+## 2. Install Fluid Package Dependencies
 
 There are three packages to install to get started with Fluid:
 
