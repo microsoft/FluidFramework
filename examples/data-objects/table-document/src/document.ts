@@ -4,8 +4,10 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ICombiningOp, IntervalType, LocalReference, PropertySet } from "@fluidframework/merge-tree";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     positionToRowCol,
     rowColToPosition,
@@ -13,8 +15,6 @@ import {
     SparseMatrix,
     SequenceDeltaEvent,
 } from "@fluidframework/sequence";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IEvent } from "@fluidframework/common-definitions";
 import { CellRange } from "./cellrange";
 import { TableDocumentType } from "./componentTypes";
 import { ConfigKey } from "./configKey";
