@@ -12,20 +12,11 @@ import { TypedEventEmitter, EventEmitterEventType } from "@fluidframework/common
  */
 export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> extends TypedEventEmitter<TEvent> {
     public emit(event: EventEmitterEventType, ...args: any[]): boolean {
-        if (event === "error") {
-            const anyListeners = super.emit(event, ...args);
-            if (!anyListeners) {
-                console.error("Nobody is listening for 'error' events");
-            }
-            return anyListeners;
-        }
-
-        let result: boolean;
         try {
-            result = super.emit(event, ...args);
+            return super.emit(event, ...args);
         } catch (error) {
-            result = this.emit("error", error);
+            // Note: This will throw if no listeners are registered
+            return super.emit("error", error);
         }
-        return result;
     }
 }
