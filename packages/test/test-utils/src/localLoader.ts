@@ -51,11 +51,14 @@ export function createLoader(
 ): IHostLoader {
     const codeLoader: ICodeLoader = new LocalCodeLoader(packageEntries);
 
+    const driver = typeof getFluidTestDriver === "function" ? getFluidTestDriver() : undefined;
+    const logger = typeof getTestLogger === "function" ? getTestLogger() : undefined;
+
     return new Loader({
         urlResolver,
         documentServiceFactory,
         codeLoader,
-        logger: ChildLogger.create(getTestLogger?.(), undefined, {driverType: getFluidTestDriver?.()?.type}),
+        logger: ChildLogger.create(logger, undefined, {driverType: driver?.type}),
         options,
     });
 }
