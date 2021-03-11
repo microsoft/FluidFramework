@@ -37,6 +37,12 @@ cd my-app-name
 
 ## 2. Install Fluid and Fluid Data Objects
 
+There are three packages to install to get started with Fluid:
+
+`@fluid-experimental/fluid-static` - Manages creating and getting Fluid containers
+`@fluid-experimental/data-objects` - Contains the KVPair DataObject you will use to sync data
+`@fluid-experimental/get-container` - Defines the service connection to our local Fluid server
+
 ### Using NPM
 ```bash
 npm install @fluid-experimental/fluid-static @fluid-experimental/data-objects @fluid-experimental/get-container
