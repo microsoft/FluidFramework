@@ -232,6 +232,15 @@ export type ILoaderOptions = {
      * Defaults to true.
      */
     cache?: boolean;
+
+    /**
+     * Provide the current Loader through the scope object when creating Containers.  It is added
+     * as the `ILoader` property, and will overwrite an existing property of the same name on the
+     * scope.  Useful for when the host wants to provide the current Loader's functionality to
+     * individual Data Stores.
+     * Defaults to false.
+     */
+    provideScopeLoader?: boolean;
 };
 
 /**
@@ -273,7 +282,14 @@ export interface ILoaderHeader {
     [LoaderHeader.version]: string | undefined | null;
 }
 
+interface IProvideLoader {
+    readonly ILoader: ILoader;
+}
+
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IRequestHeader extends Partial<ILoaderHeader> { }
+
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideLoader>> { }
 }

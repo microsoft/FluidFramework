@@ -6,6 +6,7 @@
 import { Template } from "@fluid-example/flow-util-lib";
 import { TableDocument, TableDocumentType } from "@fluid-example/table-document";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { GridView } from "./grid";
@@ -101,7 +102,7 @@ export class TableView extends DataObject implements IFluidHTMLView {
     }
 }
 
-const factory = new DataObjectFactory(
+const factory = new DataObjectFactory<TableView, undefined, undefined, IEvent>(
     tableViewType,
     TableView,
     [],
