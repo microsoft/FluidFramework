@@ -215,6 +215,6 @@ Then we're ready to start our React app
 npm run start
 ```
 
-> They both happen to use port 3000, so CRA will ask if you want to use 3001. Just hit enter. This issue is [fixed](https://github.com/microsoft/FluidFramework/pull/5447) and will be out in the next release
+> They both happen to use port 3000, so CRA will ask if you want to use 3001. Just hit enter. This issue is [fixed](https://github.com/microsoft/FluidFramework/pull/5447) in the next release.
 
 When the app loads it will update the URL. Copy that new URL into a second browser and note that if you click the button in one browser, the other browser updates as well.
