@@ -1,5 +1,5 @@
 # @fluid-example/cra-demo
-This is an experimental learning tutorial demonstrating a completed integration between [`create-react-app`](https://create-react-app.dev/) and Fluid.
+This is an experimental learning tutorial demonstrating a integration between [`create-react-app`](https://create-react-app.dev/) and Fluid.
 
 Concepts you will learn:
 1. How to integrate Fluid into a React application
