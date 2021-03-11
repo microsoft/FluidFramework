@@ -93,7 +93,8 @@ class Summary implements ISummary {
     }
 
     public broadcast(op: ISummaryOpMessage) {
-        assert(this.state === SummaryState.Local, "Can only broadcast if summarizer starts in local state");
+        assert(this.state === SummaryState.Local,
+            "sc:0138" /* Can only broadcast if summarizer starts in local state */);
         this._summaryOp = op;
         this.defSummaryOp.resolve();
         this.state = SummaryState.Broadcast;
@@ -101,7 +102,8 @@ class Summary implements ISummary {
     }
 
     public ackNack(op: ISummaryAckMessage | ISummaryNackMessage) {
-        assert(this.state === SummaryState.Broadcast, "Can only ack/nack if summarizer is in broadcasting state");
+        assert(this.state === SummaryState.Broadcast,
+            "sc:0139" /* Can only ack/nack if summarizer is in broadcasting state */);
         this._summaryAckNack = op;
         this.defSummaryAck.resolve();
         this.state = op.type === MessageType.SummaryAck ? SummaryState.Acked : SummaryState.Nacked;

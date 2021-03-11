@@ -128,7 +128,7 @@ export abstract class SnapshotExtractor {
                         subTree = subTree.trees[subPath];
                     }
                     const blobName = pathSplit[pathSplit.length - 1];
-                    assert(subTree.blobs[blobName] === undefined, "real blob ID exists");
+                    assert(subTree.blobs[blobName] === undefined, "sc:00d6" /* real blob ID exists */);
                     subTree.blobs[blobName] = id;
                 }
                 // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
@@ -154,12 +154,12 @@ export abstract class SnapshotExtractor {
 class SnapshotExtractorInPlace extends SnapshotExtractor {
     public async getBlob(id: string, tree: ISnapshotTree): Promise<ArrayBufferLike> {
         const blob = tree.blobs[id];
-        assert(blob !== undefined, "aggregate blob missing");
+        assert(blob !== undefined, "sc:00d7" /* aggregate blob missing */);
         return stringToBuffer(blob, "base64");
     }
 
     public setBlob(id: string, tree: ISnapshotTree, content: string) {
-        assert(tree.blobs[id] === undefined, "blob from aggregate blob exists on its own");
+        assert(tree.blobs[id] === undefined, "sc:00d8" /* blob from aggregate blob exists on its own */);
         tree.blobs[id] = fromUtf8ToBase64(content);
     }
 }
@@ -286,9 +286,9 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 
         // are there other ways we can get here? createFile is one flow, but we should not be reading blobs
         // in such flow
-        assert(this.loadedFromSummary, "never read summary");
+        assert(this.loadedFromSummary, "sc:00d9" /* never read summary */);
         const blob = this.virtualBlobs.get(id);
-        assert(blob !== undefined, "virtual blob not found");
+        assert(blob !== undefined, "sc:00da" /* virtual blob not found */);
         return blob;
     }
 
@@ -323,7 +323,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 
         let aggregator = aggregatorArg;
         if (startingLevel) {
-            assert(aggregator === undefined, "logic err with aggregator");
+            assert(aggregator === undefined, "sc:00db" /* logic err with aggregator */);
             aggregator = new BlobAggregator();
         }
 
@@ -363,26 +363,27 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
                         handlePath = handlePath.substr(1);
                     }
                     // Ensure only whole data stores can be reused, no reusing at deeper level!
-                    assert(level === 0, "tree reuse at lower level");
-                    assert(handlePath.indexOf("/") === -1, "data stores are writing incremental summaries!");
+                    assert(level === 0, "sc:00dc" /* tree reuse at lower level */);
+                    assert(handlePath.indexOf("/") === -1,
+                        "sc:00dd" /* data stores are writing incremental summaries! */);
                     break;
                 }
                 case SummaryType.Attachment:
-                    assert(this.isRealStorageId(obj.id), "attachment is aggregate blob");
+                    assert(this.isRealStorageId(obj.id), "sc:00de" /* attachment is aggregate blob */);
                     break;
                 default:
                     unreachableCase(obj, `Unknown type: ${(obj as any).type}`);
             }
         }
 
-        assert(newSummary.tree[this.aggregatedBlobName] === undefined, "duplicate aggregate blob");
+        assert(newSummary.tree[this.aggregatedBlobName] === undefined, "sc:00df" /* duplicate aggregate blob */);
         if (startingLevel) {
             // Note: It would be great to add code here to unpack aggregate blob back to normal blobs
             // If only one blob made it into aggregate. Currently that does not happen as we always have
             // at least one .component blob and at least one DDS that has .attributes blob, so it's not an issue.
             // But it's possible that in future that would be great addition!
             // Good news - it's backward compatible change.
-            assert(aggregator !== undefined, "logic error");
+            assert(aggregator !== undefined, "sc:00e0" /* logic error */);
             const content = aggregator.getAggregatedBlobContent();
             if (content !== undefined) {
                 newSummary.tree[this.aggregatedBlobName] = {

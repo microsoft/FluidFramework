@@ -94,7 +94,7 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document delta storage service for routerlicious driver.
      */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
-        assert(this.documentStorageService, "Storage service not initialized");
+        assert(this.documentStorageService, "sc:0095" /* Storage service not initialized */);
 
         const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, this.tokenProvider, this.logger);
         return new DocumentDeltaStorageService(this.tenantId, this.documentId,

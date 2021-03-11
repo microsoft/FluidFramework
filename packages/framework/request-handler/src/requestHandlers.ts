@@ -50,7 +50,7 @@ class LegacyUriHandle<T = IFluidObject & IFluidLoadable> implements IFluidHandle
     }
 
     public attachGraph() {
-        assert(false, "Trying to use legacy graph attach!");
+        assert(false, "sc:00ae" /* Trying to use legacy graph attach! */);
     }
 
     public async get(): Promise<any> {

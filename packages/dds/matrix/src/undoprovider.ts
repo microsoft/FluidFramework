@@ -47,7 +47,7 @@ export class VectorUndoProvider {
             // For SharedMatrix, each IRevertibles always holds a single row/col operation.
             // Therefore, 'currentOp' must either be undefined or equal to the current op.
             assert(this.currentOp === undefined || this.currentOp === operation,
-                "On vector undo, unexpected 'currentOp' type/state!");
+                "sc:0017" /* On vector undo, unexpected 'currentOp' type/state! */);
 
             switch (operation) {
                 case MergeTreeDeltaType.INSERT:
@@ -80,7 +80,7 @@ export class VectorUndoProvider {
         const revertible = {
             revert: () => {
                 assert(this.currentGroup === undefined && this.currentOp === undefined,
-                    "Must not nest calls to IRevertible.revert()");
+                    "sc:0018" /* Must not nest calls to IRevertible.revert() */);
 
                 this.currentGroup = new TrackingGroup();
 
@@ -139,7 +139,7 @@ export class MatrixUndoProvider<T extends Serializable = Serializable> {
 
     cellSet(rowHandle: Handle, colHandle: Handle, oldValue: T) {
         assert(isHandleValid(rowHandle) && isHandleValid(colHandle),
-            "On cellSet(), invalid row and/or column handles!");
+            "sc:0019" /* On cellSet(), invalid row and/or column handles! */);
 
         if (this.consumer !== undefined) {
             this.consumer.pushToCurrentOperation({

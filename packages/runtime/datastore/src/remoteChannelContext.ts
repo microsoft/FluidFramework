@@ -105,14 +105,14 @@ export class RemoteChannelContext implements IChannelContext {
         if (this.isLoaded) {
             this.services.deltaConnection.process(message, local, localOpMetadata);
         } else {
-            assert(!local, "Remote channel must not be local when processing op");
+            assert(!local, "sc:0155" /* Remote channel must not be local when processing op */);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.pending!.push(message);
         }
     }
 
     public reSubmit(content: any, localOpMetadata: unknown) {
-        assert(this.isLoaded, "Remote channel must be loaded when resubmitting op");
+        assert(this.isLoaded, "sc:0156" /* Remote channel must be loaded when resubmitting op */);
 
         this.services.deltaConnection.reSubmit(content, localOpMetadata);
     }
@@ -133,7 +133,7 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     private async loadChannel(): Promise<IChannel> {
-        assert(!this.isLoaded, "Remote channel must not already be loaded when loading");
+        assert(!this.isLoaded, "sc:0157" /* Remote channel must not already be loaded when loading */);
 
         let attributes: IChannelAttributes | undefined;
         if (await this.services.objectStorage.contains(attributesBlobKey)) {

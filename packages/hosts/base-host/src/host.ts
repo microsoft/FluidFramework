@@ -81,7 +81,7 @@ export class BaseHost {
         const loader = await this.getLoader();
         const container = await loader.createDetachedContainer(codeDetails);
 
-        assert(container.hasNullRuntime() === false, "Detached container should never have null runtime");
+        assert(container.hasNullRuntime() === false, "sc:00af" /* Detached container should never have null runtime */);
         return container;
     }
 
@@ -93,7 +93,7 @@ export class BaseHost {
         const loader = await this.getLoader();
         const container = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
 
-        assert(container.hasNullRuntime() === false, "Detached container should never have null runtime");
+        assert(container.hasNullRuntime() === false, "sc:00b0" /* Detached container should never have null runtime */);
         return container;
     }
 

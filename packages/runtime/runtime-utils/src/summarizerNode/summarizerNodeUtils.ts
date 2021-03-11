@@ -201,8 +201,9 @@ export function decodeSummary(
             };
         }
 
-        assert(!!outstandingOpsBlob, "Outstanding ops blob missing, but base summary tree exists");
-        assert(newBaseSummary !== undefined, "Base summary tree missing, but outstanding ops blob exists");
+        assert(!!outstandingOpsBlob, "sc:016d" /* Outstanding ops blob missing, but base summary tree exists */);
+        assert(newBaseSummary !== undefined,
+            "sc:016e" /* Base summary tree missing, but outstanding ops blob exists */);
         baseSummary = newBaseSummary;
         pathParts.push(baseSummaryTreeKey);
         opsBlobs.unshift(outstandingOpsBlob);

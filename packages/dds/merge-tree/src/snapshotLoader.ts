@@ -41,7 +41,7 @@ export class SnapshotLoader {
     ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
         const headerLoadedP =
             services.readBlob(SnapshotLegacy.header).then((header) => {
-                assert(!!header, "Missing blob header on legacy snapshot!");
+                assert(!!header, "sc:004c" /* Missing blob header on legacy snapshot! */);
                 return this.loadHeader(bufferToString(header,"utf8"));
             });
 
@@ -156,11 +156,11 @@ export class SnapshotLoader {
     private async loadBody(chunk1: MergeTreeChunkV1, services: IChannelStorageService): Promise<void> {
         assert(
             chunk1.length <= chunk1.headerMetadata!.totalLength,
-            "Mismatch in totalLength");
+            "sc:004d" /* Mismatch in totalLength */);
 
         assert(
             chunk1.segmentCount <= chunk1.headerMetadata!.totalSegmentCount,
-            "Mismatch in totalSegmentCount");
+            "sc:004e" /* Mismatch in totalSegmentCount */);
 
         if (chunk1.segmentCount === chunk1.headerMetadata!.totalSegmentCount) {
             return;
@@ -180,11 +180,11 @@ export class SnapshotLoader {
         }
         assert(
             lengthSofar === chunk1.headerMetadata!.totalLength,
-            "Mismatch in totalLength");
+            "sc:004f" /* Mismatch in totalLength */);
 
         assert(
             chunk1.segmentCount + segs.length === chunk1.headerMetadata!.totalSegmentCount,
-            "Mismatch in totalSegmentCount");
+            "sc:0050" /* Mismatch in totalSegmentCount */);
 
         // Helper to insert segments at the end of the MergeTree.
         const mergeTree = this.mergeTree;
