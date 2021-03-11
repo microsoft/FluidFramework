@@ -6,13 +6,9 @@
 import { strict as assert } from "assert";
 import { EventEmitterWithErrorHandling } from "../eventEmitterWithErrorHandling";
 
-class MyEventEmitter extends EventEmitterWithErrorHandling {
-
-}
-
 describe.only("EventEmitterWithErrorHandling", () => {
     it("forwards events", ()=> {
-        const emitter = new MyEventEmitter();
+        const emitter = new EventEmitterWithErrorHandling();
         let passedArg: number | undefined;
         emitter.on("foo", (arg) => { passedArg = arg; });
 
@@ -20,7 +16,7 @@ describe.only("EventEmitterWithErrorHandling", () => {
         assert.strictEqual(passedArg, 3);
     });
     it("forwards error event", ()=> {
-        const emitter = new MyEventEmitter();
+        const emitter = new EventEmitterWithErrorHandling();
         let passedArg: number | undefined;
         emitter.on("error", (arg) => { passedArg = arg; });
 
@@ -28,7 +24,7 @@ describe.only("EventEmitterWithErrorHandling", () => {
         assert.strictEqual(passedArg, 3);
     });
     it("converts exception in listener to error event", ()=> {
-        const emitter = new MyEventEmitter();
+        const emitter = new EventEmitterWithErrorHandling();
         let passedErrorMsg: string | undefined;
         let passedEventArg: number | undefined;
         emitter.on("foo", (arg) => {
@@ -46,7 +42,7 @@ describe.only("EventEmitterWithErrorHandling", () => {
         assert.strictEqual(passedEventArg, 3);
     });
     it("emitting error event when unhandled will throw", ()=> {
-        const emitter = new MyEventEmitter();
+        const emitter = new EventEmitterWithErrorHandling();
         try {
             const error = new Error("No one is listening");
             Object.assign(error, { prop: 4 });
@@ -58,7 +54,7 @@ describe.only("EventEmitterWithErrorHandling", () => {
         }
     });
     it("if error listener throws, new exception is thrown", ()=> {
-        const emitter = new MyEventEmitter();
+        const emitter = new EventEmitterWithErrorHandling();
         let errorListenerCallCount: number = 0;
         emitter.on("error", (_error) => {
             ++errorListenerCallCount;
@@ -76,7 +72,7 @@ describe.only("EventEmitterWithErrorHandling", () => {
         assert.strictEqual(errorListenerCallCount, 2, "error listener should be called twice");
     });
     it("exception in listener will be thrown if no error listener", ()=> {
-        const emitter = new MyEventEmitter();
+        const emitter = new EventEmitterWithErrorHandling();
         emitter.on("foo", (arg) => {
             const error = new Error("foo listener throws");
             Object.assign(error, { eventArg: arg });
