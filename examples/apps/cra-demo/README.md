@@ -91,9 +91,9 @@ const getContainerId = (): { containerId: string; isNew: boolean } => {
 
 ## 4. Initialize React component
 
-Before we can actually render our view we need to create our Fluid container and data objects. We can do this within the React lifecycle by using the React hooks, `useState` and `useEffect`.
+Before we can actually render our view we need to create, or get, our Fluid container and KeyValueDataObject. We can do this within the React lifecycle by using the React hooks, `useState` and `useEffect`.
 
-`useState` provides storage that we can modify over the lifecycle of the component, and `useEffect` is a method that gets called as soon as the component renders, and again any time state changes.
+[`useState`](https://reactjs.org/docs/hooks-state.html) provides storage that we can modify over the lifecycle of the component, and [`useEffect`](https://reactjs.org/docs/hooks-effect.html) is a method that gets called as soon as the component renders, and again any time state changes.
 
 All of the code in step 4 will go before the `return` method.
 
@@ -110,7 +110,7 @@ function App() {
 };
 ```
 
-Now that we have state, we need a way to update that state as soon as the component loads. That's where we turn to `useEffect`.
+Now that we have state, we need a way to update that state when our React component loads. That's where we turn to `useEffect`.
 
 ### 4.b Load container and subscribe to changes to Fluid data
 
@@ -118,9 +118,9 @@ React's `useEffect` is passed a function that fires as soon as the component loa
 
 Our `useEffect` will end up firing twice. The first time, on component load, it will either create or load the container and `dataObject` based on if this is a new "document" (no hash in URL) or existing "document" (has hash in URL) .
 
-> `TinyliciousService` is the service we are using to handle the Fluid data for this local demo. You'll use different services if you load your app in Azure, Teams or Sharepoint.
+> `TinyliciousService` defines the schema for connecting to a locally deployed [tinylicious](https://www.npmjs.com/package/tinylicious) Fluid service. You'll use different provided services when connecting to production Fluid services.
 
-The second time `useEffect` fires, the `dataObject` will have been set, so we set up a listener to call `updateData` each time the `changed` event is fired. `UpdateData` will sync the view state with the necessary Fluid data. For this example, we're just pulling all of the Fluid data.
+The second time `useEffect` fires, the `dataObject` will be set. Now that our KeyValuePairDataObject is loaded we can set up a listener to call `updateData` each time the `changed` event is fired. `updateData` will sync the view state with the necessary Fluid data. For this example, we are updated all of the Fluid data on any change.
 
 ```jsx
 function App() {
@@ -129,7 +129,7 @@ function App() {
     const [dataObject, setDataObject] = React.useState<KeyValueDataObject>();
 
     React.useEffect(() => {
-        if (dataObject !== undefined) {
+        if (dataObject === undefined) {
         // First time: create/get the Fluid container, then create/get KeyValueDataObject
             const { containerId, isNew } = getContainerId();
             const load = async () => {
