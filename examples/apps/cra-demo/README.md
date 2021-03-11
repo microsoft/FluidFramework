@@ -14,14 +14,14 @@ Concepts you will learn:
 
 In this demo you will be doing the following:
 
-1. Install Create-React-App with Typescript
-2. Install Fluid Package Dependencies
-3. Import Dependencies
-4. Initialize React component
-5. Update the view
-6. Fire up the servers
+1. [Install Create-React-App with Typescript](#cra)
+2. [Install Fluid Package Dependencies](#install)
+3. [Import Dependencies](#import)
+4. [Initialize React component](#init)
+5. [Update the view](#view)
+6. [Fire up the servers](#servers)
 
-## 1. Use Create-React-App with Typescript
+## 1. <a name="cra"></a> Use Create-React-App with Typescript
 
 ### Using NPM
 ```bash
@@ -37,7 +37,7 @@ cd my-app-name
 
 \* Don't start the React application yet. We'll do that at the end.
 
-## 2. Install Fluid Package Dependencies
+## 2. <a name="install"></a> Install Fluid Package Dependencies
 
 There are three packages to install to get started with Fluid:
 
@@ -59,7 +59,7 @@ yarn add @fluid-experimental/fluid-static @fluid-experimental/data-objects @flui
 
 Lastly, open up the `App.tsx` file, as that will be the only file we need to edit.
 
-## 3. Import Fluid Dependencies
+## 3. <a name="import"></a> Import Fluid Dependencies
 
 `Fluid` provides methods for creating a [Fluid container](https://fluidframework.com/docs/glossary/#container) and attaching [DataObjects](https://fluidframework.com/docs/glossary/#dataobject) to it.
 
@@ -90,7 +90,7 @@ const getContainerId = (): { containerId: string; isNew: boolean } => {
 ```
 
 
-## 4. Initialize React component
+## 4. <a name="init"></a>  Initialize React component
 
 Before we can actually render our view we need to create, or get, our Fluid container and KeyValueDataObject. We can do this within the React lifecycle by using the React hooks, `useState` and `useEffect`.
 
@@ -164,7 +164,7 @@ function App() {
 
 
 
-## 5. Update the view
+## 5. <a name="view"></a>  Update the view
 
 In this simple multi-user app, we are going to build a button that, when pressed, shows the current timestamp. We will store that timestamp in Fluid. This allows co-authors to automatically see the most recent timestamp at which any author pressed the button.
 
@@ -217,7 +217,7 @@ function App() {
 }
 ```
 
-## 6. Fire up the servers
+## 6. <a name="servers"></a>  Fire up the servers
 
 To see this application working we first need to fire up a local Fluid server called Tinylicious
 
