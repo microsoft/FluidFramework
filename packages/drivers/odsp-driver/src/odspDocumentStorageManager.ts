@@ -130,7 +130,8 @@ class BlobCache {
 
     public addBlobs(blobs: IBlob[]) {
         blobs.forEach((blob) => {
-            assert(blob.encoding === "base64" || blob.encoding === undefined);
+            assert(blob.encoding === "base64" || blob.encoding === undefined,
+                `Unexpected blob encoding type: '${blob.encoding}'`);
             this._blobCache.set(blob.id, blob);
         });
         // Reset the timer on cache set
@@ -246,8 +247,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private readonly blobCache = new BlobCache();
 
     public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
-        assert(this._ops === undefined);
-        assert(ops !== undefined);
+        assert(this._ops === undefined, "Trying to set ops when they are already set!");
+        assert(ops !== undefined, "Input ops are undefined!");
         this._ops = ops;
     }
 
@@ -741,7 +742,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize } = this.evalBlobsAndTrees(snapshot);
             const clientTime = networkTime ? overallTime - networkTime : undefined;
 
-            assert(this._snapshotCacheEntry === undefined);
+            assert(this._snapshotCacheEntry === undefined, "snapshotCacheEntry already defined!");
             this._snapshotCacheEntry = {
                 file: this.fileEntry,
                 type: "snapshot",

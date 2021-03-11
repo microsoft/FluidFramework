@@ -64,7 +64,7 @@ class KeyValue implements IKeyValue, IFluidObject, IFluidRouter {
     private _root: ISharedMap | undefined;
 
     public get root() {
-        assert(!!this._root);
+        assert(!!this._root, "KeyValueCache root map is missing!");
         return this._root;
     }
 
