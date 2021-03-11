@@ -15,7 +15,7 @@ Concepts you will learn:
 In this demo you will be doing the following:
 
 1. Install Create-React-App with Typescript
-2. Install Fluid and Fluid Data Objects
+2. Install Fluid Package Dependencies
 3. Import KVpair and Fluid Static
 4. Initialize React component
 5. Update the view
