@@ -1390,11 +1390,9 @@ export class DeltaManager
 
         // All non-system messages are coming from some client, and should have clientId
         // System messages may have no clientId (but some do, like propose, noop, summarize)
-        // Note: NoClient has not been added yet to isSystemMessage (in 0.16.x branch)
         assert(
             message.clientId !== undefined
-            || isSystemMessage(message)
-            || message.type === MessageType.NoClient,
+            || isSystemMessage(message),
             "non-system message have to have clientId",
         );
 
