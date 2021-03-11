@@ -107,18 +107,34 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document delta stream service for routerlicious driver.
      */
     public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
-        const ordererToken = await this.tokenProvider.fetchOrdererToken(
-            this.tenantId,
-            this.documentId,
-        );
-        return R11sDocumentDeltaConnection.create(
-            this.tenantId,
-            this.documentId,
-            ordererToken.jwt,
-            io,
-            client,
-            this.ordererUrl,
-            this.logger);
+        const connect = async () => {
+            const ordererToken = await this.tokenProvider.fetchOrdererToken(
+                this.tenantId,
+                this.documentId,
+            );
+            return R11sDocumentDeltaConnection.create(
+                this.tenantId,
+                this.documentId,
+                ordererToken.jwt,
+                io,
+                client,
+                this.ordererUrl,
+                this.logger,
+            );
+        };
+
+        // Attempt to establish connection.
+        // Retry with new token on authorization error; otherwise, allow container layer to handle.
+        try {
+            const connection = await connect();
+            return connection;
+        } catch (error) {
+            if (error?.errorType === api.DriverErrorType.authorizationError) {
+                // Fetch new token and retry once
+                return connect();
+            }
+            throw error;
+        }
     }
 
     public getErrorTrackingService() {

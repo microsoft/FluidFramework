@@ -15,6 +15,29 @@ export enum R11sErrorType {
     fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
 }
 
+/**
+ * Interface for error responses for the WebSocket connection
+ */
+export interface IR11sSocketError {
+    /**
+     * An error code number for the error that occurred.
+     * It will be a valid HTTP status code.
+     */
+    code: number;
+
+    /**
+     * A message about the error that occurred for debugging / logging purposes.
+     * This should not be displayed to the user directly.
+     */
+    message: string;
+
+    /**
+     * Optional Retry-After time in seconds.
+     * The client should wait this many seconds before retrying its request.
+     */
+    retryAfter?: number;
+}
+
 export interface IR11sError {
     readonly errorType: R11sErrorType;
     readonly message: string;
@@ -58,4 +81,16 @@ export function throwR11sNetworkError(
 
     // eslint-disable-next-line @typescript-eslint/no-throw-literal
     throw networkError;
+}
+
+/**
+ * Returns network error based on error object from R11s socket (IR11sSocketError)
+ */
+export function errorObjectFromSocketError(socketError: IR11sSocketError, handler: string): R11sError {
+    const message = `socket.io: ${handler}: ${socketError.message}`;
+    return createR11sNetworkError(
+        message,
+        socketError.code,
+        socketError.retryAfter,
+    );
 }
