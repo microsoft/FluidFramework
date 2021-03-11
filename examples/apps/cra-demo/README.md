@@ -1,5 +1,12 @@
 # @fluid-example/cra-demo
-This is an experimental example of a completed integration between [`create-react-app`](https://create-react-app.dev/) and Fluid. Below you will find instructions to how to start from `create-react-app` and get to this completed state.
+This is an experimental learning tutorial demonstrating a completed integration between [`create-react-app`](https://create-react-app.dev/) and Fluid. Below you will find instructions to how to start from `create-react-app` and get to this completed state.
+
+Concepts you will learn:
+1. How to integrate Fluid into a React application
+2. How run and connect your application to a local Fluid service
+3. How to create and get Fluid Containers and DataObjects
+4. How to use a single KeyValuePair (KVPair) DataObject to sync data between connected clients
+
 
 \* This demo is a work in progress. There will be rough sections that need refactoring or refinement
 
