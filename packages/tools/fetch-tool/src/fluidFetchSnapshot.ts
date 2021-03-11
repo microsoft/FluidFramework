@@ -20,6 +20,7 @@ import {
     dumpSnapshotStats,
     dumpSnapshotTrees,
     dumpSnapshotVersions,
+    paramActualFormatting,
     paramNumSnapshotVersions,
     paramSnapshotVersionIndex,
     paramUnpackAggregatedBlobs,
@@ -246,19 +247,21 @@ async function saveSnapshot(name: string, fetchedData: IFetchedData[], saveDir: 
 
         if (!isFetchedTree(item)) {
             fs.writeFileSync(`${outDir}/${item.filename}`, data);
-            const decoded = bufferToString(buffer,"utf8");
+            let decoded = bufferToString(buffer,"utf8");
             try {
-                const object = JSON.parse(decoded);
-                fs.writeFileSync(`${outDir}/decoded/${item.filename}.json`, JSON.stringify(object, undefined, 2));
+                if (!paramActualFormatting) {
+                    decoded = JSON.stringify(JSON.parse(decoded), undefined, 2);
+                }
             } catch (e) {
-                fs.writeFileSync(`${outDir}/decoded/${item.filename}.txt`, decoded);
             }
+            fs.writeFileSync(
+                `${outDir}/decoded/${item.filename}.json`, decoded);
         } else {
             // Write out same data for tree
             fs.writeFileSync(`${outDir}/${item.filename}.json`, data);
             const decoded = bufferToString(buffer,"utf8");
             fs.writeFileSync(`${outDir}/decoded/${item.filename}.json`,
-                JSON.stringify(JSON.parse(decoded), undefined, 2));
+                paramActualFormatting ? decoded : JSON.stringify(JSON.parse(decoded), undefined, 2));
         }
     }));
 }

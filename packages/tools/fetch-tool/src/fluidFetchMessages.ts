@@ -20,6 +20,7 @@ import {
     connectToWebSocket,
     dumpMessages,
     dumpMessageStats,
+    paramActualFormatting,
     messageTypeFilter,
 } from "./fluidFetchArgs";
 
@@ -178,7 +179,9 @@ async function* saveOps(
             const name = filenameFromIndex(index);
             const write = sequencedMessages.splice(0, chunk);
             console.log(`writing messages${name}.json`);
-            fs.writeFileSync(`${dir}/messages${name}.json`, JSON.stringify(write, undefined, 2));
+            fs.writeFileSync(
+                `${dir}/messages${name}.json`,
+                JSON.stringify(write, undefined, paramActualFormatting ? 0 : 2));
             curr += chunk;
             assert(sequencedMessages.length === 0 || sequencedMessages[0].sequenceNumber === curr,
                 "Stopped writing at unexpected sequence number");

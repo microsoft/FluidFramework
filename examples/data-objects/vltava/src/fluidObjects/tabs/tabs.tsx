@@ -7,6 +7,7 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidObject, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -24,7 +25,8 @@ export const TabsName = "tabs";
 export class TabsFluidObject extends DataObject implements IFluidHTMLView {
     private dataModelInternal: ITabsDataModel | undefined;
 
-    private static readonly factory = new DataObjectFactory(TabsName, TabsFluidObject, [], {});
+    private static readonly factory =
+    new DataObjectFactory<TabsFluidObject, undefined, undefined, IEvent>(TabsName, TabsFluidObject, [], {});
 
     public static getFactory() {
         return TabsFluidObject.factory;
