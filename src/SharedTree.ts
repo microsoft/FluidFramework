@@ -4,15 +4,15 @@
  */
 
 import { fromBase64ToUtf8, IsoBuffer } from '@fluidframework/common-utils';
-import { IFluidHandle, IFluidSerializer, ISerializedHandle } from '@fluidframework/core-interfaces';
+import { IFluidHandle, IFluidSerializer } from '@fluidframework/core-interfaces';
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from '@fluidframework/protocol-definitions';
 import { IFluidDataStoreRuntime, IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
-import { SharedObject } from '@fluidframework/shared-object-base';
+import { serializeHandles, SharedObject } from '@fluidframework/shared-object-base';
 import { IErrorEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger } from '@fluidframework/telemetry-utils';
 import { assert, fail, SharedTreeTelemetryProperties } from './Common';
-import { EditHandle, editsPerChunk, EditLog, OrderedEditSet } from './EditLog';
+import { editsPerChunk, EditLog, OrderedEditSet } from './EditLog';
 import {
 	Edit,
 	Delete,
@@ -79,13 +79,6 @@ export enum SharedTreeEvent {
 	 * Passed the EditId of the committed edit, i.e. supports callbacks of type {@link EditCommittedHandler}.
 	 */
 	EditCommitted = 'committedEdit',
-	/**
-	 * Upload has completed successfully for a set of edit chunks, or failed for at least one chunk in the set.
-	 * If any chunk upload failed, the error will be raised on the SharedTree instance.
-	 * This event is used exclusively for testing.
-	 * @internal
-	 */
-	ChunksUploaded = 'uploadedChunks',
 }
 
 /**
@@ -306,16 +299,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 		return edit.id;
 	}
 
-	private deserializeHandle(serializedHandle: ISerializedHandle): IFluidHandle<ArrayBufferLike> {
-		const deserializeHandle = this.serializer.parse(JSON.stringify(serializedHandle));
+	private deserializeHandle(serializedHandle: string): IFluidHandle<ArrayBufferLike> {
+		const deserializeHandle = this.serializer.parse(serializedHandle);
 		assert(typeof deserializeHandle === 'object');
 		return deserializeHandle as IFluidHandle<ArrayBufferLike>;
-	}
-
-	private toSerializable(value: EditHandle): ISerializedHandle {
-		// Stringify to convert to the serialized handle values - and then parse
-		const stringified = this.serializer.stringify(value, this.handle);
-		return JSON.parse(stringified) as ISerializedHandle;
 	}
 
 	/**
@@ -324,35 +311,16 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 	private async uploadEditChunk(edits: EditWithoutId[], chunkKey: number): Promise<void> {
 		const editHandle = await this.runtime.uploadBlob(IsoBuffer.from(JSON.stringify({ edits })));
 		this.submitLocalMessage({
-			editHandle: this.toSerializable(editHandle),
+			editHandle: serializeHandles(editHandle, this.serializer, this.handle),
 			chunkKey,
 			type: SharedTreeOpType.Handle,
 		});
 	}
 
 	/**
-	 * Asynchronously uploads edit chunks that have reached the chunk size limit.
-	 */
-	private async initiateEditChunkUpload(): Promise<void> {
-		// Initiate upload of any edit chunks not yet uploaded.
-		const editChunks = this.editLog.getEditLogSummary(true).editChunks;
-		try {
-			await Promise.all(
-				editChunks.map(async ({ key, chunk }) => {
-					if (Array.isArray(chunk) && chunk.length === editsPerChunk) {
-						await this.uploadEditChunk(chunk, key);
-					}
-				})
-			);
-		} finally {
-			this.emit(SharedTreeEvent.ChunksUploaded);
-		}
-	}
-
-	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
 	 */
-	public snapshotCore(_serializer: IFluidSerializer): ITree {
+	public snapshotCore(serializer: IFluidSerializer): ITree {
 		const tree: ITree = {
 			entries: [
 				{
@@ -360,7 +328,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 					path: snapshotFileName,
 					type: TreeEntry[TreeEntry.Blob],
 					value: {
-						contents: serialize(this.saveSummary()),
+						contents: this.saveSerializedSummary(serializer),
 						encoding: 'utf-8',
 					},
 				},
@@ -369,6 +337,16 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 		};
 
 		return tree;
+	}
+
+	/**
+	 * Saves this SharedTree into a serialized summary.
+	 *
+	 * @param serializer - Optional serializer to use. If not passed in, SharedTree's serializer is used.
+	 * @internal
+	 */
+	public saveSerializedSummary(serializer?: IFluidSerializer): string {
+		return serialize(this.saveSummary(), serializer || this.serializer, this.handle);
 	}
 
 	/**
@@ -389,7 +367,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 			this.editLog.sequenceLocalEdits();
 		}
 
-		this.initiateEditChunkUpload().catch((error: unknown) => this.emit('error', error));
 		return this.summarizer(this.editLog, this.currentView);
 	}
 
@@ -411,13 +388,15 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 		const { editHistory, currentTree } = convertedSummary;
 		const currentView = Snapshot.fromTree(currentTree);
 
-		const serializationHelpers = {
-			serializeHandle: this.toSerializable.bind(this),
-			deserializeHandle: this.deserializeHandle.bind(this),
-		};
-
-		const editLog = new EditLog(editHistory, serializationHelpers);
+		const editLog = new EditLog(editHistory);
 		const logViewer = new CachingLogViewer(editLog, initialTree, this.expensiveValidation, undefined, this.logger);
+
+		// Upload any full blobs that have yet to be uploaded
+		// When multiple clients connect and load summaries with non-uploaded chunks, they will all initiate uploads
+		// but there will only be one winner per chunk.
+		for (const [key, chunk] of editLog.getEditChunksReadyForUpload()) {
+			this.uploadEditChunk(chunk, key).catch((error: unknown) => this.emit('error', error));
+		}
 
 		// TODO:#47830: Store the associated revision on the snapshot.
 		// The current view should only be stored in the cache if the revision it's associated with is known.
@@ -450,7 +429,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const header = await storage.read(snapshotFileName);
-		const summary = deserialize(fromBase64ToUtf8(header));
+		const summary = deserialize(fromBase64ToUtf8(header), this.serializer);
 		if (typeof summary === 'string') {
 			fail(summary);
 		}
@@ -487,9 +466,14 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 
 	private processSequencedEdit(edit: Edit): void {
 		const wasLocalEdit = this.editLog.isLocalEdit(edit.id);
-		this.editLog.addSequencedEdit(edit);
+		const [key, edits] = this.editLog.addSequencedEdit(edit);
 		if (!wasLocalEdit) {
 			this.emit(SharedTreeEvent.EditCommitted, edit.id);
+		} else {
+			// If this client created the edit that filled up a chunk, it is responsible for uploading that chunk.
+			if (edits.length === editsPerChunk) {
+				this.uploadEditChunk(edits, key).catch((error: unknown) => this.emit('error', error));
+			}
 		}
 	}
 

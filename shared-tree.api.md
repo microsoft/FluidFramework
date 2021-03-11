@@ -14,7 +14,6 @@ import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISerializedHandle } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
@@ -175,8 +174,21 @@ export interface EditBase {
     readonly changes: readonly Change[];
 }
 
+// Warning: (ae-internal-missing-underscore) The name "EditChunkOrHandle" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export type EditChunkOrHandle = EditHandle | EditWithoutId[];
+
 // @public
 export type EditCommittedHandler = (id: EditId) => void;
+
+// Warning: (ae-internal-missing-underscore) The name "EditHandle" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export interface EditHandle {
+    // (undocumented)
+    get: () => Promise<ArrayBufferLike>;
+}
 
 // @public
 export type EditId = UuidString & {
@@ -189,7 +201,7 @@ export type EditId = UuidString & {
 export interface EditLogSummary {
     readonly editChunks: readonly {
         key: number;
-        chunk: SerializedChunk;
+        chunk: EditChunkOrHandle;
     }[];
     readonly editIds: readonly EditId[];
 }
@@ -332,9 +344,6 @@ export type PlaceIndex = number & {
 export function revert(edit: Edit, before: Snapshot): Change[];
 
 // @public
-export type SerializedChunk = ISerializedHandle | EditWithoutId[];
-
-// @public
 export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<EditNode>): readonly Change[];
 
 // @public
@@ -378,9 +387,11 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
     // (undocumented)
     protected registerCore(): void;
     // @internal
+    saveSerializedSummary(serializer?: IFluidSerializer): string;
+    // @internal
     saveSummary(): SharedTreeSummaryBase;
     // (undocumented)
-    snapshotCore(_serializer: IFluidSerializer): ITree;
+    snapshotCore(serializer: IFluidSerializer): ITree;
     summarizer: SharedTreeSummarizer;
     }
 
@@ -401,8 +412,6 @@ export class SharedTreeEditor {
 
 // @public
 export enum SharedTreeEvent {
-    // @internal
-    ChunksUploaded = "uploadedChunks",
     EditCommitted = "committedEdit"
 }
 

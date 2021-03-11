@@ -4,7 +4,6 @@
  */
 
 import { expect } from 'chai';
-import { ISerializedHandle } from '@fluidframework/core-interfaces';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { EditHandle, EditLog, editsPerChunk, separateEditAndId } from '../EditLog';
 import { Edit, EditWithoutId } from '../PersistedTypes';
@@ -213,22 +212,6 @@ describe('EditLog', () => {
 	});
 
 	it('can load edits from a handle', async () => {
-		const handleMap = new Map<string, EditHandle>();
-		const serializationHelpers = {
-			serializeHandle: (handle: EditHandle) => {
-				const mapSize = String(handleMap.size);
-				const serializedHandle: ISerializedHandle = {
-					type: '__fluid_handle__',
-					url: mapSize,
-				};
-				handleMap.set(mapSize, handle);
-				return serializedHandle;
-			},
-			deserializeHandle: (serializedHandle: ISerializedHandle) => {
-				return assertNotUndefined(handleMap.get(serializedHandle.url));
-			},
-		};
-
 		const editIds: EditId[] = [];
 		const editChunks: EditWithoutId[][] = [];
 		const numberOfChunks = 2;
@@ -256,16 +239,16 @@ describe('EditLog', () => {
 		});
 
 		let chunkKey = 0;
-		const serializedHandles = handles.map((chunk) => {
-			const serializedHandle = {
+		const handlesWithKeys = handles.map((chunk) => {
+			const handle = {
 				key: chunkKey,
-				chunk: serializationHelpers.serializeHandle(chunk),
+				chunk,
 			};
 			chunkKey = chunkKey + 5;
-			return serializedHandle;
+			return handle;
 		});
 
-		const log = new EditLog({ editChunks: serializedHandles, editIds }, serializationHelpers);
+		const log = new EditLog({ editChunks: handlesWithKeys, editIds });
 
 		// Check that each edit can be retrieved correctly
 		for (let i = 0; i < 10; i++) {

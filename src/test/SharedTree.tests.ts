@@ -32,8 +32,11 @@ import {
 	assertNoDelta,
 } from './utilities/TestUtilities';
 import { runSharedTreeUndoRedoTestSuite } from './utilities/UndoRedoTests';
+import { TestFluidHandle, TestFluidSerializer } from './utilities/TestSerializer';
 
 describe('SharedTree', () => {
+	const testSerializer = new TestFluidSerializer();
+
 	describe('SharedTree before initialization', () => {
 		it('can create a new SharedTree', () => {
 			const { tree } = setUpTestSharedTree();
@@ -430,19 +433,20 @@ describe('SharedTree', () => {
 	describe('SharedTree summarizing', () => {
 		const treeOptions = { initialTree: simpleTestTree, localMode: false };
 		const newNode = makeEmptyNode();
+		const testHandle = new TestFluidHandle();
 
 		it('returns false when given bad json input', () => {
-			assert.typeOf(deserialize(''), 'string');
-			assert.typeOf(deserialize('~ malformed JSON ~'), 'string');
-			assert.typeOf(deserialize('{ unrecognizedKey: 42 }'), 'string');
+			assert.typeOf(deserialize('', testSerializer), 'string');
+			assert.typeOf(deserialize('~ malformed JSON ~', testSerializer), 'string');
+			assert.typeOf(deserialize('{ unrecognizedKey: 42 }', testSerializer), 'string');
 		});
 
 		it('correctly handles snapshots of default trees', () => {
 			const { tree: uninitializedTree } = setUpTestSharedTree();
 
 			// Serialize the state of one uninitialized tree into a second tree
-			const serialized = serialize(uninitializedTree.saveSummary());
-			const parsedTree = deserialize(serialized) as SharedTreeSummary_0_0_2;
+			const serialized = serialize(uninitializedTree.saveSummary(), testSerializer, testHandle);
+			const parsedTree = deserialize(serialized, testSerializer) as SharedTreeSummary_0_0_2;
 			expect(parsedTree.sequencedEdits).deep.equal([]);
 			expect(deepCompareNodes(parsedTree.currentTree, initialTree)).to.be.true;
 		});
@@ -460,7 +464,7 @@ describe('SharedTree', () => {
 					containerRuntimeFactory.processAllMessages();
 				}
 
-				const serialized = serialize(tree.saveSummary());
+				const serialized = serialize(tree.saveSummary(), testSerializer, testHandle);
 				const treeContent = JSON.parse(serialized);
 				const parsedTree = treeContent as SharedTreeSummary_0_0_2;
 

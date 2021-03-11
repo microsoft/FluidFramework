@@ -60,7 +60,7 @@ export {
 export * from './Factory';
 export * from './HistoryEditFactory';
 export * from './Identifiers';
-export { OrderedEditSet, EditLogSummary, SerializedChunk } from './EditLog';
+export { OrderedEditSet, EditLogSummary, EditHandle, EditChunkOrHandle } from './EditLog';
 export {
 	EditValidationResult,
 	NodeInTrait,

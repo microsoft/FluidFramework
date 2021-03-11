@@ -7,7 +7,7 @@ import { fail } from '../Common';
 import { Change, StablePlace } from '../PersistedTypes';
 import { DetachedSequenceId, EditId, NodeId } from '../Identifiers';
 import { newEdit } from '../EditUtilities';
-import { SharedTree, SharedTreeEvent } from '../SharedTree';
+import { SharedTree } from '../SharedTree';
 import { deserialize } from '../SummaryBackCompatibility';
 import {
 	fullHistorySummarizer,
@@ -22,6 +22,7 @@ import {
 	setUpLocalServerTestSharedTree,
 	setUpTestSharedTree,
 } from './utilities/TestUtilities';
+import { TestFluidSerializer } from './utilities/TestSerializer';
 
 // This accounts for this file being executed after compilation. If many tests want to leverage resources, we should unify
 // resource path logic to a single place.
@@ -44,8 +45,10 @@ describe('Summary', () => {
 	const uuidNamespace = '44864298-500e-4cf8-9f44-a249e5b3a286';
 	const setupEditId = '9406d301-7449-48a5-b2ea-9be637b0c6e4' as EditId;
 
+	const testSerializer = new TestFluidSerializer();
+
 	let expectedTree: SharedTree;
-	let localTestObjectProvider: TestObjectProvider<ITestContainerConfig>;
+	let testObjectProvider: TestObjectProvider<ITestContainerConfig>;
 
 	const testSummaryFiles = fs.readdirSync(pathBase);
 
@@ -74,23 +77,16 @@ describe('Summary', () => {
 			setupEditId,
 		});
 		expectedTree = testingComponents.tree;
-		localTestObjectProvider = testingComponents.testObjectProvider;
+		testObjectProvider = testingComponents.testObjectProvider;
 	});
 
-	// Completes any pending chunk uploads on expectedTree and processes the handle ops
-	const catchupExpectedTree = async () => {
-		expectedTree.saveSummary();
-		await new Promise((resolve) => expectedTree.once(SharedTreeEvent.ChunksUploaded, resolve));
-		await localTestObjectProvider.opProcessingController.process();
-	};
-
 	afterEach(async () => {
-		localTestObjectProvider.reset();
+		testObjectProvider.reset();
 	});
 
 	const validateSummaryRead = (fileName: string): void => {
-		const serializeSummary = fs.readFileSync(summaryFilePath(fileName), 'utf8');
-		const summary = deserialize(serializeSummary);
+		const serializedSummary = fs.readFileSync(summaryFilePath(fileName), 'utf8');
+		const summary = deserialize(serializedSummary, testSerializer);
 
 		const { tree } = setUpTestSharedTree();
 		assert.typeOf(summary, 'object');
@@ -114,8 +110,8 @@ describe('Summary', () => {
 	for (const [summaryType, files] of summaryTypes.entries()) {
 		it(`files of type '${summaryType}' with different format versions produce identical trees`, () => {
 			// Load the first summary file
-			const serializeSummary = fs.readFileSync(summaryFilePath(files[0]), 'utf8');
-			const summary = deserialize(serializeSummary);
+			const serializedSummary = fs.readFileSync(summaryFilePath(files[0]), 'utf8');
+			const summary = deserialize(serializedSummary, testSerializer);
 			assert.typeOf(summary, 'object');
 			expectedTree.loadSummary(summary as SharedTreeSummaryBase);
 
@@ -123,8 +119,8 @@ describe('Summary', () => {
 			for (let i = 1; i < files.length; i++) {
 				const { tree } = setUpTestSharedTree();
 
-				const serializeSummary = fs.readFileSync(summaryFilePath(files[i]), 'utf8');
-				const summary = deserialize(serializeSummary);
+				const serializedSummary = fs.readFileSync(summaryFilePath(files[i]), 'utf8');
+				const summary = deserialize(serializedSummary, testSerializer);
 				assert.typeOf(summary, 'object');
 				tree.loadSummary(summary as SharedTreeSummaryBase);
 
@@ -135,23 +131,24 @@ describe('Summary', () => {
 		for (const { version, summarizer } of supportedSummarizers) {
 			it(`format version ${version} can be written for ${summaryType} summary type`, async () => {
 				// Load the first summary file (the one with the oldest version)
-				const serializeSummary = fs.readFileSync(summaryFilePath(files.sort()[0]), 'utf8');
-				const summary = deserialize(serializeSummary);
+				const serializedSummary = fs.readFileSync(summaryFilePath(files.sort()[0]), 'utf8');
+				const summary = deserialize(serializedSummary, testSerializer);
 				assert.typeOf(summary, 'object');
 				expectedTree.loadSummary(summary as SharedTreeSummaryBase);
 
-				await catchupExpectedTree();
+				// Wait for the ops to to be submitted and processed across the containers.
+				await testObjectProvider.opProcessingController.process();
 
 				// Write a new summary with the specified version
 				expectedTree.summarizer = summarizer;
-				const newSummary = expectedTree.saveSummary();
+				const newSummary = expectedTree.saveSerializedSummary();
 
 				// Check the newly written summary is equivalent to its corresponding test summary file
 				const fileName = `${summaryType}-${version}`;
-				const expectedSerializeSummary = fs.readFileSync(summaryFilePath(fileName), 'utf8');
-				const expectedSummary = deserialize(expectedSerializeSummary);
+				// Re-stringify the the JSON file to remove escaped characters
+				const expectedSummary = JSON.stringify(JSON.parse(fs.readFileSync(summaryFilePath(fileName), 'utf8')));
 
-				expect(newSummary).to.deep.equal(expectedSummary);
+				expect(newSummary).to.equal(expectedSummary);
 			});
 		}
 	}
@@ -179,7 +176,8 @@ describe('Summary', () => {
 				expectedTree.processLocalEdit({ ...edit, id: uuidv5(i.toString(), uuidNamespace) as EditId });
 			}
 
-			await localTestObjectProvider.opProcessingController.process();
+			// Wait for the ops to to be submitted and processed across the containers.
+			await testObjectProvider.opProcessingController.process();
 
 			validateSummaryRead('small-history-0.0.2');
 			validateSummaryWrite(fullHistorySummarizer);
@@ -210,9 +208,8 @@ describe('Summary', () => {
 				expectedTree.processLocalEdit({ ...edit, id: uuidv5(i.toString(), uuidNamespace) as EditId });
 			}
 
-			await localTestObjectProvider.opProcessingController.process();
-
-			await catchupExpectedTree();
+			// Wait for the ops to to be submitted and processed across the containers.
+			await testObjectProvider.opProcessingController.process();
 
 			validateSummaryRead('large-history-0.1.0');
 			validateSummaryWrite(fullHistorySummarizer_0_1_0);

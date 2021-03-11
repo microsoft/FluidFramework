@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ISerializedHandle } from '@fluidframework/core-interfaces';
-
 // All types imported into this file inherit the requirements documented below.
 // These imports are ok because they consist only of type aliases for primitive types,
 // and thus have no impact on serialization as long as the primitive type they are an alias for does not change.
@@ -614,8 +612,8 @@ export interface SharedTreeEditOp extends SharedTreeOp {
  * The handle corresponds to an edit chunk in the edit log.
  */
 export interface SharedTreeHandleOp extends SharedTreeOp {
-	/** The handled to an uploaded edit chunk. */
-	editHandle: ISerializedHandle;
+	/** The serialized handle to an uploaded edit chunk. */
+	editHandle: string;
 	/** The index of the first edit in the chunk that corresponds to the handle. */
 	chunkKey: number;
 }
