@@ -4,13 +4,14 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ICombiningOp, PropertySet } from "@fluidframework/merge-tree";
 import { CellRange } from "./cellrange";
+import { TableSliceType } from "./componentTypes";
 import { ConfigKey } from "./configKey";
 import { TableDocument } from "./document";
 import { ITable, TableDocumentItem } from "./table";
-import { TableSliceType } from "./componentTypes";
 
 export interface ITableSliceConfig {
     docId: string;
@@ -25,7 +26,8 @@ export interface ITableSliceConfig {
 export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITable {
     public static getFactory() { return TableSlice.factory; }
 
-    private static readonly factory = new DataObjectFactory(
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    private static readonly factory = new DataObjectFactory<TableSlice, object, ITableSliceConfig, IEvent>(
         TableSliceType,
         TableSlice,
         [],
