@@ -70,10 +70,12 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
     }
 
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        const rootDataObject = await runtime.createRootDataStore(
+        await runtime.createRootDataStore(
             this.rootDataObjectFactory.type,
             rootDataStoreId,
         ) as RootDataObject;
+
+        const rootDataObject = (await runtime.request({ url: "/" })).value;
 
         const initialDataObjects: Promise<IFluidLoadable>[] = [];
         // If the developer provides additional DataObjects we will create them
