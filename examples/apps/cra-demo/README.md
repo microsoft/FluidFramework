@@ -152,7 +152,7 @@ function App() {
 
 ## 5. Update the view
 
-In this simple multi-user app, we are going to build a button that, when pressed, shows the current time stamp. We will store that timestamp in Fluid. This allows co-authors to automatically see the most recent timestamp at which any author pressed the button.
+In this simple multi-user app, we are going to build a button that, when pressed, shows the current timestamp. We will store that timestamp in Fluid. This allows co-authors to automatically see the most recent timestamp at which any author pressed the button.
 
 To make sure we don't render the app too soon, we return a blank `<div />` until the `dataObject` is defined. Once that's done, we'll render a button that sets the `time` key in our `KeyValueDataObject` to the current timestamp. Anytime this button is pressed, every user will see the latest value stored in the `time` key of `data`.
 
