@@ -337,9 +337,13 @@ export class Loader extends EventEmitter implements IHostLoader {
             throw new Error(`Invalid URL ${resolvedAsFluid.url}`);
         }
 
-        if (pendingLocalState !== undefined && resolvedAsFluid.url !== pendingLocalState.url) {
-            const message = `URL ${resolvedAsFluid.url} does not match pending state URL ${pendingLocalState.url}`;
-            throw new Error(message);
+        if (pendingLocalState !== undefined) {
+            const parsedPendingUrl = parseUrl(pendingLocalState.url);
+            if (parsedPendingUrl?.id !== parsed.id ||
+                parsedPendingUrl?.path.replace(/\/$/, "") !== parsed.path.replace(/\/$/, "")) {
+                const message = `URL ${resolvedAsFluid.url} does not match pending state URL ${pendingLocalState.url}`;
+                throw new Error(message);
+            }
         }
 
         // parseUrl's id is expected to be of format "tenantId/docId"

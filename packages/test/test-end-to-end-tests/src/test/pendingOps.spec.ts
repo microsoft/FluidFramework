@@ -36,7 +36,7 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
             container.on("connected", () => res());
         }
     });
-    await args.opProcessingController.process();
+    await args.ensureSynchronized();
     await args.opProcessingController.pauseProcessing(container.deltaManager as any);
     const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
     assert(dataStore.runtime.deltaManager.outbound.paused);
@@ -47,8 +47,9 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
     let pendingState: string;
     if (send) {
         const pendingRuntimeState = (container as any).context.runtime.getPendingLocalState();
-        await args.opProcessingController.process();
-        container.close();
+        await args.ensureSynchronized();
+        const p = container.closeAndGetPendingLocalState();
+        assert.strictEqual(JSON.parse(p).pendingRuntimeState, undefined);
         // if we sent the ops successfully the pending state should have a clientId. if not they will be resent anyway
         assert(pendingRuntimeState.clientId !== undefined, "no clientId for successful ops");
         assert(container.resolvedUrl !== undefined && container.resolvedUrl.type === "fluid");
@@ -66,26 +67,26 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
 
 const tests = (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
-    let documentId;
     let url;
-    beforeEach(async ()=>{
-        args = argsFactory();
-        documentId = (args as any).documentId;
-        url = await args.driver.createContainerUrl(documentId);
-    });
     let loader: ILoader;
     let container1: IContainer;
     let map1: SharedMap;
 
     beforeEach(async () => {
+        args = argsFactory();
         loader = args.makeTestLoader(testContainerConfig);
         container1 = await createAndAttachContainer(
             args.defaultCodeDetails,
             loader as IHostLoader,
-            args.driver.createCreateNewRequest(documentId));
+            args.driver.createCreateNewRequest(args.documentId));
         args.opProcessingController.addDeltaManagers((container1 as any).deltaManager);
+        url = await container1.getAbsoluteUrl("");
         const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
+    });
+
+    afterEach(async () => {
+        args.reset();
     });
 
     it("resends op", async function() {
@@ -95,7 +96,6 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         // load container with pending ops, which should resend the op not sent by previous container
         const container2 = await loader.resolve({ url }, pendingOps);
-        args.opProcessingController.addDeltaManagers(container2.deltaManager as any);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
         assert.strictEqual(await map1.wait(testKey), testValue);
@@ -108,16 +108,14 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         });
 
         map1.set(testKey, testValue);
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         // load with pending ops, which it should not resend because they were already sent successfully
         const container2 = await loader.resolve({ url }, pendingOps);
-        args.opProcessingController.addDeltaManagers(container2.deltaManager as any);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 
-        await args.opProcessingController.process();
-
+        await args.ensureSynchronized();
         assert.strictEqual(await map1.wait(testKey), testValue);
         assert.strictEqual(await map2.wait(testKey), testValue);
     });
@@ -129,7 +127,6 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         // load container with pending ops, which should resend the ops not sent by previous container
         const container2 = await loader.resolve({ url }, pendingOps);
-        args.opProcessingController.addDeltaManagers(container2.deltaManager as any);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
         await Promise.all([...Array(lots).keys()].map(
@@ -145,14 +142,17 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         // send a bunch from first container that should not be overwritten
         [...Array(lots).keys()].map((i) => map1.set(i.toString(), testValue));
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         // load container with pending ops, which should not resend the ops sent by previous container
         const container2 = await loader.resolve({ url }, pendingOps);
-        args.opProcessingController.addDeltaManagers(container2.deltaManager as any);
+        args.opProcessingController.addDeltaManagers(container2.deltaManager);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-        await args.opProcessingController.process();
+        if (!(container2 as any).connected) {
+            await new Promise((res) => container2.on("connected", res));
+        }
+        await args.ensureSynchronized();
         await Promise.all([...Array(lots).keys()].map(
             async (i) => assert.strictEqual(await map1.wait(i.toString()), testValue)));
         await Promise.all([...Array(lots).keys()].map(
@@ -168,7 +168,6 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         // load container with pending ops, which should resend the ops not sent by previous container
         const container2 = await loader.resolve({ url }, pendingOps);
-        args.opProcessingController.addDeltaManagers(container2.deltaManager as any);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
         await Promise.all([...Array(lots).keys()].map(
@@ -189,10 +188,9 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         // load container with pending ops, which should not resend the ops sent by previous container
         const container2 = await loader.resolve({ url }, pendingOps);
-        args.opProcessingController.addDeltaManagers(container2.deltaManager as any);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
         await Promise.all([...Array(lots).keys()].map(
             async (i) => assert.strictEqual(await map1.wait(i.toString()), testValue)));
         await Promise.all([...Array(lots).keys()].map(
@@ -208,7 +206,6 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         // load container with pending ops, which should resend the ops not sent by previous container
         const container2 = await loader.resolve({ url }, pendingOps);
-        args.opProcessingController.addDeltaManagers(container2.deltaManager as any);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
         assert.strictEqual(await map1.wait(testKey), bigString);
@@ -229,10 +226,9 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         // load container with pending ops, which should resend the ops not sent by previous container
         const container2 = await loader.resolve({ url }, pendingOps);
-        args.opProcessingController.addDeltaManagers(container2.deltaManager as any);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
         assert.strictEqual(await map1.wait(testKey), testValue);
         assert.strictEqual(await map2.wait(testKey), testValue);
         assert.strictEqual(await map1.wait(testKey2), testValue);
@@ -241,21 +237,22 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
     it("pending map clear resend", async function() {
         [...Array(lots).keys()].map((i) => map1.set(i.toString(), testValue));
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         const pendingOps = await getPendingOps(args, false, (c, d, map) => {
             map.clear();
         });
 
         const container2 = await loader.resolve({ url }, pendingOps);
-        args.opProcessingController.addDeltaManagers(container2.deltaManager as any);
+        args.opProcessingController.addDeltaManagers(container2.deltaManager);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-        await args.opProcessingController.process();
-        await Promise.all([...Array(lots).keys()].map(
-            async (i) => assert.strictEqual(await map1.get(i.toString()), undefined)));
-        await Promise.all([...Array(lots).keys()].map(
-            async (i) => assert.strictEqual(await map2.get(i.toString()), undefined)));
+        if (!(container2 as any).connected) {
+            await new Promise((res) => container2.on("connected", res));
+        }
+        await args.ensureSynchronized();
+        [...Array(lots).keys()].map(async (i) => assert.strictEqual(map1.get(i.toString()), undefined));
+        [...Array(lots).keys()].map(async (i) => assert.strictEqual(map2.get(i.toString()), undefined));
     });
 
     it("successful map clear no resend", async function() {
@@ -264,13 +261,15 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         });
 
         [...Array(lots).keys()].map((i) => map1.set(i.toString(), testValue));
-        await args.opProcessingController.process();
+        await args.ensureSynchronized();
 
         const container2 = await loader.resolve({ url }, pendingOps);
-        args.opProcessingController.addDeltaManagers(container2.deltaManager as any);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-        await args.opProcessingController.process();
+        if (!(container2 as any).connected) {
+            await new Promise((res) => container2.on("connected", res));
+        }
+        await args.ensureSynchronized();
         await Promise.all([...Array(lots).keys()].map(
             async (i) => assert.strictEqual(await map1.get(i.toString()), testValue)));
         await Promise.all([...Array(lots).keys()].map(
@@ -296,7 +295,9 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         });
 
         const container2 = await loader.resolve({ url }, pendingOps);
-        await new Promise((res) => container2.on("connected", res));
+        if (!(container2 as any).connected) {
+            await new Promise((res) => container2.on("connected", res));
+        }
 
         // get new datastore from first container
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container1, id);
@@ -331,6 +332,6 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     });
 };
 
-describe("pending ops", () => {
+describe("stashed ops", () => {
     generateNonCompatTest(tests);
 });

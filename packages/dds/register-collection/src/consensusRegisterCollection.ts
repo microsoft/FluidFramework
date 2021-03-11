@@ -350,6 +350,7 @@ export class ConsensusRegisterCollection<T>
     }
 
     protected applyStashedOpCore() {
-        throw new Error("not implemented");
+        // empty implementation
+        return () => { };
     }
 }
