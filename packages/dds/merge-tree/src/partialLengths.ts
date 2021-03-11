@@ -657,7 +657,8 @@ export class PartialSequenceLengths {
             const flatCount = this.verifyPartialLengths(this.partialLengths, false);
 
             // The number of partial lengths on the client view and flat view should be the same
-            assert(flatCount === cliCount, "sc:0047" /* Mismatch between number of partial lengths on client and flat views! */);
+            assert(flatCount === cliCount,
+                "sc:0047" /* Mismatch between number of partial lengths on client and flat views! */);
         } else {
             // If we don't have a client view, we shouldn't have the flat view either
             assert(!this.partialLengths, "sc:0048" /* Flat view exists but client view does not! */);
