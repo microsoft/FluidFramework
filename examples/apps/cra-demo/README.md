@@ -48,7 +48,7 @@ Lastly, open up the `App.tsx` file, as that will be the only file we need to edi
 
 `Fluid` gives you access to methods to bootstrap a new [Fluid container](https://fluidframework.com/docs/glossary/#container) and attach [DataObjects](https://fluidframework.com/docs/glossary/#dataobject) to it.
 
-`KeyValueDataObject` is a simple DataObject that we will attach to this app's container, and will give us an API to set and retrieve key value pairs from Fluid.
+`KeyValueDataObject` is the DataObject that we will attach to this app's container, and will give us an API to set and retrieve key value pairs from Fluid.
 
 ```js
 // App.tsx
