@@ -66,20 +66,10 @@ export function compareWithReferenceSnapshot(
     const packageVersionRegex = /\\"packageversion\\":\\"[^"]+\\"/gi;
     const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X\\\"";
 
-    // The summaryFormatVersion and snapshotFormatVersion could vary. Replace all with -1 like packageVersion.
-    const snapshotFormatVersionRegex = /\\"snapshotformatversion\\":(\\"[^"]+\\"|\d+)/gi;
-    const snapshotFormatVersionPlaceholder = "\\\"snapshotFormatVersion\\\":-1";
-
     const normalizedSnapshot = JSON.parse(
-        JSON.stringify(snapshot, undefined, 2)
-            .replace(packageVersionRegex, packageVersionPlaceholder)
-            .replace(snapshotFormatVersionRegex, snapshotFormatVersionPlaceholder),
-    );
+        JSON.stringify(snapshot, undefined, 2).replace(packageVersionRegex, packageVersionPlaceholder));
     const normalizedReferenceSnapshot = JSON.parse(
-        JSON.stringify(referenceSnapshot, undefined, 2)
-            .replace(packageVersionRegex, packageVersionPlaceholder)
-            .replace(snapshotFormatVersionRegex, snapshotFormatVersionPlaceholder),
-    );
+        JSON.stringify(referenceSnapshot, undefined, 2).replace(packageVersionRegex, packageVersionPlaceholder));
 
     // Put the assert in a try catch block, so that we can report errors, if any.
     try {
