@@ -33,7 +33,7 @@ export interface ContainerCreateConfig extends ContainerConfig {
      * }
      * ```
      *
-     * To get these DataObjects uses `container.getDataObject` passing in one of the ids.
+     * To get these DataObjects, call `container.getDataObject` passing in one of the ids.
      */
     initialDataObjects?: IdToDataObjectCollection;
 }
