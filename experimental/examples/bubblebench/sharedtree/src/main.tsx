@@ -7,15 +7,15 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+import { AppView, IArrayish, IClient } from "@fluid-experimental/bubblebench-common";
 import { SharedTree } from "@fluid-experimental/tree";
-
 import React from "react";
 import ReactDOM from "react-dom";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IArrayish, IClient, AppView } from "@fluid-experimental/bubblebench-common";
-import { AppState } from "./state";
 import { TreeObjectProxy } from "./proxy";
+import { AppState } from "./state";
 
 interface IApp { clients: IArrayish<IClient>; }
 
@@ -81,7 +81,8 @@ export class Bubblebench extends DataObject implements IFluidHTMLView {
  * The DataObjectFactory declares the Fluid object and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
-export const BubblebenchInstantiationFactory = new DataObjectFactory(
+// eslint-disable-next-line @typescript-eslint/ban-types
+export const BubblebenchInstantiationFactory = new DataObjectFactory<Bubblebench, object, undefined, IEvent>(
     Bubblebench.Name,
     Bubblebench,
     [SharedTree.getFactory()],

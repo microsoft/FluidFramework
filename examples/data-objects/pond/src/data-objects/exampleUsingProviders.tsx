@@ -4,12 +4,11 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-
 import React from "react";
 import ReactDOM from "react-dom";
-
 import { IFluidUserInformation } from "../interfaces";
 
 /**
@@ -49,11 +48,12 @@ export class ExampleUsingProviders
 
     public static getFactory() { return ExampleUsingProviders.factory; }
 
-    private static readonly factory = new DataObjectFactory(
-        ExampleUsingProviders.ComponentName,
-        ExampleUsingProviders,
-        [SharedMap.getFactory()],
-        { IFluidUserInformation });
+    private static readonly factory =
+        new DataObjectFactory<ExampleUsingProviders, IFluidUserInformation, undefined, IEvent>(
+            ExampleUsingProviders.ComponentName,
+            ExampleUsingProviders,
+            [SharedMap.getFactory()],
+            { IFluidUserInformation });
 }
 
 interface ExampleUsingProvidersViewProps {
