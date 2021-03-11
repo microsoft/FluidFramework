@@ -18,58 +18,45 @@ const getContainerId = (): { containerId: string; isNew: boolean } => {
     return { containerId, isNew };
 };
 
-type KVData = { [key: string]: any };
-type SetKVPair = (key: string, value: any) => void;
+function App() {
 
-// useKVPair is an example of a custom hook that returns Fluid backed state and a method to modify that state
-function useKVPair(): [KVData, SetKVPair | undefined] {
     const [dataObject, setDataObject] = React.useState<KeyValueDataObject>();
     const [data, setData] = React.useState<{ [key: string]: any }>({});
 
     React.useEffect(() => {
-        const { containerId, isNew } = getContainerId();
+        if (!dataObject) {
+            const { containerId, isNew } = getContainerId();
 
-        const load = async () => {
-            const service = new TinyliciousService();
-            const fluidContainer = isNew
-                ? await Fluid.createContainer(service, containerId, [KeyValueDataObject])
-                : await Fluid.getContainer(service, containerId, [KeyValueDataObject]);
+            const load = async () => {
+                const service = new TinyliciousService();
+                const fluidContainer = isNew
+                    ? await Fluid.createContainer(service, containerId, [KeyValueDataObject])
+                    : await Fluid.getContainer(service, containerId, [KeyValueDataObject]);
 
-            const keyValueDataObject: KeyValueDataObject = isNew
-                ? await fluidContainer.createDataObject(KeyValueDataObject, 'kvpairId')
-                : await fluidContainer.getDataObject('kvpairId');
+                const keyValueDataObject: KeyValueDataObject = isNew
+                    ? await fluidContainer.createDataObject(KeyValueDataObject, 'kvpairId')
+                    : await fluidContainer.getDataObject('kvpairId');
 
-            setDataObject(keyValueDataObject);
-        }
+                setDataObject(keyValueDataObject);
+            }
 
-        load();
-
-    }, [])
-
-    React.useEffect(() => {
-        if (dataObject) {
+            load();
+        } else {
             const updateData = () => setData(dataObject.query());
+            updateData();
             dataObject.on("changed", updateData);
             return () => { dataObject.off("change", updateData) }
         }
     }, [dataObject]);
 
-    const setPair = dataObject?.set;
-
-    return [data, setPair];
-}
-
-function App() {
-    const [data, setPair] = useKVPair();
-
-    if (!data || !setPair) return <div />;
+    if (!dataObject) return <div />;
 
     return (
         <div className="App">
-            <button onClick={() => setPair("time", Date.now().toString())}>
+            <button onClick={() => dataObject.set("time", Date.now().toString())}>
                 click
             </button>
-            <span>{data.time}</span>
+            <span>{data["time"]}</span>
         </div>
     )
 }
