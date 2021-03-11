@@ -1,9 +1,9 @@
 # @fluid-example/cra-demo
-This is an experimental learning tutorial demonstrating a completed integration between [`create-react-app`](https://create-react-app.dev/) and Fluid. Below you will find instructions to how to start from `create-react-app` and get to this completed state.
+This is an experimental learning tutorial demonstrating a completed integration between [`create-react-app`](https://create-react-app.dev/) and Fluid.
 
 Concepts you will learn:
 1. How to integrate Fluid into a React application
-2. How run and connect your application to a local Fluid service
+2. How to run and connect your application to a local Fluid service (Tinylicious)
 3. How to create and get Fluid Containers and DataObjects
 4. How to use a single KeyValuePair (KVPair) DataObject to sync data between connected clients
 
@@ -16,10 +16,10 @@ In this demo you will be doing the following:
 
 1. Install Create-React-App with Typescript
 2. Install Fluid Package Dependencies
-3. Import KVpair and Fluid Static
+3. Import Dependencies
 4. Initialize React component
 5. Update the view
-6. Run the app!
+6. Fire up the servers
 
 ## 1. Use Create-React-App with Typescript
 
@@ -34,6 +34,8 @@ cd my-app-name
 npx create-react-app my-app-name --template typescript
 cd my-app-name
 ```
+
+\* Don't start the React application yet. We'll do that at the end.
 
 ## 2. Install Fluid Package Dependencies
 
@@ -57,7 +59,7 @@ yarn add @fluid-experimental/fluid-static @fluid-experimental/data-objects @flui
 
 Lastly, open up the `App.tsx` file, as that will be the only file we need to edit.
 
-## 3. Import Fluid and KeyValueDataObject
+## 3. Import Fluid Dependencies
 
 `Fluid` provides methods for creating a [Fluid container](https://fluidframework.com/docs/glossary/#container) and attaching [DataObjects](https://fluidframework.com/docs/glossary/#dataobject) to it.
 
@@ -68,7 +70,6 @@ Lastly, open up the `App.tsx` file, as that will be the only file we need to edi
 import { Fluid } from "@fluid-experimental/fluid-static";
 import { KeyValueDataObject } from "@fluid-experimental/data-objects";
 import { TinyliciousService } from "@fluid-experimental/get-container";
-
 ```
 
 ### 3.a Create unique container IDs
@@ -120,7 +121,7 @@ Our `useEffect` will end up firing twice. The first time, on component load, it 
 
 > `TinyliciousService` defines the schema for connecting to a locally deployed [tinylicious](https://www.npmjs.com/package/tinylicious) Fluid service. You'll use different provided services when connecting to production Fluid services.
 
-The second time `useEffect` fires, the `dataObject` will be set. Now that our KeyValuePairDataObject is loaded we can set up a listener to call `updateData` each time the `changed` event is fired. `updateData` will sync the view state with the necessary Fluid data. For this example, we are updated all of the Fluid data on any change.
+The second time `useEffect` fires, the `dataObject` will be set. Now that our `KeyValuePairDataObject` is loaded we can set up a listener to call `updateData` each time the `changed` event is fired. `updateData` will sync the view state with the necessary Fluid data. For this example, we are updated all of the Fluid data on any change.
 
 ```jsx
 function App() {
@@ -201,6 +202,8 @@ function App() {
         }
     }, [dataObject]);
 
+    // update the view below
+
     if (!dataObject) return <div />;
 
     return (
@@ -208,13 +211,13 @@ function App() {
             <button onClick={() => dataObject.set("time", Date.now().toString())}>
                 click
             </button>
-            <span>{data.time}</span>
+            <span>{data["time"]}</span>
         </div>
     )
 }
 ```
 
-## 7. A working application
+## 6. Fire up the servers
 
 To see this application working we first need to fire up a local Fluid server called Tinylicious
 

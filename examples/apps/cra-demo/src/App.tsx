@@ -56,7 +56,7 @@ function App() {
             <button onClick={() => dataObject.set("time", Date.now().toString())}>
                 click
             </button>
-            <span>{data.time}</span>
+            <span>{data["time"]}</span>
         </div>
     )
 }
