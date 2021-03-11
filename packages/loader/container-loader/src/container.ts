@@ -770,6 +770,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // Propagate current connection state through the system.
             this.propagateConnectionState();
             if (!this.closed) {
+                this._deltaManager.inbound.resume();
+                this._deltaManager.outbound.resume();
+                this._deltaManager.inboundSignal.resume();
                 this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
             }
         } finally {
@@ -1177,10 +1180,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Propagate current connection state through the system.
         this.propagateConnectionState();
 
-        if (!pause) {
-            this.resume();
-        }
-
         // Internal context is fully loaded at this point
         this.loaded = true;
 
@@ -1191,6 +1190,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._deltaManager.inbound.resume();
             this._deltaManager.outbound.resume();
             this._deltaManager.inboundSignal.resume();
+            if (!pause) {
+                this.resume();
+            }
         }
 
         return {
