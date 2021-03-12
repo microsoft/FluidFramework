@@ -110,7 +110,7 @@ describe("Shared Map with Interception", () => {
                 sharedMapWithInterception.set("color", "green");
             } catch (error) {
                 assert.strictEqual(error.message,
-                    "set called recursively from the interception callback",
+                    "sc:00a3",
                     "We should have caught an assert in replaceText because it detects an infinite recursion");
                 asserted = true;
             }
