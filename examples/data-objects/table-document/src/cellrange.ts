@@ -47,7 +47,7 @@ export class CellRange {
         private readonly resolve: (localRef: LocalReference) => { row: number; col: number },
     ) {
         // Ensure CellInterval was not created with a null/undefined interval.
-        assert(!!interval);
+        assert(!!interval, "CellInterval created with bad interval!");
     }
 
     public getRange() {

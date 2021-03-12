@@ -5,6 +5,7 @@
 
 import { TaskManager } from "@fluid-experimental/task-manager";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
@@ -130,7 +131,7 @@ class CounterReactView extends React.Component<CounterProps, CounterState> {
 
 // ----- FACTORY SETUP -----
 
-export const ClickerInstantiationFactory = new DataObjectFactory(
+export const ClickerInstantiationFactory = new DataObjectFactory<Clicker, undefined, undefined, IEvent>(
     ClickerName,
     Clicker,
     [SharedCounter.getFactory(), TaskManager.getFactory()],

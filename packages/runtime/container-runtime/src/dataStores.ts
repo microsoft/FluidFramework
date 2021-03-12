@@ -146,7 +146,7 @@ export class DataStores implements IDisposable {
         const attachMessage = message.contents as InboundAttachMessage;
         // The local object has already been attached
         if (local) {
-            assert(this.pendingAttach.has(attachMessage.id));
+            assert(this.pendingAttach.has(attachMessage.id), "Local object does not have matching attach message id");
             this.contexts.get(attachMessage.id)?.emit("attached");
             this.pendingAttach.delete(attachMessage.id);
             return;
@@ -383,7 +383,8 @@ export class DataStores implements IDisposable {
         await Promise.all(Array.from(this.contexts)
             .filter(([_, context]) => {
                 // Summarizer works only with clients with no local changes!
-                assert(context.attachState !== AttachState.Attaching);
+                assert(context.attachState !== AttachState.Attaching,
+                    "Summarizer cannot work if client has local changes");
                 return context.attachState === AttachState.Attached;
             }).map(async ([contextId, context]) => {
                 const contextSummary = await context.summarize(fullTree, trackState);
