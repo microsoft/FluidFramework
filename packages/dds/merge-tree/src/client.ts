@@ -334,7 +334,7 @@ export class Client {
      * @returns True if the remove was applied. False if it could not be.
      */
     private applyRemoveRangeOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
-        assert(opArgs.op.type === ops.MergeTreeDeltaType.REMOVE, "sc:001a" /* Unexpected op type on range remove! */);
+        assert(opArgs.op.type === ops.MergeTreeDeltaType.REMOVE, "s_0q" /* Unexpected op type on range remove! */);
         const op = opArgs.op;
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);
@@ -373,7 +373,7 @@ export class Client {
      */
     private applyAnnotateRangeOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
         assert(opArgs.op.type === ops.MergeTreeDeltaType.ANNOTATE,
-            "sc:001b" /* Unexpected op type on range annotate! */);
+            "s_0r" /* Unexpected op type on range annotate! */);
         const op = opArgs.op;
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);
@@ -408,7 +408,7 @@ export class Client {
      * @returns True if the insert was applied. False if it could not be.
      */
     private applyInsertOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
-        assert(opArgs.op.type === ops.MergeTreeDeltaType.INSERT, "sc:001c" /* Unexpected op type on range insert! */);
+        assert(opArgs.op.type === ops.MergeTreeDeltaType.INSERT, "s_0s" /* Unexpected op type on range insert! */);
         const op = opArgs.op;
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);
@@ -478,9 +478,9 @@ export class Client {
             }
         } else {
             assert(this.mergeTree.getCollabWindow().currentSeq < clientArgs.sequenceNumber,
-                "sc:001d" /* Incoming remote op sequence# <= local collabWindow's currentSequence# */);
+                "s_0t" /* Incoming remote op sequence# <= local collabWindow's currentSequence# */);
             assert(this.mergeTree.getCollabWindow().minSeq <= opArgs.sequencedMessage.minimumSequenceNumber,
-                "sc:001e" /* Incoming remote op minSequence# < local collabWindow's minSequence# */);
+                "s_0u" /* Incoming remote op minSequence# < local collabWindow's minSequence# */);
             if (traceStart) {
                 this.accumTime += elapsedMicroseconds(traceStart);
                 this.accumOps++;
@@ -685,7 +685,7 @@ export class Client {
      * @param localSeq - The localSeq to find the position of the segment at
      */
     public findReconnectionPostition(segment: ISegment, localSeq: number) {
-        assert(localSeq <= this.mergeTree.collabWindow.localSeq, "sc:001f" /* localSeq greater than collab window */);
+        assert(localSeq <= this.mergeTree.collabWindow.localSeq, "s_0v" /* localSeq greater than collab window */);
         let segmentPosition = 0;
         /*
             Walk the segments up to the current segment, and calculate it's
@@ -721,10 +721,10 @@ export class Client {
     private resetPendingDeltaToOps(
         resetOp: ops.IMergeTreeDeltaOp,
         segmentGroup: SegmentGroup): ops.IMergeTreeDeltaOp[] {
-        assert(!!segmentGroup, "sc:0020" /* Segment group undefined */);
+        assert(!!segmentGroup, "s_0w" /* Segment group undefined */);
         const NACKedSegmentGroup = this.mergeTree.pendingSegments?.dequeue();
         assert(segmentGroup === NACKedSegmentGroup,
-            "sc:0021" /* Segment group not at head of merge tree pending queue */);
+            "s_0x" /* Segment group not at head of merge tree pending queue */);
 
         const opList: ops.IMergeTreeDeltaOp[] = [];
         // We need to sort the segments by ordinal, as the segments are not sorted in the segment group.
@@ -735,13 +735,13 @@ export class Client {
         for (const segment of segmentGroup.segments.sort((a, b) => a.ordinal < b.ordinal ? -1 : 1)) {
             const segmentSegGroup = segment.segmentGroups.dequeue();
             assert(segmentGroup === segmentSegGroup,
-                "sc:0022" /* Segment group not at head of segment pending queue */);
+                "s_0y" /* Segment group not at head of segment pending queue */);
             const segmentPosition = this.findReconnectionPostition(segment, segmentGroup.localSeq);
             let newOp: ops.IMergeTreeDeltaOp | undefined;
             switch (resetOp.type) {
                 case ops.MergeTreeDeltaType.ANNOTATE:
                     assert(segment.propertyManager?.hasPendingProperties() === true,
-                        "sc:0023" /* Segment has no pending properties */);
+                        "s_0z" /* Segment has no pending properties */);
                     newOp = OpBuilder.createAnnotateRangeOp(
                         segmentPosition,
                         segmentPosition + segment.cachedLength,
@@ -751,7 +751,7 @@ export class Client {
 
                 case ops.MergeTreeDeltaType.INSERT:
                     assert(segment.seq === UnassignedSequenceNumber,
-                        "sc:0024" /* Segment already has assigned sequence number */);
+                        "s_10" /* Segment already has assigned sequence number */);
                     newOp = OpBuilder.createInsertSegmentOp(
                         segmentPosition,
                         segment);
@@ -833,9 +833,9 @@ export class Client {
         const collabWindow = this.mergeTree.getCollabWindow();
         // Equal is fine here due to SharedSegmentSequence<>.snapshotContent() potentially updating with same #
         assert(collabWindow.currentSeq <= seq,
-            "sc:0025" /* Incoming op sequence# < local collabWindow's currentSequence# */);
+            "s_11" /* Incoming op sequence# < local collabWindow's currentSequence# */);
         collabWindow.currentSeq = seq;
-        assert(min <= seq, "sc:0026" /* Incoming op sequence# < minSequence# */);
+        assert(min <= seq, "s_12" /* Incoming op sequence# < minSequence# */);
         this.updateMinSeq(min);
     }
 
@@ -875,7 +875,7 @@ export class Client {
             if (resetOp.type === ops.MergeTreeDeltaType.GROUP) {
                 if (Array.isArray(segmentGroup)) {
                     assert(resetOp.ops.length === segmentGroup.length,
-                        "sc:0027" /* Number of ops in 'resetOp' must match the number of segment groups provided. */);
+                        "s_13" /* Number of ops in 'resetOp' must match the number of segment groups provided. */);
 
                     for (let i = 0; i < resetOp.ops.length; i++) {
                         opList.push(
@@ -885,14 +885,14 @@ export class Client {
                     // A group op containing a single op will pass a direct reference to 'segmentGroup'
                     // rather than an array of segment groups.  (See 'peekPendingSegmentGroups()')
                     assert(resetOp.ops.length === 1,
-                        "sc:0028" /* Number of ops in 'resetOp' must match the number of segment groups provided. */);
+                        "s_14" /* Number of ops in 'resetOp' must match the number of segment groups provided. */);
                     opList.push(...this.resetPendingDeltaToOps(resetOp.ops[0], segmentGroup));
                 }
             } else {
                 assert((resetOp.type as any) !== ops.MergeTreeDeltaType.GROUP,
-                    "sc:0029" /* Reset op has 'group' delta type! */);
+                    "s_15" /* Reset op has 'group' delta type! */);
                 assert(!Array.isArray(segmentGroup),
-                    "sc:002a" /* segmentGroup is array rather than singleton! */);
+                    "s_16" /* segmentGroup is array rather than singleton! */);
                 opList.push(
                     ...this.resetPendingDeltaToOps(resetOp, segmentGroup));
             }
@@ -930,14 +930,14 @@ export class Client {
         // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
         // Not sure why - need to catch it sooner
         assert(this.getCollabWindow().minSeq === minSeq,
-            "sc:002b" /* minSeq mismatch between collab window and delta manager! */);
+            "s_17" /* minSeq mismatch between collab window and delta manager! */);
 
         // TODO: Remove options flag once new snapshot format is adopted as default.
         //       (See https://github.com/microsoft/FluidFramework/issues/84)
         if (this.mergeTree.options?.newMergeTreeSnapshotFormat === true) {
             assert(
                 catchUpMsgs === undefined || catchUpMsgs.length === 0,
-                "sc:002c" /* New format should not emit catchup ops */);
+                "s_18" /* New format should not emit catchup ops */);
             const snap = new SnapshotV1(this.mergeTree, this.logger);
             snap.extractSync();
             return snap.emit(serializer, handle);

@@ -229,7 +229,7 @@ export class DeltaManager
      */
     public get hasCheckpointSequenceNumber() {
         // Valid to be called only if we have active connection.
-        assert(this.connection !== undefined, "sc:00c0" /* Missing active connection */);
+        assert(this.connection !== undefined, "s_5c" /* Missing active connection */);
         return this._hasCheckpointSequenceNumber;
     }
 
@@ -368,7 +368,7 @@ export class DeltaManager
 
         // ensure we did not lose that policy in the process of wrapping
         assert(storageService.policies?.minBlobSize === this.storageService.policies?.minBlobSize,
-            "sc:00c1" /* lost minBlobSize policy */);
+            "s_5d" /* lost minBlobSize policy */);
 
         return this.storageService;
     }
@@ -380,7 +380,7 @@ export class DeltaManager
     public setAutomaticReconnect(reconnect: boolean): void {
         assert(
             this._reconnectMode !== ReconnectMode.Never,
-            "sc:00c2" /* Cannot toggle automatic reconnect if reconnect is set to Never. */);
+            "s_5e" /* Cannot toggle automatic reconnect if reconnect is set to Never. */);
         this._reconnectMode = reconnect ? ReconnectMode.Enabled : ReconnectMode.Disabled;
     }
 
@@ -511,10 +511,10 @@ export class DeltaManager
         this.lastObservedSeqNumber = sequenceNumber;
 
         // We will use same check in other places to make sure all the seq number above are set properly.
-        assert(this.handler === undefined, "sc:00c3" /* DeltaManager already has attached op handler! */);
+        assert(this.handler === undefined, "s_5f" /* DeltaManager already has attached op handler! */);
         this.handler = handler;
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        assert(!!(this.handler as any), "sc:00c4" /* Newly set op handler is null/undefined! */);
+        assert(!!(this.handler as any), "s_5g" /* Newly set op handler is null/undefined! */);
 
         this._inbound.resume();
         this._inboundSignal.resume();
@@ -733,7 +733,7 @@ export class DeltaManager
         // reset clientSequenceNumber if we are using new clientId.
         // we keep info about old connection as long as possible to be able to account for all non-acked ops
         // that we pick up on next connection.
-        assert(!!this.connection, "sc:00c5" /* Lost old connection! */);
+        assert(!!this.connection, "s_5h" /* Lost old connection! */);
         if (this.lastSubmittedClientId !== this.connection?.clientId) {
             this.lastSubmittedClientId = this.connection?.clientId;
             this.clientSequenceNumber = 0;
@@ -1113,7 +1113,7 @@ export class DeltaManager
      */
     private setupNewSuccessfulConnection(connection: IDocumentDeltaConnection, requestedMode: ConnectionMode) {
         // Old connection should have been cleaned up before establishing a new one
-        assert(this.connection === undefined, "sc:00c6" /* old connection exists on new connection setup */);
+        assert(this.connection === undefined, "s_5i" /* old connection exists on new connection setup */);
         this.connection = connection;
 
         // Does information in scopes & mode matches?
@@ -1121,8 +1121,8 @@ export class DeltaManager
         // But if we ask read, server can still give us write.
         const readonly = !connection.claims.scopes.includes(ScopeType.DocWrite);
         assert(requestedMode === "read" || readonly === (this.connectionMode === "read"),
-            "sc:00c7" /* claims/connectionMode mismatch */);
-        assert(!readonly || this.connectionMode === "read", "sc:00c8" /* readonly perf with write connection */);
+            "s_5j" /* claims/connectionMode mismatch */);
+        assert(!readonly || this.connectionMode === "read", "s_5k" /* readonly perf with write connection */);
         this.set_readonlyPermissions(readonly);
 
         this.refreshDelayInfo(this.deltaStreamDelayId);
@@ -1138,7 +1138,7 @@ export class DeltaManager
         // but it's safe to assume (until better design is put into place) that batches should not exist
         // across multiple connections. Right now we assume runtime will not submit any ops in disconnected
         // state. As requirements change, so should these checks.
-        assert(this.messageBuffer.length === 0, "sc:00c9" /* messageBuffer is not empty on new connection */);
+        assert(this.messageBuffer.length === 0, "s_5l" /* messageBuffer is not empty on new connection */);
 
         this._outbound.resume();
 
@@ -1226,7 +1226,7 @@ export class DeltaManager
         // but it's safe to assume (until better design is put into place) that batches should not exist
         // across multiple connections. Right now we assume runtime will not submit any ops in disconnected
         // state. As requirements change, so should these checks.
-        assert(this.messageBuffer.length === 0, "sc:00ca" /* messageBuffer is not empty on disconnect */);
+        assert(this.messageBuffer.length === 0, "s_5m" /* messageBuffer is not empty on disconnect */);
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this._outbound.pause();
@@ -1252,7 +1252,7 @@ export class DeltaManager
         // We quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
         // If we're already disconnected/disconnecting it's not appropriate to call this again.
-        assert(this.connection !== undefined, "sc:00cb" /* Missing connection for reconnect */);
+        assert(this.connection !== undefined, "s_5n" /* Missing connection for reconnect */);
 
         this.disconnectFromDeltaStream(error.message);
 
@@ -1329,7 +1329,7 @@ export class DeltaManager
 
         const n = this.previouslyProcessedMessage?.sequenceNumber;
         assert(n === undefined || n === this.lastQueuedSequenceNumber,
-            "sc:00cc" /* Unexpected value for previously processed message's sequence number */);
+            "s_5o" /* Unexpected value for previously processed message's sequence number */);
 
         for (const message of messages) {
             // Check that the messages are arriving in the expected order
@@ -1394,7 +1394,7 @@ export class DeltaManager
         assert(
             message.clientId !== undefined
             || isSystemMessage(message),
-            "sc:00cd" /* non-system message have to have clientId */,
+            "s_5p" /* non-system message have to have clientId */,
         );
 
         // if we have connection, and message is local, then we better treat is as local!
@@ -1402,15 +1402,15 @@ export class DeltaManager
             this.connection === undefined
             || this.connection.clientId !== message.clientId
             || this.lastSubmittedClientId === message.clientId,
-            "sc:00ce" /* Not accounting local messages correctly */,
+            "s_5q" /* Not accounting local messages correctly */,
         );
 
         if (this.lastSubmittedClientId !== undefined && this.lastSubmittedClientId === message.clientId) {
             const clientSequenceNumber = message.clientSequenceNumber;
 
-            assert(this.clientSequenceNumberObserved < clientSequenceNumber, "sc:00cf" /* client seq# not growing */);
+            assert(this.clientSequenceNumberObserved < clientSequenceNumber, "s_5r" /* client seq# not growing */);
             assert(clientSequenceNumber <= this.clientSequenceNumber,
-                "sc:00d0" /* Incoming local client seq# > generated by this client */);
+                "s_5s" /* Incoming local client seq# > generated by this client */);
 
             this.clientSequenceNumberObserved = clientSequenceNumber;
         }
@@ -1482,7 +1482,7 @@ export class DeltaManager
             return;
         }
 
-        assert(fromArg === this.lastQueuedSequenceNumber, "sc:00d1" /* from arg */);
+        assert(fromArg === this.lastQueuedSequenceNumber, "s_5t" /* from arg */);
         let from = fromArg;
 
         const n = this.previouslyProcessedMessage?.sequenceNumber;
@@ -1492,8 +1492,8 @@ export class DeltaManager
             // Knowing about this mechanism, we could ask for op we already observed to increase validation.
             // This is especially useful when coming out of offline mode or loading from
             // very old cached (by client / driver) snapshot.
-            assert(n === fromArg, "sc:00d2" /* previouslyProcessedMessage */);
-            assert(from > 0, "sc:00d3" /* not positive */);
+            assert(n === fromArg, "s_5u" /* previouslyProcessedMessage */);
+            assert(from > 0, "s_5v" /* not positive */);
             from--;
         }
 

@@ -65,7 +65,7 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
         }
         this.lastOps = this.messages.slice(readFrom, readTo);
         assert(this.lastOps[0].sequenceNumber === readFrom + 1,
-            "sc:0078" /* Retrieved ops' first sequence number has unexpected value! */);
+            "s_3c" /* Retrieved ops' first sequence number has unexpected value! */);
         return this.lastOps;
     }
 }

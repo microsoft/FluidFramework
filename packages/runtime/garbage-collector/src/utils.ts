@@ -29,7 +29,7 @@ export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionD
 export function getChildNodesUsedRoutes(usedRoutes: string[]) {
     const childUsedRoutesMap: Map<string, string[]> = new Map();
     for (const route of usedRoutes) {
-        assert(route.startsWith("/"), "sc:0158" /* Used route should always be an absolute route */);
+        assert(route.startsWith("/"), "s_9k" /* Used route should always be an absolute route */);
         const childId = route.split("/")[1];
         const childUsedRoute = route.slice(childId.length + 1);
 
@@ -51,7 +51,7 @@ export function getChildNodesUsedRoutes(usedRoutes: string[]) {
 export function getChildNodesGCData(gcData: IGarbageCollectionData) {
     const childGCDataMap: Map<string, IGarbageCollectionData> = new Map();
     for (const [id, outboundRoutes] of Object.entries(gcData.gcNodes)) {
-        assert(id.startsWith("/"), "sc:0159" /* id should always be an absolute route */);
+        assert(id.startsWith("/"), "s_9l" /* id should always be an absolute route */);
         const childId = id.split("/")[1];
         let childGCNodeId = id.slice(childId.length + 1);
         // GC node id always begins with "/". Handle the special case where the id in parent's GC nodes is of the

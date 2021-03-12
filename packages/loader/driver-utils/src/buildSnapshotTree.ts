@@ -49,7 +49,7 @@ function flattenCore(
             };
             entries.push(entry);
         } else {
-            assert(treeEntry.type === TreeEntry.Tree, "sc:00e1" /* Unexpected tree entry type on flatten! */);
+            assert(treeEntry.type === TreeEntry.Tree, "s_69" /* Unexpected tree entry type on flatten! */);
             const t = treeEntry.value;
             const entry: git.ITreeEntry = {
                 mode: FileMode[treeEntry.mode],

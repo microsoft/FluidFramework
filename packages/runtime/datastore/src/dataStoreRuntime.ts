@@ -373,7 +373,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public createChannel(id: string = uuid(), type: string): IChannel {
         this.verifyNotClosed();
 
-        assert(!this.contexts.has(id), "sc:013c" /* createChannel() with existing ID */);
+        assert(!this.contexts.has(id), "s_8s" /* createChannel() with existing ID */);
         this.notBoundedChannelContextSet.add(id);
         const context = new LocalChannelContext(
             id,
@@ -396,7 +396,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.contextsDeferred.set(id, deferred);
         }
 
-        assert(!!context.channel, "sc:013d" /* Channel should be loaded when created!! */);
+        assert(!!context.channel, "s_8t" /* Channel should be loaded when created!! */);
         return context.channel;
     }
 
@@ -407,7 +407,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      */
     public bindChannel(channel: IChannel): void {
         assert(this.notBoundedChannelContextSet.has(channel.id),
-            "sc:013e" /* Channel to be binded should be in not bounded set */);
+            "s_8u" /* Channel to be binded should be in not bounded set */);
         this.notBoundedChannelContextSet.delete(channel.id);
         // If our data store is attached, then attach the channel.
         if (this.isAttached) {
@@ -513,7 +513,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                     // If a non-local operation then go and create the object
                     // Otherwise mark it as officially attached.
                     if (local) {
-                        assert(this.pendingAttach.has(id), "sc:013f" /* Unexpected attach (local) channel OP */);
+                        assert(this.pendingAttach.has(id), "s_8v" /* Unexpected attach (local) channel OP */);
                         this.pendingAttach.delete(id);
                     } else {
                         assert(!this.contexts.has(id), `Unexpected attach channel OP,
@@ -665,7 +665,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         // Verify that the used routes are correct.
         for (const [id] of usedContextRoutes) {
-            assert(this.contexts.has(id), "sc:0140" /* Used route does not belong to any known context */);
+            assert(this.contexts.has(id), "s_8w" /* Used route does not belong to any known context */);
         }
 
         // Update the used routes in each context. Used routes is empty for unused context.
@@ -712,7 +712,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             .filter(([contextId, _]) => {
                 const isAttached = this.isChannelAttached(contextId);
                 // We are not expecting local dds! Summary may not capture local state.
-                assert(isAttached, "sc:0141" /* Not expecting detached channels during summarize */);
+                assert(isAttached, "s_8x" /* Not expecting detached channels during summarize */);
                 // If the object is registered - and we have received the sequenced op creating the object
                 // (i.e. it has a base mapping) - then we go ahead and summarize
                 return isAttached;
@@ -756,7 +756,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                     const contextSummary = context.getAttachSummary();
                     assert(
                         contextSummary.summary.type === SummaryType.Tree,
-                        "sc:0142" /* getAttachSummary should always return a tree */);
+                        "s_8y" /* getAttachSummary should always return a tree */);
                     summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
 
                     // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node
@@ -766,7 +766,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                     // If this channel is not yet loaded, then there should be no changes in the snapshot from which
                     // it was created as it is detached container. So just use the previous snapshot.
                     assert(!!this.dataStoreContext.baseSnapshot,
-                        "sc:0143" /* BaseSnapshot should be there as detached container loaded from snapshot */);
+                        "s_8z" /* BaseSnapshot should be there as detached container loaded from snapshot */);
                     summaryTree = convertSnapshotTreeToSummaryTree(this.dataStoreContext.baseSnapshot.trees[contextId]);
                 }
                 summaryBuilder.addWithStats(contextId, summaryTree);
@@ -812,7 +812,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         channel.handle.attachGraph();
 
-        assert(this.isAttached, "sc:0144" /* Data store should be attached to attach the channel. */);
+        assert(this.isAttached, "s_90" /* Data store should be attached to attach the channel. */);
         // Get the object snapshot only if the data store is Bound and its graph is attached too,
         // because if the graph is attaching, then it would get included in the data store snapshot.
         if (this.bindState === BindState.Bound && this.graphAttachState === AttachState.Attached) {
@@ -862,7 +862,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                     // For Operations, find the right channel and trigger resubmission on it.
                     const envelope = content as IEnvelope;
                     const channelContext = this.contexts.get(envelope.address);
-                    assert(!!channelContext, "sc:0145" /* There should be a channel context for the op */);
+                    assert(!!channelContext, "s_91" /* There should be a channel context for the op */);
                     channelContext.reSubmit(envelope.contents, localOpMetadata);
                     break;
                 }
@@ -891,7 +891,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         };
 
         const channelContext = this.contexts.get(envelope.address);
-        assert(!!channelContext, "sc:0146" /* Channel not found */);
+        assert(!!channelContext, "s_92" /* Channel not found */);
         channelContext.processOp(transformed, local, localOpMetadata);
 
         return channelContext;
@@ -907,7 +907,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         });
         this.dataStoreContext.once("attaching", () => {
             assert(this.bindState !== BindState.NotBound,
-                "sc:0147" /* Data store attaching should not occur if it is not bound */);
+                "s_93" /* Data store attaching should not occur if it is not bound */);
             this._attachState = AttachState.Attaching;
             // This promise resolution will be moved to attached event once we fix the scheduler.
             this.deferredAttached.resolve();
@@ -915,7 +915,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         });
         this.dataStoreContext.once("attached", () => {
             assert(this.bindState === BindState.Bound,
-                "sc:0148" /* Data store should only be attached after it is bound */);
+                "s_94" /* Data store should only be attached after it is bound */);
             this._attachState = AttachState.Attached;
             this.emit("attached");
         });

@@ -54,8 +54,8 @@ export class PermutationSegment extends BaseSegment {
 
     public get start() { return this._start; }
     public set start(value: Handle) {
-        assert(this._start === Handle.unallocated, "sc:0011" /* Start of PermutationSegment already allocated! */);
-        assert(isHandleValid(value), "sc:0012" /* Trying to set start of PermutationSegment to invalid handle! */);
+        assert(this._start === Handle.unallocated, "s_0h" /* Start of PermutationSegment already allocated! */);
+        assert(isHandleValid(value), "s_0i" /* Trying to set start of PermutationSegment to invalid handle! */);
 
         this._start = value;
     }
@@ -103,7 +103,7 @@ export class PermutationSegment extends BaseSegment {
     }
 
     protected createSplitSegmentAt(pos: number) {
-        assert(0 < pos && pos < this.cachedLength, "sc:0013" /* Trying to split segment at out-of-bounds position! */);
+        assert(0 < pos && pos < this.cachedLength, "s_0j" /* Trying to split segment at out-of-bounds position! */);
 
         const leafSegment = new PermutationSegment(
             /* length: */ this.cachedLength - pos,
@@ -168,7 +168,7 @@ export class PermutationVector extends Client {
     }
 
     public getMaybeHandle(pos: number): Handle {
-        assert(0 <= pos && pos < this.getLength(), "sc:0014" /* Trying to get handle of out-of-bounds position! */);
+        assert(0 <= pos && pos < this.getLength(), "s_0k" /* Trying to get handle of out-of-bounds position! */);
 
         return this.handleCache.getHandle(pos);
     }
@@ -211,7 +211,7 @@ export class PermutationVector extends Client {
 
     public handleToPosition(handle: Handle, localSeq = this.mergeTree.collabWindow.localSeq) {
         assert(localSeq <= this.mergeTree.collabWindow.localSeq,
-            "sc:0015" /* 'localSeq' for op being resubmitted must be <= the 'localSeq' of the last submitted op. */);
+            "s_0l" /* 'localSeq' for op being resubmitted must be <= the 'localSeq' of the last submitted op. */);
 
         // TODO: In theory, the MergeTree should be able to map the (position, refSeq, localSeq) from
         //       the original operation to the current position for resubmitting.  This is probably the
@@ -256,7 +256,7 @@ export class PermutationVector extends Client {
         // ops that reference the stale handle, or the removal is unACKed, in which case the handle
         // has not yet been recycled.
 
-        assert(isHandleValid(containingSegment.start), "sc:0016" /* Invalid handle at start of containing segment! */);
+        assert(isHandleValid(containingSegment.start), "s_0m" /* Invalid handle at start of containing segment! */);
 
         // Once we know the current position of the handle, we can use the MergeTree to get the segment
         // containing this position and use 'findReconnectionPosition' to adjust for the local ops that

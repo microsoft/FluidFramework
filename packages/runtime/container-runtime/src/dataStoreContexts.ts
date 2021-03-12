@@ -85,7 +85,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      */
     public addUnbound(context: LocalFluidDataStoreContext) {
         const id = context.id;
-        assert(!this._contexts.has(id), "sc:011e" /* Creating store with existing ID */);
+        assert(!this._contexts.has(id), "s_7y" /* Creating store with existing ID */);
 
         this._contexts.set(id, context);
 
@@ -123,7 +123,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      */
     public bind(id: string) {
         const removed: boolean = this.notBoundContexts.delete(id);
-        assert(removed, "sc:011f" /* The given id was not found in notBoundContexts to delete */);
+        assert(removed, "s_7z" /* The given id was not found in notBoundContexts to delete */);
 
         this.resolveDeferred(id);
     }
@@ -134,12 +134,12 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      */
     private resolveDeferred(id: string) {
         const context = this._contexts.get(id);
-        assert(!!context, "sc:0120" /* Cannot find context to resolve to */);
+        assert(!!context, "s_80" /* Cannot find context to resolve to */);
         assert(!this.notBoundContexts.has(id),
-            "sc:0121" /* Expected this id to already be removed from notBoundContexts */);
+            "s_81" /* Expected this id to already be removed from notBoundContexts */);
 
         const deferred = this.deferredContexts.get(id);
-        assert(!!deferred, "sc:0122" /* Cannot find deferred to resolve */);
+        assert(!!deferred, "s_82" /* Cannot find deferred to resolve */);
         deferred.resolve(context);
     }
 
@@ -150,7 +150,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      */
     public addBoundOrRemoted(context: FluidDataStoreContext) {
         const id = context.id;
-        assert(!this._contexts.has(id), "sc:0123" /* Creating store with existing ID */);
+        assert(!this._contexts.has(id), "s_83" /* Creating store with existing ID */);
 
         this._contexts.set(id, context);
 

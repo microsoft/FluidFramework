@@ -176,7 +176,7 @@ export class PendingStateManager {
 
         // Get the next state from the pending queue and verify that it is of type "message".
         const pendingState = this.peekNextPendingState();
-        assert(pendingState.type === "message", "sc:012d" /* No pending message found for this remote message */);
+        assert(pendingState.type === "message", "s_8d" /* No pending message found for this remote message */);
         this.pendingStates.shift();
 
         // Processing part - Verify that there has been no data corruption.
@@ -221,12 +221,12 @@ export class PendingStateManager {
         // after a message is processed and not before.
         if (pendingState.type === "flushMode") {
             assert(pendingState.flushMode === FlushMode.Manual,
-                "sc:012e" /* Flush mode should be manual when processing batch begin */);
+                "s_8e" /* Flush mode should be manual when processing batch begin */);
         }
 
         // We should not already be processing a batch and there should be no pending batch begin message.
         assert(!this.isProcessingBatch && this.pendingBatchBeginMessage === undefined,
-            "sc:012f" /* The pending batch state indicates we are already processing a batch */);
+            "s_8f" /* The pending batch state indicates we are already processing a batch */);
 
         // Set the pending batch state indicating we have started processing a batch.
         this.pendingBatchBeginMessage = message;
@@ -248,12 +248,12 @@ export class PendingStateManager {
         // beginning of a new one. So, it will removed when the next batch begin is processed.
         if (nextPendingState.type === "flushMode") {
             assert(nextPendingState.flushMode === FlushMode.Automatic,
-                "sc:0130" /* Flush mode is set to Manual in the middle of processing a batch */);
+                "s_8g" /* Flush mode is set to Manual in the middle of processing a batch */);
             this.pendingStates.shift();
         }
 
         // There should be a pending batch begin message.
-        assert(this.pendingBatchBeginMessage !== undefined, "sc:0131" /* There is no pending batch begin message */);
+        assert(this.pendingBatchBeginMessage !== undefined, "s_8h" /* There is no pending batch begin message */);
 
         // Get the batch begin metadata from the first message in the batch.
         const batchBeginMetadata = this.pendingBatchBeginMessage.metadata?.batch;
@@ -262,12 +262,12 @@ export class PendingStateManager {
         // are multiple messages in the batch, verify that we got the correct batch begin and end metadata.
         if (this.pendingBatchBeginMessage === message) {
             assert(batchBeginMetadata === undefined,
-                "sc:0132" /* Batch with single message should not have batch metadata */);
+                "s_8i" /* Batch with single message should not have batch metadata */);
         } else {
             // Get the batch metadata from the last message in the batch.
             const batchEndMetadata = message.metadata?.batch;
-            assert(batchBeginMetadata === true, "sc:0133" /* Did not receive batch begin metadata */);
-            assert(batchEndMetadata === false, "sc:0134" /* Did not receive batch end metadata */);
+            assert(batchBeginMetadata === true, "s_8j" /* Did not receive batch begin metadata */);
+            assert(batchEndMetadata === false, "s_8k" /* Did not receive batch end metadata */);
         }
 
         // Clear the pending batch state now that we have processed the entire batch.
@@ -280,7 +280,7 @@ export class PendingStateManager {
      */
     private peekNextPendingState(): IPendingState {
         const nextPendingState = this.pendingStates.peekFront();
-        assert(!!nextPendingState, "sc:0135" /* No pending state found for the remote message */);
+        assert(!!nextPendingState, "s_8l" /* No pending state found for the remote message */);
         return nextPendingState;
     }
 
@@ -289,11 +289,11 @@ export class PendingStateManager {
      * states in its queue. This includes setting the FlushMode and trigerring resubmission of unacked ops.
      */
     public replayPendingStates() {
-        assert(this.connected, "sc:0136" /* The connection state is not consistent with the runtime */);
+        assert(this.connected, "s_8m" /* The connection state is not consistent with the runtime */);
 
         // This assert suggests we are about to send same ops twice, which will result in data loss.
         assert(this.clientId !== this.containerRuntime.clientId,
-            "sc:0137" /* replayPendingStates called twice for same clientId! */);
+            "s_8n" /* replayPendingStates called twice for same clientId! */);
         this.clientId = this.containerRuntime.clientId;
 
         let pendingStatesCount = this.pendingStates.length;

@@ -36,8 +36,8 @@ export class EpochTracker {
     }
 
     public set fileEntry(fileEntry: IFileEntry | undefined) {
-        assert(this._fileEntry === undefined, "sc:0081" /* File Entry should be set only once */);
-        assert(fileEntry !== undefined, "sc:0082" /* Passed file entry should not be undefined */);
+        assert(this._fileEntry === undefined, "s_3l" /* File Entry should be set only once */);
+        assert(fileEntry !== undefined, "s_3m" /* Passed file entry should not be undefined */);
         this._fileEntry = fileEntry;
     }
 
@@ -221,7 +221,7 @@ export class EpochTracker {
                     fetchType,
                 };
                 this.logger.sendErrorEvent({ eventName: "EpochVersionMismatch" }, err);
-                assert(!!this.fileEntry, "sc:0083" /* File Entry should be set to clear the cached entries!! */);
+                assert(!!this.fileEntry, "s_3n" /* File Entry should be set to clear the cached entries!! */);
                 // If the epoch mismatches, then clear all entries for such file entry from cache.
                 await this.persistedCache.removeEntries(this.fileEntry);
                 throw epochError;

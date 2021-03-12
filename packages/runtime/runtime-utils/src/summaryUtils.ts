@@ -241,7 +241,7 @@ export function convertSnapshotTreeToSummaryTree(
     snapshot: ISnapshotTree,
 ): ISummaryTreeWithStats {
     assert(Object.keys(snapshot.commits).length === 0,
-        "sc:015e" /* There should not be commit tree entries in snapshot */);
+        "s_9q" /* There should not be commit tree entries in snapshot */);
 
     const builder = new SummaryTreeBuilder();
     for (const [key, value] of Object.entries(snapshot.blobs)) {

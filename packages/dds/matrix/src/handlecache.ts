@@ -56,12 +56,12 @@ export class HandleCache implements IVectorConsumer<Handle> {
 
     /** Update the cache when a handle has been allocated for a given position. */
     public addHandle(position: number, handle: Handle) {
-        assert(isHandleValid(handle), "sc:0004" /* Trying to add invalid handle! */);
+        assert(isHandleValid(handle), "s_04" /* Trying to add invalid handle! */);
 
         const index = this.getIndex(position);
         if (index < this.handles.length) {
             assert(!isHandleValid(this.handles[index]),
-                "sc:0005" /* Trying to insert handle into position with already valid handle! */);
+                "s_05" /* Trying to insert handle into position with already valid handle! */);
             this.handles[index] = handle;
         }
     }

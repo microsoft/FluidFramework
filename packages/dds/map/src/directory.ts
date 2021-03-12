@@ -1483,7 +1483,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         if (this.pendingClearMessageId !== -1) {
             if (local) {
                 assert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
-                    "sc:0001" /* Received out of order storage op when there is an unackd clear message */);
+                    "s_01" /* Received out of order storage op when there is an unackd clear message */);
             }
             // If I have a NACK clear, we can ignore all ops.
             return false;

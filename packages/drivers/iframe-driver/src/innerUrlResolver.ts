@@ -16,7 +16,7 @@ export class InnerUrlResolver implements IUrlResolver {
         // is expected to exist when running any inner iframe code.
         const combinedProxy = Comlink.wrap(outerPort);
         const outerProxy = combinedProxy[IUrlResolverProxyKey] as Comlink.Remote<IUrlResolverProxy>;
-        assert(outerProxy !== undefined, "sc:007f" /* OuterUrlResolverProxy unavailable */);
+        assert(outerProxy !== undefined, "s_3j" /* OuterUrlResolverProxy unavailable */);
         await outerProxy.connected();
         return new InnerUrlResolver(outerProxy);
     }

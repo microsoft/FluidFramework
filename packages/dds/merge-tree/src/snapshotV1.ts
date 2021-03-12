@@ -232,7 +232,7 @@ export class SnapshotV1 {
                 // sequence numbers.  Any remaining removal info should be preserved.
                 if (segment.removedSeq !== undefined) {
                     assert(segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq > minSeq,
-                        "sc:0051" /* On removal info preservation, segment has invalid removed sequence number! */);
+                        "s_29" /* On removal info preservation, segment has invalid removed sequence number! */);
                     raw.removedSeq = segment.removedSeq;
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     raw.removedClient = mergeTree.getLongClientId!(segment.removedClientId!);
@@ -241,7 +241,7 @@ export class SnapshotV1 {
             // Sanity check that we are preserving either the seq < minSeq or a removed segment's info.
                 assert(raw.seq !== undefined && raw.client !== undefined
                     || raw.removedSeq !== undefined && raw.removedClient !== undefined,
-                    "sc:0052" /* Corrupted preservation of segment metadata! */);
+                    "s_2a" /* Corrupted preservation of segment metadata! */);
 
                 // Record the segment with it's required metadata.
                 pushSegRaw(raw, segment.cachedLength);

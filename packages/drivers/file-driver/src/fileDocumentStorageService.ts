@@ -39,9 +39,9 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
      * @param version - The version contains the path of the file which contains the snapshot tree.
      */
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
-        assert(version !== null, "sc:0079" /* version input for reading snapshot tree is null! */);
+        assert(version !== null, "s_3d" /* version input for reading snapshot tree is null! */);
         assert(!version || version.treeId === FileStorageVersionTreeId,
-            "sc:007a" /* invalid version input for reading snapshot tree! */);
+            "s_3e" /* invalid version input for reading snapshot tree! */);
 
         let filename: string;
         let rootTree = false;
@@ -85,7 +85,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
             return [];
         } else if (this.versionName !== undefined) {
             // We loaded from snapshot - search for commit there.
-            assert(!!this.docTree, "sc:007b" /* Missing snapshot tree! */);
+            assert(!!this.docTree, "s_3f" /* Missing snapshot tree! */);
             return [{
                 id: versionId,
                 treeId: FileStorageVersionTreeId,
@@ -300,7 +300,7 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
             }
 
             assert(Object.keys(snapshotTree.commits).length === 0,
-                "sc:007c" /* Leftover distinct commits after building tree! */);
+                "s_3g" /* Leftover distinct commits after building tree! */);
             return tree;
         }
     };
@@ -312,7 +312,7 @@ function removeNullTreeIds(tree: api.ITree) {
         }
     }
     assert(tree.id === undefined || tree.id === null,
-        "sc:007d" /* Trying to remove valid tree IDs in removeNullTreeIds()! */);
+        "s_3h" /* Trying to remove valid tree IDs in removeNullTreeIds()! */);
     delete tree.id;
 }
 

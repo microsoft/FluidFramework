@@ -68,7 +68,7 @@ async function* loadAllSequencedMessages(
                 const fileContent = fs.readFileSync(`${dir}/messages${file}.json`, { encoding: "utf-8" });
                 const messages: ISequencedDocumentMessage[] = JSON.parse(fileContent);
                 assert(messages[0].sequenceNumber === lastSeq + 1,
-                    "sc:0177" /* Unexpected value for sequence number of first message in file */);
+                    "s_af" /* Unexpected value for sequence number of first message in file */);
                 yield messages;
                 lastSeq = messages[messages.length - 1].sequenceNumber;
             } catch (e) {
@@ -95,7 +95,7 @@ async function* loadAllSequencedMessages(
         requests++;
         const { messages, partialResult } = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
         if (messages.length === 0) {
-            assert(!partialResult, "sc:0178" /* No messages to load, but nonzero partial result */);
+            assert(!partialResult, "s_ag" /* No messages to load, but nonzero partial result */);
             break;
         }
         yield messages;
@@ -168,10 +168,10 @@ async function* saveOps(
             }
             sequencedMessages = sequencedMessages.concat(messages);
             assert(sequencedMessages[0].sequenceNumber === curr,
-                "sc:0179" /* Unexpected sequence number on first of messages to save */);
+                "s_ah" /* Unexpected sequence number on first of messages to save */);
             assert(sequencedMessages[sequencedMessages.length - 1].sequenceNumber
                 === curr + sequencedMessages.length - 1,
-                "sc:017a" /* Unexpected sequence number on last of messages to save */);
+                "s_ai" /* Unexpected sequence number on last of messages to save */);
         }
 
         // Time to write it out?
@@ -184,7 +184,7 @@ async function* saveOps(
                 JSON.stringify(write, undefined, paramActualFormatting ? 0 : 2));
             curr += chunk;
             assert(sequencedMessages.length === 0 || sequencedMessages[0].sequenceNumber === curr,
-                "sc:017b" /* Stopped writing at unexpected sequence number */);
+                "s_aj" /* Stopped writing at unexpected sequence number */);
             index++;
         }
 

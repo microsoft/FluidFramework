@@ -114,7 +114,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
      */
     public openUndo(consumer: IUndoConsumer) {
         assert(this.undo === undefined,
-            "sc:0006" /* SharedMatrix.openUndo() supports at most a single IUndoConsumer. */);
+            "s_06" /* SharedMatrix.openUndo() supports at most a single IUndoConsumer. */);
 
         this.undo = new MatrixUndoProvider(consumer, this, this.rows, this.cols);
     }
@@ -177,7 +177,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
     public setCell(row: number, col: number, value: T) {
         assert(0 <= row && row < this.rowCount
             && 0 <= col && col < this.colCount,
-            "sc:0007" /* Trying to set out-of-bounds cell! */);
+            "s_07" /* Trying to set out-of-bounds cell! */);
 
         this.setCellCore(row, col, value);
 
@@ -194,7 +194,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
             && (0 <= colStart && colStart < this.colCount)
             && (1 <= colCount && colCount <= (this.colCount - colStart))
             && (rowCount <= (this.rowCount - rowStart)),
-            "sc:0008" /* Trying to set multiple out-of-bounds cells! */);
+            "s_08" /* Trying to set multiple out-of-bounds cells! */);
 
         const endCol = colStart + colCount;
         let r = rowStart;
@@ -275,7 +275,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         // Note that the comparison is '>=' because, in the case the MergeTree is regenerating ops for reconnection,
         // the MergeTree submits the op with the original 'localSeq'.
         assert(localSeq >= oppositeWindow.localSeq,
-            "sc:0009" /* The 'localSeq' of the vector submitting an op must >= the 'localSeq' of the other vector. */);
+            "s_09" /* The 'localSeq' of the vector submitting an op must >= the 'localSeq' of the other vector. */);
 
         oppositeWindow.localSeq = localSeq;
 
@@ -452,14 +452,14 @@ export class SharedMatrix<T extends Serializable = Serializable>
     protected submitLocalMessage(message: any, localOpMetadata?: any) {
         // TODO: Recommend moving this assertion into SharedObject
         //       (See https://github.com/microsoft/FluidFramework/issues/2559)
-        assert(this.isAttached() === true, "sc:000a" /* Trying to submit message to runtime while detached! */);
+        assert(this.isAttached() === true, "s_0a" /* Trying to submit message to runtime while detached! */);
 
         super.submitLocalMessage(makeHandlesSerializable(message, this.serializer, this.handle), localOpMetadata);
 
         // Ensure that row/col 'localSeq' are synchronized (see 'nextLocalSeq()').
         assert(
             this.rows.getCollabWindow().localSeq === this.cols.getCollabWindow().localSeq,
-            "sc:000b" /* Row and col collab window 'localSeq' desynchronized! */,
+            "s_0b" /* Row and col collab window 'localSeq' desynchronized! */,
         );
     }
 
@@ -474,7 +474,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
 
     protected onConnect() {
         assert(this.rows.getCollabWindow().collaborating === this.cols.getCollabWindow().collaborating,
-            "sc:000c" /* Row and col collab window 'collaborating' status desynchronized! */);
+            "s_0c" /* Row and col collab window 'collaborating' status desynchronized! */);
 
         // Update merge tree collaboration information with new client ID and then resend pending ops
         this.rows.startOrUpdateCollaboration(this.runtime.clientId as string);
@@ -494,7 +494,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                     localOpMetadata as SegmentGroup | SegmentGroup[]));
                 break;
             default: {
-                assert(content.type === MatrixOp.set, "sc:000d" /* Unknown SharedMatrix 'op' type. */);
+                assert(content.type === MatrixOp.set, "s_0d" /* Unknown SharedMatrix 'op' type. */);
 
                 const setOp = content as ISetOp<T>;
                 const { rowHandle, colHandle, localSeq } = localOpMetadata as ISetOpMetadata;
@@ -562,7 +562,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                 break;
             default: {
                 assert(contents.type === MatrixOp.set,
-                    "sc:000e" /* SharedMatrix message contents have unexpected type! */);
+                    "s_0e" /* SharedMatrix message contents have unexpected type! */);
 
                 const { referenceSequenceNumber: refSeq, clientId } = rawMessage;
                 const { row, col } = contents;
@@ -589,7 +589,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                             const colHandle = this.cols.getAllocatedHandle(adjustedCol);
 
                             assert(isHandleValid(rowHandle) && isHandleValid(colHandle),
-                                "sc:000f" /* SharedMatrix row and/or col handles are invalid! */);
+                                "s_0f" /* SharedMatrix row and/or col handles are invalid! */);
 
                             // If there is a pending (unACKed) local write to the same cell, skip the current op
                             // since it "happened before" the pending write.
@@ -661,7 +661,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         // be 'undefined' or > 'localSeq'.
         assert(!(pendingLocalSeq < localSeq),
             // eslint-disable-next-line max-len
-            "sc:0010" /* The 'localSeq' of pending write (if any) must be <= the localSeq of the currently processed op. */);
+            "s_0g" /* The 'localSeq' of pending write (if any) must be <= the localSeq of the currently processed op. */);
 
         // If this is the most recent write to the cell by the local client, the stored localSeq
         // will be an exact match for the given 'localSeq'.

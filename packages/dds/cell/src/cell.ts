@@ -287,7 +287,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
             if (local) {
                 const messageIdReceived = localOpMetadata as number;
                 assert(messageIdReceived !== undefined && messageIdReceived <= this.messageId,
-                    "sc:0000" /* messageId is incorrect from from the local client's ACK */);
+                    "s_00" /* messageId is incorrect from from the local client's ACK */);
 
                 // We got an ACK. Update messageIdObserved.
                 this.messageIdObserved = localOpMetadata as number;

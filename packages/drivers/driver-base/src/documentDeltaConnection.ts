@@ -187,9 +187,9 @@ export class DocumentDeltaConnection
     public get initialMessages(): ISequencedDocumentMessage[] {
         // If we call this when the earlyOpHandler is not attached, then the queuedMessages may not include the
         // latest ops.  This could possibly indicate that initialMessages was called twice.
-        assert(this.earlyOpHandlerAttached, "sc:0075" /* Potentially missed initial messages */);
+        assert(this.earlyOpHandlerAttached, "s_39" /* Potentially missed initial messages */);
         // We will lose ops and perf will tank as we need to go to storage to become current!
-        assert(this.listeners("op").length !== 0, "sc:0076" /* No op handler is setup! */);
+        assert(this.listeners("op").length !== 0, "s_3a" /* No op handler is setup! */);
 
         this.removeEarlyOpHandler();
 
@@ -209,7 +209,7 @@ export class DocumentDeltaConnection
      * @returns signals sent during the connection
      */
     public get initialSignals(): ISignalMessage[] {
-        assert(this.listeners("signal").length !== 0, "sc:0077" /* No signal handler is setup! */);
+        assert(this.listeners("signal").length !== 0, "s_3b" /* No signal handler is setup! */);
 
         this.removeEarlySignalHandler();
 

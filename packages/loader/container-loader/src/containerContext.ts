@@ -243,7 +243,7 @@ export class ContainerContext implements IContainerContext {
     public setConnectionState(connected: boolean, clientId?: string) {
         const runtime = this.runtime;
 
-        assert(connected === this.connected, "sc:00bf" /* Mismatch in connection state while setting */);
+        assert(connected === this.connected, "s_5b" /* Mismatch in connection state while setting */);
 
         runtime.setConnectionState(connected, clientId);
     }

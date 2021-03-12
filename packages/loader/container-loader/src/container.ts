@@ -183,7 +183,7 @@ export async function waitContainerToCatchUp(container: Container) {
 
         const waitForOps = () => {
             assert(container.connectionState !== ConnectionState.Disconnected,
-                "sc:00b1" /* Container disconnected while waiting for ops! */);
+                "s_4x" /* Container disconnected while waiting for ops! */);
             const hasCheckpointSequenceNumber = deltaManager.hasCheckpointSequenceNumber;
 
             const connectionOpSeqNumber = deltaManager.lastKnownSeqNumber;
@@ -660,7 +660,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
 
-        assert(this.connectionState === ConnectionState.Disconnected, "sc:00b2" /* disconnect event was not raised! */);
+        assert(this.connectionState === ConnectionState.Disconnected, "s_4y" /* disconnect event was not raised! */);
 
         if (error !== undefined) {
             // Log current sequence number - useful if we have access to a file to understand better
@@ -675,7 +675,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 error,
             );
         } else {
-            assert(this.loaded, "sc:00b3" /* Container in non-loaded state before close! */);
+            assert(this.loaded, "s_4z" /* Container in non-loaded state before close! */);
             this.logger.sendTelemetryEvent({ eventName: "ContainerClose" });
         }
 
@@ -689,7 +689,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public serialize(): string {
-        assert(this.attachState === AttachState.Detached, "sc:00b4" /* Should only be called in detached container */);
+        assert(this.attachState === AttachState.Detached, "s_50" /* Should only be called in detached container */);
 
         const appSummary: ISummaryTree = this.context.createSummary();
         const protocolSummary = this.captureProtocolSummary();
@@ -698,8 +698,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async attach(request: IRequest): Promise<void> {
-        assert(this.loaded, "sc:00b5" /* not loaded */);
-        assert(!this.closed, "sc:00b6" /* closed */);
+        assert(this.loaded, "s_51" /* not loaded */);
+        assert(!this.closed, "s_52" /* closed */);
 
         // If container is already attached or attach is in progress, return.
         if (this._attachState === AttachState.Attached || this.attachInProgress) {
@@ -709,7 +709,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.attachInProgress = true;
         try {
             assert(this.deltaManager.inbound.length === 0,
-                "sc:00b7" /* Inbound queue should be empty when attaching */);
+                "s_53" /* Inbound queue should be empty when attaching */);
             // Only take a summary if the container is in detached state, otherwise we could have local changes.
             // In failed attach call, we would already have a summary cached.
             if (this._attachState === AttachState.Detached) {
@@ -730,7 +730,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this.emit("attaching");
             }
             assert(!!this.cachedAttachSummary,
-                "sc:00b8" /* Summary should be there either by this attach call or previous attach call!! */);
+                "s_54" /* Summary should be there either by this attach call or previous attach call!! */);
 
             const createNewResolvedUrl = await this.urlResolver.resolve(request);
             ensureFluidResolvedUrl(createNewResolvedUrl);
@@ -750,7 +750,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 "",
                 this._context?.codeDetails,
             );
-            assert(url !== undefined, "sc:00b9" /* Container url undefined */);
+            assert(url !== undefined, "s_55" /* Container url undefined */);
             this.containerUrl = url;
             const parsedUrl = parseUrl(resolvedUrl.url);
             if (parsedUrl === undefined) {
@@ -844,7 +844,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     protected resumeInternal(args: IConnectionArgs) {
-        assert(!this.closed, "sc:00ba" /* Attempting to setAutoReconnect() a closed DeltaManager */);
+        assert(!this.closed, "s_56" /* Attempting to setAutoReconnect() a closed DeltaManager */);
 
         // Resume processing ops
         if (!this.resumedOpProcessingAfterLoad) {
@@ -989,7 +989,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._storageService =
                 new BlobCacheStorageService(this.storageService, blobs);
             // ensure we did not lose that policy in the process of wrapping
-            assert(blobSize === this._storageService.policies?.minBlobSize, "sc:00bb" /* blob size policy */);
+            assert(blobSize === this._storageService.policies?.minBlobSize, "s_57" /* blob size policy */);
         }
         const attributes: IDocumentAttributes = {
             branch: this.id,
@@ -1248,7 +1248,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async rehydrateDetachedFromSnapshot(snapshotTree: ISnapshotTree) {
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
-        assert(attributes.sequenceNumber === 0, "sc:00bc" /* Seq number in detached container should be 0!! */);
+        assert(attributes.sequenceNumber === 0, "s_58" /* Seq number in detached container should be 0!! */);
         this.attachDeltaManagerOpHandler(attributes);
 
         // We know this is create detached flow with snapshot.
@@ -1622,7 +1622,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         value: ConnectionState,
         reason?: string) {
         assert(value !== ConnectionState.Connecting,
-            "sc:00bd" /* Trying to set connection state while container is connecting! */);
+            "s_59" /* Trying to set connection state while container is connecting! */);
         if (this.connectionState === value) {
             // Already in the desired state - exit early
             this.logger.sendErrorEvent({ eventName: "setConnectionStateSame", value });
@@ -1798,7 +1798,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         snapshot?: ISnapshotTree,
         previousRuntimeState: IRuntimeState = {},
     ) {
-        assert(this._context?.disposed !== false, "sc:00be" /* Existing context not disposed */);
+        assert(this._context?.disposed !== false, "s_5a" /* Existing context not disposed */);
         // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
         if (this._dirtyContainer) {
             this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer"});

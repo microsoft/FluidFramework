@@ -93,7 +93,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         }
         const { siteUrl, driveId, itemId, path, containerPackageName, fileVersion } = decodeOdspUrl(request.url);
         const hashedDocumentId = getHashedDocumentId(driveId, itemId);
-        assert(!hashedDocumentId.includes("/"), "sc:008c" /* Docid should not contain slashes!! */);
+        assert(!hashedDocumentId.includes("/"), "s_3w" /* Docid should not contain slashes!! */);
 
         let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(path)}`;
 

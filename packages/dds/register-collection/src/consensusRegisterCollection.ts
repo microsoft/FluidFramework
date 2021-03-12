@@ -172,7 +172,7 @@ export class ConsensusRegisterCollection<T>
 
         if (versions !== undefined) {
             // We don't support deletion. So there should be at least one value.
-            assert(versions.length > 0, "sc:0058" /* Value should be undefined or non-empty */);
+            assert(versions.length > 0, "s_2g" /* Value should be undefined or non-empty */);
 
             return versions[versions.length - 1];
         }
@@ -219,7 +219,7 @@ export class ConsensusRegisterCollection<T>
         for (const key of Object.keys(dataObj)) {
             assert(dataObj[key].atomic?.value.type !== "Shared",
                 // eslint-disable-next-line max-len
-                "sc:0059" /* SharedObjects contained in ConsensusRegisterCollection can no longer be deserialized as of 0.17 */);
+                "s_2h" /* SharedObjects contained in ConsensusRegisterCollection can no longer be deserialized as of 0.17 */);
 
             this.data.set(key, dataObj[key]);
         }
@@ -245,7 +245,7 @@ export class ConsensusRegisterCollection<T>
                     // Use the refSeq from when the op was created, not when it was transmitted
                     const refSeqWhenCreated = op.refSeq;
                     assert(refSeqWhenCreated <= message.referenceSequenceNumber,
-                        "sc:005a" /* Message's reference sequence number < op's reference sequence number! */);
+                        "s_2i" /* Message's reference sequence number < op's reference sequence number! */);
 
                     const value = incomingOpMatchesCurrentFormat(op)
                         ? this.parse(op.serializedValue, this.serializer) as T
@@ -308,7 +308,7 @@ export class ConsensusRegisterCollection<T>
             }
         }
         else {
-            assert(!!data, "sc:005b" /* data missing for non-atomic inbound update! */);
+            assert(!!data, "s_2j" /* data missing for non-atomic inbound update! */);
         }
 
         // Remove versions that were known to the remote client at the time of write
@@ -324,11 +324,11 @@ export class ConsensusRegisterCollection<T>
         // Asserts for data integrity
         if (!this.isAttached()) {
             assert(refSeq === 0 && sequenceNumber === 0,
-                "sc:005c" /* sequence numbers are expected to be 0 when unattached */);
+                "s_2k" /* sequence numbers are expected to be 0 when unattached */);
         }
         else if (data.versions.length > 0) {
             assert(sequenceNumber > data.versions[data.versions.length - 1].sequenceNumber,
-                "sc:005d" /* Versions should naturally be ordered by sequenceNumber */);
+                "s_2l" /* Versions should naturally be ordered by sequenceNumber */);
         }
 
         // Push the new element.

@@ -247,8 +247,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private readonly blobCache = new BlobCache();
 
     public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
-        assert(this._ops === undefined, "sc:0089" /* Trying to set ops when they are already set! */);
-        assert(ops !== undefined, "sc:008a" /* Input ops are undefined! */);
+        assert(this._ops === undefined, "s_3t" /* Trying to set ops when they are already set! */);
+        assert(ops !== undefined, "s_3u" /* Input ops are undefined! */);
         this._ops = ops;
     }
 
@@ -742,7 +742,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize } = this.evalBlobsAndTrees(snapshot);
             const clientTime = networkTime ? overallTime - networkTime : undefined;
 
-            assert(this._snapshotCacheEntry === undefined, "sc:008b" /* snapshotCacheEntry already defined! */);
+            assert(this._snapshotCacheEntry === undefined, "s_3v" /* snapshotCacheEntry already defined! */);
             this._snapshotCacheEntry = {
                 file: this.fileEntry,
                 type: "snapshot",

@@ -153,11 +153,11 @@ export class SnapshotLegacy {
 
         assert(
             length === this.header!.segmentsTotalLength,
-            "sc:004a" /* emit: mismatch in segmentsTotalLength */);
+            "s_22" /* emit: mismatch in segmentsTotalLength */);
 
         assert(
             segments === chunk1.totalSegmentCount,
-            "sc:004b" /* emit: mismatch in totalSegmentCount */);
+            "s_23" /* emit: mismatch in totalSegmentCount */);
 
         if(catchUpMsgs !== undefined && catchUpMsgs.length > 0) {
             tree.entries.push({

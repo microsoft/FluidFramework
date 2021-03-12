@@ -617,7 +617,7 @@ export class MapKernel implements IValueTypeCreator {
         if (this.pendingClearMessageId !== -1) {
             if (local) {
                 assert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
-                    "sc:0002" /* Received out of order op when there is an unackd clear message */);
+                    "s_02" /* Received out of order op when there is an unackd clear message */);
             }
             // If we have an unack'd clear, we can ignore all ops.
             return false;
@@ -654,7 +654,7 @@ export class MapKernel implements IValueTypeCreator {
                 process: (op: IMapClearOperation, local, message, localOpMetadata) => {
                     if (local) {
                         assert(localOpMetadata !== undefined,
-                            "sc:0003" /* pendingMessageId is missing from the local client's clear operation */);
+                            "s_03" /* pendingMessageId is missing from the local client's clear operation */);
                         const pendingMessageId = localOpMetadata as number;
                         if (this.pendingClearMessageId === pendingMessageId) {
                             this.pendingClearMessageId = -1;

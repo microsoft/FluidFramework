@@ -101,7 +101,7 @@ export class LocalChannelContext implements IChannelContext {
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
-        assert(this.attached, "sc:0149" /* Local channel must be attached when processing op */);
+        assert(this.attached, "s_95" /* Local channel must be attached when processing op */);
 
         // A local channel may not be loaded in case where we rehydrate the container from a snapshot because of
         // delay loading. So after the container is attached and some other client joins which start generating
@@ -110,14 +110,14 @@ export class LocalChannelContext implements IChannelContext {
             this.services.value.deltaConnection.process(message, local, localOpMetadata);
         } else {
             assert(local === false,
-                "sc:014a" /* Should always be remote because a local dds shouldn't generate ops before loading */);
+                "s_96" /* Should always be remote because a local dds shouldn't generate ops before loading */);
             this.pending.push(message);
         }
     }
 
     public reSubmit(content: any, localOpMetadata: unknown) {
-        assert(this.isLoaded, "sc:014b" /* Channel should be loaded to resubmit ops */);
-        assert(this.attached, "sc:014c" /* Local channel must be attached when resubmitting op */);
+        assert(this.isLoaded, "s_97" /* Channel should be loaded to resubmit ops */);
+        assert(this.attached, "s_98" /* Local channel must be attached when resubmitting op */);
         this.services.value.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
@@ -127,26 +127,26 @@ export class LocalChannelContext implements IChannelContext {
      * @param trackState - This tells whether we should track state from this summary.
      */
     public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<IContextSummarizeResult> {
-        assert(this.isLoaded && this.channel !== undefined, "sc:014d" /* Channel should be loaded to summarize */);
+        assert(this.isLoaded && this.channel !== undefined, "s_99" /* Channel should be loaded to summarize */);
         return summarizeChannel(this.channel, fullTree, trackState);
     }
 
     public getAttachSummary(): IContextSummarizeResult {
-        assert(this.isLoaded && this.channel !== undefined, "sc:014e" /* Channel should be loaded to take snapshot */);
+        assert(this.isLoaded && this.channel !== undefined, "s_9a" /* Channel should be loaded to take snapshot */);
         return summarizeChannel(this.channel, true /* fullTree */, false /* trackState */);
     }
 
     private async loadChannel(): Promise<IChannel> {
-        assert(!this.isLoaded, "sc:014f" /* Channel must not already be loaded when loading */);
-        assert(!!this.snapshotTree, "sc:0150" /* Snapshot should be provided to load from!! */);
+        assert(!this.isLoaded, "s_9b" /* Channel must not already be loaded when loading */);
+        assert(!!this.snapshotTree, "s_9c" /* Snapshot should be provided to load from!! */);
 
         assert(await this.services.value.objectStorage.contains(".attributes"),
-            "sc:0151" /* .attributes blob should be present */);
+            "s_9d" /* .attributes blob should be present */);
         const attributes = await readAndParse<IChannelAttributes>(
             this.services.value.objectStorage,
             ".attributes");
 
-        assert(!!this.factory, "sc:0152" /* Factory should be there for local channel */);
+        assert(!!this.factory, "s_9e" /* Factory should be there for local channel */);
         // Services will be assigned during this load.
         const channel = await this.factory.load(
             this.runtime,
@@ -178,7 +178,7 @@ export class LocalChannelContext implements IChannelContext {
         }
 
         if (this.isLoaded) {
-            assert(!!this.channel, "sc:0153" /* Channel should be there if loaded!! */);
+            assert(!!this.channel, "s_9f" /* Channel should be there if loaded!! */);
             this.channel.connect(this.services.value);
         }
         this.attached = true;
@@ -207,7 +207,7 @@ export class LocalChannelContext implements IChannelContext {
      * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
     public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
-        assert(this.isLoaded && this.channel !== undefined, "sc:0154" /* Channel should be loaded to run GC */);
+        assert(this.isLoaded && this.channel !== undefined, "s_9g" /* Channel should be loaded to run GC */);
         return this.channel.getGCData(fullGC);
     }
 
