@@ -1,0 +1,9 @@
+{{ $issue := .Get 0 }}
+<!-- {{ $url := "https://github.com/{{$.Page.Site.Params.githubRepo}}/discussions/{{$issue}}" }} -->
+<div class="important callout">
+    <p class="callout-title">👋 Hi!</p>
+    <p>This article isn't written yet, but you can discuss and vote on it in our
+        GitHub discussion board.</p>
+    <p><a href="https://github.com/{{$.Page.Site.Params.githubRepo}}/discussions/{{$issue}}">Discussion #{{$issue}}.</a>
+    </p>
+</div>
