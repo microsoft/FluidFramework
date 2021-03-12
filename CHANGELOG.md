@@ -1,5 +1,23 @@
 # Change Log
 
+## 0.70.1
+
+* fix: Ensure SharedTree.serializer is not used during summarizing
+  * Associated pull request: [28561](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28561)
+  * Commit: [d00c6d885abde01bdaf01f68acb981b707aa42b9](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d00c6d885abde01bdaf01f68acb981b707aa42b9)
+* improvement: Specify TEvent parameters on EventEmitters
+  * Associated pull request: [28329](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28329)
+  * Commit: [08cb3b9b9d95655dad0abbaf33e619368f0bf225](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/08cb3b9b9d95655dad0abbaf33e619368f0bf225)
+* merge: releases/2021.03.1 into master
+  * Associated pull request: [28639](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28639)
+  * Commit: [d8d9e4b079a97add6d09215fce7ce4b7f02c9f71](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d8d9e4b079a97add6d09215fce7ce4b7f02c9f71)
+* improvement: Remove mocha --exit kludge
+  * Associated pull request: [28662](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28662)
+  * Commit: [e62d65e7d8a9838fbd8c5d8d3fc1792933be772c](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/e62d65e7d8a9838fbd8c5d8d3fc1792933be772c)
+* fix: Propagate async errors in chunk upload to SharedTree
+  * Associated pull request: [28381](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28381)
+  * Commit: [cb4756aa92aa9b460965ac56eb1bbd97a5245934](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/cb4756aa92aa9b460965ac56eb1bbd97a5245934)
+
 ## 0.67.0
 
 * chore: Fix repo / bugs properties in package.json files
