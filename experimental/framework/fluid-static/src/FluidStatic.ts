@@ -60,6 +60,13 @@ export class FluidContainer {
         dataObjectClass: IFluidStaticDataObjectClass,
         id: string,
     ) {
+        const type = dataObjectClass.factory.type;
+        // This is a runtime check to ensure the developer doesn't try to create something they have not defined.
+        if (!this.types.has(type)) {
+            throw new Error(
+                `Trying to create a DataObject with type ${type} that was not defined in Container initialization`);
+        }
+
         return this.rootDataObject.createDataObject<T>(dataObjectClass, id);
     }
 
