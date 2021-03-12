@@ -22,7 +22,6 @@ interface ITestData {
 }
 
 const localClientId = 17;
-const branchId = 0;
 const treeFactories: ITestTreeFactory[] = [
     {
         create: () => {
@@ -38,8 +37,7 @@ const treeFactories: ITestTreeFactory[] = [
             mergeTree.startCollaboration(
                 localClientId,
                 /* minSeq: */ UniversalSequenceNumber,
-                /* currentSeq: */ UniversalSequenceNumber,
-                branchId);
+                /* currentSeq: */ UniversalSequenceNumber);
             return {
                 initialText,
                 mergeTree,
@@ -94,8 +92,7 @@ const treeFactories: ITestTreeFactory[] = [
             mergeTree.startCollaboration(
                 localClientId,
                 /* minSeq: */ UniversalSequenceNumber,
-                /* currentSeq: */ UniversalSequenceNumber,
-                branchId);
+                /* currentSeq: */ UniversalSequenceNumber);
             return {
                 initialText,
                 mergeTree,
@@ -157,8 +154,7 @@ const treeFactories: ITestTreeFactory[] = [
             mergeTree.startCollaboration(
                 localClientId,
                 /* minSeq: */ UniversalSequenceNumber,
-                /* currentSeq: */ UniversalSequenceNumber,
-                branchId);
+                /* currentSeq: */ UniversalSequenceNumber);
 
             return {
                 initialText,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -84,14 +84,6 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
         return snapshotTree;
     }
 
-    public async read(blobId: string): Promise<string> {
-        const blob = this.blobs.get(blobId);
-        if (blob !== undefined) {
-            return bufferToString(blob,"base64");
-        }
-        throw new Error(`Unknown blob ID: ${blobId}`);
-    }
-
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
         const blob = this.blobs.get(blobId);
         if (blob !== undefined) {
@@ -108,7 +100,7 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
         protected readonly storage: IDocumentStorageService,
         protected readonly docTree: ISnapshotTree | null) {
         super();
-        assert(!!this.docTree);
+        assert(!!this.docTree, "Missing document snapshot tree!");
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
@@ -127,10 +119,6 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
         return this.docTree;
     }
 
-    public async read(blobId: string): Promise<string> {
-        return this.storage.read(blobId);
-    }
-
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
         return this.storage.readBlob(blobId);
     }
@@ -143,10 +131,6 @@ export class OpStorage extends ReadDocumentStorageServiceBase {
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
         throw new Error("no snapshot tree should be asked when playing ops");
-    }
-
-    public async read(blobId: string): Promise<string> {
-        throw new Error(`Unknown blob ID: ${blobId}`);
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {

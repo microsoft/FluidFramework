@@ -3,21 +3,33 @@
  * Licensed under the MIT License.
  */
 
-
 import { strict as assert } from "assert";
 import { Context, VersionChangeType } from "./context";
 import { getRepoStateChange } from "./versionBag";
 import { fatal, exec } from "./utils";
 import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
+import { getPackageShortName } from "./releaseVersion";
 import * as semver from "semver";
 
+export async function bumpVersionCommand(context:Context, bump: string, version: VersionChangeType, commit: boolean) {
+    const bumpBranch = `bump_${version}_${Date.now()}`;
+    if (commit) {
+        console.log(`Creating branch ${bumpBranch}`);
+        await context.createBranch(bumpBranch);
+    }
+
+    await bumpVersion(context, [bump], version, getPackageShortName(bump), commit ? "" : undefined);
+
+    if (commit) {
+        console.log("======================================================================================================");
+        console.log(`Please create PR for branch ${bumpBranch} targeting ${context.originalBranchName}`);
+    }
+}
 
 /**
  * Functions and utilities to update the package versions
  */
-
-
 export async function bumpVersion(context: Context, bump: string[], version: VersionChangeType, packageShortNames: string, commit?: string) {
     console.log(`Bumping ${packageShortNames} to ${version}`);
 
@@ -60,10 +72,9 @@ export async function bumpVersion(context: Context, bump: string[], version: Ver
     console.log(bumpRepoState);
 
     if (commit !== undefined) {
-        await context.gitRepo.commit(`[bump] package version for ${packageShortNames}\n${bumpRepoState}${commit}`, "create bumped version commit");
+        await context.gitRepo.commit(`[bump] package version for ${packageShortNames} (${version})\n${bumpRepoState}${commit}`, "create bumped version commit");
     }
 }
-
 
 /**
  * Bump version of packages in the repo
@@ -100,16 +111,17 @@ export async function bumpRepo(context: Context, versionBump: VersionChangeType,
     return context.collectVersions(true);
 }
 
-async function bumpLegacyDependencies(context:Context, versionBump: VersionChangeType) {
+async function bumpLegacyDependencies(context: Context, versionBump: VersionChangeType) {
     if (versionBump !== "patch") {
         // Assumes that we want N/N-1 testing
-        const pkg = context.fullPackageMap.get("@fluid-internal/end-to-end-tests");
+        const pkg = context.fullPackageMap.get("@fluidframework/test-end-to-end-tests")
+            || context.fullPackageMap.get("@fluid-internal/end-to-end-tests");
         if (!pkg) {
             fatal("Unable to find package @fluid-internal/end-to-end-tests");
         }
 
         // The dependency names don't have an enforced pattern, but they do retain a stable ordering
-        // Keep a count of how many times we've encounted each dependency to properly set N-1, N-2, etc
+        // Keep a count of how many times we've encountered each dependency to properly set N-1, N-2, etc
         const pkgFrequencies = new Map<string, number>();
         for (const { name, version, dev } of pkg.combinedDependencies) {
             if (!version.startsWith("npm:")) {

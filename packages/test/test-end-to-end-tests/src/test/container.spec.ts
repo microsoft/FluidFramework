@@ -24,7 +24,7 @@ import {
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestDriver, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
-import { getDataStoreFactory, TestDataObject } from "./compatUtils";
+import { getDataStoreFactory, ITestDataObject, TestDataObjectType } from "./compatUtils";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
@@ -210,7 +210,7 @@ describe("Container", () => {
 
     it("Delta manager receives readonly event when calling container.forceReadonly()", async () => {
         const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
-            TestDataObject.type,
+            TestDataObjectType,
             getDataStoreFactory());
 
         const localTestObjectProvider = new TestObjectProvider(
@@ -219,7 +219,7 @@ describe("Container", () => {
             runtimeFactory);
 
         const container = await localTestObjectProvider.makeTestContainer() as Container;
-        const dataObject = await requestFluidObject<TestDataObject>(container, "default");
+        const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
 
         let runCount = 0;
 

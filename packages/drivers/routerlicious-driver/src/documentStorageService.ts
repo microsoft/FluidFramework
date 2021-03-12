@@ -28,7 +28,7 @@ import {
     SummaryObject,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
-import * as gitStorage from "@fluidframework/server-services-client";
+import { GitManager } from "@fluidframework/server-services-client";
 
 /**
  * Document access to underlying storage for routerlicious driver.
@@ -49,7 +49,7 @@ export class DocumentStorageService implements IDocumentStorageService {
 
     constructor(
         public readonly id: string,
-        public manager: gitStorage.GitManager,
+        public manager: GitManager,
         public readonly policies?: IDocumentStorageServicePolicies) {
     }
 
@@ -79,7 +79,6 @@ export class DocumentStorageService implements IDocumentStorageService {
             treeId: commit.commit.tree.sha,
         }));
     }
-
     public async read(blobId: string): Promise<string> {
         const value = await this.manager.getBlob(blobId);
         this.blobsShaCache.set(value.sha, "");

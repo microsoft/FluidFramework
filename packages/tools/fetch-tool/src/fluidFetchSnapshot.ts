@@ -20,6 +20,7 @@ import {
     dumpSnapshotStats,
     dumpSnapshotTrees,
     dumpSnapshotVersions,
+    paramActualFormatting,
     paramNumSnapshotVersions,
     paramSnapshotVersionIndex,
     paramUnpackAggregatedBlobs,
@@ -114,7 +115,8 @@ async function fetchBlobsFromSnapshotTree(
     tree: ISnapshotTree,
     prefix: string = "/",
     perCommitBlobIdMap?: Map<string, number>): Promise<IFetchedData[]> {
-    assert(Object.keys(tree.commits).length === 0 || (prefix === "/"));
+    assert(Object.keys(tree.commits).length === 0 || (prefix === "/"),
+        "Unexpected tree input to fetch");
     const commit = !perCommitBlobIdMap;
     if (commit && dumpSnapshotTrees) {
         console.log(tree);
@@ -148,8 +150,10 @@ async function fetchBlobsFromSnapshotTree(
             console.error(`No data store tree for data store = ${dataStore}, path = ${prefix}, version = ${dataStoreVersions[0].id}`);
             continue;
         }
-        assert(dataStoreSnapShotTree.id === undefined || dataStoreSnapShotTree.id === tree.commits[dataStore]);
-        assert(tree.commits[dataStore] === dataStoreVersions[0].id);
+        assert(dataStoreSnapShotTree.id === undefined || dataStoreSnapShotTree.id === tree.commits[dataStore],
+            `Unexpected id for tree: ${dataStoreSnapShotTree.id}`);
+        assert(tree.commits[dataStore] === dataStoreVersions[0].id,
+            "Mismatch between commit id and fetched tree id");
         const dataStoreBlobs = await fetchBlobsFromSnapshotTree(
             storage,
             dataStoreSnapShotTree,
@@ -159,7 +163,7 @@ async function fetchBlobsFromSnapshotTree(
 
     for (const subtreeId of Object.keys(tree.trees)) {
         const subtree = tree.trees[subtreeId];
-        assert(Object.keys(subtree.commits).length === 0);
+        assert(Object.keys(subtree.commits).length === 0, "Unexpected subtree properties");
         const dataStoreBlobs = await fetchBlobsFromSnapshotTree(
             storage,
             subtree,
@@ -243,19 +247,21 @@ async function saveSnapshot(name: string, fetchedData: IFetchedData[], saveDir: 
 
         if (!isFetchedTree(item)) {
             fs.writeFileSync(`${outDir}/${item.filename}`, data);
-            const decoded = bufferToString(buffer,"utf8");
+            let decoded = bufferToString(buffer,"utf8");
             try {
-                const object = JSON.parse(decoded);
-                fs.writeFileSync(`${outDir}/decoded/${item.filename}.json`, JSON.stringify(object, undefined, 2));
+                if (!paramActualFormatting) {
+                    decoded = JSON.stringify(JSON.parse(decoded), undefined, 2);
+                }
             } catch (e) {
-                fs.writeFileSync(`${outDir}/decoded/${item.filename}.txt`, decoded);
             }
+            fs.writeFileSync(
+                `${outDir}/decoded/${item.filename}.json`, decoded);
         } else {
             // Write out same data for tree
             fs.writeFileSync(`${outDir}/${item.filename}.json`, data);
             const decoded = bufferToString(buffer,"utf8");
             fs.writeFileSync(`${outDir}/decoded/${item.filename}.json`,
-                JSON.stringify(JSON.parse(decoded), undefined, 2));
+                paramActualFormatting ? decoded : JSON.stringify(JSON.parse(decoded), undefined, 2));
         }
     }));
 }

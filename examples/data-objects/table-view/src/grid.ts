@@ -291,7 +291,7 @@ export class GridView {
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.tdText = newParent.firstChild!;
-            console.assert(this.tdText.nodeType === Node.TEXT_NODE);
+            console.assert(this.tdText.nodeType === Node.TEXT_NODE, "TableData text has wrong node type!");
 
             const value = this.doc.getCellValue(row, col);
             this.inputBox.value = `${value ?? ""}`;
