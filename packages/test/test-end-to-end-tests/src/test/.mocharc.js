@@ -12,6 +12,7 @@ const testPackagesDir = `${packageDir}/..`;
 const requiredModules = [
     `${testPackagesDir}/mocha-test-setup`, // General mocha setup e.g. suppresses console.log
     `${testPackagesDir}/test-drivers`, // Inject implementation of getFluidTestDriver, configured via FLUID_TEST_DRIVER
+    `${packageDir}/dist/test/testApi`,
 ];
 
 if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {

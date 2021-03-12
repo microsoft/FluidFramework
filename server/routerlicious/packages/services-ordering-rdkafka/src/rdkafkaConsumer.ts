@@ -313,7 +313,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private processMessage(message: kafkaTypes.Message) {
 		const partition = message.partition;
 
-		if (this.assignedPartitions.has(partition) && this.isRebalancing) {
+		if (this.isRebalancing && this.assignedPartitions.has(partition)) {
 			/*
 				It is possible to receive messages while we have not yet finished rebalancing
 				due to how we wait for the fetchPartitionEpochs call to finish before emitting the rebalanced event.

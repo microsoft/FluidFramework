@@ -6,7 +6,6 @@ import {
     ISnapshotTree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
-import { bufferToString } from "@fluidframework/common-utils";
 import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
 import {
     LoaderCachingPolicy,
@@ -37,10 +36,6 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
             });
         }
         return p;
-    }
-
-    public async read(blobId: string): Promise<string> {
-        return bufferToString(await this.cachedRead(blobId), "base64");
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {

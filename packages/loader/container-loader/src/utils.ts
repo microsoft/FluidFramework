@@ -33,7 +33,17 @@ export function parseUrl(url: string): IParsedUrl | undefined {
         : undefined;
 }
 
-function convertProtocolAndAppSummaryToSnapshotTreeCore(
+/**
+ * Converts summary tree (for upload) to snapshot tree (for download).
+ * Summary tree blobs contain contents, but snapshot tree blobs normally
+ * contain IDs pointing to storage. This will create 2 blob entries in the
+ * snapshot tree for each blob in the summary tree. One will be the regular
+ * path pointing to a uniquely generated ID. Then there will be another
+ * entry with the path as that uniquely generated ID, and value as the
+ * blob contents as a base-64 string.
+ * @param summary - summary to convert
+ */
+function convertSummaryToSnapshotWithEmbeddedBlobContents(
     summary: ISummaryTree,
 ): ISnapshotTree {
     const treeNode = {
@@ -48,7 +58,7 @@ function convertProtocolAndAppSummaryToSnapshotTreeCore(
 
         switch (summaryObject.type) {
             case SummaryType.Tree: {
-                treeNode.trees[key] = convertProtocolAndAppSummaryToSnapshotTreeCore(summaryObject);
+                treeNode.trees[key] = convertSummaryToSnapshotWithEmbeddedBlobContents(summaryObject);
                 break;
             }
             case SummaryType.Blob: {
@@ -79,20 +89,14 @@ export function convertProtocolAndAppSummaryToSnapshotTree(
     protocolSummaryTree: ISummaryTree,
     appSummaryTree: ISummaryTree,
 ): ISnapshotTree {
-    const protocolSummaryTreeModified: ISummaryTree = {
+    // Shallow copy is fine, since we are doing a deep clone below.
+    const combinedSummary: ISummaryTree = {
         type: SummaryType.Tree,
-        tree: {
-            ".protocol": {
-                type: SummaryType.Tree,
-                tree: { ...protocolSummaryTree.tree },
-            },
-        },
-    };
-    const snapshotTree = convertProtocolAndAppSummaryToSnapshotTreeCore(protocolSummaryTreeModified);
-    snapshotTree.trees = {
-        ...snapshotTree.trees,
-        ...convertProtocolAndAppSummaryToSnapshotTreeCore(appSummaryTree).trees,
+        tree: { ...appSummaryTree.tree },
     };
 
+    combinedSummary.tree[".protocol"] = protocolSummaryTree;
+
+    const snapshotTree = convertSummaryToSnapshotWithEmbeddedBlobContents(combinedSummary);
     return snapshotTree;
 }

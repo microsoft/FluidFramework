@@ -67,10 +67,6 @@ export class ReplayControllerStatic extends ReplayController {
         return version ? Promise.reject(new Error("Invalid operation")) : null;
     }
 
-    public async read(blobId: string): Promise<string> {
-        return Promise.reject(new Error("Invalid operation"));
-    }
-
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
         return Promise.reject(new Error("Invalid operation"));
     }
@@ -321,7 +317,7 @@ export class ReplayDocumentDeltaConnection
             if (messages.length === 0) {
                 // No more ops. But, they can show up later, either because document was just created,
                 // or because another client keeps submitting new ops.
-                assert(!partialResult);
+                assert(!partialResult, "No more ops, but nonzero partial results!");
                 if (controller.isDoneFetch(currentOp, undefined)) {
                     break;
                 }

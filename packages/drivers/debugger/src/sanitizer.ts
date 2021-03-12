@@ -144,7 +144,8 @@ class ChunkedOpProcessor {
         let stringified: string;
         try {
             stringified = JSON.stringify(contents);
-            assert(stringified.length <= this.concatenatedLength);
+            assert(stringified.length <= this.concatenatedLength,
+                "Stringified length of chunk contents > total starting length");
         } catch (e) {
             this.debugMsg(e);
             throw e;
@@ -447,7 +448,7 @@ export class Sanitizer {
      * @param contents - contents object to fix
      */
     fixAttachContents(contents: any): any {
-        assert(typeof contents === "object");
+        assert(typeof contents === "object", "Unexpected type on contents for fix of an attach!");
         if (!this.objectMatchesSchema(contents, attachContentsSchema)) {
             this.replaceObject(contents);
         } else {
@@ -511,7 +512,7 @@ export class Sanitizer {
             }
 
             const innerContent = contents.contents.content;
-            assert(innerContent !== undefined);
+            assert(innerContent !== undefined, "innerContent for fixing op contents is undefined!");
             if (contents.contents.type === "attach") {
                 // attach op
                 // handle case where inner content is stringified json
@@ -674,7 +675,7 @@ export class Sanitizer {
             });
 
             // make sure we don't miss an incomplete chunked op at the end
-            assert(!this.chunkProcessor.isPendingProcessing());
+            assert(!this.chunkProcessor.isPendingProcessing(), "After sanitize, pending incomplete ops!");
         } catch (error) {
             this.debugMsg(`Error while processing sequenceNumber ${seq}`);
             throw error;

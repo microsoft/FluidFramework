@@ -11,7 +11,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { v4 as uuid } from "uuid";
 import { ReferenceType } from "@fluidframework/merge-tree";
-import { generateNonCompatTest, ITestObjectProvider, ITestContainerConfig, TestDataObject } from "./compatUtils";
+import { generateNonCompatTest, ITestObjectProvider, ITestContainerConfig, ITestDataObject } from "./compatUtils";
 
 const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: { initialSummarizerDelayMs: 20, summaryConfigOverrides: { maxOps: 1 } },
@@ -36,7 +36,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             }
         }));
 
-        const dataStore = await requestFluidObject<TestDataObject>(container, "default");
+        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
         const blob = await dataStore._runtime.uploadBlob(stringToBuffer("some random text", "utf-8"));
 
         dataStore._root.set("my blob", blob);
@@ -49,13 +49,13 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         const testKey = "a blob";
         const container1 = await args.makeTestContainer(testContainerConfig);
 
-        const dataStore1 = await requestFluidObject<TestDataObject>(container1, "default");
+        const dataStore1 = await requestFluidObject<ITestDataObject>(container1, "default");
 
         const blob = await dataStore1._runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
         dataStore1._root.set(testKey, blob);
 
         const container2 = await args.loadTestContainer(testContainerConfig);
-        const dataStore2 = await requestFluidObject<TestDataObject>(container2, "default");
+        const dataStore2 = await requestFluidObject<ITestDataObject>(container2, "default");
 
         const blobHandle = await dataStore2._root.wait<IFluidHandle<ArrayBufferLike>>(testKey);
         assert(blobHandle);
@@ -64,7 +64,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
     it("loads from snapshot", async function() {
         const container1 = await args.makeTestContainer(testContainerConfig);
-        const dataStore = await requestFluidObject<TestDataObject>(container1, "default");
+        const dataStore = await requestFluidObject<ITestDataObject>(container1, "default");
         const blob = await dataStore._runtime.uploadBlob(stringToBuffer("some random text", "utf-8"));
 
         // attach blob, wait for blob attach op, then take BlobManager snapshot
@@ -105,7 +105,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         const testString = "this is a test string";
         // setup
         {
-            const dataStore = await requestFluidObject<TestDataObject>(container2, "default");
+            const dataStore = await requestFluidObject<ITestDataObject>(container2, "default");
             const sharedString = SharedString.create(dataStore._runtime, uuid());
             dataStore._root.set("sharedString", sharedString.handle);
 
@@ -132,7 +132,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         // validate on remote container, local container, and container loaded from summary
         for (const container of [container1, container2, await args.loadTestContainer(testContainerConfig)]) {
-            const dataStore2 = await requestFluidObject<TestDataObject>(container, "default");
+            const dataStore2 = await requestFluidObject<ITestDataObject>(container, "default");
             const handle = await dataStore2._root.wait<IFluidHandle<SharedString>>("sharedString");
             assert(handle);
             const sharedString2 = await handle.get();

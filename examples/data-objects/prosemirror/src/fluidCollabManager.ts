@@ -117,7 +117,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 
                     case ReferenceType.NestEnd:
                         const popped = nodeStack.pop();
-                        assert(popped!.type === nodeType);
+                        assert(popped!.type === nodeType, "NestEnd top-node type has wrong type");
                         break;
 
                     case ReferenceType.Simple:
