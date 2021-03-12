@@ -128,7 +128,7 @@ export function CreateProcessingError(
  * @param error - Error to be converted.
  */
 export function CreateContainerError(error: any): ICriticalContainerError {
-    assert(error !== undefined, "s_5x" /* Missing error input */);
+    assert(error !== undefined, 0xd5 /* Missing error input */);
 
     if (typeof error === "object" && error !== null) {
         const err = error;

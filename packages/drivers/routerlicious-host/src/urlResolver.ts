@@ -58,10 +58,10 @@ export class ContainerUrlResolver implements IUrlResolver {
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
         const parsedUrl = parse(fluidResolvedUrl.url);
-        assert(parsedUrl.pathname !== undefined, "s_4b" /* Pathname should be defined */);
+        assert(parsedUrl.pathname !== undefined, 0x9b /* Pathname should be defined */);
         const [, tenantId, documentId] = parsedUrl.pathname.split("/");
         assert(documentId !== undefined && tenantId !== undefined,
-            "s_4c" /* Document and tenant IDs should both be defined */);
+            0x9c /* Document and tenant IDs should both be defined */);
 
         let url = relativeUrl;
         if (url.startsWith("/")) {

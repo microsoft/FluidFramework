@@ -37,7 +37,7 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
         public readonly absolutePath: string,
         public readonly routeContext: IFluidHandleContext,
     ) {
-        assert(absolutePath.startsWith("/"), "s_9p" /* Handles should always have absolute paths */);
+        assert(absolutePath.startsWith("/"), 0x15d /* Handles should always have absolute paths */);
     }
 
     /**

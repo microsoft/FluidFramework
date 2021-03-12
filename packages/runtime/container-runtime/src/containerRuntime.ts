@@ -253,11 +253,11 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
         } else {
             // new format
             const innerContents = message.contents as ContainerRuntimeMessage;
-            assert(innerContents.type !== undefined, "s_6k" /* Undefined inner contents type! */);
+            assert(innerContents.type !== undefined, 0xec /* Undefined inner contents type! */);
             message.type = innerContents.type;
             message.contents = innerContents.contents;
         }
-        assert(isRuntimeMessage(message), "s_6l" /* Message to unpack is not proper runtime message */);
+        assert(isRuntimeMessage(message), 0xed /* Message to unpack is not proper runtime message */);
     } else {
         // Legacy format, but it's already "unpacked",
         // i.e. message.type is actually ContainerMessageType.
@@ -734,7 +734,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
             () => {
-                assert(this.attachState !== AttachState.Detached, "s_6m" /* Blobs NYI in detached container mode */);
+                assert(this.attachState !== AttachState.Detached, 0xee /* Blobs NYI in detached container mode */);
                 return this.storage;
             },
             (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
@@ -798,7 +798,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.deltaManager.on("readonly", (readonly: boolean) => {
             // we accumulate ops while being in read-only state.
             // once user gets write permissions and we have active connection, flush all pending ops.
-            assert(readonly === this.deltaManager.readonly, "s_6n" /* inconsistent readonly property/event state */);
+            assert(readonly === this.deltaManager.readonly, 0xef /* inconsistent readonly property/event state */);
 
             // We need to be very careful with when we (re)send pending ops, to ensure that we only send ops
             // when we either never send an op, or attempted to send it but we know for sure it was not
@@ -812,7 +812,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // can rely on same safety mechanism and resend ops only when we establish new connection.
             // This is applicable for read-only permissions (event is raised before connection is properly registered),
             // but it's an extra requirement for Container.forceReadonly() API
-            assert(!readonly || !this.connected, "s_6o" /* Unsafe to transition to read-only state! */);
+            assert(!readonly || !this.connected, 0xf0 /* Unsafe to transition to read-only state! */);
 
             this.replayPendingStates();
         });
@@ -924,7 +924,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // We always expect createSubRequest to include a leading slash, but asserting here to protect against
                 // unintentionally modifying the url if that changes.
                 assert(subRequest.url.startsWith("/"),
-                    "s_6p" /* Expected createSubRequest url to include a leading slash */);
+                    0xf1 /* Expected createSubRequest url to include a leading slash */);
                 return dataStore.IFluidRouter.request(subRequest);
             }
 
@@ -1016,7 +1016,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const oldState = this.dirtyContainer;
         this.dirtyContainer = false;
 
-        assert(this.emitDirtyDocumentEvent, "s_6q" /* dirty document event not set on replay */);
+        assert(this.emitDirtyDocumentEvent, 0xf2 /* dirty document event not set on replay */);
         this.emitDirtyDocumentEvent = false;
         let newState: boolean;
 
@@ -1050,7 +1050,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         raiseConnectedEvent(this._logger, this, connected, clientId);
 
         if (connected) {
-            assert(!!clientId, "s_6r" /* Missing clientId */);
+            assert(!!clientId, 0xf3 /* Missing clientId */);
             this.summaryManager.setConnected(clientId);
         } else {
             this.summaryManager.setDisconnected();
@@ -1108,7 +1108,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.dataStores.processFluidDataStoreOp(message, local, localMessageMetadata);
                     break;
                 case ContainerMessageType.BlobAttach:
-                    assert(message?.metadata?.blobId, "s_6s" /* Missing blob id on metadata */);
+                    assert(message?.metadata?.blobId, 0xf4 /* Missing blob id on metadata */);
                     this.blobManager.addBlobId(message.metadata.blobId);
                     break;
                 default:
@@ -1302,7 +1302,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public isMessageDirtyable(message: ISequencedDocumentMessage) {
         assert(
             isRuntimeMessage(message) === true,
-            "s_6t" /* Message passed for dirtyable check should be a container runtime message */,
+            0xf5 /* Message passed for dirtyable check should be a container runtime message */,
         );
         return this.isContainerMessageDirtyable(message.type as ContainerMessageType, message.contents);
     }
@@ -1341,10 +1341,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
         if (attachState === AttachState.Attaching) {
             assert(this.attachState === AttachState.Attaching,
-                "s_6u" /* Container Context should already be in attaching state */);
+                0xf6 /* Container Context should already be in attaching state */);
         } else {
             assert(this.attachState === AttachState.Attached,
-                "s_6v" /* Container Context should already be in attached state */);
+                0xf7 /* Container Context should already be in attached state */);
         }
         this.dataStores.setAttachState(attachState);
     }
@@ -1427,7 +1427,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
         assert(summarizeResult.summary.type === SummaryType.Tree,
-            "s_6w" /* Container Runtime's summarize should always return a tree */);
+            0xf8 /* Container Runtime's summarize should always return a tree */);
 
         return summarizeResult as IChannelSummarizeResult;
     }
@@ -1566,7 +1566,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.chunkMap.set(clientId, map);
         }
         assert(chunkedContent.chunkId === map.length + 1,
-            "s_6x" /* Mismatch between new chunkId and expected chunkMap */); // 1-based indexing
+            0xf9 /* Mismatch between new chunkId and expected chunkMap */); // 1-based indexing
         map.push(chunkedContent.contents);
     }
 
@@ -1618,7 +1618,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.verifyNotClosed();
 
         // There should be no ops in detached container state!
-        assert(this.attachState !== AttachState.Detached, "s_6y" /* sending ops in detached container */);
+        assert(this.attachState !== AttachState.Detached, 0xfa /* sending ops in detached container */);
 
         let clientSequenceNumber: number = -1;
         let opMetadataInternal = opMetadata;
@@ -1697,7 +1697,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         type: MessageType,
         contents: any) {
         this.verifyNotClosed();
-        assert(this.connected, "s_6z" /* Container disconnected when trying to submit system message */);
+        assert(this.connected, 0xfb /* Container disconnected when trying to submit system message */);
 
         // System message should not be sent in the middle of the batch.
         // That said, we can preserve existing behavior by not flushing existing buffer.
@@ -1775,13 +1775,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // Each client expresses interest to be a leader.
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 scheduler.pick(LeaderTaskId, async () => {
-                    assert(!this._leader, "s_70" /* Client is already leader */);
+                    assert(!this._leader, 0xfc /* Client is already leader */);
                     this.updateLeader(true);
                 });
 
                 scheduler.on("lost", (key) => {
                     if (key === LeaderTaskId) {
-                        assert(this._leader, "s_71" /* Got leader key but client is not leader */);
+                        assert(this._leader, 0xfd /* Got leader key but client is not leader */);
                         this._leader = false;
                         this.updateLeader(false);
                     }
@@ -1817,7 +1817,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._leader = leadership;
         if (this.leader) {
             assert(this.clientId === undefined || this.connected && this.deltaManager && this.deltaManager.active,
-                "s_72" /* Leader must either have undefined clientId or be connected with active delta manager! */);
+                0xfe /* Leader must either have undefined clientId or be connected with active delta manager! */);
             this.emit("leader");
         } else {
             this.emit("notleader");
@@ -1869,13 +1869,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private async getVersionFromStorage(versionId: string): Promise<IVersion> {
         const versions = await this.storage.getVersions(versionId, 1);
-        assert(!!versions && !!versions[0], "s_73" /* Failed to get version from storage */);
+        assert(!!versions && !!versions[0], 0xff /* Failed to get version from storage */);
         return versions[0];
     }
 
     private async getSnapshotFromStorage(version: IVersion): Promise<ISnapshotTree> {
         const snapshot = await this.storage.getSnapshotTree(version);
-        assert(!!snapshot, "s_74" /* Failed to get snapshot from storage */);
+        assert(!!snapshot, 0x100 /* Failed to get snapshot from storage */);
         return snapshot;
     }
 }

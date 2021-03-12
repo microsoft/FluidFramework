@@ -201,9 +201,9 @@ export function decodeSummary(
             };
         }
 
-        assert(!!outstandingOpsBlob, "s_a5" /* Outstanding ops blob missing, but base summary tree exists */);
+        assert(!!outstandingOpsBlob, 0x16d /* Outstanding ops blob missing, but base summary tree exists */);
         assert(newBaseSummary !== undefined,
-            "s_a6" /* Base summary tree missing, but outstanding ops blob exists */);
+            0x16e /* Base summary tree missing, but outstanding ops blob exists */);
         baseSummary = newBaseSummary;
         pathParts.push(baseSummaryTreeKey);
         opsBlobs.unshift(outstandingOpsBlob);

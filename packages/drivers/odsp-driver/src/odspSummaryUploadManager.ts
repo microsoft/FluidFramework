@@ -114,7 +114,7 @@ export class OdspSummaryUploadManager {
         blobCache: Map<string, IBlob | ArrayBuffer>,
         path: string = ""): Promise<api.ISummaryTree>
     {
-        assert(Object.keys(snapshotTree.commits).length === 0, "s_3x" /* There should not be commit tree entries in snapshot */);
+        assert(Object.keys(snapshotTree.commits).length === 0, 0x8d /* There should not be commit tree entries in snapshot */);
 
         const summaryTree: api.ISummaryTree = {
             type: api.SummaryType.Tree,
@@ -227,7 +227,7 @@ export class OdspSummaryUploadManager {
             false,
         );
         if (!this.hostPolicy.blobDeduping) {
-            assert(reusedBlobs === 0, "s_3y" /* No blobs should be deduped */);
+            assert(reusedBlobs === 0, 0x8e /* No blobs should be deduped */);
         }
         const snapshot: ISnapshotRequest = {
             entries: snapshotTree.entries!,
@@ -354,7 +354,7 @@ export class OdspSummaryUploadManager {
                         hash = this.blobTreeDedupCaches.pathToBlobSha.get(currentPath);
                         if (hash !== undefined) {
                             cachedPath = this.blobTreeDedupCaches.blobShaToPath.get(hash);
-                            assert(cachedPath !== undefined, "s_3z" /* path should be defined as path->sha mapping exists */);
+                            assert(cachedPath !== undefined, 0x8f /* path should be defined as path->sha mapping exists */);
                         } else {
                             // We may not have the blob hash in case its contents were not returned during snapshot fetch.
                             // In that case just put the current path as cached path as its contents should not have changed
@@ -387,7 +387,7 @@ export class OdspSummaryUploadManager {
                         blobs++;
                     } else {
                         if (!blobDedupingEnabled) {
-                            assert(false, "s_40" /* Blob deduping is disabled */);
+                            assert(false, 0x90 /* Blob deduping is disabled */);
                         }
                         reusedBlobs++;
                         id = `${parentHandle}/${cachedPath}`;
@@ -453,7 +453,7 @@ export class OdspSummaryUploadManager {
             let entry: SnapshotTreeEntry;
 
             if (value) {
-                assert(id === undefined, "s_41" /* Snapshot entry has both a tree value and a referenced id! */);
+                assert(id === undefined, 0x91 /* Snapshot entry has both a tree value and a referenced id! */);
                 entry = {
                     value,
                     ...baseEntry,

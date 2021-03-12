@@ -250,11 +250,11 @@ export class ClientReplayTool {
                     assert(
                         mergeTree[1].getLength() === readonlyClient.get(mergeTree[0]).getLength(),
                         // eslint-disable-next-line max-len
-                        "s_an" /* Mismatch between client mergeTree length and corresponding readonly mergeTree length */);
+                        0x17f /* Mismatch between client mergeTree length and corresponding readonly mergeTree length */);
                     assert(
                         mergeTree[1].getText() === readonlyClient.get(mergeTree[0]).getText(),
                         // eslint-disable-next-line max-len
-                        "s_ao" /* Mismatch between client mergeTree length and corresponding readonly mergeTree text */);
+                        0x180 /* Mismatch between client mergeTree length and corresponding readonly mergeTree text */);
                 }
             }
         }

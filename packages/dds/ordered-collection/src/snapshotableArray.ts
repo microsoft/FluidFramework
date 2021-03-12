@@ -13,7 +13,7 @@ export class SnapshotableArray<T> extends Array {
     }
 
     public async loadFrom(from: T[]): Promise<void> {
-        assert(this.data.length === 0, "s_2f" /* Loading snapshot into a non-empty collection */);
+        assert(this.data.length === 0, 0x57 /* Loading snapshot into a non-empty collection */);
         this.data = from;
     }
 

@@ -26,7 +26,7 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
         const combinedProxy = Comlink.wrap(outerPort);
         const outerProxy =
             combinedProxy[IDocumentServiceFactoryProxyKey] as Comlink.Remote<IDocumentServiceFactoryProxy>;
-        assert(outerProxy !== undefined, "s_3i" /* OuterDocumentServiceFactoryProxy unavailable */);
+        assert(outerProxy !== undefined, 0x7e /* OuterDocumentServiceFactoryProxy unavailable */);
         await outerProxy.connected();
         return new InnerDocumentServiceFactory(outerProxy);
     }

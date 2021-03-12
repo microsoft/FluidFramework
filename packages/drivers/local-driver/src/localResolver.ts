@@ -72,7 +72,7 @@ export class LocalResolver implements IUrlResolver {
             throw new Error("Url should contain tenant and docId!!");
         }
         const [, , documentId] = parsedUrl.pathname.split("/");
-        assert(!!documentId, "s_3k" /* The resolvedUrl must have a documentId */);
+        assert(!!documentId, 0x80 /* The resolvedUrl must have a documentId */);
 
         return `http://localhost:3000/${documentId}/${url}`;
     }

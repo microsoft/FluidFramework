@@ -134,10 +134,10 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
         const parsedUrl = parse(fluidResolvedUrl.url);
-        assert(!!parsedUrl.pathname, "s_4d" /* PathName should exist */);
+        assert(!!parsedUrl.pathname, 0x9d /* PathName should exist */);
         const [, tenantId, documentId] = parsedUrl.pathname.split("/");
-        assert(!!tenantId, "s_4e" /* Tenant id should exist */);
-        assert(!!documentId, "s_4f" /* Document id should exist */);
+        assert(!!tenantId, 0x9e /* Tenant id should exist */);
+        assert(!!documentId, 0x9f /* Document id should exist */);
 
         let url = relativeUrl;
         if (url.startsWith("/")) {

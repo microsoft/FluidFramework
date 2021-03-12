@@ -39,7 +39,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         } else {
             root = await runtime.getChannel("root") as ISharedMap;
             const handle = await root.wait<IFluidHandle<ConsensusRegisterCollection<string | null>>>("scheduler");
-            assert(handle !== undefined, "s_6a" /* Missing handle on scheduler load */);
+            assert(handle !== undefined, 0xe2 /* Missing handle on scheduler load */);
             scheduler = await handle.get();
         }
         const agentScheduler = new AgentScheduler(runtime, context, scheduler);
@@ -55,7 +55,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
             return UnattachedClientId;
         }
         const clientId = this.runtime.clientId;
-        assert(!!clientId, "s_6b" /* Trying to get missing clientId! */);
+        assert(!!clientId, 0xe3 /* Trying to get missing clientId! */);
         return clientId;
     }
 
@@ -111,7 +111,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         // I'm adding assert here to catch that case and make decision on which way we go - push requirements
         // to consumers to make a choice, or centrally make this call here.
         assert(this.context.deltaManager.clientDetails.capabilities.interactive,
-            "s_6c" /* Bad client interactive check */);
+            0xe4 /* Bad client interactive check */);
 
         // Check the current status and express interest if it's a new one (undefined) or currently unpicked (null).
         if (this.isActive()) {
@@ -131,7 +131,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
             }
             // Note - the assumption is - we are connected.
             // If not - all tasks should have been dropped already on disconnect / attachment
-            assert(active, "s_6d" /* This agent became inactive while releasing */);
+            assert(active, 0xe5 /* This agent became inactive while releasing */);
             if (this.getTaskClientId(taskUrl) !== this.clientId) {
                 return Promise.reject(new Error(`${taskUrl} was never picked`));
             }
@@ -182,7 +182,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
     }
 
     private async clearTasks(taskUrls: string[]) {
-        assert(this.isActive(), "s_6e" /* Trying to clear tasks on inactive agent */);
+        assert(this.isActive(), 0xe6 /* Trying to clear tasks on inactive agent */);
         const clearP: Promise<void>[] = [];
         for (const taskUrl of taskUrls) {
             debug(`Clearing ${taskUrl}`);
@@ -206,7 +206,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         // Probably okay for now to have every client try to do this.
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         quorum.on("removeMember", async (clientId: string) => {
-            assert(this.runtime.objectsRoutingContext.isAttached, "s_6f" /* Detached object routing context */);
+            assert(this.runtime.objectsRoutingContext.isAttached, 0xe7 /* Detached object routing context */);
             // Cleanup only if connected. If not, cleanup will happen in initializeCore() that runs on connection.
             if (this.isActive()) {
                 const leftTasks: string[] = [];
@@ -257,7 +257,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
     }
 
     private onNewTaskAssigned(key: string) {
-        assert(!this.runningTasks.has(key), "s_6g" /* task is already running */);
+        assert(!this.runningTasks.has(key), 0xe8 /* task is already running */);
         this.runningTasks.add(key);
         const worker = this.locallyRunnableTasks.get(key);
         if (worker === undefined) {
@@ -276,7 +276,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
             this.runningTasks.delete(key);
             this.emit("released", key);
         }
-        assert(currentClient !== undefined, "s_6h" /* client is undefined */);
+        assert(currentClient !== undefined, 0xe9 /* client is undefined */);
         if (this.isActive()) {
             // attempt to pick up task if we are connected.
             // If not, initializeCore() will do it when connected

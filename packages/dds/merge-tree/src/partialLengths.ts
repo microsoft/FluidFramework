@@ -602,16 +602,16 @@ export class PartialSequenceLengths {
             count++;
 
             // Sequence number should be larger or equal to minseq
-            assert(this.minSeq <= partialLength.seq, "s_1t" /* Sequence number less than minSeq! */);
+            assert(this.minSeq <= partialLength.seq, 0x41 /* Sequence number less than minSeq! */);
 
             // Sequence number should be sorted
-            assert(lastSeqNum < partialLength.seq, "s_1u" /* Sequence number is not sorted! */);
+            assert(lastSeqNum < partialLength.seq, 0x42 /* Sequence number is not sorted! */);
             lastSeqNum = partialLength.seq;
 
             // Len is a accumulation of all the seglen adjustments
             accumSegLen += partialLength.seglen;
             if (accumSegLen !== partialLength.len) {
-                assert(false, "s_1v" /* Unexpected total for accumulation of all seglen adjustments! */);
+                assert(false, 0x43 /* Unexpected total for accumulation of all seglen adjustments! */);
             }
 
             if (clientPartials) {
@@ -628,13 +628,13 @@ export class PartialSequenceLengths {
             } else {
                 // Len adjustment should not make length negative
                 if (this.minLength + partialLength.len < 0) {
-                    assert(false, "s_1w" /* Negative length after length adjustment! */);
+                    assert(false, 0x44 /* Negative length after length adjustment! */);
                 }
             }
 
             if (partialLength.overlapRemoveClients) {
                 // Only the flat partialLengths can have overlapRemoveClients, the per client view shouldn't
-                assert(!clientPartials, "s_1x" /* Both overlapRemoveClients and clientPartials are set! */);
+                assert(!clientPartials, 0x45 /* Both overlapRemoveClients and clientPartials are set! */);
 
                 // Each overlap client count as one
                 count += partialLength.overlapRemoveClients.size();
@@ -653,15 +653,15 @@ export class PartialSequenceLengths {
             }
 
             // If we have client view, we should have the flat view
-            assert(!!this.partialLengths, "s_1y" /* Client view exists but flat view does not! */);
+            assert(!!this.partialLengths, 0x46 /* Client view exists but flat view does not! */);
             const flatCount = this.verifyPartialLengths(this.partialLengths, false);
 
             // The number of partial lengths on the client view and flat view should be the same
             assert(flatCount === cliCount,
-                "s_1z" /* Mismatch between number of partial lengths on client and flat views! */);
+                0x47 /* Mismatch between number of partial lengths on client and flat views! */);
         } else {
             // If we don't have a client view, we shouldn't have the flat view either
-            assert(!this.partialLengths, "s_20" /* Flat view exists but client view does not! */);
+            assert(!this.partialLengths, 0x48 /* Flat view exists but client view does not! */);
         }
     }
 }

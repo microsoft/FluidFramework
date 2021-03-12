@@ -207,9 +207,9 @@ export class DebugReplayController extends ReplayController implements IDebugger
             return this.shouldUseController;
         }
 
-        assert(!!documentService, "s_2v" /* Invalid document service! */);
-        assert(!this.documentService, "s_2w" /* Document service already set! */);
-        assert(!this.documentStorageService, "s_2x" /* Document storage service already set! */);
+        assert(!!documentService, 0x67 /* Invalid document service! */);
+        assert(!this.documentService, 0x68 /* Document service already set! */);
+        assert(!this.documentStorageService, 0x69 /* Document storage service already set! */);
         this.documentService = documentService;
         this.documentStorageService = await documentService.connectToStorage();
 
@@ -246,7 +246,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
         this.shouldUseController = await this.startSeqDeferred.promise !== DebugReplayController.WindowClosedSeq;
 
         assert(this.isSelectionMade() === this.shouldUseController,
-            "s_2y" /* User selection status does not match replay controller use status! */);
+            0x6a /* User selection status does not match replay controller use status! */);
         return this.shouldUseController;
     }
 
@@ -334,10 +334,10 @@ export class DebugReplayController extends ReplayController implements IDebugger
         seq: number,
         storage: ReadDocumentStorageServiceBase,
         version: IVersion | string) {
-        assert(!this.isSelectionMade(), "s_2z" /* On storage resolve, user selection already made! */);
-        assert(!!storage, "s_30" /* On storage resolve, missing storage! */);
+        assert(!this.isSelectionMade(), 0x6b /* On storage resolve, user selection already made! */);
+        assert(!!storage, 0x6c /* On storage resolve, missing storage! */);
         this.storage = storage;
-        assert(this.isSelectionMade(), "s_31" /* After storage resolve, user selection status still false! */);
+        assert(this.isSelectionMade(), 0x6d /* After storage resolve, user selection status still false! */);
 
         this.ui.versionSelected(seq, version);
         this.startSeqDeferred.resolve(seq);
@@ -352,7 +352,7 @@ async function* generateSequencedMessagesFromDeltaStorage(deltaStorage: IDocumen
         if (messages.length === 0) {
             assert(!partialResult,
                 // eslint-disable-next-line max-len
-                "s_32" /* No messages loaded from chunk, but nonzero number of partial results loaded from chunk! */);
+                0x6e /* No messages loaded from chunk, but nonzero number of partial results loaded from chunk! */);
             break;
         }
         yield messages;

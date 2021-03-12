@@ -73,18 +73,18 @@ class ContainerContent {
 
     public constructor(public readonly op: number) {
         this._normalizedSnapshot = new Lazy(() => {
-            assert(this.snapshot !== undefined, "s_aq" /* snapshot should be set before retreiving it */);
+            assert(this.snapshot !== undefined, 0x182 /* snapshot should be set before retreiving it */);
             return getNormalizedFileSnapshot(this.snapshot);
         });
 
         this._snapshotAsString = new Lazy(() => {
-            assert(this.snapshot !== undefined, "s_ar" /* snapshot should be set before retreiving it */);
+            assert(this.snapshot !== undefined, 0x183 /* snapshot should be set before retreiving it */);
             return JSON.stringify(this.snapshot, undefined, 2);
         });
 
         this._snapshotExpanded = new Lazy(() => {
             assert(this.snapshot !== undefined,
-                "s_as" /* snapshot should be set before retreiving it as expanded string */);
+                0x184 /* snapshot should be set before retreiving it as expanded string */);
             const snapshotExpanded: IFileSnapshot = {
                 commits: {},
                 tree: expandTreeForReadability(this.snapshot.tree),
@@ -225,7 +225,7 @@ class Document {
                 this.resolveC = resolve;
             });
             assert(this.documentSeqNumber === this.currentOp,
-                "s_at" /* Mismatch between document sequence number and current op number */);
+                0x185 /* Mismatch between document sequence number and current op number */);
         }
     }
 
@@ -296,7 +296,7 @@ export class ReplayTool {
             process.stdout.write("\n");
         }
         assert(this.documentsFromStorageSnapshots.length === 0,
-            "s_au" /* Leftover documents after replay! */);
+            0x186 /* Leftover documents after replay! */);
 
         process.removeListener("unhandledRejection", listener);
 
@@ -523,7 +523,7 @@ export class ReplayTool {
                 replayTo = Math.min(replayTo, op);
             }
 
-            assert(replayTo > currentOp, "s_av" /* replay-to target is <= current op in replay cycle */);
+            assert(replayTo > currentOp, 0x187 /* replay-to target is <= current op in replay cycle */);
             for (const doc of this.documents) {
                 await doc.replay(replayTo);
             }
@@ -598,7 +598,7 @@ export class ReplayTool {
             && (final || this.documentsWindow[0].fromOp <= startOp)) {
             const doc = this.documentsWindow.shift();
             assert(doc.fromOp === startOp || final,
-                "s_aw" /* Bad window to verify snapshot */);
+                0x188 /* Bad window to verify snapshot */);
             await this.saveAndVerify(doc, dir, content, final);
         }
     }
@@ -615,7 +615,7 @@ export class ReplayTool {
         }
         if (processVersionedSnapshot) {
             this.documentPriorSnapshot = this.documentsFromStorageSnapshots.shift();
-            assert(this.documentPriorSnapshot.fromOp === op, "s_ax" /* Unexpected previous snapshot op number */);
+            assert(this.documentPriorSnapshot.fromOp === op, 0x189 /* Unexpected previous snapshot op number */);
             await this.saveAndVerify(this.documentPriorSnapshot, dir, content, final)
                 .catch((e) => {
                     const from = this.documentPriorSnapshot.containerDescription;

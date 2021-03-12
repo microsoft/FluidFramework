@@ -648,7 +648,7 @@ function processQuorumMessages(
         const clientId = JSON.parse(dataString);
         session = sessionsInProgress.get(clientId);
         sessionsInProgress.delete(clientId);
-        assert(!!session, "s_ad" /* Bad session state for processing quorum messages */);
+        assert(!!session, 0x175 /* Bad session state for processing quorum messages */);
         if (session) {
             if (!skipMessage) {
                 session.reportOp(message.timestamp);
@@ -665,7 +665,7 @@ function processQuorumMessages(
         session = sessionsInProgress.get(message.clientId);
         if (session === undefined) {
             session = sessionsInProgress.get(noClientName);
-            assert(!!session, "s_ae" /* Bad session state for processing quorum messages */);
+            assert(!!session, 0x176 /* Bad session state for processing quorum messages */);
         }
     }
     return session;

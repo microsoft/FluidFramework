@@ -122,7 +122,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public get packagePath(): readonly string[] {
-        assert(this.pkg !== undefined, "s_75" /* Undefined package path */);
+        assert(this.pkg !== undefined, 0x101 /* Undefined package path */);
         return this.pkg;
     }
 
@@ -211,9 +211,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.containerRuntime.attachState : AttachState.Detached;
 
         this.bindToContext = () => {
-            assert(this.bindState === BindState.NotBound, "s_76" /* datastore context is already in bound state */);
+            assert(this.bindState === BindState.NotBound, 0x102 /* datastore context is already in bound state */);
             this.bindState = BindState.Binding;
-            assert(this.channel !== undefined, "s_77" /* undefined channel on datastore context */);
+            assert(this.channel !== undefined, 0x103 /* undefined channel on datastore context */);
             bindChannel(this.channel);
             this.bindState = BindState.Bound;
         };
@@ -255,7 +255,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public async realize(): Promise<IFluidDataStoreChannel> {
-        assert(!this.detachedRuntimeCreation, "s_78" /* Detached runtime creation on realize() */);
+        assert(!this.detachedRuntimeCreation, 0x104 /* Detached runtime creation on realize() */);
         if (!this.channelDeferred) {
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore().catch((error) => {
@@ -266,7 +266,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     protected async factoryFromPackagePath(packages) {
-        assert(this.pkg === packages, "s_79" /* Unexpected package path */);
+        assert(this.pkg === packages, 0x105 /* Unexpected package path */);
 
         let entry: FluidDataStoreRegistryEntry | undefined;
         let registry: IFluidDataStoreRegistry | undefined = this._containerRuntime.IFluidDataStoreRegistry;
@@ -300,11 +300,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         const { factory, registry } = await this.factoryFromPackagePath(packages);
 
-        assert(this.registry === undefined, "s_7a" /* datastore context registry is already set */);
+        assert(this.registry === undefined, 0x106 /* datastore context registry is already set */);
         this.registry = registry;
 
         const channel = await factory.instantiateDataStore(this);
-        assert(channel !== undefined, "s_7b" /* undefined channel on datastore context */);
+        assert(channel !== undefined, 0x107 /* undefined channel on datastore context */);
         this.bindRuntime(channel);
     }
 
@@ -322,7 +322,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             return;
         }
 
-        assert(this.connected === connected, "s_7c" /* Unexpected connected state */);
+        assert(this.connected === connected, 0x108 /* Unexpected connected state */);
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.channel!.setConnectionState(connected, clientId);
@@ -343,7 +343,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         if (this.loaded) {
             return this.channel?.process(message, local, localOpMetadata);
         } else {
-            assert(!local, "s_7d" /* local store channel is not loaded */);
+            assert(!local, 0x109 /* local store channel is not loaded */);
             this.pending?.push(message);
         }
     }
@@ -421,7 +421,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      */
     private async getGCDataInternal(fullGC: boolean = false): Promise<IGarbageCollectionData> {
         await this.realize();
-        assert(this.channel !== undefined, "s_7e" /* Channel should not be undefined when running GC */);
+        assert(this.channel !== undefined, 0x10a /* Channel should not be undefined when running GC */);
 
         return this.channel.getGCData(fullGC);
     }
@@ -456,8 +456,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * 2. When the data store is realized. This updates the channel's used routes as per last GC run.
      */
     private updateChannelUsedRoutes() {
-        assert(this.loaded, "s_7f" /* Channel should be loaded when updating used routes */);
-        assert(this.channel !== undefined, "s_7g" /* Channel should be present when data store is loaded */);
+        assert(this.loaded, 0x10b /* Channel should be loaded when updating used routes */);
+        assert(this.channel !== undefined, 0x10c /* Channel should be present when data store is loaded */);
 
         // Remove the route to this data store, if it exists.
         const usedChannelRoutes = this.summarizerNode.usedRoutes.filter(
@@ -476,7 +476,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
         this.verifyNotClosed();
-        assert(!!this.channel, "s_7h" /* Channel must exist when submitting message */);
+        assert(!!this.channel, 0x10d /* Channel must exist when submitting message */);
         const fluidDataStoreContent: FluidDataStoreMessage = {
             content,
             type,
@@ -513,7 +513,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
-        assert(!!this.channel, "s_7i" /* Channel must exist on submitting signal */);
+        assert(!!this.channel, 0x10e /* Channel must exist on submitting signal */);
         return this._containerRuntime.submitDataStoreSignal(this.id, type, content);
     }
 
@@ -544,9 +544,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         try
         {
-            assert(!this.detachedRuntimeCreation, "s_7j" /* Detached runtime creation on runtime bind */);
-            assert(this.channelDeferred !== undefined, "s_7k" /* Undefined channel defferal */);
-            assert(this.pkg !== undefined, "s_7l" /* Undefined package path */);
+            assert(!this.detachedRuntimeCreation, 0x10f /* Detached runtime creation on runtime bind */);
+            assert(this.channelDeferred !== undefined, 0x110 /* Undefined channel defferal */);
+            assert(this.pkg !== undefined, 0x111 /* Undefined package path */);
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const pending = this.pending!;
@@ -601,7 +601,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     public abstract getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
-        assert(!!this.channel, "s_7m" /* Channel must exist when resubmitting ops */);
+        assert(!!this.channel, 0x112 /* Channel must exist when resubmitting ops */);
         const innerContents = contents as FluidDataStoreMessage;
         this.channel.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
     }
@@ -789,20 +789,20 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
     private attachListeners(): void {
         this.once("attaching", () => {
-            assert(this.attachState === AttachState.Detached, "s_7n" /* Should move from detached to attaching */);
+            assert(this.attachState === AttachState.Detached, 0x113 /* Should move from detached to attaching */);
             this._attachState = AttachState.Attaching;
         });
         this.once("attached", () => {
-            assert(this.attachState === AttachState.Attaching, "s_7o" /* Should move from attaching to attached */);
+            assert(this.attachState === AttachState.Attaching, 0x114 /* Should move from attaching to attached */);
             this._attachState = AttachState.Attached;
         });
     }
 
     public generateAttachMessage(): IAttachMessage {
-        assert(this.channel !== undefined, "s_7p" /* There should be a channel when generating attach message */);
-        assert(this.pkg !== undefined, "s_7q" /* pkg should be available in local data store context */);
+        assert(this.channel !== undefined, 0x115 /* There should be a channel when generating attach message */);
+        assert(this.pkg !== undefined, 0x116 /* pkg should be available in local data store context */);
         assert(this.isRootDataStore !== undefined,
-            "s_7r" /* isRootDataStore should be available in local data store context */);
+            0x117 /* isRootDataStore should be available in local data store context */);
 
         const summarizeResult = this.channel.getAttachSummary();
 
@@ -831,9 +831,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         assert(this.pkg !== undefined,
-            "s_7s" /* pkg should be available in local data store */);
+            0x118 /* pkg should be available in local data store */);
         assert(this.isRootDataStore !== undefined,
-            "s_7t" /* isRootDataStore should be available in local data store */);
+            0x119 /* isRootDataStore should be available in local data store */);
         return {
             pkg: this.pkg,
             snapshot: this.snapshotTree,
@@ -922,15 +922,15 @@ export class LocalDetachedFluidDataStoreContext
         registry: IProvideFluidDataStoreFactory,
         dataStoreRuntime: IFluidDataStoreChannel)
     {
-        assert(this.detachedRuntimeCreation, "s_7u" /* runtime creation is already attached */);
-        assert(this.channelDeferred === undefined, "s_7v" /* channel deferral is already set */);
+        assert(this.detachedRuntimeCreation, 0x11a /* runtime creation is already attached */);
+        assert(this.channelDeferred === undefined, 0x11b /* channel deferral is already set */);
 
         const factory = registry.IFluidDataStoreFactory;
 
         const entry = await this.factoryFromPackagePath(this.pkg);
-        assert(entry.factory === factory, "s_7w" /* Unexpected factory for package path */);
+        assert(entry.factory === factory, 0x11c /* Unexpected factory for package path */);
 
-        assert(this.registry === undefined, "s_7x" /* datastore registry already attached */);
+        assert(this.registry === undefined, 0x11d /* datastore registry already attached */);
         this.registry = entry.registry;
 
         this.detachedRuntimeCreation = false;

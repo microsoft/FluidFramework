@@ -85,7 +85,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      */
     public addUnbound(context: LocalFluidDataStoreContext) {
         const id = context.id;
-        assert(!this._contexts.has(id), "s_7y" /* Creating store with existing ID */);
+        assert(!this._contexts.has(id), 0x11e /* Creating store with existing ID */);
 
         this._contexts.set(id, context);
 
@@ -123,7 +123,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      */
     public bind(id: string) {
         const removed: boolean = this.notBoundContexts.delete(id);
-        assert(removed, "s_7z" /* The given id was not found in notBoundContexts to delete */);
+        assert(removed, 0x11f /* The given id was not found in notBoundContexts to delete */);
 
         this.resolveDeferred(id);
     }
@@ -134,12 +134,12 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      */
     private resolveDeferred(id: string) {
         const context = this._contexts.get(id);
-        assert(!!context, "s_80" /* Cannot find context to resolve to */);
+        assert(!!context, 0x120 /* Cannot find context to resolve to */);
         assert(!this.notBoundContexts.has(id),
-            "s_81" /* Expected this id to already be removed from notBoundContexts */);
+            0x121 /* Expected this id to already be removed from notBoundContexts */);
 
         const deferred = this.deferredContexts.get(id);
-        assert(!!deferred, "s_82" /* Cannot find deferred to resolve */);
+        assert(!!deferred, 0x122 /* Cannot find deferred to resolve */);
         deferred.resolve(context);
     }
 
@@ -150,7 +150,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      */
     public addBoundOrRemoted(context: FluidDataStoreContext) {
         const id = context.id;
-        assert(!this._contexts.has(id), "s_83" /* Creating store with existing ID */);
+        assert(!this._contexts.has(id), 0x123 /* Creating store with existing ID */);
 
         this._contexts.set(id, context);
 

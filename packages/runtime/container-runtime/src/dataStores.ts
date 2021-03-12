@@ -147,7 +147,7 @@ export class DataStores implements IDisposable {
         // The local object has already been attached
         if (local) {
             assert(this.pendingAttach.has(attachMessage.id),
-                "s_84" /* Local object does not have matching attach message id */);
+                0x124 /* Local object does not have matching attach message id */);
             this.contexts.get(attachMessage.id)?.emit("attached");
             this.pendingAttach.delete(attachMessage.id);
             return;
@@ -204,7 +204,7 @@ export class DataStores implements IDisposable {
     public bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
         const id = fluidDataStoreRuntime.id;
         const localContext = this.contexts.getUnbound(id);
-        assert(!!localContext, "s_85" /* Could not find unbound context to bind */);
+        assert(!!localContext, 0x125 /* Could not find unbound context to bind */);
 
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
@@ -270,7 +270,7 @@ export class DataStores implements IDisposable {
     public resubmitDataStoreOp(content: any, localOpMetadata: unknown) {
         const envelope = content as IEnvelope;
         const context = this.contexts.get(envelope.address);
-        assert(!!context, "s_86" /* There should be a store context for the op */);
+        assert(!!context, 0x126 /* There should be a store context for the op */);
         context.reSubmit(envelope.contents, localOpMetadata);
     }
 
@@ -278,7 +278,7 @@ export class DataStores implements IDisposable {
         const envelope = message.contents as IEnvelope;
         const transformed = { ...message, contents: envelope.contents };
         const context = this.contexts.get(envelope.address);
-        assert(!!context, "s_87" /* There should be a store context for the op */);
+        assert(!!context, 0x127 /* There should be a store context for the op */);
         context.process(transformed, local, localMessageMetadata);
     }
 
@@ -298,7 +298,7 @@ export class DataStores implements IDisposable {
         const context = this.contexts.get(address);
         if (!context) {
             // Attach message may not have been processed yet
-            assert(!local, "s_88" /* Missing datastore for local signal */);
+            assert(!local, 0x128 /* Missing datastore for local signal */);
             this.logger.sendTelemetryEvent({
                 eventName: "SignalFluidDataStoreNotFound",
                 fluidDataStoreId: address,
@@ -348,7 +348,7 @@ export class DataStores implements IDisposable {
             const summaryTree = await value.summarize(true /* fullTree */, false /* trackState */);
             assert(
                 summaryTree.summary.type === SummaryType.Tree,
-                "s_89" /* summarize should always return a tree when fullTree is true */);
+                0x129 /* summarize should always return a tree when fullTree is true */);
             // back-compat summary - Remove this once snapshot is removed.
             const snapshot = convertSummaryTreeToITree(summaryTree.summary);
 
@@ -385,7 +385,7 @@ export class DataStores implements IDisposable {
             .filter(([_, context]) => {
                 // Summarizer works only with clients with no local changes!
                 assert(context.attachState !== AttachState.Attaching,
-                    "s_8a" /* Summarizer cannot work if client has local changes */);
+                    0x12a /* Summarizer cannot work if client has local changes */);
                 return context.attachState === AttachState.Attached;
             }).map(async ([contextId, context]) => {
                 const contextSummary = await context.summarize(fullTree, trackState);
@@ -431,7 +431,7 @@ export class DataStores implements IDisposable {
                         // If this data store is not yet loaded, then there should be no changes in the snapshot from
                         // which it was created as it is detached container. So just use the previous snapshot.
                         assert(!!this.baseSnapshot,
-                            "s_8b" /* BaseSnapshot should be there as detached container loaded from snapshot */);
+                            0x12b /* BaseSnapshot should be there as detached container loaded from snapshot */);
                         dataStoreSummary = convertSnapshotTreeToSummaryTree(this.baseSnapshot.trees[key]);
                     }
                     builder.addWithStats(key, dataStoreSummary);
@@ -480,7 +480,7 @@ export class DataStores implements IDisposable {
 
         // Verify that the used routes are correct.
         for (const [id] of usedDataStoreRoutes) {
-            assert(this.contexts.has(id), "s_8c" /* Used route does not belong to any known data store */);
+            assert(this.contexts.has(id), 0x12c /* Used route does not belong to any known data store */);
         }
 
         // Update the used routes in each data store. Used routes is empty for unused data stores.
