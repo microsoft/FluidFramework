@@ -4,13 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { TaskManager } from "@fluidframework/agent-scheduler";
 import { IContainer } from "@fluidframework/container-definitions";
 import { taskSchedulerId } from "@fluidframework/container-runtime";
 import { IAgentScheduler } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { timeoutPromise, defaultTimeoutDurationMs } from "@fluidframework/test-utils";
-import { generateTest, ITestObjectProvider, TestDataObject } from "./compatUtils";
+import { generateTest, ITestObjectProvider, ITestDataObject } from "./compatUtils";
 
 const tests = (argsFactory: () => ITestObjectProvider) => {
     let leaderTimeout = defaultTimeoutDurationMs;
@@ -29,10 +28,12 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         beforeEach(async () => {
             const container = await args.makeTestContainer();
-            scheduler = await requestFluidObject<TaskManager>(container, taskSchedulerId)
-                .then((taskManager) => taskManager.IAgentScheduler);
+            // Back-compat: querying for IAgentScheduler since this request would return an ITaskManager prior to 0.36.
+            // Remove the query in 0.38 when back compat is no longer a concern.
+            scheduler = await requestFluidObject<IAgentScheduler>(container, taskSchedulerId)
+                .then((agentScheduler) => agentScheduler.IAgentScheduler);
 
-            const dataObject = await requestFluidObject<TestDataObject>(container, "default");
+            const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
 
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
@@ -109,9 +110,11 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         beforeEach(async () => {
             // Create a new Container for the first document.
             container1 = await args.makeTestContainer();
-            scheduler1 = await requestFluidObject<TaskManager>(container1, taskSchedulerId)
-                .then((taskManager) => taskManager.IAgentScheduler);
-            const dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
+            // Back-compat: querying for IAgentScheduler since this request would return an ITaskManager prior to 0.36.
+            // Remove the query in 0.38 when back compat is no longer a concern.
+            scheduler1 = await requestFluidObject<IAgentScheduler>(container1, taskSchedulerId)
+                .then((agentScheduler) => agentScheduler.IAgentScheduler);
+            const dataObject1 = await requestFluidObject<ITestDataObject>(container1, "default");
 
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
@@ -124,9 +127,11 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             }
             // Load existing Container for the second document.
             container2 = await args.loadTestContainer();
-            scheduler2 = await requestFluidObject<TaskManager>(container2, taskSchedulerId)
-                .then((taskManager) => taskManager.IAgentScheduler);
-            const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
+            // Back-compat: querying for IAgentScheduler since this request would return an ITaskManager prior to 0.36.
+            // Remove the query in 0.38 when back compat is no longer a concern.
+            scheduler2 = await requestFluidObject<IAgentScheduler>(container2, taskSchedulerId)
+                .then((agentScheduler) => agentScheduler.IAgentScheduler);
+            const dataObject2 = await requestFluidObject<ITestDataObject>(container2, "default");
 
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.

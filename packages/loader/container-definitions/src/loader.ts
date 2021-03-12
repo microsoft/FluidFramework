@@ -181,7 +181,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 }
 
 /**
- * The Host's view of the Loader, used for loading Containers
+ * The Runtime's view of the Loader, used for loading Containers
  */
 export interface ILoader extends IFluidRouter {
     /**
@@ -192,7 +192,12 @@ export interface ILoader extends IFluidRouter {
      * a request against the server found from the resolve step.
      */
     resolve(request: IRequest): Promise<IContainer>;
+}
 
+/**
+ * The Host's view of the Loader, used for loading Containers
+ */
+export interface IHostLoader extends ILoader {
     /**
      * Creates a new container using the specified chaincode but in an unattached state. While unattached all
      * updates will only be local until the user explicitly attaches the container to a service provider.
@@ -227,6 +232,15 @@ export type ILoaderOptions = {
      * Defaults to true.
      */
     cache?: boolean;
+
+    /**
+     * Provide the current Loader through the scope object when creating Containers.  It is added
+     * as the `ILoader` property, and will overwrite an existing property of the same name on the
+     * scope.  Useful for when the host wants to provide the current Loader's functionality to
+     * individual Data Stores.
+     * Defaults to false.
+     */
+    provideScopeLoader?: boolean;
 };
 
 /**
@@ -239,7 +253,6 @@ export enum LoaderHeader {
     cache = "fluid-cache",
 
     clientDetails = "fluid-client-details",
-    executionContext = "execution-context",
 
     /**
      * Start the container in a paused, unconnected state. Defaults to false
@@ -264,13 +277,19 @@ export interface ILoaderHeader {
     [LoaderHeader.cache]: boolean;
     [LoaderHeader.clientDetails]: IClientDetails;
     [LoaderHeader.pause]: boolean;
-    [LoaderHeader.executionContext]: string;
     [LoaderHeader.sequenceNumber]: number;
     [LoaderHeader.reconnect]: boolean;
     [LoaderHeader.version]: string | undefined | null;
 }
 
+interface IProvideLoader {
+    readonly ILoader: ILoader;
+}
+
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IRequestHeader extends Partial<ILoaderHeader> { }
+
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideLoader>> { }
 }

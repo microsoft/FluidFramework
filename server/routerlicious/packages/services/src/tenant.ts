@@ -14,7 +14,6 @@ import { generateToken, getCorrelationId } from "@fluidframework/server-services
 import * as core from "@fluidframework/server-services-core";
 import Axios from "axios";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import { v4 as uuid } from "uuid";
 
 export class Tenant implements core.ITenant {
     public get id(): string {
@@ -63,12 +62,18 @@ export class TenantManager implements core.ITenantManager {
             token: fromUtf8ToBase64(`${credentials.user}`),
         };
         const defaultHeaders = {
-            "Authorization": getAuthorizationTokenFromCredentials(credentials),
-            // TODO: all requests from this GitManager will have the same correlation id. Is this intended behavior?
-            "x-correlation-id": getCorrelationId() || uuid(),
+            Authorization: getAuthorizationTokenFromCredentials(credentials),
         };
         const baseUrl = `${details.data.storage.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`;
-        const restWrapper = new BasicRestWrapper(baseUrl, defaultQueryString, undefined, defaultHeaders);
+        const restWrapper = new BasicRestWrapper(
+            baseUrl,
+            defaultQueryString,
+            undefined,
+            defaultHeaders,
+            undefined,
+            undefined,
+            undefined,
+            getCorrelationId);
         const historian = new Historian(
             `${details.data.storage.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`,
             true,

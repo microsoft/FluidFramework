@@ -10,10 +10,9 @@ import { strict as assert } from "assert";
 import sinon from "sinon";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { OdspDriverUrlResolverForShareLink } from "../odspDriverUrlResolverForShareLink";
-import { SharingLinkTokenFetchOptions, TokenFetcher } from "../tokenFetch";
 import { getHashedDocumentId } from "../odspUtils";
 import { createOdspUrl } from "../createOdspUrl";
-import * as graphImport from "../graph";
+import * as fileLinkImport from "../getFileLink";
 import { getLocatorFromOdspUrl, storeLocatorInOdspUrl } from "../odspFluidFileLink";
 import { IOdspResolvedUrl, SharingLinkHeader } from "../contracts";
 
@@ -29,17 +28,16 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
     let urlResolver: OdspDriverUrlResolverForShareLink;
 
     beforeEach(() => {
-        const shareLinkTokenFetcher: TokenFetcher<SharingLinkTokenFetchOptions> = async (options) => "SharingLinkToken";
-        urlResolver = new OdspDriverUrlResolverForShareLink(shareLinkTokenFetcher);
+        urlResolver = new OdspDriverUrlResolverForShareLink(async () => "SharingLinkToken");
     });
 
-    async function mockGetShareLink<T>(response: Promise<string>, callback: () => Promise<T>): Promise<T> {
-        const getShareLinkStub = sinon.stub(graphImport, "getShareLink");
-        getShareLinkStub.returns(response);
+    async function mockGetFileLink<T>(response: Promise<string>, callback: () => Promise<T>): Promise<T> {
+        const getFileLinkStub = sinon.stub(fileLinkImport, "getFileLink");
+        getFileLinkStub.returns(response);
         try {
             return await callback();
         } finally {
-            getShareLinkStub.restore();
+            getFileLinkStub.restore();
         }
     }
 
@@ -64,7 +62,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
     });
 
     it("resolve - Check conversion in either direction", async () => {
-        const resolvedUrl = await mockGetShareLink(Promise.resolve(sharelink), async () => {
+        const resolvedUrl = await mockGetFileLink(Promise.resolve(sharelink), async () => {
             return urlResolver.resolve({ url: urlWithNavParam });
         });
         const absoluteUrl = await urlResolver.getAbsoluteUrl(resolvedUrl, dataStorePath);
@@ -76,7 +74,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 
     it("resolve - Should generate sharelink and set it in shareLinkMap", async () => {
         const url: string = createOdspUrl(siteUrl, driveId, itemId, dataStorePath);
-        await mockGetShareLink(Promise.resolve(sharelink), async () => {
+        await mockGetFileLink(Promise.resolve(sharelink), async () => {
             return urlResolver.resolve({ url });
         });
         const actualShareLink = await urlResolver["sharingLinkCache"].get(`${siteUrl},${driveId},${itemId}`);
@@ -85,7 +83,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 
     it("getAbsoluteUrl - Should generate sharelink if none was generated on resolve", async () => {
         const mockResolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
-        const absoluteUrl = await mockGetShareLink(Promise.resolve(sharelink), async () => {
+        const absoluteUrl = await mockGetFileLink(Promise.resolve(sharelink), async () => {
             return urlResolver.getAbsoluteUrl(mockResolvedUrl, dataStorePath);
         });
 
@@ -101,7 +99,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
     it("getAbsoluteUrl - Should throw if getShareLink throws and clear the promise from shareLinkMap", async () => {
         const mockResolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
         let success = true;
-        const absoluteUrl = await mockGetShareLink(Promise.reject(new Error("No Sharelink")), async () => {
+        const absoluteUrl = await mockGetFileLink(Promise.reject(new Error("No Sharelink")), async () => {
             return urlResolver.getAbsoluteUrl(mockResolvedUrl, dataStorePath);
         }).catch((error) => {
             assert.strictEqual(error.message, "No Sharelink", "Error should be as expected.");
@@ -131,7 +129,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
     });
 
     it("Sharing link should be set when isSharingLinkToRedeem header is set", async () => {
-        const resolvedUrl = await mockGetShareLink(Promise.resolve(sharelink), async () => {
+        const resolvedUrl = await mockGetFileLink(Promise.resolve(sharelink), async () => {
             const url = new URL(sharelink);
             storeLocatorInOdspUrl(url, { siteUrl, driveId, fileId: itemId, dataStorePath });
             return urlResolver.resolve({ url: url.toString(), headers: { [SharingLinkHeader.isSharingLinkToRedeem]: true } });

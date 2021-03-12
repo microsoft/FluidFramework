@@ -279,9 +279,13 @@ function initialize(
             }
             typingDetails.classList.remove("hidden");
 
+            if (context.scope.ILoader === undefined) {
+                throw new Error("scope must contain ILoader");
+            }
+
             // Start typing and register to update the UI
             const typeP = scribe.type(
-                context.loader,
+                context.scope.ILoader,
                 url,
                 root,
                 runtime,

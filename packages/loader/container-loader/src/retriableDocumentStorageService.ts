@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { performance } from "@fluidframework/common-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     IDocumentStorageService,
@@ -20,6 +18,8 @@ import {
     ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { performance, bufferToString } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import { DeltaManager } from "./deltaManager";
 
@@ -52,7 +52,8 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
     }
 
     public async read(blobId: string): Promise<string> {
-        return this.readWithRetry(async () => this.internalStorageService.read(blobId), "read");
+        return this.readWithRetry(async () =>
+        bufferToString(await this.internalStorageService.readBlob(blobId),"base64"), "read");
     }
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {

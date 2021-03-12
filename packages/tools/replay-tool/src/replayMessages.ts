@@ -223,7 +223,8 @@ class Document {
             await new Promise<void>((resolve) => {
                 this.resolveC = resolve;
             });
-            assert(this.documentSeqNumber === this.currentOp);
+            assert(this.documentSeqNumber === this.currentOp,
+                "Mismatch between document sequence number and current op number");
         }
     }
 
@@ -293,7 +294,8 @@ export class ReplayTool {
         } else if (threads.isMainThread) {
             process.stdout.write("\n");
         }
-        assert(this.documentsFromStorageSnapshots.length === 0);
+        assert(this.documentsFromStorageSnapshots.length === 0,
+            "Leftover documents after replay!");
 
         process.removeListener("unhandledRejection", listener);
 
@@ -442,7 +444,7 @@ export class ReplayTool {
                         this.documents.push(doc);
                     }
                 } catch (error) {
-                    doc.logger.logException({ eventName: "FailedToLoadSnapshot" }, error);
+                    doc.logger.sendErrorEvent({ eventName: "FailedToLoadSnapshot" }, error);
                 }
             }
         }
@@ -489,7 +491,7 @@ export class ReplayTool {
                         this.documentsFromStorageSnapshots.push(doc);
                     }
                 } catch (error) {
-                    doc.logger.logException({ eventName: "FailedToLoadSnapshot" }, error);
+                    doc.logger.sendTelemetryEvent({ eventName: "FailedToLoadSnapshot" }, error);
                 }
             }
             this.documentsFromStorageSnapshots.sort((a: Document, b: Document) => a.fromOp > b.fromOp ? 1 : -1);
@@ -520,7 +522,7 @@ export class ReplayTool {
                 replayTo = Math.min(replayTo, op);
             }
 
-            assert(replayTo > currentOp);
+            assert(replayTo > currentOp, "replay-to target is <= current op in replay cycle");
             for (const doc of this.documents) {
                 await doc.replay(replayTo);
             }
@@ -594,7 +596,8 @@ export class ReplayTool {
         while (this.documentsWindow.length > 0
             && (final || this.documentsWindow[0].fromOp <= startOp)) {
             const doc = this.documentsWindow.shift();
-            assert(doc.fromOp === startOp || final);
+            assert(doc.fromOp === startOp || final,
+                "Bad window to verify snapshot");
             await this.saveAndVerify(doc, dir, content, final);
         }
     }
@@ -611,7 +614,7 @@ export class ReplayTool {
         }
         if (processVersionedSnapshot) {
             this.documentPriorSnapshot = this.documentsFromStorageSnapshots.shift();
-            assert(this.documentPriorSnapshot.fromOp === op);
+            assert(this.documentPriorSnapshot.fromOp === op, "Unexpected previous snapshot op number");
             await this.saveAndVerify(this.documentPriorSnapshot, dir, content, final)
                 .catch((e) => {
                     const from = this.documentPriorSnapshot.containerDescription;

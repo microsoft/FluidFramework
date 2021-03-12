@@ -31,6 +31,8 @@ import {
      convertSnapshotTreeToSummaryTree,
      convertSummaryTreeToITree,
      convertToSummaryTree,
+     create404Response,
+     responseToException,
      SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -144,7 +146,7 @@ export class DataStores implements IDisposable {
         const attachMessage = message.contents as InboundAttachMessage;
         // The local object has already been attached
         if (local) {
-            assert(this.pendingAttach.has(attachMessage.id));
+            assert(this.pendingAttach.has(attachMessage.id), "Local object does not have matching attach message id");
             this.contexts.get(attachMessage.id)?.emit("attached");
             this.pendingAttach.delete(attachMessage.id);
             return;
@@ -164,7 +166,7 @@ export class DataStores implements IDisposable {
             throw error;
         }
 
-        const flatBlobs = new Map<string, string>();
+        const flatBlobs = new Map<string, ArrayBufferLike>();
         let snapshotTree: ISnapshotTree | undefined;
         if (attachMessage.snapshot) {
             snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
@@ -198,7 +200,7 @@ export class DataStores implements IDisposable {
         Promise.resolve().then(async () => remotedFluidDataStoreContext.realize());
     }
 
-    public  bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
+    public bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
         const id = fluidDataStoreRuntime.id;
         const localContext = this.contexts.getUnbound(id);
         assert(!!localContext, "Could not find unbound context to bind");
@@ -279,14 +281,16 @@ export class DataStores implements IDisposable {
         context.process(transformed, local, localMessageMetadata);
     }
 
-    public async getDataStore(id: string, wait: boolean): Promise<IFluidDataStoreChannel> {
+    public async getDataStore(id: string, wait: boolean): Promise<FluidDataStoreContext> {
         const context = await this.contexts.getBoundOrRemoted(id, wait);
 
         if (context === undefined) {
-            throw new Error(`DataStore ${id} does not yet exist or is not yet bound`);
+            // The requested data store does not exits. Throw a 404 response exception.
+            const request = { url: id };
+            throw responseToException(create404Response(request), request);
         }
 
-        return context.realize();
+        return context;
     }
 
     public processSignal(address: string, message: IInboundSignalMessage, local: boolean) {
@@ -379,7 +383,8 @@ export class DataStores implements IDisposable {
         await Promise.all(Array.from(this.contexts)
             .filter(([_, context]) => {
                 // Summarizer works only with clients with no local changes!
-                assert(context.attachState !== AttachState.Attaching);
+                assert(context.attachState !== AttachState.Attaching,
+                    "Summarizer cannot work if client has local changes");
                 return context.attachState === AttachState.Attached;
             }).map(async ([contextId, context]) => {
                 const contextSummary = await context.summarize(fullTree, trackState);

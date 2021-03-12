@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { TaskManagerFactory } from "@fluidframework/agent-scheduler";
+import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
@@ -61,7 +61,6 @@ import {
 import {
     IClientDetails,
     IDocumentMessage,
-    IHelpMessage,
     IQuorum,
     ISequencedDocumentMessage,
     ISignalMessage,
@@ -90,8 +89,8 @@ import {
     ISummaryStats,
     ISummaryTreeWithStats,
     ISummarizeInternalResult,
+    IProvideAgentScheduler,
     IAgentScheduler,
-    ITaskManager,
     IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
@@ -107,6 +106,7 @@ import {
     RequestParser,
     create404Response,
     exceptionToResponse,
+    responseToException,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -114,7 +114,6 @@ import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
 import { ISummarizerRuntime, ISummarizerInternalsProvider, Summarizer, IGenerateSummaryOptions } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
-import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
@@ -215,9 +214,6 @@ export interface IContainerRuntimeOptions {
     // This defaults to true and must be explicitly set to false to disable.
     generateSummaries?: boolean;
 
-    // Experimental flag that will execute tasks in web worker if connected to a service that supports them.
-    enableWorker?: boolean;
-
     // Delay before first attempt to spawn summarizing container
     initialSummarizerDelayMs?: number;
 
@@ -257,11 +253,11 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
         } else {
             // new format
             const innerContents = message.contents as ContainerRuntimeMessage;
-            assert(innerContents.type !== undefined);
+            assert(innerContents.type !== undefined, "Undefined inner contents type!");
             message.type = innerContents.type;
             message.contents = innerContents.contents;
         }
-        assert(isRuntimeMessage(message));
+        assert(isRuntimeMessage(message), "Message to unpack is not proper runtime message");
     } else {
         // Legacy format, but it's already "unpacked",
         // i.e. message.type is actually ContainerMessageType.
@@ -443,7 +439,7 @@ class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
     constructor(namedEntries: NamedFluidDataStoreRegistryEntries) {
         super([
             ...namedEntries,
-            TaskManagerFactory.registryEntry,
+            AgentSchedulerFactory.registryEntry,
         ]);
     }
 }
@@ -528,7 +524,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Create all internal data stores if not already existing on storage or loaded a detached
         // container from snapshot(ex. draft mode).
         if (!context.existing) {
-            await runtime.createRootDataStore(TaskManagerFactory.type, taskSchedulerId);
+            await runtime.createRootDataStore(AgentSchedulerFactory.type, taskSchedulerId);
         }
 
         runtime.subscribeToLeadership();
@@ -623,11 +619,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
-    private tasks: string[] = [];
-
-    // Back-compat: version decides between loading document and chaincode.
-    private version: string | undefined;
-
     private _flushMode = FlushMode.Automatic;
     private needsFlush = false;
     private flushTrigger = false;
@@ -680,7 +671,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         chunks: [string, string[]][],
         private readonly runtimeOptions: IContainerRuntimeOptions = {
             generateSummaries: true,
-            enableWorker: false,
         },
         private readonly containerScope: IFluidObject,
         public readonly logger: ITelemetryLogger,
@@ -794,7 +784,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summaryManager = new SummaryManager(
             context,
             this.runtimeOptions.generateSummaries !== false,
-            !!this.runtimeOptions.enableWorker,
             this.logger,
             (summarizer) => { this.nextSummarizerP = summarizer; },
             this.previousState.nextSummarizerP,
@@ -920,10 +909,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     return create404Response(request);
                 }
             } else if (requestParser.pathParts.length > 0) {
-                const wait =
-                    typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
-
-                const dataStore = await this.getDataStore(id, wait);
+                /**
+                 * If this an external app request with "externalRequest" header, we need to return an error if the
+                 * data store being requested is marked as unreferenced as per the data store's initial summary.
+                 *
+                 * This is a workaround to handle scenarios where a data store shared with an external app is deleted
+                 * and marked as unreferenced by GC. Returning an error will fail to load the data store for the app.
+                 */
+                const wait = typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
+                const dataStore = request.headers?.externalRequest
+                    ? await this.getDataStoreIfInitiallyReferenced(id, wait)
+                    : await this.getDataStore(id, wait);
                 const subRequest = requestParser.createSubRequest(1);
                 // We always expect createSubRequest to include a leading slash, but asserting here to protect against
                 // unintentionally modifying the url if that changes.
@@ -935,6 +931,28 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         } catch (error) {
             return exceptionToResponse(error);
         }
+    }
+
+    /**
+     * Retrieves the runtime for a data store if it's referenced as per the initially summary that it is loaded with.
+     * This is a workaround to handle scenarios where a data store shared with an external app is deleted and marked
+     * as unreferenced by GC.
+     * @param id - Id supplied during creating the data store.
+     * @param wait - True if you want to wait for it.
+     * @returns the data store runtime if the data store exists and is initially referenced; undefined otherwise.
+     */
+    private async getDataStoreIfInitiallyReferenced(id: string, wait = true): Promise<IFluidRouter> {
+        const dataStoreContext = await this.dataStores.getDataStore(id, wait);
+        // The data store is referenced if used routes in the initial summary has a route to self.
+        // Older documents may not have used routes in the summary. They are considered referenced.
+        const usedRoutes = (await dataStoreContext.getInitialGCSummaryDetails()).usedRoutes;
+        if (usedRoutes === undefined || usedRoutes.includes("") || usedRoutes.includes("/")) {
+            return dataStoreContext.realize();
+        }
+
+        // The data store is unreferenced. Throw a 404 response exception.
+        const request = { url: id };
+        throw responseToException(create404Response(request), request);
     }
 
     /**
@@ -997,7 +1015,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const oldState = this.dirtyContainer;
         this.dirtyContainer = false;
 
-        assert(this.emitDirtyDocumentEvent);
+        assert(this.emitDirtyDocumentEvent, "dirty document event not set on replay");
         this.emitDirtyDocumentEvent = false;
         let newState: boolean;
 
@@ -1031,7 +1049,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         raiseConnectedEvent(this._logger, this, connected, clientId);
 
         if (connected) {
-            assert(!!clientId);
+            assert(!!clientId, "Missing clientId");
             this.summaryManager.setConnected(clientId);
         } else {
             this.summaryManager.setDisconnected();
@@ -1089,7 +1107,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.dataStores.processFluidDataStoreOp(message, local, localMessageMetadata);
                     break;
                 case ContainerMessageType.BlobAttach:
-                    assert(message?.metadata?.blobId);
+                    assert(message?.metadata?.blobId, "Missing blob id on metadata");
                     this.blobManager.addBlobId(message.metadata.blobId);
                     break;
                 default:
@@ -1122,11 +1140,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
-        return this.dataStores.getDataStore(id, wait);
+        const context = await this.dataStores.getDataStore(id, wait);
+        assert(await context.isRoot());
+        return context.realize();
     }
 
     protected async getDataStore(id: string, wait = true): Promise<IFluidRouter> {
-        return this.dataStores.getDataStore(id, wait);
+        return (await this.dataStores.getDataStore(id, wait)).realize();
     }
 
     public notifyDataStoreInstantiated(context: IFluidDataStoreContext) {
@@ -1252,20 +1272,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public raiseContainerWarning(warning: ContainerWarning) {
         this.context.raiseContainerWarning(warning);
-    }
-
-    /**
-     * Notifies this object to register tasks to be performed.
-     * @param tasks - List of tasks.
-     * @param version - Version of the Fluid package.
-     */
-    public registerTasks(tasks: string[], version?: string) {
-        this.verifyNotClosed();
-        this.tasks = tasks;
-        this.version = version;
-        if (this.leader) {
-            this.runTaskAnalyzer();
-        }
     }
 
     /**
@@ -1557,7 +1563,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             map = [];
             this.chunkMap.set(clientId, map);
         }
-        assert(chunkedContent.chunkId === map.length + 1); // 1-based indexing
+        assert(chunkedContent.chunkId === map.length + 1,
+            "Mismatch between new chunkId and expected chunkMap"); // 1-based indexing
         map.push(chunkedContent.contents);
     }
 
@@ -1688,7 +1695,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         type: MessageType,
         contents: any) {
         this.verifyNotClosed();
-        assert(this.connected);
+        assert(this.connected, "Container disconnected when trying to submit system message");
 
         // System message should not be sent in the middle of the batch.
         // That said, we can preserve existing behavior by not flushing existing buffer.
@@ -1766,13 +1773,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // Each client expresses interest to be a leader.
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 scheduler.pick(LeaderTaskId, async () => {
-                    assert(!this._leader);
+                    assert(!this._leader, "Client is already leader");
                     this.updateLeader(true);
                 });
 
                 scheduler.on("lost", (key) => {
                     if (key === LeaderTaskId) {
-                        assert(this._leader);
+                        assert(this._leader, "Got leader key but client is not leader");
                         this._leader = false;
                         this.updateLeader(false);
                     }
@@ -1780,74 +1787,41 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }).catch((err) => {
                 this.closeFn(CreateContainerError(err));
             });
-
-            this.context.quorum.on("removeMember", () => {
-                if (this.leader) {
-                    this.runTaskAnalyzer();
-                }
-            });
         }
     }
 
-    public async getTaskManager(): Promise<ITaskManager> {
-        return requestFluidObject<ITaskManager>(
-            await this.getDataStore(taskSchedulerId, true),
-            "");
+    /**
+     * @deprecated starting in 0.36. The AgentScheduler can be requested directly, though this will also be removed in
+     * a future release when an alternative is available: containerRuntime.request(\{ url: "/_scheduler" \}).
+     * getTaskManager should be removed in 0.38.
+     */
+    public async getTaskManager(): Promise<IProvideAgentScheduler> {
+        console.error("getTaskManager is deprecated.");
+        const agentScheduler = await this.getScheduler();
+        // Prior versions would return a TaskManager, which was an IProvideAgentScheduler -- returning this for back
+        // compat.  Wrapping the agentScheduler in an IProvideAgentScheduler will help catch any cases where customers
+        // try to call other TaskManager functionality.
+        return { IAgentScheduler: agentScheduler };
     }
 
-    public async getScheduler(): Promise<IAgentScheduler> {
-        const taskManager = await this.getTaskManager();
-        return taskManager.IAgentScheduler;
+    private async getScheduler(): Promise<IAgentScheduler> {
+        return requestFluidObject<IAgentScheduler>(
+            await this.getDataStore(taskSchedulerId, true),
+            "",
+        );
     }
 
     private updateLeader(leadership: boolean) {
         this._leader = leadership;
         if (this.leader) {
-            assert(this.clientId === undefined || this.connected && this.deltaManager && this.deltaManager.active);
+            assert(this.clientId === undefined || this.connected && this.deltaManager && this.deltaManager.active,
+                "Leader must either have undefined clientId or be connected with active delta manager!");
             this.emit("leader");
         } else {
             this.emit("notleader");
         }
 
         this.dataStores.updateLeader();
-
-        if (this.leader) {
-            this.runTaskAnalyzer();
-        }
-    }
-
-    /**
-     * On a client joining/departure, decide whether this client is the new leader.
-     * If so, calculate if there are any unhandled tasks for browsers and remote agents.
-     * Emit local help message for this browser and submits a remote help message for agents.
-     */
-    private runTaskAnalyzer() {
-        // Analyze the current state and ask for local and remote help separately.
-        // If called for detached container, the clientId would not be assigned and it is disconnected. In this
-        // case, all tasks are run by the detached container. Called only if a leader. If we have a clientId,
-        // then we should be connected as leadership is lost on losing connection.
-        const helpTasks = this.clientId === undefined ?
-            { browser: this.tasks, robot: [] } :
-            analyzeTasks(this.clientId, this.getQuorum().getMembers(), this.tasks);
-
-        if (helpTasks && (helpTasks.browser.length > 0 || helpTasks.robot.length > 0)) {
-            if (helpTasks.browser.length > 0) {
-                const localHelpMessage: IHelpMessage = {
-                    tasks: helpTasks.browser,
-                    version: this.version,   // Back-compat
-                };
-                debug(`Requesting local help for ${helpTasks.browser}`);
-                this.emit("localHelp", localHelpMessage);
-            }
-            if (helpTasks.robot.length > 0) {
-                const remoteHelpMessage: IHelpMessage = {
-                    tasks: helpTasks.robot,
-                    version: this.version,   // Back-compat
-                };
-                debug(`Requesting remote help for ${helpTasks.robot}`);
-                this.submitSystemMessage(MessageType.RemoteHelp, remoteHelpMessage);
-            }
-        }
     }
 
     /** Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck */

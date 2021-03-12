@@ -209,7 +209,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         // Create a sub data store of type TestFluidObject.
         const dataStore1 = await createFluidObject(dataStore.context, "default");
-        const defP = new Deferred();
+        const defP = new Deferred<void>();
         container.on("op", (op: ISequencedDocumentMessage) => {
             if (op.contents?.type === DataStoreMessageType.Attach) {
                 assert.strictEqual(op.contents.contents.id, dataStore1.context.id,
@@ -265,7 +265,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
     it("Fire ops during container attach for shared string", async () => {
         const ops = { pos1: 0, seg: "b", type: 0 };
-        const defPromise = new Deferred();
+        const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.equal(type, MessageType.Operation);
@@ -299,7 +299,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
     it("Fire ops during container attach for shared map", async () => {
         const ops = { key: "1", type: "set", value: { type: "Plain", value: "b" } };
-        const defPromise = new Deferred();
+        const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
@@ -328,7 +328,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
     it("Fire channel attach ops during container attach", async () => {
         const testChannelId = "testChannel1";
-        const defPromise = new Deferred();
+        const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.id,
@@ -356,7 +356,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
     it("Fire dataStore attach ops during container attach", async () => {
         const testDataStoreType = "default";
-        const defPromise = new Deferred();
+        const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(args.defaultCodeDetails);
 
         // Get the root dataStore from the detached container.
@@ -391,7 +391,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             serializedValue: JSON.stringify("b"),
             refSeq: detachedContainerRefSeqNumber,
         };
-        const defPromise = new Deferred();
+        const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
@@ -425,7 +425,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             type: "set",
             value: { type: "Plain", value: "b" },
         };
-        const defPromise = new Deferred();
+        const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
@@ -453,7 +453,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
     it("Fire ops during container attach for shared cell", async () => {
         const op = { type: "setCell", value: { type: "Plain", value: "b" } };
-        const defPromise = new Deferred();
+        const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
@@ -480,7 +480,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     });
 
     it("Fire ops during container attach for shared ink", async () => {
-        const defPromise = new Deferred();
+        const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
@@ -513,7 +513,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
     it("Fire ops during container attach for consensus ordered collection", async () => {
         const op = { opName: "add", value: JSON.stringify("s") };
-        const defPromise = new Deferred();
+        const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
@@ -543,7 +543,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
     it("Fire ops during container attach for sparse matrix", async () => {
         const seg = { items: ["s"] };
-        const defPromise = new Deferred();
+        const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
@@ -578,7 +578,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
     it.skip("Fire ops during container attach for shared matrix", async () => {
         const op = { pos1: 0, seg: 9, type: 0, target: "rows" };
-        const defPromise = new Deferred();
+        const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(args.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
