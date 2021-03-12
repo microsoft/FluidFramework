@@ -9,7 +9,7 @@ import { IContainerRuntimeOptions, ContainerRuntime } from "@fluidframework/cont
 import { IFluidLoadable, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IClientConfiguration } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext,IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ISharedDirectory } from "@fluidframework/map";
 import { unreachableCase } from "@fluidframework/common-utils";
@@ -21,7 +21,7 @@ import {
     TestObjectProvider,
 } from "@fluidframework/test-utils";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
-import { getLoaderApi, getContainerRuntimeApi, getDataRuntimeApi, DataRuntimeApiType } from "./testApi";
+import { getLoaderApi, getContainerRuntimeApi, getDataRuntimeApi } from "./testApi";
 
 export interface ITestObjectProvider {
     /**
@@ -72,7 +72,7 @@ export interface ITestDataObject extends IFluidLoadable {
     _root: ISharedDirectory;
 }
 
-function createGetDataStoreFactoryFunction(api: DataRuntimeApiType) {
+function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntimeApi>) {
     class TestDataObject extends api.DataObject implements ITestDataObject {
         public get _context() { return this.context; }
         public get _runtime() { return this.runtime; }
@@ -97,7 +97,7 @@ function createGetDataStoreFactoryFunction(api: DataRuntimeApiType) {
         return oldRegistry;
     }
 
-    return function(containerOptions?: ITestContainerConfig) {
+    return function(containerOptions?: ITestContainerConfig): IFluidDataStoreFactory {
         const registry = convertRegistry(containerOptions?.registry);
         const fluidDataObjectType = containerOptions?.fluidDataObjectType;
         switch (fluidDataObjectType) {

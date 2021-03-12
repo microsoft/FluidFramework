@@ -31,7 +31,7 @@ import {
     ITestContainerConfig,
     DataObjectFactoryType,
     ITestObjectProvider,
-} from "./compatUtils";
+} from "@fluidframework/test-version-utils";
 
 const detachedContainerRefSeqNumber = 0;
 

@@ -9,7 +9,7 @@ import { taskSchedulerId } from "@fluidframework/container-runtime";
 import { IAgentScheduler } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { timeoutPromise, defaultTimeoutDurationMs } from "@fluidframework/test-utils";
-import { generateTest, ITestObjectProvider, ITestDataObject } from "./compatUtils";
+import { generateTest, ITestObjectProvider, ITestDataObject } from "@fluidframework/test-version-utils";
 
 const tests = (argsFactory: () => ITestObjectProvider) => {
     let leaderTimeout = defaultTimeoutDurationMs;

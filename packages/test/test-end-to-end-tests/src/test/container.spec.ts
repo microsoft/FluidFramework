@@ -24,7 +24,7 @@ import {
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestDriver, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
-import { getDataStoreFactory, ITestDataObject, TestDataObjectType } from "./compatUtils";
+import { getDataStoreFactory, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };

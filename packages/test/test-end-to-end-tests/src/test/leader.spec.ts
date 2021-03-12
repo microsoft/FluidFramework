@@ -10,7 +10,7 @@ import { ITestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
 import {
     generateNonCompatTest,
     ITestObjectProvider,
-} from "./compatUtils";
+} from "@fluidframework/test-version-utils";
 
 async function ensureConnected(container: Container) {
     if (!container.connected) {

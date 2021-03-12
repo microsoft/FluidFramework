@@ -18,7 +18,12 @@ import {
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ChannelFactoryRegistry, ITestFluidObject } from "@fluidframework/test-utils";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { DataObjectFactoryType, generateTest, ITestContainerConfig, ITestObjectProvider } from "./compatUtils";
+import {
+    DataObjectFactoryType,
+    generateTest,
+    ITestContainerConfig,
+    ITestObjectProvider,
+} from "@fluidframework/test-version-utils";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IFluidDataStoreRuntime, id?: string): T;
@@ -39,7 +44,7 @@ function generate(
     input: any[], output: any[]) {
     const tests = (argsFactory: () => ITestObjectProvider) => {
         let args: ITestObjectProvider;
-        beforeEach(()=>{
+        beforeEach(() => {
             args = argsFactory();
         });
         afterEach(() => {

@@ -15,7 +15,7 @@ import {
     ITestObjectProvider,
     ITestDataObject,
     TestDataObjectType,
-} from "./compatUtils";
+} from "@fluidframework/test-version-utils";
 
 const tests = (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;

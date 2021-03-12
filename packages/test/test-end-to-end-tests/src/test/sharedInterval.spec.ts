@@ -24,7 +24,7 @@ import {
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
-} from "./compatUtils";
+} from "@fluidframework/test-version-utils";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
