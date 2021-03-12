@@ -1,4 +1,3 @@
-/* eslint-disable no-null/no-null */
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
@@ -184,11 +183,12 @@ export function configureWebSocketServices(
                 getSocketConnectThrottleId(message.tenantId),
                 logger);
             if (throttleError) {
-                return Promise.reject(throttleError);
+                return Promise.reject(createNackMessage(
+                    429, NackErrorType.ThrottlingError, throttleError.message, throttleError.retryAfter));
             }
             if (!message.token) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject("Must provide an authorization token");
+                return Promise.reject(createNackMessage(
+                    403, NackErrorType.InvalidTokenError, "Must provide an authorization token"));
             }
 
             // Validate token signature and claims
@@ -199,15 +199,13 @@ export function configureWebSocketServices(
                 maxTokenLifetimeSec,
                 isTokenExpiryEnabled);
             if (!claims) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject("Invalid claims");
+                return Promise.reject(createNackMessage(401, NackErrorType.InvalidClaimsError, "Invalid claims"));
             }
 
             try {
                 await tenantManager.verifyToken(claims.tenantId, token);
             } catch (err) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject("Invalid token");
+                return Promise.reject(createNackMessage(403, NackErrorType.InvalidTokenError, "Invalid token"));
             }
 
             const clientId = generateClientId();
@@ -236,11 +234,10 @@ export function configureWebSocketServices(
             const connectVersions = message.versions ? message.versions : ["^0.1.0"];
             const version = selectProtocolVersion(connectVersions);
             if (!version) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject(
+                return Promise.reject(createNackMessage(
+                    400, NackErrorType.BadRequestError,
                     `Unsupported client protocol.` +
-                    `Server: ${protocolVersions}. ` +
-                    `Client: ${JSON.stringify(connectVersions)}`);
+                    `Server: ${protocolVersions}. Client: ${JSON.stringify(connectVersions)}`));
             }
 
             const detailsP = storage.getOrCreateDocument(claims.tenantId, claims.documentId);
@@ -249,12 +246,8 @@ export function configureWebSocketServices(
             const [details, clients] = await Promise.all([detailsP, clientsP]);
 
             if (clients.length > maxNumberOfClientsPerDocument) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject({
-                    code: 400,
-                    message: "Too many clients are already connected to this document.",
-                    retryAfter: 5 * 60,
-                });
+                return Promise.reject(createNackMessage(
+                    429, NackErrorType.ThrottlingError, "Too Many Clients Connected to Document", 5 * 60));
             }
 
             await clientManager.addClient(
@@ -268,8 +261,8 @@ export function configureWebSocketServices(
                 if (lifeTimeMSec > 0) {
                     setExpirationTimer(lifeTimeMSec);
                 } else {
-                    // eslint-disable-next-line prefer-promise-reject-errors
-                    return Promise.reject("Invalid token expiry");
+                    return Promise.reject(createNackMessage(
+                        401, NackErrorType.InvalidClaimsError, "Invalid token expiry"));
                 }
             }
 
