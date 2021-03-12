@@ -129,8 +129,9 @@ export class DocumentService implements api.IDocumentService {
             const connection = await connect();
             return connection;
         } catch (error) {
-            if (error?.errorType === api.DriverErrorType.authorizationError) {
-                // Fetch new token and retry once
+            if (error?.statusCode === 401) {
+                // Fetch new token and retry once,
+                // otherwise 401 will be bubbled up as non-retriable AuthorizationError.
                 return connect();
             }
             throw error;

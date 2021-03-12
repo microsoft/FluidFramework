@@ -5,7 +5,12 @@
 
 import assert from "assert";
 import { DriverErrorType, IThrottlingWarning } from "@fluidframework/driver-definitions";
-import { createR11sNetworkError, throwR11sNetworkError, R11sErrorType } from "../errorUtils";
+import {
+    createR11sNetworkError,
+    throwR11sNetworkError,
+    R11sErrorType,
+    errorObjectFromSocketError,
+} from "../errorUtils";
 
 describe("ErrorUtils", () => {
     describe("createR11sNetworkError()", () => {
@@ -117,6 +122,75 @@ describe("ErrorUtils", () => {
                 errorType: DriverErrorType.genericNetworkError,
                 canRetry: false,
             });
+        });
+    });
+    describe("errorObjectFromSocketError()", () => {
+        const handler = "test_handler";
+        const message = "test error";
+        const assertExpectedMessage = (actualMessage: string) => {
+            const expectedMessage = `socket.io: ${handler}: ${message}`;
+            assert.strictEqual(actualMessage, expectedMessage);
+        };
+        it("creates non-retriable authorization error on 401", () => {
+            const error = errorObjectFromSocketError({
+                code: 401,
+                message,
+            }, handler);
+            assertExpectedMessage(error.message);
+            assert.strictEqual(error.errorType, DriverErrorType.authorizationError);
+            assert.strictEqual(error.canRetry, false);
+            assert.strictEqual((error as any).statusCode, 401);
+        });
+        it("creates non-retriable authorization error on 403", () => {
+            const error = errorObjectFromSocketError({
+                code: 403,
+                message,
+            }, handler);
+            assertExpectedMessage(error.message);
+            assert.strictEqual(error.errorType, DriverErrorType.authorizationError);
+            assert.strictEqual(error.canRetry, false);
+            assert.strictEqual((error as any).statusCode, 403);
+        });
+        it("creates non-retriable not-found error on 404", () => {
+            const error = errorObjectFromSocketError({
+                code: 404,
+                message,
+            }, handler);
+            assertExpectedMessage(error.message);
+            assert.strictEqual(error.errorType, R11sErrorType.fileNotFoundOrAccessDeniedError);
+            assert.strictEqual(error.canRetry, false);
+            assert.strictEqual((error as any).statusCode, 404);
+        });
+        it("creates retriable error on 429 with retry-after", () => {
+            const error = errorObjectFromSocketError({
+                code: 429,
+                message,
+                retryAfter: 5,
+            }, handler);
+            assertExpectedMessage(error.message);
+            assert.strictEqual(error.errorType, DriverErrorType.throttlingError);
+            assert.strictEqual(error.canRetry, true);
+            assert.strictEqual((error as IThrottlingWarning).retryAfterSeconds, 5);
+            assert.strictEqual((error as any).statusCode, 429);
+        });
+        it("creates retriable error on 429 without retry-after", () => {
+            const error = errorObjectFromSocketError({
+                code: 429,
+                message,
+            }, handler);
+            assertExpectedMessage(error.message);
+            assert.strictEqual(error.errorType, DriverErrorType.genericNetworkError);
+            assert.strictEqual(error.canRetry, true);
+        });
+        it("creates retriable error on 500", () => {
+            const error = errorObjectFromSocketError({
+                code: 500,
+                message,
+            }, handler);
+            assertExpectedMessage(error.message);
+            assert.strictEqual(error.errorType, DriverErrorType.genericNetworkError);
+            assert.strictEqual(error.canRetry, true);
+            assert.strictEqual((error as any).statusCode, 500);
         });
     });
 });
