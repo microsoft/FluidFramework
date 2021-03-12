@@ -56,7 +56,7 @@ export class InsecureUrlResolver implements IUrlResolver {
         // service using our bearer token.
         if (this.isForNodeTest) {
             const [, documentId, relativePath] = parsedUrl.pathname.substr(1).split("/");
-            return this.resolveHelper(documentId, `/${relativePath}`, parsedUrl.search);
+            return this.resolveHelper(documentId, relativePath, parsedUrl.search);
         } else if (parsedUrl.host === window.location.host) {
             const fullPath = parsedUrl.pathname.substr(1);
             const documentId = fullPath.split("/")[0];
@@ -90,7 +90,8 @@ export class InsecureUrlResolver implements IUrlResolver {
         const encodedTenantId = encodeURIComponent(this.tenantId);
         const encodedDocId = encodeURIComponent(documentId);
         const host = new URL(this.ordererUrl).host;
-        const documentUrl = `fluid://${host}/${encodedTenantId}/${encodedDocId}${documentRelativePath}${queryParams}`;
+        const relativePath = documentRelativePath.startsWith("/") ? documentRelativePath : `/${documentRelativePath}`;
+        const documentUrl = `fluid://${host}/${encodedTenantId}/${encodedDocId}${relativePath}${queryParams}`;
 
         const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodedTenantId}/${encodedDocId}`;
         const storageUrl = `${this.storageUrl}/repos/${encodedTenantId}`;
