@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import BTree from 'sorted-btree';
+import BTree from '@taylorsw04/sorted-btree';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import Denque from 'denque';
 import { assert, fail, noop } from './Common';
