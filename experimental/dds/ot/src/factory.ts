@@ -41,14 +41,14 @@ export class OTFactory implements IChannelFactory {
         id: string,
         services: IChannelServices,
         attributes: IChannelAttributes): Promise<ISharedOT> {
-        const OT = new SharedOT(id, runtime, attributes);
-        await OT.load(services);
-        return OT;
+        const ot = new SharedOT(id, runtime, attributes);
+        await ot.load(services);
+        return ot;
     }
 
     public create(document: IFluidDataStoreRuntime, id: string): ISharedOT {
-        const OT = new SharedOT(id, document, this.attributes);
-        OT.initializeLocal();
-        return OT;
+        const ot = new SharedOT(id, document, this.attributes);
+        ot.initializeLocal();
+        return ot;
     }
 }
