@@ -33,7 +33,7 @@ export interface IAppState {
 }
 
 export function makeBubble(stageWidth: number, stageHeight: number) {
-    const radius = Math.max((normal() * 15) + 5, 3);
+    const radius = Math.max((normal() * 10) + 10, 3);
     const maxSpeed = 4;
     const diameter = radius * 2;
 
