@@ -35,6 +35,9 @@ describe("OT", () => {
 
         beforeEach(() => {
             ot = createLocalOT("OT");
+
+            // eslint-disable-next-line no-null/no-null
+            ot.replace([], null, {});
         });
 
         const expect = (expected: Jsonable) => {
@@ -67,7 +70,7 @@ describe("OT", () => {
             });
 
             describe("remove()", () => {
-                it("", () => {
+                it("property from root object", () => {
                     ot.insert(["x"], 1);
                     ot.remove(["x"]);
                     expect({});
@@ -75,7 +78,7 @@ describe("OT", () => {
             });
 
             describe("replace()", () => {
-                it("", () => {
+                it("property on root object", () => {
                     ot.insert(["x"], 1);
                     ot.replace(["x"], 1, 2);
                     expect({ x: 2 });
@@ -83,7 +86,7 @@ describe("OT", () => {
             });
 
             describe("move", () => {
-                it("", () => {
+                it("between properties on root object", () => {
                     ot.insert(["x"], 1);
                     ot.move(["x"], ["y"]);
                     expect({ y: 1 });
@@ -102,6 +105,9 @@ describe("OT", () => {
                 containerRuntimeFactory = new MockContainerRuntimeFactory();
                 ot1 = createConnectedOT("OT1", containerRuntimeFactory);
                 ot2 = createConnectedOT("OT2", containerRuntimeFactory);
+
+                // eslint-disable-next-line no-null/no-null
+                ot1.replace([], null, {});
             });
 
             const expect = (expected: Jsonable) => {
@@ -110,7 +116,7 @@ describe("OT", () => {
                 assert.deepEqual(ot2.get(), expected);
             };
 
-            it("", () => {
+            it("ensure change propagates", () => {
                 ot1.insert(["x"], 1);
                 expect({ x: 1 });
             });
