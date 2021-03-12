@@ -23,6 +23,8 @@ variables:
 - group: prague-key-vault
 - name: skipComponentGovernanceDetection
   value: true
+- name: testBuild
+  value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')
 - name: shouldPublish
   value: ${{
     and(
@@ -35,7 +37,8 @@ variables:
           ne(parameters.buildNumberInPatch, true),
           startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')
         ),
-        eq(variables['Build.SourceBranch'], 'refs/heads/main')
+        eq(variables['Build.SourceBranch'], 'refs/heads/main'),
+        variables.testBuild
       )
     )}}
 - name: canRelease

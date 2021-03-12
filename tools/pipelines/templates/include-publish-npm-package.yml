@@ -11,9 +11,22 @@ parameters:
   type: string
 
 stages:
+- stage: publish_npm_internal_test
+  dependsOn: build
+  displayName: Publish Internal Test Packages
+  condition: and(succeeded(), eq(variables['testBuild'], true))
+  jobs:
+  - template: include-publish-npm-package-steps.yml
+    parameters:
+      namespace: ${{ parameters.namespace }}
+      feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test%40Local/npm/registry/
+      environment: test-package-build-feed
+      official: false
+
 - stage: publish_npm_internal
   dependsOn: build
   displayName: Publish Internal Packages
+  condition: and(succeeded(), eq(variables['testBuild'], false))
   jobs:
   - template: include-publish-npm-package-steps.yml
     parameters:
