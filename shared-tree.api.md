@@ -180,7 +180,14 @@ export interface EditBase {
 export type EditChunkOrHandle = EditHandle | EditWithoutId[];
 
 // @public
-export type EditCommittedHandler = (id: EditId) => void;
+export interface EditCommittedEventArguments {
+    editId: EditId;
+    local: boolean;
+    tree: SharedTree;
+}
+
+// @public
+export type EditCommittedHandler = (args: EditCommittedEventArguments) => void;
 
 // Warning: (ae-internal-missing-underscore) The name "EditHandle" should be prefixed with an underscore because the declaration is marked as @internal
 //

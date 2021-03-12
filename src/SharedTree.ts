@@ -82,6 +82,19 @@ export enum SharedTreeEvent {
 }
 
 /**
+ * The arguments included when the EditCommitted SharedTreeEvent is emitted.
+ * @public
+ */
+export interface EditCommittedEventArguments {
+	/** The ID of the edit committed. */
+	editId: EditId;
+	/** Whether or not this is a local edit. */
+	local: boolean;
+	/** The tree the edit was committed on. Required for local edit events handled by SharedTreeUndoRedoHandler. */
+	tree: SharedTree;
+}
+
+/**
  * Events which may be emitted by `SharedTree`. See {@link SharedTreeEvent} for documentation of event semantics.
  */
 export interface ISharedTreeEvents extends IErrorEvent {
@@ -91,7 +104,7 @@ export interface ISharedTreeEvents extends IErrorEvent {
 /**
  * Expected type for a handler of the `EditCommitted` event.
  */
-export type EditCommittedHandler = (id: EditId) => void;
+export type EditCommittedHandler = (args: EditCommittedEventArguments) => void;
 
 // TODO:#48151: Support reference payloads, and use this type to identify them.
 /**
@@ -468,7 +481,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 		const wasLocalEdit = this.editLog.isLocalEdit(edit.id);
 		const [key, edits] = this.editLog.addSequencedEdit(edit);
 		if (!wasLocalEdit) {
-			this.emit(SharedTreeEvent.EditCommitted, edit.id);
+			const eventArguments: EditCommittedEventArguments = { editId: edit.id, local: false, tree: this };
+			this.emit(SharedTreeEvent.EditCommitted, eventArguments);
 		} else {
 			// If this client created the edit that filled up a chunk, it is responsible for uploading that chunk.
 			if (edits.length === editsPerChunk) {
@@ -491,6 +505,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 		// TODO:44711: what should be passed in when unattached?
 		this.submitLocalMessage(editOp);
 		this.editLog.addLocalEdit(edit);
-		this.emit(SharedTreeEvent.EditCommitted, edit.id);
+
+		const eventArguments: EditCommittedEventArguments = { editId: edit.id, local: true, tree: this };
+		this.emit(SharedTreeEvent.EditCommitted, eventArguments);
 	}
 }

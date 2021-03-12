@@ -40,6 +40,7 @@
 		"@fluidframework/protocol-definitions": "^0.1019.0",
 		"@fluidframework/shared-object-base": "^0.35.3",
 		"@fluidframework/telemetry-utils": "^0.35.3",
+		"@fluidframework/undo-redo": "^0.35.3",
 		"buffer": "^6.0.3",
 		"denque": "^1.5.0",
 		"sorted-btree": "^1.4.0",

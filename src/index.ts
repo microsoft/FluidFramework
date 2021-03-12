@@ -20,6 +20,7 @@ export { initialTree } from './InitialTree';
 export {
 	BlobId,
 	EditCommittedHandler,
+	EditCommittedEventArguments,
 	ISharedTreeEvents,
 	SharedTree,
 	SharedTreeEvent,

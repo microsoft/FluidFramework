@@ -7,8 +7,8 @@ import { assert, expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { assertArrayOfOne, assertNotUndefined, isSharedTreeEvent } from '../Common';
-import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers';
-import { SharedTreeEvent } from '../SharedTree';
+import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../Identifiers';
+import { SharedTree, SharedTreeEvent } from '../SharedTree';
 import { Change, ChangeType, EditNode, Delete, Insert, ChangeNode, StablePlace, StableRange } from '../PersistedTypes';
 import { editsPerChunk } from '../EditLog';
 import { deepCompareNodes, newEdit } from '../EditUtilities';
@@ -33,6 +33,21 @@ import {
 } from './utilities/TestUtilities';
 import { runSharedTreeUndoRedoTestSuite } from './utilities/UndoRedoTests';
 import { TestFluidHandle, TestFluidSerializer } from './utilities/TestSerializer';
+
+const revert = (tree: SharedTree, editId: EditId) => {
+	const editIndex = tree.edits.getIndexOfId(editId);
+	return tree.editor.revert(
+		tree.edits.getEditInSessionAtIndex(editIndex),
+		tree.logViewer.getSnapshotInSession(editIndex)
+	);
+};
+
+// Options for the undo/redo test suite. The undo and redo functions are the same.
+const undoRedoOptions = {
+	title: 'Revert',
+	undo: revert,
+	redo: revert,
+};
 
 describe('SharedTree', () => {
 	const testSerializer = new TestFluidSerializer();
@@ -236,7 +251,7 @@ describe('SharedTree', () => {
 			});
 		});
 
-		runSharedTreeUndoRedoTestSuite({ localMode: true });
+		runSharedTreeUndoRedoTestSuite({ localMode: true, ...undoRedoOptions });
 	});
 
 	describe('SharedTree in connected state with a remote SharedTree', () => {
@@ -427,7 +442,7 @@ describe('SharedTree', () => {
 			expect(tree.edits.getIdAtIndex(1)).to.equal(edit.id);
 		});
 
-		runSharedTreeUndoRedoTestSuite({ localMode: false });
+		runSharedTreeUndoRedoTestSuite({ localMode: false, ...undoRedoOptions });
 	});
 
 	describe('SharedTree summarizing', () => {
