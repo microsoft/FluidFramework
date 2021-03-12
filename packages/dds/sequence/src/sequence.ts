@@ -700,7 +700,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
     }
 
-    protected applyStashedOpCore() {
+    protected applyStashedOp() {
         throw new Error("not implemented");
     }
 }

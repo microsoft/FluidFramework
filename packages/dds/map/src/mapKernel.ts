@@ -32,14 +32,14 @@ interface IMapMessageHandler {
      * Apply the given operation.
      * @param op - The map operation to apply
      * @param local - Whether the message originated from the local client
-     * @param message - The full message
+     * @param message - The full message. Not provided for stashed ops.
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      */
     process(
         op: IMapOperation,
         local: boolean,
-        message: ISequencedDocumentMessage | null,
+        message: ISequencedDocumentMessage | undefined,
         localOpMetadata: unknown,
     ): void;
 
@@ -347,7 +347,7 @@ export class MapKernel implements IValueTypeCreator {
             key,
             localValue,
             true,
-            null,
+            undefined,
         );
 
         // If we are not attached, don't submit the op.
@@ -383,7 +383,7 @@ export class MapKernel implements IValueTypeCreator {
             key,
             localValue,
             true,
-            null,
+            undefined,
         );
 
         // If we are not attached, don't submit the op.
@@ -410,7 +410,7 @@ export class MapKernel implements IValueTypeCreator {
      */
     public delete(key: string): boolean {
         // Delete the key locally first.
-        const successfullyRemoved = this.deleteCore(key, true, null);
+        const successfullyRemoved = this.deleteCore(key, true, undefined);
 
         // If we are not attached, don't submit the op.
         if (!this.isAttached()) {
@@ -431,7 +431,7 @@ export class MapKernel implements IValueTypeCreator {
      */
     public clear(): void {
         // Clear the data locally first.
-        this.clearCore(true, null);
+        this.clearCore(true, undefined);
 
         // If we are not attached, don't submit the op.
         if (!this.isAttached()) {
@@ -526,7 +526,7 @@ export class MapKernel implements IValueTypeCreator {
     public tryProcessMessage(
         op: IMapOperation,
         local: boolean,
-        message: ISequencedDocumentMessage | null,
+        message: ISequencedDocumentMessage | undefined,
         localOpMetadata: unknown,
     ): boolean {
         if (this.messageHandlers.has(op.type)) {
@@ -546,7 +546,7 @@ export class MapKernel implements IValueTypeCreator {
      * @param local - Whether the message originated from the local client
      * @param op - The message if from a remote set, or null if from a local set
      */
-    private setCore(key: string, value: ILocalValue, local: boolean, op: ISequencedDocumentMessage | null): void {
+    private setCore(key: string, value: ILocalValue, local: boolean, op: ISequencedDocumentMessage | undefined): void {
         const previousValue = this.get(key);
         this.data.set(key, value);
         const event: IValueChanged = { key, previousValue };
@@ -558,7 +558,7 @@ export class MapKernel implements IValueTypeCreator {
      * @param local - Whether the message originated from the local client
      * @param op - The message if from a remote clear, or null if from a local clear
      */
-    private clearCore(local: boolean, op: ISequencedDocumentMessage | null): void {
+    private clearCore(local: boolean, op: ISequencedDocumentMessage | undefined): void {
         this.data.clear();
         this.eventEmitter.emit("clear", local, op, this.eventEmitter);
     }
@@ -570,7 +570,7 @@ export class MapKernel implements IValueTypeCreator {
      * @param op - The message if from a remote delete, or null if from a local delete
      * @returns True if the key existed and was deleted, false if it did not exist
      */
-    private deleteCore(key: string, local: boolean, op: ISequencedDocumentMessage | null): boolean {
+    private deleteCore(key: string, local: boolean, op: ISequencedDocumentMessage | undefined): boolean {
         const previousValue = this.get(key);
         const successfullyRemoved = this.data.delete(key);
         if (successfullyRemoved) {

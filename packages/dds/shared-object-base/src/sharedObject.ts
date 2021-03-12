@@ -485,9 +485,5 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         this.reSubmitCore(content, localOpMetadata);
     }
 
-    private applyStashedOp(content: any): unknown {
-        return this.applyStashedOpCore(content);
-    }
-
-    protected abstract applyStashedOpCore(content: any): unknown;
+    protected abstract applyStashedOp(content: any): unknown;
 }

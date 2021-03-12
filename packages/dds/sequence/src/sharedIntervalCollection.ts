@@ -205,7 +205,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         return label;
     }
 
-    protected applyStashedOpCore() {
+    protected applyStashedOp() {
         throw new Error("not implemented");
     }
 }

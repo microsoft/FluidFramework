@@ -152,7 +152,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
         throw new Error("shared summary block should not generate any ops.");
     }
 
-    protected applyStashedOpCore() {
+    protected applyStashedOp() {
         throw new Error("not implemented");
     }
 }
