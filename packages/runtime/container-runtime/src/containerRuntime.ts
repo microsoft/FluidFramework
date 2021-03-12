@@ -1004,8 +1004,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             ));
         }
 
-        const metadata = this.formMetadata();
-        root.entries.push(new BlobTreeEntry(metadataBlobName, JSON.stringify(metadata)));
+        root.entries.push(new BlobTreeEntry(metadataBlobName, JSON.stringify(this.formMetadata())));
 
         if (this.chunkMap.size > 0) {
             root.entries.push(new BlobTreeEntry(chunksBlobName, JSON.stringify([...this.chunkMap])));
@@ -1015,8 +1014,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {
-        const metadata = this.formMetadata();
-        addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
+        addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
         if (this.chunkMap.size > 0) {
             const content = JSON.stringify([...this.chunkMap]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
