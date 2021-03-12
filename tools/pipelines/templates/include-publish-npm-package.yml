@@ -19,7 +19,7 @@ stages:
   - template: include-publish-npm-package-steps.yml
     parameters:
       namespace: ${{ parameters.namespace }}
-      feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test%40Local/npm/registry/
+      feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
       environment: test-package-build-feed
       official: false
 
