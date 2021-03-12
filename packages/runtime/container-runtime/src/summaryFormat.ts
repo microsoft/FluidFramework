@@ -6,18 +6,6 @@
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
-export type ContainerRuntimeSummaryFormatVersion =
-    /**
-     * Version 0: format version is missing from summary.
-     * This indicates it is an older version.
-     */
-    | undefined
-    /**
-     * Introduces .metadata blob and .channels trees for isolation of
-     * data store trees from container-level objects.
-     */
-    | 1;
-
 interface IFluidDataStoreAttributes1 {
     pkg: string;
     readonly snapshotFormatVersion?: "0.1";
@@ -72,7 +60,7 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
 }
 
 export interface IContainerRuntimeMetadata {
-    readonly summaryFormatVersion: ContainerRuntimeSummaryFormatVersion;
+    readonly summaryFormatVersion: 1;
     /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
     readonly disableIsolatedChannels?: true;
 }

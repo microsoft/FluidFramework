@@ -12,8 +12,7 @@ import { IContainerRuntimeMetadata, nonDataStorePaths } from "../summaryFormat";
 describe("Runtime", () => {
     describe("Container Runtime", () => {
         describe("getSummaryForDatastores", () => {
-            const missingMetadata: IContainerRuntimeMetadata = { summaryFormatVersion: undefined };
-            const version1Metadata: IContainerRuntimeMetadata = { summaryFormatVersion: 1 };
+            const enabledMetadata: IContainerRuntimeMetadata = { summaryFormatVersion: 1 };
             const disabledMetadata: IContainerRuntimeMetadata = {
                 summaryFormatVersion: 1,
                 disableIsolatedChannels: true,
@@ -49,22 +48,22 @@ describe("Runtime", () => {
             };
 
             it("Should return undefined for undefined snapshots", () => {
-                let snapshot = getSummaryForDatastores(undefined, missingMetadata);
+                let snapshot = getSummaryForDatastores(undefined, undefined);
                 assert(snapshot === undefined);
-                snapshot = getSummaryForDatastores(undefined, version1Metadata);
+                snapshot = getSummaryForDatastores(undefined, enabledMetadata);
                 assert(snapshot === undefined);
                 snapshot = getSummaryForDatastores(undefined, disabledMetadata);
                 assert(snapshot === undefined);
-                snapshot = getSummaryForDatastores(null as any, missingMetadata);
+                snapshot = getSummaryForDatastores(null as any, undefined);
                 assert(snapshot === undefined);
-                snapshot = getSummaryForDatastores(null as any, version1Metadata);
+                snapshot = getSummaryForDatastores(null as any, enabledMetadata);
                 assert(snapshot === undefined);
                 snapshot = getSummaryForDatastores(null as any, disabledMetadata);
                 assert(snapshot === undefined);
             });
 
             it("Should strip out non-datastore paths for versions < 1", () => {
-                const snapshot = getSummaryForDatastores(testSnapshot, missingMetadata);
+                const snapshot = getSummaryForDatastores(testSnapshot, undefined);
                 assert(snapshot, "Snapshot should be defined");
                 assert.strictEqual(snapshot.id, "root-id", "Should be top-level");
                 assert.strictEqual(Object.keys(snapshot.trees).length, 3, "Should have 3 datastores");
@@ -90,7 +89,7 @@ describe("Runtime", () => {
             });
 
             it("Should give channels subtree for version 1", () => {
-                const snapshot = getSummaryForDatastores(testSnapshot, version1Metadata);
+                const snapshot = getSummaryForDatastores(testSnapshot, enabledMetadata);
                 assert(snapshot, "Snapshot should be defined");
                 assert.strictEqual(snapshot.id, "channels-id", "Should be lower-level");
                 assert.strictEqual(Object.keys(snapshot.trees).length, 4, "Should have 4 datastores");

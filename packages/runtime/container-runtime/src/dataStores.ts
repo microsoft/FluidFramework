@@ -508,7 +508,7 @@ export class DataStores implements IDisposable {
 
 export function getSummaryForDatastores(
     snapshot: ISnapshotTree | undefined,
-    metadata: IContainerRuntimeMetadata,
+    metadata: IContainerRuntimeMetadata | undefined,
 ): ISnapshotTree | undefined {
     if (!snapshot) {
         return undefined;

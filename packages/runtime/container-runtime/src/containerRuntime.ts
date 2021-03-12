@@ -684,7 +684,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
-        metadata: IContainerRuntimeMetadata = { summaryFormatVersion: undefined },
+        metadata: IContainerRuntimeMetadata | undefined,
         chunks: [string, string[]][],
         runtimeOptions: IContainerRuntimeOptions = {
             generateSummaries: true,
