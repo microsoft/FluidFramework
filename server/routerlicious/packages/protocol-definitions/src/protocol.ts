@@ -299,35 +299,14 @@ export interface INackContent {
 
 /**
  * Type of the Nack.
+ * InvalidScopeError: Client's token is not valid for the intended op.
+ * ThrottlingError: Retryable after retryAfter number.
+ * BadRequestError: Clients op is invalid and should retry immediately with a valid op.
+ * LimitExceededError: Service is having issues. Client should not retry.
  */
 export enum NackErrorType {
-    /**
-     * Retryable after retryAfter number seconds.
-     */
     ThrottlingError = "ThrottlingError",
-
-    /**
-     * Client's token is not valid.
-     */
-    InvalidTokenError = "InvalidTokenError",
-
-    /**
-     * Client's token is not valid for the intended op.
-     */
     InvalidScopeError = "InvalidScopeError",
-
-    /**
-     * Client's token claims are not valid. Invalid expiration or missing document id, tenant id, or scopes.
-     */
-    InvalidClaimsError = "InvalidClaimsError",
-
-    /**
-     * Clients op is invalid and should retry immediately with a valid op.
-     */
     BadRequestError = "BadRequestError",
-
-    /**
-     * Service is having issues. Client should not retry.
-     */
     LimitExceededError = "LimitExceededError",
 }

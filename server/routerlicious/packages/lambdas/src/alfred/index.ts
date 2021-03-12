@@ -183,12 +183,14 @@ export function configureWebSocketServices(
                 getSocketConnectThrottleId(message.tenantId),
                 logger);
             if (throttleError) {
-                return Promise.reject(createNackMessage(
-                    429, NackErrorType.ThrottlingError, throttleError.message, throttleError.retryAfter));
+                return Promise.reject(throttleError);
             }
             if (!message.token) {
-                return Promise.reject(createNackMessage(
-                    403, NackErrorType.InvalidTokenError, "Must provide an authorization token"));
+                // eslint-disable-next-line prefer-promise-reject-errors
+                return Promise.reject({
+                    code: 403,
+                    message: "Must provide an authorization token",
+                });
             }
 
             // Validate token signature and claims
@@ -199,13 +201,15 @@ export function configureWebSocketServices(
                 maxTokenLifetimeSec,
                 isTokenExpiryEnabled);
             if (!claims) {
-                return Promise.reject(createNackMessage(401, NackErrorType.InvalidClaimsError, "Invalid claims"));
+                // eslint-disable-next-line prefer-promise-reject-errors
+                return Promise.reject({ code: 401, message: "Invalid claims" });
             }
 
             try {
                 await tenantManager.verifyToken(claims.tenantId, token);
             } catch (err) {
-                return Promise.reject(createNackMessage(403, NackErrorType.InvalidTokenError, "Invalid token"));
+                // eslint-disable-next-line prefer-promise-reject-errors
+                return Promise.reject({ code: 403, message: "Invalid token" });
             }
 
             const clientId = generateClientId();
@@ -234,10 +238,13 @@ export function configureWebSocketServices(
             const connectVersions = message.versions ? message.versions : ["^0.1.0"];
             const version = selectProtocolVersion(connectVersions);
             if (!version) {
-                return Promise.reject(createNackMessage(
-                    400, NackErrorType.BadRequestError,
-                    `Unsupported client protocol.` +
-                    `Server: ${protocolVersions}. Client: ${JSON.stringify(connectVersions)}`));
+                // eslint-disable-next-line prefer-promise-reject-errors
+                return Promise.reject({
+                    code: 400,
+                    message: `Unsupported client protocol. ` +
+                    `Server: ${protocolVersions}. ` +
+                    `Client: ${JSON.stringify(connectVersions)}`,
+                });
             }
 
             const detailsP = storage.getOrCreateDocument(claims.tenantId, claims.documentId);
@@ -246,8 +253,12 @@ export function configureWebSocketServices(
             const [details, clients] = await Promise.all([detailsP, clientsP]);
 
             if (clients.length > maxNumberOfClientsPerDocument) {
-                return Promise.reject(createNackMessage(
-                    429, NackErrorType.ThrottlingError, "Too Many Clients Connected to Document", 5 * 60));
+                // eslint-disable-next-line prefer-promise-reject-errors
+                return Promise.reject({
+                    code: 429,
+                    message: "Too Many Clients Connected to Document",
+                    retryAfter: 5 * 60,
+                });
             }
 
             await clientManager.addClient(
@@ -261,8 +272,11 @@ export function configureWebSocketServices(
                 if (lifeTimeMSec > 0) {
                     setExpirationTimer(lifeTimeMSec);
                 } else {
-                    return Promise.reject(createNackMessage(
-                        401, NackErrorType.InvalidClaimsError, "Invalid token expiry"));
+                    // eslint-disable-next-line prefer-promise-reject-errors
+                    return Promise.reject({
+                        code: 401,
+                        message: "Invalid token expiry",
+                    });
                 }
             }
 
