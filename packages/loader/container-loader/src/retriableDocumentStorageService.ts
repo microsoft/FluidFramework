@@ -129,7 +129,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
                 lastError = err;
                 // If the error is throttling error, then wait for the specified time before retrying.
                 // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
-                retryAfter = getRetryDelayFromError(err) ?? Math.min(retryAfter * 2, 8000);
+                retryAfter = getRetryDelayFromError(err) ?? Math.min(retryAfter * 2 + 1, 8000);
                 if (id === undefined) {
                     id = uuid();
                 }
