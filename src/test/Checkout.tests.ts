@@ -45,23 +45,33 @@ export function checkoutTests(
 	}
 
 	/**
-	 * Counts the number of times invalidation occurs while performing `action`.
+	 * Counts the number of times ViewChange occurs while performing `action`.
+	 * Checks arguments to ViewChange are correct as well.
 	 * @param action Action to perform
 	 * @param options Options object used to construct the initial SharedTree
 	 */
-	async function countInvalidations(
-		action: (checkout: Checkout) => void,
+	async function countViewChange(
+		action: (checkout: Checkout, data: { changeCount: number }) => void | Promise<void>,
 		options: SharedTreeTestingOptions = { localMode: true }
 	): Promise<number> {
 		const { checkout } = await setUpTestCheckout(options);
-
-		let invalidations = 0;
-		checkout.on(CheckoutEvent.ViewChange, () => {
-			invalidations++;
+		let lastView = checkout.currentView;
+		const data = { changeCount: 0 };
+		checkout.on(CheckoutEvent.ViewChange, (before, after) => {
+			expect(after).equals(checkout.currentView);
+			expect(before).equals(lastView);
+			lastView = after;
+			data.changeCount++;
+		});
+		// Prevent errors from errors (like failed expects) from being hidden.
+		const errors: Error[] = [];
+		checkout.on('error', (error) => {
+			errors.push(error);
 		});
 
-		action(checkout);
-		return invalidations;
+		await action(checkout, data);
+		expect(errors).deep.equal([]);
+		return data.changeCount;
 	}
 
 	return describe(suiteName, () => {
@@ -171,7 +181,7 @@ export function checkoutTests(
 			});
 
 			// This could alternatively actually cause a ViewChange via application of an edit.
-			checkout.emit(CheckoutEvent.ViewChange, { changed: [], added: [], removed: [] });
+			checkout.emit(CheckoutEvent.ViewChange, checkout.currentView, checkout.currentView);
 			expect(treeErrorHandlerWasCalled).equals(true);
 		});
 
@@ -251,7 +261,7 @@ export function checkoutTests(
 		});
 
 		it('does not invalidate in response to an empty edit', async () => {
-			const invalidations = await countInvalidations((checkout) => {
+			const invalidations = await countViewChange((checkout) => {
 				checkout.openEdit();
 				checkout.closeEdit();
 			});
@@ -268,7 +278,7 @@ export function checkoutTests(
 		});
 
 		it('will emit invalidation messages in response to changes', async () => {
-			const invalidations = await countInvalidations(
+			const invalidations = await countViewChange(
 				(checkout) => {
 					checkout.applyEdit(Delete.create(StableRange.only(left)));
 				},
@@ -278,29 +288,36 @@ export function checkoutTests(
 		});
 
 		it('emits a change event for each batch of changes in a local edit', async () => {
-			const { checkout } = await setUpTestCheckout({ initialTree: simpleTestTree });
-			let changeCount = 0;
-			checkout.on(CheckoutEvent.ViewChange, () => {
-				const leftTrait = checkout.currentView.getTrait(leftTraitLocation);
-				const rightTrait = checkout.currentView.getTrait(rightTraitLocation);
+			const changes = await countViewChange(
+				async (checkout, data) => {
+					checkout.on(CheckoutEvent.ViewChange, () => {
+						const leftTrait = checkout.currentView.getTrait(leftTraitLocation);
+						const rightTrait = checkout.currentView.getTrait(rightTraitLocation);
 
-				if (changeCount === 0) {
-					expect(leftTrait.length).to.equal(0); // "left" child is deleted...
-					expect(rightTrait.length).to.equal(1); // ...but "right" child is not
-				} else if (changeCount === 1) {
-					expect(leftTrait.length).to.equal(0); // "left" child is deleted...
-					expect(rightTrait.length).to.equal(0); // ...and so is "right" child
-				}
+						if (data.changeCount === 1) {
+							expect(leftTrait.length).to.equal(0); // "left" child is deleted...
+							expect(rightTrait.length).to.equal(1); // ...but "right" child is not
+						} else if (data.changeCount === 2) {
+							expect(leftTrait.length).to.equal(0); // "left" child is deleted...
+							expect(rightTrait.length).to.equal(0); // ...and so is "right" child
+						}
+					});
 
-				changeCount += 1;
-			});
+					checkout.openEdit();
+					expect(data.changeCount).equals(0);
+					checkout.applyChanges(Delete.create(StableRange.only(left)));
+					expect(data.changeCount).equals(1);
+					checkout.applyChanges(Delete.create(StableRange.only(right)));
+					expect(data.changeCount).equals(2);
+					checkout.closeEdit();
+					await checkout.waitForPendingUpdates();
+				},
+				{ initialTree: simpleTestTree }
+			);
 
-			checkout.openEdit();
-			checkout.applyChanges(Delete.create(StableRange.only(left)));
-			checkout.applyChanges(Delete.create(StableRange.only(right)));
-			checkout.closeEdit();
-			await checkout.waitForPendingUpdates();
-			expect(changeCount).equals(2);
+			// Checkout's use of LogViewer.setKnownEditingResult should enable CachingLogViewer
+			// to return the exact same SnapShot object, allowing checkout to so skip an extra change event from closeEdit.
+			expect(changes).equals(2);
 		});
 
 		it('emits EditCommitted event synchronously for edits', async () => {

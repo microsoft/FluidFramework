@@ -15,12 +15,27 @@ import { EditingResult, Transaction } from './Transaction';
 import { initialTree } from './InitialTree';
 
 /**
- * Callback for when an edit is applied.
- * Note that edits may be applied multiple times (and with different results due to concurrent edits),
- * and might not be applied when added.
- * This callback cannot be used to simply log each edit as it comes it to see its status.
+ * Callback for when an edit is applied (meaning the result of applying it to a particular snapshot is computed).
+ *
+ * Edits may be applied any time a Snapshot is computed that includes them.
+ * Each edit is guaranteed to be applied at least once (in the lifetime of the LogViewer) before a Snapshot containing it is returned,
+ * unless the edit precedes a know revision specified by setKnownRevision.
+ *
+ * If the same edit occurs in different contexts (ex: a local edit is adjusted for a new remote edit),
+ * that it will be reapplied, and this may result in different results.
+ *
+ * Edits may additionally be reapplied at other times since their previous output might not be cached.
+ *
+ * If an application requests the current view, this will force all edits to be applied.
+ * Such an application can use this callback can be log each edit as it comes it to see its status,
+ * however this may include duplicates, as well as entries for reapplications in modified contexts.
+ *
+ * In the context of this callback,
+ * skipping the first evaluation of an edit in a particular context due to setKnownEditingResult (but not when due to setKnownRevision),
+ * is still considered applying.
+ * To use this call back to track when the actual computational work of applying edits is done, only count cases when `wasCached` is false.
  */
-export type EditResultCallback = (editResult: EditResult, editId: EditId) => void;
+export type EditResultCallback = (editResult: EditResult, editId: EditId, wasCached: boolean) => void;
 
 /**
  * Creates `Snapshot`s for the revisions in an `EditLog`
@@ -61,6 +76,12 @@ export interface LogViewer {
 	 * that would be produced by getSnapshot at the same revision.
 	 */
 	setKnownRevision(revision: number, view: Snapshot): void;
+
+	/**
+	 * Inform the LogViewer that a particular edit is know to have a specific result when applied to a particular Snapshot.
+	 * LogViewer may use this information to as a optimization to avoid rerunning the edit if reapplied to the same Snapshot.
+	 */
+	setKnownEditingResult(edit: Edit, result: EditingResult): void;
 }
 
 /**
@@ -109,10 +130,19 @@ export class CachingLogViewer implements LogViewer {
 	private readonly unappliedSelfEdits: Denque<EditId> = new Denque();
 
 	/**
+	 * Cache of applying a edit.
+	 * Due to use of Transactions in checkouts, a common pattern involves applying an edit
+	 * as part of the transaction, then submitting it.
+	 * This cache helps optimize that case by avoiding recomputing the edit if no other edits were added during the transaction.
+	 */
+	private cachedEditResult?: { editId: EditId; result: EditingResult };
+
+	/**
 	 * Create a new LogViewer
 	 * @param log - the edit log which snapshots will be based on.
 	 * @param baseTree - the tree used in the snapshot corresponding to the 0th revision. Defaults to `initialTree`.
 	 * @param expensiveValidation - Iff true, the snapshots passed to setKnownRevision will be asserted to be correct.
+	 * @param processEditResult - called after applying an edit.
 	 */
 	public constructor(
 		log: EditLog,
@@ -184,6 +214,10 @@ export class CachingLogViewer implements LogViewer {
 		this.sequencedSnapshotCache.set(revision, snapshot);
 	}
 
+	public setKnownEditingResult(edit: Edit, result: EditingResult): void {
+		this.cachedEditResult = { editId: edit.id, result };
+	}
+
 	/**
 	 * Version of setKnownRevision that does not support expensive validation.
 	 */
@@ -236,7 +270,20 @@ export class CachingLogViewer implements LogViewer {
 	 * @returns the resulting snapshot
 	 */
 	private applyEdit(prevSnapshot: Snapshot, edit: Edit, editIndex: number): Snapshot {
-		const editingResult = new Transaction(prevSnapshot).applyChanges(edit.changes).close();
+		let editingResult: EditingResult;
+		let cached;
+		if (
+			this.cachedEditResult !== undefined &&
+			this.cachedEditResult.editId === edit.id &&
+			this.cachedEditResult.result.before === prevSnapshot
+		) {
+			editingResult = this.cachedEditResult.result;
+			cached = true;
+		} else {
+			editingResult = new Transaction(prevSnapshot).applyChanges(edit.changes).close();
+			cached = false;
+		}
+
 		const revision = editIndex + 1;
 		let nextSnapshot: Snapshot;
 		if (editingResult.result === EditResult.Applied) {
@@ -260,7 +307,7 @@ export class CachingLogViewer implements LogViewer {
 			this.localSnapshotCache.push({ snapshot: nextSnapshot, result: editingResult });
 		}
 
-		this.processEditResult(editingResult.result, this.log.getIdAtIndex(editIndex));
+		this.processEditResult(editingResult.result, this.log.getIdAtIndex(editIndex), cached);
 		return nextSnapshot;
 	}
 

@@ -202,6 +202,18 @@ export type EditId = UuidString & {
     readonly EditId: '56897beb-53e4-4e66-85da-4bf5cd5d0d49';
 };
 
+// @public
+export type EditingResult = {
+    readonly result: EditResult.Invalid | EditResult.Malformed;
+    readonly changes: readonly Change[];
+    readonly before: Snapshot;
+} | {
+    readonly result: EditResult.Applied;
+    readonly changes: readonly Change[];
+    readonly before: Snapshot;
+    readonly after: Snapshot;
+};
+
 // Warning: (ae-internal-missing-underscore) The name "EditLogSummary" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal
@@ -243,7 +255,7 @@ export function fullHistorySummarizer(editLog: OrderedEditSet, currentView: Snap
 // @public
 export interface ICheckoutEvents extends IErrorEvent {
     // (undocumented)
-    (event: 'viewChange', listener: (delta: Delta<NodeId>) => void): any;
+    (event: 'viewChange', listener: (before: Snapshot, after: Snapshot) => void): any;
 }
 
 // @public
@@ -279,6 +291,7 @@ export function isSharedTreeEvent(event: ITelemetryBaseEvent): boolean;
 export interface LogViewer {
     getSnapshot(revision: number): Promise<Snapshot>;
     getSnapshotInSession(revision: number): Snapshot;
+    setKnownEditingResult(edit: Edit, result: EditingResult): void;
     setKnownRevision(revision: number, view: Snapshot): void;
 }
 

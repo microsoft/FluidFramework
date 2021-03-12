@@ -29,6 +29,7 @@ module.exports = {
 		// Prettier
 		'comma-dangle': 'off',
 		'max-len': 'off',
+		'no-mixed-spaces-and-tabs': 'off',
 
 		// Rules which could be re-enabled (by dropping these overrides, as they are enabled in base config) with some minor fixes:
 		'@typescript-eslint/strict-boolean-expressions': 'off',

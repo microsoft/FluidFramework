@@ -6,7 +6,7 @@
 import { expect } from 'chai';
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { EditLog } from '../EditLog';
-import { ChangeNode, Edit, Insert, StablePlace } from '../PersistedTypes';
+import { ChangeNode, Edit, EditResult, Insert, StablePlace } from '../PersistedTypes';
 import { newEdit } from '../EditUtilities';
 import { CachingLogViewer, EditResultCallback, LogViewer } from '../LogViewer';
 import { Snapshot } from '../Snapshot';
@@ -270,6 +270,96 @@ describe('CachingLogViewer', () => {
 		);
 		viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
 		expect(editsProcessed).to.equal(logWithLocalEdits.numberOfLocalEdits + 1);
+	});
+
+	// An arbitrary snapshot which can be used to check to see if it gets used when provided as a cached value.
+	const arbitrarySnapshot = Snapshot.fromTree(makeEmptyNode());
+
+	it('uses known editing result', () => {
+		const log = new EditLog();
+		const editsProcessed: boolean[] = [];
+		const viewer = getCachingLogViewer(log, initialSimpleTree, (_, _2, wasCached) =>
+			editsProcessed.push(wasCached)
+		);
+		const before = viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
+		const edit = newEdit([]);
+		log.addLocalEdit(edit);
+		viewer.setKnownEditingResult(edit, {
+			result: EditResult.Applied,
+			changes: edit.changes,
+			before,
+			after: arbitrarySnapshot,
+		});
+		const after = viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
+		expect(editsProcessed).deep.equal([true]);
+		expect(after).equal(arbitrarySnapshot);
+	});
+
+	it('ignores known editing if for wrong before snapshot', () => {
+		const log = new EditLog();
+		const editsProcessed: boolean[] = [];
+		const viewer = getCachingLogViewer(log, initialSimpleTree, (_, _2, wasCached) =>
+			editsProcessed.push(wasCached)
+		);
+		const edit = newEdit([]);
+		log.addLocalEdit(edit);
+		viewer.setKnownEditingResult(edit, {
+			result: EditResult.Applied,
+			changes: edit.changes,
+			before: arbitrarySnapshot,
+			after: arbitrarySnapshot,
+		});
+		const after = viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
+		expect(editsProcessed).deep.equal([false]);
+		expect(after).not.equal(arbitrarySnapshot);
+	});
+
+	it('ignores known editing if for wrong edit', () => {
+		const log = new EditLog();
+		const editsProcessed: boolean[] = [];
+		const viewer = getCachingLogViewer(log, initialSimpleTree, (_, _2, wasCached) =>
+			editsProcessed.push(wasCached)
+		);
+		const before = viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
+		const edit = newEdit([]);
+		log.addLocalEdit(edit);
+		viewer.setKnownEditingResult(newEdit([]), {
+			result: EditResult.Applied,
+			changes: edit.changes,
+			before,
+			after: arbitrarySnapshot,
+		});
+		const after = viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
+		expect(editsProcessed).deep.equal([false]);
+		expect(after).not.equal(arbitrarySnapshot);
+	});
+
+	it('uses known editing result with multiple edits', () => {
+		const log = new EditLog();
+		const editsProcessed: boolean[] = [];
+		const viewer = getCachingLogViewer(log, initialSimpleTree, (_, _2, wasCached) =>
+			editsProcessed.push(wasCached)
+		);
+		const edit1 = newEdit([]);
+		const edit2 = newEdit([]);
+		const edit3 = newEdit([]);
+		log.addLocalEdit(edit1);
+
+		const before = viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
+		expect(editsProcessed).deep.equal([false]);
+		log.addLocalEdit(edit2);
+		viewer.setKnownEditingResult(edit2, {
+			result: EditResult.Applied,
+			changes: edit2.changes,
+			before,
+			after: arbitrarySnapshot,
+		});
+		const after = viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
+		expect(editsProcessed).deep.equal([false, true]);
+		expect(after).equal(arbitrarySnapshot);
+		log.addLocalEdit(edit3);
+		viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
+		expect(editsProcessed).deep.equal([false, true, false]);
 	});
 
 	describe('Telemetry', () => {

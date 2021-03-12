@@ -20,9 +20,22 @@ import {
 } from './PersistedTypes';
 import { EditValidationResult, SnapshotNode, Snapshot } from './Snapshot';
 
+/**
+ * Result of applying a transaction.
+ * @public
+ */
 export type EditingResult =
-	| { result: EditResult.Invalid | EditResult.Malformed; changes: readonly Change[]; before: Snapshot }
-	| { result: EditResult.Applied; changes: readonly Change[]; before: Snapshot; after: Snapshot };
+	| {
+			readonly result: EditResult.Invalid | EditResult.Malformed;
+			readonly changes: readonly Change[];
+			readonly before: Snapshot;
+	  }
+	| {
+			readonly result: EditResult.Applied;
+			readonly changes: readonly Change[];
+			readonly before: Snapshot;
+			readonly after: Snapshot;
+	  };
 
 /**
  * A mutable transaction for applying sequences of changes to a Snapshot.

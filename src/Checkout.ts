@@ -6,13 +6,12 @@
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { IDisposable, IErrorEvent } from '@fluidframework/common-definitions';
 import { assert } from './Common';
-import { EditId, NodeId } from './Identifiers';
+import { EditId } from './Identifiers';
 import { Change, Edit, EditResult } from './PersistedTypes';
 import { newEdit } from './EditUtilities';
 import { EditValidationResult, Snapshot } from './Snapshot';
 import { Transaction } from './Transaction';
 import { EditCommittedHandler, SharedTree, SharedTreeEvent } from './SharedTree';
-import type { Delta } from './Forest';
 
 /**
  * An event emitted by a `Checkout` to indicate a state change. See {@link ICheckoutEvents} for event argument information.
@@ -21,7 +20,7 @@ import type { Delta } from './Forest';
 export enum CheckoutEvent {
 	/**
 	 * `currentView` has changed.
-	 * Passed `Delta<NodeId>` of all nodes changed since the last ViewChange event.
+	 * Passed a before and after Snapshot.
 	 */
 	ViewChange = 'viewChange',
 	/**
@@ -46,7 +45,7 @@ export enum CheckoutEvent {
  * Events which may be emitted by `Checkout`. See {@link CheckoutEvent} for documentation of event semantics.
  */
 export interface ICheckoutEvents extends IErrorEvent {
-	(event: 'viewChange', listener: (delta: Delta<NodeId>) => void);
+	(event: 'viewChange', listener: (before: Snapshot, after: Snapshot) => void);
 }
 
 /**
@@ -154,6 +153,9 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 		const editingResult = currentEdit.close();
 		assert(editingResult.result === EditResult.Applied, 'Locally constructed edits must be well-formed and valid');
 		const edit = newEdit(editingResult.changes);
+
+		// As an optimization, inform logViewer of this editing result so it can reuse it if applied to the same before snapshot.
+		this.tree.logViewer.setKnownEditingResult(edit, editingResult);
 
 		this.handleNewEdit(edit, editingResult.before, editingResult.after);
 
@@ -270,10 +272,12 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 * It is ok to make excessive calls to this: change notifications will be cheaply de-duplicated.
 	 */
 	protected emitChange(): void {
-		const delta = this.previousView.delta(this.currentView);
-		this.previousView = this.currentView;
-		if (delta.changed.length !== 0 || delta.removed.length !== 0 || delta.added.length !== 0) {
-			this.emit(CheckoutEvent.ViewChange, delta);
+		const current = this.currentView;
+		const previous = this.previousView;
+		if (previous !== current) {
+			// Set previousView before calling emit to make reentrant case work (where the event handler causes an edit).
+			this.previousView = current;
+			this.emit(CheckoutEvent.ViewChange, previous, current);
 		}
 	}
 

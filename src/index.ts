@@ -76,3 +76,4 @@ export { setTrait, newEdit } from './EditUtilities';
 export { LogViewer } from './LogViewer';
 export { Checkout, CheckoutEvent, ICheckoutEvents } from './Checkout';
 export { BasicCheckout } from './BasicCheckout';
+export { EditingResult } from './Transaction';
