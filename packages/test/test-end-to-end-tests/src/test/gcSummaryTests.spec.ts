@@ -12,7 +12,7 @@ import { assert, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { SummaryType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import {
@@ -27,22 +27,18 @@ class TestDataObject extends DataObject {
         return this.root;
     }
 
-    public get _runtime() {
-        return this.runtime;
-    }
-
     public get _context() {
         return this.context;
     }
 }
 
-describe("GC in Summary", () => {
+describe("GC in summary", () => {
     let documentId: string;
     const codeDetails: IFluidCodeDetails = {
         package: "garbageCollectionTestPackage",
         config: {},
     };
-    const factory = new DataObjectFactory(
+    const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
         TestDataObject,
         [],
@@ -51,9 +47,9 @@ describe("GC in Summary", () => {
         generateSummaries: false,
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-        factory,
+        dataObjectFactory,
         [
-            [factory.type, Promise.resolve(factory)],
+            [dataObjectFactory.type, Promise.resolve(dataObjectFactory)],
         ],
         undefined,
         undefined,
@@ -62,8 +58,9 @@ describe("GC in Summary", () => {
 
     let driver: ITestDriver;
     let opProcessingController: OpProcessingController;
-    let container1: IContainer;
+    let container: IContainer;
     let containerRuntime: ContainerRuntime;
+    let defaultDataStore: TestDataObject;
 
     async function createContainer(): Promise<IContainer> {
         const loader = createLoader(
@@ -74,28 +71,29 @@ describe("GC in Summary", () => {
             codeDetails, loader, driver.createCreateNewRequest(documentId));
     }
 
-    // async function loadContainer(): Promise<IContainer> {
-    //     const loader = createLoader(
-    //         [[codeDetails, runtimeFactory]],
-    //         driver.createDocumentServiceFactory(),
-    //         driver.createUrlResolver());
-    //     return loader.resolve({ url: await driver.createContainerUrl(documentId) });
-    // }
+    // Summarizes the container and validates that the data store's reference state is correct in the summary.
+    async function validateDataStoreReferenceState(dataStoreId: string, unreferenced?: true) {
+        await opProcessingController.process();
+        const { summary } = await containerRuntime.summarize({
+            runGC: true,
+            fullTree: true,
+            trackState: false,
+            summaryLogger: new TelemetryNullLogger(),
+        });
 
-    function verifyDataStoreReference(summary: ISummaryTree, dataStoreId: string, unreferenced: true | undefined) {
+        let found = false;
         for (const [ id, summaryObject ] of Object.entries(summary.tree)) {
-            if (summaryObject.type !== SummaryType.Tree) {
-                continue;
-            }
-
             if (id === dataStoreId) {
+                assert(summaryObject.type === SummaryType.Tree, `Data store ${dataStoreId}'s entry is not a tree`);
                 assert(
                     summaryObject.unreferenced === unreferenced,
                     `Data store ${dataStoreId} should be ${ unreferenced ? "unreferenced" : "referenced" }`,
                 );
+                found = true;
                 break;
             }
         }
+        assert(found, `Data store ${dataStoreId} is not in the summary!`);
     }
 
     beforeEach(async () => {
@@ -103,20 +101,69 @@ describe("GC in Summary", () => {
         driver = getFluidTestDriver() as unknown as ITestDriver;
         opProcessingController = new OpProcessingController();
 
-        // Create a Container for the first client.
-        container1 = await createContainer();
-        opProcessingController.addDeltaManagers(container1.deltaManager);
-        const dataStore = await requestFluidObject<TestDataObject>(container1, "/");
-        containerRuntime = dataStore._context.containerRuntime as ContainerRuntime;
+        container = await createContainer();
+        opProcessingController.addDeltaManagers(container.deltaManager);
+        defaultDataStore = await requestFluidObject<TestDataObject>(container, "/");
+        containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
     });
 
-    it("marks default component as referenced in summary", async () => {
-        const { summary } = await containerRuntime.summarize({
-            runGC: true,
-            fullTree: true,
-            trackState: false,
-            summaryLogger: new TelemetryNullLogger(),
-        });
-        verifyDataStoreReference(summary, "default", true);
+    it("marks default data store as referenced", async () => {
+        await validateDataStoreReferenceState(defaultDataStore.id);
+    });
+
+    it("marks root data stores as referenced", async () => {
+        const rootDataStore = await dataObjectFactory.createRootInstance("rootDataStore", containerRuntime);
+        await validateDataStoreReferenceState(rootDataStore.id);
+    });
+
+    it("marks non-root data stores as referenced / unreferenced correctly", async () => {
+        const dataStore = await dataObjectFactory.createInstance(containerRuntime);
+        // Add data store's handle in root component and verify its marked as referenced.
+        {
+            defaultDataStore._root.set("nonRootDS", dataStore.handle);
+            await validateDataStoreReferenceState(dataStore.id);
+        }
+
+        // Remove its handle and verify its marked as unreferenced.
+        {
+            defaultDataStore._root.delete("nonRootDS");
+            await validateDataStoreReferenceState(dataStore.id, true /* unreferenced */);
+        }
+
+        // Add data store's handle back in root component and verify its marked as referenced.
+        {
+            defaultDataStore._root.set("nonRootDS", dataStore.handle);
+            await validateDataStoreReferenceState(dataStore.id);
+        }
+    });
+
+    it("marks non-root data stores with handle in unreferenced data stores as unreferenced", async () => {
+        const dataStore1 = await dataObjectFactory.createInstance(containerRuntime);
+        // Add data store's handle in root component and verify its marked as referenced.
+        {
+            defaultDataStore._root.set("nonRootDS1", dataStore1.handle);
+            await validateDataStoreReferenceState(dataStore1.id);
+        }
+
+        // Remove its handle and verify its marked as unreferenced.
+        {
+            defaultDataStore._root.delete("nonRootDS1");
+            await validateDataStoreReferenceState(dataStore1.id, true /* unreferenced */);
+        }
+
+        // Create another non-root data store.
+        const dataStore2 = await dataObjectFactory.createInstance(containerRuntime);
+        // Add data store's handle in root component and verify its marked as referenced.
+        {
+            defaultDataStore._root.set("nonRootDS2", dataStore2.handle);
+            await validateDataStoreReferenceState(dataStore2.id);
+        }
+
+        // Remove its handle from root component and add to dataStore1 (which is unreferenced).
+        {
+            defaultDataStore._root.delete("nonRootDS2");
+            dataStore1._root.set("nonRootDS2", dataStore2.handle);
+            await validateDataStoreReferenceState(dataStore2.id, true /* unreferenced */);
+        }
     });
 });
