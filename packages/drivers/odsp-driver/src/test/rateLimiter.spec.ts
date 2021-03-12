@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { strict as assert } from "assert";
 import { RateLimiter } from "../rateLimiter";
 
 describe("Rate Limiter", () => {

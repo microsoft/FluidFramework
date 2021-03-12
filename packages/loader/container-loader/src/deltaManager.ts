@@ -229,7 +229,7 @@ export class DeltaManager
      */
     public get hasCheckpointSequenceNumber() {
         // Valid to be called only if we have active connection.
-        assert(this.connection !== undefined);
+        assert(this.connection !== undefined, "Missing active connection");
         return this._hasCheckpointSequenceNumber;
     }
 
@@ -511,10 +511,10 @@ export class DeltaManager
         this.lastObservedSeqNumber = sequenceNumber;
 
         // We will use same check in other places to make sure all the seq number above are set properly.
-        assert(this.handler === undefined);
+        assert(this.handler === undefined, "DeltaManager already has attached op handler!");
         this.handler = handler;
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        assert(!!(this.handler as any));
+        assert(!!(this.handler as any), "Newly set op handler is null/undefined!");
 
         this._inbound.resume();
         this._inboundSignal.resume();
@@ -733,7 +733,7 @@ export class DeltaManager
         // reset clientSequenceNumber if we are using new clientId.
         // we keep info about old connection as long as possible to be able to account for all non-acked ops
         // that we pick up on next connection.
-        assert(!!this.connection);
+        assert(!!this.connection, "Lost old connection!");
         if (this.lastSubmittedClientId !== this.connection?.clientId) {
             this.lastSubmittedClientId = this.connection?.clientId;
             this.clientSequenceNumber = 0;
@@ -1252,7 +1252,7 @@ export class DeltaManager
         // We quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
         // If we're already disconnected/disconnecting it's not appropriate to call this again.
-        assert(this.connection !== undefined);
+        assert(this.connection !== undefined, "Missing connection for reconnect");
 
         this.disconnectFromDeltaStream(error.message);
 
@@ -1328,7 +1328,8 @@ export class DeltaManager
         }
 
         const n = this.previouslyProcessedMessage?.sequenceNumber;
-        assert(n === undefined || n === this.lastQueuedSequenceNumber);
+        assert(n === undefined || n === this.lastQueuedSequenceNumber,
+            "Unexpected value for previously processed message's sequence number");
 
         for (const message of messages) {
             // Check that the messages are arriving in the expected order

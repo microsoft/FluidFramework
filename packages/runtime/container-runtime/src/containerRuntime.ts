@@ -254,11 +254,11 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
         } else {
             // new format
             const innerContents = message.contents as ContainerRuntimeMessage;
-            assert(innerContents.type !== undefined);
+            assert(innerContents.type !== undefined, "Undefined inner contents type!");
             message.type = innerContents.type;
             message.contents = innerContents.contents;
         }
-        assert(isRuntimeMessage(message));
+        assert(isRuntimeMessage(message), "Message to unpack is not proper runtime message");
     } else {
         // Legacy format, but it's already "unpacked",
         // i.e. message.type is actually ContainerMessageType.
@@ -1025,7 +1025,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const oldState = this.dirtyContainer;
         this.dirtyContainer = false;
 
-        assert(this.emitDirtyDocumentEvent);
+        assert(this.emitDirtyDocumentEvent, "dirty document event not set on replay");
         this.emitDirtyDocumentEvent = false;
         let newState: boolean;
 
@@ -1097,7 +1097,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         raiseConnectedEvent(this._logger, this, connected, clientId);
 
         if (connected) {
-            assert(!!clientId);
+            assert(!!clientId, "Missing clientId");
             this.summaryManager.setConnected(clientId);
         } else {
             this.summaryManager.setDisconnected();
@@ -1150,7 +1150,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.dataStores.processFluidDataStoreOp(message, local || localAck, localOpMetadata);
                     break;
                 case ContainerMessageType.BlobAttach:
-                    assert(message?.metadata?.blobId);
+                    assert(message?.metadata?.blobId, "Missing blob id on metadata");
                     this.blobManager.addBlobId(message.metadata.blobId);
                     break;
                 default:
@@ -1606,7 +1606,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             map = [];
             this.chunkMap.set(clientId, map);
         }
-        assert(chunkedContent.chunkId === map.length + 1); // 1-based indexing
+        assert(chunkedContent.chunkId === map.length + 1,
+            "Mismatch between new chunkId and expected chunkMap"); // 1-based indexing
         map.push(chunkedContent.contents);
     }
 
@@ -1741,7 +1742,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         type: MessageType,
         contents: any) {
         this.verifyNotClosed();
-        assert(this.connected);
+        assert(this.connected, "Container disconnected when trying to submit system message");
 
         // System message should not be sent in the middle of the batch.
         // That said, we can preserve existing behavior by not flushing existing buffer.
@@ -1819,13 +1820,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // Each client expresses interest to be a leader.
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 scheduler.pick(LeaderTaskId, async () => {
-                    assert(!this._leader);
+                    assert(!this._leader, "Client is already leader");
                     this.updateLeader(true);
                 });
 
                 scheduler.on("lost", (key) => {
                     if (key === LeaderTaskId) {
-                        assert(this._leader);
+                        assert(this._leader, "Got leader key but client is not leader");
                         this._leader = false;
                         this.updateLeader(false);
                     }
@@ -1860,7 +1861,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private updateLeader(leadership: boolean) {
         this._leader = leadership;
         if (this.leader) {
-            assert(this.clientId === undefined || this.connected && this.deltaManager && this.deltaManager.active);
+            assert(this.clientId === undefined || this.connected && this.deltaManager && this.deltaManager.active,
+                "Leader must either have undefined clientId or be connected with active delta manager!");
             this.emit("leader");
         } else {
             this.emit("notleader");
