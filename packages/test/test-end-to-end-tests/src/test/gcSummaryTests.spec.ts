@@ -11,6 +11,7 @@ import {
 import { assert, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { Container } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -58,7 +59,6 @@ describe("GC in summary", () => {
 
     let driver: ITestDriver;
     let opProcessingController: OpProcessingController;
-    let container: IContainer;
     let containerRuntime: ContainerRuntime;
     let defaultDataStore: TestDataObject;
 
@@ -101,10 +101,15 @@ describe("GC in summary", () => {
         driver = getFluidTestDriver() as unknown as ITestDriver;
         opProcessingController = new OpProcessingController();
 
-        container = await createContainer();
-        opProcessingController.addDeltaManagers(container.deltaManager);
+        const container = await createContainer() as Container;
         defaultDataStore = await requestFluidObject<TestDataObject>(container, "/");
         containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
+        opProcessingController.addDeltaManagers(containerRuntime.deltaManager);
+
+        // Wait for the Container to get connected.
+        if (!container.connected) {
+            await new Promise<void>((resolve) => container.on("connected", () => resolve()));
+        }
     });
 
     it("marks default data store as referenced", async () => {
