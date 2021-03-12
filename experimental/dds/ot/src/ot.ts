@@ -20,7 +20,7 @@ import {
     Serializable,
 } from "@fluidframework/datastore-definitions";
 import { SharedObject } from "@fluidframework/shared-object-base";
-import { moveOp, Doc, type, insertOp, JSONOp, removeOp, replaceOp } from "ot-json1";
+import { Doc, type, JSONOp, replaceOp, insertOp, moveOp, removeOp } from "ot-json1";
 import { OTFactory } from "./factory";
 import { debug } from "./debug";
 import { ISharedOT, ISharedOTEvents } from "./interfaces";
@@ -51,7 +51,8 @@ export class SharedOT<T extends Serializable = any>
         return new OTFactory();
     }
 
-    private root: Serializable = {};
+    // eslint-disable-next-line no-null/no-null
+    private root: Doc = null;
 
     /**
      * Constructs a new shared OT. If the object is non-local an id and service interfaces will
@@ -64,26 +65,26 @@ export class SharedOT<T extends Serializable = any>
         super(id, runtime, attributes);
     }
 
-    public get() { return this.root; }
+    public get(): Doc { return this.root; }
 
     public insert(path: (string | number)[], value: Serializable) {
-        this.applyOtOp(insertOp(path, value as Doc));
+        this.apply(insertOp(path, value as Doc));
     }
 
     public move(from: (string | number)[], to: (string | number)[]) {
-        this.applyOtOp(moveOp(from, to));
+        this.apply(moveOp(from, to));
     }
 
     public remove(path: (string | number)[], value?: boolean) {
-        this.applyOtOp(removeOp(path, value));
+        this.apply(removeOp(path, value));
     }
 
     public replace(path: (string | number)[], oldValue: Serializable, newValue: Serializable) {
-        this.applyOtOp(replaceOp(path, oldValue as Doc, newValue as Doc));
+        this.apply(replaceOp(path, oldValue as Doc, newValue as Doc));
     }
 
-    private applyOtOp(op: JSONOp) {
-        this.root = type.apply(this.root as Doc, op);
+    public apply(op: JSONOp) {
+        this.root = type.apply(this.root, op) as Doc;
 
         // If we are not attached, don't submit the op.
         if (!this.isAttached()) {
@@ -138,7 +139,7 @@ export class SharedOT<T extends Serializable = any>
                 remoteOp = type.transformNoConflict(remoteOp, localPendingOp, "right");
             }
 
-            this.root = type.apply(this.root as Doc, remoteOp);
+            this.root = type.apply(this.root, remoteOp) as Doc;
         }
     }
 }
