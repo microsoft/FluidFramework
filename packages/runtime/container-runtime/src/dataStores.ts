@@ -47,7 +47,6 @@ import { ContainerRuntime } from "./containerRuntime";
 import {
     FluidDataStoreContext,
     RemotedFluidDataStoreContext,
-    IFluidDataStoreAttributes,
     LocalFluidDataStoreContext,
     createAttributesBlob,
     LocalDetachedFluidDataStoreContext,
@@ -57,7 +56,8 @@ import {
     IContainerRuntimeMetadata,
     nonDataStorePaths,
     rootHasIsolatedChannels,
-    summaryFormatVersionToNumber,
+    ReadFluidDataStoreAttributes,
+    getAttributesFormatVersion,
 } from "./summaryFormat";
 
  /**
@@ -111,14 +111,14 @@ export class DataStores implements IDisposable {
                 }
                 const snapshotTree = value;
                 // Need to rip through snapshot.
-                const attributes = readAndParseFromBlobs<IFluidDataStoreAttributes>(
+                const attributes = readAndParseFromBlobs<ReadFluidDataStoreAttributes>(
                         snapshotTree.blobs,
                         snapshotTree.blobs[dataStoreAttributesBlobName]);
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
                 // For snapshotFormatVersion = "0.1" (1) or above, pkg is jsonified, otherwise it is just a string.
                 // However the feature of loading a detached container from snapshot, is added when the
                 // snapshotFormatVersion is at least "0.1" (1), so we don't expect it to be anything else.
-                const formatVersion = summaryFormatVersionToNumber(attributes.snapshotFormatVersion);
+                const formatVersion = getAttributesFormatVersion(attributes);
                 assert(formatVersion > 0, `Invalid snapshot format version ${attributes.snapshotFormatVersion}`);
                 const pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
 

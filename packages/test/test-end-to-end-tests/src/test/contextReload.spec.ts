@@ -307,7 +307,7 @@ describe("context reload (hot-swap)", function() {
             );
         }
 
-        describe(`compat N${compatVersions} - old loader, new runtime`, () => {
+        describe(`compat N${compatVersion} - old loader, new runtime`, () => {
             beforeEach(async function() {
                 const documentId = createDocumentId();
                 container = await createContainer(
@@ -326,7 +326,7 @@ describe("context reload (hot-swap)", function() {
 
             tests();
         });
-        describe(`compat N${compatVersions} - new loader, old runtime`, () => {
+        describe(`compat N${compatVersion} - new loader, old runtime`, () => {
             beforeEach(async function() {
                 container = await createContainer(
                     [

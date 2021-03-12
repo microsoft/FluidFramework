@@ -63,21 +63,22 @@ import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/run
 import { ContainerRuntime } from "./containerRuntime";
 import {
     dataStoreAttributesBlobName,
-    DataStoreSummaryFormatVersion,
     hasIsolatedChannels,
-    summaryFormatVersionToNumber,
     wrapSummaryInChannelsTree,
+    ReadFluidDataStoreAttributes,
+    WriteFluidDataStoreAttributes,
+    getAttributesFormatVersion,
 } from "./summaryFormat";
 
 function createAttributes(
     pkg: readonly string[],
     isRootDataStore: boolean,
     disableIsolatedChannels: boolean,
-): IFluidDataStoreAttributes {
+): WriteFluidDataStoreAttributes {
     const stringifiedPkg = JSON.stringify(pkg);
     return {
         pkg: stringifiedPkg,
-        snapshotFormatVersion: 2,
+        summaryFormatVersion: 2,
         isRootDataStore,
         disableIsolatedChannels: disableIsolatedChannels || undefined,
     };
@@ -89,24 +90,6 @@ export function createAttributesBlob(
 ): ITreeEntry {
     const attributes = createAttributes(pkg, isRootDataStore, disableIsolatedChannels);
     return new BlobTreeEntry(dataStoreAttributesBlobName, JSON.stringify(attributes));
-}
-
-/**
- * Added IFluidDataStoreAttributes similar to IChannelAttributes which will tell the attributes of a
- * store like the package, snapshotFormatVersion to take different decisions based on a particular
- * snapshotFormatVersion.
- */
-export interface IFluidDataStoreAttributes {
-    pkg: string;
-    readonly snapshotFormatVersion: DataStoreSummaryFormatVersion;
-    /**
-     * This tells whether a data store is root. Root data stores are never collected.
-     * Non-root data stores may be collected if they are not used. If this is not present, default it to
-     * true. This will ensure that older data stores are incorrectly collected.
-     */
-    readonly isRootDataStore?: boolean;
-    /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
-    readonly disableIsolatedChannels?: true;
 }
 
 interface ISnapshotDetails {
@@ -710,12 +693,12 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
             // Need to rip through snapshot and use that to populate extraBlobs
             const attributes =
-                await localReadAndParse<IFluidDataStoreAttributes>(tree.blobs[dataStoreAttributesBlobName]);
+                await localReadAndParse<ReadFluidDataStoreAttributes>(tree.blobs[dataStoreAttributesBlobName]);
 
             let pkgFromSnapshot: string[];
             // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
             // For snapshotFormatVersion = "0.1" (1) or above, pkg is jsonified, otherwise it is just a string.
-            const formatVersion = summaryFormatVersionToNumber(attributes.snapshotFormatVersion);
+            const formatVersion = getAttributesFormatVersion(attributes);
             if (formatVersion < 1) {
                 if (attributes.pkg.startsWith("[\"") && attributes.pkg.endsWith("\"]")) {
                     pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];

@@ -29,12 +29,15 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
 import { stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
-    IFluidDataStoreAttributes,
     LocalFluidDataStoreContext,
     RemotedFluidDataStoreContext,
 } from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
-import { dataStoreAttributesBlobName } from "../summaryFormat";
+import {
+    dataStoreAttributesBlobName,
+    ReadFluidDataStoreAttributes,
+    WriteFluidDataStoreAttributes,
+} from "../summaryFormat";
 
 describe("Data Store Context Tests", () => {
     const dataStoreId = "Test1";
@@ -107,17 +110,18 @@ describe("Data Store Context Tests", () => {
                 const attributesEntry = attachMessage.snapshot.entries.find(
                     (e) => e.path === dataStoreAttributesBlobName);
                 assert(attributesEntry !== undefined, "There is no attributes blob in the summary tree");
-                const contents = JSON.parse((attributesEntry.value as IBlob).contents) as IFluidDataStoreAttributes;
-                const dataStoreAttributes: IFluidDataStoreAttributes = {
+                // Assume that it is in write format, will see errors if not.
+                const contents = JSON.parse((attributesEntry.value as IBlob).contents) as WriteFluidDataStoreAttributes;
+                const dataStoreAttributes: WriteFluidDataStoreAttributes = {
                     pkg: JSON.stringify(["TestDataStore1"]),
-                    snapshotFormatVersion: 2,
+                    summaryFormatVersion: 2,
                     isRootDataStore: true,
                 };
 
                 assert.strictEqual(contents.pkg, dataStoreAttributes.pkg, "Local DataStore package does not match.");
                 assert.strictEqual(
-                    contents.snapshotFormatVersion,
-                    dataStoreAttributes.snapshotFormatVersion,
+                    contents.summaryFormatVersion,
+                    dataStoreAttributes.summaryFormatVersion,
                     "Local DataStore snapshot version does not match.");
                 assert.strictEqual(
                     contents.isRootDataStore,
@@ -177,17 +181,17 @@ describe("Data Store Context Tests", () => {
                 const attributesEntry = attachMessage.snapshot.entries.find(
                     (e) => e.path === dataStoreAttributesBlobName);
                 assert(attributesEntry !== undefined, "There is no attributes blob in the summary tree");
-                const contents = JSON.parse((attributesEntry.value as IBlob).contents) as IFluidDataStoreAttributes;
-                const dataStoreAttributes: IFluidDataStoreAttributes = {
+                const contents = JSON.parse((attributesEntry.value as IBlob).contents) as WriteFluidDataStoreAttributes;
+                const dataStoreAttributes: WriteFluidDataStoreAttributes = {
                     pkg: JSON.stringify(["TestComp", "SubComp"]),
-                    snapshotFormatVersion: 2,
+                    summaryFormatVersion: 2,
                     isRootDataStore: false,
                 };
 
                 assert.strictEqual(contents.pkg, dataStoreAttributes.pkg, "Local DataStore package does not match.");
                 assert.strictEqual(
-                    contents.snapshotFormatVersion,
-                    dataStoreAttributes.snapshotFormatVersion,
+                    contents.summaryFormatVersion,
+                    dataStoreAttributes.summaryFormatVersion,
                     "Local DataStore snapshot version does not match.");
                 assert.strictEqual(
                     contents.isRootDataStore,
@@ -287,7 +291,7 @@ describe("Data Store Context Tests", () => {
 
     describe("RemoteDataStoreContext", () => {
         let remotedDataStoreContext: RemotedFluidDataStoreContext;
-        let dataStoreAttributes: IFluidDataStoreAttributes;
+        let dataStoreAttributes: ReadFluidDataStoreAttributes;
         const storage: Partial<IDocumentStorageService> = {};
         let scope: IFluidObject;
         let containerRuntime: ContainerRuntime;
@@ -337,7 +341,7 @@ describe("Data Store Context Tests", () => {
             it("can correctly initialize and generate attributes", async () => {
                 dataStoreAttributes = {
                     pkg: JSON.stringify(["TestDataStore1"]),
-                    snapshotFormatVersion: 2,
+                    summaryFormatVersion: 2,
                     isRootDataStore: true,
                 };
                 const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
@@ -367,11 +371,11 @@ describe("Data Store Context Tests", () => {
                     "summarize should always return a tree when fullTree is true");
                 const blob = summarizeResult.summary.tree[dataStoreAttributesBlobName] as ISummaryBlob;
 
-                const contents = JSON.parse(blob.content as string) as IFluidDataStoreAttributes;
+                const contents = JSON.parse(blob.content as string) as WriteFluidDataStoreAttributes;
                 assert.strictEqual(contents.pkg, dataStoreAttributes.pkg, "Remote DataStore package does not match.");
                 assert.strictEqual(
-                    contents.snapshotFormatVersion,
-                    dataStoreAttributes.snapshotFormatVersion,
+                    contents.summaryFormatVersion,
+                    dataStoreAttributes.summaryFormatVersion,
                     "Remote DataStore snapshot version does not match.");
                 assert.strictEqual(
                     contents.isRootDataStore,
@@ -382,7 +386,7 @@ describe("Data Store Context Tests", () => {
             it("can correctly initialize and generate attributes without version and isRootDataStore", async () => {
                 dataStoreAttributes = {
                     pkg: "TestDataStore1",
-                    snapshotFormatVersion: undefined,
+                    summaryFormatVersion: undefined,
                 };
                 const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
                 const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
@@ -409,13 +413,13 @@ describe("Data Store Context Tests", () => {
                     "summarize should always return a tree when fullTree is true");
                 const blob = summarizeResult.summary.tree[dataStoreAttributesBlobName] as ISummaryBlob;
 
-                const contents = JSON.parse(blob.content as string) as IFluidDataStoreAttributes;
+                const contents = JSON.parse(blob.content as string) as WriteFluidDataStoreAttributes;
                 assert.strictEqual(
                     contents.pkg,
                     JSON.stringify([dataStoreAttributes.pkg]),
                     "Remote DataStore package does not match.");
                 assert.strictEqual(
-                    contents.snapshotFormatVersion,
+                    contents.summaryFormatVersion,
                     2,
                     "Remote DataStore snapshot version does not match.");
                 // Remote context without the isRootDataStore flag in the snapshot should default it to true.
@@ -442,7 +446,7 @@ describe("Data Store Context Tests", () => {
             it("can generate GC data without GC details in initial summary", async () => {
                 dataStoreAttributes = {
                     pkg: "TestDataStore1",
-                    snapshotFormatVersion: undefined,
+                    summaryFormatVersion: undefined,
                 };
                 const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
                 const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
@@ -481,7 +485,7 @@ describe("Data Store Context Tests", () => {
             it("can generate GC data with emtpy GC details in initial summary", async () => {
                 dataStoreAttributes = {
                     pkg: "TestDataStore1",
-                    snapshotFormatVersion: undefined,
+                    summaryFormatVersion: undefined,
                 };
                 const gcDetails: IGarbageCollectionSummaryDetails = {
                     usedRoutes: [],
@@ -531,7 +535,7 @@ describe("Data Store Context Tests", () => {
             it("can generate GC data with GC details in initial summary", async () => {
                 dataStoreAttributes = {
                     pkg: "TestDataStore1",
-                    snapshotFormatVersion: undefined,
+                    summaryFormatVersion: undefined,
                 };
                 const gcDetails: IGarbageCollectionSummaryDetails = {
                     usedRoutes: [],
@@ -573,7 +577,7 @@ describe("Data Store Context Tests", () => {
             it("should not reuse summary data when used state changed since last summary", async () => {
                 dataStoreAttributes = {
                     pkg: "TestDataStore1",
-                    snapshotFormatVersion: undefined,
+                    summaryFormatVersion: undefined,
                 };
                 const gcDetails: IGarbageCollectionSummaryDetails = {
                     usedRoutes: [""], // Set initial used routes to be same as the default used routes.
@@ -624,7 +628,7 @@ describe("Data Store Context Tests", () => {
             it("can successfully update referenced state", () => {
                 dataStoreAttributes = {
                     pkg: "TestDataStore1",
-                    snapshotFormatVersion: undefined,
+                    summaryFormatVersion: undefined,
                 };
                 const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
                 const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
