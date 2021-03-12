@@ -36,6 +36,7 @@ trigger:
     include:
     - main
     - release/*
+    - test/*
   paths:
     include:
     - server/routerlicious
