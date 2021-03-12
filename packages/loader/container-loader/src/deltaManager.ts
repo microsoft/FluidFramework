@@ -815,9 +815,9 @@ export class DeltaManager
             to, // exclusive right
             MaxBatchDeltas,
             this.logger,
-            async (request: number, _from: number, _to: number) => {
+            async (request: number, _from: number, _to: number, strongTo: boolean) => {
                 requests++;
-                return this.getSingleOpBatch(request, _from, _to, telemetryEvent);
+                return this.getSingleOpBatch(request, _from, _to, telemetryEvent, strongTo);
             },
             (deltas: ISequencedDocumentMessage[]) => {
                 deltasRetrievedTotal += deltas.length;
@@ -846,13 +846,16 @@ export class DeltaManager
      * @param from - inclusive boundary
      * @param to - exclusive boundary
      * @param telemetryEvent - telemetry event used to track consecutive batch of requests
+     * @param strongTo - tells if ops in range from...to have to be there and have to be retrieved.
+     * If false, returning less ops would mean we reached end of file.
      * @returns - an object with resulting ops and cancellation / partial result flags
      */
     async getSingleOpBatch(
         request: number,
         from: number,
         to: number,
-        telemetryEvent: PerformanceEvent):
+        telemetryEvent: PerformanceEvent,
+        strongTo: boolean):
             Promise<{ partial: boolean, cancel: boolean, payload: ISequencedDocumentMessage[] }>
     {
         let deltaStorage: IDocumentDeltaStorageService | undefined;
@@ -889,7 +892,7 @@ export class DeltaManager
                 const deltasRetrievedLast = messages.length;
                 deltasRetrievedTotal += deltasRetrievedLast;
 
-                if (deltasRetrievedLast !== 0) {
+                if (deltasRetrievedLast !== 0 || !strongTo) {
                     telemetryEvent.reportProgress({
                         chunkDeltas: deltasRetrievedTotal,
                         chunkFrom: from,

@@ -32,7 +32,7 @@ export class ParallelRequests<T> {
         private to: number | undefined,
         private readonly payloadSize: number,
         private readonly logger: ITelemetryLogger,
-        private readonly requestCallback: (request: number, from: number, to: number) =>
+        private readonly requestCallback: (request: number, from: number, to: number, strongTo: boolean) =>
             Promise<{ partial: boolean, cancel: boolean, payload: T[] }>,
         private readonly responseCallback: (payload: T[]) => void)
     {
@@ -154,7 +154,7 @@ export class ParallelRequests<T> {
 
             this.requests++;
 
-            const promise = this.requestCallback(this.requests, from, to);
+            const promise = this.requestCallback(this.requests, from, to, this.to !== undefined);
 
             // dispatch any prior received data
             this.dispatch();
@@ -321,7 +321,7 @@ export function parallel<T>(
     to: number | undefined,
     payloadSize: number,
     logger: ITelemetryLogger,
-    requestCallback: (request: number, from: number, to: number) =>
+    requestCallback: (request: number, from: number, to: number, strongTo: boolean) =>
         Promise<{ partial: boolean, cancel: boolean, payload: T[] }>,
 ): IReadPipe<T[]> {
     const queue = new Queue<T[]>();
