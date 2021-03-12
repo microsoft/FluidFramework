@@ -9,7 +9,6 @@ import { v4 as uuid } from "uuid";
 import {
     assert,
     fromBase64ToUtf8,
-    fromUtf8ToBase64,
     IsoBuffer,
     performance,
     stringToBuffer,
@@ -131,7 +130,8 @@ class BlobCache {
 
     public addBlobs(blobs: IBlob[]) {
         blobs.forEach((blob) => {
-            assert(blob.encoding === "base64" || blob.encoding === undefined);
+            assert(blob.encoding === "base64" || blob.encoding === undefined,
+                `Unexpected blob encoding type: '${blob.encoding}'`);
             this._blobCache.set(blob.id, blob);
         });
         // Reset the timer on cache set
@@ -247,8 +247,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private readonly blobCache = new BlobCache();
 
     public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
-        assert(this._ops === undefined);
-        assert(ops !== undefined);
+        assert(this._ops === undefined, "Trying to set ops when they are already set!");
+        assert(ops !== undefined, "Input ops are undefined!");
         this._ops = ops;
     }
 
@@ -280,7 +280,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             docId: this.documentId,
         };
 
-        this.odspSummaryUploadManager = new OdspSummaryUploadManager(this.snapshotUrl, getStorageToken, logger, epochTracker);
+        this.odspSummaryUploadManager = new OdspSummaryUploadManager(this.snapshotUrl, getStorageToken, logger, epochTracker, this.hostPolicy);
     }
 
     public get repositoryUrl(): string {
@@ -401,25 +401,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return stringToBuffer(blob.content, blob.encoding ?? "utf8");
     }
 
-    public async read(blobId: string): Promise<string> {
-        return this.readWithEncodingOutput(blobId, "base64");
-    }
-
-    private async readWithEncodingOutput(blobId: string, outputFormat: "base64" | "string"): Promise<string> {
-        const blob = await this.readBlobCore(blobId);
-
-        if (blob instanceof ArrayBuffer) {
-            return IsoBuffer.from(blob).toString(outputFormat === "base64" ? "base64" : "utf8");
-        }
-        if (outputFormat === blob.encoding || (outputFormat === "string" && blob.encoding === undefined))  {
-            return blob.content;
-        } else if (outputFormat === "base64") {
-            return fromUtf8ToBase64(blob.content);
-        } else {
-            return fromBase64ToUtf8(blob.content);
-        }
-    }
-
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
         if (!this.snapshotUrl) {
             return null;
@@ -476,7 +457,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             finalTree = this.combineProtocolAndAppSnapshotTree(appTree, protocolTree);
         }
 
-        if (this.hostPolicy.summarizerClient) {
+        if (this.hostPolicy.summarizerClient && this.hostPolicy.blobDeduping) {
             await this.odspSummaryUploadManager.buildCachesForDedup(finalTree, this.blobCache.value);
         }
         return finalTree;
@@ -653,20 +634,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (this.hostPolicy.summarizerClient) {
             snapshotOptions.mds = undefined;
         }
-        let abortController: AbortController | undefined;
-        if (this.hostPolicy.summarizerClient !== true) {
-            abortController = new AbortController();
-            const timeout = setTimeout(
-                () => {
-                    clearTimeout(timeout);
-                    abortController?.abort();
-                },
-                snapshotOptions.timeout,
-            );
-        }
 
         try {
-            const odspSnapshot = await this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions, abortController);
+            const odspSnapshot = await this.fetchSnapshotCore(snapshotOptions, tokenFetchOptions);
             return odspSnapshot;
         } catch (error) {
             const errorType = error.errorType;
@@ -676,7 +646,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             }
             // If the first snapshot request was with blobs and we either timed out or the size was too big, then try to fetch without blobs.
             if ((errorType === OdspErrorType.snapshotTooBig || errorType === OdspErrorType.fetchTimeout) && snapshotOptions.blobs) {
-                const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: 0, mds: undefined };
+                this.logger.sendErrorEvent({
+                    eventName: "TreeLatest_SecondCall",
+                    errorType,
+                });
+                const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: 0, mds: undefined, timeout: undefined };
                 return this.fetchSnapshotCore(snapshotOptionsWithoutBlobs, tokenFetchOptions);
             }
             throw error;
@@ -686,7 +660,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private async fetchSnapshotCore(
         snapshotOptions: ISnapshotOptions,
         tokenFetchOptions: TokenFetchOptions,
-        controller?: AbortController,
     ): Promise<IOdspSnapshot> {
         const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
         const url = `${this.snapshotUrl}/trees/latest?ump=1`;
@@ -694,9 +667,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         let postBody = `--${formBoundary}\r\n`;
         postBody += `Authorization: Bearer ${storageToken}\r\n`;
         postBody += `X-HTTP-Method-Override: GET\r\n`;
+        const logOptions = {};
         Object.entries(snapshotOptions).forEach(([key, value]) => {
             if (value !== undefined) {
                 postBody += `${key}: ${value}\r\n`;
+                logOptions[`snapshotOption_${key}`] = value;
             }
         });
         if (this.redeemSharingLink) {
@@ -708,8 +683,24 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
         };
 
+        let controller: AbortController | undefined;
+        if (this.hostPolicy.summarizerClient !== true) {
+            controller = new AbortController();
+            setTimeout(
+                () => controller!.abort(),
+                snapshotOptions.timeout,
+            );
+        }
+
         // This event measures only successful cases of getLatest call (no tokens, no retries).
-        const odspSnapshot = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest", fetchTimeout: snapshotOptions.timeout, maxSnapshotSize: snapshotOptions.mds }, async (event) => {
+        return PerformanceEvent.timedExecAsync(
+            this.logger,
+            {
+                eventName: "TreesLatest",
+                ...logOptions,
+            },
+            async (event) =>
+        {
             const startTime = performance.now();
             const response: IOdspResponse<IOdspSnapshot> = await this.epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(
                 url,
@@ -761,7 +752,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize } = this.evalBlobsAndTrees(snapshot);
             const clientTime = networkTime ? overallTime - networkTime : undefined;
 
-            assert(this._snapshotCacheEntry === undefined);
+            assert(this._snapshotCacheEntry === undefined, "snapshotCacheEntry already defined!");
             this._snapshotCacheEntry = {
                 file: this.fileEntry,
                 type: "snapshot",
@@ -814,7 +805,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             });
             return snapshot;
         });
-        return odspSnapshot;
     }
 
     private evalBlobsAndTrees(snapshot: IOdspSnapshot) {

@@ -8,11 +8,11 @@ import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { MonoRepoKind } from "../common/monoRepo";
 import { GitRepo, fatal } from "./utils";
 import { Context, VersionBumpType, VersionChangeType } from "./context";
-import { bumpVersion } from "./bumpVersion";
+import { bumpVersionCommand } from "./bumpVersion";
 import { createReleaseBranch } from "./createBranch";
-import { releaseVersion, getPackageShortName } from "./releaseVersion";
+import { releaseVersion } from "./releaseVersion";
 import { showVersions } from "./showVersions";
-import { bumpDependencies } from "./bumpDependencies";
+import { bumpDependencies, cleanPrereleaseDependencies } from "./bumpDependencies";
 import * as semver from "semver";
 
 function printUsage() {
@@ -24,6 +24,7 @@ Options:
   -b --bump [<pkg>[=<type>]]     Bump the package version of specified package or monorepo (default: client)
   -d --dep [<pkg>[=<version>]]   Bump the dependencies version of specified package or monorepo (default: client)
   -r --release [<pkg>[=<type>]]  Release and bump version of specified package or monorepo and dependencies (default: client)
+  -u --update                    Update prerelease dependencies for released packages
      --version [<pkg>[=<type>]]  Collect and show version of specified package or monorepo and dependencies (default: client)
 ${commonOptionString}
 `);
@@ -31,16 +32,16 @@ ${commonOptionString}
 
 const paramBumpDepPackages = new Map<string, string | undefined>();
 let paramBranch = false;
-let paramPush = true;
-let paramPublishCheck = true;
+let paramLocal = true;
 let paramReleaseName: string | undefined;
 let paramReleaseVersion: VersionBumpType | undefined;
 let paramClean = false;
-let paramCommit = false;
+let paramCommit = true;
 let paramVersionName: string | undefined;
 let paramVersion: semver.SemVer | undefined;
 let paramBumpName: string | undefined;
 let paramBumpVersion: VersionChangeType | undefined;
+let paramUpdate = false;
 
 function parseNameVersion(arg: string | undefined) {
     let name = arg;
@@ -124,14 +125,7 @@ function parseOptions(argv: string[]) {
             break;
         }
         if (arg === "--local") {
-            paramPush = false;
-            paramPublishCheck = false;
-            continue;
-        }
-
-        if (arg === "--test") {
-            paramPush = false;
-            // still do publish check assuming it is already published even when we don't push
+            paramLocal = false;
             continue;
         }
 
@@ -140,8 +134,8 @@ function parseOptions(argv: string[]) {
             continue;
         }
 
-        if (arg === "--commit") {
-            paramCommit = true;
+        if (arg === "--nocommit") {
+            paramCommit = false;
             continue;
         }
 
@@ -196,6 +190,11 @@ function parseOptions(argv: string[]) {
             if (extra) { i++; }
             continue;
         }
+
+        if (arg === "-u" || arg === "--update") {
+            paramUpdate = true;
+            continue;
+        }
         console.error(`ERROR: Invalid arguments ${arg}`);
         error = true;
         break;
@@ -207,6 +206,47 @@ function parseOptions(argv: string[]) {
     }
 }
 
+function checkFlagsConflicts() {
+    let command = undefined;
+    if (paramBranch) {
+        command = "branch";
+    }
+    if (paramBumpDepPackages.size) {
+        if (command !== undefined) {
+            fatal(`Conflicting switches --dep and --${command}`);
+        }
+        command = "dep";
+    }
+    if (paramReleaseName) {
+        if (command !== undefined) {
+            fatal(`Conflicting switches --release and --${command}`);
+        }
+        command = "release";
+    }
+    if (paramVersionName) {
+        if (command !== undefined) {
+            fatal(`Conflicting switches --version and --${command}`);
+        }
+        command = "version";
+    }
+    if (paramBumpName) {
+        if (command !== undefined) {
+            fatal(`Conflicting switches --bump and --${command}`);
+        }
+        command = "bump";
+    }
+    if (paramUpdate) {
+        if (command !== undefined) {
+            fatal(`Conflicting switches --update and --${command}`);
+        }
+        command = "update";
+    }
+    if (command === undefined) {
+        fatal("Missing command flags --branch/--release/--dep/--bump/--version");
+    }
+    return command;
+}
+
 /**
  * Load the repo and either do version bump or dependencies bump
  */
@@ -215,53 +255,36 @@ async function main() {
     const resolvedRoot = await getResolvedFluidRoot();
     console.log(`Repo: ${resolvedRoot}`);
     const gitRepo = new GitRepo(resolvedRoot);
-    const context = new Context(gitRepo, await gitRepo.getCurrentBranchName());
-
+    const context = new Context(gitRepo, "github.com/microsoft/FluidFramework", await gitRepo.getCurrentBranchName());
     try {
-        if (paramBranch) {
-            if (paramBumpDepPackages.size) {
-                fatal("Conflicting switches --dep and --branch");
-            }
-            if (paramReleaseName) {
-                fatal("Conflicting switches --release and --branch");
-            }
-            if (paramVersionName) {
-                fatal("Conflicting switches --version and --branch");
-            }
-            if (paramBumpName) {
-                fatal("Conflicting switches --bump and --branch");
-            }
-            await createReleaseBranch(context, "github.com/microsoft/FluidFramework");
-        } else if (paramBumpDepPackages.size) {
-            if (paramReleaseName) {
-                fatal("Conflicting switches --release and --dep");
-            }
-            if (paramVersionName) {
-                fatal("Conflicting switches --version and --dep");
-            }
-            if (paramBumpName) {
-                fatal("Conflicting switches --bump and --dep");
-            }
-            console.log("Bumping dependencies");
+        const command = checkFlagsConflicts();
 
-            await bumpDependencies(context, "Bump dependencies version", paramBumpDepPackages, paramPublishCheck, paramCommit);
-        } else if (paramReleaseName) {
-            if (paramVersionName) {
-                fatal("Conflicting switches --release and --version");
-            }
-            if (paramBumpName) {
-                fatal("Conflicting switches --release and --bump");
-            }
-            await releaseVersion(context, paramReleaseName, paramPublishCheck, paramReleaseVersion);
-        } else if (paramVersionName) {
-            if (paramBumpName) {
-                fatal("Conflicting switches --version and --bump");
-            }
-            await showVersions(context, paramVersionName, paramVersion);
-        } else if (paramBumpName) {
-            await bumpVersion(context, [paramBumpName], paramBumpVersion ?? "patch", getPackageShortName(paramBumpName), paramCommit ? "" : undefined);
-        } else {
-            fatal("Missing command flags --release/--dep/--bump/--version");
+        // Make sure we are operating on a clean repo
+        const status = await context.gitRepo.getStatus();
+        if (status !== "") {
+            fatal(`Local repo is dirty\n${status}`);
+        }
+
+        switch (command) {
+            case "branch":
+                await createReleaseBranch(context);
+                break;
+            case "dep":
+                console.log("Bumping dependencies");
+                await bumpDependencies(context, "Bump dependencies version", paramBumpDepPackages, paramLocal, paramCommit);
+                break;
+            case "release":
+                await releaseVersion(context, paramReleaseName!, paramLocal, paramReleaseVersion);
+                break;
+            case "version":
+                await showVersions(context, paramVersionName!, paramVersion);
+                break;
+            case "bump":
+                await bumpVersionCommand(context, paramBumpName!, paramBumpVersion ?? "patch", paramCommit);
+                break;
+            case "update":
+                await cleanPrereleaseDependencies(context, paramLocal, paramCommit);
+                break;
         }
     } catch (e) {
         if (!e.fatal) { throw e; }

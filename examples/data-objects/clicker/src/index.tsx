@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { TaskManager } from "@fluid-experimental/task-manager";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { IAgentScheduler } from "@fluidframework/runtime-definitions";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
@@ -15,6 +16,9 @@ import { ClickerAgent } from "./agent";
 export const ClickerName = "Clicker";
 
 const counterKey = "counter";
+const taskManagerKey = "taskManager";
+
+const consoleLogTaskId = "ConsoleLog";
 
 /**
  * Basic Clicker example using new interfaces and stock component classes.
@@ -23,6 +27,7 @@ export class Clicker extends DataObject implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
 
     private _counter: SharedCounter | undefined;
+    private _taskManager: TaskManager | undefined;
 
     /**
      * Do setup work here
@@ -30,12 +35,21 @@ export class Clicker extends DataObject implements IFluidHTMLView {
     protected async initializingFirstTime() {
         const counter = SharedCounter.create(this.runtime);
         this.root.set(counterKey, counter.handle);
+        const taskManager = TaskManager.create(this.runtime);
+        this.root.set(taskManagerKey, taskManager.handle);
     }
 
     protected async hasInitialized() {
         const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
         this._counter = await counterHandle?.get();
-        this.setupAgent();
+        const taskManagerHandle = this.root.get<IFluidHandle<TaskManager>>(taskManagerKey);
+        this._taskManager = await taskManagerHandle?.get();
+
+        if (this.runtime.connected) {
+            this.setupAgent();
+        } else {
+            this.runtime.once("connected", () => { this.setupAgent(); });
+        }
     }
 
     // #region IFluidHTMLView
@@ -55,19 +69,12 @@ export class Clicker extends DataObject implements IFluidHTMLView {
     // #endregion IFluidHTMLView
 
     public setupAgent() {
-        const agentTaskId = "agent";
-        const clickerAgent = new ClickerAgent(this.counter);
-
-        this.context.containerRuntime.request({ url: "/_scheduler" }).then(async (agentSchedulerResponse) => {
-            if (agentSchedulerResponse.status === 404) {
-                throw new Error("Agent scheduler not found");
-            }
-            const agentScheduler = agentSchedulerResponse.value as IAgentScheduler;
-            await agentScheduler.pick(agentTaskId, async () => {
+        this.taskManager.lockTask(consoleLogTaskId)
+            .then(async () => {
                 console.log(`Picked`);
+                const clickerAgent = new ClickerAgent(this.counter);
                 await clickerAgent.run();
-            });
-        }).catch((err) => { console.error(err); });
+            }).catch((err) => { console.error(err); });
     }
 
     private get counter() {
@@ -75,6 +82,13 @@ export class Clicker extends DataObject implements IFluidHTMLView {
             throw new Error("SharedCounter not initialized");
         }
         return this._counter;
+    }
+
+    private get taskManager() {
+        if (this._taskManager === undefined) {
+            throw new Error("TaskManager not initialized");
+        }
+        return this._taskManager;
     }
 }
 
@@ -117,10 +131,10 @@ class CounterReactView extends React.Component<CounterProps, CounterState> {
 
 // ----- FACTORY SETUP -----
 
-export const ClickerInstantiationFactory = new DataObjectFactory(
+export const ClickerInstantiationFactory = new DataObjectFactory<Clicker, undefined, undefined, IEvent>(
     ClickerName,
     Clicker,
-    [SharedCounter.getFactory()],
+    [SharedCounter.getFactory(), TaskManager.getFactory()],
     {},
 );
 

@@ -3,17 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { assert } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/driver-definitions";
 import { IClient, IErrorTrackingService } from "@fluidframework/protocol-definitions";
-import {
-    BasicRestWrapper,
-    getAuthorizationTokenFromCredentials,
-    GitManager,
-    Historian,
-    ICredentials,
-    IGitCache,
-} from "@fluidframework/server-services-client";
+import { GitManager, Historian, ICredentials, IGitCache } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
@@ -21,6 +14,7 @@ import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
 import { NullBlobStorageService } from "./nullBlobStorageService";
 import { ITokenProvider } from "./tokens";
+import { RouterliciousStorageRestWrapper } from "./restWrapper";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -56,35 +50,19 @@ export class DocumentService implements api.IDocumentService {
             return new NullBlobStorageService();
         }
 
-        const storageToken = await this.tokenProvider.fetchStorageToken(
+        const storageRestWrapper = await RouterliciousStorageRestWrapper.load(
             this.tenantId,
             this.documentId,
-        );
-        // Craft credentials - either use the direct credentials (i.e. a GitHub user + PAT) - or make use of our
-        // tenant token
-        let credentials: ICredentials | undefined;
-        if (this.directCredentials) {
-            credentials = this.directCredentials;
-        } else {
-            credentials = {
-                password: storageToken.jwt,
-                user: this.tenantId,
-            };
-        }
-
-        const restWrapper = new BasicRestWrapper(
+            this.tokenProvider,
+            this.logger,
             this.gitUrl,
-            {},
-            undefined,
-            {
-                Authorization: getAuthorizationTokenFromCredentials(credentials),
-            },
+            this.directCredentials,
         );
         const historian = new Historian(
             this.gitUrl,
             this.historianApi,
             this.disableCache,
-            restWrapper);
+            storageRestWrapper);
         const gitManager = new GitManager(historian);
 
         // Insert cached seed data
@@ -116,7 +94,7 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document delta storage service for routerlicious driver.
      */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
-        assert(this.documentStorageService, "Storage service not initialized");
+        assert(!!this.documentStorageService, "Storage service not initialized");
 
         const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, this.tokenProvider, this.logger);
         return new DocumentDeltaStorageService(this.tenantId, this.documentId,

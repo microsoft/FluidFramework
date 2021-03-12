@@ -12,7 +12,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     private _handler: IDeltaHandler | undefined;
 
     private get handler(): IDeltaHandler {
-        assert(!!this._handler);
+        assert(!!this._handler, "Missing delta handler");
         return this._handler;
     }
     public get connected(): boolean {
@@ -27,7 +27,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     }
 
     public attach(handler: IDeltaHandler) {
-        assert(this._handler === undefined);
+        assert(this._handler === undefined, "Missing delta handler on attach");
         this._handler = handler;
     }
 

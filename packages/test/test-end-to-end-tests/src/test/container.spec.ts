@@ -15,11 +15,16 @@ import {
     IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
 import { MockDocumentDeltaConnection } from "@fluidframework/test-loader-utils";
-import { LocalCodeLoader, TestObjectProvider, LoaderContainerTracker } from "@fluidframework/test-utils";
+import {
+    LocalCodeLoader,
+    TestObjectProvider,
+    LoaderContainerTracker,
+    TestContainerRuntimeFactory,
+} from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestDriver, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
-import { getDataStoreFactory, createRuntimeFactory, TestDataObject } from "./compatUtils";
+import { getDataStoreFactory, ITestDataObject, TestDataObjectType } from "./compatUtils";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
@@ -42,7 +47,7 @@ describe("Container", () => {
         loaderContainerTracker.reset();
     });
     async function loadContainer(props?: Partial<ILoaderProps>) {
-        const loader =  new Loader({
+        const loader = new Loader({
             ...props,
             logger,
             urlResolver: props?.urlResolver ?? driver.createUrlResolver(),
@@ -204,8 +209,8 @@ describe("Container", () => {
     });
 
     it("Delta manager receives readonly event when calling container.forceReadonly()", async () => {
-        const runtimeFactory = (_?: unknown) => createRuntimeFactory(
-            TestDataObject.type,
+        const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
+            TestDataObjectType,
             getDataStoreFactory());
 
         const localTestObjectProvider = new TestObjectProvider(
@@ -214,7 +219,7 @@ describe("Container", () => {
             runtimeFactory);
 
         const container = await localTestObjectProvider.makeTestContainer() as Container;
-        const dataObject = await requestFluidObject<TestDataObject>(container, "default");
+        const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
 
         let runCount = 0;
 
