@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import BTree from 'sorted-btree';
+import BTree from '@taylorsw04/sorted-btree';
 import { fail, assert } from './Common';
 
 /**
@@ -308,6 +308,10 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 		return this.parents.get(id);
 	}
 
+	private static anyDifference(): { break: boolean } {
+		return { break: true };
+	}
+
 	public equals(forest: Forest<ID, T, TParentData>, comparator: (a: T, b: T) => boolean = Object.is): boolean {
 		if (this === forest) {
 			return true;
@@ -319,6 +323,22 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 			if (forest.nodes === this.nodes) {
 				return true;
 			}
+			if (
+				this.nodes.diff(
+					forest.nodes,
+					ForestI.anyDifference,
+					ForestI.anyDifference,
+					(_, nodeThis, nodeOther) => {
+						if (!comparator(nodeThis, nodeOther)) {
+							return { break: true };
+						}
+						return undefined;
+					}
+				)
+			) {
+				return false;
+			}
+			return true;
 		}
 
 		for (const [id, value] of forest) {
@@ -331,7 +351,34 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 	}
 
 	public delta(forest: Forest<ID, T, TParentData>, comparator: (a: T, b: T) => boolean = Object.is): Delta<ID> {
-		// TODO:#48808: Include generating changed, removed and added in optimized B+ tree diff.
+		if (forest instanceof ForestI) {
+			const changed: ID[] = [];
+			const removed: ID[] = [];
+			const added: ID[] = [];
+			this.nodes.diff(
+				forest.nodes,
+				(id) => {
+					removed.push(id);
+				},
+				(id) => {
+					added.push(id);
+				},
+				(id, nodeThis, nodeOther) => {
+					if (!comparator(nodeThis, nodeOther)) {
+						changed.push(id);
+					}
+				}
+			);
+			return {
+				changed,
+				added,
+				removed,
+			};
+		}
+		return this.slowDelta(forest, comparator);
+	}
+
+	private slowDelta(forest: Forest<ID, T, TParentData>, comparator: (a: T, b: T) => boolean): Delta<ID> {
 		const changed: ID[] = [];
 		for (const [id] of this) {
 			const f = forest.tryGet(id);

@@ -40,9 +40,9 @@
 		"@fluidframework/protocol-definitions": "^0.1019.0",
 		"@fluidframework/shared-object-base": "^0.35.3",
 		"@fluidframework/telemetry-utils": "^0.35.3",
+		"@taylorsw04/sorted-btree": "1.4.1-optimizedDiff",
 		"buffer": "^6.0.3",
 		"denque": "^1.5.0",
-		"sorted-btree": "^1.4.0",
 		"uuid": "^8.3.2"
 	},
 	"devDependencies": {
