@@ -493,7 +493,7 @@ export class SharedTree extends SharedObject {
 		this.emit(SharedTreeEvent.EditCommitted, edit.id);
 	}
 
-	protected applyStashedOpCore() {
+	protected applyStashedOp() {
 		throw new Error('not implemented');
 	}
 }
