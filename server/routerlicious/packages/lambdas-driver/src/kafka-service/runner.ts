@@ -71,6 +71,7 @@ export class KafkaRunner implements IRunner {
         // Stop the partition manager
         await this.partitionManager?.stop();
 
+        // Dispose the factory
         await this.factory.dispose();
 
         // Close the underlying consumer, but setting a timeout for safety
