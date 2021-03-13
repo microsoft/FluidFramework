@@ -16,10 +16,10 @@
 <nav id="docs-navbar" aria-label="Topics" class="docs-nav visible-md visible-lg">
     <ul class="nav" id="main-nav">
 
-        <li {{ if eq .Kind "section" }} class="active" {{ end }}>
+        <!-- <li {{ if eq .Kind "section" }} class="active" {{ end }}>
             <a class="docs-home" href="/reference/" {{ if eq .Kind "section" }}
                 aria-label="Current Page: Fluid Documentation Overview" {{ end }}>Reference</a>
-        </li>
+        </li> -->
 
         {{- range .Site.Menus.reference }}
         {{ $menuArea := .Identifier}}
