@@ -26,6 +26,8 @@ export class PartitionManager extends EventEmitter {
     // Start rebalancing until we receive the first rebalanced message
     private isRebalancing = true;
 
+    private stopped = false;
+
     constructor(
         private readonly factory: IPartitionLambdaFactory,
         private readonly consumer: IConsumer,
@@ -48,11 +50,19 @@ export class PartitionManager extends EventEmitter {
 
         // On any Kafka errors immediately stop processing
         this.consumer.on("error", (error) => {
+            if (this.stopped) {
+                return;
+            }
+
             this.emit("error", error);
         });
     }
 
     public async stop(): Promise<void> {
+        this.stopped = true;
+
+        this.logger?.info("Stop requested");
+
         // Drain all pending messages from the partitions
         const partitionsStoppedP: Promise<void>[] = [];
         for (const [, partition] of this.partitions) {
@@ -67,23 +77,29 @@ export class PartitionManager extends EventEmitter {
         }
 
         this.partitions.clear();
+
+        this.removeAllListeners();
     }
 
     private process(message: IQueuedMessage) {
+        if (this.stopped) {
+            return;
+        }
+
         if (this.isRebalancing) {
             this.logger?.info(
                 `Ignoring ${message.topic}:${message.partition}@${message.offset} due to pending rebalance`);
             return;
         }
 
-        if (!this.partitions.has(message.partition)) {
+        const partition = this.partitions.get(message.partition);
+        if (!partition) {
             this.emit(
                 "error",
                 `Received message for untracked partition ${message.topic}:${message.partition}@${message.offset}`);
             return;
         }
 
-        const partition = this.partitions.get(message.partition);
         partition.process(message);
     }
 
@@ -111,6 +127,10 @@ export class PartitionManager extends EventEmitter {
      * May contain partitions that have been previously assigned to this consumer
      */
     private rebalanced(partitions: IPartitionWithEpoch[]) {
+        if (this.stopped) {
+            return;
+        }
+
         this.isRebalancing = false;
 
         const partitionsMap = new Map(partitions.map((partition) => [partition.partition, partition]));
@@ -146,6 +166,10 @@ export class PartitionManager extends EventEmitter {
 
             // Listen for error events to know when the partition has stopped processing due to an error
             newPartition.on("error", (error, errorData: IContextErrorData) => {
+                if (this.stopped) {
+                    return;
+                }
+
                 // For simplicity we will close the entire manager whenever any partition errors. In the case that the
                 // restart flag is false and there was an error we will eventually need a way to signify that a
                 // partition is 'poisoned'.

@@ -16,6 +16,7 @@ import {
 import {
     IDeltaManager,
     IDeltaQueue,
+    ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 
 /**
@@ -50,16 +51,6 @@ class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         return [];
     }
 
-    // back-compat: usage removed in 0.33, remove in future versions
-    public async systemPause(): Promise<void> {
-        return;
-    }
-
-    // back-compat: usage removed in 0.33, remove in future versions
-    public systemResume(): void {
-        return undefined;
-    }
-
     public dispose() { }
 
     constructor() {
@@ -75,6 +66,7 @@ export class MockDeltaManager extends EventEmitter
     public get disposed() { return undefined; }
 
     public readonly readonly = false;
+    public readOnlyInfo: ReadOnlyInfo = { readonly: false };
     public readonly clientType: string;
     public readonly clientDetails: IClientDetails;
     public get IDeltaSender() { return this; }

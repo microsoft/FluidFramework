@@ -24,9 +24,6 @@ import {
 import { ISubscriber } from "./pubsub";
 
 export class LocalOrdererConnection implements IOrdererConnection {
-    // Back-compat, removal tracked with issue #4346
-    public readonly parentBranch = null;
-
     public readonly maxMessageSize: number;
 
     constructor(

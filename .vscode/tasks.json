@@ -23,7 +23,7 @@
             ]
         },
         {
-            "label": "fluid-build $cwd -s tsc",
+            "label": "Build Current Tests",
             "type": "process",
             "command": "node",
             "args": [
@@ -33,6 +33,8 @@
                 "--vscode",
                 "-s",
                 "tsc",
+                "-s",
+                "build:test",
                 "${fileDirname}"
             ],
             "group": "build",

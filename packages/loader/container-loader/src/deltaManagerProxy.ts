@@ -9,6 +9,7 @@ import {
     IDeltaQueue,
     IDeltaSender,
     IDeltaQueueEvents,
+    ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { EventForwarder } from "@fluidframework/common-utils";
 import {
@@ -17,7 +18,6 @@ import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     ISignalMessage,
-    MessageType,
 } from "@fluidframework/protocol-definitions";
 
 /**
@@ -93,11 +93,6 @@ export class DeltaManagerProxy
         return this.deltaManager.lastKnownSeqNumber;
     }
 
-    // Back-compat: <= 0.18
-    public get referenceSequenceNumber(): number {
-        return this.lastSequenceNumber;
-    }
-
     public get initialSequenceNumber(): number {
         return this.deltaManager.initialSequenceNumber;
     }
@@ -130,6 +125,10 @@ export class DeltaManagerProxy
         return this.deltaManager.readonly;
     }
 
+    public get readOnlyInfo(): ReadOnlyInfo {
+        return this.deltaManager.readOnlyInfo;
+    }
+
     constructor(private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>) {
         super(deltaManager);
 
@@ -151,10 +150,6 @@ export class DeltaManagerProxy
 
     public submitSignal(content: any): void {
         return this.deltaManager.submitSignal(content);
-    }
-
-    public submit(type: MessageType, contents: any, batch: boolean, appData: any): number {
-        return this.deltaManager.submit(type, contents, batch, appData);
     }
 
     public flush(): void {

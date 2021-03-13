@@ -40,7 +40,7 @@ async function conductor(
     writers,
     processes,
     callback,
-): Promise<author.IScribeMetrics> {
+): Promise<author.IScribeMetrics | undefined> {
     const process = 0;
     const docId = "";
     const chunks = author.normalizeText(text).split("\n");
@@ -91,7 +91,7 @@ export async function type(
     processes: number,
     callback: author.ScribeMetricsCallback,
     distributed = false,
-): Promise<author.IScribeMetrics> {
+): Promise<author.IScribeMetrics | undefined> {
     if (distributed) {
         console.log("distributed");
     }

@@ -44,19 +44,22 @@ export const BadgeView: React.FC<IBadgeViewProps> = (props: IBadgeViewProps) => 
         changeSelectedOption,
     } = props;
 
-    const currentOption = options.find((option) => option.key === selectedOption);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const currentOption = options.find((option) => option.key === selectedOption)!;
 
     // Set up local state for our custom status creator
 
     const [isCustomStatusVisible, setIsCustomStatusVisible] = useState<boolean>(false);
     const [customStatusColor, setCustomStatusColor] = useState<IColor>(
-        getColorFromString("#fff"),
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        getColorFromString("#fff")!,
     );
     const [customStatusText, setCustomStatusText] = useState<string>("");
 
     // Set up event handlers
-    const onStatusClick = (_, item: IContextualMenuItem): void => {
-        switch (item.key) {
+    const onStatusClick = (_, item: IContextualMenuItem | undefined): void => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        switch (item!.key) {
             case "new":
                 setIsCustomStatusVisible(true);
                 break;
@@ -82,8 +85,8 @@ export const BadgeView: React.FC<IBadgeViewProps> = (props: IBadgeViewProps) => 
         setCustomStatusColor(colorObj);
     };
 
-    const updateCustomStatusText = (_, newValue: string) => {
-        setCustomStatusText(newValue);
+    const updateCustomStatusText = (_, newValue: string | undefined) => {
+        setCustomStatusText(newValue ?? "");
     };
 
     // Create the content for the history card

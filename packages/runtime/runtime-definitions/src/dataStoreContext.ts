@@ -38,7 +38,6 @@ import {
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
 } from "./summary";
-import { ITaskManager } from "./agent";
 
 /**
  * Runtime flush mode handling
@@ -126,8 +125,6 @@ export interface IContainerRuntimeBase extends
      * @param relativeUrl - A relative request within the container
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-
-    getTaskManager(): Promise<ITaskManager>;
 
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 
@@ -258,8 +255,11 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
-    readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
+    /**
+     * @deprecated 0.37 Use the provideScopeLoader flag to make the loader
+     * available through scope instead
+     */
     readonly loader: ILoader;
     /**
      * Indicates the attachment state of the data store to a host service.
@@ -267,12 +267,6 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
     readonly attachState: AttachState;
 
     readonly containerRuntime: IContainerRuntimeBase;
-    /**
-     * @deprecated 0.17 Issue #1888 Rename IHostRuntime to IContainerRuntime and refactor usages
-     * Use containerRuntime instead of hostRuntime
-     */
-    readonly hostRuntime: IContainerRuntimeBase;
-    readonly snapshotFn: (message: string) => Promise<void>;
 
     /**
      * @deprecated 0.16 Issue #1635, #3631

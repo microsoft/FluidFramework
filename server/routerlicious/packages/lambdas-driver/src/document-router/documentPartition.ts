@@ -13,16 +13,15 @@ import {
 import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";
 import { Provider } from "nconf";
-import * as winston from "winston";
 import { DocumentContext } from "./documentContext";
 
 export class DocumentPartition {
     private readonly q: AsyncQueue<IQueuedMessage>;
     private readonly lambdaP: Promise<IPartitionLambda>;
-    private lambda: IPartitionLambda;
+    private lambda: IPartitionLambda | undefined;
     private corrupt = false;
     private closed = false;
-    private activityTimeoutTime: number;
+    private activityTimeoutTime: number | undefined;
 
     constructor(
         factory: IPartitionLambdaFactory,
@@ -44,7 +43,8 @@ export class DocumentPartition {
                 // Winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
                 try {
                     if (!this.corrupt) {
-                        this.lambda.handler(message);
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        this.lambda!.handler(message);
                     } else {
                         // Until we can dead letter - simply checkpoint as handled
                         this.context.checkpoint(message);
@@ -52,7 +52,6 @@ export class DocumentPartition {
                 } catch (error) {
                     // TODO dead letter queue for bad messages, etc... when the lambda is throwing an exception
                     // for now we will simply continue on to keep the queue flowing
-                    winston.error("Error processing partition message", error);
                     context.error(error, { restart: false, tenantId, documentId });
                     this.corrupt = true;
                 }
@@ -117,7 +116,7 @@ export class DocumentPartition {
     }
 
     public isInactive(now: number = Date.now()) {
-        return !this.context.hasPendingWork() && now > this.activityTimeoutTime;
+        return !this.context.hasPendingWork() && this.activityTimeoutTime && now > this.activityTimeoutTime;
     }
 
     private updateActivityTime() {

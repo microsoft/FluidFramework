@@ -148,6 +148,19 @@
                     "Framework-Utils"
                 ]
             },
+            "HostUtils": {
+                "dev": true,
+                "packages": [
+                    "@fluid-experimental/get-container",
+                    "@fluid-experimental/fluid-static"
+                ],
+                "deps": [
+                    "Loader",
+                    "Routerlicious-Driver",
+                    "Server-Libs",
+                    "Test"
+                ]
+            },
             "Runtime": {
                 "packages": [
                     "@fluidframework/agent-scheduler"
@@ -183,6 +196,7 @@
                 "dev": true,
                 "dirs": [
                     "examples/",
+                    "experimental/examples/",
                     "packages/agents/"
                 ],
                 "deps": [

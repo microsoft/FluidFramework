@@ -59,7 +59,7 @@ export class Smde extends EventEmitter implements
     private smde: SimpleMDE | undefined;
 
     private get text() {
-        assert(!!this._text);
+        assert(!!this._text, "SharedString property missing!");
         return this._text;
     }
     constructor(private readonly runtime: IFluidDataStoreRuntime, private readonly context: IFluidDataStoreContext) {

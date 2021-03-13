@@ -122,7 +122,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public get packagePath(): readonly string[] {
-        assert(this.pkg !== undefined);
+        assert(this.pkg !== undefined, "Undefined package path");
         return this.pkg;
     }
 
@@ -146,14 +146,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.leader;
     }
 
-    public get snapshotFn(): (message: string) => Promise<void> {
-        return this._containerRuntime.snapshotFn;
-    }
-
-    public get branch(): string {
-        return this._containerRuntime.branch;
-    }
-
     public get loader(): ILoader {
         return this._containerRuntime.loader;
     }
@@ -164,14 +156,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public get isLoaded(): boolean {
         return this.loaded;
-    }
-
-    /**
-     * @deprecated 0.17 Issue #1888 Rename IHostRuntime to IContainerRuntime and refactor usages
-     * Use containerRuntime instead of hostRuntime
-     */
-    public get hostRuntime(): IContainerRuntime {
-        return this._containerRuntime;
     }
 
     public get baseSnapshot(): ISnapshotTree | undefined {
@@ -227,9 +211,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.containerRuntime.attachState : AttachState.Detached;
 
         this.bindToContext = () => {
-            assert(this.bindState === BindState.NotBound);
+            assert(this.bindState === BindState.NotBound, "datastore context is already in bound state");
             this.bindState = BindState.Binding;
-            assert(this.channel !== undefined);
+            assert(this.channel !== undefined, "undefined channel on datastore context");
             bindChannel(this.channel);
             this.bindState = BindState.Bound;
         };
@@ -271,7 +255,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public async realize(): Promise<IFluidDataStoreChannel> {
-        assert(!this.detachedRuntimeCreation);
+        assert(!this.detachedRuntimeCreation, "Detached runtime creation on realize()");
         if (!this.channelDeferred) {
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore().catch((error) => {
@@ -282,7 +266,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     protected async factoryFromPackagePath(packages) {
-        assert(this.pkg === packages);
+        assert(this.pkg === packages, "Unexpected package path");
 
         let entry: FluidDataStoreRegistryEntry | undefined;
         let registry: IFluidDataStoreRegistry | undefined = this._containerRuntime.IFluidDataStoreRegistry;
@@ -316,11 +300,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         const { factory, registry } = await this.factoryFromPackagePath(packages);
 
-        assert(this.registry === undefined);
+        assert(this.registry === undefined, "datastore context registry is already set");
         this.registry = registry;
 
         const channel = await factory.instantiateDataStore(this);
-        assert(channel !== undefined);
+        assert(channel !== undefined, "undefined channel on datastore context");
         this.bindRuntime(channel);
     }
 
@@ -338,7 +322,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             return;
         }
 
-        assert(this.connected === connected);
+        assert(this.connected === connected, "Unexpected connected state");
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.channel!.setConnectionState(connected, clientId);
@@ -439,12 +423,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         await this.realize();
         assert(this.channel !== undefined, "Channel should not be undefined when running GC");
 
-        // back-compat - 0.31. Older data store runtimes will not have getGCData API.
-        if (this.channel.getGCData === undefined) {
-            return {
-                gcNodes: {},
-            };
-        }
         return this.channel.getGCData(fullGC);
     }
 
@@ -481,14 +459,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         assert(this.loaded, "Channel should be loaded when updating used routes");
         assert(this.channel !== undefined, "Channel should be present when data store is loaded");
 
-        // back-compat: 0.33 - updateUsedRoutes is added in 0.33. Remove the check here when N >= 0.36.
-        if (this.channel.updateUsedRoutes !== undefined) {
-            // Remove the route to this data store, if it exists.
-            const usedChannelRoutes = this.summarizerNode.usedRoutes.filter(
-                (id: string) => { return id !== "/" && id !== ""; },
-            );
-            this.channel.updateUsedRoutes(usedChannelRoutes);
-        }
+        // Remove the route to this data store, if it exists.
+        const usedChannelRoutes = this.summarizerNode.usedRoutes.filter(
+            (id: string) => { return id !== "/" && id !== ""; },
+        );
+        this.channel.updateUsedRoutes(usedChannelRoutes);
     }
 
     /**
@@ -501,7 +476,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
         this.verifyNotClosed();
-        assert(!!this.channel);
+        assert(!!this.channel, "Channel must exist when submitting message");
         const fluidDataStoreContent: FluidDataStoreMessage = {
             content,
             type,
@@ -538,7 +513,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
-        assert(!!this.channel);
+        assert(!!this.channel, "Channel must exist on submitting signal");
         return this._containerRuntime.submitDataStoreSignal(this.id, type, content);
     }
 
@@ -569,9 +544,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         try
         {
-            assert(!this.detachedRuntimeCreation);
-            assert(this.channelDeferred !== undefined);
-            assert(this.pkg !== undefined);
+            assert(!this.detachedRuntimeCreation, "Detached runtime creation on runtime bind");
+            assert(this.channelDeferred !== undefined, "Undefined channel defferal");
+            assert(this.pkg !== undefined, "Undefined package path");
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const pending = this.pending!;
@@ -944,15 +919,15 @@ export class LocalDetachedFluidDataStoreContext
         registry: IProvideFluidDataStoreFactory,
         dataStoreRuntime: IFluidDataStoreChannel)
     {
-        assert(this.detachedRuntimeCreation);
-        assert(this.channelDeferred === undefined);
+        assert(this.detachedRuntimeCreation, "runtime creation is already attached");
+        assert(this.channelDeferred === undefined, "channel deferral is already set");
 
         const factory = registry.IFluidDataStoreFactory;
 
         const entry = await this.factoryFromPackagePath(this.pkg);
-        assert(entry.factory === factory);
+        assert(entry.factory === factory, "Unexpected factory for package path");
 
-        assert(this.registry === undefined);
+        assert(this.registry === undefined, "datastore registry already attached");
         this.registry = entry.registry;
 
         this.detachedRuntimeCreation = false;

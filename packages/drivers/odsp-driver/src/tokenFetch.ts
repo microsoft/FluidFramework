@@ -15,7 +15,7 @@ export interface TokenResponse {
 }
 
 /**
- * Represents token fetch options
+ * Represents access token fetch options
  */
 export interface TokenFetchOptions {
     /**
@@ -24,54 +24,46 @@ export interface TokenFetchOptions {
      */
     refresh: boolean;
 
-    /** Claims that have to be passed with token fetch request */
+    /**
+     * Claims that have to be passed with token fetch request.
+     * These can be used to specify additional information that must be passed to token authority.
+     */
     claims?: string;
+
+    /**
+     * Tenant id of authority that must be handling token fetch.
+     * If it is not specified then it is up to token fetching logic to determine which tenant authority
+     * to use to issue access token.
+     */
+    tenantId?: string;
 }
 
 /**
- * Method signature for callback method used to fetch Storage token
- * @param siteUrl - Storage site url
- * @param refresh - Flag indicating whether token fetch must bypass local cache
- * @param claims - Optional string indicating claims that will be passed to token authority
- * @returns If successful, TokenResponse object representing token value along with flag indicating
- * whether token came from cache. Legacy implementation may return a string for token value;
- * in this case it should be assumes that fromCache signal is undefined. Null is returned in case of failure.
+ * Represents access token fetch options for ODSP resource
  */
-// eslint-disable-next-line max-len
-export type StorageTokenFetcher = (siteUrl: string, refresh: boolean, claims?: string) => Promise<string | TokenResponse | null>;
+export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
+    /** Site url representing ODSP resource location */
+    siteUrl: string;
 
-/**
- * Method signature for callback method used to fetch Push token
- * @param refresh - Flag indicating whether token fetch must bypass local cache
- * @param claims - Optional string indicating claims that will be passed to token authority
- * @returns If successful, TokenResponse object representing token value along with flag indicating
- * whether token came from cache. Legacy implementation may return a string for token value;
- * in this case it should be assumes that fromCache signal is undefined. Null is returned in case of failure.
- */
-export type PushTokenFetcher = (refresh: boolean, claims?: string) => Promise<string | TokenResponse | null>;
+    /** ODSP drive id where resource resides. Optional, used only when fetching token to access ODSP file */
+    driveId?: string;
 
-/**
- * Method signature for callback method used to fetch Sharing link token
- * @param siteUrl - Storage site url
- * @param scopeFor - to determine the scope of the token to fetch the share link.
- * @param refresh - Flag indicating whether token fetch must bypass local cache
- * @param claims - Optional string indicating claims that will be passed to token authority
- * @returns If successful, TokenResponse object representing token value along with flag indicating
- * whether token came from cache. Legacy implementation may return a string for token value;
- * in this case it should be assumes that fromCache signal is undefined. Null is returned in case of failure.
- */
-export type SharingLinkTokenFetcher =
-    (siteUrl: string, scopeFor: SharingLinkScopeFor, refresh: boolean, claims?: string)
-        => Promise<string | TokenResponse | null>;
-
-export enum SharingLinkScopeFor {
-    fileDefaultUrl = "fileDefaultUrl",
-    nonFileDefaultUrl = "nonFileDefaultUrl",
+    /** ODSP item id representing resource. Optional, used only when fetching token to access ODSP file */
+    itemId?: string;
 }
 
 /**
- * Helper method which transforms return value for StorageTokenFetcher and PushTokenFetcher to token string
- * @param tokenResponse - return value for StorageTokenFetcher and PushTokenFetcher methods
+ * Method signature for callback method used to fetch access token
+ * @param options - token fetch options
+ * @returns If successful, TokenResponse object representing token value along with flag indicating
+ * whether token came from cache. Legacy implementation may return a string for token value;
+ * in this case it should be assumes that fromCache signal is undefined. Null is returned in case of failure.
+ */
+export type TokenFetcher<T> = (options: T) => Promise<string | TokenResponse | null>;
+
+/**
+ * Helper method which transforms return value for TokenFetcher method to token string
+ * @param tokenResponse - return value for TokenFetcher method
  * @returns Token value
  */
 export function tokenFromResponse(tokenResponse: string | TokenResponse | null | undefined): string | null {
@@ -82,7 +74,7 @@ export function tokenFromResponse(tokenResponse: string | TokenResponse | null |
 
 /**
  * Helper method which returns flag indicating whether token response comes from local cache
- * @param tokenResponse - return value for StorageTokenFetcher and PushTokenFetcher methods
+ * @param tokenResponse - return value for TokenFetcher method
  * @returns Value indicating whether response came from cache.
  * Undefined is returned when we could not determine the source of token.
  */

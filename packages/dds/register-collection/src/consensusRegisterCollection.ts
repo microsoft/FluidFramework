@@ -235,7 +235,7 @@ export class ConsensusRegisterCollection<T>
             const op: IIncomingRegisterOperation<T> = message.contents;
             switch (op.type) {
                 case "write": {
-                    // back-compat 0.13 refSeq
+                    // backward compatibility: File at rest written with runtime <= 0.13 do not have refSeq
                     // when the refSeq property didn't exist
                     if (op.refSeq === undefined) {
                         op.refSeq = message.referenceSequenceNumber;
@@ -243,7 +243,8 @@ export class ConsensusRegisterCollection<T>
                     // Message can be delivered with delay - e.g. resubmitted on reconnect.
                     // Use the refSeq from when the op was created, not when it was transmitted
                     const refSeqWhenCreated = op.refSeq;
-                    assert(refSeqWhenCreated <= message.referenceSequenceNumber);
+                    assert(refSeqWhenCreated <= message.referenceSequenceNumber,
+                        "Message's reference sequence number < op's reference sequence number!");
 
                     const value = incomingOpMatchesCurrentFormat(op)
                         ? this.parse(op.serializedValue, this.serializer) as T
@@ -306,7 +307,7 @@ export class ConsensusRegisterCollection<T>
             }
         }
         else {
-            assert(!!data);
+            assert(!!data, "data missing for non-atomic inbound update!");
         }
 
         // Remove versions that were known to the remote client at the time of write
@@ -321,7 +322,7 @@ export class ConsensusRegisterCollection<T>
 
         // Asserts for data integrity
         if (!this.isAttached()) {
-            assert(refSeq === 0 && sequenceNumber === 0, "sequence numbersare expected to be 0 when unattached");
+            assert(refSeq === 0 && sequenceNumber === 0, "sequence numbers are expected to be 0 when unattached");
         }
         else if (data.versions.length > 0) {
             assert(sequenceNumber > data.versions[data.versions.length - 1].sequenceNumber,

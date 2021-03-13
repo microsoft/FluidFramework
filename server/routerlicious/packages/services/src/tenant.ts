@@ -3,10 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { GitManager, Historian, ICredentials } from "@fluidframework/server-services-client";
+import {
+    GitManager,
+    Historian,
+    ICredentials,
+    BasicRestWrapper,
+    getAuthorizationTokenFromCredentials,
+} from "@fluidframework/server-services-client";
 import { generateToken, getCorrelationId } from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
 import Axios from "axios";
+import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 
 export class Tenant implements core.ITenant {
     public get id(): string {
@@ -51,12 +58,27 @@ export class TenantManager implements core.ITenantManager {
             password: generateToken(tenantId, null, key, null),
             user: tenantId,
         };
+        const defaultQueryString = {
+            token: fromUtf8ToBase64(`${credentials.user}`),
+        };
+        const defaultHeaders = {
+            Authorization: getAuthorizationTokenFromCredentials(credentials),
+        };
+        const baseUrl = `${details.data.storage.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`;
+        const restWrapper = new BasicRestWrapper(
+            baseUrl,
+            defaultQueryString,
+            undefined,
+            defaultHeaders,
+            undefined,
+            undefined,
+            undefined,
+            getCorrelationId);
         const historian = new Historian(
             `${details.data.storage.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`,
             true,
             false,
-            credentials,
-            getCorrelationId);
+            restWrapper);
         const gitManager = new GitManager(historian);
         const tenant = new Tenant(details.data, gitManager);
 

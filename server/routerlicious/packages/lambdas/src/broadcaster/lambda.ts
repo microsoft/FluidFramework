@@ -28,7 +28,7 @@ class BroadcasterBatch {
 
 // Set immediate is not available in all environments, specifically it does not work in a browser.
 // Fallback to set timeout in those cases
-let taskScheduleFunction: (cb: () => void) => unknown;
+let taskScheduleFunction: (cb: () => any) => unknown;
 let clearTaskScheduleTimerFunction: (timer: any) => void;
 
 if (typeof setImmediate === "function") {
@@ -65,14 +65,16 @@ export class BroadcasterLambda implements IPartitionLambda {
                 event = "nack";
             }
 
-            if (topic) {
+            if (topic && event) {
                 const value = baseMessage as INackMessage | ISequencedOperationMessage;
 
-                if (!this.pending.has(topic)) {
-                    this.pending.set(topic, new BroadcasterBatch(value.documentId, value.tenantId, event));
+                let pendingBatch = this.pending.get(topic);
+                if (!pendingBatch) {
+                    pendingBatch = new BroadcasterBatch(value.documentId, value.tenantId, event);
+                    this.pending.set(topic, pendingBatch);
                 }
 
-                this.pending.get(topic).messages.push(value.operation);
+                pendingBatch.messages.push(value.operation);
             }
         }
 
@@ -111,25 +113,37 @@ export class BroadcasterLambda implements IPartitionLambda {
         }
 
         // Invoke the next send after a delay to give IO time to create more batches
-        this.messageSendingTimerId = taskScheduleFunction(() => {
+        this.messageSendingTimerId = taskScheduleFunction(async () => {
             const batchOffset = this.pendingOffset;
 
             this.current = this.pending;
             this.pending = new Map<string, BroadcasterBatch>();
             this.pendingOffset = undefined;
 
-            this.messageSendingTimerId = undefined;
-
             // Process all the batches + checkpoint
-            this.current.forEach((batch, topic) => {
-                if (this.publisher.emit) {
-                    this.publisher.emit(topic, batch.event, batch.documentId, batch.messages);
-                } else {
+            if (this.publisher.emit) {
+                const promises: Promise<void>[] = [];
+
+                for (const [topic, batch] of this.current) {
+                    promises.push(this.publisher.emit(topic, batch.event, batch.documentId, batch.messages));
+                }
+
+                try {
+                    await Promise.all(promises);
+                } catch (ex) {
+                    this.context.error(ex, { restart: true });
+                    return;
+                }
+            } else {
+                for (const [topic, batch] of this.current) {
                     this.publisher.to(topic).emit(batch.event, batch.documentId, batch.messages);
                 }
-            });
+            }
 
-            this.context.checkpoint(batchOffset);
+            this.messageSendingTimerId = undefined;
+
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.context.checkpoint(batchOffset!);
             this.current.clear();
             this.sendPending();
         });

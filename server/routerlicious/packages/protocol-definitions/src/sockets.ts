@@ -78,12 +78,6 @@ export interface IConnected {
      */
     maxMessageSize: number;
 
-    // Back-compat, removal tracked with issue #4346
-    /**
-     * The parent branch for the document
-     */
-    parentBranch: null;
-
     /**
      * Messages sent during the connection
      */

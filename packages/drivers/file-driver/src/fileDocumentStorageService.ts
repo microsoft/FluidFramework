@@ -4,8 +4,12 @@
  */
 
 import fs from "fs";
-import { assert, fromBase64ToUtf8, stringToBuffer } from "@fluidframework/common-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { assert, bufferToString } from "@fluidframework/common-utils";
+import {
+    IDocumentStorageService,
+    IDocumentStorageServicePolicies,
+    ISummaryContext,
+} from "@fluidframework/driver-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@fluidframework/replay-driver";
@@ -35,8 +39,9 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
      * @param version - The version contains the path of the file which contains the snapshot tree.
      */
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
-        assert(version !== null);
-        assert(!version || version.treeId === FileStorageVersionTreeId);
+        assert(version !== null, "version input for reading snapshot tree is null!");
+        assert(!version || version.treeId === FileStorageVersionTreeId,
+            "invalid version input for reading snapshot tree!");
 
         let filename: string;
         let rootTree = false;
@@ -48,9 +53,9 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
                 return null;
             }
             rootTree = true;
-            filename = `${this.path}/${this.versionName}/tree.json`;
+            filename = `${this.path}/${this.versionName}/decoded/tree.json`;
         } else {
-            filename = `${this.path}/${this.versionName}/${version.id}.json`;
+            filename = `${this.path}/${this.versionName}/decoded/${version.id}.json`;
         }
 
         if (!fs.existsSync(filename)) {
@@ -80,28 +85,13 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
             return [];
         } else if (this.versionName !== undefined) {
             // We loaded from snapshot - search for commit there.
-            assert(!!this.docTree);
+            assert(!!this.docTree, "Missing snapshot tree!");
             return [{
                 id: versionId,
                 treeId: FileStorageVersionTreeId,
             }];
         }
         throw new Error(`Unknown version: ${versionId}`);
-    }
-
-    /**
-     * Finds if a file exists and returns the contents of the blob file.
-     * @param sha - Name of the file to be read for blobs.
-     */
-    public async read(sha: string): Promise<string> {
-        if (this.versionName !== undefined) {
-            const fileName = `${this.path}/${this.versionName}/${sha}`;
-            if (fs.existsSync(fileName)) {
-                const data = fs.readFileSync(fileName).toString();
-                return data;
-            }
-        }
-        throw new Error(`Can't find blob ${sha}`);
     }
 
     public async readBlob(sha: string): Promise<ArrayBufferLike> {
@@ -126,13 +116,13 @@ export type ReaderConstructor = new (...args: any[]) => IDocumentStorageService;
 export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(Base: TBase) =>
     class extends Base implements ISnapshotWriterStorage {
         // Note: if variable name has same name as in base class, it overrides it!
-        public blobsWriter = new Map<string, string>();
+        public blobsWriter = new Map<string, ArrayBufferLike>();
         public commitsWriter: { [key: string]: api.ITree } = {};
         public latestWriterTree?: api.ISnapshotTree;
         public docId?: string;
 
         public reset() {
-            this.blobsWriter = new Map<string, string>();
+            this.blobsWriter = new Map<string, ArrayBufferLike>();
             this.commitsWriter = {};
             this.latestWriterTree = undefined;
             this.docId = undefined;
@@ -145,18 +135,10 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
             throw new Error("onSnapshotHandler is not setup! Please provide your handler!");
         }
 
-        public async read(sha: string): Promise<string> {
-            const blob = this.blobsWriter.get(sha);
-            if (blob !== undefined) {
-                return blob;
-            }
-            return super.read(sha);
-        }
-
         public async readBlob(sha: string): Promise<ArrayBufferLike> {
             const blob = this.blobsWriter.get(sha);
             if (blob !== undefined) {
-                return stringToBuffer(blob, "base64");
+                return blob;
             }
             return super.readBlob(sha);
         }
@@ -303,9 +285,10 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
             }
 
             for (const blobName of Object.keys(snapshotTree.blobs)) {
-                const contents = await this.read(snapshotTree.blobs[blobName]);
+                const buffer = await this.readBlob(snapshotTree.blobs[blobName]);
+                const contents = bufferToString(buffer, "utf8");
                 const blob: api.IBlob = {
-                    contents: fromBase64ToUtf8(contents), // Decode for readability
+                    contents,
                     encoding: "utf-8",
                 };
                 tree.entries.push({
@@ -316,7 +299,7 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
                 });
             }
 
-            assert(Object.keys(snapshotTree.commits).length === 0);
+            assert(Object.keys(snapshotTree.commits).length === 0, "Leftover distinct commits after building tree!");
             return tree;
         }
     };
@@ -327,7 +310,8 @@ function removeNullTreeIds(tree: api.ITree) {
             removeNullTreeIds(node.value);
         }
     }
-    assert(tree.id === undefined || tree.id === null);
+    assert(tree.id === undefined || tree.id === null,
+        "Trying to remove valid tree IDs in removeNullTreeIds()!");
     delete tree.id;
 }
 

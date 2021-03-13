@@ -13,6 +13,7 @@ import * as historianApp from "../app";
 import { TestTenantService } from "../test-utils/testTenantService";
 import { TestCache } from "../test-utils/testCache";
 import { RestGitService } from "../services";
+import { AsyncLocalStorage } from "async_hooks";
 
 const limit = 10;
 const sha = "testSha";
@@ -66,11 +67,13 @@ describe("routes", () => {
                 }));
 
                 const throttler = new TestThrottler(limit);
+                const asyncLocalStorage = new AsyncLocalStorage<string>();
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
                     defaultCache,
-                    throttler
+                    throttler,
+                    asyncLocalStorage
                 );
                 superTest = request(app);
             });
@@ -136,11 +139,13 @@ describe("routes", () => {
                 }));
 
                 const throttler = new TestThrottler(limit);
+                const asyncLocalStorage = new AsyncLocalStorage<string>();
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
                     defaultCache,
-                    throttler
+                    throttler,
+                    asyncLocalStorage
                 );
                 superTest = request(app);
             });
@@ -216,11 +221,13 @@ describe("routes", () => {
                 deleteRefStub = sinon.stub(RestGitService.prototype, "deleteRef").returns(Promise.resolve());
 
                 const throttler = new TestThrottler(limit);
+                const asyncLocalStorage = new AsyncLocalStorage<string>();
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
                     defaultCache,
-                    throttler
+                    throttler,
+                    asyncLocalStorage
                 );
                 superTest = request(app);
             });
@@ -285,11 +292,13 @@ describe("routes", () => {
                 }));
 
                 const throttler = new TestThrottler(limit);
+                const asyncLocalStorage = new AsyncLocalStorage<string>();
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
                     defaultCache,
-                    throttler
+                    throttler,
+                    asyncLocalStorage
                 );
                 superTest = request(app);
             });
@@ -328,11 +337,13 @@ describe("routes", () => {
                 }));
 
                 const throttler = new TestThrottler(limit);
+                const asyncLocalStorage = new AsyncLocalStorage<string>();
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
                     defaultCache,
-                    throttler
+                    throttler,
+                    asyncLocalStorage
                 );
                 superTest = request(app);
             });
@@ -365,11 +376,13 @@ describe("routes", () => {
                 }));
 
                 const throttler = new TestThrottler(limit);
+                const asyncLocalStorage = new AsyncLocalStorage<string>();
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
                     defaultCache,
-                    throttler
+                    throttler,
+                    asyncLocalStorage
                 );
                 superTest = request(app);
             });
@@ -403,11 +416,13 @@ describe("routes", () => {
                 }));
 
                 const throttler = new TestThrottler(limit);
+                const asyncLocalStorage = new AsyncLocalStorage<string>();
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
                     defaultCache,
-                    throttler
+                    throttler,
+                    asyncLocalStorage
                 );
                 superTest = request(app);
             });
@@ -462,11 +477,13 @@ describe("routes", () => {
                 }));
 
                 const throttler = new TestThrottler(maxThrottlerLimit);
+                const asyncLocalStorage = new AsyncLocalStorage<string>();
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
                     defaultCache,
-                    throttler
+                    throttler,
+                    asyncLocalStorage
                 );
                 superTest = request(app);
             });
@@ -530,11 +547,13 @@ describe("routes", () => {
                 }));
 
                 const throttler = new TestThrottler(maxThrottlerLimit);
+                const asyncLocalStorage = new AsyncLocalStorage<string>();
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
                     defaultCache,
-                    throttler
+                    throttler,
+                    asyncLocalStorage
                 );
                 superTest = request(app);
             });
@@ -608,11 +627,13 @@ describe("routes", () => {
                 deleteRefStub = sinon.stub(RestGitService.prototype, "deleteRef").returns(Promise.resolve());
 
                 const throttler = new TestThrottler(maxThrottlerLimit);
+                const asyncLocalStorage = new AsyncLocalStorage<string>();
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
                     defaultCache,
-                    throttler
+                    throttler,
+                    asyncLocalStorage
                 );
                 superTest = request(app);
             });
@@ -675,11 +696,13 @@ describe("routes", () => {
                 }));
 
                 const throttler = new TestThrottler(maxThrottlerLimit);
+                const asyncLocalStorage = new AsyncLocalStorage<string>();
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
                     defaultCache,
-                    throttler
+                    throttler,
+                    asyncLocalStorage
                 );
                 superTest = request(app);
             });
@@ -716,11 +739,13 @@ describe("routes", () => {
                 }));
 
                 const throttler = new TestThrottler(maxThrottlerLimit);
+                const asyncLocalStorage = new AsyncLocalStorage<string>();
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
                     defaultCache,
-                    throttler
+                    throttler,
+                    asyncLocalStorage
                 );
                 superTest = request(app);
             });
@@ -751,11 +776,13 @@ describe("routes", () => {
                 }));
 
                 const throttler = new TestThrottler(maxThrottlerLimit);
+                const asyncLocalStorage = new AsyncLocalStorage<string>();
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
                     defaultCache,
-                    throttler
+                    throttler,
+                    asyncLocalStorage
                 );
                 superTest = request(app);
             });
@@ -787,11 +814,13 @@ describe("routes", () => {
                 }));
 
                 const throttler = new TestThrottler(maxThrottlerLimit);
+                const asyncLocalStorage = new AsyncLocalStorage<string>();
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
                     defaultCache,
-                    throttler
+                    throttler,
+                    asyncLocalStorage
                 );
                 superTest = request(app);
             });

@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-null/no-null */
-
 import { IContext, IDeliState } from "@fluidframework/server-services-core";
 import { ICheckpointParams, IDeliCheckpointManager } from "./checkpointManager";
 
 export class CheckpointContext {
-    private pendingUpdateP: Promise<void>;
-    private pendingCheckpoint: ICheckpointParams;
+    private pendingUpdateP: Promise<void> | undefined;
+    private pendingCheckpoint: ICheckpointParams | undefined;
     private closed = false;
 
     constructor(
@@ -35,26 +33,28 @@ export class CheckpointContext {
 
         // Write the checkpoint data to MongoDB
         this.pendingUpdateP = this.checkpointCore(checkpoint);
-        this.pendingUpdateP.then(
+        this.pendingUpdateP?.then(
             () => {
                 this.context.checkpoint(checkpoint.queuedMessage);
-                this.pendingUpdateP = null;
+                this.pendingUpdateP = undefined;
 
                 // Trigger another round if there is a pending update
                 if (this.pendingCheckpoint) {
                     const pendingCheckpoint = this.pendingCheckpoint;
-                    this.pendingCheckpoint = null;
+                    this.pendingCheckpoint = undefined;
                     this.checkpoint(pendingCheckpoint);
                 }
             },
             (error) => {
                 // TODO flag context as error
-                const messageMetaData = {
-                    documentId: this.id,
-                    tenantId: this.tenantId,
-                };
-                this.context.log.error(
-                    `Error writing checkpoint to MongoDB: ${JSON.stringify(error)}`, { messageMetaData });
+                this.context.log?.error(
+                    `Error writing checkpoint to MongoDB: ${JSON.stringify(error)}`,
+                    {
+                        messageMetaData: {
+                            documentId: this.id,
+                            tenantId: this.tenantId,
+                        },
+                    });
             });
     }
 
@@ -90,12 +90,14 @@ export class CheckpointContext {
         // Retry the checkpoint on error
         // eslint-disable-next-line @typescript-eslint/promise-function-async
         return updateP.catch((error) => {
-            const messageMetaData = {
-                documentId: this.id,
-                tenantId: this.tenantId,
-            };
-            this.context.log.error(
-                `Error writing checkpoint to MongoDB: ${JSON.stringify(error)}`, { messageMetaData });
+            this.context.log?.error(
+                `Error writing checkpoint to MongoDB: ${JSON.stringify(error)}`,
+                {
+                    messageMetaData: {
+                        documentId: this.id,
+                        tenantId: this.tenantId,
+                    },
+                });
             return new Promise<void>((resolve, reject) => {
                 resolve(this.checkpointCore(checkpoint));
             });

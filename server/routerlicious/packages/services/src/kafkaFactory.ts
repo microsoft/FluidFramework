@@ -4,10 +4,8 @@
  */
 
 import { IConsumer, IProducer } from "@fluidframework/server-services-core";
-import { KafkaNodeConsumer } from "./kafkaNodeConsumer";
-import { KafkaNodeProducer } from "./kafkaNodeProducer";
-import { RdkafkaConsumer } from "./rdkafkaConsumer";
-import { RdkafkaProducer } from "./rdkafkaProducer";
+import { KafkaNodeConsumer, KafkaNodeProducer } from "@fluidframework/server-services-ordering-kafkanode";
+import { RdkafkaConsumer, RdkafkaProducer } from "@fluidframework/server-services-ordering-rdkafka";
 
 export function createConsumer(
     type: string,

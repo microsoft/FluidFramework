@@ -43,12 +43,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
             }]));
         });
         it("Send and receive a GenericError with a dangling error of object type.", () => {
-            const testErrorObj = {
-                clientId: "clientId",
-                messageClientId: "messageClientId",
-                sequenceNumber: 0,
-                clientSequenceNumber: 0,
-            };
+            const testErrorObj = new Error("some error");
             const testError = new GenericError("genericError", testErrorObj);
             mockLogger.sendErrorEvent({ eventName: "A" }, testError);
             assert(mockLogger.matchEvents([{
@@ -57,6 +52,40 @@ describe("Check if the errorType field matches after sending/receiving via Conta
                 message: "genericError",
                 errorType: ContainerErrorType.genericError,
                 error: "genericError",
+            }]));
+        });
+
+        it("Send and receive a GenericError using CreateContainerError", () => {
+            const props = {
+                clientId: "clientId",
+                messageClientId: "messageClientId",
+                sequenceNumber: 0,
+                clientSequenceNumber: 0,
+                messageTimestamp: 0,
+            };
+            const testError = new GenericError(
+                "someGenericError",
+                undefined /* error */,
+                props,
+            );
+            // Equivalent of common scenario where we call container.close(CreateContainerError(some_error)):
+            const wrappedTestError = CreateContainerError(testError);
+            mockLogger.sendErrorEvent({
+                eventName: "containerErrorFromGenericErrorTest",
+                sequenceNumber: 0,
+            }, wrappedTestError);
+
+            assert(mockLogger.matchEvents([{
+                eventName: "containerErrorFromGenericErrorTest",
+                category: "error",
+                message: "someGenericError",
+                errorType: ContainerErrorType.genericError,
+                error: "someGenericError",
+                clientId: "clientId",
+                messageClientId: "messageClientId",
+                sequenceNumber: 0,
+                clientSequenceNumber: 0,
+                messageTimestamp: 0,
             }]));
         });
     });

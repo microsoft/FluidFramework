@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { AsyncLocalStorage } from "async_hooks";
 import { Response } from "express";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // eslint-disable-next-line import/no-unresolved
@@ -37,6 +38,7 @@ export async function createGitService(
     authorization: string,
     tenantService: ITenantService,
     cache: ICache,
+    asyncLocalStorage?: AsyncLocalStorage<string>,
 ): Promise<RestGitService> {
     let token: string = null;
     if (authorization) {
@@ -60,7 +62,7 @@ export async function createGitService(
     const customData: ITenantCustomDataExternal = details.customData;
     const writeToExternalStorage = customData.externalStorageData !== undefined &&
     customData.externalStorageData !== null;
-    const service = new RestGitService(details.storage, cache, writeToExternalStorage);
+    const service = new RestGitService(details.storage, cache, writeToExternalStorage, asyncLocalStorage);
 
     return service;
 }

@@ -243,6 +243,7 @@ export async function loadContainer(
             ["@fluid-example/table-document/TableDocument", Promise.resolve(chaincode)],
             ["LastEditedComponent", Promise.resolve(chaincode)],
             ["OfficeRootComponent", Promise.resolve(chaincode)],
+            ["OneNoteRootComponentType", Promise.resolve(chaincode)],
         ]);
 
     // Make sure any package (string[]) is resolved as well.
@@ -261,7 +262,7 @@ export async function loadContainer(
     });
     const container: Container = await loader.resolve({ url: resolved.url });
 
-    assert(container.existing); // ReplayFileDeltaConnection.create() guarantees that
+    assert(container.existing, "Container does not exist!"); // ReplayFileDeltaConnection.create() guarantees that
 
     return container;
 }

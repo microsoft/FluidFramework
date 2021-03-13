@@ -50,6 +50,7 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
     constructor(
         errorMessage: string,
         readonly claims: string | undefined,
+        readonly tenantId: string | undefined,
         statusCode: number,
     ) {
         super(errorMessage, { statusCode });

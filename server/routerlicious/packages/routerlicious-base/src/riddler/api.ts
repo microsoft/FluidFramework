@@ -12,7 +12,7 @@ import {
     ITenantCustomData,
 } from "@fluidframework/server-services-core";
 import { Response, Router } from "express";
-import { getParam } from "../utils";
+import { getParam } from "@fluidframework/server-services-utils";
 import { TenantManager } from "./tenantManager";
 
 export function create(

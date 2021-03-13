@@ -6,12 +6,13 @@
 import { assert } from "@fluidframework/common-utils";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
+import { CreateProcessingError } from "@fluidframework/container-utils";
 
 export class ChannelDeltaConnection implements IDeltaConnection {
     private _handler: IDeltaHandler | undefined;
 
     private get handler(): IDeltaHandler {
-        assert(!!this._handler);
+        assert(!!this._handler, "Missing delta handler");
         return this._handler;
     }
     public get connected(): boolean {
@@ -26,7 +27,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     }
 
     public attach(handler: IDeltaHandler) {
-        assert(this._handler === undefined);
+        assert(this._handler === undefined, "Missing delta handler on attach");
         this._handler = handler;
     }
 
@@ -36,7 +37,20 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        this.handler.process(message, local, localOpMetadata);
+        try {
+            // catches as data processing error whether or not they come from async pending queues
+            this.handler.process(message, local, localOpMetadata);
+        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-throw-literal
+            throw CreateProcessingError(error, {
+                messageClientId: message.clientId,
+                sequenceNumber: message.sequenceNumber,
+                clientSequenceNumber: message.clientSequenceNumber,
+                referenceSequenceNumber: message.referenceSequenceNumber,
+                minimumSequenceNumber: message.minimumSequenceNumber,
+                messageTimestamp: message.timestamp,
+            });
+        }
     }
 
     public reSubmit(content: any, localOpMetadata: unknown) {

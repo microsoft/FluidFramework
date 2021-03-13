@@ -16,7 +16,8 @@ import { IBadgeClientProps, IBadgeType } from "./Badge.types";
 export const BadgeClient: React.FC<IBadgeClientProps> = ({ model }: IBadgeClientProps) => {
     // Setters
     const changeSelectedOption = (newItem: IBadgeType): void => {
-        if (newItem.key !== model.currentCell.get().key) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        if (newItem.key !== model.currentCell.get()!.key) {
             const len = model.historySequence.getItemCount();
             model.historySequence.insert(len, [
                 {
@@ -57,7 +58,8 @@ export const BadgeClient: React.FC<IBadgeClientProps> = ({ model }: IBadgeClient
     };
 
     const getSelectedOptionKey = () => {
-        return model.currentCell.get().key;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return model.currentCell.get()!.key;
     };
 
     // Store Fluid data in React state

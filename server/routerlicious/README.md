@@ -89,7 +89,7 @@ or
 
 ### Standalone
 
-You can also just run the service directly with Docker. You'll need to connect to our container registry to start.
+You can also just run the service directly with Docker.
 
 Docker Compose is used to run the service locally. To start up an instance of the service simply run the following two commands.
 
@@ -110,7 +110,8 @@ attach to the running tests with VS Code or any other node debugger.
 
 ### Documentation
 
-If you want to build API documentation locally, see [Building Documentation](https://praguedocs.azurewebsites.net/contributing/building-documentation.html).
+If you want to build API documentation locally, see
+[Building Documentation](https://github.com/microsoft/FluidFramework/wiki/Building-documentation-locally).
 
 ## Design principals
 
@@ -118,6 +119,7 @@ If you want to build API documentation locally, see [Building Documentation](htt
 * Perf === Magic
 
 ## Architecture
+
 ![](./docs/Routerlicious-Architecture.svg)
 
 ### Microservices
@@ -224,8 +226,6 @@ git clone ssh://git@localhost:3022/home/git/fluid/fluid
 cd fluid/fluid
 git checkout <document id>
 ```
-
-Or `git clone ssh://git@praguegit.westus2.cloudapp.azure.com/home/git/prague/prague` for our production site.
 
 From there you can use your git repository management tool of choice to inspect the various documents and revisions
 stored in the repository.

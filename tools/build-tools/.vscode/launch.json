@@ -8,7 +8,7 @@
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "program": "${workspaceFolder}\\dist\\fluidBuild.js",
+            "program": "${workspaceFolder}\\dist\\fluidBuild\\fluidBuild.js",
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ]
@@ -25,6 +25,12 @@
                 "${workspaceFolder}/**/*.js"
             ],
             "cwd": "${workspaceFolder}",
-        }
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach by Process ID",
+            "processId": "${command:PickProcess}"
+        },
     ],
 }

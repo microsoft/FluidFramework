@@ -41,7 +41,7 @@ export class DocumentContextManager extends EventEmitter {
         assert(head.offset > this.tail.offset && head.offset <= this.head.offset);
 
         // Create the new context and register for listeners on it
-        const context = new DocumentContext(head, () => this.tail);
+        const context = new DocumentContext(head, this.partitionContext.log, () => this.tail);
         this.contexts.add(context);
         context.addListener("checkpoint", () => this.updateCheckpoint());
         context.addListener("error", (error, errorData: IContextErrorData) => this.emit("error", error, errorData));
@@ -52,10 +52,21 @@ export class DocumentContextManager extends EventEmitter {
         this.contexts.delete(context);
     }
 
-    public setHead(head: IQueuedMessage) {
-        assert(head.offset > this.head.offset, `${head.offset} > ${this.head.offset}`);
+    public getHeadOffset() {
+        return this.head.offset;
+    }
 
-        this.head = head;
+    /**
+     * Updates the head to the new offset. The head offset will not be updated if it stays the same or moves backwards.
+     * @returns True if the head was updated, false if it was not.
+     */
+    public setHead(head: IQueuedMessage) {
+        if (head.offset > this.head.offset) {
+            this.head = head;
+            return true;
+        }
+
+        return false;
     }
 
     public setTail(tail: IQueuedMessage) {
@@ -72,6 +83,10 @@ export class DocumentContextManager extends EventEmitter {
         for (const context of this.contexts) {
             context.close();
         }
+
+        this.contexts.clear();
+
+        this.removeAllListeners();
     }
 
     private updateCheckpoint() {

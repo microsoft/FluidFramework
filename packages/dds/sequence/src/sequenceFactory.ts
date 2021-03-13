@@ -15,7 +15,7 @@ import { pkgVersion } from "./packageVersion";
 import { SharedNumberSequence } from "./sharedNumberSequence";
 import { SharedObjectSequence } from "./sharedObjectSequence";
 import { IJSONRunSegment, SubSequence } from "./sharedSequence";
-import { SharedString } from "./sharedString";
+import { SharedString, SharedStringSegment } from "./sharedString";
 
 export class SharedStringFactory implements IChannelFactory {
     // TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
@@ -28,7 +28,7 @@ export class SharedStringFactory implements IChannelFactory {
         packageVersion: pkgVersion,
     };
 
-    public static segmentFromSpec(spec: any) {
+    public static segmentFromSpec(spec: any): SharedStringSegment {
         const maybeText = MergeTree.TextSegment.fromJSONObject(spec);
         if (maybeText) { return maybeText; }
 

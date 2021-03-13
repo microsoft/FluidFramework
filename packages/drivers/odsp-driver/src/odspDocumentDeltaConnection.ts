@@ -73,7 +73,7 @@ class SocketReference {
      * @param isFatalError - true if the socket reference should be removed immediately due to a fatal error
      */
     public removeSocketIoReference(isFatalError: boolean) {
-        assert(this.references > 0);
+        assert(this.references > 0, "No more socketIO refs to remove!");
         this.references--;
 
         // see comment in disconnected() getter
@@ -87,7 +87,7 @@ class SocketReference {
         if (this.references === 0 && this.delayDeleteTimeout === undefined) {
             this.delayDeleteTimeout = setTimeout(() => {
                 // We should not get here with active users.
-                assert(this.references === 0);
+                assert(this.references === 0, "Unexpected socketIO references on timeout");
                 this.closeSocket();
             }, socketReferenceBufferTime);
             this.delayDeleteTimeoutSetTime = Date.now();
@@ -136,7 +136,8 @@ class SocketReference {
 
         this.clearTimer();
 
-        assert(SocketReference.socketIoSockets.get(this.key) === this);
+        assert(SocketReference.socketIoSockets.get(this.key) === this,
+            "Socket reference set unexpectedly does not point to this socket!");
         SocketReference.socketIoSockets.delete(this.key);
 
         const socket = this._socket;

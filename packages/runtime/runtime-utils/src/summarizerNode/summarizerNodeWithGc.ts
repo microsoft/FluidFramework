@@ -164,10 +164,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         const summarizeResult = await this.summarizeFn(fullTree, trackState);
-        // back-compat 0.31 - Older versions will not have GC data in summary.
-        if (summarizeResult.gcData !== undefined) {
-            this.gcData = cloneGCData(summarizeResult.gcData);
-        }
+        this.gcData = cloneGCData(summarizeResult.gcData);
         return summarizeResult;
     }
 

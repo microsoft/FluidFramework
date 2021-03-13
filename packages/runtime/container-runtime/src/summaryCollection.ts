@@ -93,7 +93,7 @@ class Summary implements ISummary {
     }
 
     public broadcast(op: ISummaryOpMessage) {
-        assert(this.state === SummaryState.Local);
+        assert(this.state === SummaryState.Local, "Can only broadcast if summarizer starts in local state");
         this._summaryOp = op;
         this.defSummaryOp.resolve();
         this.state = SummaryState.Broadcast;
@@ -101,7 +101,7 @@ class Summary implements ISummary {
     }
 
     public ackNack(op: ISummaryAckMessage | ISummaryNackMessage) {
-        assert(this.state === SummaryState.Broadcast);
+        assert(this.state === SummaryState.Broadcast, "Can only ack/nack if summarizer is in broadcasting state");
         this._summaryAckNack = op;
         this.defSummaryAck.resolve();
         this.state = op.type === MessageType.SummaryAck ? SummaryState.Acked : SummaryState.Nacked;
@@ -201,6 +201,9 @@ export class SummaryCollection {
     private readonly pendingSummaries = new Map<number, Summary>();
     private refreshWaitNextAck = new Deferred<void>();
 
+    private lastSummaryTimestamp: number | undefined;
+    private maxAckWaitTime: number | undefined;
+    private pendingAckTimerTimeoutCallback: (() => void) | undefined;
     private lastAck?: IAckedSummary;
 
     public get latestAck() { return this.lastAck; }
@@ -223,6 +226,11 @@ export class SummaryCollection {
 
     public removeWatcher(clientId: string) {
         this.summaryWatchers.delete(clientId);
+    }
+
+    public setPendingAckTimerTimeoutCallback(maxAckWaitTime: number, timeoutCallback: () => void) {
+        this.maxAckWaitTime = maxAckWaitTime;
+        this.pendingAckTimerTimeoutCallback = timeoutCallback;
     }
 
     /**
@@ -270,6 +278,16 @@ export class SummaryCollection {
                 return;
             }
             default: {
+                // If the difference between timestamp of current op and last summary op is greater than
+                // the maxAckWaitTime, then we need to inform summarizer to not wait and summarize
+                // immediately as we have already waited for maxAckWaitTime.
+                const lastOpTimestamp = op.timestamp;
+                if (this.lastSummaryTimestamp !== undefined &&
+                    this.maxAckWaitTime !== undefined &&
+                    lastOpTimestamp - this.lastSummaryTimestamp >= this.maxAckWaitTime
+                ) {
+                    this.pendingAckTimerTimeoutCallback?.();
+                }
                 return;
             }
         }
@@ -295,6 +313,7 @@ export class SummaryCollection {
             }
         }
         this.pendingSummaries.set(op.sequenceNumber, summary);
+        this.lastSummaryTimestamp = op.timestamp;
     }
 
     private handleSummaryAck(op: ISummaryAckMessage) {

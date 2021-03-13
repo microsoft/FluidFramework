@@ -99,7 +99,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
         this.providers = props.providers;
         this.initProps = props.initProps;
 
-        assert((this.runtime as any)._dataObject === undefined);
+        assert((this.runtime as any)._dataObject === undefined, "Object runtime already has DataObject!");
         (this.runtime as any)._dataObject = this;
 
         // Create a FluidObjectHandle with empty string as `path`. This is because reaching this PureDataObject is the
@@ -130,9 +130,6 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
 
     // #region IFluidLoadable
 
-    // Back-compat <= 0.28
-    public get url() { return this.context.id; }
-
     // #endregion IFluidLoadable
 
     /**
@@ -160,7 +157,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
     public async initializeInternal(): Promise<void> {
         await this.preInitialize();
         if (this.runtime.existing) {
-            assert(this.initProps === undefined);
+            assert(this.initProps === undefined, "Trying to initialize from existing while initProps is set!");
             await this.initializingFromExisting();
         } else {
             await this.initializingFirstTime(this.context.createProps as S ?? this.initProps);

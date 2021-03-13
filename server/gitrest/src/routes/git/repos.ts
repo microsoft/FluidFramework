@@ -5,7 +5,7 @@
 
 import { ICreateRepoParams } from "@fluidframework/gitresources";
 import { Router } from "express";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import * as utils from "../../utils";
 
 export function create(store: nconf.Provider, repoManager: utils.RepositoryManager): Router {

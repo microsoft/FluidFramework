@@ -4,10 +4,10 @@
  */
 
 import { Definition, NodeId } from './Identifiers';
-import { Payload, TraitMap, TreeNode, TreeNodeSequence } from './PersistedTypes';
+import { ChangeNode, Payload, TraitMap, TreeNode } from './PersistedTypes';
 import { Snapshot } from './Snapshot';
 import { memoizeGetter } from './Common';
-import { getTreeNodeFromSnapshotNode } from './SnapshotUtilities';
+import { getChangeNodeFromSnapshot } from './SnapshotUtilities';
 
 /**
  * A handle to a `TreeNode` that exists within a specific `Snapshot`. This type provides a convenient
@@ -45,11 +45,7 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
 			Object.defineProperty(traitMap, label, {
 				get() {
 					const handleTrait = trait.map((node) => new TreeNodeHandle(snapshot, node.identifier));
-					return memoizeGetter(
-						this as TraitMap<TreeNodeHandle>,
-						label,
-						(handleTrait as unknown) as TreeNodeSequence<TreeNodeHandle>
-					);
+					return memoizeGetter(this as TraitMap<TreeNodeHandle>, label, handleTrait);
 				},
 				configurable: true,
 				enumerable: true,
@@ -59,7 +55,22 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
 		return memoizeGetter(this, 'traits', traitMap);
 	}
 
-	public get node(): TreeNode<TreeNodeHandle> {
-		return memoizeGetter(this, 'node', getTreeNodeFromSnapshotNode(this.snapshot, this.nodeId, true));
+	/**
+	 * Get a `ChangeNode` for the snapshot node that this handle references
+	 */
+	public get node(): ChangeNode {
+		return memoizeGetter(this, 'node', getChangeNodeFromSnapshot(this.snapshot, this.nodeId, true));
+	}
+
+	/**
+	 * Generate a new `ChangeNode` for the snapshot node that this handle references. The returned node will be fully
+	 * demanded, i.e. will contain no lazy/virtualized subtrees.
+	 */
+	public demandTree(): ChangeNode {
+		return getChangeNodeFromSnapshot(this.snapshot, this.nodeId, false);
+	}
+
+	public toString(): string {
+		return JSON.stringify(this.demandTree());
 	}
 }

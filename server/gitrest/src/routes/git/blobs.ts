@@ -5,7 +5,7 @@
 
 import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@fluidframework/gitresources";
 import { Router } from "express";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import * as utils from "../../utils";
 
 /**
@@ -37,6 +37,7 @@ export async function createBlob(
     repo: string,
     blob: ICreateBlobParams): Promise<ICreateBlobResponse> {
         if (!blob || !validateBlob(blob.content) || !validateEncoding(blob.encoding)) {
+            // eslint-disable-next-line prefer-promise-reject-errors
             return Promise.reject("Invalid blob");
     }
 

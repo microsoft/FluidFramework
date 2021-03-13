@@ -64,7 +64,8 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
             return this.lastOps;
         }
         this.lastOps = this.messages.slice(readFrom, readTo);
-        assert(this.lastOps[0].sequenceNumber === readFrom + 1);
+        assert(this.lastOps[0].sequenceNumber === readFrom + 1,
+            "Retrieved ops' first sequence number has unexpected value!");
         return this.lastOps;
     }
 }

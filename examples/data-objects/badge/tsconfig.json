@@ -7,7 +7,6 @@
     "compilerOptions": {
         "target": "es6",
         "module": "esnext",
-        "strictNullChecks": false,
         "outDir": "dist",
         "jsx": "react",
         "types": []

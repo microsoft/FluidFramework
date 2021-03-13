@@ -75,7 +75,7 @@ export class RouterliciousTestDriver implements ITestDriver {
         return this.testIdPrefix + testId;
     }
 
-    createContainerUrl(testId: string): string {
+    async createContainerUrl(testId: string): Promise<string> {
         // eslint-disable-next-line max-len
         return `${this.serviceEndpoints.hostUrl}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.createDocumentId(testId))}`;
     }

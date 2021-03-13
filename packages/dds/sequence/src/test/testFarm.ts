@@ -6,7 +6,6 @@
 // TODO: Some of these should be fixed
 /* eslint-disable no-bitwise */
 /* eslint-disable max-len */
-/* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable guard-for-in */
 /* eslint-disable @typescript-eslint/no-for-in-array */

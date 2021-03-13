@@ -135,8 +135,7 @@ export enum SnapshotType {
 export interface ISnapshotRequest {
     type: SnapshotType;
     message: string;
-    // Server only looks at it when the Snapshot type is "container".
-    sequenceNumber?: number;
+    sequenceNumber: number;
     entries: SnapshotTreeEntry[];
 }
 
@@ -248,6 +247,8 @@ export interface HostStoragePolicy {
      * Passing true results in faster loads and keeping cache more current, but it increases bandwidth consumption.
      */
     concurrentSnapshotFetch?: boolean;
+
+    blobDeduping?: boolean;
 }
 
 /**

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { AsyncLocalStorage } from "async_hooks";
 import * as git from "@fluidframework/gitresources";
 import { IThrottler } from "@fluidframework/server-services-core";
 import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
@@ -16,7 +17,8 @@ export function create(
     store: nconf.Provider,
     tenantService: ITenantService,
     cache: ICache,
-    throttler: IThrottler): Router {
+    throttler: IThrottler,
+    asyncLocalStorage?: AsyncLocalStorage<string>): Router {
     const router: Router = Router();
 
     const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -29,7 +31,7 @@ export function create(
         authorization: string,
         sha: string,
         count: number): Promise<git.ICommitDetails[]> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
         return service.getCommits(sha, count);
     }
 

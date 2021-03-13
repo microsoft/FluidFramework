@@ -4,7 +4,8 @@
  */
 
 import * as path from "path";
-import { EventHubResourcesFactory } from "@fluidframework/server-lambdas-driver";
+import { EventHubResourcesFactory } from "@fluidframework/server-services-ordering-eventhub";
+
 import { execute } from "./command";
 
 execute(

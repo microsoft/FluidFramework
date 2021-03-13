@@ -20,6 +20,7 @@ export * from "./metricClient";
 export * from "./mongo";
 export * from "./mongoDatabaseManager";
 export * from "./orderer";
+export * from "./pendingBoxcar";
 export * from "./publisher";
 export * from "./queue";
 export * from "./secretManager";

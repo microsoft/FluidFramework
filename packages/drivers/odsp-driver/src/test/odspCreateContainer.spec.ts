@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IDocumentService } from "@fluidframework/driver-definitions";
+import { DriverErrorType, IDocumentService } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
@@ -33,10 +33,11 @@ describe("Odsp Create Container Test", () => {
     };
 
     const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
-        async (_url: string, _refresh: boolean, _claims?: string) => "token",
-        async (_refresh: boolean, _claims?: string) => "token");
+        async (_options) => "token",
+        async (_options) => "token",
+    );
 
-    const createSummary = (putAppTree: boolean, putProtocolTree: boolean, sequenceNumber: number) => {
+    const createSummary = (putAppTree: boolean, putProtocolTree: boolean) => {
         const summary: ISummaryTree = {
             type: SummaryType.Tree,
             tree: {},
@@ -53,7 +54,7 @@ describe("Odsp Create Container Test", () => {
                 tree: {
                     attributes: {
                         type: SummaryType.Blob,
-                        content: JSON.stringify({ branch: "", minimumSequenceNumber: 0, sequenceNumber }),
+                        content: JSON.stringify({ branch: "", minimumSequenceNumber: 0, sequenceNumber: 0 }),
                     },
                 },
             };
@@ -77,7 +78,7 @@ describe("Odsp Create Container Test", () => {
     it("Check Document Service Successfully", async () => {
         const resolved = await resolver.resolve(request);
         const docID = getHashedDocumentId(driveId, itemId);
-        const summary = createSummary(true, true, 0);
+        const summary = createSummary(true, true);
         const docService = await mockFetch(
             expectedResponse,
             async () => odspDocumentServiceFactory.createContainer(
@@ -99,23 +100,29 @@ describe("Odsp Create Container Test", () => {
 
     it("No App Summary", async () => {
         const resolved = await resolver.resolve(request);
-        const summary = createSummary(false, true, 0);
+        const summary = createSummary(false, true);
         await assert.rejects(createService(summary, resolved),
             "Doc service should not be created because there was no app summary");
     });
 
-    it("Wrong Seq No in Protocol Summary", async () => {
+    it("No protocol Summary", async () => {
         const resolved = await resolver.resolve(request);
-        const summary = createSummary(true, true, 1);
+        const summary = createSummary(true, false);
         await assert.rejects(createService(summary, resolved),
-            "Doc service should not be created because seq no was wrong");
+            "Doc service should not be created because there was no protocol summary");
     });
 
     it("No item id in response from server", async () => {
         const resolved = await resolver.resolve(request);
-        const summary = createSummary(true, true, 0);
+        const summary = createSummary(true, true);
 
-        await assert.rejects(createService(summary, resolved),
-            "Doc service should not be created because no Item id is there");
+        try{
+            await mockFetch({}, async () => createService(summary, resolved));
+        } catch (error) {
+            assert.strictEqual(error.statusCode, 712, "Error code should be 712");
+            assert.strictEqual(error.errorType, DriverErrorType.incorrectServerResponse,
+                "Error type should be correct");
+            assert.strictEqual(error.message, "Could not parse item from Vroom response", "Message should be correct");
+        }
     });
 });
