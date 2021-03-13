@@ -99,7 +99,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
     private async readWithRetry<T>(api: () => Promise<T>, fetchCallName: string): Promise<T> {
         let result: T | undefined;
         let success = false;
-        let retryAfter = 0;
+        let retryAfter = 1; // has to be positive!
         let numRetries = 0;
         const startTime = performance.now();
         let lastError: any;
@@ -129,7 +129,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
                 lastError = err;
                 // If the error is throttling error, then wait for the specified time before retrying.
                 // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
-                retryAfter = getRetryDelayFromError(err) ?? Math.min(retryAfter * 2 + 1, 8000);
+                retryAfter = getRetryDelayFromError(err) ?? Math.min(retryAfter * 2, 8000);
                 if (id === undefined) {
                     id = uuid();
                 }
