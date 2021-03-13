@@ -400,4 +400,8 @@ export class ConsensusOrderedCollection<T = any>
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return serializer.parse(content);
     }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
+    }
 }

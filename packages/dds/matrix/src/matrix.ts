@@ -683,4 +683,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
 
         return `${s}\n`;
     }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
+    }
 }

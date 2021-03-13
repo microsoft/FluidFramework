@@ -558,7 +558,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         } else {
             assert(message.type === MessageType.Operation, "Sequence message not operation");
 
-            const handled = this.intervalMapKernel.tryProcessMessage(message, local, localOpMetadata);
+            const handled = this.intervalMapKernel.tryProcessMessage(message.contents, local, message, localOpMetadata);
 
             if (!handled) {
                 this.processMergeTreeMsg(message);
@@ -698,5 +698,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             const intervalCollection = this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(key);
             intervalCollection.attachGraph(this.client, key);
         }
+    }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
     }
 }
