@@ -15,8 +15,43 @@
 
 <nav id="docs-navbar" aria-label="Topics" class="docs-nav visible-md visible-lg">
     <ul class="nav" id="main-nav">
+
         <li {{ if eq .Kind "section" }} class="active" {{ end }}>
-            <a class="docs-home" href="/apis/" {{ if eq .Kind "section" }} aria-label="Current Page: Fluid API Overview"
+            <a class="docs-home" href="/reference/" {{ if eq .Kind "section" }}
+                aria-label="Current Page: Fluid Documentation Overview" {{ end }}>Reference</a>
+        </li>
+
+        {{- range .Site.Menus.reference }}
+        {{ $menuArea := .Identifier}}
+        {{ $isCurrentArea := (eq $menuArea $area) }}
+
+        {{- if ne .URL "" -}}
+        {{ $isCurrentPage := eq .URL $current.RelPermalink }}
+        <li class="panel {{if $isCurrentPage }}active{{end}}">
+            <a class="area{{if $isCurrentPage }} active expanded{{ end }}" aria-label="{{ .Name }}" href="{{.URL}}"
+                data-parent="#main-nav">{{ .Name }}</a>
+            {{- else -}}
+        <li class="panel {{if $isCurrentArea}}active expanded{{else}}collapsed{{end}}">
+            <a class="area" aria-label="{{ .Name }} drop down" href="#{{ $menuArea }}-articles" data-parent="#main-nav"
+                data-toggle="collapse">{{ .Name }}</a>
+
+            <ul id="{{ $menuArea }}-articles" class="collapse {{if $isCurrentArea}}in{{end}}">
+                <!-- list all pages in area -->
+                {{- range ((where $current.Site.RegularPages "Params.area" "==" $menuArea).ByParam "menuPosition") }}
+                {{ $isCurrentPage := eq .RelPermalink $current.RelPermalink }}
+                <li {{ if $isCurrentPage }}class="active" {{ end }}>
+                    <a href="{{ .RelPermalink }}"
+                        {{ if $isCurrentPage }}aria-label="Current Page: {{ .Title | safeHTML }} " {{ end }}>
+                        {{ .Title }} </a>
+                </li>
+                {{- end }}
+            </ul>
+        </li>
+        {{- end -}}
+        {{- end }}
+
+        <li {{ if eq .Kind "section" }} class="active" {{ end }}>
+            <a class="docs-home" href="/reference/apis/" {{ if eq .Kind "section" }} aria-label="Current Page: Fluid API Overview"
                 {{ end }}>API Overview</a>
         </li>
 
