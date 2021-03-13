@@ -5,7 +5,7 @@
 {{ define "main" }}
 <div class="container body-content docs">
     <div class="row">
-        <div class="col-md-2 docs-navbar-container">{{ partial "docNav.html" .}}</div>
+        <div class="col-md-2 docs-navbar-container">{{ partial "docNav.html" (dict "context" . "menu" .Site.Menus.docs "mainURL" "docs") }}</div>
         <div role="main" id="main-content" class="col-sm-9 col-md-8 body">
             <div>
                 <h1>{{ title .Title }}</h1>

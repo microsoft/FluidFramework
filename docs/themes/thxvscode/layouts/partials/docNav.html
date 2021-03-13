@@ -1,15 +1,25 @@
+{{ $context := .context }}
+{{ $menu := .menu }}
+{{ $mainURL := .mainURL }}
+{{ $sectionTitle := .sectionTitle }}
+
+{{ with .context }}
 {{ $current := . }}
 {{ $currentURL := . | relURL }}
 {{ $area := $current.Params.area }}
 
+{{/* printf "%#v" $menu */}}
+
 <nav id="docs-navbar" aria-label="Topics" class="docs-nav visible-md visible-lg">
     <ul class="nav" id="main-nav">
+    {{ if $sectionTitle }}
         <li {{ if eq .Kind "section" }} class="active" {{ end }}>
-            <a class="docs-home" href="/docs" {{ if eq .Kind "section" }}
-                aria-label="Current Page: Fluid Documentation Overview" {{ end }}>Overview</a>
+            <a class="docs-home" href="/{{ $mainURL }}" {{ if eq .Kind "section" }}
+                aria-label="Current Page: Fluid Documentation Overview" {{ end }}>{{ $sectionTitle }}</a>
         </li>
+    {{- end }}
 
-        {{- range .Site.Menus.docs }}
+        {{- range $menu }}
         {{ $menuArea := .Identifier}}
         {{ $isCurrentArea := (eq $menuArea $area) }}
 
@@ -61,3 +71,4 @@
         {{- end }}
     </select>
 </nav>
+{{ end }}

@@ -7,7 +7,7 @@ titleCaseStyle: "Chicago"
 
 permalinks:
   page: "/:slug"
-  post: "/:year/:month/:day/:title"
+  post: "/:year/:month/:title"
 
 params:
   appInsightKey: ""  # This is provided by the build system as an env variable
@@ -23,13 +23,13 @@ menu:
   main:
   - name: "Getting started"
     url: "/docs/get-started/quick-start/"
-    weight: -90
+    weight: -100
   - name: "Recipes"
     url: "/docs/recipes/"
+    weight: -90
+  - name: "Docs"
+    url: "/reference"
     weight: -80
-  - name: "API"
-    url: "/reference/"
-    weight: -70
   - name: "Community"
     url: "/community/"
     weight: -60
@@ -50,7 +50,7 @@ menu:
     weight: -100
   - identifier: "glossary"
     name: "Glossary"
-    url: "/docs/Glossary/"
+    url: "/docs/glossary/"
     weight: -90
 
   # this menu supplements one generated in the apiNav partial
