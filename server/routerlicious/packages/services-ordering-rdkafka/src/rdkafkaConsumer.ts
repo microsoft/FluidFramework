@@ -224,7 +224,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		});
 
 		consumer.on("event.error", (error) => {
-            this.error(error);
+			this.error(error);
 		});
 
 		consumer.on("event.throttle", (event) => {
