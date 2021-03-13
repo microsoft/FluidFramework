@@ -12,7 +12,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { v4 as uuid } from "uuid";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import {
-    generateNonCompatTest,
+    generateTest,
     ITestObjectProvider,
     ITestContainerConfig,
     ITestDataObject,
@@ -150,6 +150,5 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 };
 
 describe("blobs", () => {
-    // TODO: add back compat test once N-2 is 0.28
-    generateNonCompatTest(tests);
+    generateTest(tests);
 });

@@ -8,7 +8,7 @@ import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
 import {
-    generateNonCompatTest,
+    generateTest,
     ITestObjectProvider,
 } from "@fluidframework/test-version-utils";
 
@@ -192,5 +192,5 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 };
 
 describe("Leader", () => {
-    generateNonCompatTest(tests);
+    generateTest(tests);
 });

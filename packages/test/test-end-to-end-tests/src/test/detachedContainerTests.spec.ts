@@ -27,7 +27,6 @@ import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { convertContainerToDriverSerializedFormat, requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     generateTest,
-    generateNonCompatTest,
     ITestContainerConfig,
     DataObjectFactoryType,
     ITestObjectProvider,
@@ -605,38 +604,21 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         await containerP;
         await defPromise.promise;
     });
+
+    it("Load attached container from cache and check if they are same", async () => {
+        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+
+        // Now attach the container and get the sub dataStore.
+        await container.attach(request);
+
+        // Create a new request url from the resolvedUrl of the first container.
+        assert(container.resolvedUrl);
+        const requestUrl2 = await args.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
+        const container2 = await loader.resolve({ url: requestUrl2 });
+        assert.strictEqual(container, container2, "Both containers should be same");
+    });
 };
 
 describe("Detached Container", () => {
     generateTest(tests);
-
-    // non compat test
-    generateNonCompatTest((argsFactory: () => ITestObjectProvider) => {
-        let args: ITestObjectProvider;
-        let request: IRequest;
-        let loader: Loader;
-
-        beforeEach(async () => {
-            args = argsFactory();
-            request = (args.driver ?? getFluidTestDriver()).createCreateNewRequest(args.documentId);
-            loader = args.makeTestLoader(testContainerConfig) as Loader;
-        });
-
-        afterEach(() => {
-            args.reset();
-        });
-
-        it("Load attached container from cache and check if they are same", async () => {
-            const container = await loader.createDetachedContainer(args.defaultCodeDetails);
-
-            // Now attach the container and get the sub dataStore.
-            await container.attach(request);
-
-            // Create a new request url from the resolvedUrl of the first container.
-            assert(container.resolvedUrl);
-            const requestUrl2 = await args.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
-            const container2 = await loader.resolve({ url: requestUrl2 });
-            assert.strictEqual(container, container2, "Both containers should be same");
-        });
-    });
 });

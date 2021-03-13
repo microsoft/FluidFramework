@@ -43,6 +43,9 @@ const packageList = [
     "@fluidframework/sequence",
 ];
 
+export const ensurePackageInstalled =
+    async (version: number | string) => ensureInstalled(getRequestedRange(version), packageList);
+
 // Current versions of the APIs
 const LoaderApi = {
     version: pkgVersion,
@@ -129,15 +132,4 @@ export function getDataRuntimeApi(requested?: number | string): typeof DataRunti
             SparseMatrix: loadPackage(modulePath, "@fluidframework/sequence").SparseMatrix,
         },
     };
-}
-
-export async function mochaGlobalSetup() {
-    // Make sure we wait for both before returning, even if one of them is rejected
-    const p1 = ensureInstalled(getRequestedRange(-1), packageList);
-    const p2 = ensureInstalled(getRequestedRange(-2), packageList);
-    try {
-        await p1;
-    } finally {
-        await p2;
-    }
 }

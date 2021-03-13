@@ -4,12 +4,10 @@
  */
 
 import { IContainer, ILoader } from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
-import { IContainerRuntimeOptions, ContainerRuntime } from "@fluidframework/container-runtime";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidLoadable, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
-import { IClientConfiguration } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreContext,IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ISharedDirectory } from "@fluidframework/map";
 import { unreachableCase } from "@fluidframework/common-utils";
@@ -21,6 +19,7 @@ import {
     TestObjectProvider,
 } from "@fluidframework/test-utils";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
+
 import { getLoaderApi, getContainerRuntimeApi, getDataRuntimeApi } from "./testApi";
 
 export interface ITestObjectProvider {
@@ -42,10 +41,6 @@ export interface ITestObjectProvider {
     documentId: string,
     driver: ITestDriver;
 
-}
-
-export interface ITestOptions {
-    serviceConfiguration?: Partial<IClientConfiguration>,
 }
 
 export enum DataObjectFactoryType {
@@ -119,107 +114,22 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 
 export const getDataStoreFactory = createGetDataStoreFactoryFunction(getDataRuntimeApi());
 
-export function createTestObjectProvider(
-    type: string,
-    driver: ITestDriver,
-    LoaderConstructor = Loader,
-    ContainerRuntimeConstructor = ContainerRuntime,
-    getDataStoreFactoryFn = getDataStoreFactory,
+export function getTestObjectProvider(
+    loaderVersion?: number | string,
+    runtimeVersion?: number | string,
+    dataRuntimeVersion?: number | string,
 ): ITestObjectProvider {
+    const loaderApi = getLoaderApi(loaderVersion);
+    const containerRuntimeApi = getContainerRuntimeApi(runtimeVersion);
+    const dataRuntimeApi = getDataRuntimeApi(dataRuntimeVersion);
+    const driver = getFluidTestDriver();
+
+    const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(dataRuntimeApi);
     const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
         const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
-        const factoryCtor = createTestContainerRuntimeFactory(ContainerRuntimeConstructor);
-        return new factoryCtor(type, dataStoreFactory, containerOptions?.runtimeOptions);
+        const factoryCtor = createTestContainerRuntimeFactory(containerRuntimeApi.ContainerRuntime);
+        return new factoryCtor(TestDataObjectType, dataStoreFactory, containerOptions?.runtimeOptions);
     };
 
-    return new TestObjectProvider(LoaderConstructor, driver, containerFactoryFn);
+    return new TestObjectProvider(loaderApi.Loader, driver, containerFactoryFn);
 }
-
-export const generateNonCompatTest = (
-    tests: (compatArgsFactory: () => ITestObjectProvider) => void,
-) => {
-    describe("non-compat", () => {
-        tests(() => {
-            // Run with all current versions
-            const driver = getFluidTestDriver();
-            return createTestObjectProvider(TestDataObjectType, driver as any);
-        });
-    });
-};
-
-export const generateCompatTest = (
-    tests: (compatArgsFactory: () => ITestObjectProvider) => void,
-    options: ITestOptions = {},
-) => {
-    // Run against all currently supported versions by default
-    const compatVersions = [-1, -2];
-    compatVersions.forEach((compatVersion: number) => {
-        let oldLoaderApi: ReturnType<typeof getLoaderApi>;
-        let oldContainerRuntimeApi: ReturnType<typeof getContainerRuntimeApi>;
-        let oldDataRuntimeApi: ReturnType<typeof getDataRuntimeApi>;
-        before(async () => {
-            oldLoaderApi = getLoaderApi(compatVersion);
-            oldContainerRuntimeApi = getContainerRuntimeApi(compatVersion);
-            oldDataRuntimeApi = getDataRuntimeApi(compatVersion);
-        });
-        describe(`compat N${compatVersion} - old loader, new runtime`, function() {
-            tests(() => {
-                const driver = getFluidTestDriver();
-                return createTestObjectProvider(
-                    TestDataObjectType,
-                    driver as any,
-                    oldLoaderApi.Loader,
-                );
-            });
-        });
-
-        describe(`compat N${compatVersion} - new loader, old runtime`, function() {
-            tests(() => {
-                const driver = getFluidTestDriver();
-                return createTestObjectProvider(
-                    TestDataObjectType,
-                    driver as any,
-                    Loader,
-                    oldContainerRuntimeApi.ContainerRuntime,
-                    createGetDataStoreFactoryFunction(oldDataRuntimeApi),
-                );
-            });
-        });
-
-        describe(`compat N${compatVersion} - new ContainerRuntime, old DataStoreRuntime`, function() {
-            tests(() => {
-                const driver = getFluidTestDriver();
-                return createTestObjectProvider(
-                    TestDataObjectType,
-                    driver as any,
-                    Loader,
-                    ContainerRuntime,
-                    createGetDataStoreFactoryFunction(oldDataRuntimeApi),
-                );
-            });
-        });
-
-        describe(`compat N${compatVersion} - old ContainerRuntime, new DataStoreRuntime`, function() {
-            tests(() => {
-                const driver = getFluidTestDriver();
-                return createTestObjectProvider(
-                    TestDataObjectType,
-                    driver as any,
-                    oldLoaderApi.Loader,
-                    oldContainerRuntimeApi.ContainerRuntime,
-                    getDataStoreFactory,
-                );
-            });
-        });
-    });
-};
-
-export const generateTest = (
-    tests: (compatArgsFactory: () => ITestObjectProvider) => void,
-    options: ITestOptions = {},
-) => {
-    describe("test", () => {
-        generateNonCompatTest(tests);
-        generateCompatTest(tests, options);
-    });
-};
