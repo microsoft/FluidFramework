@@ -498,6 +498,12 @@ export class LoggingError extends Error {
         props?: ITelemetryProperties,
     ) {
         super(message);
+        if (props) {
+            this.addProperties(props);
+        }
+    }
+
+    public addProperties(props: ITelemetryProperties) {
         Object.assign(this, props);
     }
 

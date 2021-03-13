@@ -8,7 +8,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { fluidEpochMismatchError, OdspErrorType, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import { ThrottlingError } from "@fluidframework/driver-utils";
 import { IConnected } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, LoggingError } from "@fluidframework/telemetry-utils";
 import { fetchAndParseAsJSONHelper, fetchArray, IOdspResponse } from "./odspUtils";
 import { ICacheEntry, IFileEntry, LocalPersistentCacheAdapter } from "./odspCache";
 import { RateLimiter } from "./rateLimiter";
@@ -214,23 +214,23 @@ export class EpochTracker {
                 // This will only throw if it is an epoch error.
                 this.checkForEpochErrorCore(epochFromResponse, error.errorMessage);
             } catch (epochError) {
-                const err = {
-                    ...epochError,
+                assert(epochError instanceof LoggingError);
+                epochError.addProperties({
                     fromCache,
                     clientEpoch: this.fluidEpoch,
                     fetchType,
-                };
-                this.logger.sendErrorEvent({ eventName: "EpochVersionMismatch" }, err);
+                });
+                this.logger.sendErrorEvent({ eventName: "EpochVersionMismatch" }, epochError);
                 assert(!!this.fileEntry, "File Entry should be set to clear the cached entries!!");
                 // If the epoch mismatches, then clear all entries for such file entry from cache.
                 await this.persistedCache.removeEntries(this.fileEntry);
                 throw epochError;
             }
-            // If it was categorised as epoch error but the epoch returned in response matches with the client epoch
+            // If it was categorized as epoch error but the epoch returned in response matches with the client epoch
             // then it was coherency 409, so rethrow it as throttling error so that it can retried. Default throttling
             // time is 1s.
             this.logger.sendErrorEvent({ eventName: "Coherency409" }, error);
-            throw new ThrottlingError(error.errorMessage, 1000, 429);
+            throw new ThrottlingError(error.errorMessage ?? "Coherency409", 1000, 429);
         }
     }
 
