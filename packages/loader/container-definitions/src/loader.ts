@@ -241,6 +241,16 @@ export type ILoaderOptions = {
      * Defaults to false.
      */
     provideScopeLoader?: boolean;
+
+    /**
+     * Set min time frequency with which noops would be sent in case of active connection which is not sending any op.
+     */
+    noopTimeFrequency?: number;
+
+    /**
+     * Set min op frequency with which noops would be sent in case of active connection which is not sending any op.
+     */
+    noopCountFrequency?: number;
 };
 
 /**
