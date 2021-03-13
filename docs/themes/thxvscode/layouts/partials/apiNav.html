@@ -73,7 +73,7 @@
                 {{ $customTitle := index $custom "title"}}
                 {{ $isCurrentPage := eq (relURL $current.RelPermalink) $customLink }}
                 <li {{ if $isCurrentPage }}class="active" {{ end }}>
-                    <a href="{{$customLink}}"
+                    <a href="{{relURL $customLink}}"
                         {{ if $isCurrentPage }}aria-label="Current Page: {{ $customTitle | humanize | title }} "
                         {{ end }}>
                         {{ $customTitle | humanize | title }} </a>
@@ -89,7 +89,7 @@
                 {{ $isCurrentPage = eq $targetPage.RelPermalink $current.RelPermalink}}
                 {{ end }}
                 <li {{ if $isCurrentPage }}class="active" {{ end }}>
-                    <a href="{{$targetPage.Permalink}}"
+                    <a href="{{$targetPage.RelPermalink}}"
                         {{ if $isCurrentPage }}aria-label="Current Page: {{ (path.Base .) | humanize | title }} "
                         {{ end }}>
                         {{ (path.Base .) | humanize | title }} </a>
