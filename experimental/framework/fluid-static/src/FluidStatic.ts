@@ -4,8 +4,8 @@
  */
 
 import { getContainer, IGetContainerService } from "@fluid-experimental/get-container";
+import { DataObject } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
 import {
     DOProviderContainerRuntimeFactory,
@@ -56,7 +56,7 @@ export class FluidContainer {
             });
         }
 
-    public async createDataObject<T extends IFluidLoadable = IFluidLoadable>(
+    public async createDataObject<T extends DataObject>(
         dataObjectClass: IFluidStaticDataObjectClass,
         id: string,
     ) {
@@ -70,7 +70,7 @@ export class FluidContainer {
         return this.rootDataObject.createDataObject<T>(dataObjectClass, id);
     }
 
-    public async getDataObject<T extends IFluidLoadable = IFluidLoadable>(id: string) {
+    public async getDataObject<T extends DataObject>(id: string) {
         return this.rootDataObject.getDataObject<T>(id);
     }
 }

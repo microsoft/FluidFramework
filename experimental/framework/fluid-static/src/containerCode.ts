@@ -25,7 +25,7 @@ export class RootDataObject extends DataObject {
 
     protected async hasInitialized() { }
 
-    public async createDataObject<T extends IFluidLoadable = IFluidLoadable>(
+    public async createDataObject<T extends DataObject>(
         dataObjectClass: IFluidStaticDataObjectClass,
         id: string,
     ) {
@@ -37,7 +37,7 @@ export class RootDataObject extends DataObject {
         return object;
     }
 
-    public async getDataObject<T extends IFluidLoadable = IFluidLoadable>(id: string) {
+    public async getDataObject<T extends DataObject>(id: string) {
         const handle = await this.root.wait<IFluidHandle<T>>(id);
         return handle.get();
     }
