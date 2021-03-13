@@ -103,7 +103,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		consumer.on("connection.failure", async (error) => {
 			await this.close(true);
 
-			this.emit("error", error);
+			this.error(error);
 
 			this.connect();
 		});
@@ -122,7 +122,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 						err.code === kafka.CODES.ERRORS.ERR_ILLEGAL_GENERATION);
 
 				if (!shouldRetryCommit) {
-					this.emit("error", err);
+					this.error(err);
 				}
 			}
 
@@ -149,7 +149,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 						this.emit("checkpoint", offset.partition, offset.offset);
 					}
 				} else {
-					this.emit("error", new Error(`Unknown commit for partition ${offset.partition}`));
+					this.error(new Error(`Unknown commit for partition ${offset.partition}`));
 				}
 			}
 		});
@@ -210,21 +210,21 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					}
 				} catch (ex) {
 					this.isRebalancing = false;
-					this.emit("error", ex);
+					this.error(ex);
 				} finally {
 					this.pendingMessages.clear();
 				}
 			} else {
-				this.emit("error", err);
+				this.error(err);
 			}
 		});
 
 		consumer.on("rebalance.error", (error) => {
-			this.emit("error", error);
+			this.error(error);
 		});
 
 		consumer.on("event.error", (error) => {
-			this.emit("error", error);
+            this.error(error);
 		});
 
 		consumer.on("event.throttle", (event) => {
