@@ -830,7 +830,9 @@ export class DeltaManager
             },
         );
 
-        await manager.run(2 /* concurrency */);
+        // Staging: starting with no concurrency, listening for feedback first.
+        // In future releases we will switch to actual concurrency
+        await manager.run(1 /* concurrency */);
 
         telemetryEvent.end({
             lastFetch,
