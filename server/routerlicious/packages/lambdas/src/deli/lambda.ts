@@ -265,6 +265,14 @@ export class DeliLambda implements IPartitionLambda {
                 `Gap detected in incoming op`);
         }
 
+        if (this.isInvalidMessage(message)) {
+            return this.createNackMessage(
+                message,
+                400,
+                NackErrorType.BadRequestError,
+                `Op not allowed`);
+        }
+
         // Handle client join/leave messages.
         if (!message.clientId) {
             if (message.operation.type === MessageType.ClientLeave) {
@@ -482,6 +490,16 @@ export class DeliLambda implements IPartitionLambda {
                 return JSON.parse(operation.data);
             }
         }
+    }
+
+    private isInvalidMessage(message: IRawOperationMessage) {
+        return message.clientId && (
+            message.operation.type === MessageType.ClientJoin ||
+            message.operation.type === MessageType.ClientLeave ||
+            message.operation.type === MessageType.SummaryAck ||
+            message.operation.type === MessageType.SummaryNack ||
+            message.operation.type === MessageType.NoClient ||
+            message.operation.type === MessageType.Control);
     }
 
     private createOutputMessage(
