@@ -9,7 +9,6 @@ import {
     KeyValueInstantiationFactory
 } from "@fluid-experimental/data-objects";
 import { getSessionStorageContainer } from "@fluid-experimental/get-container";
-import { getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
 
 import { DiceRollerController } from "../src/controller";
 import { DOProviderContainerRuntimeFactory } from "@fluid-experimental/fluid-static";
@@ -39,10 +38,11 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
 
     // Get the Default Object from the Container
     const dataObjectId = "dice";
+    const rootDataObject = (await container.request({ url: "/" })).value;
     if (createNewFlag) {
-        await container.request({ url: `/create/${KeyValueInstantiationFactory.type}/${dataObjectId}` });
+        await rootDataObject.createDataObject(KeyValueDataObject, dataObjectId);
     }
-    const kvPairDataObject = await getObjectWithIdFromContainer<KeyValueDataObject>(dataObjectId, container);
+    const kvPairDataObject = await rootDataObject.getDataObject(dataObjectId);
     const diceRollerController = new DiceRollerController(kvPairDataObject);
     await diceRollerController.initialize(createNewFlag);
 
