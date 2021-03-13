@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.70.3
+
+* merge: branch 'releases/2021.03.1' into `releases/2021.03.2`
+  * Commit: [97f0314723bdf513a47d6d943a94454706eda43f](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/97f0314723bdf513a47d6d943a94454706eda43f)
+* docs: Revert unwanted change log updates in version bump pipeline
+  * Associated pull request: [28641](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28641)
+  * Commit: [38bfb0d7a346f00197d991386ba115b56aefb61d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/38bfb0d7a346f00197d991386ba115b56aefb61d)
+
 ## 0.70.2
 
 * fix: Implement optimized delta in Forest
