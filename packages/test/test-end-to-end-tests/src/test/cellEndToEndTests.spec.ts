@@ -12,7 +12,7 @@ import {
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
 import {
-    generateTest,
+    describeWithCompat,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
@@ -25,7 +25,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+describeWithCompat("SharedCell", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();
@@ -220,8 +220,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         verifyCellValue(await getCellDataStore(getCellDataStore(Promise.resolve(sharedCell2))), cellValue, 2);
         verifyCellValue(await getCellDataStore(getCellDataStore(Promise.resolve(sharedCell3))), cellValue, 3);
     });
-};
-
-describe("Cell", () => {
-    generateTest(tests);
 });

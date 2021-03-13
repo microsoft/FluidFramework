@@ -44,7 +44,7 @@ const packageList = [
 ];
 
 export const ensurePackageInstalled =
-    async (version: number | string) => ensureInstalled(getRequestedRange(version), packageList);
+    async (version: number | string, force: boolean) => ensureInstalled(getRequestedRange(version), packageList, force);
 
 // Current versions of the APIs
 const LoaderApi = {

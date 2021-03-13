@@ -14,7 +14,7 @@ import {
     ITestFluidObject,
 } from "@fluidframework/test-utils";
 import {
-    generateTest,
+    describeWithCompat,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
@@ -27,7 +27,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+describeWithCompat("SharedMap", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();
@@ -309,8 +309,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         assert.equal(newSharedMap2.get("newKey"), "anotherNewValue", "The new value is not updated in map 2");
         assert.equal(newSharedMap1.get("newKey"), "anotherNewValue", "The new value is not updated in map 1");
     });
-};
-
-describe("Map", () => {
-    generateTest(tests);
 });

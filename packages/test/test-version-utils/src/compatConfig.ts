@@ -47,61 +47,83 @@ export const compatConfigs: {
 }[] = [{ name: "Non-Compat", compatVersion: 0 }, ...genConfig(-1), ...genConfig(-2)];
 
 /*
- * Parse the command line argument to see if a particular compat is specified.
+ * Parse the command line argument and environment variables.  Arguments take precedent.
+ *   --compat <index> - choose a config to run (default: -1 for all)
+ *   --reinstall      - force reinstallation of legacy versions
+ *
+ * Env:
+ *   fluid__test__compat - same as --compat
  */
+const transformArgvKey = (obj: { key: string, value: string }) => {
+    if (obj.key === "compat") {
+        obj.key = `fluid:test:${obj.key}`;
+    }
+    return obj;
+};
 nconf.argv({
     compat: {
-        default: -1,
         description: "Compat Variant defined in the array in compatConfigs",
         requiresArg: true,
     },
-});
+    reinstall: {
+        default: false,
+        description: "Force compat package to be installed",
+        boolean: true,
+    },
+    transform: transformArgvKey,
+}).env({
+    separator: "__",
+    whitelist: ["fluid__test__compat"],
+}).defaults(
+    {
+        fluid: {
+            test: {
+                compat: -1,
+            },
+        },
+    },
+);
 
-const compatIndex = nconf.get("compat");
+const compatIndex = nconf.get("fluid:test:compat");
 const compatConfig = compatConfigs[compatIndex];
 if (compatIndex !== -1 && compatConfig === undefined) {
     throw new Error(`Invalid compat config index '${compatIndex}'`);
 }
 
-/*
- * Utils for test to generate the compat variants.
- */
-const generateTestForConfig = (
-    config: typeof compatConfig,
-    tests: (provider: () => ReturnType<typeof getTestObjectProvider>) => void,
-) => {
-    tests(() => {
-        return getTestObjectProvider(config?.loader, config?.containerRuntime, config?.dataRuntime);
-    });
-};
+// set it in the env for parallel workers
+process.env.fluid__test__compat = compatIndex;
 
-export const generateTest = (
+/*
+ * Mocha Utils for test to generate the compat variants.
+ */
+export function describeWithCompat(
+    name: string,
     tests: (provider: () => ReturnType<typeof getTestObjectProvider>) => void,
-) => {
-    if (compatIndex !== -1) {
-        generateTestForConfig(compatConfig, tests);
-    } else {
-        for (const config of compatConfigs) {
+) {
+    describe(name, () => {
+        const configList = compatIndex === -1 ? compatConfigs : [compatConfig];
+
+        for (const config of configList) {
             describe(config.name, () => {
-                generateTestForConfig(config, tests);
+                tests(() => {
+                    return getTestObjectProvider(config?.loader, config?.containerRuntime, config?.dataRuntime);
+                });
             });
         }
-    }
-};
+    });
+}
 
 /*
  * Mocha start up to ensure legacy versions are installed
  */
 export async function mochaGlobalSetup() {
-    const versions = compatConfig ? [compatConfig?.loader, compatConfig?.containerRuntime, compatConfig?.dataRuntime]
-        .filter((value, index, self) =>
-            value !== undefined && value !== 0 && self.indexOf(value) === index) as (string | number)[] :
-        [-1, -2];
+    const configList = compatIndex === -1 ? compatConfigs : [compatConfig];
+    const versions = new Set(configList.map((value) => value.compatVersion).filter((value) => value !== 0));
+    if (versions.size === 0) { return; }
 
-    if (versions.length === 0) { return; }
-
-    // Make sure we wait for both before returning, even if one of them is rejected
-    const installP = versions.map(async (value) => ensurePackageInstalled(value));
+    // Make sure we wait for all before returning, even if one of them has error.
+    const installP = Array.from(versions.values()).map(
+        async (value) => ensurePackageInstalled(value, nconf.get("reinstall")));
 
     let error: Error | undefined;
     for (const p of installP) {

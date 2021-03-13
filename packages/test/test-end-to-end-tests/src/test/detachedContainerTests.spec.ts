@@ -26,7 +26,7 @@ import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { convertContainerToDriverSerializedFormat, requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    generateTest,
+    describeWithCompat,
     ITestContainerConfig,
     DataObjectFactoryType,
     ITestObjectProvider,
@@ -61,7 +61,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+describeWithCompat("Detached Container", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     let request: IRequest;
     let loader: Loader;
@@ -617,8 +617,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         const container2 = await loader.resolve({ url: requestUrl2 });
         assert.strictEqual(container, container2, "Both containers should be same");
     });
-};
-
-describe("Detached Container", () => {
-    generateTest(tests);
 });

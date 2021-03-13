@@ -60,12 +60,12 @@ function resolveVersion(requested: string, installed: boolean) {
     }
 }
 
-export async function ensureInstalled(requested: string, packageList: string[]) {
+export async function ensureInstalled(requested: string, packageList: string[], force: boolean) {
     const version = resolveVersion(requested, false);
     let release = await lock(__dirname, { retries: { forever: true } });
     try {
         const modulePath = getModulePath(version);
-        if (existsSync(modulePath)) {
+        if (!force && existsSync(modulePath)) {
             // assume it is valid if it exists
             return { version, modulePath };
         }

@@ -18,7 +18,7 @@ import {
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
 import {
-    generateTest,
+    describeWithCompat,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
@@ -39,7 +39,7 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {
-    const tests = (argsFactory: () => ITestObjectProvider) => {
+    describeWithCompat(name, (argsFactory: () => ITestObjectProvider) => {
         let args: ITestObjectProvider;
         beforeEach(()=>{
             args = argsFactory();
@@ -213,10 +213,6 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             assert.equal(sharedMap1Prime.get("test"), "sampleValue");
             assert.equal(sharedMap2Prime.get("test"), "sampleValue");
         });
-    };
-
-    describe(name, () => {
-        generateTest(tests);
     });
 }
 

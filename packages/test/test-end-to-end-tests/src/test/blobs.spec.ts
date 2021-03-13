@@ -12,7 +12,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { v4 as uuid } from "uuid";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import {
-    generateTest,
+    describeWithCompat,
     ITestObjectProvider,
     ITestContainerConfig,
     ITestDataObject,
@@ -23,7 +23,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry: [["sharedString", SharedString.getFactory()]],
 };
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+describeWithCompat("blobs",(argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();
@@ -147,8 +147,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             assert.strictEqual(IsoBuffer.from(await props.blob.get()).toString("utf-8"), testString);
         }
     });
-};
-
-describe("blobs", () => {
-    generateTest(tests);
 });

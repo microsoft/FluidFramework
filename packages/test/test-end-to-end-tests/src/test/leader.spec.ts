@@ -8,7 +8,7 @@ import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
 import {
-    generateTest,
+    describeWithCompat,
     ITestObjectProvider,
 } from "@fluidframework/test-version-utils";
 
@@ -18,7 +18,7 @@ async function ensureConnected(container: Container) {
     }
 }
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+describeWithCompat("Leader", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     let container1: Container;
     let dataObject1: ITestFluidObject;
@@ -189,8 +189,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         checkExpected(config2);
         checkExpected(config3);
     });
-};
-
-describe("Leader", () => {
-    generateTest(tests);
 });

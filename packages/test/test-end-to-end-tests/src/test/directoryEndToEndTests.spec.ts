@@ -13,7 +13,7 @@ import {
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
 import {
-    generateTest,
+    describeWithCompat,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
@@ -26,7 +26,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+describeWithCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();
@@ -645,8 +645,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             });
         });
     });
-};
-
-describe("Directory", () => {
-    generateTest(tests);
 });

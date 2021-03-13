@@ -11,7 +11,7 @@ import {
     ITestFluidObject, timeoutPromise,
 } from "@fluidframework/test-utils";
 import {
-    generateTest,
+    describeWithCompat,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
@@ -22,7 +22,7 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 const waitForSignal =
-    async (...signallers: {once(e: "signal", l: () => void): void}[]) =>
+    async (...signallers: { once(e: "signal", l: () => void): void }[]) =>
         Promise.all(
             signallers.map(
                 async (signaller, index) =>
@@ -33,7 +33,7 @@ const waitForSignal =
                             errorMsg: `Signaller[${index}] Timeout`,
                         })));
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+describeWithCompat("TestSignals", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;
@@ -164,8 +164,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         assert.equal(user1CompSignalReceivedCount, 1, "client 1 did not receive signal on data store runtime");
         assert.equal(user2CompSignalReceivedCount, 1, "client 2 did not receive signal on data store runtime");
     });
-};
-
-describe("TestSignals", () => {
-    generateTest(tests);
 });

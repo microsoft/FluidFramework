@@ -11,13 +11,13 @@ import {
     TestFluidObject,
 } from "@fluidframework/test-utils";
 import {
-    generateTest,
+    describeWithCompat,
     ITestObjectProvider,
     ITestDataObject,
     TestDataObjectType,
 } from "@fluidframework/test-version-utils";
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+describeWithCompat("FluidObjectHandle", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();
@@ -168,8 +168,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             firstContainerObject2.handle.absolutePath,
             "The urls do not match");
     });
-};
-
-describe("FluidObjectHandle", () => {
-    generateTest(tests);
 });

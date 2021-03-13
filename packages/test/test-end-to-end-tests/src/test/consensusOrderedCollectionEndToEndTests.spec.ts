@@ -20,7 +20,7 @@ import { ChannelFactoryRegistry, ITestFluidObject } from "@fluidframework/test-u
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     DataObjectFactoryType,
-    generateTest,
+    describeWithCompat,
     ITestContainerConfig,
     ITestObjectProvider,
 } from "@fluidframework/test-version-utils";
@@ -42,7 +42,7 @@ const testContainerConfig: ITestContainerConfig = {
 function generate(
     name: string, ctor: ISharedObjectConstructor<IConsensusOrderedCollection>,
     input: any[], output: any[]) {
-    const tests = (argsFactory: () => ITestObjectProvider) => {
+    describeWithCompat(name, (argsFactory: () => ITestObjectProvider) => {
         let args: ITestObjectProvider;
         beforeEach(() => {
             args = argsFactory();
@@ -354,10 +354,6 @@ function generate(
             assert.strictEqual(removeCount2, 3, "Incorrect number remove events in document 2");
             assert.strictEqual(removeCount3, 3, "Incorrect number remove events in document 3");
         });
-    };
-
-    describe(name, () => {
-        generateTest(tests);
     });
 }
 

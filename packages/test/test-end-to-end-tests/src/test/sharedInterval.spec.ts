@@ -20,7 +20,7 @@ import {
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
 import {
-    generateTest,
+    describeWithCompat,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
@@ -53,7 +53,7 @@ const assertIntervalsHelper = (
     }
 };
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+describeWithCompat("SharedInterval", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();
@@ -326,8 +326,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
                 "Incorrect handle type in shared interval's summary");
         });
     });
-};
-
-describe("SharedInterval", () => {
-    generateTest(tests);
 });
