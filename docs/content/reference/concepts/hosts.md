@@ -28,7 +28,7 @@ You may also want to host your Fluid container on a standalone website.
 The Fluid loader loads Fluid containers by connecting to the Fluid service and fetching Fluid container code. From a
 system architecture perspective, the Fluid loader sits in between the Fluid service and a Fluid container.
 
-![A diagram of the Fluid Framework system architecture](/docs/concepts/images/architecture.png)
+![A diagram of the Fluid Framework system architecture](/reference/concepts/images/architecture.png)
 
 The Fluid loader is intended to be extremely generic. To maintain generic-ness, the loader uses a plugin model. With the
 right plugins (drivers, handlers, resolvers), the Fluid loader will work for any wire protocol and any service
@@ -43,7 +43,7 @@ A Fluid host creates a Fluid loader with a URL resolver, Fluid service driver, a
 Fluid container from the loader. Finally, the host *does something* with the Fluid containers. A host can request
 multiple containers from the loader.
 
-![The loader architecture and request flow](/docs/concepts/images/load-flow.png)
+![The loader architecture and request flow](/reference/concepts/images/load-flow.png)
 
 We'll talk about each of these parts, starting with the request and loader dependencies, over the next sections.
 

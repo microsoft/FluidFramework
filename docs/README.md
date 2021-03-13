@@ -104,7 +104,7 @@ generating them using the `hugo` command as shown below:
 ### Static doc
 
 ```bash
-npm run hugo -- new docs/concepts/flux-capacitor.md
+npm run hugo -- new reference/concepts/flux-capacitor.md
 ```
 
 ### Blog post

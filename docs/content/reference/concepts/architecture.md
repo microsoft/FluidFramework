@@ -11,7 +11,7 @@ identify the important lower level concepts, and discuss some of our key design 
 
 The Fluid loader connects to the Fluid service and loads a Fluid container.
 
-![A diagram of the Fluid Framework architecture](/docs/concepts/images/architecture.png)
+![A diagram of the Fluid Framework architecture](/reference/concepts/images/architecture.png)
 
 If you want to load a Fluid container on your app or website, you'll load the container with the Fluid loader. If you
 want to create a new collaborative experience using the Fluid Framework, you'll create a Fluid container.
@@ -70,7 +70,7 @@ Fluid container code. In this way, the Fluid loader 'mimics the web.' The Fluid 
 resolver,** connects to the Fluid service using the **Fluid service driver**, and loads the correct app code using the
 **code loader.**
 
-![A diagram of the Fluid loading sequence](/docs/concepts/images/load-flow.png)
+![A diagram of the Fluid loading sequence](/reference/concepts/images/load-flow.png)
 
 The **container lookup & resolver** identifies, by a URL, which service a container is bound to and where in that service it
 is located. The Fluid service driver consumes this information.
@@ -90,7 +90,7 @@ client, gives the op a sequential order number, and sends the ordered op back to
 structures use these ops to reconstruct state on each client. The Fluid service doesn't parse any of these ops; in fact,
 the service knows nothing about the contents of any Fluid container.
 
-![A diagram depicting operations being sent from a Fluid client to a Fluid service and broadcast to Fluid clients](/docs/concepts/images/fluid-service.png)
+![A diagram depicting operations being sent from a Fluid client to a Fluid service and broadcast to Fluid clients](/reference/concepts/images/fluid-service.png)
 From the client perspective, this op flow is accessed through a **DeltaConnection** object.
 
 The service also stores old operations, accessible to clients through a **DeltaStorageService** object, and stores

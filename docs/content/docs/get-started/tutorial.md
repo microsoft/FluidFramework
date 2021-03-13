@@ -238,7 +238,7 @@ to see the changes reflected between clients.
 
 <!-- Concepts -->
 
-[Fluid container]: {{< relref "/docs/concepts/containers-runtime.md" >}}
+[Fluid container]: {{< relref "/reference/concepts/containers-runtime.md" >}}
 
 <!-- Packages -->
 
