@@ -6,25 +6,17 @@
 import { strict as assert } from "assert";
 import { TextSegment } from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { createAndAttachContainer, createLoader, createDocumentId } from "@fluidframework/test-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { describeWithLoaderCompat } from "@fluidframework/test-version-utils";
 import { FlowDocument } from "../document";
 import { SegmentSpan } from "../document/segmentspan";
 
-describe("SegmentSpan", () => {
-    const codeDetails = {
-        package: "segmentSpanTestPkg",
-        config: {},
-    };
-
+describeWithLoaderCompat("SegmentSpan", (getTestObjectProvider: () => ITestObjectProvider) => {
     let doc: FlowDocument;
-    let driver: ITestDriver;
+    let provider: ITestObjectProvider;
     before(async () => {
-        driver = getFluidTestDriver();
-        const documentServiceFactory = driver.createDocumentServiceFactory();
-        const urlResolver = driver.createUrlResolver();
-        const loader = createLoader([[codeDetails, FlowDocument.getFactory()]], documentServiceFactory, urlResolver);
-        const container = await createAndAttachContainer(codeDetails, loader, driver.createCreateNewRequest(createDocumentId()));
+        provider = getTestObjectProvider();
+        const container = await provider.createContainer(FlowDocument.getFactory());
         doc = await requestFluidObject<FlowDocument>(container, "default");
     });
 
