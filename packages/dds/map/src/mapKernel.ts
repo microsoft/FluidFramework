@@ -32,11 +32,16 @@ interface IMapMessageHandler {
      * Apply the given operation.
      * @param op - The map operation to apply
      * @param local - Whether the message originated from the local client
-     * @param message - The full message
+     * @param message - The full message. Not provided for stashed ops.
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      */
-    process(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage, localOpMetadata: unknown): void;
+    process(
+        op: IMapOperation,
+        local: boolean,
+        message: ISequencedDocumentMessage | undefined,
+        localOpMetadata: unknown,
+    ): void;
 
     /**
      * Communicate the operation to remote clients.
@@ -44,12 +49,14 @@ interface IMapMessageHandler {
      * @param localOpMetadata - The metadata to be submitted with the message.
      */
     submit(op: IMapOperation, localOpMetadata: unknown): void;
+
+    getStashedOpLocalMetadata(op: IMapOperation): unknown;
 }
 
 /**
  * Describes an operation specific to a value type.
  */
-interface IMapValueTypeOperation {
+export interface IMapValueTypeOperation {
     /**
      * String identifier of the operation type.
      */
@@ -69,7 +76,7 @@ interface IMapValueTypeOperation {
 /**
  * Operation indicating a value should be set for a key.
  */
-interface IMapSetOperation {
+export interface IMapSetOperation {
     /**
      * String identifier of the operation type.
      */
@@ -89,7 +96,7 @@ interface IMapSetOperation {
 /**
  * Operation indicating a key should be deleted from the map.
  */
-interface IMapDeleteOperation {
+export interface IMapDeleteOperation {
     /**
      * String identifier of the operation type.
      */
@@ -104,12 +111,12 @@ interface IMapDeleteOperation {
 /**
  * Map key operations are one of several types.
  */
-type IMapKeyOperation = IMapValueTypeOperation | IMapSetOperation | IMapDeleteOperation;
+export type IMapKeyOperation = IMapValueTypeOperation | IMapSetOperation | IMapDeleteOperation;
 
 /**
  * Operation indicating the map should be cleared.
  */
-interface IMapClearOperation {
+export interface IMapClearOperation {
     /**
      * String identifier of the operation type.
      */
@@ -119,7 +126,7 @@ interface IMapClearOperation {
 /**
  * Description of a map delta operation
  */
-type IMapOperation = IMapKeyOperation | IMapClearOperation;
+export type IMapOperation = IMapKeyOperation | IMapClearOperation;
 
 /**
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
@@ -340,7 +347,7 @@ export class MapKernel implements IValueTypeCreator {
             key,
             localValue,
             true,
-            null,
+            undefined,
         );
 
         // If we are not attached, don't submit the op.
@@ -376,7 +383,7 @@ export class MapKernel implements IValueTypeCreator {
             key,
             localValue,
             true,
-            null,
+            undefined,
         );
 
         // If we are not attached, don't submit the op.
@@ -403,7 +410,7 @@ export class MapKernel implements IValueTypeCreator {
      */
     public delete(key: string): boolean {
         // Delete the key locally first.
-        const successfullyRemoved = this.deleteCore(key, true, null);
+        const successfullyRemoved = this.deleteCore(key, true, undefined);
 
         // If we are not attached, don't submit the op.
         if (!this.isAttached()) {
@@ -424,7 +431,7 @@ export class MapKernel implements IValueTypeCreator {
      */
     public clear(): void {
         // Clear the data locally first.
-        this.clearCore(true, null);
+        this.clearCore(true, undefined);
 
         // If we are not attached, don't submit the op.
         if (!this.isAttached()) {
@@ -499,6 +506,15 @@ export class MapKernel implements IValueTypeCreator {
         return false;
     }
 
+    public tryGetStashedOpLocalMetadata(op: any): unknown {
+        const type: string = op.type;
+        if (this.messageHandlers.has(type)) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return this.messageHandlers.get(type)!.getStashedOpLocalMetadata(op as IMapOperation);
+        }
+        throw new Error("no apply stashed op handler");
+    }
+
     /**
      * Process the given op if a handler is registered.
      * @param message - The message to process
@@ -507,8 +523,12 @@ export class MapKernel implements IValueTypeCreator {
      * For messages from a remote client, this will be undefined.
      * @returns True if the operation was processed, false otherwise.
      */
-    public tryProcessMessage(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): boolean {
-        const op = message.contents as IMapOperation;
+    public tryProcessMessage(
+        op: IMapOperation,
+        local: boolean,
+        message: ISequencedDocumentMessage | undefined,
+        localOpMetadata: unknown,
+    ): boolean {
         if (this.messageHandlers.has(op.type)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.messageHandlers
@@ -526,7 +546,7 @@ export class MapKernel implements IValueTypeCreator {
      * @param local - Whether the message originated from the local client
      * @param op - The message if from a remote set, or null if from a local set
      */
-    private setCore(key: string, value: ILocalValue, local: boolean, op: ISequencedDocumentMessage | null): void {
+    private setCore(key: string, value: ILocalValue, local: boolean, op: ISequencedDocumentMessage | undefined): void {
         const previousValue = this.get(key);
         this.data.set(key, value);
         const event: IValueChanged = { key, previousValue };
@@ -538,7 +558,7 @@ export class MapKernel implements IValueTypeCreator {
      * @param local - Whether the message originated from the local client
      * @param op - The message if from a remote clear, or null if from a local clear
      */
-    private clearCore(local: boolean, op: ISequencedDocumentMessage | null): void {
+    private clearCore(local: boolean, op: ISequencedDocumentMessage | undefined): void {
         this.data.clear();
         this.eventEmitter.emit("clear", local, op, this.eventEmitter);
     }
@@ -550,7 +570,7 @@ export class MapKernel implements IValueTypeCreator {
      * @param op - The message if from a remote delete, or null if from a local delete
      * @returns True if the key existed and was deleted, false if it did not exist
      */
-    private deleteCore(key: string, local: boolean, op: ISequencedDocumentMessage | null): boolean {
+    private deleteCore(key: string, local: boolean, op: ISequencedDocumentMessage | undefined): boolean {
         const previousValue = this.get(key);
         const successfullyRemoved = this.data.delete(key);
         if (successfullyRemoved) {
@@ -611,7 +631,6 @@ export class MapKernel implements IValueTypeCreator {
     private needProcessKeyOperation(
         op: IMapKeyOperation,
         local: boolean,
-        message: ISequencedDocumentMessage,
         localOpMetadata: unknown,
     ): boolean {
         if (this.pendingClearMessageId !== -1) {
@@ -671,12 +690,16 @@ export class MapKernel implements IValueTypeCreator {
                     // We don't reuse the metadata but send a new one on each submit.
                     this.submitMapClearMessage(op);
                 },
+                getStashedOpLocalMetadata: (op: IMapClearOperation) => {
+                    // We don't reuse the metadata but send a new one on each submit.
+                    return this.getMapClearMessageLocalMetadata(op);
+                },
             });
         messageHandlers.set(
             "delete",
             {
                 process: (op: IMapDeleteOperation, local, message, localOpMetadata) => {
-                    if (!this.needProcessKeyOperation(op, local, message, localOpMetadata)) {
+                    if (!this.needProcessKeyOperation(op, local, localOpMetadata)) {
                         return;
                     }
                     this.deleteCore(op.key, local, message);
@@ -685,12 +708,16 @@ export class MapKernel implements IValueTypeCreator {
                     // We don't reuse the metadata but send a new one on each submit.
                     this.submitMapKeyMessage(op);
                 },
+                getStashedOpLocalMetadata: (op: IMapDeleteOperation) => {
+                    // We don't reuse the metadata but send a new one on each submit.
+                    return this.getMapKeyMessageLocalMetadata(op);
+                },
             });
         messageHandlers.set(
             "set",
             {
                 process: (op: IMapSetOperation, local, message, localOpMetadata) => {
-                    if (!this.needProcessKeyOperation(op, local, message, localOpMetadata)) {
+                    if (!this.needProcessKeyOperation(op, local, localOpMetadata)) {
                         return;
                     }
 
@@ -701,6 +728,10 @@ export class MapKernel implements IValueTypeCreator {
                 submit: (op: IMapSetOperation, localOpMetadata: unknown) => {
                     // We don't reuse the metadata but send a new one on each submit.
                     this.submitMapKeyMessage(op);
+                },
+                getStashedOpLocalMetadata: (op: IMapSetOperation) => {
+                    // We don't reuse the metadata but send a new one on each submit.
+                    return this.getMapKeyMessageLocalMetadata(op);
                 },
             });
 
@@ -730,9 +761,18 @@ export class MapKernel implements IValueTypeCreator {
                 submit: (op: IMapValueTypeOperation, localOpMetadata: unknown) => {
                     this.submitMessage(op, localOpMetadata);
                 },
+                getStashedOpLocalMetadata: (op: IMapValueTypeOperation) => {
+                    assert(false, "apply stashed op not implemented for custom value type ops");
+                },
             });
 
         return messageHandlers;
+    }
+
+    private getMapClearMessageLocalMetadata(op: IMapClearOperation): number {
+        const pendingMessageId = ++this.pendingMessageId;
+        this.pendingClearMessageId = pendingMessageId;
+        return pendingMessageId;
     }
 
     /**
@@ -740,9 +780,14 @@ export class MapKernel implements IValueTypeCreator {
      * @param op - The clear message
      */
     private submitMapClearMessage(op: IMapClearOperation): void {
-        const pendingMessageId = ++this.pendingMessageId;
+        const pendingMessageId = this.getMapClearMessageLocalMetadata(op);
         this.submitMessage(op, pendingMessageId);
-        this.pendingClearMessageId = pendingMessageId;
+    }
+
+    private getMapKeyMessageLocalMetadata(op: IMapKeyOperation): number {
+        const pendingMessageId = ++this.pendingMessageId;
+        this.pendingKeys.set(op.key, pendingMessageId);
+        return pendingMessageId;
     }
 
     /**
@@ -750,9 +795,8 @@ export class MapKernel implements IValueTypeCreator {
      * @param op - The map key message
      */
     private submitMapKeyMessage(op: IMapKeyOperation): void {
-        const pendingMessageId = ++this.pendingMessageId;
+        const pendingMessageId = this.getMapKeyMessageLocalMetadata(op);
         this.submitMessage(op, pendingMessageId);
-        this.pendingKeys.set(op.key, pendingMessageId);
     }
 
     /**
