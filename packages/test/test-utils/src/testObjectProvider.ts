@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { Container, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
@@ -13,11 +14,52 @@ import { LoaderContainerTracker } from "./loaderContainerTracker";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
 import { OpProcessingController } from "./opProcessingController";
+import { ChannelFactoryRegistry } from "./testFluidObject";
 
 const defaultCodeDetails: IFluidCodeDetails = {
     package: "defaultTestPackage",
     config: {},
 };
+
+export interface ITestObjectProvider {
+    createContainer(entryPoint: fluidEntryPoint): Promise<IContainer>;
+
+    /**
+     * Used to create a test Container. The Loader/ContainerRuntime/DataRuntime might be different versioned.
+     * In generateLocalCompatTest(), this Container and its runtime will be arbitrarily-versioned.
+     */
+    makeTestLoader(testContainerConfig?: ITestContainerConfig): IHostLoader,
+    makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
+    loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
+
+    documentServiceFactory: IDocumentServiceFactory,
+    urlResolver: IUrlResolver,
+    defaultCodeDetails: IFluidCodeDetails,
+    opProcessingController: OpProcessingController,
+
+    ensureSynchronized(): Promise<void>;
+    reset(): void,
+
+    documentId: string,
+    driver: ITestDriver;
+
+}
+
+export enum DataObjectFactoryType {
+    Primed, // default
+    Test,
+}
+
+export interface ITestContainerConfig {
+    // TestFluidDataObject instead of PrimedDataStore
+    fluidDataObjectType?: DataObjectFactoryType,
+
+    // And array of channel name and DDS factory pair to create on container creation time
+    registry?: ChannelFactoryRegistry,
+
+    // Container runtime options for the container instance
+    runtimeOptions?: IContainerRuntimeOptions,
+}
 
 export const createDocumentId = (): string => uuid();
 
@@ -76,24 +118,54 @@ export class TestObjectProvider<TestContainerConfigType> {
         return this._opProcessingController;
     }
 
+    /**
+     * Create a loader.  Container created/loaded thru this loader will not be automatically added
+     * to the OpProcessingController, and will need to be added manually if needed.
+     *
+     * Only the version of the loader will vary based on compat config. The version of
+     * containerRuntime/dataRuntime used in fluidEntryPoint will be used as is from what is passed in.
+     *
+     * @param packageEntries - list of code details and fluidEntryPoint pairs.
+     */
     private createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>) {
         const codeLoader = new LocalCodeLoader(packageEntries);
-        return new this.LoaderConstructor({
+        const loader = new this.LoaderConstructor({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
         });
+        this._loaderContainerTracker.add(loader);
+        return loader;
+    }
+
+    /**
+     * Create a container using a default document id and code details.
+     * Container created is automatically added to the OpProcessingController to manage op flow
+     *
+     * Only the version of the loader will vary based on compat config. The version of
+     * containerRuntime/dataRuntime used in fluidEntryPoint will be used as is from what is passed in.
+     *
+     * @param packageEntries - list of code details and fluidEntryPoint pairs.
+     */
+    public async createContainer(entryPoint: fluidEntryPoint) {
+        const loader = this.createLoader([[defaultCodeDetails, entryPoint]]);
+        const container = await createAndAttachContainer(
+            defaultCodeDetails,
+            loader,
+            this.driver.createCreateNewRequest(createDocumentId()),
+        );
+        this.opProcessingController.addDeltaManagers(container.deltaManager);
+        return container;
     }
 
     /**
      * Make a test loader.  Container created/loaded thru this loader will not be automatically added
      * to the OpProcessingController, and will need to be added manually if needed.
+     * The version of the loader/containerRuntime/dataRuntime may vary based on compat config of the current run
      * @param testContainerConfig - optional configuring the test Container
      */
     public makeTestLoader(testContainerConfig?: TestContainerConfigType) {
-        const loader = this.createLoader([[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]]);
-        this._loaderContainerTracker.add(loader);
-        return loader;
+        return this.createLoader([[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]]);
     }
 
     /**

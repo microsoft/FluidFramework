@@ -16,15 +16,13 @@ import {
     SharedString,
 } from "@fluidframework/sequence";
 import {
-    ITestFluidObject,
-    ChannelFactoryRegistry,
-} from "@fluidframework/test-utils";
-import {
-    describeWithCompat,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
-} from "@fluidframework/test-version-utils";
+    ITestFluidObject,
+    ChannelFactoryRegistry,
+} from "@fluidframework/test-utils";
+import { describeWithAllCompat } from "@fluidframework/test-version-utils";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
@@ -53,7 +51,7 @@ const assertIntervalsHelper = (
     }
 };
 
-describeWithCompat("SharedInterval", (argsFactory: () => ITestObjectProvider) => {
+describeWithAllCompat("SharedInterval", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();

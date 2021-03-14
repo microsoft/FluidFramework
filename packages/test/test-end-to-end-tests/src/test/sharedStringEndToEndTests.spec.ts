@@ -8,15 +8,13 @@ import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import {
-    ChannelFactoryRegistry,
-    ITestFluidObject,
-} from "@fluidframework/test-utils";
-import {
-    describeWithCompat,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
-} from "@fluidframework/test-version-utils";
+    ChannelFactoryRegistry,
+    ITestFluidObject,
+} from "@fluidframework/test-utils";
+import { describeWithAllCompat } from "@fluidframework/test-version-utils";
 
 const stringId = "sharedStringKey";
 const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
@@ -25,7 +23,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeWithCompat("SharedString", (argsFactory: () => ITestObjectProvider) => {
+describeWithAllCompat("SharedString", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();

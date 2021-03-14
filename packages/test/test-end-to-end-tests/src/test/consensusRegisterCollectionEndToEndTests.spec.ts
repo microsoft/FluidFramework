@@ -14,15 +14,13 @@ import {
 } from "@fluidframework/register-collection";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    ITestFluidObject,
-    ChannelFactoryRegistry,
-} from "@fluidframework/test-utils";
-import {
-    describeWithCompat,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
-} from "@fluidframework/test-version-utils";
+    ITestFluidObject,
+    ChannelFactoryRegistry,
+} from "@fluidframework/test-utils";
+import { describeWithAllCompat } from "@fluidframework/test-version-utils";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IFluidDataStoreRuntime, id?: string): T;
@@ -39,7 +37,7 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {
-    describeWithCompat(name, (argsFactory: () => ITestObjectProvider) => {
+    describeWithAllCompat(name, (argsFactory: () => ITestObjectProvider) => {
         let args: ITestObjectProvider;
         beforeEach(()=>{
             args = argsFactory();

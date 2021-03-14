@@ -16,14 +16,15 @@ import {
     waitAcquireAndComplete,
 } from "@fluidframework/ordered-collection";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ChannelFactoryRegistry, ITestFluidObject } from "@fluidframework/test-utils";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
-    DataObjectFactoryType,
-    describeWithCompat,
+    ChannelFactoryRegistry,
+    ITestFluidObject,
     ITestContainerConfig,
     ITestObjectProvider,
-} from "@fluidframework/test-version-utils";
+    DataObjectFactoryType,
+} from "@fluidframework/test-utils";
+import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { describeWithAllCompat } from "@fluidframework/test-version-utils";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IFluidDataStoreRuntime, id?: string): T;
@@ -42,7 +43,7 @@ const testContainerConfig: ITestContainerConfig = {
 function generate(
     name: string, ctor: ISharedObjectConstructor<IConsensusOrderedCollection>,
     input: any[], output: any[]) {
-    describeWithCompat(name, (argsFactory: () => ITestObjectProvider) => {
+    describeWithAllCompat(name, (argsFactory: () => ITestObjectProvider) => {
         let args: ITestObjectProvider;
         beforeEach(() => {
             args = argsFactory();

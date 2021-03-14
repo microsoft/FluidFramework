@@ -6,11 +6,8 @@
 import { strict as assert } from "assert";
 import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
-import {
-    describeWithCompat,
-    ITestObjectProvider,
-} from "@fluidframework/test-version-utils";
+import { ITestObjectProvider, ITestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
+import { describeWithAllCompat } from "@fluidframework/test-version-utils";
 
 async function ensureConnected(container: Container) {
     if (!container.connected) {
@@ -18,7 +15,7 @@ async function ensureConnected(container: Container) {
     }
 }
 
-describeWithCompat("Leader", (argsFactory: () => ITestObjectProvider) => {
+describeWithAllCompat("Leader", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     let container1: Container;
     let dataObject1: ITestFluidObject;

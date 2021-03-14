@@ -8,14 +8,13 @@ import { Container } from "@fluidframework/container-loader";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    ITestFluidObject, timeoutPromise,
-} from "@fluidframework/test-utils";
-import {
-    describeWithCompat,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
-} from "@fluidframework/test-version-utils";
+    ITestFluidObject,
+    timeoutPromise,
+} from "@fluidframework/test-utils";
+import { describeWithAllCompat } from "@fluidframework/test-version-utils";
 
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
@@ -33,7 +32,7 @@ const waitForSignal =
                             errorMsg: `Signaller[${index}] Timeout`,
                         })));
 
-describeWithCompat("TestSignals", (argsFactory: () => ITestObjectProvider) => {
+describeWithAllCompat("TestSignals", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;

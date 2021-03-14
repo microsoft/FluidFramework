@@ -10,15 +10,13 @@ import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    ChannelFactoryRegistry,
-    ITestFluidObject,
-} from "@fluidframework/test-utils";
-import {
-    describeWithCompat,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
-} from "@fluidframework/test-version-utils";
+    ChannelFactoryRegistry,
+    ITestFluidObject,
+} from "@fluidframework/test-utils";
+import { describeWithAllCompat } from "@fluidframework/test-version-utils";
 
 const mapId = "mapKey";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -27,7 +25,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeWithCompat("SharedMap", (argsFactory: () => ITestObjectProvider) => {
+describeWithAllCompat("SharedMap", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();

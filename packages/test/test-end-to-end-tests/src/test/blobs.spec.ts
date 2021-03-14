@@ -11,21 +11,17 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { v4 as uuid } from "uuid";
 import { ReferenceType } from "@fluidframework/merge-tree";
-import {
-    describeWithCompat,
-    ITestObjectProvider,
-    ITestContainerConfig,
-    ITestDataObject,
-} from "@fluidframework/test-version-utils";
+import { ITestObjectProvider, ITestContainerConfig } from "@fluidframework/test-utils";
+import { describeWithAllCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 
 const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: { initialSummarizerDelayMs: 20, summaryConfigOverrides: { maxOps: 1 } },
     registry: [["sharedString", SharedString.getFactory()]],
 };
 
-describeWithCompat("blobs",(argsFactory: () => ITestObjectProvider) => {
+describeWithAllCompat("blobs", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
-    beforeEach(()=>{
+    beforeEach(() => {
         args = argsFactory();
     });
     afterEach(() => {

@@ -9,6 +9,9 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import {
+    ITestContainerConfig,
+    DataObjectFactoryType,
+    ITestObjectProvider,
     ChannelFactoryRegistry,
     ITestFluidObject,
 } from "@fluidframework/test-utils";
@@ -25,12 +28,7 @@ import { MessageType, ISequencedDocumentMessage } from "@fluidframework/protocol
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { convertContainerToDriverSerializedFormat, requestFluidObject } from "@fluidframework/runtime-utils";
-import {
-    describeWithCompat,
-    ITestContainerConfig,
-    DataObjectFactoryType,
-    ITestObjectProvider,
-} from "@fluidframework/test-version-utils";
+import { describeWithAllCompat } from "@fluidframework/test-version-utils";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -61,7 +59,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeWithCompat("Detached Container", (argsFactory: () => ITestObjectProvider) => {
+describeWithAllCompat("Detached Container", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     let request: IRequest;
     let loader: Loader;

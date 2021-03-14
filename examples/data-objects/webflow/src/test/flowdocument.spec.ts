@@ -5,26 +5,19 @@
 
 import { strict as assert } from "assert";
 import { TagName } from "@fluid-example/flow-util-lib";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { Marker, ReferenceType } from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createAndAttachContainer, createLocalLoader } from "@fluidframework/test-utils";
-import { FlowDocument } from "../src/document";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { describeWithLoaderCompat } from "@fluidframework/test-version-utils";
+import { FlowDocument } from "../document";
 
-describe("FlowDocument", () => {
-    const documentUrl = "fluid-test://localhost/flowDocumentTest";
-    const codeDetails = {
-        package: "flowDocumentTestPkg",
-        config: {},
-    };
+describeWithLoaderCompat("FlowDocument", (getTestObjectProvider: () => ITestObjectProvider) => {
     let doc: FlowDocument;
 
+    let provider: ITestObjectProvider;
     beforeEach(async () => {
-        const deltaConnectionServer = LocalDeltaConnectionServer.create();
-        const urlResolver = new LocalResolver();
-        const loader = createLocalLoader([[codeDetails, FlowDocument.getFactory()]], deltaConnectionServer, urlResolver);
-        const container = await createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentUrl));
+        provider = getTestObjectProvider();
+        const container = await provider.createContainer(FlowDocument.getFactory());
         doc = await requestFluidObject<FlowDocument>(container, "default");
     });
 
@@ -36,7 +29,7 @@ describe("FlowDocument", () => {
         for (let i = start; i < end; i++) {
             const actual = doc.getTags(i).map((marker) => {
                 assert.strictEqual(marker.refType, ReferenceType.NestBegin | ReferenceType.Tile);
-                return marker.properties.tags;
+                return marker.properties.tags as string[];
             });
             assert.deepStrictEqual(actual, expected);
         }

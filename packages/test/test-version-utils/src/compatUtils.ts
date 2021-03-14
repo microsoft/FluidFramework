@@ -3,61 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer, ILoader } from "@fluidframework/container-definitions";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IFluidLoadable, IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ISharedDirectory } from "@fluidframework/map";
 import { unreachableCase } from "@fluidframework/common-utils";
-
 import {
+    ITestObjectProvider,
+    ITestContainerConfig,
+    DataObjectFactoryType,
     ChannelFactoryRegistry,
     createTestContainerRuntimeFactory,
-    OpProcessingController,
     TestObjectProvider,
 } from "@fluidframework/test-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 import { getLoaderApi, getContainerRuntimeApi, getDataRuntimeApi } from "./testApi";
-
-export interface ITestObjectProvider {
-    /**
-     * Used to create a test Container.
-     * In generateLocalCompatTest(), this Container and its runtime will be arbitrarily-versioned.
-     */
-    makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
-    loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
-    makeTestLoader(testContainerConfig?: ITestContainerConfig): ILoader,
-    documentServiceFactory: IDocumentServiceFactory,
-    urlResolver: IUrlResolver,
-    defaultCodeDetails: IFluidCodeDetails,
-    opProcessingController: OpProcessingController,
-
-    ensureSynchronized(): Promise<void>;
-    reset(): void,
-
-    documentId: string,
-    driver: ITestDriver;
-
-}
-
-export enum DataObjectFactoryType {
-    Primed, // default
-    Test,
-}
-
-export interface ITestContainerConfig {
-    // TestFluidDataObject instead of PrimedDataStore
-    fluidDataObjectType?: DataObjectFactoryType,
-
-    // And array of channel name and DDS factory pair to create on container creation time
-    registry?: ChannelFactoryRegistry,
-
-    // Container runtime options for the container instance
-    runtimeOptions?: IContainerRuntimeOptions,
-}
 
 export const TestDataObjectType = "@fluid-example/test-dataStore";
 
@@ -114,7 +74,7 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 
 export const getDataStoreFactory = createGetDataStoreFactoryFunction(getDataRuntimeApi());
 
-export function getTestObjectProvider(
+export function getVersionedTestObjectProvider(
     loaderVersion?: number | string,
     runtimeVersion?: number | string,
     dataRuntimeVersion?: number | string,

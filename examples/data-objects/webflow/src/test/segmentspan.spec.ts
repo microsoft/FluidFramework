@@ -4,28 +4,27 @@
  */
 
 import { strict as assert } from "assert";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { TextSegment } from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createAndAttachContainer, createLocalLoader } from "@fluidframework/test-utils";
-import { FlowDocument } from "../src/document";
-import { SegmentSpan } from "../src/document/segmentspan";
+import { createAndAttachContainer, createLoader, createDocumentId } from "@fluidframework/test-utils";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { FlowDocument } from "../document";
+import { SegmentSpan } from "../document/segmentspan";
 
 describe("SegmentSpan", () => {
-    const documentUrl = "fluid-test://localhost/segmentSpanTest";
     const codeDetails = {
         package: "segmentSpanTestPkg",
         config: {},
     };
 
     let doc: FlowDocument;
-
+    let driver: ITestDriver;
     before(async () => {
-        const deltaConnectionServer = LocalDeltaConnectionServer.create();
-        const urlResolver = new LocalResolver();
-        const loader = createLocalLoader([[codeDetails, FlowDocument.getFactory()]], deltaConnectionServer, urlResolver);
-        const container = await createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentUrl));
+        driver = getFluidTestDriver();
+        const documentServiceFactory = driver.createDocumentServiceFactory();
+        const urlResolver = driver.createUrlResolver();
+        const loader = createLoader([[codeDetails, FlowDocument.getFactory()]], documentServiceFactory, urlResolver);
+        const container = await createAndAttachContainer(codeDetails, loader, driver.createCreateNewRequest(createDocumentId()));
         doc = await requestFluidObject<FlowDocument>(container, "default");
     });
 

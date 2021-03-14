@@ -9,15 +9,13 @@ import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@fluid
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    ITestFluidObject,
-    ChannelFactoryRegistry,
-} from "@fluidframework/test-utils";
-import {
-    describeWithCompat,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
-} from "@fluidframework/test-version-utils";
+    ITestFluidObject,
+    ChannelFactoryRegistry,
+} from "@fluidframework/test-utils";
+import { describeWithAllCompat } from "@fluidframework/test-version-utils";
 
 const directoryId = "directoryKey";
 const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
@@ -26,9 +24,9 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeWithCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) => {
+describeWithAllCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
-    beforeEach(()=>{
+    beforeEach(() => {
         args = argsFactory();
     });
     afterEach(() => {

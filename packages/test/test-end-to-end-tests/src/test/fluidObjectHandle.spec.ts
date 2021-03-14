@@ -9,15 +9,15 @@ import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     TestFluidObject,
+    ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import {
-    describeWithCompat,
-    ITestObjectProvider,
+    describeWithAllCompat,
     ITestDataObject,
     TestDataObjectType,
 } from "@fluidframework/test-version-utils";
 
-describeWithCompat("FluidObjectHandle", (argsFactory: () => ITestObjectProvider) => {
+describeWithAllCompat("FluidObjectHandle", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();

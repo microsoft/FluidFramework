@@ -4,47 +4,71 @@
  */
 
 import nconf from "nconf";
-import { getTestObjectProvider } from "./compatUtils";
+import { getVersionedTestObjectProvider } from "./compatUtils";
 import { ensurePackageInstalled } from "./testApi";
+
+/**
+ * Different kind of compat version config
+ */
+enum CompatKind {
+    None = "None",
+    Loader = "Loader",
+    ContainerRuntime = "ContainerRuntime",
+    DataRuntime = "DataRuntime",
+    LoaderAndContainerRuntime = "LoaderAndContainerRuntime",
+}
 
 /*
  * Generate configuration combinations for a particular compat version
  */
-const genConfig = (compatVersion: number) => [
-    {
-        name: `compat N${compatVersion} - old loader + new runtime`,
-        compatVersion,
-        loader: compatVersion,
-    },
-    {
-        name: `compat N${compatVersion} - new loader + old runtime`,
-        compatVersion,
-        containerRuntime: compatVersion,
-        dataRuntime: compatVersion,
-    },
-    {
-        name: `compat N${compatVersion} - new container runtime + old data runtime`,
-        compatVersion,
-        dataRuntime: compatVersion,
-    },
-    {
-        name: `compat N${compatVersion} - old container runtime + new data runtime`,
-        compatVersion,
-        loader: compatVersion,
-        containerRuntime: compatVersion,
-    },
-];
 
-/*
- * Currently we test N, N-1 and N-2
- */
-export const compatConfigs: {
+interface CompatConfig {
     name: string,
-    compatVersion: number,
+    kind: CompatKind,
+    compatVersion: number | string,
     loader?: string | number,
     containerRuntime?: string | number,
     dataRuntime?: string | number,
-}[] = [{ name: "Non-Compat", compatVersion: 0 }, ...genConfig(-1), ...genConfig(-2)];
+}
+
+function genConfig(compatVersion: number): CompatConfig[] {
+    if (compatVersion === 0) {
+        return [{
+            name: `Non-Compat`,
+            kind: CompatKind.None,
+            compatVersion: 0,
+        }];
+    }
+
+    return [
+        {
+            name: `compat N${compatVersion} - old loader + new runtime`,
+            kind: CompatKind.Loader,
+            compatVersion,
+            loader: compatVersion,
+        },
+        {
+            name: `compat N${compatVersion} - new loader + old runtime`,
+            kind: CompatKind.ContainerRuntime,
+            compatVersion,
+            containerRuntime: compatVersion,
+            dataRuntime: compatVersion,
+        },
+        {
+            name: `compat N${compatVersion} - new container runtime + old data runtime`,
+            kind: CompatKind.DataRuntime,
+            compatVersion,
+            dataRuntime: compatVersion,
+        },
+        {
+            name: `compat N${compatVersion} - old container runtime + new data runtime`,
+            kind: CompatKind.LoaderAndContainerRuntime,
+            compatVersion,
+            loader: compatVersion,
+            containerRuntime: compatVersion,
+        },
+    ];
+}
 
 /*
  * Parse the command line argument and environment variables.  Arguments take precedent.
@@ -54,76 +78,127 @@ export const compatConfigs: {
  * Env:
  *   fluid__test__compat - same as --compat
  */
-const transformArgvKey = (obj: { key: string, value: string }) => {
-    if (obj.key === "compat") {
-        obj.key = `fluid:test:${obj.key}`;
-    }
-    return obj;
-};
-nconf.argv({
-    compat: {
-        description: "Compat Variant defined in the array in compatConfigs",
+const options = {
+    compatKind: {
+        description: "Compat kind to run",
+        choices: [
+            CompatKind.None,
+            CompatKind.Loader,
+            CompatKind.ContainerRuntime,
+            CompatKind.DataRuntime,
+            CompatKind.LoaderAndContainerRuntime,
+        ],
         requiresArg: true,
+        array: true,
+    },
+    compatVersion: {
+        description: "Compat version to run",
+        requiresArg: true,
+        array: true,
+        type: "number",
     },
     reinstall: {
         default: false,
         description: "Force compat package to be installed",
         boolean: true,
     },
-    transform: transformArgvKey,
+};
+
+nconf.argv({
+    ...options,
+    transform: (obj: { key: string, value: string }) => {
+        if (options[obj.key] !== undefined) {
+            obj.key = `fluid:test:${obj.key}`;
+        }
+        return obj;
+    },
 }).env({
     separator: "__",
-    whitelist: ["fluid__test__compat"],
+    whitelist: ["fluid__test__compatKind", "fluid__test__compatVersion"],
+    parseValues: true,
 }).defaults(
     {
         fluid: {
             test: {
-                compat: -1,
+                compat: undefined,
+                compatVersion: [0, -1, -2],
             },
         },
     },
 );
 
-const compatIndex = nconf.get("fluid:test:compat");
-const compatConfig = compatConfigs[compatIndex];
-if (compatIndex !== -1 && compatConfig === undefined) {
-    throw new Error(`Invalid compat config index '${compatIndex}'`);
-}
+const compatKind = nconf.get("fluid:test:compatKind") as CompatKind[];
+const compatVersions = nconf.get("fluid:test:compatVersion") as number[];
 
 // set it in the env for parallel workers
-process.env.fluid__test__compat = compatIndex;
+process.env.fluid__test__compatKind = JSON.stringify(compatKind);
+process.env.fluid__test__compatVersion = JSON.stringify(compatVersions);
+
+let configList: CompatConfig[] = [];
+compatVersions.forEach((value) => {
+    configList.push(...genConfig(value));
+});
+
+if (compatKind !== undefined) {
+    configList = configList.filter((value) => compatKind.includes(value.kind));
+}
+
+console.log(compatKind);
+console.log(compatVersions);
+console.log(configList);
 
 /*
  * Mocha Utils for test to generate the compat variants.
  */
-export function describeWithCompat(
+function describeWithCompat(
     name: string,
-    tests: (provider: () => ReturnType<typeof getTestObjectProvider>) => void,
+    tests: (provider: () => ReturnType<typeof getVersionedTestObjectProvider>) => void,
+    compatFilter?: CompatKind[],
 ) {
-    describe(name, () => {
-        const configList = compatIndex === -1 ? compatConfigs : [compatConfig];
+    let configs = configList;
+    if (compatFilter !== undefined) {
+        configs = configs.filter((value) => compatFilter.includes(value.kind));
+    }
 
-        for (const config of configList) {
+    describe(name, () => {
+        for (const config of configs) {
             describe(config.name, () => {
                 tests(() => {
-                    return getTestObjectProvider(config?.loader, config?.containerRuntime, config?.dataRuntime);
+                    return getVersionedTestObjectProvider(
+                        config?.loader,
+                        config?.containerRuntime,
+                        config?.dataRuntime,
+                    );
                 });
             });
         }
     });
 }
 
+export function describeWithLoaderCompat(
+    name: string,
+    tests: (provider: () => ReturnType<typeof getVersionedTestObjectProvider>) => void,
+) {
+    describeWithCompat(name, tests, [CompatKind.None, CompatKind.Loader]);
+}
+
+export function describeWithAllCompat(
+    name: string,
+    tests: (provider: () => ReturnType<typeof getVersionedTestObjectProvider>) => void,
+) {
+    describeWithCompat(name, tests);
+}
+
 /*
  * Mocha start up to ensure legacy versions are installed
  */
 export async function mochaGlobalSetup() {
-    const configList = compatIndex === -1 ? compatConfigs : [compatConfig];
     const versions = new Set(configList.map((value) => value.compatVersion).filter((value) => value !== 0));
     if (versions.size === 0) { return; }
 
     // Make sure we wait for all before returning, even if one of them has error.
     const installP = Array.from(versions.values()).map(
-        async (value) => ensurePackageInstalled(value, nconf.get("reinstall")));
+        async (value) => ensurePackageInstalled(value, nconf.get("fluid:test:reinstall")));
 
     let error: Error | undefined;
     for (const p of installP) {

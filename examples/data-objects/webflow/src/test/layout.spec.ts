@@ -3,30 +3,30 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/unbound-method */
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
 require("jsdom-global")("", { url: "http://localhost" });
 window.performance.mark = window.performance.mark || (() => { });
 window.performance.measure = window.performance.measure || (() => { });
 
 import { strict as assert } from "assert";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createAndAttachContainer, createLocalLoader } from "@fluidframework/test-utils";
-import { htmlFormatter } from "../src";
-import { FlowDocument } from "../src/document";
-import { Layout } from "../src/view/layout";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { describeWithLoaderCompat } from "@fluidframework/test-version-utils";
+import { htmlFormatter } from "..";
+import { FlowDocument } from "../document";
+import { Layout } from "../view/layout";
 
 interface ISnapshotNode {
     node: Node;
     children: ISnapshotNode[];
 }
 
-function snapshot(root: Node): ISnapshotNode {
-    return {
-        node: root,
-        children: [...root.childNodes].map(snapshot),
-    };
-}
+const snapshot = (root: Node): ISnapshotNode => ({
+    node: root,
+    children: [...root.childNodes].map(snapshot),
+});
 
 function expectTree(actual: Node, expected: ISnapshotNode) {
     assert.strictEqual(actual, expected.node);
@@ -39,22 +39,15 @@ function expectTree(actual: Node, expected: ISnapshotNode) {
     assert.strictEqual(i, children.length);
 }
 
-describe("Layout", () => {
-    const documentUrl = "fluid-test://localhost/layoutTest";
-    const codeDetails = {
-        package: "layoutTestPkg",
-        config: {},
-    };
-
+describeWithLoaderCompat("Layout", (getTestObjectProvider: () => ITestObjectProvider) => {
     let doc: FlowDocument;
     let root: HTMLElement;
     let layout: Layout;
 
+    let provider: ITestObjectProvider;
     before(async () => {
-        const deltaConnectionServer = LocalDeltaConnectionServer.create();
-        const urlResolver = new LocalResolver();
-        const loader = createLocalLoader([[codeDetails, FlowDocument.getFactory()]], deltaConnectionServer, urlResolver);
-        const container = await createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentUrl));
+        provider = getTestObjectProvider();
+        const container = await provider.createContainer(FlowDocument.getFactory());
         doc = await requestFluidObject<FlowDocument>(container, "default");
     });
 
@@ -69,9 +62,7 @@ describe("Layout", () => {
         root = undefined;
     });
 
-    function getHTML() {
-        return root.innerHTML;
-    }
+    const getHTML = () => root.innerHTML;
 
     describe("round-trip", () => {
         async function check() {
@@ -93,7 +84,7 @@ describe("Layout", () => {
         });
 
         afterEach(async () => {
-            check();
+            return check();
         });
 
         it("Single text segment", async () => {
