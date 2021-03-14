@@ -4,13 +4,20 @@
  */
 
 import assert from "assert";
-import { IContainer, IHostLoader, ILoader } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
-import { ChannelFactoryRegistry, createAndAttachContainer, ITestFluidObject } from "@fluidframework/test-utils";
-import { DataObjectFactoryType, generateNonCompatTest, ITestContainerConfig, ITestObjectProvider } from "./compatUtils";
+import {
+    ChannelFactoryRegistry,
+    createAndAttachContainer,
+    ITestFluidObject,
+    ITestContainerConfig,
+    ITestObjectProvider,
+    DataObjectFactoryType
+} from "@fluidframework/test-utils";
+import { describeWithAllCompat } from "@fluidframework/test-version-utils";
 
 const mapId = "map";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -65,10 +72,10 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
     return pendingState;
 };
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+describeWithAllCompat("stashed ops", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     let url;
-    let loader: ILoader;
+    let loader: IHostLoader;
     let container1: IContainer;
     let map1: SharedMap;
 
@@ -77,7 +84,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         loader = args.makeTestLoader(testContainerConfig);
         container1 = await createAndAttachContainer(
             args.defaultCodeDetails,
-            loader as IHostLoader,
+            loader,
             args.driver.createCreateNewRequest(args.documentId));
         args.opProcessingController.addDeltaManagers((container1 as any).deltaManager);
         url = await container1.getAbsoluteUrl("");
@@ -322,7 +329,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         });
 
         const container2 = await loader.resolve({ url }, pendingOps);
-        await new Promise<void>((res)  => {
+        await new Promise<void>((res) => {
             if ((container2 as any).connected) {
                 res();
             } else {
@@ -330,8 +337,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             }
         });
     });
-};
-
-describe("stashed ops", () => {
-    generateNonCompatTest(tests);
 });
