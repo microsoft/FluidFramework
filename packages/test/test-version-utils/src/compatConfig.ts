@@ -143,10 +143,6 @@ if (compatKind !== undefined) {
     configList = configList.filter((value) => compatKind.includes(value.kind));
 }
 
-console.log(compatKind);
-console.log(compatVersions);
-console.log(configList);
-
 /*
  * Mocha Utils for test to generate the compat variants.
  */

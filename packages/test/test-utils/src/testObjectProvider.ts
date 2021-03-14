@@ -66,7 +66,7 @@ export const createDocumentId = (): string => uuid();
 /**
  * Shared base class for test object provider.  Contain code for loader and container creation and loading
  */
-export class TestObjectProvider<TestContainerConfigType> {
+export class TestObjectProvider {
     private readonly _loaderContainerTracker = new LoaderContainerTracker();
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _urlResolver: IUrlResolver | undefined;
@@ -81,7 +81,7 @@ export class TestObjectProvider<TestContainerConfigType> {
     constructor(
         public readonly LoaderConstructor: typeof Loader,
         public readonly driver: ITestDriver,
-        private readonly createFluidEntryPoint: (testContainerConfig?: TestContainerConfigType) => fluidEntryPoint,
+        private readonly createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint,
     ) {
 
     }
@@ -164,7 +164,7 @@ export class TestObjectProvider<TestContainerConfigType> {
      * The version of the loader/containerRuntime/dataRuntime may vary based on compat config of the current run
      * @param testContainerConfig - optional configuring the test Container
      */
-    public makeTestLoader(testContainerConfig?: TestContainerConfigType) {
+    public makeTestLoader(testContainerConfig?: ITestContainerConfig) {
         return this.createLoader([[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]]);
     }
 
@@ -173,7 +173,7 @@ export class TestObjectProvider<TestContainerConfigType> {
      * Container loaded is automatically added to the OpProcessingController to manage op flow
      * @param testContainerConfig - optional configuring the test Container
      */
-    public async makeTestContainer(testContainerConfig?: TestContainerConfigType): Promise<IContainer> {
+    public async makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer> {
         const loader = this.makeTestLoader(testContainerConfig);
         const container =
             await createAndAttachContainer(
@@ -189,7 +189,7 @@ export class TestObjectProvider<TestContainerConfigType> {
      * Container loaded is automatically added to the OpProcessingController to manage op flow
      * @param testContainerConfig - optional configuring the test Container
      */
-    public async loadTestContainer(testContainerConfig?: TestContainerConfigType): Promise<Container> {
+    public async loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<Container> {
         const loader = this.makeTestLoader(testContainerConfig);
         const container = await loader.resolve({ url: await this.driver.createContainerUrl(this.documentId) });
         await waitContainerToCatchUp(container);
