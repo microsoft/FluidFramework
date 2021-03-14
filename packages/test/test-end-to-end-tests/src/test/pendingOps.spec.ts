@@ -15,7 +15,7 @@ import {
     ITestFluidObject,
     ITestContainerConfig,
     ITestObjectProvider,
-    DataObjectFactoryType
+    DataObjectFactoryType,
 } from "@fluidframework/test-utils";
 import { describeWithAllCompat } from "@fluidframework/test-version-utils";
 
