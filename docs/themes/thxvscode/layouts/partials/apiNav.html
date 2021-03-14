@@ -11,15 +11,16 @@
 {{ end }}
 
 {{ $section := .CurrentSection }}
+{{ $api_section := and (eq .Kind "section") (eq .Type "apis") }}
 {{ $packagePages := where $section.RegularPages "Params.kind" "Package"}}
 
 <nav id="docs-navbar" aria-label="Topics" class="docs-nav visible-md visible-lg">
     <ul class="nav" id="main-nav">
 
-        <!-- <li {{ if eq .Kind "section" }} class="active" {{ end }}>
-            <a class="docs-home" href="/reference/apis/" {{ if eq .Kind "section" }}
-                aria-label="Current Page: API Home" {{ end }}>API Home1</a>
-        </li> -->
+        <li {{ if not $api_section }} class="active" {{ end }}>
+            <a class="docs-home" href="/reference/" {{ if not $api_section }}
+                aria-label="Current Page: Documentation for FluidFramework" {{ end }}>Overview</a>
+        </li>
 
         {{- range .Site.Menus.reference }}
         {{ $menuArea := .Identifier}}
@@ -52,9 +53,9 @@
 
         <hr/>
 
-        <li {{ if eq .Kind "section" }} class="active" {{ end }}>
-            <a class="docs-home" href="/reference/apis/" {{ if eq .Kind "section" }} aria-label="Current Page: Fluid API Overview"
-                {{ end }}>API</a>
+        <li {{ if $api_section }} class="active" {{ end }}>
+            <a class="docs-home" href="/reference/apis/" {{ if $api_section }}
+                aria-label="Current Page: API Overview" {{ end }}>API</a>
         </li>
 
         {{ range $grouping, $names :=  $.Site.Data.packages }}

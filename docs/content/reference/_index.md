@@ -1,6 +1,6 @@
 ---
-title: Documentation for Fluid Framework
-meta: "What is Fluid Framework"
+title: Fluid Framework Documentation
+meta: "meta"
 ---
 
 ## What is Fluid Framework?
