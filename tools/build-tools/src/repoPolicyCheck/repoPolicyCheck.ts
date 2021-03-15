@@ -121,6 +121,13 @@ lineReader.on('line', line => {
     }
 });
 
+handlers.forEach((h)=>{
+    const result = h.final?.(pathToGitRoot, program.resolve);
+    if(result?.error){
+
+    }
+});
+
 process.on("beforeExit", () => {
     console.log(`${processed} processed, ${count - processed} excluded, ${count} total`);
 });

@@ -43,7 +43,8 @@
     "rimraf": "^2.6.2",
     "semver": "^7.1.2",
     "shelljs": "^0.8.4",
-    "sort-package-json": "1.40.0"
+    "sort-package-json": "1.40.0",
+    "ts-morph": "^7.1.2"
   },
   "devDependencies": {
     "@types/async": "^2.4.1",
