@@ -5,7 +5,7 @@
 
 'use strict';
 
-const testDriver = process.env.FLUID_TEST_DRIVER ?? "local";
+const testDriver = process.env.FLUID_TEST_DRIVER ? process.env.FLUID_TEST_DRIVE : "local";
 const packageDir = `${__dirname}/../..`;
 const moduleDir = `${packageDir}/node_modules`;
 
@@ -27,11 +27,11 @@ const config = {
     "unhandled-rejections": "strict"
 };
 
-if(process.env.FLUID_TEST_TIMEOUT !== undefined){
+if (process.env.FLUID_TEST_TIMEOUT !== undefined) {
     config["timeout"] = process.env.FLUID_TEST_TIMEOUT;
 }
 
-if(process.env.FLUID_TEST_REPORT === "1"){
+if (process.env.FLUID_TEST_REPORT === "1") {
     config["reporter"] = `xunit`;
     config["reporter-options"] = [
         // give the report file a unique name based on driver config
