@@ -72,7 +72,7 @@ describe("GC in summary", () => {
     }
 
     // Summarizes the container and validates that the data store's reference state is correct in the summary.
-    async function validateDataStoreReferenceState(dataStoreId: string, unreferenced?: true) {
+    async function validateDataStoreReferenceState(dataStoreId: string, referenced: boolean) {
         await opProcessingController.process();
         const { summary } = await containerRuntime.summarize({
             runGC: true,
@@ -81,13 +81,15 @@ describe("GC in summary", () => {
             summaryLogger: new TelemetryNullLogger(),
         });
 
+        // For unreferenced nodes, the unreferenced flag in its summary tree is undefined.
+        const expectedUnreferenced = referenced ? undefined : true;
         let found = false;
         for (const [ id, summaryObject ] of Object.entries(summary.tree)) {
             if (id === dataStoreId) {
                 assert(summaryObject.type === SummaryType.Tree, `Data store ${dataStoreId}'s entry is not a tree`);
                 assert(
-                    summaryObject.unreferenced === unreferenced,
-                    `Data store ${dataStoreId} should be ${ unreferenced ? "unreferenced" : "referenced" }`,
+                    summaryObject.unreferenced === expectedUnreferenced,
+                    `Data store ${dataStoreId} should be ${ referenced ? "referenced" : "unreferenced" }`,
                 );
                 found = true;
                 break;
@@ -113,12 +115,12 @@ describe("GC in summary", () => {
     });
 
     it("marks default data store as referenced", async () => {
-        await validateDataStoreReferenceState(defaultDataStore.id);
+        await validateDataStoreReferenceState(defaultDataStore.id, true /* referenced */);
     });
 
     it("marks root data stores as referenced", async () => {
         const rootDataStore = await dataObjectFactory.createRootInstance("rootDataStore", containerRuntime);
-        await validateDataStoreReferenceState(rootDataStore.id);
+        await validateDataStoreReferenceState(rootDataStore.id, true /* referenced */);
     });
 
     it("marks non-root data stores as referenced / unreferenced correctly", async () => {
@@ -126,19 +128,19 @@ describe("GC in summary", () => {
         // Add data store's handle in root component and verify its marked as referenced.
         {
             defaultDataStore._root.set("nonRootDS", dataStore.handle);
-            await validateDataStoreReferenceState(dataStore.id);
+            await validateDataStoreReferenceState(dataStore.id, true /* referenced */);
         }
 
         // Remove its handle and verify its marked as unreferenced.
         {
             defaultDataStore._root.delete("nonRootDS");
-            await validateDataStoreReferenceState(dataStore.id, true /* unreferenced */);
+            await validateDataStoreReferenceState(dataStore.id, false /* referenced */);
         }
 
         // Add data store's handle back in root component and verify its marked as referenced.
         {
             defaultDataStore._root.set("nonRootDS", dataStore.handle);
-            await validateDataStoreReferenceState(dataStore.id);
+            await validateDataStoreReferenceState(dataStore.id, true /* referenced */);
         }
     });
 
@@ -147,13 +149,13 @@ describe("GC in summary", () => {
         // Add data store's handle in root component and verify its marked as referenced.
         {
             defaultDataStore._root.set("nonRootDS1", dataStore1.handle);
-            await validateDataStoreReferenceState(dataStore1.id);
+            await validateDataStoreReferenceState(dataStore1.id, true /* referenced */);
         }
 
         // Remove its handle and verify its marked as unreferenced.
         {
             defaultDataStore._root.delete("nonRootDS1");
-            await validateDataStoreReferenceState(dataStore1.id, true /* unreferenced */);
+            await validateDataStoreReferenceState(dataStore1.id, false /* referenced */);
         }
 
         // Create another non-root data store.
@@ -161,14 +163,14 @@ describe("GC in summary", () => {
         // Add data store's handle in root component and verify its marked as referenced.
         {
             defaultDataStore._root.set("nonRootDS2", dataStore2.handle);
-            await validateDataStoreReferenceState(dataStore2.id);
+            await validateDataStoreReferenceState(dataStore2.id, true /* referenced */);
         }
 
         // Remove its handle from root component and add to dataStore1 (which is unreferenced).
         {
             defaultDataStore._root.delete("nonRootDS2");
             dataStore1._root.set("nonRootDS2", dataStore2.handle);
-            await validateDataStoreReferenceState(dataStore2.id, true /* unreferenced */);
+            await validateDataStoreReferenceState(dataStore2.id, false /* referenced */);
         }
     });
 });
