@@ -16,7 +16,6 @@ import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedDirectory } from "@fluidframework/map";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import {
     createAndAttachContainer,
     createDocumentId,
@@ -26,6 +25,7 @@ import {
     LoaderContainerTracker,
 } from "@fluidframework/test-utils";
 import { Loader } from "@fluidframework/container-loader";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
     getLoaderApi,
     getContainerRuntimeApi,
@@ -103,11 +103,14 @@ describe("context reload (hot-swap)", function() {
         packageEntries,
         documentId: string,
         LoaderConstructor = Loader): Promise<IContainer> {
+        const driver = getFluidTestDriver();
+
         const loader = new LoaderConstructor({
             codeLoader: new LocalCodeLoader(packageEntries),
             options: { hotSwapContext: true },
             urlResolver: driver.createUrlResolver(),
             documentServiceFactory: driver.createDocumentServiceFactory(),
+            logger: ChildLogger.create(getTestLogger(), undefined, {testDriverType: driver.type}),
         });
         loaderContainerTracker.add(loader);
         return createAndAttachContainer(
@@ -124,11 +127,6 @@ describe("context reload (hot-swap)", function() {
             [[type, Promise.resolve(factory)]],
         );
     };
-    let driver: ITestDriver;
-    before(() => {
-        driver = getFluidTestDriver() as unknown as ITestDriver;
-    });
-
     const tests = function() {
         beforeEach(async function() {
             // make sure container errors fail the test
@@ -228,11 +226,13 @@ describe("context reload (hot-swap)", function() {
 
     describe("two containers", () => {
         async function loadContainer(packageEntries, documentId): Promise<IContainer> {
+            const driver = getFluidTestDriver();
             const loader = new Loader({
                 codeLoader: new LocalCodeLoader(packageEntries),
                 options: { hotSwapContext: true },
                 urlResolver: driver.createUrlResolver(),
                 documentServiceFactory: driver.createDocumentServiceFactory(),
+                logger: ChildLogger.create(getTestLogger(), undefined, {testDriverType: driver.type}),
             });
             loaderContainerTracker.add(loader);
             return loader.resolve({ url: await driver.createContainerUrl(documentId) });

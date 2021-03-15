@@ -12,6 +12,7 @@ import {
 import { Loader } from "@fluidframework/container-loader";
 import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 
 /**
@@ -29,10 +30,16 @@ export function createLoader(
 ): IHostLoader {
     const codeLoader: ICodeLoader = new LocalCodeLoader(packageEntries);
 
+    // TODO: some tests is table are using this, and not properly using mocha hooks,
+    // so the tests break if we don't null check here
+    const driver = typeof getFluidTestDriver === "function" ? getFluidTestDriver() : undefined;
+    const logger = typeof getTestLogger === "function" ? getTestLogger() : undefined;
+
     return new Loader({
         urlResolver,
         documentServiceFactory,
         codeLoader,
+        logger: ChildLogger.create(logger, undefined, {driverType: driver?.type}),
         options,
     });
 }
