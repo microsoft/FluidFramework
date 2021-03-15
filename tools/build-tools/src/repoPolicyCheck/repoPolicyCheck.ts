@@ -153,9 +153,9 @@ lineReader.once("close",()=>{
 
 
 process.on("beforeExit", () => {
-    console.log(`${processed} processed, ${count - processed} excluded, ${count} total`);
+    writeOutLine(`Statitisics: ${processed} processed, ${count - processed} excluded, ${count} total`);
     handlerActionPerf.forEach((handlerPerf, action)=>{
-        writeOutLine(`${action} performance:`);
+        writeOutLine(`Performance for "${action}":`);
         handlerPerf.forEach((dur, handler)=>{
             writeOutLine(`\t${handler}: ${dur/1000}:`);
         });

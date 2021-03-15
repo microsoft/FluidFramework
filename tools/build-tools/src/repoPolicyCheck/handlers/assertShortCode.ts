@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { Node, NumericLiteral, Project, SourceFile, SyntaxKind, } from "ts-morph";
+import {
+    Node,
+    NumericLiteral,
+    Project,
+    SourceFile,
+    StringLiteral,
+    SyntaxKind,
+    TemplateLiteral,
+} from "ts-morph";
 import {Handler} from "../common";
 
 const shortCodes = new Map<number, Node>();
@@ -14,22 +22,40 @@ function getCallsiteString(msg: Node){
     return `${msg.getSourceFile().getFilePath()}@${msg.getStartLineNumber()}`
 }
 
-function *getAssertMessageParams(sourceFile: SourceFile){
+function getAssertMessageParams(sourceFile: SourceFile): (StringLiteral | NumericLiteral | TemplateLiteral)[]{
     const calls = sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression);
+    const messageArgs:(StringLiteral | NumericLiteral | TemplateLiteral)[] = []
     for(const call of calls){
         if(call.getExpression().getText() === "assert"){
             const args = call.getArguments();
             if(args.length >=1 && args[1] !== undefined){
-                yield args[1];
+                const kind = args[1].getKind();
+                switch(kind){
+                    case SyntaxKind.StringLiteral:
+                    case SyntaxKind.NumericLiteral:
+                    case SyntaxKind.TemplateExpression:
+                    case SyntaxKind.NoSubstitutionTemplateLiteral:
+                        messageArgs.push(args[1] as any)
+                        break;
+                    case SyntaxKind.BinaryExpression:
+                    case SyntaxKind.CallExpression:
+                        break;
+                    default:
+                        throw new Error(`Unknown argument kind: ${kind}\n${getCallsiteString(args[1])}`);
+                }
             }
         }
     }
+    return messageArgs;
 }
 
 export const handler: Handler = {
     name: "assert-short-codes",
-    match: /^(packages)\/.*(?!test)\/tsconfig\.json/i,
+    match: /^(packages)\/.*\/tsconfig\.json/i,
     handler: (tsconfigPath) => {
+        if(tsconfigPath.includes("test")){
+            return;
+        }
         const project = new Project({
             skipFileDependencyResolution: true,
             tsConfigFilePath: tsconfigPath,
@@ -61,16 +87,19 @@ export const handler: Handler = {
         for(const s of newAssetFiles){
             const res = s.refreshFromFileSystemSync();
             for(const msg of getAssertMessageParams(s)){
-                if(resolve){
-                    //for now we don't care about filling gaps, but possible
-                    const shortCode = ++maxShortCode;
-                    shortCodes.set(shortCode, msg);
-                    const text = msg.getText();
-                    const shortCodeStr = `0x${shortCode.toString(16).padStart(3,"0")}`;
-                    msg.replaceWithText(`${shortCodeStr} /* ${text} */`);
-                }else{
-                    errors.push(`no assert shortcode: ${getCallsiteString(msg)}`);
-                    break;
+                if(msg.getKind() !== SyntaxKind.NumericLiteral){
+                    if(resolve){
+                        //for now we don't care about filling gaps, but possible
+                        const shortCode = ++maxShortCode;
+                        shortCodes.set(shortCode, msg);
+                        const text = msg.getText();
+                        const shortCodeStr = `0x${shortCode.toString(16).padStart(3,"0")}`;
+                        msg.replaceWithText(`${shortCodeStr} /* ${text} */`);
+                    }else{
+                        //TODO: enable errors on missing shortcodes
+                        // errors.push(`no assert shortcode: ${getCallsiteString(msg)}`);
+                        break;
+                    }
                 }
             }
             if(resolve){
