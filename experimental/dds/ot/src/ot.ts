@@ -23,12 +23,9 @@ import { SharedObject } from "@fluidframework/shared-object-base";
 import { Doc, type, JSONOp, replaceOp, insertOp, moveOp, removeOp } from "ot-json1";
 import { OTFactory } from "./factory";
 import { debug } from "./debug";
-import { ISharedOT, ISharedOTEvents } from "./interfaces";
+import { ISharedOT } from "./interfaces";
 
-export class SharedOT<T extends Serializable = any>
-    extends SharedObject<ISharedOTEvents<T>>
-    implements ISharedOT<T>
-{
+export class SharedOT extends SharedObject implements ISharedOT {
     private readonly pendingOps: JSONOp[] = [];
 
     /**

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /* eslint-disable @typescript-eslint/ban-types */
 import * as json1 from "ot-json1";
 
@@ -79,6 +84,13 @@ const createObjectProxy = (
     },
 });
 
+// If given key is a string containing an integer then convert it to an integer,
+// otherwise return the key unmodified.
+
+// Used when proxying an array to undo the Proxy's coercion of numbers to strings.
+// This is required because, while the underlying array will accept string as indices,
+// the 'ot-json1' uses indexer semantics for numeric paths and property semantics for
+// string paths.
 function indexify(key: string | symbol): string | symbol | number {
     if (typeof key === "string") {
         const asNumber = +key;
