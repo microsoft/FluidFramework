@@ -92,11 +92,11 @@ export abstract class RdkafkaBase extends EventEmitter {
 		});
 	}
 
-    protected error(error: any, restartOnError: boolean = false) {
-        const errorData: IContextErrorData = {
-            restart: restartOnError,
-        };
+	protected error(error: any, restartOnError: boolean = false) {
+		const errorData: IContextErrorData = {
+			restart: restartOnError,
+		};
 
-        this.emit("error", error, errorData);
-    }
+		this.emit("error", error, errorData);
+	}
 }
