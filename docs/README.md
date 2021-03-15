@@ -209,6 +209,7 @@ The site theme/template lives in `themes/thxvscode`.
 | `build:diagrams` | Generate the diagram images using ditaa. |
 | `build:md-magic` | Updates generated content in Markdown files. |
 | `clean` | Remove all generated files. |
+| `copyfiles` | `copyfiles _replacements/ content/` |
 | `ditaa` | Run the local copy of ditaa. |
 | `ditaa:default` | --- |
 | `ditaa:win32` | --- |

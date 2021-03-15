@@ -13,7 +13,8 @@
 {{ $section := .CurrentSection }}
 <!-- {{ printf "%#v" $section.Name }} -->
 <!-- {{ $api_section := eq .Kind "section" }} -->
-{{ $api_section := and (eq .Kind "section") (eq .Type "apis") }}
+<!-- {{ $api_section := and (eq .Kind "section") (eq .Type "apis") }} -->
+{{ $api_section := eq (path.Base .) "apis" }}
 <!-- {{ $api_section := or (and (eq .Kind "section") (eq .Section "apis")) (eq .Type "apis") }} -->
 {{ $packagePages := where .Site.RegularPages "Params.kind" "Package"}}
 
@@ -98,7 +99,7 @@
                             {{ $isCurrentPage := eq $package $targetPage }}
                             {{ if $isCurrentPage}}
                                 {{ $isCurrentPage = eq $targetPage.RelPermalink $current.RelPermalink}}
-                                PART 2
+                                <!-- PART 2 -->
                             {{ end }}
                             <li {{ if $isCurrentPage }}class="active" {{ end }}>
                                 <a href="{{$targetPage.RelPermalink}}"
