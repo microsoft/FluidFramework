@@ -20,14 +20,9 @@ import { SharedObject } from "@fluidframework/shared-object-base";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 describe(`Attach/Bind Api Tests For Attached Container`, () => {
-    let driver: ITestDriver;
-    before(()=>{
-        driver = getFluidTestDriver() as unknown as ITestDriver;
-    });
-
     const codeDetails: IFluidCodeDetails = {
         package: "detachedContainerTestPackage1",
         config: {},
@@ -69,12 +64,14 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             [mapId1, SharedMap.getFactory()],
             [mapId2, SharedMap.getFactory()],
         ]);
+        const driver = getFluidTestDriver();
         const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const documentServiceFactory = driver.createDocumentServiceFactory();
         const testLoader = new Loader({
             urlResolver,
             documentServiceFactory,
             codeLoader,
+            logger: ChildLogger.create(getTestLogger(), undefined, {testDriverType: driver.type}),
         });
         loaderContainerTracker.add(testLoader);
         return testLoader;
@@ -82,6 +79,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
 
     beforeEach(async () => {
         const documentId = createDocumentId();
+        const driver = getFluidTestDriver();
         const urlResolver = driver.createUrlResolver();
         request = driver.createCreateNewRequest(documentId);
         loader = createTestLoader(urlResolver);
