@@ -136,7 +136,7 @@ describe("Logger", () => {
             });
             it("addTelemetryProperties - adds to object, returned from getTelemetryProperties, overwrites", () => {
                 const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
-                loggingError.addTelemetryProperties({p1: "one", p4: 4, p5: { value: 5, tag: 0 } });
+                loggingError.addTelemetryProperties({p1: "one", p4: 4, p5: { value: 5, tag: TelemetryDataTag.None } });
                 const props = loggingError.getTelemetryProperties();
                 assert.strictEqual(props.p1, "one");
                 assert.strictEqual(props.p4, 4);
@@ -201,7 +201,7 @@ describe("Logger", () => {
             it("getTelemetryProperties - tagged [unrecognized tag] are removed", () => {
                 const loggingError = new LoggingError(
                     "myMessage",
-                    { somePii: { value: "very personal", tag: 9999 }});
+                    { somePii: { value: "very personal", tag: "FutureTag" as TelemetryDataTag }});
                 const props = loggingError.getTelemetryProperties();
                 assert.strictEqual(props.somePii, undefined, "somePii should not exist on props");
                 assert(typeof ((loggingError as any).somePii) === "object", "somePii should remain on loggingError");
