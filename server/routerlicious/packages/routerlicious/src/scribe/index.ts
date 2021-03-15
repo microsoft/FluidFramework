@@ -44,10 +44,6 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
         client.collection<ISequencedOperationMessage>(messagesCollectionName),
     ]);
 
-    if (createSortIndexes) {
-        await scribeDeltas.createIndex({ "operation.sequenceNumber": 1 }, false);
-    }
-
     await scribeDeltas.createIndex(
         {
             "documentId": 1,
@@ -55,6 +51,10 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
             "tenantId": 1,
         },
         true);
+
+    if (createSortIndexes) {
+        await scribeDeltas.createIndex({ "operation.sequenceNumber": 1 }, false);
+    }
 
     if (mongoExpireAfterSeconds > 0) {
         await scribeDeltas.createTTLIndex(

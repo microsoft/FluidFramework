@@ -18,17 +18,6 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
 
     const db = await mongoManager.getDatabase();
     const opCollection = db.collection(deltasCollectionName);
-    if (createSortIndexes) {
-        await opCollection.createIndex({
-            "operation.sequenceNumber": 1,
-        }, false);
-
-        await opCollection.createIndex({
-            "operation.term": 1,
-            "operation.sequenceNumber": 1,
-        }, false);
-    }
-
     await opCollection.createIndex(
         {
             "documentId": 1,
@@ -37,6 +26,17 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
             "tenantId": 1,
         },
         true);
+
+    if (createSortIndexes) {
+        await opCollection.createIndex({
+            "operation.term": 1,
+            "operation.sequenceNumber": 1,
+        }, false);
+
+        await opCollection.createIndex({
+            "operation.sequenceNumber": 1,
+        }, false);
+    }
 
     if (mongoExpireAfterSeconds > 0) {
         await opCollection.createTTLIndex(
