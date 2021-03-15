@@ -176,7 +176,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
 
     public setCell(row: number, col: number, value: T) {
         assert(0 <= row && row < this.rowCount
-            && 0 <= col && col < this.colCount);
+            && 0 <= col && col < this.colCount,
+            "Trying to set out-of-bounds cell!");
 
         this.setCellCore(row, col, value);
 
@@ -192,7 +193,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
         assert((0 <= rowStart && rowStart < this.rowCount)
             && (0 <= colStart && colStart < this.colCount)
             && (1 <= colCount && colCount <= (this.colCount - colStart))
-            && (rowCount <= (this.rowCount - rowStart)));
+            && (rowCount <= (this.rowCount - rowStart)),
+            "Trying to set multiple out-of-bounds cells!");
 
         const endCol = colStart + colCount;
         let r = rowStart;
@@ -450,13 +452,14 @@ export class SharedMatrix<T extends Serializable = Serializable>
     protected submitLocalMessage(message: any, localOpMetadata?: any) {
         // TODO: Recommend moving this assertion into SharedObject
         //       (See https://github.com/microsoft/FluidFramework/issues/2559)
-        assert(this.isAttached() === true);
+        assert(this.isAttached() === true, "Trying to submit message to runtime while detached!");
 
         super.submitLocalMessage(makeHandlesSerializable(message, this.serializer, this.handle), localOpMetadata);
 
         // Ensure that row/col 'localSeq' are synchronized (see 'nextLocalSeq()').
         assert(
             this.rows.getCollabWindow().localSeq === this.cols.getCollabWindow().localSeq,
+            "Row and col collab window 'localSeq' desynchronized!",
         );
     }
 
@@ -470,7 +473,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
     }
 
     protected onConnect() {
-        assert(this.rows.getCollabWindow().collaborating === this.cols.getCollabWindow().collaborating);
+        assert(this.rows.getCollabWindow().collaborating === this.cols.getCollabWindow().collaborating,
+            "Row and col collab window 'collaborating' status desynchronized!");
 
         // Update merge tree collaboration information with new client ID and then resend pending ops
         this.rows.startOrUpdateCollaboration(this.runtime.clientId as string);
@@ -557,7 +561,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                 this.rows.applyMsg(msg);
                 break;
             default: {
-                assert(contents.type === MatrixOp.set);
+                assert(contents.type === MatrixOp.set, "SharedMatrix message contents have unexpected type!");
 
                 const { referenceSequenceNumber: refSeq, clientId } = rawMessage;
                 const { row, col } = contents;
@@ -583,7 +587,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
                             const rowHandle = this.rows.getAllocatedHandle(adjustedRow);
                             const colHandle = this.cols.getAllocatedHandle(adjustedCol);
 
-                            assert(isHandleValid(rowHandle) && isHandleValid(colHandle));
+                            assert(isHandleValid(rowHandle) && isHandleValid(colHandle),
+                                "SharedMatrix row and/or col handles are invalid!");
 
                             // If there is a pending (unACKed) local write to the same cell, skip the current op
                             // since it "happened before" the pending write.
@@ -677,5 +682,9 @@ export class SharedMatrix<T extends Serializable = Serializable>
         }
 
         return `${s}\n`;
+    }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
     }
 }

@@ -26,7 +26,7 @@ export class DocumentLambda implements IPartitionLambda {
     constructor(
         private readonly factory: IPartitionLambdaFactory,
         private readonly config: Provider,
-        context: IContext,
+        private readonly context: IContext,
         private readonly documentLambdaServerConfiguration: IDocumentLambdaServerConfiguration) {
         this.contextManager = new DocumentContextManager(context);
         this.contextManager.on("error", (error, errorData: IContextErrorData) => {
@@ -38,7 +38,12 @@ export class DocumentLambda implements IPartitionLambda {
     }
 
     public handler(message: IQueuedMessage): void {
-        this.contextManager.setHead(message);
+        if (!this.contextManager.setHead(message)) {
+            this.context.log?.warn("Unexpected head offset. " +
+                `head offset: ${this.contextManager.getHeadOffset()}, message offset: ${message.offset}`);
+            return;
+        }
+
         this.handlerCore(message);
         this.contextManager.setTail(message);
     }

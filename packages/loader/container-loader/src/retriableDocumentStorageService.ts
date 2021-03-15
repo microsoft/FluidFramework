@@ -99,7 +99,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
     private async readWithRetry<T>(api: () => Promise<T>, fetchCallName: string): Promise<T> {
         let result: T | undefined;
         let success = false;
-        let retryAfter = 0;
+        let retryAfter = 1; // has to be positive!
         let numRetries = 0;
         const startTime = performance.now();
         let lastError: any;

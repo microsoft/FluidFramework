@@ -9,7 +9,7 @@ export class LoaderContainerTracker {
     private readonly containers = new Set<IContainer>();
 
     public add<LoaderType extends IHostLoader>(loader: LoaderType) {
-        const patch = <T, C extends IContainer>(fn: (...args: T[]) => Promise<C>) => {
+        const patch = <T, C extends IContainer>(fn: (...args) => Promise<C>) => {
             const boundFn = fn.bind(loader);
             return async (...args: T[]) => {
                 const container = await boundFn(...args);

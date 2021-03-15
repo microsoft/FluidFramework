@@ -520,3 +520,41 @@ export class LoggingError extends Error {
         return props;
     }
 }
+
+/**
+ * Logger that is useful for UT
+ * It can be used in places where logger instance is required, but events should be not send over.
+ */
+ export class TelemetryUTLogger implements ITelemetryLogger {
+    public send(event: ITelemetryBaseEvent): void {
+    }
+    public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
+    }
+    public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
+        this.reportError("errorEvent in UT logger!", event, error);
+    }
+    public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
+    }
+    public logGenericError(eventName: string, error: any) {
+        this.reportError(`genericError in UT logger!`, { eventName }, error);
+    }
+    public logException(event: ITelemetryErrorEvent, exception: any): void {
+        this.reportError("exception in UT logger!", event, exception);
+    }
+    public debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
+        this.reportError("debugAssert in UT logger!");
+    }
+    public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
+        this.reportError("shipAssert in UT logger!");
+    }
+
+    private reportError(message: string, event?: ITelemetryErrorEvent, err?: any) {
+        const error = new Error(message);
+        (error as any).error = error;
+        (error as any).event = event;
+        // report to console as exception can be eaten
+        console.error(message);
+        console.error(error);
+        throw error;
+    }
+}
