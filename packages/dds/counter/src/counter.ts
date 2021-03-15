@@ -194,4 +194,8 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
             }
         }
     }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
+    }
 }

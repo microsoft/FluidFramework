@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { assert } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/driver-definitions";
 import { IClient, IErrorTrackingService } from "@fluidframework/protocol-definitions";
 import { GitManager, Historian, ICredentials, IGitCache } from "@fluidframework/server-services-client";
@@ -94,7 +94,7 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document delta storage service for routerlicious driver.
      */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
-        assert(this.documentStorageService, "Storage service not initialized");
+        assert(!!this.documentStorageService, "Storage service not initialized");
 
         const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, this.tokenProvider, this.logger);
         return new DocumentDeltaStorageService(this.tenantId, this.documentId,
@@ -107,18 +107,35 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document delta stream service for routerlicious driver.
      */
     public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
-        const ordererToken = await this.tokenProvider.fetchOrdererToken(
-            this.tenantId,
-            this.documentId,
-        );
-        return R11sDocumentDeltaConnection.create(
-            this.tenantId,
-            this.documentId,
-            ordererToken.jwt,
-            io,
-            client,
-            this.ordererUrl,
-            this.logger);
+        const connect = async () => {
+            const ordererToken = await this.tokenProvider.fetchOrdererToken(
+                this.tenantId,
+                this.documentId,
+            );
+            return R11sDocumentDeltaConnection.create(
+                this.tenantId,
+                this.documentId,
+                ordererToken.jwt,
+                io,
+                client,
+                this.ordererUrl,
+                this.logger,
+            );
+        };
+
+        // Attempt to establish connection.
+        // Retry with new token on authorization error; otherwise, allow container layer to handle.
+        try {
+            const connection = await connect();
+            return connection;
+        } catch (error) {
+            if (error?.statusCode === 401) {
+                // Fetch new token and retry once,
+                // otherwise 401 will be bubbled up as non-retriable AuthorizationError.
+                return connect();
+            }
+            throw error;
+        }
     }
 
     public getErrorTrackingService() {

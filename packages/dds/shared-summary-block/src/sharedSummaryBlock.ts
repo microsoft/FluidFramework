@@ -148,4 +148,8 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         throw new Error("shared summary block should not generate any ops.");
     }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
+    }
 }

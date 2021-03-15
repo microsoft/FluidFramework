@@ -54,8 +54,8 @@ export class PermutationSegment extends BaseSegment {
 
     public get start() { return this._start; }
     public set start(value: Handle) {
-        assert(this._start === Handle.unallocated);
-        assert(isHandleValid(value));
+        assert(this._start === Handle.unallocated, "Start of PermutationSegment already allocated!");
+        assert(isHandleValid(value), "Trying to set start of PermutationSegment to invalid handle!");
 
         this._start = value;
     }
@@ -103,7 +103,7 @@ export class PermutationSegment extends BaseSegment {
     }
 
     protected createSplitSegmentAt(pos: number) {
-        assert(0 < pos && pos < this.cachedLength);
+        assert(0 < pos && pos < this.cachedLength, "Trying to split segment at out-of-bounds position!");
 
         const leafSegment = new PermutationSegment(
             /* length: */ this.cachedLength - pos,
@@ -168,7 +168,7 @@ export class PermutationVector extends Client {
     }
 
     public getMaybeHandle(pos: number): Handle {
-        assert(0 <= pos && pos < this.getLength());
+        assert(0 <= pos && pos < this.getLength(), "Trying to get handle of out-of-bounds position!");
 
         return this.handleCache.getHandle(pos);
     }
@@ -256,7 +256,7 @@ export class PermutationVector extends Client {
         // ops that reference the stale handle, or the removal is unACKed, in which case the handle
         // has not yet been recycled.
 
-        assert(isHandleValid(containingSegment.start));
+        assert(isHandleValid(containingSegment.start), "Invalid handle at start of containing segment!");
 
         // Once we know the current position of the handle, we can use the MergeTree to get the segment
         // containing this position and use 'findReconnectionPosition' to adjust for the local ops that

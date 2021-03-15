@@ -913,6 +913,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             },
         );
     }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
+    }
 }
 
 /**

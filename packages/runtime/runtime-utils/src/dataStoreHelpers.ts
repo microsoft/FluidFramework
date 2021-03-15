@@ -80,14 +80,14 @@ export async function requestFluidObject<T = IFluidObject>(
         throw responseToException(response, request);
     }
 
-    assert(response.value);
+    assert(response.value, "Invalid response value for Fluid object request");
     return response.value as T;
 }
 
 export const create404Response = (request: IRequest) => createResponseError(404, "not found", request);
 
 export function createResponseError(status: number, value: string, request: IRequest): IResponse {
-    assert(status !== 200);
+    assert(status !== 200, "Cannot not create response error on 200 status");
     return {
         mimeType: "text/plain",
         status,

@@ -406,4 +406,8 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             }
         }
     }
+
+    public applyStashedOp() {
+        throw new Error("not implemented");
+    }
 }

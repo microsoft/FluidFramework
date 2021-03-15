@@ -287,7 +287,7 @@ export class DebuggerUI {
     }
 
     public disableNextOpButton(disable: boolean) {
-        assert(!!this.buttonOps);
+        assert(!!this.buttonOps, "Missing button ops button!");
         this.buttonOps.disabled = disable;
     }
 

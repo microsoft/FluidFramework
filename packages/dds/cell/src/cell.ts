@@ -348,4 +348,8 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
             ? this.serializer.parse(JSON.stringify(value))
             : value;
     }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
+    }
 }
