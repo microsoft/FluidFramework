@@ -22,7 +22,6 @@ import {
 } from "@fluidframework/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 interface ICodeProposalTestPackage extends IFluidPackage{
     version: number,
@@ -37,11 +36,6 @@ function isCodeProposalTestPackage(pkg: unknown): pkg is ICodeProposalTestPackag
 }
 
 describe("CodeProposal.EndToEnd", () => {
-    let driver: ITestDriver;
-    before(()=>{
-        driver = getFluidTestDriver() as unknown as ITestDriver;
-    });
-
     const packageV1: ICodeProposalTestPackage = {
         name: "test",
         version: 1,
@@ -81,6 +75,7 @@ describe("CodeProposal.EndToEnd", () => {
             IFluidCodeDetailsComparer: codeDetailsComparer,
 
         };
+        const driver = getFluidTestDriver();
         return createLoaderUtil(
             [
                 [{ package: packageV1 }, fluidExport],
@@ -94,11 +89,13 @@ describe("CodeProposal.EndToEnd", () => {
 
     async function createContainer(code: IFluidCodeDetails, documentId: string): Promise<IContainer> {
         const loader = createLoader();
+        const driver = getFluidTestDriver();
         return createAndAttachContainer(code, loader, driver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(documentId: string): Promise<IContainer> {
         const loader = createLoader();
+        const driver = getFluidTestDriver();
         return loader.resolve({ url: await driver.createContainerUrl(documentId) });
     }
 

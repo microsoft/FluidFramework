@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 
-import { assert, bufferToString } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
@@ -20,6 +20,7 @@ import {
     IChannelStorageService,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { TaskManagerFactory } from "./taskManagerFactory";
 import { ITaskManager, ITaskManagerEvents } from "./interfaces";
@@ -286,12 +287,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const blob = await storage.readBlob(snapshotFileName);
-        const rawContent = bufferToString(blob, "utf8");
-        const content = rawContent !== undefined
-            ? JSON.parse(rawContent) as [string, string[]][]
-            : [];
-
+        const content = await readAndParse<[string, string[]][]>(storage, snapshotFileName);
         content.forEach(([taskId, clientIdQueue]) => {
             this.taskQueues.set(taskId, clientIdQueue);
         });
@@ -409,5 +405,9 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 this.queueWatcher.emit("queueChange", taskId);
             }
         }
+    }
+
+    public applyStashedOp() {
+        throw new Error("not implemented");
     }
 }

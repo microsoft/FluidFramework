@@ -23,7 +23,8 @@ import {
 } from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestDriver, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { getDataStoreFactory, ITestDataObject, TestDataObjectType } from "./compatUtils";
 
 const id = "fluid-test://localhost/containerTest";
@@ -31,11 +32,9 @@ const testRequest: IRequest = { url: id };
 
 describe("Container", () => {
     let driver: ITestDriver;
-    let logger: ITelemetryBufferedLogger;
     const loaderContainerTracker = new LoaderContainerTracker();
     before(function() {
-        driver = getFluidTestDriver() as unknown as ITestDriver;
-        logger = getTestLogger();
+        driver = getFluidTestDriver();
 
         // TODO: Convert these to mocked unit test. These are all API tests and doesn't
         // need the service.  For new disable the tests other than local driver
@@ -49,7 +48,7 @@ describe("Container", () => {
     async function loadContainer(props?: Partial<ILoaderProps>) {
         const loader = new Loader({
             ...props,
-            logger,
+            logger: ChildLogger.create(getTestLogger(), undefined, {testDriverType: driver.type}),
             urlResolver: props?.urlResolver ?? driver.createUrlResolver(),
             documentServiceFactory:
                 props?.documentServiceFactory ?? driver.createDocumentServiceFactory(),

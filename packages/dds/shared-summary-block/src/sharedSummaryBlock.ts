@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
@@ -19,6 +18,7 @@ import {
     AsJsonable,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
 import {
     SharedObject,
 } from "@fluidframework/shared-object-base";
@@ -126,10 +126,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const blob = await storage.readBlob(snapshotFileName);
-        const rawContent = bufferToString(blob, "utf8");
-        const contents = JSON.parse(rawContent) as ISharedSummaryBlockDataSerializable;
-
+        const contents = await readAndParse<ISharedSummaryBlockDataSerializable>(storage, snapshotFileName);
         for (const [key, value] of Object.entries(contents)) {
             this.data.set(key, value);
         }
@@ -150,5 +147,9 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         throw new Error("shared summary block should not generate any ops.");
+    }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
     }
 }
