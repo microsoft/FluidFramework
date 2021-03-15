@@ -449,7 +449,6 @@ export class Loader extends EventEmitter implements IHostLoader {
                 resolvedUrl: resolved,
                 version: request.headers?.[LoaderHeader.version],
                 pause: request.headers?.[LoaderHeader.pause],
-                maxClientLeaveWaitTime: request.headers?.[LoaderHeader.maxClientLeaveWaitTime],
             },
             pendingLocalState,
         );

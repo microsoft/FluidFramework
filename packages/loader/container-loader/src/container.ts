@@ -31,7 +31,6 @@ import {
     IPendingLocalState,
     ReadOnlyInfo,
     ILoaderOptions,
-    LoaderHeader,
 } from "@fluidframework/container-definitions";
 import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import {
@@ -128,11 +127,6 @@ export interface IContainerLoadOptions {
      * Loads the Container in paused state if true, unpaused otherwise.
      */
     pause?: boolean;
-
-    /**
-     * Max time container will wait for a leave message of a disconnected client.
-     */
-    maxClientLeaveWaitTime?: number;
 }
 
 export interface IContainerConfig {
@@ -148,10 +142,6 @@ export interface IContainerConfig {
      */
     clientDetailsOverride?: IClientDetails;
     id?: string;
-    /**
-     * Max time container will wait for a leave message of a disconnected client.
-     */
-    maxClientLeaveWaitTime?: number;
 }
 
 export enum ConnectionState {
@@ -309,7 +299,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 id: loadOptions.docId,
                 resolvedUrl: loadOptions.resolvedUrl,
                 canReconnect: loadOptions.canReconnect,
-                maxClientLeaveWaitTime: loadOptions.maxClientLeaveWaitTime,
             });
 
         return PerformanceEvent.timedExecAsync(container.logger, { eventName: "Load" }, async (event) => {
@@ -394,7 +383,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._storageService;
     }
 
-    private maxClientLeaveWaitTime: number | undefined;
     private prevClientLeftP: Deferred<boolean> | undefined;
     private _clientId: string | undefined;
     private _id: string | undefined;
@@ -570,6 +558,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public get options(): ILoaderOptions { return this.loader.services.options; }
     private get scope() { return this.loader.services.scope;}
     private get codeLoader() { return this.loader.services.codeLoader;}
+    private get maxClientLeaveWaitTime() { return this.loader.services.options.maxClientLeaveWaitTime; }
     constructor(
         private readonly loader: Loader,
         config: IContainerConfig,
@@ -582,7 +571,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.clientDetailsOverride = config.clientDetailsOverride;
         this._id = config.id;
         this._resolvedUrl = config.resolvedUrl;
-        this.maxClientLeaveWaitTime = config.maxClientLeaveWaitTime;
         if (config.canReconnect !== undefined) {
             this._canReconnect = config.canReconnect;
         }
@@ -813,7 +801,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._attachState = AttachState.Attached;
             this.emit("attached");
             this.cachedAttachSummary = undefined;
-            this.maxClientLeaveWaitTime = request.headers?.[LoaderHeader.maxClientLeaveWaitTime];
             // Propagate current connection state through the system.
             this.propagateConnectionState();
             if (!this.closed) {

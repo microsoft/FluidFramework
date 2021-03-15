@@ -261,6 +261,11 @@ export type ILoaderOptions = {
      * Set min op frequency with which noops would be sent in case of active connection which is not sending any op.
      */
     noopCountFrequency?: number;
+
+    /**
+     * Max time(in ms) container will wait for a leave message of a disconnected client.
+    */
+    maxClientLeaveWaitTime?: number,
 };
 
 /**
