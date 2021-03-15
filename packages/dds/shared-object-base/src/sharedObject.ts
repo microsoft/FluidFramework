@@ -425,6 +425,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             reSubmit: (content: any, localOpMetadata: unknown) => {
                 this.reSubmit(content, localOpMetadata);
             },
+            applyStashedOp: (content: any): unknown => {
+                return this.applyStashedOp(content);
+            },
         });
 
         // Trigger initial state
@@ -481,4 +484,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     private reSubmit(content: any, localOpMetadata: unknown) {
         this.reSubmitCore(content, localOpMetadata);
     }
+
+    protected abstract applyStashedOp(content: any): unknown;
 }

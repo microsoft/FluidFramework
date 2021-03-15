@@ -364,12 +364,17 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         this.kernel.trySubmitMessage(content, localOpMetadata);
     }
 
+    protected applyStashedOp(content: any): unknown {
+        this.kernel.tryProcessMessage(content, false, undefined, undefined);
+        return this.kernel.tryGetStashedOpLocalMetadata(content);
+    }
+
     /**
     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
     */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
-            this.kernel.tryProcessMessage(message, local, localOpMetadata);
+            this.kernel.tryProcessMessage(message.contents, local, message, localOpMetadata);
         }
     }
 

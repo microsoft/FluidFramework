@@ -3,23 +3,47 @@
  * Licensed under the MIT License.
  */
 
-import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
+import {
+    BaseContainerRuntimeFactory,
+    DataObject,
+    DataObjectFactory,
+    defaultRouteRequestHandler,
+} from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { innerRequestHandler, RuntimeRequestHandler } from "@fluidframework/request-handler";
-import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
-import { RequestParser } from "@fluidframework/runtime-utils";
+import { IFluidDataStoreFactory, NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-/**
- * We'll allow root data stores to be created by requesting a url like /create/dropletType/dataStoreId
- */
-const createRequestHandler: RuntimeRequestHandler =
-    async (request: RequestParser, runtime: IContainerRuntime) => {
-        if (request.pathParts[0] === "create" && request.pathParts.length === 3) {
-            await runtime.createRootDataStore(request.pathParts[1], request.pathParts[2]);
-            return runtime.request(request.createSubRequest(2));
-        }
-    };
+export type IdToDataObjectCollection = Record<string, IFluidStaticDataObjectClass>;
 
+export interface IFluidStaticDataObjectClass {
+    readonly factory: IFluidDataStoreFactory;
+}
+
+export class RootDataObject extends DataObject {
+    protected async initializingFirstTime() { }
+
+    protected async hasInitialized() { }
+
+    public async createDataObject<T extends DataObject>(
+        dataObjectClass: IFluidStaticDataObjectClass,
+        id: string,
+    ) {
+        const factory = dataObjectClass.factory;
+        const packagePath = [...this.context.packagePath, factory.type];
+        const router = await this.context.containerRuntime.createDataStore(packagePath);
+        const object = await requestFluidObject<T>(router, "/");
+        this.root.set(id, object.handle);
+        return object;
+    }
+
+    public async getDataObject<T extends DataObject>(id: string) {
+        const handle = await this.root.wait<IFluidHandle<T>>(id);
+        return handle.get();
+    }
+}
+
+const rootDataStoreId = "rootDOId";
 /**
  * The DOProviderContainerRuntimeFactory is the container code for our scenario.
  *
@@ -27,7 +51,38 @@ const createRequestHandler: RuntimeRequestHandler =
  * These can then be retrieved via container.request("/dataObjectId").
  */
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
-    constructor(registryEntries: NamedFluidDataStoreRegistryEntry[]) {
-        super(registryEntries, [], [createRequestHandler, innerRequestHandler]);
+    private readonly rootDataObjectFactory; // type is DataObjectFactory
+    private readonly initialDataObjects: IdToDataObjectCollection;
+    constructor(
+        registryEntries: NamedFluidDataStoreRegistryEntry[],
+        initialDataObjects: IdToDataObjectCollection = {},
+    ) {
+        const rootDataObjectFactory = new DataObjectFactory(
+            "rootDO",
+            RootDataObject,
+            [],
+            {},
+            registryEntries,
+        );
+        super([rootDataObjectFactory.registryEntry], [], [defaultRouteRequestHandler(rootDataStoreId)]);
+        this.rootDataObjectFactory = rootDataObjectFactory;
+        this.initialDataObjects = initialDataObjects;
+    }
+
+    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+        await runtime.createRootDataStore(
+            this.rootDataObjectFactory.type,
+            rootDataStoreId,
+        );
+
+        const rootDataObject: RootDataObject = (await runtime.request({ url: "/" })).value;
+
+        const initialDataObjects: Promise<IFluidLoadable>[] = [];
+        // If the developer provides additional DataObjects we will create them
+        Object.entries(this.initialDataObjects).forEach(([id, dataObjectClass]) => {
+            initialDataObjects.push(rootDataObject.createDataObject(dataObjectClass, id));
+        });
+
+        await Promise.all(initialDataObjects);
     }
 }

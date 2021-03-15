@@ -19,6 +19,7 @@ import {
     IContainer,
     IHostLoader,
     ILoader,
+    IPendingLocalState,
     ILoaderOptions,
     IProxyLoaderFactory,
     LoaderHeader,
@@ -241,12 +242,18 @@ export class Loader extends EventEmitter implements IHostLoader {
 
     constructor(loaderProps: ILoaderProps) {
         super();
+
+        const scope = { ...loaderProps.scope };
+        if (loaderProps.options?.provideScopeLoader === true) {
+            scope.ILoader = this;
+        }
+
         this.services = {
             urlResolver: createCachedResolver(MultiUrlResolver.create(loaderProps.urlResolver)),
             documentServiceFactory: MultiDocumentServiceFactory.create(loaderProps.documentServiceFactory),
             codeLoader: loaderProps.codeLoader,
             options: loaderProps.options ?? {},
-            scope: loaderProps.scope ?? {},
+            scope,
             subLogger: DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { loaderId: uuid() }),
             proxyLoaderFactories: loaderProps.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
         };
@@ -284,9 +291,13 @@ export class Loader extends EventEmitter implements IHostLoader {
             JSON.parse(snapshot));
     }
 
-    public async resolve(request: IRequest): Promise<Container> {
-        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Resolve" }, async () => {
-            const resolved = await this.resolveCore(request);
+    public async resolve(request: IRequest, pendingLocalState?: string): Promise<Container> {
+        const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
+        return PerformanceEvent.timedExecAsync(this.logger, { eventName }, async () => {
+            const resolved = await this.resolveCore(
+                request,
+                pendingLocalState !== undefined ? JSON.parse(pendingLocalState) : undefined,
+            );
             return resolved.container;
         });
     }
@@ -321,6 +332,7 @@ export class Loader extends EventEmitter implements IHostLoader {
 
     private async resolveCore(
         request: IRequest,
+        pendingLocalState?: IPendingLocalState,
     ): Promise<{ container: Container; parsed: IParsedUrl }> {
         const resolvedAsFluid = await this.services.urlResolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
@@ -331,12 +343,22 @@ export class Loader extends EventEmitter implements IHostLoader {
             throw new Error(`Invalid URL ${resolvedAsFluid.url}`);
         }
 
+        if (pendingLocalState !== undefined) {
+            const parsedPendingUrl = parseUrl(pendingLocalState.url);
+            if (parsedPendingUrl?.id !== parsed.id ||
+                parsedPendingUrl?.path.replace(/\/$/, "") !== parsed.path.replace(/\/$/, "")) {
+                const message = `URL ${resolvedAsFluid.url} does not match pending state URL ${pendingLocalState.url}`;
+                throw new Error(message);
+            }
+        }
+
         // parseUrl's id is expected to be of format "tenantId/docId"
         const [, docId] = parsed.id.split("/");
         const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
+        const shouldCache = pendingLocalState !== undefined ? false : canCache;
 
         let container: Container;
-        if (canCache) {
+        if (shouldCache) {
             const key = this.getKeyForContainerCache(request, parsed);
             const maybeContainer = await this.containers.get(key);
             if (maybeContainer !== undefined) {
@@ -355,7 +377,8 @@ export class Loader extends EventEmitter implements IHostLoader {
                 await this.loadContainer(
                     docId,
                     request,
-                    resolvedAsFluid);
+                    resolvedAsFluid,
+                    pendingLocalState?.pendingRuntimeState);
         }
 
         if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
@@ -413,6 +436,7 @@ export class Loader extends EventEmitter implements IHostLoader {
         encodedDocId: string,
         request: IRequest,
         resolved: IFluidResolvedUrl,
+        pendingLocalState?: unknown,
     ): Promise<Container> {
         const docId = decodeURI(encodedDocId);
         return Container.load(
@@ -427,6 +451,7 @@ export class Loader extends EventEmitter implements IHostLoader {
                 pause: request.headers?.[LoaderHeader.pause],
                 maxClientLeaveWaitTime: request.headers?.[LoaderHeader.maxClientLeaveWaitTime],
             },
+            pendingLocalState,
         );
     }
 }

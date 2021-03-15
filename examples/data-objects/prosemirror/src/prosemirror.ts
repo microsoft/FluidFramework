@@ -124,7 +124,7 @@ export class ProseMirror extends EventEmitter
 
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
-        /* Private */ context: IFluidDataStoreContext,
+        private readonly context: IFluidDataStoreContext,
     ) {
         super();
 
@@ -151,7 +151,10 @@ export class ProseMirror extends EventEmitter
         this.root = await this.runtime.getChannel("root") as ISharedMap;
         this.text = await this.root.get<IFluidHandle<SharedString>>("text")!.get();
 
-        this.collabManager = new FluidCollabManager(this.text, this.runtime.loader);
+        if (this.context.scope.ILoader === undefined) {
+            throw new Error("scope must include ILoader");
+        }
+        this.collabManager = new FluidCollabManager(this.text, this.context.scope.ILoader);
 
         // Access for debugging
         // eslint-disable-next-line @typescript-eslint/dot-notation
