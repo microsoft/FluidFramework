@@ -157,7 +157,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const content = await readAndParse<ICounterSnapshotFormat>(storage, snapshotFileName) ?? { value: 0 };
+        const content = await readAndParse<ICounterSnapshotFormat>(storage, snapshotFileName);
 
         this._value = content.value;
     }

@@ -214,9 +214,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const content = await readAndParse<ISerializableInk>(storage, snapshotFileName);
-        if (content !== undefined) {
-            this.inkData = new InkData(content);
-        }
+        this.inkData = new InkData(content);
     }
 
     /**

@@ -287,7 +287,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const content = await readAndParse<[string, string[]][]>(storage, snapshotFileName) ?? [];
+        const content = await readAndParse<[string, string[]][]>(storage, snapshotFileName);
         content.forEach(([taskId, clientIdQueue]) => {
             this.taskQueues.set(taskId, clientIdQueue);
         });

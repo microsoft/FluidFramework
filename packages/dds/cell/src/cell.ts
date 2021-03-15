@@ -241,8 +241,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const content = await readAndParse<ICellValue>(storage, snapshotFileName) ??
-            { type: ValueType[ValueType.Plain], value: undefined };
+        const content = await readAndParse<ICellValue>(storage, snapshotFileName);
 
         this.data = this.fromSerializable(content);
     }
