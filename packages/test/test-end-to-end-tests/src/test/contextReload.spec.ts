@@ -106,7 +106,7 @@ describe("context reload (hot-swap)", function() {
             options: { hotSwapContext: true },
             urlResolver: driver.createUrlResolver(),
             documentServiceFactory: driver.createDocumentServiceFactory(),
-            logger: getTestLogger(),
+            logger: ChildLogger.create(getTestLogger(), undefined, {testDriverType: driver.type}),
         });
         loaderContainerTracker.add(loader);
         return createAndAttachContainer(

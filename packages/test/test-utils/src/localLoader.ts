@@ -51,6 +51,8 @@ export function createLoader(
 ): IHostLoader {
     const codeLoader: ICodeLoader = new LocalCodeLoader(packageEntries);
 
+    // TODO: some tests is table are using this, and not properly using mocha hooks,
+    // so the tests break if we don't null check here
     const driver = typeof getFluidTestDriver === "function" ? getFluidTestDriver() : undefined;
     const logger = typeof getTestLogger === "function" ? getTestLogger() : undefined;
 
