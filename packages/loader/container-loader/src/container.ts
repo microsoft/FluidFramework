@@ -1402,7 +1402,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.prevClientLeftP.promise.then((leaveReceived: boolean) => {
                         event?.end({
                             timeout: !leaveReceived,
-                            outstandingOps: this._deltaManager.clientSeqNumberAndObservedDiff,
+                            hadOutstandingOps: this._deltaManager.shouldJoinWrite(),
                         });
                         this.setConnectionState(ConnectionState.Connected);
                     });
@@ -1704,7 +1704,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.pendingClientId = undefined;
             // Only wait for "leave" message if we have some outstanding ops and the client was write client as
             // server would not accept ops from read client.
-            if (this._deltaManager.clientSeqNumberAndObservedDiff > 0 && this.client.mode === "write") {
+            if (this._deltaManager.shouldJoinWrite() && this.client.mode === "write") {
                 this.prevClientLeftP = new Deferred();
                 // Max time is 5 min for which we are going to wait for its own "leave" message.
                 setTimeout(() => {
