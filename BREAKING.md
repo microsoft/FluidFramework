@@ -1,3 +1,20 @@
+## 0.37 Breaking changes
+- [Loader in data stores deprecated](#Loader-in-data-stores-deprecated)
+
+### Loader in data stores deprecated
+The `loader` property on the `IContainerRuntime`, `IFluidDataStoreRuntime`, and `IFluidDataStoreContext` interfaces is now deprecated and will be removed in an upcoming release.  Data store objects will no longer have access to an `ILoader` by default.  To replicate the same behavior, existing users can make the `ILoader` used to create a `Container` available on the `scope` property of these interfaces instead by setting the `provideScopeLoader` `ILoaderOptions` flag when creating the loader.
+```typescript
+const loader = new Loader({
+    urlResolver,
+    documentServiceFactory,
+    codeLoader,
+    options: { provideScopeLoader: true },
+    });
+```
+```typescript
+const loader: ILoader | undefined = this.context.scope.ILoader;
+```
+
 ## 0.36 Breaking changes
 - [Some `ILoader` APIs moved to `IHostLoader`](#Some-ILoader-APIs-moved-to-IHostLoader)
 - [TaskManager removed](#TaskManager-removed)

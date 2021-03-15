@@ -145,6 +145,12 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     close(error?: ICriticalContainerError): void;
 
     /**
+     * Closes the container and returns serialized local state intended to be
+     * given to a newly loaded container
+     */
+    closeAndGetPendingLocalState(): string;
+
+    /**
      * Propose new code details that define the code to be loaded
      * for this container's runtime. The returned promise will
      * be true when the proposal is accepted, and false if
@@ -191,7 +197,7 @@ export interface ILoader extends IFluidRouter {
      * An analogy for this is resolve is a DNS resolve of a Fluid container. Request then executes
      * a request against the server found from the resolve step.
      */
-    resolve(request: IRequest): Promise<IContainer>;
+    resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
 }
 
 /**
@@ -232,6 +238,15 @@ export type ILoaderOptions = {
      * Defaults to true.
      */
     cache?: boolean;
+
+    /**
+     * Provide the current Loader through the scope object when creating Containers.  It is added
+     * as the `ILoader` property, and will overwrite an existing property of the same name on the
+     * scope.  Useful for when the host wants to provide the current Loader's functionality to
+     * individual Data Stores.
+     * Defaults to false.
+     */
+    provideScopeLoader?: boolean;
 };
 
 /**
@@ -273,7 +288,19 @@ export interface ILoaderHeader {
     [LoaderHeader.version]: string | undefined | null;
 }
 
+interface IProvideLoader {
+    readonly ILoader: ILoader;
+}
+
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IRequestHeader extends Partial<ILoaderHeader> { }
+
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideLoader>> { }
+}
+
+export interface IPendingLocalState {
+    url: string;
+    pendingRuntimeState: unknown;
 }
