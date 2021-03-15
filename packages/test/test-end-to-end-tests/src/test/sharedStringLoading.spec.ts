@@ -24,8 +24,6 @@ import {
 import { NetworkErrorBasic, readAndParse } from "@fluidframework/driver-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
-import { bufferToString } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 describe("SharedString", () => {
