@@ -1392,20 +1392,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         protocol.quorum.on("addMember", (clientId, details) => {
             // This is the only one that requires the pending client ID
             if (clientId === this.pendingClientId) {
-                let startTime: number | undefined;
+                let event: PerformanceEvent;
                 if (this.prevClientLeftP?.isCompleted === false) {
-                    startTime = performance.now();
+                    event = PerformanceEvent.start(this.logger, { eventName: "ConnectedAfterWait" });
                 }
                 // Wait for previous client to leave the quorum before firing "connected" event.
                 if (this.prevClientLeftP) {
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     this.prevClientLeftP.promise.then((leaveReceived: boolean) => {
-                        this.logger.sendTelemetryEvent({
-                            eventName: "ConnectedAfterWait",
-                            duration: startTime !== undefined ? performance.now() - startTime : 0,
+                        event?.end({
                             timeout: !leaveReceived,
-                            outstandingOps: this._deltaManager.clientSequenceNumber -
-                                this._deltaManager.clientSequenceNumberObserved,
+                            outstandingOps: this._deltaManager.clientSeqNumberAndObservedDiff,
                         });
                         this.setConnectionState(ConnectionState.Connected);
                     });
@@ -1707,9 +1704,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.pendingClientId = undefined;
             // Only wait for "leave" message if we have some outstanding ops and the client was write client as
             // server would not accept ops from read client.
-            if (this._deltaManager.clientSequenceNumber - this._deltaManager.clientSequenceNumberObserved > 0
-                && this.client.mode === "write"
-            ) {
+            if (this._deltaManager.clientSeqNumberAndObservedDiff > 0 && this.client.mode === "write") {
                 this.prevClientLeftP = new Deferred();
                 // Max time is 5 min for which we are going to wait for its own "leave" message.
                 setTimeout(() => {
