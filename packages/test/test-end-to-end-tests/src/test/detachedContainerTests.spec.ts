@@ -28,7 +28,7 @@ import { MessageType, ISequencedDocumentMessage } from "@fluidframework/protocol
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { convertContainerToDriverSerializedFormat, requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeWithFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -59,7 +59,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeWithFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     let request: IRequest;
     let loader: Loader;

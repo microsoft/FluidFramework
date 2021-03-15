@@ -16,7 +16,7 @@ import {
     ChannelFactoryRegistry,
     ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeWithFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 const mapId = "mapKey";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -25,7 +25,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeWithFullCompat("SharedMap", (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("SharedMap", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();

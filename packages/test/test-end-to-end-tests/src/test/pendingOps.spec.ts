@@ -17,7 +17,7 @@ import {
     ITestObjectProvider,
     DataObjectFactoryType,
 } from "@fluidframework/test-utils";
-import { describeWithNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
 
 const mapId = "map";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -72,7 +72,7 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
     return pendingState;
 };
 
-describeWithNoCompat("stashed ops", (argsFactory: () => ITestObjectProvider) => {
+describeNoCompat("stashed ops", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     let url;
     let loader: IHostLoader;

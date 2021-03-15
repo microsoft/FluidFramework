@@ -9,13 +9,13 @@ import { PropertySet } from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeWithLoaderCompat } from "@fluidframework/test-version-utils";
+import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { ITable } from "../table";
 import { TableDocument } from "../document";
 import { TableDocumentType } from "../componentTypes";
 import { createTableWithInterception } from "../interception";
 
-describeWithLoaderCompat("Table Document with Interception", (getTestObjectProvider: () => ITestObjectProvider) => {
+describeLoaderCompat("Table Document with Interception", (getTestObjectProvider: () => ITestObjectProvider) => {
     describe("Simple User Attribution", () => {
         const userAttributes = { userId: "Fake User" };
         let tableDocument: TableDocument;

@@ -13,7 +13,7 @@ window.performance.measure = window.performance.measure || (() => { });
 import { strict as assert } from "assert";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeWithLoaderCompat } from "@fluidframework/test-version-utils";
+import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { htmlFormatter } from "..";
 import { FlowDocument } from "../document";
 import { Layout } from "../view/layout";
@@ -39,7 +39,7 @@ function expectTree(actual: Node, expected: ISnapshotNode) {
     assert.strictEqual(i, children.length);
 }
 
-describeWithLoaderCompat("Layout", (getTestObjectProvider: () => ITestObjectProvider) => {
+describeLoaderCompat("Layout", (getTestObjectProvider: () => ITestObjectProvider) => {
     let doc: FlowDocument;
     let root: HTMLElement;
     let layout: Layout;

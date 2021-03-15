@@ -8,10 +8,10 @@ import { TagName } from "@fluid-example/flow-util-lib";
 import { Marker, ReferenceType } from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeWithLoaderCompat } from "@fluidframework/test-version-utils";
+import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { FlowDocument } from "../document";
 
-describeWithLoaderCompat("FlowDocument", (getTestObjectProvider: () => ITestObjectProvider) => {
+describeLoaderCompat("FlowDocument", (getTestObjectProvider: () => ITestObjectProvider) => {
     let doc: FlowDocument;
 
     let provider: ITestObjectProvider;

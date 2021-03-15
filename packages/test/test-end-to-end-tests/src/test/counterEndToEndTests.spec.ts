@@ -13,7 +13,7 @@ import {
     ChannelFactoryRegistry,
     ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeWithFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 const counterId = "counterKey";
 const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
@@ -22,7 +22,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeWithFullCompat("SharedCounter", (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("SharedCounter", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();

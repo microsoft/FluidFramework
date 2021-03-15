@@ -146,7 +146,7 @@ if (compatKind !== undefined) {
 /*
  * Mocha Utils for test to generate the compat variants.
  */
-function describeWithCompat(
+function describeCompat(
     name: string,
     tests: (provider: () => ReturnType<typeof getVersionedTestObjectProvider>) => void,
     compatFilter?: CompatKind[],
@@ -171,25 +171,25 @@ function describeWithCompat(
     });
 }
 
-export function describeWithNoCompat(
+export function describeNoCompat(
     name: string,
     tests: (provider: () => ReturnType<typeof getVersionedTestObjectProvider>) => void,
 ) {
-    describeWithCompat(name, tests, [CompatKind.None]);
+    describeCompat(name, tests, [CompatKind.None]);
 }
 
-export function describeWithLoaderCompat(
+export function describeLoaderCompat(
     name: string,
     tests: (provider: () => ReturnType<typeof getVersionedTestObjectProvider>) => void,
 ) {
-    describeWithCompat(name, tests, [CompatKind.None, CompatKind.Loader]);
+    describeCompat(name, tests, [CompatKind.None, CompatKind.Loader]);
 }
 
-export function describeWithFullCompat(
+export function describeFullCompat(
     name: string,
     tests: (provider: () => ReturnType<typeof getVersionedTestObjectProvider>) => void,
 ) {
-    describeWithCompat(name, tests);
+    describeCompat(name, tests);
 }
 
 /*

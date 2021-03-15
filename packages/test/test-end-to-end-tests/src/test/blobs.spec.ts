@@ -12,14 +12,14 @@ import { SharedString } from "@fluidframework/sequence";
 import { v4 as uuid } from "uuid";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import { ITestObjectProvider, ITestContainerConfig } from "@fluidframework/test-utils";
-import { describeWithFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";
+import { describeFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 
 const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: { initialSummarizerDelayMs: 20, summaryConfigOverrides: { maxOps: 1 } },
     registry: [["sharedString", SharedString.getFactory()]],
 };
 
-describeWithFullCompat("blobs", (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("blobs", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(() => {
         args = argsFactory();

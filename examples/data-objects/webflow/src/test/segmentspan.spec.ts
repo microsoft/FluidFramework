@@ -7,11 +7,11 @@ import { strict as assert } from "assert";
 import { TextSegment } from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeWithLoaderCompat } from "@fluidframework/test-version-utils";
+import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { FlowDocument } from "../document";
 import { SegmentSpan } from "../document/segmentspan";
 
-describeWithLoaderCompat("SegmentSpan", (getTestObjectProvider: () => ITestObjectProvider) => {
+describeLoaderCompat("SegmentSpan", (getTestObjectProvider: () => ITestObjectProvider) => {
     let doc: FlowDocument;
     let provider: ITestObjectProvider;
     before(async () => {

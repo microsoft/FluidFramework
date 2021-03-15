@@ -9,12 +9,12 @@ import {
     ITestObjectProvider,
     OpProcessingController,
 } from "@fluidframework/test-utils";
-import { describeWithLoaderCompat } from "@fluidframework/test-version-utils";
+import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { TableDocument } from "../document";
 import { TableSlice } from "../slice";
 import { TableDocumentItem } from "../table";
 
-describeWithLoaderCompat("TableDocument", (getTestObjectProvider: () => ITestObjectProvider) => {
+describeLoaderCompat("TableDocument", (getTestObjectProvider: () => ITestObjectProvider) => {
     let tableDocument: TableDocument;
     let opProcessingController: OpProcessingController;
 

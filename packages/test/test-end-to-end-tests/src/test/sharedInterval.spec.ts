@@ -22,7 +22,7 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { describeWithFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
@@ -51,7 +51,7 @@ const assertIntervalsHelper = (
     }
 };
 
-describeWithFullCompat("SharedInterval", (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("SharedInterval", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();
