@@ -14,7 +14,7 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { describeWithAllCompat } from "@fluidframework/test-version-utils";
+import { describeWithFullCompat } from "@fluidframework/test-version-utils";
 
 const cellId = "cellKey";
 const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
@@ -23,7 +23,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeWithAllCompat("SharedCell", (argsFactory: () => ITestObjectProvider) => {
+describeWithFullCompat("SharedCell", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();

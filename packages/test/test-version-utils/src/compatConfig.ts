@@ -171,6 +171,13 @@ function describeWithCompat(
     });
 }
 
+export function describeWithNoCompat(
+    name: string,
+    tests: (provider: () => ReturnType<typeof getVersionedTestObjectProvider>) => void,
+) {
+    describeWithCompat(name, tests, [CompatKind.None]);
+}
+
 export function describeWithLoaderCompat(
     name: string,
     tests: (provider: () => ReturnType<typeof getVersionedTestObjectProvider>) => void,
@@ -178,7 +185,7 @@ export function describeWithLoaderCompat(
     describeWithCompat(name, tests, [CompatKind.None, CompatKind.Loader]);
 }
 
-export function describeWithAllCompat(
+export function describeWithFullCompat(
     name: string,
     tests: (provider: () => ReturnType<typeof getVersionedTestObjectProvider>) => void,
 ) {

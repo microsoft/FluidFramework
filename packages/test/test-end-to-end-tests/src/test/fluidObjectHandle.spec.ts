@@ -12,12 +12,12 @@ import {
     ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import {
-    describeWithAllCompat,
+    describeWithFullCompat,
     ITestDataObject,
     TestDataObjectType,
 } from "@fluidframework/test-version-utils";
 
-describeWithAllCompat("FluidObjectHandle", (argsFactory: () => ITestObjectProvider) => {
+describeWithFullCompat("FluidObjectHandle", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();

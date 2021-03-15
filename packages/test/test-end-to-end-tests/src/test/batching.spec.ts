@@ -19,7 +19,7 @@ import {
     DataObjectFactoryType,
 } from "@fluidframework/test-utils";
 import {
-    describeWithAllCompat,
+    describeWithFullCompat,
 } from "@fluidframework/test-version-utils";
 
 const map1Id = "map1Key";
@@ -33,7 +33,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeWithAllCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
+describeWithFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();

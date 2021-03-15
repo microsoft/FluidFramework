@@ -9,9 +9,9 @@ import { taskSchedulerId } from "@fluidframework/container-runtime";
 import { IAgentScheduler } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, timeoutPromise, defaultTimeoutDurationMs } from "@fluidframework/test-utils";
-import { describeWithAllCompat, ITestDataObject } from "@fluidframework/test-version-utils";
+import { describeWithFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 
-describeWithAllCompat("AgentScheduler",(argsFactory: () => ITestObjectProvider) => {
+describeWithFullCompat("AgentScheduler",(argsFactory: () => ITestObjectProvider) => {
     let leaderTimeout = defaultTimeoutDurationMs;
     let args: ITestObjectProvider;
     beforeEach(() => {
