@@ -10,6 +10,7 @@
     "mongo": {
         "endpoint": "mongodb://mongodb:27017",
         "expireAfterSeconds": -1,
+        "createSortIndexes": false,
         "collectionNames": {
             "deltas": "deltas",
             "rawdeltas": "rawdeltas",

@@ -12,11 +12,23 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const mongoUrl = config.get("mongo:endpoint") as string;
     const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
+    const createSortIndexes = config.get("mongo:createSortIndexes");
     const mongoFactory = new services.MongoDbFactory(mongoUrl);
     const mongoManager = new MongoManager(mongoFactory, false);
 
     const db = await mongoManager.getDatabase();
     const opCollection = db.collection(deltasCollectionName);
+    if (createSortIndexes) {
+        await opCollection.createIndex({
+            "operation.sequenceNumber": 1,
+        }, false);
+
+        await opCollection.createIndex({
+            "operation.term": 1,
+            "operation.sequenceNumber": 1,
+        }, false);
+    }
+
     await opCollection.createIndex(
         {
             "documentId": 1,
