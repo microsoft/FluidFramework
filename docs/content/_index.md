@@ -17,7 +17,7 @@ title: "Fluid Framework"
 
   {{< cta
     linkClasses="learn-more"
-    linkURL="/docs/"
+    linkURL="/reference/"
     iconClasses="learn-more"
     linkText="Learn More"
   >}}
