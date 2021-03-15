@@ -1392,15 +1392,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         protocol.quorum.on("addMember", (clientId, details) => {
             // This is the only one that requires the pending client ID
             if (clientId === this.pendingClientId) {
-                let event: PerformanceEvent;
-                if (this.prevClientLeftP?.isCompleted === false) {
-                    event = PerformanceEvent.start(this.logger, { eventName: "ConnectedAfterWait" });
-                }
                 // Wait for previous client to leave the quorum before firing "connected" event.
                 if (this.prevClientLeftP) {
+                    const event = PerformanceEvent.start(this.logger, { eventName: "ConnectedAfterWait" });
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     this.prevClientLeftP.promise.then((leaveReceived: boolean) => {
-                        event?.end({
+                        event.end({
                             timeout: !leaveReceived,
                             hadOutstandingOps: this._deltaManager.shouldJoinWrite(),
                         });
@@ -1414,8 +1411,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         protocol.quorum.on("removeMember", (clientId) => {
             // If the client which has left was us, then resolve the def. promise.
-            if (this.clientId === clientId && this.prevClientLeftP?.isCompleted === false) {
-                this.prevClientLeftP.resolve(true);
+            if (this.clientId === clientId) {
+                this.prevClientLeftP?.resolve(true);
             }
         });
 
@@ -1706,12 +1703,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // server would not accept ops from read client.
             if (this._deltaManager.shouldJoinWrite() && this.client.mode === "write") {
                 this.prevClientLeftP = new Deferred();
-                // Max time is 5 min for which we are going to wait for its own "leave" message.
+                // Default is 90 sec for which we are going to wait for its own "leave" message.
                 setTimeout(() => {
-                    if (this.prevClientLeftP?.isCompleted === false) {
-                        this.prevClientLeftP.resolve(false);
-                    }
-                }, this.maxClientLeaveWaitTime ?? 300000);
+                    this.prevClientLeftP?.resolve(false);
+                }, this.maxClientLeaveWaitTime ?? 90000);
             }
         }
 
