@@ -139,4 +139,8 @@ export class SharedOT extends SharedObject implements ISharedOT {
             this.root = type.apply(this.root, remoteOp) as Doc;
         }
     }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
+    }
 }
