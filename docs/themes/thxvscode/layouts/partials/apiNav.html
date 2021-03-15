@@ -14,7 +14,7 @@
 <!-- {{ printf "%#v" $section.Name }} -->
 <!-- {{ $api_section := eq .Kind "section" }} -->
 <!-- {{ $api_section := and (eq .Kind "section") (eq .Type "apis") }} -->
-{{ $api_section := eq (path.Base .) "apis" }}
+{{ $api_section := and (eq .Kind "section") (eq (path.Base .) "apis") }}
 <!-- {{ $api_section := or (and (eq .Kind "section") (eq .Section "apis")) (eq .Type "apis") }} -->
 {{ $packagePages := where .Site.RegularPages "Params.kind" "Package"}}
 
@@ -35,7 +35,8 @@
         <li class="panel {{if $isCurrentPage }}active{{end}}">
             <a class="area{{if $isCurrentPage }} active expanded{{ end }}" aria-label="{{ .Name }}" href="{{.URL}}"
                 data-parent="#main-nav">{{ .Name }}</a>
-            {{- else -}}
+        </li>
+        {{- else -}}
         <li class="panel {{if $isCurrentArea}}active expanded{{else}}collapsed{{end}}">
             <a class="area" aria-label="{{ .Name }} drop down" href="#{{ $menuArea }}-articles" data-parent="#main-nav"
                 data-toggle="collapse">{{ .Name }}</a>
@@ -91,12 +92,13 @@
                             <!-- PART 0 -->
 
                             {{- range (where $packagePages "Params.package" .) -}}
-                                <!-- {{ printf "%#v" $targetPage }}
-                                PART 1 -->
+                                <!-- PART 1 -->
                                 {{ $targetPage = . }}
                             {{- end }}
+                            <!-- {{ printf "%#v" $targetPage.Params.package }}
+                            {{ printf "%#v" $package }} -->
 
-                            {{ $isCurrentPage := eq $package $targetPage }}
+                            {{ $isCurrentPage := eq $package $targetPage.Params.package }}
                             {{ if $isCurrentPage}}
                                 {{ $isCurrentPage = eq $targetPage.RelPermalink $current.RelPermalink}}
                                 <!-- PART 2 -->
