@@ -3,16 +3,19 @@
 {{ $package := $current.Params.package }}
 {{ $area := "" }}
 {{ range $name, $packages := $.Site.Data.packages }}
-{{ range $packages }}
-{{ if eq $package .}}
-{{ $area = $name}}
-{{ end }}
-{{ end }}
+    {{ range $packages }}
+        {{ if eq $package .}}
+            {{ $area = $name}}
+        {{ end }}
+    {{ end }}
 {{ end }}
 
 {{ $section := .CurrentSection }}
+<!-- {{ printf "%#v" $section.Name }} -->
+<!-- {{ $api_section := eq .Kind "section" }} -->
 {{ $api_section := and (eq .Kind "section") (eq .Type "apis") }}
-{{ $packagePages := where $section.RegularPages "Params.kind" "Package"}}
+<!-- {{ $api_section := or (and (eq .Kind "section") (eq .Section "apis")) (eq .Type "apis") }} -->
+{{ $packagePages := where .Site.RegularPages "Params.kind" "Package"}}
 
 <nav id="docs-navbar" aria-label="Topics" class="docs-nav visible-md visible-lg">
     <ul class="nav" id="main-nav">
@@ -55,52 +58,58 @@
 
         <li {{ if $api_section }} class="active" {{ end }}>
             <a class="docs-home" href="/reference/apis/" {{ if $api_section }}
-                aria-label="Current Page: API Overview" {{ end }}>API</a>
+                aria-label="Current Page: API Overview" {{ end }}>API Overview</a>
         </li>
 
         {{ range $grouping, $names :=  $.Site.Data.packages }}
-        {{ $isCurrentArea := (eq $grouping $area) }}
+            {{ $isCurrentArea := (eq $grouping $area) }}
 
-        <li class="panel {{if $isCurrentArea}}active expanded{{else}}collapsed{{end}}">
-            <a class="area" aria-label="{{ $grouping }} drop down" href="#{{ $grouping }}-articles"
-                data-parent="#main-nav" data-toggle="collapse">{{ $grouping | humanize | title }}</a>
+            <li class="panel {{if $isCurrentArea}}active expanded{{else}}collapsed{{end}}">
+                <a class="area" aria-label="{{ $grouping }} drop down" href="#{{ $grouping }}-articles"
+                    data-parent="#main-nav" data-toggle="collapse">{{ $grouping | humanize | title }}</a>
 
-            <ul id="{{ $grouping }}-articles" class="collapse {{if $isCurrentArea}}in{{end}}">
-                {{- range $names }}
-                {{ $targetPage := $current }}
-                {{/* instead of a package name, we have a custom map used to create class/interface links */}}
-                {{- if reflect.IsMap .}}
+                <ul id="{{ $grouping }}-articles" class="collapse {{if $isCurrentArea}}in{{end}}">
+                    {{- range $names }}
+                        {{ $targetPage := $current }}
+                        {{/* instead of a package name, we have a custom map used to create class/interface links */}}
+                        {{- if reflect.IsMap .}}
 
-                {{$custom := index . "custom"}}
-                {{ $customLink := index $custom "url" }}
-                {{ $customTitle := index $custom "title"}}
-                {{ $isCurrentPage := eq (relURL $current.RelPermalink) $customLink }}
-                <li {{ if $isCurrentPage }}class="active" {{ end }}>
-                    <a href="{{relURL $customLink}}"
-                        {{ if $isCurrentPage }}aria-label="Current Page: {{ $customTitle | humanize | title }} "
-                        {{ end }}>
-                        {{ $customTitle | humanize | title }} </a>
-                </li>
+                            {{$custom := index . "custom"}}
+                            {{ $customLink := index $custom "url" }}
+                            {{ $customTitle := index $custom "title"}}
+                            {{ $isCurrentPage := eq (relURL $current.RelPermalink) $customLink }}
+                            <li {{ if $isCurrentPage }}class="active" {{ end }}>
+                                <a href="{{relURL $customLink}}"
+                                    {{ if $isCurrentPage }}aria-label="Current Page: {{ $customTitle | humanize | title }} "
+                                    {{ end }}>
+                                    {{ $customTitle | humanize | title }} </a>
+                            </li>
 
-                {{- else }}
+                        {{- else }}
+                            <!-- {{ printf "% #v" (len $packagePages) }} -->
+                            <!-- PART 0 -->
 
-                {{ $isCurrentPage := eq $package .}}
-                {{- range where $packagePages "Params.package" . -}}
-                {{ $targetPage = . }}
-                {{- end }}
-                {{ if $isCurrentPage}}
-                {{ $isCurrentPage = eq $targetPage.RelPermalink $current.RelPermalink}}
-                {{ end }}
-                <li {{ if $isCurrentPage }}class="active" {{ end }}>
-                    <a href="{{$targetPage.RelPermalink}}"
-                        {{ if $isCurrentPage }}aria-label="Current Page: {{ (path.Base .) | humanize | title }} "
-                        {{ end }}>
-                        {{ (path.Base .) | humanize | title }} </a>
-                </li>
-                {{- end }}
-                {{- end }}
-            </ul>
-        </li>
+                            {{- range (where $packagePages "Params.package" .) -}}
+                                <!-- {{ printf "%#v" $targetPage }}
+                                PART 1 -->
+                                {{ $targetPage = . }}
+                            {{- end }}
+
+                            {{ $isCurrentPage := eq $package $targetPage }}
+                            {{ if $isCurrentPage}}
+                                {{ $isCurrentPage = eq $targetPage.RelPermalink $current.RelPermalink}}
+                                PART 2
+                            {{ end }}
+                            <li {{ if $isCurrentPage }}class="active" {{ end }}>
+                                <a href="{{$targetPage.RelPermalink}}"
+                                    {{ if $isCurrentPage }}aria-label="Current Page: {{ (path.Base .) | humanize | title }} "
+                                    {{ end }}>
+                                    {{ (path.Base .) | humanize | title }} </a>
+                            </li>
+                        {{- end }}
+                    {{- end }}
+                </ul>
+            </li>
         {{- end }}
     </ul>
 </nav>
