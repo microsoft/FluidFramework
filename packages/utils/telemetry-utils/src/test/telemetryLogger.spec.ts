@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerProperties, ITelemetryLoggerProperty, TelemetryLogger } from "../logger";
+import { ITelemetryLoggerPropertyBags, ITelemetryLoggerPropertyBag, TelemetryLogger } from "../logger";
 
 class TestTelemetryLogger  extends TelemetryLogger {
     public events: ITelemetryBaseEvent[]=[];
@@ -14,13 +14,13 @@ class TestTelemetryLogger  extends TelemetryLogger {
     }
 }
 
-const allCases: (ITelemetryLoggerProperty)[] =
+const allCases: (ITelemetryLoggerPropertyBag)[] =
     [{}, {allProp: 1}, {allGetter: () => 1}, {allProp: 1, allGetter: () => 1}];
-const errorCases: (ITelemetryLoggerProperty)[] =
+const errorCases: (ITelemetryLoggerPropertyBag)[] =
     [{}, {errorProp: 2}, {errorGetter: () => 2}, {errorProp: 2, errorGetter: () => 2}];
 
-const propertyCases: (ITelemetryLoggerProperties | undefined)[] =
-    allCases.reduce<ITelemetryLoggerProperties[]>(
+const propertyCases: (ITelemetryLoggerPropertyBags | undefined)[] =
+    allCases.reduce<ITelemetryLoggerPropertyBags[]>(
         (pv, all)=> {
             pv.push(... errorCases.map((error)=>({all, error})));
             return pv;

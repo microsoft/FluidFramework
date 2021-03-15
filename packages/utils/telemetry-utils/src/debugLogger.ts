@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
 import { debug as registerDebug, IDebugger } from "debug";
-import { TelemetryLogger, MultiSinkLogger, ChildLogger, ITelemetryLoggerProperties } from "./logger";
+import { TelemetryLogger, MultiSinkLogger, ChildLogger, ITelemetryLoggerPropertyBags } from "./logger";
 
 /**
  * Implementation of debug logger
@@ -63,7 +63,7 @@ export class DebugLogger extends TelemetryLogger {
     constructor(
         private readonly debug: IDebugger,
         private readonly debugErr: IDebugger,
-        properties?: ITelemetryLoggerProperties,
+        properties?: ITelemetryLoggerPropertyBags,
     ) {
         super(undefined, properties);
     }
