@@ -41,7 +41,7 @@ describe("Logger", () => {
                 const event = freshEvent();
                 TelemetryLogger.prepareErrorObject(event, new Error("boom"), false);
                 assert(event.error === "boom");
-                assert(typeof event.stack === "string");
+                assert((event.stack as string).includes("boom"));
             });
             it("containsPII (legacy) is ignored", () => {
                 // Previously, setting containsPII = true on an error obj would (attempt to) redact its message
@@ -71,7 +71,7 @@ describe("Logger", () => {
                 TelemetryLogger.prepareErrorObject(event, error, false);
                 assert.strictEqual(event.somePii, undefined, "somePii should not exist on props");
             });
-            it("getTelemetryProperties - tagged TelemetryDataTag.None/CodeArtifact are preserved", () => {
+            it("getTelemetryProperties - tagged TelemetryDataTag.None/PackageData are preserved", () => {
                 const event = freshEvent();
                 const error = createILoggingError({
                     boring: { value: "boring", tag: TelemetryDataTag.None },
@@ -98,13 +98,14 @@ describe("Logger", () => {
                 const event = freshEvent();
                 const error = new Error("boom");
                 TelemetryLogger.prepareErrorObject(event, error, false);
-                assert.strictEqual(typeof (event.stack), "string");
+                assert((event.stack as string).includes("boom"));
             });
             it("fetchStack true - Add a stack if missing", () => {
                 const event = freshEvent();
-                const error = { message: "I have no stack" };
+                const error = { message: "I have no stack - boom" };
                 TelemetryLogger.prepareErrorObject(event, error, true);
                 assert.strictEqual(typeof (event.stack), "string");
+                assert(!(event.stack as string).includes("boom"));
             });
         });
         describe("TaggedTelemetryData", () => {
