@@ -65,7 +65,7 @@ export function createR11sNetworkError(
             return new GenericNetworkError(errorMessage, true, statusCode);
         default:
             return createGenericNetworkError(
-                errorMessage, false, retryAfterSeconds, statusCode);
+                errorMessage, retryAfterSeconds !== undefined, retryAfterSeconds, statusCode);
     }
 }
 

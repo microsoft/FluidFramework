@@ -21,7 +21,7 @@ import {
     LocalCodeLoader,
     OpProcessingController,
 } from "@fluidframework/test-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 class TestDataObject extends DataObject {
     public static readonly type = "@fluid-example/test-dataObject";
@@ -43,16 +43,17 @@ describe("UpgradeManager (hot-swap)", () => {
         package: "localLoaderTestPackage",
         config: {},
     };
-    let driver: ITestDriver;
     let opProcessingController: OpProcessingController;
 
     async function createContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
+        const driver = getFluidTestDriver();
         const loader = new Loader({
             urlResolver: driver.createUrlResolver(),
             documentServiceFactory: driver.createDocumentServiceFactory(),
             codeLoader,
             options: { hotSwapContext: true },
+            logger: ChildLogger.create(getTestLogger(), undefined, {testDriverType: driver.type}),
         });
 
         return createAndAttachContainer(
@@ -61,18 +62,19 @@ describe("UpgradeManager (hot-swap)", () => {
 
     async function loadContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
+        const driver = getFluidTestDriver();
         const loader = new Loader({
             urlResolver: driver.createUrlResolver(),
             documentServiceFactory: driver.createDocumentServiceFactory(),
             codeLoader,
             options: { hotSwapContext: true },
+            logger: ChildLogger.create(getTestLogger(), undefined, {testDriverType: driver.type}),
         });
 
         return loader.resolve({ url: await driver.createContainerUrl(documentId) });
     }
 
     beforeEach(async () => {
-        driver = getFluidTestDriver() as unknown as ITestDriver;
         opProcessingController = new OpProcessingController();
     });
 
