@@ -245,12 +245,15 @@ export class CollabWindowTracker {
             return;
         }
 
+        // Filter out system messages.
+        if (isSystemMessage(message)) {
+            return;
+        }
+
         // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
         // update, which updates the MSN, then ack the update, etc...). Also, don't
         // count system messages in ops count.
-        if (message.type === MessageType.NoOp || isSystemMessage(message)) {
-            return;
-        }
+        assert(message.type !== MessageType.NoOp, "Don't acknowledge no-ops");
 
         if (this.lastNoopTime === undefined) {
             this.lastNoopTime = Date.now();
@@ -264,7 +267,6 @@ export class CollabWindowTracker {
         // operation. This allows the server to know our true reference sequence number and be able to
         // correctly update the minimum sequence number (MSN).
         if (this.opsCountSinceNoop >= this.NoopCountFrequency
-            && this.activeConnection()
             && Date.now() - this.lastNoopTime >= this.NoopTimeFrequency
         ) {
             this.stopSequenceNumberUpdate();
