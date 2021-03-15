@@ -252,7 +252,7 @@ export type ILoaderOptions = {
     // connection which is not sending any op. The end result is the "AND" of these 2 options. So the client
     // should hit the min time and count to send the noop.
     /**
-     * Set min time frequency with which noops would be sent in case of active connection which is not sending any op.
+     * Set min time(in ms) frequency with which noops would be sent in case of active connection which is not sending any op.
      */
     noopTimeFrequency?: number;
 
