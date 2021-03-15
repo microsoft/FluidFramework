@@ -7,36 +7,30 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import { AppView, IArrayish, IClient } from "@fluid-experimental/bubblebench-common";
-import { SharedTree } from "@fluid-experimental/tree";
+import { SharedOT } from "@fluid-experimental/ot";
+
 import React from "react";
 import ReactDOM from "react-dom";
-import { TreeObjectProxy } from "./proxy";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { AppView } from "@fluid-experimental/bubblebench-common";
 import { AppState } from "./state";
 
-interface IApp { clients: IArrayish<IClient>; }
-
 export class Bubblebench extends DataObject implements IFluidHTMLView {
-    public static get Name() { return "@fluid-experimental/bubblebench-sharedtree"; }
-    private maybeTree?: SharedTree = undefined;
+    public static get Name() { return "@fluid-experimental/bubblebench-ot"; }
+    private maybeTree?: SharedOT = undefined;
     private maybeAppState?: AppState = undefined;
     public get IFluidHTMLView() { return this; }
 
     protected async initializingFirstTime() {
-        const tree = this.maybeTree = SharedTree.create(this.runtime);
-
-        const p = TreeObjectProxy<IApp>(tree, tree.currentView.root, tree.applyEdit.bind(tree));
-        p.clients = [] as any;
-
+        const tree = this.maybeTree = SharedOT.create(this.runtime);
+        tree.replace([], tree.get(), { clients: [] });
         this.root.set("tree", this.maybeTree.handle);
     }
 
     protected async initializingFromExisting() {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.maybeTree = await this.root.get<IFluidHandle<SharedTree>>("tree")!.get();
+        this.maybeTree = await this.root.get<IFluidHandle<SharedOT>>("tree")!.get();
     }
 
     protected async hasInitialized() {
@@ -81,10 +75,9 @@ export class Bubblebench extends DataObject implements IFluidHTMLView {
  * The DataObjectFactory declares the Fluid object and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export const BubblebenchInstantiationFactory = new DataObjectFactory<Bubblebench, object, undefined, IEvent>(
+export const BubblebenchInstantiationFactory = new DataObjectFactory(
     Bubblebench.Name,
     Bubblebench,
-    [SharedTree.getFactory()],
+    [SharedOT.getFactory()],
     {},
 );
