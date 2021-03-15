@@ -35,6 +35,7 @@ module.exports = {
     },
     "plugins": [
         "@typescript-eslint",
+        "header",
         "no-null",
         "optimize-regex",
         "prefer-arrow",
@@ -143,6 +144,17 @@ module.exports = {
             {
                 "allowWholeFile": true
             }
+        ],
+
+        // eslint-plugin-header
+        //
+        // Note: While redundant with the broader header check in 'repo-policy-check', eslint enables early
+        //       detection during 'npm run build' and allows autofixing with both VS Code and 'npm run lint:fix'.
+        "header/header": [
+            "error",
+            "block",
+            "!\n * Copyright (c) Microsoft Corporation. All rights reserved.\n * Licensed under the MIT License.\n ",
+            /* newLines: */ 2, // '\n\n' = 1 blank line after block comment
         ],
 
         // eslint-plugin-import

@@ -67,6 +67,7 @@ module.exports = {
     },
     "plugins": [
         "@typescript-eslint",
+        "header",
         "no-null",
         // "optimize-regex",
         "prefer-arrow",
