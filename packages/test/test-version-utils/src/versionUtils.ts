@@ -7,7 +7,7 @@
 
 import { exec, execSync } from "child_process";
 import * as path from "path";
-import { existsSync, mkdirSync, rmdirSync, readdirSync } from "fs";
+import { existsSync, mkdirSync, rmdirSync, readdirSync, readFileSync, writeFileSync } from "fs";
 
 import { lock } from "proper-lockfile";
 import * as semver from "semver";
@@ -15,9 +15,72 @@ import { pkgVersion } from "./packageVersion";
 
 // Assuming this file is in dist\test, so go to ..\node_modules\.legacy as the install location
 const baseModulePath = path.join(__dirname, "..", "node_modules", ".legacy");
+const installedJsonPath = path.join(baseModulePath, "installed.json");
 const getModulePath = (version: string) => path.join(baseModulePath, version);
 
 const resolutionCache = new Map<string, string>();
+
+interface InstalledJson {
+    installed: string[],
+}
+
+async function ensureInstalledJson() {
+    if (existsSync(installedJsonPath)) { return; }
+    const release = await lock(__dirname, { retries: { forever: true } });
+    try {
+        // Check it again under the lock
+        if (existsSync(installedJsonPath)) { return; }
+        // Create the directory
+        mkdirSync(baseModulePath, { recursive: true });
+        const data: InstalledJson = { installed: [] };
+
+        writeFileSync(installedJsonPath, JSON.stringify(data, undefined, 2), { encoding: "utf8" });
+    } finally {
+        release();
+    }
+}
+
+function readInstalledJsonNoLock(): InstalledJson {
+    const data = readFileSync(installedJsonPath, { encoding: "utf8" });
+    return JSON.parse(data) as InstalledJson;
+}
+
+async function readInstalledJson(): Promise<InstalledJson> {
+    await ensureInstalledJson();
+    const release = await lock(installedJsonPath, { retries: { forever: true } });
+    try {
+        return readInstalledJsonNoLock();
+    } finally {
+        release();
+    }
+}
+
+const isInstalled = async (version: string) => (await readInstalledJson()).installed.includes(version);
+async function addInstalled(version: string) {
+    await ensureInstalledJson();
+    const release = await lock(installedJsonPath, { retries: { forever: true } });
+    try {
+        const installedJson = readInstalledJsonNoLock();
+        if (!installedJson.installed.includes(version)) {
+            installedJson.installed.push(version);
+            writeFileSync(installedJsonPath, JSON.stringify(installedJson, undefined, 2), { encoding: "utf8" });
+        }
+    } finally {
+        release();
+    }
+}
+
+async function removeInstalled(version: string) {
+    await ensureInstalledJson();
+    const release = await lock(installedJsonPath, { retries: { forever: true } });
+    try {
+        const installedJson = readInstalledJsonNoLock();
+        installedJson.installed = installedJson.installed.filter((value) => value !== version);
+        writeFileSync(installedJsonPath, JSON.stringify(installedJson, undefined, 2), { encoding: "utf8" });
+    } finally {
+        release();
+    }
+}
 
 function resolveVersion(requested: string, installed: boolean) {
     const cachedVersion = resolutionCache.get(requested);
@@ -60,26 +123,39 @@ function resolveVersion(requested: string, installed: boolean) {
     }
 }
 
+async function ensureModulePath(version: string, modulePath: string) {
+    const release = await lock(baseModulePath, { retries: { forever: true } });
+    try {
+        console.log(`Installing version ${version}`);
+        if (!existsSync(modulePath)) {
+            // Create the under the baseModulePath lock
+            mkdirSync(modulePath, { recursive: true });
+        }
+    } finally {
+        release();
+    }
+}
+
 export async function ensureInstalled(requested: string, packageList: string[], force: boolean) {
     const version = resolveVersion(requested, false);
-    let release = await lock(__dirname, { retries: { forever: true } });
+    const modulePath = getModulePath(version);
+
+    if (!force && await isInstalled(version)) {
+        return { version, modulePath };
+    }
+
+    await ensureModulePath(version, modulePath);
+
+    // Release the __dirname but lock the modulePath so we can do parallel installs
+    const release = await lock(modulePath, { retries: { forever: true } });
     try {
-        const modulePath = getModulePath(version);
-        if (!force && existsSync(modulePath)) {
-            // assume it is valid if it exists
-            return { version, modulePath };
+        if (force) {
+            // remove version from install.json under the modulePath lock
+            await removeInstalled(version);
         }
-        try {
-            console.log(`Installing version ${version}`);
 
-            // Create the directory
-            mkdirSync(modulePath, { recursive: true });
-
-            // Release the __dirname but lock the modulePath so we can do parallel installs
-            const release2 = await lock(modulePath, { retries: { forever: true } });
-            release();
-            release = release2;
-
+        // Check installed status again under lock the modulePath lock
+        if (force || !await isInstalled(version)) {
             // Install the packages
             await new Promise<void>((res, rej) =>
                 exec(`npm init --yes`, { cwd: modulePath }, (error, stdout, stderr) => {
@@ -101,13 +177,16 @@ export async function ensureInstalled(requested: string, packageList: string[], 
                     },
                 ),
             );
-        } catch (e) {
-            // rmdirSync recursive flags introduced in Node v12.10
-            // Remove the `as any` cast once node typing is updated.
-            try { (rmdirSync as any)(modulePath, { recursive: true }); } catch (ex) { }
-            throw new Error(`Unable to install version ${version}\n${e}`);
+
+            // add it to the install.json under the modulePath lock.
+            await addInstalled(version);
         }
         return { version, modulePath };
+    } catch (e) {
+        // rmdirSync recursive flags introduced in Node v12.10
+        // Remove the `as any` cast once node typing is updated.
+        try { (rmdirSync as any)(modulePath, { recursive: true }); } catch (ex) { }
+        throw new Error(`Unable to install version ${version}\n${e}`);
     } finally {
         release();
     }
