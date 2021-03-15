@@ -24,7 +24,7 @@ export class DebugLogger extends TelemetryLogger {
      */
     public static create(
         namespace: string,
-        properties?: ITelemetryProperties,
+        properties?: ITelemetryLoggerPropertyBags,
     ): TelemetryLogger {
         // Setup base logger upfront, such that host can disable it (if needed)
         const debug = registerDebug(namespace);
@@ -47,7 +47,7 @@ export class DebugLogger extends TelemetryLogger {
     public static mixinDebugLogger(
         namespace: string,
         baseLogger?: ITelemetryBaseLogger,
-        properties?: ITelemetryProperties,
+        properties?: ITelemetryLoggerPropertyBags,
     ): TelemetryLogger {
         if (!baseLogger) {
             return DebugLogger.create(namespace, properties);
