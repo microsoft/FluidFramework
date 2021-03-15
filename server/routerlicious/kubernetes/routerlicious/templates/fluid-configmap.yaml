@@ -22,6 +22,7 @@ data:
         "mongo": {
             "endpoint": "{{ .Values.mongodb.url }}",
             "expireAfterSeconds": "{{ .Values.mongodb.expireAfterSeconds }}",
+            "createSortIndexes": "{{ .Values.mongodb.createSortIndexes }}",
             "collectionNames": {
                 "deltas": "deltas",
                 "documents": "documents",

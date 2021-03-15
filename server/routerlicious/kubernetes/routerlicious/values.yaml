@@ -68,6 +68,7 @@ zookeeper:
 mongodb:
   url: mongodb_url
   expireAfterSeconds: -1
+  createSortIndexes: false
 
 rabbitmq:
   connectionString: ""
