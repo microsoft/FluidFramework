@@ -87,6 +87,7 @@ function getSimpleVersion(file_version, arg_build_num, arg_release, patch) {
 
 function main() {
     let arg_build_num;
+    let arg_test_build = false;
     let arg_patch = false;
     let arg_release = false;
     let file_version;
@@ -94,6 +95,10 @@ function main() {
     for (let i = 2; i < process.argv.length; i++) {
         if (process.argv[i] === "--build") {
             arg_build_num = process.argv[++i];
+            continue;
+        }
+        if (process.argv[i] === "--testBuild") {
+            arg_test_build = true;
             continue;
         }
         if (process.argv[i] === "--release") {
@@ -122,6 +127,10 @@ function main() {
             console.error("ERROR: Missing VERSION_BUILDNUMBER environment variable");
             process.exit(3);
         }
+    }
+
+    if (!arg_test_build) {
+        arg_build_num = (process.env["TEST_BUILD"] === "true");
     }
 
     if (!arg_patch) {
@@ -157,7 +166,10 @@ function main() {
     }
 
     // Generate and print the version to console
-    const version = getSimpleVersion(file_version, arg_build_num, arg_release, arg_patch);
+    let version = getSimpleVersion(file_version, arg_build_num, arg_release, arg_patch);
+    if (arg_test_build) {
+        version += "-test";
+    }
     console.log(`version=${version}`);
     console.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
     if (arg_release) {
