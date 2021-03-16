@@ -71,7 +71,6 @@ export interface IContainerRuntimeBase extends
     IEventProvider<IContainerRuntimeBaseEvents>,
     IProvideFluidHandleContext
 {
-
     readonly logger: ITelemetryLogger;
     readonly clientDetails: IClientDetails;
 
@@ -137,6 +136,14 @@ export interface IContainerRuntimeBase extends
      * Returns the current audience.
      */
     getAudience(): IAudience;
+
+    /**
+     * Returns the number of messages currently pending acknowledgement from the service.
+     *
+     * Clients that produces high volumes of messages should check this count periodically
+     * and reduce production if the service/network is falling behind.
+     */
+    pendingMessageCount: number;
 }
 
 /**

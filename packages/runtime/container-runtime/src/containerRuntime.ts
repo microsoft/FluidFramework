@@ -1094,7 +1094,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
                 // If there are no more pending messages after processing a local message,
                 // the document is no longer dirty.
-                if (!this.pendingStateManager.hasPendingMessages()) {
+                if (this.pendingStateManager.pendingMessageCount === 0) {
                     this.updateDocumentDirtyState(false);
                 }
             }
@@ -1199,6 +1199,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.needsFlush = false;
         return this.deltaSender.flush();
     }
+
+    public get pendingMessageCount() { return this.pendingStateManager.pendingMessageCount; }
 
     public orderSequentially(callback: () => void): void {
         // If flush mode is already manual we are either

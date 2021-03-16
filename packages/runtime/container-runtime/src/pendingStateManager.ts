@@ -57,7 +57,7 @@ export class PendingStateManager {
     private readonly pendingStates = new Deque<IPendingState>();
 
     // Maintains the count of messages that are currently unacked.
-    private pendingMessagesCount: number = 0;
+    private _pendingMessagesCount: number = 0;
 
     // Indicates whether we are processing a batch.
     private isProcessingBatch: boolean = false;
@@ -73,11 +73,10 @@ export class PendingStateManager {
     }
 
     /**
-     * Called to check if there are any pending messages in the pending state queue.
-     * @returns A boolean indicating whether there are messages or not.
+     * Returns the number of pending messages in the pending state queue.
      */
-    public hasPendingMessages(): boolean {
-        return this.pendingMessagesCount !== 0;
+    public get pendingMessageCount(): number {
+        return this._pendingMessagesCount;
     }
 
     constructor(private readonly containerRuntime: ContainerRuntime) { }
@@ -108,7 +107,7 @@ export class PendingStateManager {
 
         this.pendingStates.push(pendingMessage);
 
-        this.pendingMessagesCount++;
+        this._pendingMessagesCount++;
     }
 
     /**
@@ -197,7 +196,7 @@ export class PendingStateManager {
             return;
         }
 
-        this.pendingMessagesCount--;
+        this._pendingMessagesCount--;
 
         // Post-processing part - If we are processing a batch then this could be the last message in the batch.
         if (this.isProcessingBatch) {
@@ -301,7 +300,7 @@ export class PendingStateManager {
         }
 
         // Reset the pending message count because all these messages will be removed from the queue.
-        this.pendingMessagesCount = 0;
+        this._pendingMessagesCount = 0;
 
         // Save the current FlushMode so that we can revert it back after replaying the states.
         const savedFlushMode = this.containerRuntime.flushMode;
