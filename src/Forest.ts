@@ -131,9 +131,10 @@ export interface Forest<ID, T, TParentData> {
  * @typeParam TParentData - Data about the child to parent relation ship between two nodes in the forest
  */
 export function createForest<ID, T, TParentData>(
-	getChildren: (_: T) => Iterable<[ID, TParentData]>
+	getChildren: (_: T) => Iterable<[ID, TParentData]>,
+	comparison: (a: ID, b: ID) => number
 ): Forest<ID, T, TParentData> {
-	return new ForestI(getChildren);
+	return new ForestI(getChildren, comparison);
 }
 
 interface ForestState<ID, T, TParentData> {
@@ -168,14 +169,26 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 	 * Caller must ensure provided BTrees are not modified.
 	 * Will not modify the BTrees.
 	 */
-	public constructor(data: ForestState<ID, T, TParentData> | ((_: T) => Iterable<[ID, TParentData]>)) {
+	public constructor(data: ForestState<ID, T, TParentData>);
+
+	/**
+	 * Construct a new forest without reusing nodes from a previous one.
+	 */
+
+	public constructor(getChildren: (_: T) => Iterable<[ID, TParentData]>, comparison: (a: ID, b: ID) => number);
+
+	public constructor(
+		data: ForestState<ID, T, TParentData> | ((_: T) => Iterable<[ID, TParentData]>),
+		comparison?: (a: ID, b: ID) => number
+	) {
 		if (typeof data === 'object') {
 			this.nodes = data.nodes;
 			this.parents = data.parents;
 			this.getChildren = data.getChildren;
 		} else {
-			this.nodes = new BTree();
-			this.parents = new BTree();
+			assert(comparison !== undefined);
+			this.nodes = new BTree(undefined, comparison);
+			this.parents = new BTree(undefined, comparison);
 			this.getChildren = data;
 		}
 	}

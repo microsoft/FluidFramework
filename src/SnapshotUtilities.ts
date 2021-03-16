@@ -110,3 +110,14 @@ function makeTraits(
 
 	return traitMap;
 }
+
+/**
+ * Compares finite numbers to form a strict partial ordering.
+ *
+ * Handles +/-0 like Map: -0 is equal to +0.
+ *
+ * Once https://github.com/qwertie/btree-typescript/pull/15 is merged, we can use the version of this function from it.
+ */
+export function compareFiniteNumbers(a, b): number {
+	return a - b;
+}

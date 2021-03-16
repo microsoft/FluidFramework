@@ -8,6 +8,7 @@ import { IsoBuffer } from '@fluidframework/common-utils';
 import { assert, assertNotUndefined, compareArrays, fail } from './Common';
 import { Edit, EditWithoutId } from './PersistedTypes';
 import { EditId } from './Identifiers';
+import { compareFiniteNumbers } from './SnapshotUtilities';
 
 /**
  * An ordered set of Edits associated with a SharedTree.
@@ -170,7 +171,7 @@ export class EditLog implements OrderedEditSet {
 	public constructor(summary: EditLogSummary = { editIds: [], editChunks: [] }) {
 		const { editChunks, editIds } = summary;
 
-		this.editChunks = new BTree<number, EditChunk>();
+		this.editChunks = new BTree<number, EditChunk>(undefined, compareFiniteNumbers);
 
 		editChunks.forEach((editChunkOrHandle) => {
 			const { key, chunk } = editChunkOrHandle;

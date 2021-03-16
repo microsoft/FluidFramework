@@ -73,6 +73,14 @@ function* getSnapshotNodeChildren(
 }
 
 /**
+ * Compares strings lexically to form a strict partial ordering.
+ * Once https://github.com/qwertie/btree-typescript/pull/15 is merged, we can use the version of this function from it.
+ */
+function compareStrings(a: string, b: string): number {
+	return a > b ? 1 : a === b ? 0 : -1;
+}
+
+/**
  * An immutable view of a distributed tree.
  * @public
  */
@@ -105,7 +113,10 @@ export class Snapshot {
 		}
 
 		const map = new Map<NodeId, SnapshotNode>();
-		return new Snapshot(insertNodeRecursive(root, map), createForest(getSnapshotNodeChildren).addAll(map));
+		return new Snapshot(
+			insertNodeRecursive(root, map),
+			createForest(getSnapshotNodeChildren, compareStrings).addAll(map)
+		);
 	}
 
 	private constructor(root: NodeId, forest: Forest) {

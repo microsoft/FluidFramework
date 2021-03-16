@@ -6,9 +6,13 @@
 import { expect } from 'chai';
 import { compareArrays, fail } from '../Common';
 import { createForest } from '../Forest';
+import { compareFiniteNumbers } from '../SnapshotUtilities';
 
 describe('Forest', () => {
-	const emptyForest = createForest<number, number[], number>((a) => a.map((child, index) => [child, index]));
+	const emptyForest = createForest<number, number[], number>(
+		(a) => a.map((child, index) => [child, index]),
+		compareFiniteNumbers
+	);
 	const root = 1;
 	const leaf = 0;
 	const oneNode = emptyForest.add(leaf, []);

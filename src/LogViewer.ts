@@ -13,6 +13,7 @@ import { Edit, EditResult } from './PersistedTypes';
 import { EditId } from './Identifiers';
 import { EditingResult, Transaction } from './Transaction';
 import { initialTree } from './InitialTree';
+import { compareFiniteNumbers } from './SnapshotUtilities';
 
 /**
  * Callback for when an edit is applied (meaning the result of applying it to a particular snapshot is computed).
@@ -96,7 +97,7 @@ export class CachingLogViewer implements LogViewer {
 	 * Only contains revision snapshots for sequenced revisions.
 	 * See `getSnapshot` for details.
 	 */
-	private readonly sequencedSnapshotCache = new BTree<number, Snapshot>();
+	private readonly sequencedSnapshotCache = new BTree<number, Snapshot>(undefined, compareFiniteNumbers);
 
 	/**
 	 * A cache for local snapshots.
