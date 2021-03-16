@@ -498,7 +498,7 @@ export class DeliLambda implements IPartitionLambda {
         if (message.clientId) {
             return isServiceMessageType(message.operation.type);
         } else {
-            return true;
+            return false;
         }
     }
 
