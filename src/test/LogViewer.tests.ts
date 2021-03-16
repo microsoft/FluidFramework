@@ -80,12 +80,15 @@ function runLogViewerCorrectnessTests(viewerCreator: (log: EditLog, baseTree?: C
 			expect(fullTreeSnapshot.equals(simpleTreeSnapshot)).to.be.true;
 		});
 
-		it('can set snapshots', () => {
+		it('can set snapshots', async () => {
 			const snapshots = getSnapshotsForLog(log, initialSimpleTree);
 			const viewer = viewerCreator(log, initialSimpleTree);
 			for (let i = log.length; i >= 0; i--) {
 				const snapshot = snapshots[i];
-				viewer.setKnownRevision(i, snapshot);
+				// TODO:#52815: The expensive validation pattern currently causes `setKnownRevision` to asynchronously complete, even though the
+				// `LogViewer` interface doesn't specify this.
+				// eslint-disable-next-line @typescript-eslint/await-thenable
+				await viewer.setKnownRevision(i, snapshot);
 				expect(viewer.getSnapshotInSession(i).equals(snapshot)).to.be.true;
 			}
 		});
