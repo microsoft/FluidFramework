@@ -36,7 +36,6 @@ trigger:
   branches:
     include:
     - main
-    - test/*
   paths:
     include:
     - server/historian
