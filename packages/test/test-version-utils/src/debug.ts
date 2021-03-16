@@ -6,5 +6,5 @@
 import registerDebug from "debug";
 import { pkgName, pkgVersion } from "./packageVersion";
 
-export const debug = registerDebug("fluid:test-e2e");
+export const debug = registerDebug("fluid:test-version-utils");
 debug(`Package: ${pkgName} - Version: ${pkgVersion}`);
