@@ -6,7 +6,6 @@
 import { EventEmitter } from "events";
 import { getContainer, IGetContainerService } from "@fluid-experimental/get-container";
 import { DataObject } from "@fluidframework/aqueduct";
-import { IAudience } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
 import {
@@ -44,8 +43,10 @@ export interface ContainerCreateConfig extends ContainerConfig {
 export class FluidContainer extends EventEmitter {
     private readonly types: Set<string>;
 
+    public readonly container: Container;
+
     public constructor(
-        private readonly container: Container, // we anticipate using this later, e.g. for Audience
+        readonly incomingContainer: Container, // we anticipate using this later, e.g. for Audience
         namedRegistryEntries: NamedFluidDataStoreRegistryEntry[],
         private readonly rootDataObject: RootDataObject,
         public readonly createNew: boolean) {
@@ -58,7 +59,7 @@ export class FluidContainer extends EventEmitter {
             }
             this.types.add(type);
         });
-        this.audience = container.audience;
+        this.container = incomingContainer;
     }
 
     public async createDataObject<T extends DataObject>(
@@ -74,12 +75,6 @@ export class FluidContainer extends EventEmitter {
 
         return this.rootDataObject.createDataObject<T>(dataObjectClass, id);
     }
-
-    public getId() {
-        return this.container.clientId;
-    }
-
-    public readonly audience: IAudience;
 
     public async getDataObject<T extends DataObject>(id: string) {
         return this.rootDataObject.getDataObject<T>(id);

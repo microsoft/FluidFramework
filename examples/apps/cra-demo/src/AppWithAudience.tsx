@@ -20,60 +20,69 @@ const getContainerId = (): { containerId: string; isNew: boolean } => {
 
 
 
+
+
 function App() {
 
     const [dataObject, setDataObject] = React.useState<KeyValueDataObject>();
     const [container, setContainer] = React.useState<FluidContainer>();
     const [data, setData] = React.useState<{ [key: string]: any }>({});
 
+    const createSession = () => {
+        const service = new TinyliciousService();
+        Fluid.init(service);
+
+        const dataObjectId = "dateTracker";
+
+        const containerConfig = {
+            dataObjects: [KeyValueDataObject],
+            initialDataObjects: { [dataObjectId]: KeyValueDataObject }
+        };
+
+        const { containerId, isNew } = getContainerId();
+
+        const load = async () => {
+            const fluidContainer = isNew
+                ? await Fluid.createContainer(containerId, containerConfig)
+                : await Fluid.getContainer(containerId, containerConfig);
+
+            const keyValueDataObject = await fluidContainer.getDataObject<KeyValueDataObject>(dataObjectId)
+
+            setContainer(fluidContainer);
+            setDataObject(keyValueDataObject);
+        }
+
+        load();
+    }
+
+    const setupListeners = () => {
+        const updateData = () => setData(dataObject?.query());
+        updateData();
+        dataObject?.on("changed", updateData);
+        container?.container.audience.on("addMember", updateData)
+        container?.container.audience.on("removeMember", updateData)
+        return () => {
+            dataObject?.off("change", updateData)
+            container?.container.audience.off("addMember", updateData)
+            container?.container.audience.off("removeMember", updateData)
+        }
+    }
+
     React.useEffect(() => {
-        if (!dataObject) {
-            const service = new TinyliciousService();
-            Fluid.init(service);
-
-            const dataObjectId = "dateTracker";
-
-            const containerConfig = {
-                dataObjects: [KeyValueDataObject],
-                initialDataObjects: { [dataObjectId]: KeyValueDataObject }
-            };
-
-            const { containerId, isNew } = getContainerId();
-
-            const load = async () => {
-                const fluidContainer = isNew
-                    ? await Fluid.createContainer(containerId, containerConfig)
-                    : await Fluid.getContainer(containerId, containerConfig);
-
-                const keyValueDataObject = await fluidContainer.getDataObject<KeyValueDataObject>(dataObjectId)
-
-                setContainer(fluidContainer);
-                setDataObject(keyValueDataObject);
-            }
-
-            load();
-        } else if (container !== undefined) {
-            const updateData = () => setData(dataObject.query());
-            updateData();
-            dataObject.on("changed", updateData);
-            container.audience.on("addMember", updateData)
-            container.audience.on("removeMember", updateData)
-            return () => {
-                dataObject.off("change", updateData)
-                container.audience.off("addMember", updateData)
-                container.audience.off("removeMember", updateData)
-
-            }
+        if (!container) {
+            createSession();
+        } else {
+            setupListeners();
         }
     }, [dataObject]);
 
 
     if (!dataObject || !container) return <div />;
 
-    const myId = container.getId();
+    const id = container?.container.clientId;
 
     const MemberList = () => {
-        const members: string[] = Array.from(container.audience.getMembers().keys());
+        const members: string[] = Array.from(container.container.audience.getMembers().keys());
 
         return (
             <ul>
@@ -88,11 +97,11 @@ function App() {
 
     return (
         <div className="App">
-            Name <input type="text" autoComplete="off" onChange={(e) => myId && dataObject.set(myId, e.target.value)} />
+            Name <input value={id ? dataObject.get(id) : ''} type="text" autoComplete="off" onChange={(e) => id && dataObject.set(id, e.target.value)} />
             <div>
                 <button onClick={() => {
                     dataObject.set("time", Date.now().toString())
-                    dataObject.set("lastEdit", myId)
+                    dataObject.set("lastEdit", id)
                 }}>
                     click
             </button>
