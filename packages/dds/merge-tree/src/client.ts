@@ -10,6 +10,7 @@ import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Trace } from "@fluidframework/common-utils";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
@@ -542,22 +543,24 @@ export class Client {
             }
 
             if (invalidPositions.length > 0) {
-                this.logger.sendErrorEvent({
-                    currentSeq: this.getCurrentSeq(),
-                    end,
-                    eventName: "InvalidOpRange",
-                    invalidPositions: invalidPositions.toString(),
-                    length,
-                    opPos1: op.pos1,
-                    opPos1Relative: op.relativePos1 !== undefined,
-                    opPos2: op.pos2,
-                    opPos2Relative: op.relativePos2 !== undefined,
-                    opRefSeq: clientArgs.referenceSequenceNumber,
-                    opSeq: clientArgs.sequenceNumber,
-                    opType: op.type,
-                    start,
-                });
-                return undefined;
+                throw new LoggingError(
+                    "RangeOutOfBounds",
+                    {
+                        UsageError: true,
+                        currentSeq: this.getCurrentSeq(),
+                        end,
+                        invalidPositions: invalidPositions.toString(),
+                        length,
+                        opPos1: op.pos1,
+                        opPos1Relative: op.relativePos1 !== undefined,
+                        opPos2: op.pos2,
+                        opPos2Relative: op.relativePos2 !== undefined,
+                        opRefSeq: clientArgs.referenceSequenceNumber,
+                        opSeq: clientArgs.sequenceNumber,
+                        opType: op.type,
+                        start,
+                    },
+                );
             }
         }
 
