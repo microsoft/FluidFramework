@@ -18,6 +18,7 @@ steps:
   env:
     VERSION_RELEASE: $(release)
     VERSION_BUILDNUMBER: $(Build.BuildNumber)
+    TEST_BUILD: $(testBuild)
     VERSION_PATCH: ${{ parameters.buildNumberInPatch }}
     VERSION_TAGNAME: ${{ parameters.tagName }}
   inputs:
@@ -27,6 +28,7 @@ steps:
       # expect lerna.json and package.json be in the current working directory
 
       echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
+      echo TEST_BUILD=$TEST_BUILD
       echo VERSION_RELEASE=$VERSION_RELEASE
       echo VERSION_PATCH=$VERSION_PATCH
 

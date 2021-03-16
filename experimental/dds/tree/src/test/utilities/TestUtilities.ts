@@ -153,7 +153,7 @@ export interface ITestContainerConfig {
 /** Objects returned by setUpLocalServerTestSharedTree */
 export interface LocalServerSharedTreeTestingComponents {
 	/** The LocalTestObjectProvider created if one was not set in the options. */
-	localTestObjectProvider: TestObjectProvider<ITestContainerConfig>;
+	localTestObjectProvider: TestObjectProvider;
 	/** The SharedTree created and set up. */
 	tree: SharedTree;
 }
@@ -169,7 +169,7 @@ export interface LocalServerSharedTreeTestingOptions {
 	/** Node to initialize the SharedTree with. */
 	initialTree?: ChangeNode;
 	/** If set, uses the provider to create the container and create the SharedTree. */
-	localTestObjectProvider?: TestObjectProvider<ITestContainerConfig>;
+	localTestObjectProvider?: TestObjectProvider;
 	/**
 	 * If not set, full history will be preserved.
 	 */
@@ -196,7 +196,7 @@ export async function setUpLocalServerTestSharedTree(
 			initialSummarizerDelayMs: 0,
 		});
 
-	let provider: TestObjectProvider<ITestContainerConfig>;
+	let provider: TestObjectProvider;
 	let container: IContainer;
 
 	if (localTestObjectProvider !== undefined) {

@@ -26,8 +26,8 @@
             "name": "kafka-node",
             "endpoint": "kafka:9092",
             "producerPollIntervalMs": 10,
-            "numberOfPartitions": 32,
-            "replicationFactor": 3
+            "numberOfPartitions": 8,
+            "replicationFactor": 1
         }
     },
     "zookeeper": {

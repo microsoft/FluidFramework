@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import { IContextErrorData } from "@fluidframework/server-services-core";
 import type * as kafkaTypes from "node-rdkafka";
 import { tryImportNodeRdkafka } from "./tryImport";
 
@@ -89,5 +90,13 @@ export abstract class RdkafkaBase extends EventEmitter {
 				}
 			});
 		});
+	}
+
+	protected error(error: any, restartOnError: boolean = false) {
+		const errorData: IContextErrorData = {
+			restart: restartOnError,
+		};
+
+		this.emit("error", error, errorData);
 	}
 }
