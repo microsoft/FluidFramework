@@ -4,28 +4,19 @@
  */
 
 import { strict as assert } from "assert";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { TextSegment } from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createAndAttachContainer, createLocalLoader } from "@fluidframework/test-utils";
-import { FlowDocument } from "../src/document";
-import { SegmentSpan } from "../src/document/segmentspan";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { describeLoaderCompat } from "@fluidframework/test-version-utils";
+import { FlowDocument } from "../document";
+import { SegmentSpan } from "../document/segmentspan";
 
-describe("SegmentSpan", () => {
-    const documentUrl = "fluid-test://localhost/segmentSpanTest";
-    const codeDetails = {
-        package: "segmentSpanTestPkg",
-        config: {},
-    };
-
+describeLoaderCompat("SegmentSpan", (getTestObjectProvider: () => ITestObjectProvider) => {
     let doc: FlowDocument;
-
+    let provider: ITestObjectProvider;
     before(async () => {
-        const deltaConnectionServer = LocalDeltaConnectionServer.create();
-        const urlResolver = new LocalResolver();
-        const loader = createLocalLoader([[codeDetails, FlowDocument.getFactory()]], deltaConnectionServer, urlResolver);
-        const container = await createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentUrl));
+        provider = getTestObjectProvider();
+        const container = await provider.createContainer(FlowDocument.getFactory());
         doc = await requestFluidObject<FlowDocument>(container, "default");
     });
 

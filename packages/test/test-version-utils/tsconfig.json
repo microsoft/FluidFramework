@@ -4,10 +4,12 @@
         "src/test/**/*"
     ],
     "compilerOptions": {
-        "composite": true,
-        "strictNullChecks": false,
         "rootDir": "./src",
-        "outDir": "./dist"
+        "outDir": "./dist",
+        "composite": true,
+        "types": [
+            "mocha"
+        ],
     },
     "include": [
         "src/**/*"
