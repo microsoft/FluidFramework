@@ -8,5 +8,9 @@
 const packageDir = `${__dirname}/../..`;
 
 const getFluidTestMochaConfig = require("@fluidframework/mocha-test-setup/mocharc-common.js");
-const config = getFluidTestMochaConfig(packageDir, [ "ignore-styles" ]);
+const config = getFluidTestMochaConfig(packageDir,
+    [
+        `${moduleDir}/@fluidframework/test-version-utils`,
+        "ignore-styles",
+    ]);
 module.exports = config;
