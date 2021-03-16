@@ -547,7 +547,6 @@ export class Client {
                     "RangeOutOfBounds",
                     {
                         UsageError: true,
-                        currentSeq: this.getCurrentSeq(),
                         end,
                         invalidPositions: invalidPositions.toString(),
                         length,
@@ -555,8 +554,6 @@ export class Client {
                         opPos1Relative: op.relativePos1 !== undefined,
                         opPos2: op.pos2,
                         opPos2Relative: op.relativePos2 !== undefined,
-                        opRefSeq: clientArgs.referenceSequenceNumber,
-                        opSeq: clientArgs.sequenceNumber,
                         opType: op.type,
                         start,
                     },
