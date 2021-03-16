@@ -39,7 +39,7 @@ export function createLoader(
         urlResolver,
         documentServiceFactory,
         codeLoader,
-        logger: ChildLogger.create(logger, undefined, {driverType: driver?.type}),
+        logger: ChildLogger.create(logger, undefined, {all:{driverType: driver?.type}}),
         options,
     });
 }

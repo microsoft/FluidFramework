@@ -71,7 +71,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             urlResolver,
             documentServiceFactory,
             codeLoader,
-            logger: ChildLogger.create(getTestLogger(), undefined, {testDriverType: driver.type}),
+            logger: ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}}),
         });
         loaderContainerTracker.add(testLoader);
         return testLoader;
