@@ -60,7 +60,9 @@ function App() {
             container.audience.on("removeMember", updateData)
             return () => {
                 dataObject.off("change", updateData)
-                container.audience.off("addMember" || "removeMember", updateData)
+                container.audience.off("addMember", updateData)
+                container.audience.off("removeMember", updateData)
+
             }
         }
     }, [dataObject]);
