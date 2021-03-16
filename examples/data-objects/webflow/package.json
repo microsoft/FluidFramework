@@ -35,7 +35,7 @@
     "start:tinylicious": "webpack-dev-server --config webpack.config.js --package package.json --env.mode tinylicious",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml --exit",
-    "test:mocha": "mocha --config src/test/.mocharc.js -r ignore-styles dist/test/**/*.spec.js",
+    "test:mocha": "mocha --config src/test/.mocharc.js dist/test/**/*.spec.js",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
