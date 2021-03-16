@@ -66,6 +66,7 @@ export class ContainerContext implements IContainerContext {
         version: string,
         previousRuntimeState: IRuntimeState,
         updateDirtyContainerState: (dirty: boolean) => void,
+        pendingLocalState?: unknown,
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
             container,
@@ -83,7 +84,8 @@ export class ContainerContext implements IContainerContext {
             closeFn,
             version,
             previousRuntimeState,
-            updateDirtyContainerState);
+            updateDirtyContainerState,
+            pendingLocalState);
         await context.load();
         return context;
     }
@@ -191,6 +193,7 @@ export class ContainerContext implements IContainerContext {
         public readonly version: string,
         public readonly previousRuntimeState: IRuntimeState,
         public readonly updateDirtyContainerState: (dirty: boolean) => void,
+        public readonly pendingLocalState?: unknown,
 
     ) {
         this.logger = container.subLogger;
@@ -270,6 +273,10 @@ export class ContainerContext implements IContainerContext {
 
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
         return this.container.getAbsoluteUrl(relativeUrl);
+    }
+
+    public getPendingLocalState(): unknown {
+        return this.runtime.getPendingLocalState();
     }
 
     /**

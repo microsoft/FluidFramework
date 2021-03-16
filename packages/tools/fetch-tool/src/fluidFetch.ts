@@ -106,9 +106,12 @@ fluidFetchMain()
         if (error instanceof Error) {
             let extraMsg = "";
             for (const key of Object.keys(error)) {
-                if (key !== "message" && key !== "stack") {
-                    extraMsg += `\n${key}: ${JSON.stringify(error[key], undefined, 2)}`;
-                }
+                // error[key] might have circular structure
+                try {
+                    if (key !== "message" && key !== "stack") {
+                        extraMsg += `\n${key}: ${JSON.stringify(error[key], undefined, 2)}`;
+                    }
+                } catch (_) {}
             }
             console.error(`ERROR: ${error.stack}${extraMsg}`);
         } else if (typeof error === "object") {

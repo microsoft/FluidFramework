@@ -20,7 +20,6 @@ import {
     createLoader,
     createDocumentId,
 } from "@fluidframework/test-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 const counterKey = "count";
 
@@ -87,11 +86,6 @@ const testDataObjectFactory = new DataObjectFactory(
 );
 
 describe("LocalLoader", () => {
-    let driver: ITestDriver;
-    before(()=>{
-        driver = getFluidTestDriver() as unknown as ITestDriver;
-    });
-
     const codeDetails: IFluidCodeDetails = {
         package: "localLoaderTestPackage",
         config: {},
@@ -100,6 +94,7 @@ describe("LocalLoader", () => {
     let opProcessingController: OpProcessingController;
 
     async function createContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
+        const driver = getFluidTestDriver();
         const loader = createLoader(
             [[codeDetails, factory]],
             driver.createDocumentServiceFactory(),
@@ -109,6 +104,7 @@ describe("LocalLoader", () => {
     }
 
     async function loadContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
+        const driver = getFluidTestDriver();
         const loader = createLoader(
             [[codeDetails, factory]],
             driver.createDocumentServiceFactory(),

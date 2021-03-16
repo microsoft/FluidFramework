@@ -68,8 +68,8 @@ export class WebWorkerLoader implements IHostLoader, IFluidRunnable, IFluidRoute
         return this.proxy.stop(reason);
     }
 
-    public async resolve(request: IRequest): Promise<IContainer> {
-        return this.proxy.resolve(request);
+    public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
+        return this.proxy.resolve(request, pendingLocalState);
     }
 
     public async createDetachedContainer(source: IFluidCodeDetails): Promise<IContainer> {

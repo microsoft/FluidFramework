@@ -219,6 +219,8 @@ export interface IFluidDataStoreChannel extends
      * @param localOpMetadata - The local metadata associated with the original message.
      */
     reSubmit(type: string, content: any, localOpMetadata: unknown);
+
+    applyStashedOp(content: any): Promise<unknown>;
 }
 
 export type CreateChildSummarizerNodeFn = (

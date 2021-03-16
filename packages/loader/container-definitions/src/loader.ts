@@ -145,6 +145,12 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     close(error?: ICriticalContainerError): void;
 
     /**
+     * Closes the container and returns serialized local state intended to be
+     * given to a newly loaded container
+     */
+    closeAndGetPendingLocalState(): string;
+
+    /**
      * Propose new code details that define the code to be loaded
      * for this container's runtime. The returned promise will
      * be true when the proposal is accepted, and false if
@@ -191,7 +197,7 @@ export interface ILoader extends IFluidRouter {
      * An analogy for this is resolve is a DNS resolve of a Fluid container. Request then executes
      * a request against the server found from the resolve step.
      */
-    resolve(request: IRequest): Promise<IContainer>;
+    resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
 }
 
 /**
@@ -241,6 +247,20 @@ export type ILoaderOptions = {
      * Defaults to false.
      */
     provideScopeLoader?: boolean;
+
+    // Below two are the options based on which we decide how often client needs to send noops in case of active
+    // connection which is not sending any op. The end result is the "AND" of these 2 options. So the client
+    // should hit the min time and count to send the noop.
+    /**
+     * Set min time(in ms) frequency with which noops would be sent in case of active connection which is
+     * not sending any op.
+     */
+    noopTimeFrequency?: number;
+
+    /**
+     * Set min op frequency with which noops would be sent in case of active connection which is not sending any op.
+     */
+    noopCountFrequency?: number;
 };
 
 /**
@@ -292,4 +312,9 @@ declare module "@fluidframework/core-interfaces" {
 
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideLoader>> { }
+}
+
+export interface IPendingLocalState {
+    url: string;
+    pendingRuntimeState: unknown;
 }
