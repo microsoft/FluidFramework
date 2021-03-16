@@ -12,7 +12,12 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions";
-import { MockContainerRuntime, MockContainerRuntimeFactory, MockDeltaManager, MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import {
+    MockContainerRuntime,
+    MockContainerRuntimeFactory,
+    MockDeltaManager,
+    MockFluidDataStoreRuntime,
+} from "@fluidframework/test-runtime-utils";
 import { ContainerMessageType, ScheduleManager } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
 
