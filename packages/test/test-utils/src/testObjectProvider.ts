@@ -9,6 +9,7 @@ import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { LoaderContainerTracker } from "./loaderContainerTracker";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
@@ -82,6 +83,7 @@ export class TestObjectProvider<TestContainerConfigType> {
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
+            logger:ChildLogger.create(getTestLogger?.(), undefined, {all:{driverType: this.driver.type}}),
         });
     }
 

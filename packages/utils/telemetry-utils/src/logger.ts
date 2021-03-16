@@ -15,12 +15,12 @@ import {
 } from "@fluidframework/common-definitions";
 import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
 
-export interface ITelemetryLoggerProperty {
+export interface ITelemetryLoggerPropertyBag {
     [index: string]: TelemetryEventPropertyType | (() => TelemetryEventPropertyType);
 }
-export interface ITelemetryLoggerProperties{
-    all?: ITelemetryLoggerProperty,
-    error?: ITelemetryLoggerProperty,
+export interface ITelemetryLoggerPropertyBags{
+    all?: ITelemetryLoggerPropertyBag,
+    error?: ITelemetryLoggerPropertyBag,
 }
 
 /**
@@ -105,7 +105,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
     public constructor(
         protected readonly namespace?: string,
-        protected readonly properties?: ITelemetryLoggerProperties) {
+        protected readonly properties?: ITelemetryLoggerPropertyBags) {
     }
 
     /**
@@ -222,7 +222,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
         }
         if(this.properties) {
-            const properties: (undefined | ITelemetryLoggerProperty)[] = [];
+            const properties: (undefined | ITelemetryLoggerPropertyBag)[] = [];
             properties.push(this.properties.all);
             if(includeErrorProps) {
                 properties.push(this.properties.error);
@@ -264,11 +264,11 @@ export class ChildLogger extends TelemetryLogger {
     public static create(
         baseLogger?: ITelemetryBaseLogger,
         namespace?: string,
-        properties?: ITelemetryLoggerProperties): TelemetryLogger {
+        properties?: ITelemetryLoggerPropertyBags): TelemetryLogger {
         // if we are creating a child of a child, rather than nest, which will increase
         // the callstack overhead, just generate a new logger that includes everything from the previous
         if (baseLogger instanceof ChildLogger) {
-            const combinedProperties: ITelemetryLoggerProperties = {};
+            const combinedProperties: ITelemetryLoggerPropertyBags = {};
             for(const extendedProps of [baseLogger.properties, properties]) {
                 if(extendedProps !== undefined) {
                     if(extendedProps.all !== undefined) {
@@ -308,7 +308,7 @@ export class ChildLogger extends TelemetryLogger {
     private constructor(
         protected readonly baseLogger: ITelemetryBaseLogger,
         namespace?: string,
-        properties?: ITelemetryLoggerProperties) {
+        properties?: ITelemetryLoggerPropertyBags) {
         super(namespace, properties);
     }
 
@@ -338,7 +338,7 @@ export class MultiSinkLogger extends TelemetryLogger {
      */
     constructor(
         namespace?: string,
-        properties?: ITelemetryLoggerProperties) {
+        properties?: ITelemetryLoggerPropertyBags) {
         super(namespace, properties);
     }
 
@@ -518,5 +518,43 @@ export class LoggingError extends Error {
             props[key] = this[key];
         }
         return props;
+    }
+}
+
+/**
+ * Logger that is useful for UT
+ * It can be used in places where logger instance is required, but events should be not send over.
+ */
+ export class TelemetryUTLogger implements ITelemetryLogger {
+    public send(event: ITelemetryBaseEvent): void {
+    }
+    public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
+    }
+    public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
+        this.reportError("errorEvent in UT logger!", event, error);
+    }
+    public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
+    }
+    public logGenericError(eventName: string, error: any) {
+        this.reportError(`genericError in UT logger!`, { eventName }, error);
+    }
+    public logException(event: ITelemetryErrorEvent, exception: any): void {
+        this.reportError("exception in UT logger!", event, exception);
+    }
+    public debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
+        this.reportError("debugAssert in UT logger!");
+    }
+    public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
+        this.reportError("shipAssert in UT logger!");
+    }
+
+    private reportError(message: string, event?: ITelemetryErrorEvent, err?: any) {
+        const error = new Error(message);
+        (error as any).error = error;
+        (error as any).event = event;
+        // report to console as exception can be eaten
+        console.error(message);
+        console.error(error);
+        throw error;
     }
 }

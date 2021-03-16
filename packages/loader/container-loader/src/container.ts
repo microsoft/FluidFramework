@@ -28,6 +28,7 @@ import {
     ContainerWarning,
     AttachState,
     IThrottlingWarning,
+    IPendingLocalState,
     ReadOnlyInfo,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -186,7 +187,8 @@ export async function waitContainerToCatchUp(container: Container) {
         container.on("closed", reject);
 
         const waitForOps = () => {
-            assert(container.connectionState !== ConnectionState.Disconnected);
+            assert(container.connectionState !== ConnectionState.Disconnected,
+                "Container disconnected while waiting for ops!");
             const hasCheckpointSequenceNumber = deltaManager.hasCheckpointSequenceNumber;
 
             const connectionOpSeqNumber = deltaManager.lastKnownSeqNumber;
@@ -219,13 +221,14 @@ export async function waitContainerToCatchUp(container: Container) {
 }
 
 export class CollabWindowTracker {
-    private updateSequenceNumberTimer: ReturnType<typeof setTimeout> | undefined;
-
-    private static readonly NoopFrequency = 2000;
+    private opsCountSinceNoop = 0;
+    private lastNoopTime: number  | undefined;
 
     constructor(
         private readonly submit: (type: MessageType, contents: any) => void,
         private readonly activeConnection: () => boolean,
+        private readonly NoopTimeFrequency: number = 2000,
+        private readonly NoopCountFrequency: number = 300,
     ) {}
     /**
      * Schedules as ack to the server to update the reference sequence number
@@ -246,31 +249,38 @@ export class CollabWindowTracker {
             return;
         }
 
-        // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
-        // update, which updates the MSN, then ack the update, etc...).
-        if (message.type === MessageType.NoOp) {
+        // Filter out system messages.
+        if (isSystemMessage(message)) {
             return;
         }
 
-        // We will queue a message to update our reference sequence number upon receiving a server
+        // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
+        // update, which updates the MSN, then ack the update, etc...). Also, don't
+        // count system messages in ops count.
+        assert(message.type !== MessageType.NoOp, "Don't acknowledge no-ops");
+
+        if (this.lastNoopTime === undefined) {
+            this.lastNoopTime = Date.now();
+        }
+
+        this.opsCountSinceNoop++;
+
+        // If the ops count since last op is greater than NoopCountFrequency and time since last noop is
+        // greater than NoopTimeFrequency, then send a Noop.
+        // We will send a message(Noop) to update our reference sequence number upon receiving a server
         // operation. This allows the server to know our true reference sequence number and be able to
         // correctly update the minimum sequence number (MSN).
-        if (this.updateSequenceNumberTimer === undefined) {
-            // Clear an update in 2 s
-            this.updateSequenceNumberTimer = setTimeout(() => {
-                this.updateSequenceNumberTimer = undefined;
-                if (this.activeConnection()) {
-                    this.submit(MessageType.NoOp, null);
-                }
-            }, CollabWindowTracker.NoopFrequency);
+        if (this.opsCountSinceNoop >= this.NoopCountFrequency
+            && Date.now() - this.lastNoopTime >= this.NoopTimeFrequency
+        ) {
+            this.stopSequenceNumberUpdate();
+            this.submit(MessageType.NoOp, null);
         }
     }
 
     public stopSequenceNumberUpdate(): void {
-        if (this.updateSequenceNumberTimer !== undefined) {
-            clearTimeout(this.updateSequenceNumberTimer);
-        }
-        this.updateSequenceNumberTimer = undefined;
+        this.opsCountSinceNoop = 0;
+        this.lastNoopTime = undefined;
     }
 }
 
@@ -283,6 +293,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public static async load(
         loader: Loader,
         loadOptions: IContainerLoadOptions,
+        pendingLocalState?: unknown,
     ): Promise<Container> {
         const container = new Container(
             loader,
@@ -297,7 +308,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return PerformanceEvent.timedExecAsync(container.logger, { eventName: "Load" }, async (event) => {
             return new Promise<Container>((res, rej) => {
                 const version = loadOptions.version;
-                const pause = loadOptions.pause;
+                // always load unpaused with pending ops
+                const pause = pendingLocalState !== undefined ? false : loadOptions.pause;
 
                 const onClosed = (err?: ICriticalContainerError) => {
                     // Depending where error happens, we can be attempting to connect to web socket
@@ -309,7 +321,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 };
                 container.on("closed", onClosed);
 
-                container.load(version, pause === true)
+                container.load(version, pause === true, pendingLocalState)
                     .finally(() => {
                         container.removeListener("closed", onClosed);
                     })
@@ -418,6 +430,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private readonly collabWindowTracker = new CollabWindowTracker(
         (type, contents) => this._deltaManager.submit(type, contents),
         () => this.activeConnection(),
+        this.loader.services.options?.noopTimeFrequency,
+        this.loader.services.options?.noopCountFrequency,
     );
 
     public get IFluidRouter(): IFluidRouter { return this; }
@@ -700,13 +714,31 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 error,
             );
         } else {
-            assert(this.loaded);
+            assert(this.loaded, "Container in non-loaded state before close!");
             this.logger.sendTelemetryEvent({ eventName: "ContainerClose" });
         }
 
         this.emit("closed", error);
 
         this.removeAllListeners();
+    }
+
+    public closeAndGetPendingLocalState(): string {
+        // runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
+        // container at the same time we get pending state, otherwise this container could reconnect and resubmit with
+        // a new clientId and a future container using stale pending state without the new clientId would resubmit them
+        this._deltaManager.close();
+
+        assert(this.attachState === AttachState.Attached);
+        assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid");
+        const pendingState: IPendingLocalState = {
+            pendingRuntimeState: this.context.getPendingLocalState(),
+            url: this.resolvedUrl.url,
+        };
+
+        this.close();
+
+        return JSON.stringify(pendingState);
     }
 
     public get attachState(): AttachState {
@@ -1140,7 +1172,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      *   - otherwise, version sha to load snapshot
      * @param pause - start the container in a paused state
      */
-    private async load(specifiedVersion: string | null | undefined, pause: boolean) {
+    private async load(specifiedVersion: string | null | undefined, pause: boolean, pendingLocalState?: unknown) {
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
         }
@@ -1204,7 +1236,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         [this._protocolHandler] = await Promise.all([protocolHandlerP, loadDetailsP]);
 
         const codeDetails = this.getCodeDetailsFromQuorum();
-        await this.loadContext(codeDetails, attributes, snapshot);
+        await this.loadContext(codeDetails, attributes, snapshot, undefined, pendingLocalState);
 
         // Propagate current connection state through the system.
         this.propagateConnectionState();
@@ -1645,7 +1677,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private setConnectionState(
         value: ConnectionState,
         reason?: string) {
-        assert(value !== ConnectionState.Connecting);
+        assert(value !== ConnectionState.Connecting, "Trying to set connection state while container is connecting!");
         if (this.connectionState === value) {
             // Already in the desired state - exit early
             this.logger.sendErrorEvent({ eventName: "setConnectionStateSame", value });
@@ -1813,6 +1845,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         attributes: IDocumentAttributes,
         snapshot?: ISnapshotTree,
         previousRuntimeState: IRuntimeState = {},
+        pendingLocalState?: unknown,
     ) {
         assert(this._context?.disposed !== false, "Existing context not disposed");
         // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
@@ -1844,6 +1877,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this._dirtyContainer = dirty;
                 this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
             },
+            pendingLocalState,
         );
 
         loader.resolveContainer(this);

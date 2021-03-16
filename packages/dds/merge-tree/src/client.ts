@@ -329,12 +329,12 @@ export class Client {
     }
 
     /**
-     * Performs the annotate based on the provided op
+     * Performs the remove based on the provided op
      * @param opArgs - The ops args for the op
-     * @returns True if the annotate was applied. False if it could not be.
+     * @returns True if the remove was applied. False if it could not be.
      */
     private applyRemoveRangeOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
-        assert(opArgs.op.type === ops.MergeTreeDeltaType.REMOVE);
+        assert(opArgs.op.type === ops.MergeTreeDeltaType.REMOVE, "Unexpected op type on range remove!");
         const op = opArgs.op;
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);
@@ -372,7 +372,7 @@ export class Client {
      * @returns True if the annotate was applied. False if it could not be.
      */
     private applyAnnotateRangeOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
-        assert(opArgs.op.type === ops.MergeTreeDeltaType.ANNOTATE);
+        assert(opArgs.op.type === ops.MergeTreeDeltaType.ANNOTATE, "Unexpected op type on range annotate!");
         const op = opArgs.op;
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);
@@ -407,7 +407,7 @@ export class Client {
      * @returns True if the insert was applied. False if it could not be.
      */
     private applyInsertOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
-        assert(opArgs.op.type === ops.MergeTreeDeltaType.INSERT);
+        assert(opArgs.op.type === ops.MergeTreeDeltaType.INSERT, "Unexpected op type on range insert!");
         const op = opArgs.op;
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);
@@ -748,7 +748,8 @@ export class Client {
                     break;
 
                 case ops.MergeTreeDeltaType.INSERT:
-                    assert(segment.seq === UnassignedSequenceNumber);
+                    assert(segment.seq === UnassignedSequenceNumber,
+                        "Segment already has assigned sequence number");
                     newOp = OpBuilder.createInsertSegmentOp(
                         segmentPosition,
                         segment);
@@ -885,8 +886,10 @@ export class Client {
                     opList.push(...this.resetPendingDeltaToOps(resetOp.ops[0], segmentGroup));
                 }
             } else {
-                assert((resetOp.type as any) !== ops.MergeTreeDeltaType.GROUP);
-                assert(!Array.isArray(segmentGroup));
+                assert((resetOp.type as any) !== ops.MergeTreeDeltaType.GROUP,
+                    "Reset op has 'group' delta type!");
+                assert(!Array.isArray(segmentGroup),
+                    "segmentGroup is array rather than singleton!");
                 opList.push(
                     ...this.resetPendingDeltaToOps(resetOp, segmentGroup));
             }
@@ -923,7 +926,8 @@ export class Client {
 
         // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
         // Not sure why - need to catch it sooner
-        assert(this.getCollabWindow().minSeq === minSeq);
+        assert(this.getCollabWindow().minSeq === minSeq,
+            "minSeq mismatch between collab window and delta manager!");
 
         // TODO: Remove options flag once new snapshot format is adopted as default.
         //       (See https://github.com/microsoft/FluidFramework/issues/84)

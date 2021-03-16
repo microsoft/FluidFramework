@@ -248,9 +248,11 @@ export class ClientReplayTool {
             for (const client of clients) {
                 for (const mergeTree of client[1]) {
                     assert(
-                        mergeTree[1].getLength() === readonlyClient.get(mergeTree[0]).getLength());
+                        mergeTree[1].getLength() === readonlyClient.get(mergeTree[0]).getLength(),
+                        "Mismatch between client mergeTree length and corresponding readonly mergeTree length");
                     assert(
-                        mergeTree[1].getText() === readonlyClient.get(mergeTree[0]).getText());
+                        mergeTree[1].getText() === readonlyClient.get(mergeTree[0]).getText(),
+                        "Mismatch between client mergeTree length and corresponding readonly mergeTree text");
                 }
             }
         }

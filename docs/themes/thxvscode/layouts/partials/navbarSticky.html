@@ -27,16 +27,16 @@
 
                         {{- if .HasChildren }}
                         <li {{ if $isActive }}class="active" {{end}}>
-                            <a id="nav-{{ .Name }}" href="{{ .URL | absLangURL }}" class="has-children">{{ .Name }}</a>
+                            <a id="nav-{{ .Name }}" href="{{ .URL | relLangURL }}" class="has-children">{{ .Name }}</a>
                             <span class="sub-menu">
                                 {{- range .Children }}
-                                <a href="{{ .URL | absLangURL }}">{{ .Name }}</a>
+                                <a href="{{ .URL | relLangURL }}">{{ .Name }}</a>
                                 {{- end }}
                             </span>
                         </li>
                         {{- else }}
                         <li {{ if $isActive}}class="active" {{end}}>
-                            <a id="nav-{{ .Name }}" href="{{ .URL | absLangURL }}">{{ .Name }}</a>
+                            <a id="nav-{{ .Name }}" href="{{ .URL | relLangURL }}">{{ .Name }}</a>
                         </li>
                         {{- end }}
                         {{- end }}

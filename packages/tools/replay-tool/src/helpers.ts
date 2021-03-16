@@ -94,6 +94,8 @@ class UnknownChannel implements IChannel {
             },
             reSubmit: (content: any, localOpMetadata: unknown) => {
             },
+            applyStashedOp: (content: any) => {
+            },
         });
     }
 
@@ -262,7 +264,7 @@ export async function loadContainer(
     });
     const container: Container = await loader.resolve({ url: resolved.url });
 
-    assert(container.existing); // ReplayFileDeltaConnection.create() guarantees that
+    assert(container.existing, "Container does not exist!"); // ReplayFileDeltaConnection.create() guarantees that
 
     return container;
 }

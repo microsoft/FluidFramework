@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
 import { debug as registerDebug, IDebugger } from "debug";
-import { TelemetryLogger, MultiSinkLogger, ChildLogger, ITelemetryLoggerProperties } from "./logger";
+import { TelemetryLogger, MultiSinkLogger, ChildLogger, ITelemetryLoggerPropertyBags } from "./logger";
 
 /**
  * Implementation of debug logger
@@ -24,7 +24,7 @@ export class DebugLogger extends TelemetryLogger {
      */
     public static create(
         namespace: string,
-        properties?: ITelemetryProperties,
+        properties?: ITelemetryLoggerPropertyBags,
     ): TelemetryLogger {
         // Setup base logger upfront, such that host can disable it (if needed)
         const debug = registerDebug(namespace);
@@ -47,7 +47,7 @@ export class DebugLogger extends TelemetryLogger {
     public static mixinDebugLogger(
         namespace: string,
         baseLogger?: ITelemetryBaseLogger,
-        properties?: ITelemetryProperties,
+        properties?: ITelemetryLoggerPropertyBags,
     ): TelemetryLogger {
         if (!baseLogger) {
             return DebugLogger.create(namespace, properties);
@@ -63,7 +63,7 @@ export class DebugLogger extends TelemetryLogger {
     constructor(
         private readonly debug: IDebugger,
         private readonly debugErr: IDebugger,
-        properties?: ITelemetryLoggerProperties,
+        properties?: ITelemetryLoggerPropertyBags,
     ) {
         super(undefined, properties);
     }
