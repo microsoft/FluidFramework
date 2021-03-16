@@ -112,6 +112,7 @@ export class MockContainerRuntime {
     private readonly deltaManager: MockDeltaManager;
     protected readonly deltaConnections: MockDeltaConnection[] = [];
     protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
+    public closeFn = () => {};
 
     constructor(
         protected readonly dataStoreRuntime: MockFluidDataStoreRuntime,

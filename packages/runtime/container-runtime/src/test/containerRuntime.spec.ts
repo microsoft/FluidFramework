@@ -12,8 +12,9 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions";
-import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
-import { ScheduleManager } from "../containerRuntime";
+import { MockContainerRuntime, MockContainerRuntimeFactory, MockDeltaManager, MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { ContainerMessageType, ScheduleManager } from "../containerRuntime";
+import { PendingStateManager } from "../pendingStateManager";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
@@ -348,6 +349,37 @@ describe("Runtime", () => {
                     assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");
                     assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
                 });
+            });
+        });
+
+        describe("PendingStateManager", () => {
+            it("incr/decrs 'pendingMessageCount'", () => {
+                const psm = new PendingStateManager(
+                    new MockContainerRuntime(
+                        new MockFluidDataStoreRuntime(),
+                        new MockContainerRuntimeFactory(),
+                    ) as any,
+                    async () => Promise.resolve(),
+                    undefined,
+                );
+
+                assert.equal(psm.pendingMessageCount, 0);
+
+                psm.onSubmitMessage(
+                    ContainerMessageType.FluidDataStoreOp,
+                    /* cliSeq: */ 0,
+                    /* refSeq: */ 0,
+                    /* content: */ undefined,
+                    /* localOpMetadata: */ undefined,
+                    /* opMetadata: */ undefined);
+
+                assert.equal(psm.pendingMessageCount, 1);
+
+                psm.processMessage({
+                    clientSequenceNumber: 0,
+                } as any, /* local: */ true);
+
+                 assert.equal(psm.pendingMessageCount, 0);
             });
         });
     });

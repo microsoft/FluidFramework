@@ -95,7 +95,7 @@ export class PendingStateManager {
     }
 
     public getLocalState(): IPendingLocalState | undefined {
-        if (this.hasPendingMessages()) {
+        if (this.pendingMessageCount > 0) {
             return {
                 clientId: this.clientId,
                 pendingStates: this.pendingStates.toArray().map(
