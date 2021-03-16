@@ -21,7 +21,7 @@ import {
 
 describe('SharedTree history virtualization', () => {
 	let sharedTree: SharedTree;
-	let localTestObjectProvider: TestObjectProvider<ITestContainerConfig>;
+	let localTestObjectProvider: TestObjectProvider;
 
 	beforeEach(async () => {
 		const testingComponents = await setUpLocalServerTestSharedTree({ summarizer: fullHistorySummarizer_0_1_0 });

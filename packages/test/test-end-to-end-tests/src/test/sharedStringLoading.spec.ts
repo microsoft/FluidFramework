@@ -21,17 +21,12 @@ import {
     IDocumentStorageService,
     LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
-import { NetworkErrorBasic } from "@fluidframework/driver-utils";
+import { NetworkErrorBasic, readAndParse } from "@fluidframework/driver-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
-import { bufferToString } from "@fluidframework/common-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 describe("SharedString", () => {
-    let driver: ITestDriver;
-    before(() => {
-        driver = getFluidTestDriver() as unknown as ITestDriver;
-    });
     it("Failure to Load in Shared String", async () => {
         const stringId = "sharedStringKey";
         const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
@@ -40,6 +35,9 @@ describe("SharedString", () => {
         };
         const text = "hello world";
         const documentId = createDocumentId();
+        const driver = getFluidTestDriver();
+        const logger = ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}});
+
         { // creating client
             const codeDetails = { package: "no-dynamic-pkg" };
             const codeLoader = new LocalCodeLoader([
@@ -50,6 +48,7 @@ describe("SharedString", () => {
                 urlResolver: driver.createUrlResolver(),
                 documentServiceFactory: driver.createDocumentServiceFactory(),
                 codeLoader,
+                logger,
             });
 
             const container = await loader.createDetachedContainer(codeDetails);
@@ -70,6 +69,7 @@ describe("SharedString", () => {
                 urlResolver: driver.createUrlResolver(),
                 documentServiceFactory: driver.createDocumentServiceFactory(),
                 codeLoader,
+                logger,
             });
 
             const container = await loader.resolve({ url: await driver.createContainerUrl(documentId) });
@@ -82,8 +82,8 @@ describe("SharedString", () => {
             const realSf: IDocumentServiceFactory = driver.createDocumentServiceFactory();
             const documentServiceFactory: IDocumentServiceFactory = {
                 ...realSf,
-                createDocumentService: async (resolvedUrl, logger) => {
-                    const realDs = await realSf.createDocumentService(resolvedUrl, logger);
+                createDocumentService: async (resolvedUrl, logger2) => {
+                    const realDs = await realSf.createDocumentService(resolvedUrl, logger2);
                     const mockDs = Object.create(realDs) as IDocumentService;
                     mockDs.connectToStorage = async () => {
                         const realStorage = await realDs.connectToStorage();
@@ -94,7 +94,7 @@ describe("SharedString", () => {
                         };
                         mockstorage.readBlob = async (id) => {
                             const blob = await realStorage.readBlob(id);
-                            const blobObj = JSON.parse(bufferToString(blob, "utf8"));
+                            const blobObj = await readAndParse<any>(realStorage, id);
                             // throw when trying to load the header blob
                             if (blobObj.headerMetadata !== undefined) {
                                 throw new NetworkErrorBasic(
@@ -119,6 +119,7 @@ describe("SharedString", () => {
                 urlResolver: driver.createUrlResolver(),
                 documentServiceFactory,
                 codeLoader,
+                logger,
             });
 
             const container = await loader.resolve({ url: await driver.createContainerUrl(documentId) });
@@ -139,6 +140,9 @@ describe("SharedString", () => {
         };
         const text = "hello world";
         const documentId = createDocumentId();
+        const driver = getFluidTestDriver();
+        const logger = ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}});
+
         let initialText = "";
         { // creating client
             const codeDetails = { package: "no-dynamic-pkg" };
@@ -150,6 +154,7 @@ describe("SharedString", () => {
                 urlResolver: driver.createUrlResolver(),
                 documentServiceFactory: driver.createDocumentServiceFactory(),
                 codeLoader,
+                logger,
             });
 
             const container = await loader.createDetachedContainer(codeDetails);
@@ -184,6 +189,7 @@ describe("SharedString", () => {
                 urlResolver: driver.createUrlResolver(),
                 documentServiceFactory: driver.createDocumentServiceFactory(),
                 codeLoader,
+                logger,
             });
 
             const container = await loader.resolve({ url: await driver.createContainerUrl(documentId) });

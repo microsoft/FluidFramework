@@ -13,7 +13,6 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import {
     createAndAttachContainer,
     createDocumentId,
@@ -68,11 +67,11 @@ describe("GC Data Store Requests", () => {
         runtimeOptions,
     );
 
-    let driver: ITestDriver;
     let opProcessingController: OpProcessingController;
     let container1: IContainer;
 
     async function createContainer(): Promise<IContainer> {
+        const driver = getFluidTestDriver();
         const loader = createLoader(
             [[codeDetails, runtimeFactory]],
             driver.createDocumentServiceFactory(),
@@ -82,6 +81,7 @@ describe("GC Data Store Requests", () => {
     }
 
     async function loadContainer(): Promise<IContainer> {
+        const driver = getFluidTestDriver();
         const loader = createLoader(
             [[codeDetails, runtimeFactory]],
             driver.createDocumentServiceFactory(),
@@ -105,7 +105,6 @@ describe("GC Data Store Requests", () => {
 
     beforeEach(async () => {
         documentId = createDocumentId();
-        driver = getFluidTestDriver() as unknown as ITestDriver;
         opProcessingController = new OpProcessingController();
 
         // Create a Container for the first client.

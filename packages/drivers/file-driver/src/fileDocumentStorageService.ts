@@ -39,8 +39,9 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
      * @param version - The version contains the path of the file which contains the snapshot tree.
      */
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
-        assert(version !== null);
-        assert(!version || version.treeId === FileStorageVersionTreeId);
+        assert(version !== null, "version input for reading snapshot tree is null!");
+        assert(!version || version.treeId === FileStorageVersionTreeId,
+            "invalid version input for reading snapshot tree!");
 
         let filename: string;
         let rootTree = false;
@@ -84,7 +85,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
             return [];
         } else if (this.versionName !== undefined) {
             // We loaded from snapshot - search for commit there.
-            assert(!!this.docTree);
+            assert(!!this.docTree, "Missing snapshot tree!");
             return [{
                 id: versionId,
                 treeId: FileStorageVersionTreeId,
@@ -298,7 +299,7 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
                 });
             }
 
-            assert(Object.keys(snapshotTree.commits).length === 0);
+            assert(Object.keys(snapshotTree.commits).length === 0, "Leftover distinct commits after building tree!");
             return tree;
         }
     };
@@ -309,7 +310,8 @@ function removeNullTreeIds(tree: api.ITree) {
             removeNullTreeIds(node.value);
         }
     }
-    assert(tree.id === undefined || tree.id === null);
+    assert(tree.id === undefined || tree.id === null,
+        "Trying to remove valid tree IDs in removeNullTreeIds()!");
     delete tree.id;
 }
 

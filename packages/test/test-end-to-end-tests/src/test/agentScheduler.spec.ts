@@ -8,10 +8,10 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { taskSchedulerId } from "@fluidframework/container-runtime";
 import { IAgentScheduler } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { timeoutPromise, defaultTimeoutDurationMs } from "@fluidframework/test-utils";
-import { generateTest, ITestObjectProvider, ITestDataObject } from "./compatUtils";
+import { ITestObjectProvider, timeoutPromise, defaultTimeoutDurationMs } from "@fluidframework/test-utils";
+import { describeFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("AgentScheduler",(argsFactory: () => ITestObjectProvider) => {
     let leaderTimeout = defaultTimeoutDurationMs;
     let args: ITestObjectProvider;
     beforeEach(() => {
@@ -249,8 +249,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             assert.deepStrictEqual(scheduler2.pickedTasks(), [leader]);
         });
     });
-};
-
-describe("AgentScheduler", () => {
-    generateTest(tests);
 });
