@@ -10,4 +10,5 @@ export * from "./loader";
 export * from "./networkUtils";
 export * from "./utils";
 export * from "./retriableDocumentStorageService";
+export * from "./containerContext";
 export * from "./connectionStateHandler";

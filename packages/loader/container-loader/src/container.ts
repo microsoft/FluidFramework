@@ -584,8 +584,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.connectionStateHandler = new ConnectionStateHandler(
             this,
             this._deltaManager,
-            this._audience,
             this.logger,
+            () => this._audience,
             () => this.context,
             () => this.protocolHandler);
 

@@ -47,14 +47,16 @@ export class ConnectionStateHandler {
     private _clientId: string | undefined;
     private readonly _connectionTransitionTimes: number[] = [];
 
-    private get protocolHandler(): ProtocolOpHandler | undefined {
-        try {
-            return this.protocolHandlerGetter();
-        } catch (error) {}
+    private get protocolHandler(): ProtocolOpHandler {
+        return this.protocolHandlerGetter();
     }
 
     private get context() {
         return this.containerContextGetter();
+    }
+
+    private get audience() {
+        return this.audienceGetter();
     }
 
     public get connectionState(): ConnectionState {
@@ -92,10 +94,10 @@ export class ConnectionStateHandler {
     constructor(
         private readonly container: Container,
         private readonly deltaManager: DeltaManager,
-        private readonly audience: Audience,
         private readonly logger: ITelemetryLogger,
+        private readonly audienceGetter: () => Audience,
         private readonly containerContextGetter: () => ContainerContext,
-        private readonly protocolHandlerGetter: () => ProtocolOpHandler | undefined,
+        private readonly protocolHandlerGetter: () => ProtocolOpHandler,
     ) {
         this.deltaManager.on(connectEventName, (details: IConnectionDetails, opsBehind?: number) => {
             const oldState = this._connectionState;
@@ -114,12 +116,18 @@ export class ConnectionStateHandler {
             // Report telemetry after we set client id!
             this.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
 
+            // Protocol Handler might not be set here.
+            let protocolHandler: ProtocolOpHandler | undefined;
+            try {
+                protocolHandler = this.protocolHandler;
+            } catch (error) {}
+
             // Check if we already processed our own join op through delta storage!
             // we are fetching ops from storage in parallel to connecting to ordering service
             // Given async processes, it's possible that we have already processed our own join message before
             // connection was fully established.
             // Note that we might be still initializing quorum - connection is established proactively on load!
-            if ((this.protocolHandler !== undefined && this.protocolHandler.quorum.has(details.clientId))
+            if ((protocolHandler !== undefined && protocolHandler.quorum.has(details.clientId))
                     || this.deltaManager.connectionMode === "read") {
                 this.setConnectionState(ConnectionState.Connected);
             }
