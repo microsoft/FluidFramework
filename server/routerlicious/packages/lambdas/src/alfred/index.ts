@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { isSystemType } from "@fluidframework/protocol-base";
 import {
     ConnectionMode,
     IClient,
     IConnect,
     IConnected,
     IDocumentMessage,
-    IDocumentSystemMessage,
     INack,
     ISignalMessage,
     MessageType,
@@ -74,13 +72,7 @@ function sanitizeMessage(message: any): IDocumentMessage {
         type: message.type,
     };
 
-    if (isSystemType(sanitizedMessage.type)) {
-        const systemMessage = sanitizedMessage as IDocumentSystemMessage;
-        systemMessage.data = message.data;
-        return systemMessage;
-    } else {
-        return sanitizedMessage;
-    }
+    return sanitizedMessage;
 }
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
