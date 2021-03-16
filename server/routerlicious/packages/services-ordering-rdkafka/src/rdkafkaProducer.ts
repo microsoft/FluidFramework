@@ -276,7 +276,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	private async handleError(error: any) {
 		await this.close(true);
 
-		this.emit("error", error);
+		this.error(error);
 
 		this.connect();
 	}
