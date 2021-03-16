@@ -32,7 +32,7 @@
 
 import { exec, execSync } from "child_process";
 import * as path from "path";
-import { existsSync, mkdirSync, rmdirSync } from "fs";
+import { existsSync, mkdirSync, rmdirSync, readdirSync } from "fs";
 
 // Loader API
 import { Loader } from "@fluidframework/container-loader";
@@ -106,36 +106,56 @@ const DataRuntimeApi = {
 };
 
 export type DataRuntimeApiType = typeof DataRuntimeApi;
+
+// Assuming this file is in dist\test, so go to ..\..\node_modules\.legacy as the install location
+const baseModulePath = path.join(__dirname, "..", "..", "node_modules", ".legacy");
+const getModulePath = (version: string) => path.join(baseModulePath, version);
+
 const resolutionCache = new Map<string, string>();
 
-function resolveVersion(requested: string) {
+function resolveVersion(requested: string, installed: boolean) {
     const cachedVersion = resolutionCache.get(requested);
     if (cachedVersion) { return cachedVersion; }
     if (semver.valid(requested)) {
+        // If it is a valid semver already instead of a range, just use it
         resolutionCache.set(requested, requested);
         return requested;
     }
 
-    const result = execSync(
-        `npm v @fluidframework/container-loader@"${requested}" version --json`,
-        { encoding: "utf8" },
-    );
-    try {
-        const versions: string | string[] = JSON.parse(result);
-        const version = Array.isArray(versions) ? versions.sort(semver.rcompare)[0] : versions;
-        if (!version) { throw new Error(`No version found for ${requested}`); }
-        resolutionCache.set(requested, version);
-        return version;
-    } catch (e) {
-        throw new Error(`Error parsing versions for ${requested}`);
+    if (installed) {
+        // Check the install directory instad of asking NPM for it.
+        const files = readdirSync(baseModulePath, { withFileTypes: true });
+        let found: string | undefined;
+        files.map((dirent) => {
+            if (dirent.isDirectory() && semver.valid(dirent.name) && semver.satisfies(dirent.name, requested)) {
+                if (!found || semver.lt(found, dirent.name)) {
+                    found = dirent.name;
+                }
+            }
+        });
+        if (found) {
+            return found;
+        }
+        throw new Error(`No matching version found in ${baseModulePath}`);
+    } else {
+        const result = execSync(
+            `npm v @fluidframework/container-loader@"${requested}" version --json`,
+            { encoding: "utf8" },
+        );
+        try {
+            const versions: string | string[] = JSON.parse(result);
+            const version = Array.isArray(versions) ? versions.sort(semver.rcompare)[0] : versions;
+            if (!version) { throw new Error(`No version found for ${requested}`); }
+            resolutionCache.set(requested, version);
+            return version;
+        } catch (e) {
+            throw new Error(`Error parsing versions for ${requested}`);
+        }
     }
 }
 
-// Assuming this file is in dist\test, so go to ..\..\node_modules\.legacy as the install location
-const getModulePath = (version: string) => path.join(__dirname, "..", "..", "node_modules", ".legacy", version);
-
 async function ensureInstalled(requested: string) {
-    const version = resolveVersion(requested);
+    const version = resolveVersion(requested, false);
     let release = await lock(__dirname, { retries: { forever: true } });
     try {
         const modulePath = getModulePath(version);
@@ -199,7 +219,7 @@ export async function mochaGlobalSetup() {
 }
 
 function checkInstalled(requested: string) {
-    const version = resolveVersion(requested);
+    const version = resolveVersion(requested, true);
     const modulePath = getModulePath(version);
     if (existsSync(modulePath)) {
         // assume it is valid if it exists
