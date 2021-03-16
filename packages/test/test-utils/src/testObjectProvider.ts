@@ -83,7 +83,7 @@ export class TestObjectProvider<TestContainerConfigType> {
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
-            logger:ChildLogger.create(getTestLogger?.(), undefined, {driverType: this.driver.type}),
+            logger:ChildLogger.create(getTestLogger?.(), undefined, {all:{driverType: this.driver.type}}),
         });
     }
 
