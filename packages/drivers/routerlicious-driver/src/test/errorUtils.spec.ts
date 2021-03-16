@@ -51,6 +51,13 @@ describe("ErrorUtils", () => {
             assert.strictEqual(error.errorType, DriverErrorType.genericNetworkError);
             assert.strictEqual(error.canRetry, true);
         });
+        it("creates retriable error on anything else with retryAfter", () => {
+            const message = "test error";
+            const error = createR11sNetworkError(message, undefined, 100);
+            assert.strictEqual(error.errorType, DriverErrorType.throttlingError);
+            assert.strictEqual(error.canRetry, true);
+            assert.strictEqual((error as any).retryAfterSeconds, 100);
+        });
         it("creates non-retriable error on anything else", () => {
             const message = "test error";
             const error = createR11sNetworkError(message);
@@ -112,6 +119,16 @@ describe("ErrorUtils", () => {
             }, {
                 errorType: DriverErrorType.genericNetworkError,
                 canRetry: true,
+            });
+        });
+        it("throws retriable error on anything else with retryAfter", () => {
+            const message = "test error";
+            assert.throws(() => {
+                throwR11sNetworkError(message, undefined, 200);
+            }, {
+                errorType: DriverErrorType.throttlingError,
+                canRetry: true,
+                retryAfterSeconds: 200,
             });
         });
         it("throws non-retriable error on anything else", () => {
@@ -191,6 +208,18 @@ describe("ErrorUtils", () => {
             assert.strictEqual(error.errorType, DriverErrorType.genericNetworkError);
             assert.strictEqual(error.canRetry, true);
             assert.strictEqual((error as any).statusCode, 500);
+        });
+        it("creates retriable error on 400 with retryAfter", () => {
+            const error = errorObjectFromSocketError({
+                code: 400,
+                message,
+                retryAfter: 300,
+            }, handler);
+            assertExpectedMessage(error.message);
+            assert.strictEqual(error.errorType, DriverErrorType.throttlingError);
+            assert.strictEqual(error.canRetry, true);
+            assert.strictEqual((error as any).retryAfterSeconds, 300);
+            assert.strictEqual((error as any).statusCode, 400);
         });
     });
 });

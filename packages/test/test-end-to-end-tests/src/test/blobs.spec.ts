@@ -11,16 +11,17 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { v4 as uuid } from "uuid";
 import { ReferenceType } from "@fluidframework/merge-tree";
-import { generateNonCompatTest, ITestObjectProvider, ITestContainerConfig, ITestDataObject } from "./compatUtils";
+import { ITestObjectProvider, ITestContainerConfig } from "@fluidframework/test-utils";
+import { describeFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 
 const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: { initialSummarizerDelayMs: 20, summaryConfigOverrides: { maxOps: 1 } },
     registry: [["sharedString", SharedString.getFactory()]],
 };
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("blobs", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
-    beforeEach(()=>{
+    beforeEach(() => {
         args = argsFactory();
     });
     afterEach(() => {
@@ -142,9 +143,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             assert.strictEqual(IsoBuffer.from(await props.blob.get()).toString("utf-8"), testString);
         }
     });
-};
-
-describe("blobs", () => {
-    // TODO: add back compat test once N-2 is 0.28
-    generateNonCompatTest(tests);
 });

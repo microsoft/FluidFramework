@@ -606,6 +606,15 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.channel.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
     }
 
+    public async applyStashedOp(contents: any): Promise<unknown> {
+        if (!this.channel) {
+            await this.realize();
+        }
+        assert(!!this.channel, "Channel must exist when rebasing ops");
+        const innerContents = contents as FluidDataStoreMessage;
+        return this.channel.applyStashedOp(innerContents.content);
+    }
+
     private verifyNotClosed() {
         if (this._disposed) {
             throw new Error("Context is closed");

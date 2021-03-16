@@ -200,7 +200,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     ) {
         super();
 
-        this.logger = ChildLogger.create(dataStoreContext.containerRuntime.logger, undefined, { dataStoreId: uuid() });
+        this.logger = ChildLogger.create(
+            dataStoreContext.containerRuntime.logger, undefined, {all:{ dataStoreId: uuid() }});
         this.documentId = dataStoreContext.documentId;
         this.id = dataStoreContext.id;
         this.existing = dataStoreContext.existing;
@@ -872,6 +873,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             default:
                 unreachableCase(type);
         }
+    }
+
+    public async applyStashedOp(content: any): Promise<unknown> {
+        const envelope = content as IEnvelope;
+        const channelContext = this.contexts.get(envelope.address);
+        assert(!!channelContext, "There should be a channel context for the op");
+        await channelContext.getChannel();
+        return channelContext.applyStashedOp(envelope.contents);
     }
 
     private setChannelDirty(address: string): void {

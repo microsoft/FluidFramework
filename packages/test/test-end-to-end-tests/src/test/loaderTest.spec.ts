@@ -20,7 +20,6 @@ import {
     OpProcessingController,
 } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 class TestSharedDataObject1 extends DataObject {
     public inspectRequest: boolean = false;
@@ -94,11 +93,6 @@ const testSharedDataObjectFactory2 = new DataObjectFactory(
     []);
 
 describe("Loader.request", () => {
-    let driver: ITestDriver;
-    before(()=>{
-        driver = getFluidTestDriver() as unknown as ITestDriver;
-    });
-
     const codeDetails: IFluidCodeDetails = {
         package: "loaderRequestTestPackage",
         config: {},
@@ -118,6 +112,7 @@ describe("Loader.request", () => {
                     [testSharedDataObjectFactory2.type, Promise.resolve(testSharedDataObjectFactory2)],
                 ],
             );
+        const driver = getFluidTestDriver();
         loader = createLoader(
             [[codeDetails, runtimeFactory]],
             driver.createDocumentServiceFactory(),

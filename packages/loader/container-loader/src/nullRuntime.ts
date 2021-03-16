@@ -91,6 +91,10 @@ export class NullRuntime extends EventEmitter implements IRuntime {
         // Null runtime can receive signals but it's okay to miss those.
         return;
     }
+
+    public getPendingLocalState() {
+        throw new Error("Null runtime should not be asked for pending state");
+    }
 }
 
 export class NullChaincode implements IRuntimeFactory {
