@@ -199,25 +199,21 @@ stages:
           buildDirectory: ${{ parameters.buildDirectory }}
 
     # Set version
-    - ${{ if and(eq(parameters.setVersion, true), eq(variables.testBuild, false)) }}:
+    - ${{ if eq(parameters.setVersion, true) }}:
       - template: include-set-package-version.yml
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
           buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
           tagName: ${{ parameters.tagName }}
-    - ${{ if or(eq(parameters.setVersion, false), eq(variables.testBuild, true)) }}:
+    - ${{ if eq(parameters.setVersion, false) }}:
       - task: Bash@3
         name: SetVersion
         displayName: Set Package version
         inputs:
           targetType: 'inline'
           script: |
-            VERSION=0.0.$(Build.BuildNumber)
-            if [ $(testBuild) == 'true' ]; then
-              VERSION+="-test"
-            fi
-            echo "$VERSION"
-            echo "##vso[task.setvariable variable=version;isOutput=true]$VERSION"
+            echo "0.0.$(Build.BuildNumber)"
+            echo "##vso[task.setvariable variable=version;isOutput=true]0.0.$(Build.BuildNumber)"
 
     - ${{ if eq(variables.buildBase, true) }}:
       # Build - Base
