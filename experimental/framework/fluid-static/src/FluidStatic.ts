@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { getContainer, IGetContainerService } from "@fluid-experimental/get-container";
 import { DataObject } from "@fluidframework/aqueduct";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IAudience } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
 import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
 import {
     DOProviderContainerRuntimeFactory,
@@ -39,22 +41,25 @@ export interface ContainerCreateConfig extends ContainerConfig {
     initialDataObjects?: IdToDataObjectCollection;
 }
 
-export class FluidContainer {
+export class FluidContainer extends EventEmitter {
     private readonly types: Set<string>;
+
     public constructor(
-        container: IContainer, // we anticipate using this later, e.g. for Audience
+        private readonly container: Container, // we anticipate using this later, e.g. for Audience
         namedRegistryEntries: NamedFluidDataStoreRegistryEntry[],
         private readonly rootDataObject: RootDataObject,
         public readonly createNew: boolean) {
-            this.types = new Set();
-            namedRegistryEntries.forEach((value: NamedFluidDataStoreRegistryEntry) => {
-                const type = value[0];
-                if (this.types.has(type)) {
-                    throw new Error(`Multiple DataObjects share the same type identifier ${value}`);
-                }
-                this.types.add(type);
-            });
-        }
+        super();
+        this.types = new Set();
+        namedRegistryEntries.forEach((value: NamedFluidDataStoreRegistryEntry) => {
+            const type = value[0];
+            if (this.types.has(type)) {
+                throw new Error(`Multiple DataObjects share the same type identifier ${value}`);
+            }
+            this.types.add(type);
+        });
+        this.audience = container.audience;
+    }
 
     public async createDataObject<T extends DataObject>(
         dataObjectClass: IFluidStaticDataObjectClass,
@@ -69,6 +74,12 @@ export class FluidContainer {
 
         return this.rootDataObject.createDataObject<T>(dataObjectClass, id);
     }
+
+    public getId() {
+        return this.container.clientId;
+    }
+
+    public readonly audience: IAudience;
 
     public async getDataObject<T extends DataObject>(id: string) {
         return this.rootDataObject.getDataObject<T>(id);
