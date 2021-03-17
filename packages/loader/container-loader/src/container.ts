@@ -42,12 +42,12 @@ import {
 import {
     BlobCacheStorageService,
     readAndParse,
+    OnlineStatus,
+    isOnline,
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
     readAndParseFromBlobs,
     buildSnapshotTree,
-    OnlineStatus,
-    isOnline,
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
@@ -83,10 +83,10 @@ import {
     ChildLogger,
     EventEmitterWithErrorHandling,
     PerformanceEvent,
+    raiseConnectedEvent,
     TelemetryLogger,
     connectedEventName,
     disconnectedEventName,
-    raiseConnectedEvent,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
@@ -411,7 +411,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private manualReconnectInProgress = false;
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
-
     private _loadedFromVersion: IVersion | undefined;
     private _resolvedUrl: IResolvedUrl | undefined;
     private cachedAttachSummary: ISummaryTree | undefined;
