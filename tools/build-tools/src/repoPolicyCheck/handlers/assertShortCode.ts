@@ -22,6 +22,12 @@ function getCallsiteString(msg: Node){
     return `${msg.getSourceFile().getFilePath()}@${msg.getStartLineNumber()}`
 }
 
+/**
+ * Given a source file this function will look for all assert functions contained in it, and return the second parameter from
+ * all the functions which is the message parameter
+ * @param sourceFile - The file to get the assert message parameters for.
+ * @returns - an array of all the assert message parameters
+ */
 function getAssertMessageParams(sourceFile: SourceFile): (StringLiteral | NumericLiteral | TemplateLiteral)[]{
     const calls = sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression);
     const messageArgs:(StringLiteral | NumericLiteral | TemplateLiteral)[] = []
@@ -56,12 +62,16 @@ export const handler: Handler = {
         if(tsconfigPath.includes("test")){
             return;
         }
+        // load the project based on the tsconfig
         const project = new Project({
             skipFileDependencyResolution: true,
             tsConfigFilePath: tsconfigPath,
         });
+        // walk all the files in the project
         for(const sourceFile of project.getSourceFiles()){
+            // walk the assert message params in the file
             for(const msg of getAssertMessageParams(sourceFile)){
+                // if it's a number, then it should be shortcode, which we validate
                 if(msg.getKind() === SyntaxKind.NumericLiteral){
                     const numLit = msg as NumericLiteral;
                     if(!numLit.getText().startsWith("0x")){
@@ -76,6 +86,7 @@ export const handler: Handler = {
                     //calculate the maximun short code to ensure we don't duplicate
                     maxShortCode = Math.max(numLitValue, maxShortCode);
                 }else{
+                    // the message is not a number, so stash it to apply short codes later
                     newAssetFiles.add(sourceFile);
                 }
             }
@@ -85,18 +96,25 @@ export const handler: Handler = {
         const errors: string[]=[];
         // go through all the newly collected asserts and add short codes
         for(const s of newAssetFiles){
-            const res = s.refreshFromFileSystemSync();
+            // another policy may have changed the file, so reload it
+            s.refreshFromFileSystemSync();
             for(const msg of getAssertMessageParams(s)){
+                // here we only want to looks at those messages that are not numbers,
+                // as we validated existing short codes above
                 if(msg.getKind() !== SyntaxKind.NumericLiteral){
+                    // resolve === fix
                     if(resolve){
                         //for now we don't care about filling gaps, but possible
                         const shortCode = ++maxShortCode;
                         shortCodes.set(shortCode, msg);
                         const text = msg.getText();
                         const shortCodeStr = `0x${shortCode.toString(16).padStart(3,"0")}`;
+                        // replace the message with shortcode, and put the message in a comment
                         msg.replaceWithText(`${shortCodeStr} /* ${text} */`);
                     }else{
-                        //TODO: enable errors on missing shortcodes
+                        // TODO: if we are not in resolve mode we
+                        // allow  messages that are not short code. this seems like the right
+                        // behavior for main. we may want to enforce shortcodes in release branches in the future
                         // errors.push(`no assert shortcode: ${getCallsiteString(msg)}`);
                         break;
                     }
