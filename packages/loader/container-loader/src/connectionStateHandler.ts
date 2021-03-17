@@ -102,7 +102,7 @@ export class ConnectionStateHandler {
         }
 
         const oldState = this._connectionState;
-        this._connectionState = ConnectionState.Disconnected;
+        this._connectionState = value;
 
         if (value === ConnectionState.Connected) {
             // Mark our old client should have left in the quorum if it's still there

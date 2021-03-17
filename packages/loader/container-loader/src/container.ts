@@ -1509,7 +1509,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             () => this.activeConnection(),
         );
 
-        this.deltaManager.on(connectEventName, (details: IConnectionDetails, opsBehind?: number) => {
+        deltaManager.on(connectEventName, (details: IConnectionDetails, opsBehind?: number) => {
             this.connectionStateHandler.receivedConnectEvent(
                 this,
                 this._deltaManager.connectionMode,
@@ -1525,7 +1525,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         });
 
-        this.deltaManager.on("disconnect", (reason: string) => {
+        deltaManager.on("disconnect", (reason: string) => {
             this.manualReconnectInProgress = false;
             this.connectionStateHandler.receivedDisconnectEvent(reason);
         });
