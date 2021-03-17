@@ -13,6 +13,7 @@ import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { ITestDriver, TestDriverTypes, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import { createFluidTestDriver } from "@fluidframework/test-drivers";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ITestConfig, ILoadTestConfig } from "./testConfigFile";
 import { IRunConfig, fluidExport, ILoadTest } from "./loadTestDataStore";
@@ -38,7 +39,7 @@ function createLoader(testDriver: ITestDriver) {
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
         codeLoader,
-        logger,
+        logger: ChildLogger.create(logger, undefined, {all: {buildId: process.env.FLUID_PIPELINE_BUILD_ID}}),
     });
     return loader;
 }
