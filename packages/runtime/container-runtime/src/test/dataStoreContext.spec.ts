@@ -384,10 +384,7 @@ describe("Data Store Context Tests", () => {
             });
 
             it("can correctly initialize and generate attributes without version and isRootDataStore", async () => {
-                dataStoreAttributes = {
-                    pkg: "TestDataStore1",
-                    summaryFormatVersion: undefined,
-                };
+                dataStoreAttributes = { pkg: "TestDataStore1" };
                 const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
                 const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
                 const snapshotTree: ISnapshotTree = {
@@ -424,6 +421,53 @@ describe("Data Store Context Tests", () => {
                     "Remote DataStore snapshot version does not match.");
                 // Remote context without the isRootDataStore flag in the snapshot should default it to true.
                 assert.strictEqual(contents.isRootDataStore, true, "Remote DataStore root state does not match.");
+            });
+
+            it("can correctly initialize and generate attributes with isolated channels disabled", async () => {
+                dataStoreAttributes = {
+                    pkg: JSON.stringify(["TestDataStore1"]),
+                    summaryFormatVersion: 2,
+                    isRootDataStore: true,
+                };
+                (containerRuntime as any).disableIsolatedChannels = true;
+
+                const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
+                const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
+                const snapshotTree: ISnapshotTree = {
+                    blobs: { [dataStoreAttributesBlobName]: "fluidDataStoreAttributes" },
+                    commits: {},
+                    trees: {},
+                };
+
+                remotedDataStoreContext = new RemotedFluidDataStoreContext(
+                    dataStoreId,
+                    snapshotTree,
+                    containerRuntime,
+                    new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                    scope,
+                    createSummarizerNodeFn,
+                );
+
+                const isRootNode = await remotedDataStoreContext.isRoot();
+                assert.strictEqual(isRootNode, true, "The data store should be root.");
+
+                const summarizeResult = await remotedDataStoreContext.summarize(true /* fullTree */);
+                assert(summarizeResult.summary.type === SummaryType.Tree,
+                    "summarize should always return a tree when fullTree is true");
+                const blob = summarizeResult.summary.tree[dataStoreAttributesBlobName] as ISummaryBlob;
+
+                const contents = JSON.parse(blob.content as string) as WriteFluidDataStoreAttributes;
+                assert.strictEqual(
+                    contents.pkg,
+                    dataStoreAttributes.pkg,
+                    "Remote DataStore package does not match.");
+                assert.strictEqual(
+                    contents.summaryFormatVersion,
+                    2,
+                    "Remote DataStore snapshot version does not match.");
+                // Remote context without the isRootDataStore flag in the snapshot should default it to true.
+                assert.strictEqual(contents.isRootDataStore, true, "Remote DataStore root state does not match.");
+                assert.strictEqual(contents.disableIsolatedChannels, true, "Disable isolated channels should be true.");
             });
         });
 
@@ -625,11 +669,7 @@ describe("Data Store Context Tests", () => {
                     "summarize should return a tree since used state changed");
             });
 
-            it("can successfully update referenced state", () => {
-                dataStoreAttributes = {
-                    pkg: "TestDataStore1",
-                    summaryFormatVersion: undefined,
-                };
+            function updateReferencedStateTest() {
                 const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
                 const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
                 const snapshotTree: ISnapshotTree = {
@@ -662,6 +702,26 @@ describe("Data Store Context Tests", () => {
                 remotedDataStoreContext.updateUsedRoutes([""]);
                 assert.strictEqual(
                     dataStoreSummarizerNode?.isReferenced(), true, "Data store should now be referenced");
+            }
+            it("can successfully update referenced state from format version 0", () => {
+                dataStoreAttributes = {
+                    pkg: "TestDataStore1",
+                };
+                updateReferencedStateTest();
+            });
+            it("can successfully update referenced state from format version 1", () => {
+                dataStoreAttributes = {
+                    pkg: "[\"TestDataStore1\"]",
+                    snapshotFormatVersion: "0.1",
+                };
+                updateReferencedStateTest();
+            });
+            it("can successfully update referenced state from format version 2", () => {
+                dataStoreAttributes = {
+                    pkg: "[\"TestDataStore1\"]",
+                    summaryFormatVersion: 2,
+                };
+                updateReferencedStateTest();
             });
         });
     });
