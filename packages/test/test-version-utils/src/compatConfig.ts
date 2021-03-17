@@ -149,8 +149,6 @@ process.env.fluid__test__compatKind = JSON.stringify(compatKind);
 process.env.fluid__test__compatVersion = `"${JSON.stringify(compatVersions)}"`;
 process.env.fluid__test__driver = driver;
 
-console.log(JSON.stringify(driver));
-
 let configList: CompatConfig[] = [];
 compatVersions.forEach((value) => {
     configList.push(...genConfig(value));
