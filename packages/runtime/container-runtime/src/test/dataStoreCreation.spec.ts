@@ -145,8 +145,7 @@ describe("Data Store Creation Tests", () => {
                 getCreateSummarizerNodeFn(dataStoreId),
                 attachCb,
                 undefined,
-                false /* isRootDataStore */,
-                2);
+                false /* isRootDataStore */);
 
             try {
                 await context.realize();

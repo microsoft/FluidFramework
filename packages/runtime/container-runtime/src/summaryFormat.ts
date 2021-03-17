@@ -31,7 +31,7 @@ export type ReadFluidDataStoreAttributes = IFluidDataStoreAttributes1 | IFluidDa
 export type WriteFluidDataStoreAttributes = IFluidDataStoreAttributes2;
 
 export function getAttributesFormatVersion(attributes: ReadFluidDataStoreAttributes): number {
-    if ("summaryFormatVersion" in attributes) {
+    if ("summaryFormatVersion" in attributes && attributes.summaryFormatVersion !== undefined) {
         /**
          * Version 2+: Introduces .channels trees for isolation of
          * channel trees from data store objects.
