@@ -177,7 +177,7 @@ function describeCompat(
                         config?.loader,
                         {
                             type: driver,
-                            // version: config?.loader,
+                            version: config?.loader,
                         },
                         config?.containerRuntime,
                         config?.dataRuntime,

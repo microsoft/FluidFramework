@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
+import { DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
 import { InsecureTokenProvider, InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
@@ -82,7 +82,7 @@ export class RouterliciousTestDriver implements ITestDriver {
         return `${this.serviceEndpoints.hostUrl}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.createDocumentId(testId))}`;
     }
 
-    createDocumentServiceFactory(): RouterliciousDocumentServiceFactory {
+    createDocumentServiceFactory() {
         const tokenProvider = new InsecureTokenProvider(
             this.tenantSecret,
             {

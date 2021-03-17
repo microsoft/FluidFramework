@@ -17,7 +17,7 @@ import {
     TestObjectProvider,
 } from "@fluidframework/test-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { createFluidTestDriver, FluidTestDriverConfig } from "@fluidframework/test-drivers";
+import { FluidTestDriverConfig, createFluidTestDriver } from "@fluidframework/test-drivers";
 
 import { getLoaderApi, getContainerRuntimeApi, getDataRuntimeApi, getDriverApi } from "./testApi";
 

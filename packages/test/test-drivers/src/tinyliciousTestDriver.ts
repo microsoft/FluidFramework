@@ -4,7 +4,6 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import {
     createTinyliciousCreateNewRequest,
     InsecureTinyliciousTokenProvider,
@@ -19,8 +18,8 @@ export class TinyliciousTestDriver implements ITestDriver {
     public get version() { return this.api.version; }
 
     constructor(private readonly api = RouterliciousDriverApi) {}
-    createDocumentServiceFactory(): RouterliciousDocumentServiceFactory {
-        return new RouterliciousDocumentServiceFactory(
+    createDocumentServiceFactory() {
+        return new this.api.RouterliciousDocumentServiceFactory(
             new InsecureTinyliciousTokenProvider());
     }
     createUrlResolver(): InsecureTinyliciousUrlResolver {

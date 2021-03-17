@@ -22,15 +22,18 @@ export const DriverApi = {
     RouterliciousDriverApi,
 };
 
-export
+let hasSetKeepAlive = false;
 function setKeepAlive() {
-    // Each TCP connect has a delay to allow it to be reuse after close, and unit test make a lot of connection,
-    // which might cause port exhaustion.
+    if (!hasSetKeepAlive) {
+        // Each TCP connect has a delay to allow it to be reuse after close, and unit test make a lot of connection,
+        // which might cause port exhaustion.
 
-    // For drivers that use Axios (t9s and r11s), keep the TCP connection open so that they can be reused
-    // TODO: no solution for node-fetch used by ODSP driver.
-    // TODO: currently the driver use a global setting.  Might want to make this encapsulated.
-    Axios.defaults.httpAgent = new http.Agent({ keepAlive: true });
+        // For drivers that use Axios (t9s and r11s), keep the TCP connection open so that they can be reused
+        // TODO: no solution for node-fetch used by ODSP driver.
+        // TODO: currently the driver use a global setting.  Might want to make this encapsulated.
+        Axios.defaults.httpAgent = new http.Agent({ keepAlive: true });
+        hasSetKeepAlive = true;
+    }
 }
 
 type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => any> =
