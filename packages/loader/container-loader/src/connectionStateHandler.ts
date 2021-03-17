@@ -3,61 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, performance } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
-import { isOnline, OnlineStatus } from "@fluidframework/driver-utils";
-import { ProtocolOpHandler } from "@fluidframework/protocol-base";
-import { ISequencedClient } from "@fluidframework/protocol-definitions";
-import { raiseConnectedEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
-import { Audience } from "./audience";
-import { Container } from "./container";
-import { ContainerContext } from "./containerContext";
-import { DeltaManager, ReconnectMode } from "./deltaManager";
-
-export const connectEventName = "connect";
-
-export enum ConnectionState {
-    /**
-     * The document is no longer connected to the delta server
-     */
-    Disconnected,
-
-    /**
-     * The document has an inbound connection but is still pending for outbound deltas
-     */
-    Connecting,
-
-    /**
-     * The document is fully connected
-     */
-    Connected,
-}
-
-interface ILocalSequencedClient extends ISequencedClient {
-    shouldHaveLeft?: boolean;
-}
+import { ProtocolOpHandler, Quorum } from "@fluidframework/protocol-base";
+import { ConnectionMode } from "@fluidframework/protocol-definitions";
+import { connectEventName, ConnectionState, ILocalSequencedClient } from "./container";
 
 export class ConnectionStateHandler {
-    private firstConnection = true;
-    private _manualReconnectInProgress = false;
-    private _messageCountAfterDisconnection: number = 0;
     private _connectionState = ConnectionState.Disconnected;
-    private pendingClientId: string | undefined;
+    private _pendingClientId: string | undefined;
     private _clientId: string | undefined;
-    private readonly _connectionTransitionTimes: number[] = [];
-
-    private get protocolHandler(): ProtocolOpHandler {
-        return this.protocolHandlerGetter();
-    }
-
-    private get context() {
-        return this.containerContextGetter();
-    }
-
-    private get audience() {
-        return this.audienceGetter();
-    }
 
     public get connectionState(): ConnectionState {
         return this._connectionState;
@@ -71,155 +28,60 @@ export class ConnectionStateHandler {
         return this._clientId;
     }
 
-    public get messageCountAfterDisconnection() {
-        return this._messageCountAfterDisconnection;
-    }
-
-    public set messageCountAfterDisconnection(value) {
-        this._messageCountAfterDisconnection = value;
-    }
-
-    public get connectionTransitionTimes() {
-        return this._connectionTransitionTimes;
-    }
-
-    public get manualReconnectInProgress() {
-        return this._manualReconnectInProgress;
-    }
-
-    public set manualReconnectInProgress(value: boolean) {
-        this._manualReconnectInProgress = value;
+    public get pendingClientId(): string | undefined {
+        return this._pendingClientId;
     }
 
     constructor(
-        private readonly container: Container,
-        private readonly deltaManager: DeltaManager,
+        private readonly protocolHandler: () => ProtocolOpHandler | undefined,
+        private readonly logConnectionStateChangeTelemetry:
+            (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
+        private readonly propagateConnectionState: () => void,
+        private readonly isContainerLoaded: () => boolean,
         private readonly logger: ITelemetryLogger,
-        private readonly audienceGetter: () => Audience,
-        private readonly containerContextGetter: () => ContainerContext,
-        private readonly protocolHandlerGetter: () => ProtocolOpHandler,
     ) {
-        this.deltaManager.on(connectEventName, (details: IConnectionDetails, opsBehind?: number) => {
-            const oldState = this._connectionState;
-            this._connectionState = ConnectionState.Connecting;
-
-            // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
-            // (have received the join message for the client ID)
-            // This is especially important in the reconnect case. It's possible there could be outstanding
-            // ops sent by this client, so we should keep the old client id until we see our own client's
-            // join message. after we see the join message for out new connection with our new client id,
-            // we know there can no longer be outstanding ops that we sent with the previous client id.
-            this.pendingClientId = details.clientId;
-
-            container.emit(connectEventName, opsBehind);
-
-            // Report telemetry after we set client id!
-            this.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
-
-            // Protocol Handler might not be set here.
-            let protocolHandler: ProtocolOpHandler | undefined;
-            try {
-                protocolHandler = this.protocolHandler;
-            } catch (error) {}
-
-            // Check if we already processed our own join op through delta storage!
-            // we are fetching ops from storage in parallel to connecting to ordering service
-            // Given async processes, it's possible that we have already processed our own join message before
-            // connection was fully established.
-            // Note that we might be still initializing quorum - connection is established proactively on load!
-            if ((protocolHandler !== undefined && protocolHandler.quorum.has(details.clientId))
-                    || this.deltaManager.connectionMode === "read") {
-                this.setConnectionState(ConnectionState.Connected);
-            }
-
-            // Back-compat for new client and old server.
-            this.audience.clear();
-
-            for (const priorClient of details.initialClients ?? []) {
-                this.audience.addMember(priorClient.clientId, priorClient.client);
-            }
-        });
-
-        this.deltaManager.on("disconnect", (reason: string) => {
-            this.manualReconnectInProgress = false;
-            this.setConnectionState(ConnectionState.Disconnected, reason);
-        });
     }
 
-    public setProtocolMemberEvents(protocol: ProtocolOpHandler) {
-        // Track membership changes and update connection state accordingly
-        protocol.quorum.on("addMember", (clientId, details) => {
-            // This is the only one that requires the pending client ID
-            if (clientId === this.pendingClientId) {
-                this.setConnectionState(ConnectionState.Connected);
-            }
-        });
-    }
-
-    private logConnectionStateChangeTelemetry(
-        value: ConnectionState,
-        oldState: ConnectionState,
-        reason?: string,
-    ) {
-        // Log actual event
-        const time = performance.now();
-        this.connectionTransitionTimes[value] = time;
-        const duration = time - this.connectionTransitionTimes[oldState];
-
-        let durationFromDisconnected: number | undefined;
-        let connectionMode: string | undefined;
-        let connectionInitiationReason: string | undefined;
-        let autoReconnect: ReconnectMode | undefined;
-        let checkpointSequenceNumber: number | undefined;
-        let sequenceNumber: number | undefined;
-        let opsBehind: number | undefined;
-        if (value === ConnectionState.Disconnected) {
-            autoReconnect = this.deltaManager.reconnectMode;
-        } else {
-            connectionMode = this.deltaManager.connectionMode;
-            sequenceNumber = this.deltaManager.lastSequenceNumber;
-            if (value === ConnectionState.Connected) {
-                durationFromDisconnected = time - this.connectionTransitionTimes[ConnectionState.Disconnected];
-                durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
-            } else {
-                // This info is of most interest on establishing connection only.
-                checkpointSequenceNumber = this.deltaManager.lastKnownSeqNumber;
-                if (this.deltaManager.hasCheckpointSequenceNumber) {
-                    opsBehind = checkpointSequenceNumber - sequenceNumber;
-                }
-            }
-            if (this.firstConnection) {
-                connectionInitiationReason = "InitialConnect";
-            } else if (this.manualReconnectInProgress) {
-                connectionInitiationReason = "ManualReconnect";
-            } else {
-                connectionInitiationReason = "AutoReconnect";
-            }
+    public receivedAddMemberEvent(clientId: string, quorum: Quorum) {
+        // This is the only one that requires the pending client ID
+        if (clientId === this.pendingClientId) {
+            this.setConnectionState(ConnectionState.Connected);
         }
+    }
 
-        this.logger.sendPerformanceEvent({
-            eventName: `ConnectionStateChange_${ConnectionState[value]}`,
-            from: ConnectionState[oldState],
-            duration,
-            durationFromDisconnected,
-            reason,
-            connectionInitiationReason,
-            socketDocumentId: this.deltaManager.socketDocumentId,
-            pendingClientId: this.pendingClientId,
-            clientId: this.clientId,
-            connectionMode,
-            autoReconnect,
-            opsBehind,
-            online: OnlineStatus[isOnline()],
-            lastVisible: this.container.lastVisible !== undefined ?
-                performance.now() - this.container.lastVisible : undefined,
-            checkpointSequenceNumber,
-            sequenceNumber,
-        });
+    public receivedDisconnectEvent(reason: string) {
+        this.setConnectionState(ConnectionState.Disconnected, reason);
+    }
 
-        if (value === ConnectionState.Connected) {
-            this.firstConnection = false;
-            this.manualReconnectInProgress = false;
+    public receivedConnectEvent(
+        emitter: EventEmitter,
+        connectionMode: ConnectionMode,
+        details: IConnectionDetails,
+        opsBehind?: number,
+    ) {
+        const oldState = this._connectionState;
+        this._connectionState = ConnectionState.Connecting;
+        // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
+        // (have received the join message for the client ID)
+        // This is especially important in the reconnect case. It's possible there could be outstanding
+        // ops sent by this client, so we should keep the old client id until we see our own client's
+        // join message. after we see the join message for out new connection with our new client id,
+        // we know there can no longer be outstanding ops that we sent with the previous client id.
+        this._pendingClientId = details.clientId;
+        emitter.emit(connectEventName, opsBehind);
+        // Report telemetry after we set client id!
+        this.logConnectionStateChangeTelemetry(this._connectionState, oldState);
+
+        const protocolHandler = this.protocolHandler();
+        // Check if we already processed our own join op through delta storage!
+        // we are fetching ops from storage in parallel to connecting to ordering service
+        // Given async processes, it's possible that we have already processed our own join message before
+        // connection was fully established.
+        // Note that we might be still initializing quorum - connection is established proactively on load!
+        if ((protocolHandler !== undefined && protocolHandler.quorum.has(details.clientId))
+            || connectionMode === "read"
+        ) {
+            this.setConnectionState(ConnectionState.Connected);
         }
     }
 
@@ -237,13 +99,13 @@ export class ConnectionStateHandler {
         }
 
         const oldState = this._connectionState;
-        this._connectionState = value;
+        this._connectionState = ConnectionState.Disconnected;
 
         if (value === ConnectionState.Connected) {
             // Mark our old client should have left in the quorum if it's still there
             if (this._clientId !== undefined) {
                 const client: ILocalSequencedClient | undefined =
-                    this.protocolHandler?.quorum.getMember(this._clientId);
+                    this.protocolHandler()?.quorum.getMember(this._clientId);
                 if (client !== undefined) {
                     client.shouldHaveLeft = true;
                 }
@@ -251,37 +113,14 @@ export class ConnectionStateHandler {
             this._clientId = this.pendingClientId;
         } else if (value === ConnectionState.Disconnected) {
             // Important as we process our own joinSession message through delta request
-            this.pendingClientId = undefined;
+            this._pendingClientId = undefined;
         }
 
-        if (this.container.isLoaded) {
+        if (this.isContainerLoaded()) {
             this.propagateConnectionState();
         }
 
         // Report telemetry after we set client id!
-        this.logConnectionStateChangeTelemetry(value, oldState, reason);
-    }
-
-    public propagateConnectionState() {
-        const logOpsOnReconnect: boolean =
-            this._connectionState === ConnectionState.Connected &&
-            !this.firstConnection &&
-            this.deltaManager.connectionMode === "write";
-        if (logOpsOnReconnect) {
-            this._messageCountAfterDisconnection = 0;
-        }
-
-        const state = this._connectionState === ConnectionState.Connected;
-        if (!this.context.disposed) {
-            this.context.setConnectionState(state, this.clientId);
-        }
-        assert(this.protocolHandler !== undefined, "Protocol handler should be set here");
-        this.protocolHandler.quorum.setConnectionState(state, this.clientId);
-        raiseConnectedEvent(this.logger, this.container, state, this.clientId);
-
-        if (logOpsOnReconnect) {
-            this.logger.sendTelemetryEvent(
-                { eventName: "OpsSentOnReconnect", count: this._messageCountAfterDisconnection });
-        }
+        this.logConnectionStateChangeTelemetry(this._connectionState, oldState, reason);
     }
 }

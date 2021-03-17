@@ -46,6 +46,8 @@ import {
     combineAppAndProtocolSummary,
     readAndParseFromBlobs,
     buildSnapshotTree,
+    OnlineStatus,
+    isOnline,
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
@@ -84,23 +86,25 @@ import {
     TelemetryLogger,
     connectedEventName,
     disconnectedEventName,
+    raiseConnectedEvent,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
-import { IConnectionArgs, DeltaManager } from "./deltaManager";
+import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
 import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
-import { connectEventName, ConnectionState, ConnectionStateHandler } from "./connectionStateHandler";
+import { ConnectionStateHandler } from "./connectionStateHandler";
 
 const detachedContainerRefSeqNumber = 0;
 
+export const connectEventName = "connect";
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
-interface ILocalSequencedClient extends ISequencedClient {
+export interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
 }
 
@@ -139,6 +143,23 @@ export interface IContainerConfig {
      */
     clientDetailsOverride?: IClientDetails;
     id?: string;
+}
+
+export enum ConnectionState {
+    /**
+     * The document is no longer connected to the delta server
+     */
+    Disconnected,
+
+    /**
+     * The document has an inbound connection but is still pending for outbound deltas
+     */
+    Connecting,
+
+    /**
+     * The document is fully connected
+     */
+    Connected,
 }
 
 /**
@@ -386,14 +407,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private resumedOpProcessingAfterLoad = false;
+    private firstConnection = true;
+    private manualReconnectInProgress = false;
+    private readonly connectionTransitionTimes: number[] = [];
+    private messageCountAfterDisconnection: number = 0;
 
-    private _lastVisible: number | undefined;
     private _loadedFromVersion: IVersion | undefined;
     private _resolvedUrl: IResolvedUrl | undefined;
     private cachedAttachSummary: ISummaryTree | undefined;
     private attachInProgress = false;
     private _dirtyContainer = false;
 
+    private lastVisible: number | undefined;
     private readonly connectionStateHandler: ConnectionStateHandler;
 
     private _closed = false;
@@ -409,14 +434,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public get resolvedUrl(): IResolvedUrl | undefined {
         return this._resolvedUrl;
-    }
-
-    public get lastVisible() {
-        return this._lastVisible;
-    }
-
-    public get isLoaded() {
-        return this.loaded;
     }
 
     public get loadedFromVersion(): IVersion | undefined {
@@ -582,22 +599,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this._deltaManager = this.createDeltaManager();
         this.connectionStateHandler = new ConnectionStateHandler(
-            this,
-            this._deltaManager,
+            () => this._protocolHandler,
+            (value, oldState, reason) => this.logConnectionStateChangeTelemetry(value, oldState, reason),
+            () => this.propagateConnectionState(),
+            () => this.loaded,
             this.logger,
-            () => this._audience,
-            () => this.context,
-            () => this.protocolHandler);
+        );
 
         // keep track of last time page was visible for telemetry
         if (typeof document === "object" && document !== null) {
-            this._lastVisible = document.hidden ? performance.now() : undefined;
+            this.lastVisible = document.hidden ? performance.now() : undefined;
             document.addEventListener("visibilitychange", () => {
                 if (document.hidden) {
-                    this._lastVisible = performance.now();
+                    this.lastVisible = performance.now();
                 } else {
                     // settimeout so this will hopefully fire after disconnect event if being hidden caused it
-                    setTimeout(() => this._lastVisible = undefined, 0);
+                    setTimeout(() => this.lastVisible = undefined, 0);
                 }
             });
         }
@@ -788,7 +805,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.cachedAttachSummary = undefined;
 
             // Propagate current connection state through the system.
-            this.connectionStateHandler.propagateConnectionState();
+            this.propagateConnectionState();
             if (!this.closed) {
                 this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
             }
@@ -838,9 +855,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // If container state is not attached and resumed, then don't connect to delta stream. Also don't set the
         // manual reconnection flag to true as we haven't made the initial connection yet.
         if (reconnect && this._attachState === AttachState.Attached && this.resumedOpProcessingAfterLoad) {
-            if (this.connectionStateHandler.connectionState === ConnectionState.Disconnected) {
+            if (this.connectionState === ConnectionState.Disconnected) {
                 // Only track this as a manual reconnection if we are truly the ones kicking it off.
-                this.connectionStateHandler.manualReconnectInProgress = true;
+                this.manualReconnectInProgress = true;
             }
 
             // Ensure connection to web socket
@@ -1108,8 +1125,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private recordConnectStartTime() {
-        if (this.connectionStateHandler.connectionTransitionTimes[ConnectionState.Disconnected] === undefined) {
-            this.connectionStateHandler.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
+        if (this.connectionTransitionTimes[ConnectionState.Disconnected] === undefined) {
+            this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
         }
     }
 
@@ -1200,7 +1217,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         await this.loadContext(codeDetails, attributes, snapshot, undefined, pendingLocalState);
 
         // Propagate current connection state through the system.
-        this.connectionStateHandler.propagateConnectionState();
+        this.propagateConnectionState();
 
         if (!pause) {
             this.resume();
@@ -1258,7 +1275,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // The load context - given we seeded the quorum - will be great
         await this.createDetachedContext(attributes);
 
-        this.connectionStateHandler.propagateConnectionState();
+        this.propagateConnectionState();
 
         this.loaded = true;
     }
@@ -1280,7 +1297,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.loaded = true;
 
-        this.connectionStateHandler.propagateConnectionState();
+        this.propagateConnectionState();
     }
 
     private async getDocumentStorageService(): Promise<IDocumentStorageService> {
@@ -1374,7 +1391,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             protocolLogger.sendErrorEvent(error);
         });
 
-        this.connectionStateHandler.setProtocolMemberEvents(protocol);
+        // Track membership changes and update connection state accordingly
+        protocol.quorum.on("addMember", (clientId, details) => {
+            this.connectionStateHandler.receivedAddMemberEvent(clientId, this.protocolHandler.quorum);
+        });
 
         protocol.quorum.on("addProposal",(proposal: IPendingProposal) => {
             if (proposal.key === "code" || proposal.key === "code2") {
@@ -1498,6 +1518,27 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.emit("readonly", readonly);
         });
 
+        this.deltaManager.on(connectEventName, (details: IConnectionDetails, opsBehind?: number) => {
+            this.connectionStateHandler.receivedConnectEvent(
+                this,
+                this._deltaManager.connectionMode,
+                details,
+                opsBehind,
+            );
+
+            // Back-compat for new client and old server.
+            this._audience.clear();
+
+            for (const priorClient of details.initialClients ?? []) {
+                this._audience.addMember(priorClient.clientId, priorClient.client);
+            }
+        });
+
+        this.deltaManager.on("disconnect", (reason: string) => {
+            this.manualReconnectInProgress = false;
+            this.connectionStateHandler.receivedDisconnectEvent(reason);
+        });
+
         return deltaManager;
     }
 
@@ -1522,6 +1563,96 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             });
     }
 
+    private logConnectionStateChangeTelemetry(
+        value: ConnectionState,
+        oldState: ConnectionState,
+        reason?: string,
+    ) {
+        // Log actual event
+        const time = performance.now();
+        this.connectionTransitionTimes[value] = time;
+        const duration = time - this.connectionTransitionTimes[oldState];
+
+        let durationFromDisconnected: number | undefined;
+        let connectionMode: string | undefined;
+        let connectionInitiationReason: string | undefined;
+        let autoReconnect: ReconnectMode | undefined;
+        let checkpointSequenceNumber: number | undefined;
+        let sequenceNumber: number | undefined;
+        let opsBehind: number | undefined;
+        if (value === ConnectionState.Disconnected) {
+            autoReconnect = this._deltaManager.reconnectMode;
+        } else {
+            connectionMode = this._deltaManager.connectionMode;
+            sequenceNumber = this.deltaManager.lastSequenceNumber;
+            if (value === ConnectionState.Connected) {
+                durationFromDisconnected = time - this.connectionTransitionTimes[ConnectionState.Disconnected];
+                durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
+            } else {
+                // This info is of most interest on establishing connection only.
+                checkpointSequenceNumber = this.deltaManager.lastKnownSeqNumber;
+                if (this.deltaManager.hasCheckpointSequenceNumber) {
+                    opsBehind = checkpointSequenceNumber - sequenceNumber;
+                }
+            }
+            if (this.firstConnection) {
+                connectionInitiationReason = "InitialConnect";
+            } else if (this.manualReconnectInProgress) {
+                connectionInitiationReason = "ManualReconnect";
+            } else {
+                connectionInitiationReason = "AutoReconnect";
+            }
+        }
+
+        this.logger.sendPerformanceEvent({
+            eventName: `ConnectionStateChange_${ConnectionState[value]}`,
+            from: ConnectionState[oldState],
+            duration,
+            durationFromDisconnected,
+            reason,
+            connectionInitiationReason,
+            socketDocumentId: this._deltaManager.socketDocumentId,
+            pendingClientId: this.connectionStateHandler.pendingClientId,
+            clientId: this.clientId,
+            connectionMode,
+            autoReconnect,
+            opsBehind,
+            online: OnlineStatus[isOnline()],
+            lastVisible: this.lastVisible !== undefined ?
+                performance.now() - this.lastVisible : undefined,
+            checkpointSequenceNumber,
+            sequenceNumber,
+        });
+
+        if (value === ConnectionState.Connected) {
+            this.firstConnection = false;
+            this.manualReconnectInProgress = false;
+        }
+    }
+
+    public propagateConnectionState() {
+        const logOpsOnReconnect: boolean =
+            this.connectionState === ConnectionState.Connected &&
+            !this.firstConnection &&
+            this._deltaManager.connectionMode === "write";
+        if (logOpsOnReconnect) {
+            this.messageCountAfterDisconnection = 0;
+        }
+
+        const state = this.connectionState === ConnectionState.Connected;
+        if (!this.context.disposed) {
+            this.context.setConnectionState(state, this.clientId);
+        }
+        assert(this.protocolHandler !== undefined, "Protocol handler should be set here");
+        this.protocolHandler.quorum.setConnectionState(state, this.clientId);
+        raiseConnectedEvent(this.logger, this, state, this.clientId);
+
+        if (logOpsOnReconnect) {
+            this.logger.sendTelemetryEvent(
+                { eventName: "OpsSentOnReconnect", count: this.messageCountAfterDisconnection });
+        }
+    }
+
     private submitContainerMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
         const outboundMessageType: string = type;
         switch (outboundMessageType) {
@@ -1542,7 +1673,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             return -1;
         }
 
-        this.connectionStateHandler.messageCountAfterDisconnection += 1;
+        this.messageCountAfterDisconnection += 1;
         this.collabWindowTracker.stopSequenceNumberUpdate();
         return this._deltaManager.submit(type, contents, batch, metadata);
     }
