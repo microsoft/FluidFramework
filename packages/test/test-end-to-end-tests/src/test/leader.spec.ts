@@ -11,7 +11,7 @@ import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 async function ensureConnected(container: Container) {
     if (!container.connected) {
-        await timeoutPromise((resolve, rejected) => container.on("connected", resolve));
+        await new Promise((resolve, rejected) => container.on("connected", resolve));
     }
 }
 
