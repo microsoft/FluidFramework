@@ -125,30 +125,16 @@ export class OdspTestDriver implements ITestDriver {
     async createContainerUrl(testId: string): Promise<string> {
         if(!this.testIdToUrl.has(testId)) {
             const siteUrl = `https://${this.config.server}`;
-            let driveItem;
-            try {
-                driveItem = await getDriveItemByRootFileName(
-                    this.config.server,
-                    undefined,
-                    `/${this.config.directory}/${testId}.fluid`,
-                    {
-                        accessToken: await this.getStorageToken({ siteUrl, refresh: false }),
-                        refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: false }),
-                    },
-                    false,
-                    this.config.driveId);
-            } catch (e) {
-                driveItem = await getDriveItemByRootFileName(
-                    this.config.server,
-                    undefined,
-                    `/${this.config.directory}/${testId}.fluid`,
-                    {
-                        accessToken: await this.getStorageToken({ siteUrl, refresh: false }),
-                        refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: false }),
-                    },
-                    true,
-                    this.config.driveId);
-            }
+            const driveItem = await getDriveItemByRootFileName(
+                this.config.server,
+                undefined,
+                `/${this.config.directory}/${testId}.fluid`,
+                {
+                    accessToken: await this.getStorageToken({ siteUrl, refresh: false }),
+                    refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: false }),
+                },
+                true,
+                this.config.driveId);
 
             this.testIdToUrl.set(
                 testId,
