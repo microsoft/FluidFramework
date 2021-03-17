@@ -61,6 +61,7 @@ export class ConnectionStateHandler {
     ) {
         const oldState = this._connectionState;
         this._connectionState = ConnectionState.Connecting;
+
         // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
         // (have received the join message for the client ID)
         // This is especially important in the reconnect case. It's possible there could be outstanding
@@ -68,9 +69,11 @@ export class ConnectionStateHandler {
         // join message. after we see the join message for out new connection with our new client id,
         // we know there can no longer be outstanding ops that we sent with the previous client id.
         this._pendingClientId = details.clientId;
+
         emitter.emit(connectEventName, opsBehind);
+
         // Report telemetry after we set client id!
-        this.logConnectionStateChangeTelemetry(this._connectionState, oldState);
+        this.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
 
         const protocolHandler = this.protocolHandler();
         // Check if we already processed our own join op through delta storage!

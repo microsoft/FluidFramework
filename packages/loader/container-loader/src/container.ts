@@ -1509,14 +1509,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             () => this.activeConnection(),
         );
 
-        deltaManager.on("throttled", (warning: IThrottlingWarning) => {
-            this.raiseContainerWarning(warning);
-        });
-
-        deltaManager.on("readonly", (readonly) => {
-            this.emit("readonly", readonly);
-        });
-
         this.deltaManager.on(connectEventName, (details: IConnectionDetails, opsBehind?: number) => {
             this.connectionStateHandler.receivedConnectEvent(
                 this,
@@ -1536,6 +1528,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.deltaManager.on("disconnect", (reason: string) => {
             this.manualReconnectInProgress = false;
             this.connectionStateHandler.receivedDisconnectEvent(reason);
+        });
+
+        deltaManager.on("throttled", (warning: IThrottlingWarning) => {
+            this.raiseContainerWarning(warning);
+        });
+
+        deltaManager.on("readonly", (readonly) => {
+            this.emit("readonly", readonly);
         });
 
         return deltaManager;
@@ -1617,8 +1617,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             autoReconnect,
             opsBehind,
             online: OnlineStatus[isOnline()],
-            lastVisible: this.lastVisible !== undefined ?
-                performance.now() - this.lastVisible : undefined,
+            lastVisible: this.lastVisible !== undefined ? performance.now() - this.lastVisible : undefined,
             checkpointSequenceNumber,
             sequenceNumber,
         });
