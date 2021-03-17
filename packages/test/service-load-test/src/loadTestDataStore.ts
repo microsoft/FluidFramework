@@ -8,6 +8,11 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import {ISharedCounter, SharedCounter} from "@fluidframework/counter";
+import { ITaskManager, TaskManager } from "@fluid-experimental/task-manager";
+import { IDirectory, ISharedDirectory } from "@fluidframework/map";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 
 export interface IRunConfig {
@@ -18,77 +23,167 @@ export interface IRunConfig {
 export interface ILoadTest {
     run(config: IRunConfig): Promise<void>;
 }
-
 const wait = async (timeMs: number) => new Promise((resolve) => setTimeout(resolve, timeMs));
 
-class LoadTestDataStore extends DataObject implements ILoadTest {
-    public static DataStoreName = "StressTestDataStore";
-    private opCount = 0;
-    private sentCount = 0;
-    private state: string = "not started";
-    protected async hasInitialized() {
-        this.root.on("op", () => {
-            this.opCount++;
-        });
+class LoadTestDataStoreModel {
+    public static initializingFirstTime(root: ISharedDirectory, runtime: IFluidDataStoreRuntime) {
+        root.set("taskmanager", TaskManager.create(runtime).handle);
     }
 
-    public async pause(timeMs: number) {
-        const startTimeMs = Date.now();
-        this.state = "paused";
-        await wait(timeMs);
-        this.state = "running";
-        return Date.now() - startTimeMs;
+    private static async waitForCatchup(runtime: IFluidDataStoreRuntime) {
+        if(runtime.deltaManager.active) {
+            return;
+        }
+        const lastKnownSeq = runtime.deltaManager.lastKnownSeqNumber;
+        while(runtime.deltaManager.lastSequenceNumber < lastKnownSeq) {
+            await new Promise((resolve,reject)=>{
+                if(runtime.disposed) {
+                    reject(new Error("disposed"));
+                    return;
+                }
+                runtime.deltaManager.once("op", resolve);
+            });
+        }
     }
 
-    private printStatus(config: IRunConfig, startTimeMs: number, runningStartTimeMs: number) {
-        const now = Date.now();
-        const totalMin = (now - startTimeMs) / 60000;
-        const runningMin = (now - runningStartTimeMs) / 60000;
-        const opRate = Math.floor(this.opCount / totalMin);
-        const sendRate = Math.floor(this.sentCount / runningMin);
-        console.log(
-            `${config.runId.toString().padStart(3)}>` +
-            ` seen: ${this.opCount.toString().padStart(8)} (${opRate.toString().padStart(4)}/min),` +
-            ` sent: ${this.sentCount.toString().padStart(8)} (${sendRate.toString().padStart(2)}/min),` +
-            ` run time: ${runningMin.toFixed(2).toString().padStart(5)} min`,
-            ` total time: ${totalMin.toFixed(2).toString().padStart(5)} min`,
+    public static async createRunnerInstance(
+        config: IRunConfig, reset: boolean, root: ISharedDirectory, runtime: IFluidDataStoreRuntime) {
+        if(!root.hasSubDirectory(config.runId.toString())) {
+            root.createSubDirectory(config.runId.toString());
+        }
+        const runDir = root.getSubDirectory(config.runId.toString());
+        if(runDir === undefined) {
+            throw new Error("runDir not available");
+        }
+
+        if(!runDir.has("counter")) {
+            await LoadTestDataStoreModel.waitForCatchup(runtime);
+            if(!runDir.has("counter")) {
+                runDir.set("counter", SharedCounter.create(runtime).handle);
+                runDir.set("startTime",Date.now());
+            }
+        }
+        const counter = await runDir.get<IFluidHandle<ISharedCounter>>("counter")?.get();
+        const taskmanager = await root.wait<IFluidHandle<ITaskManager>>("taskmanager").then(async (h)=>h.get());
+
+        if(counter === undefined) {
+            throw new Error("counter not available");
+        }
+        if(taskmanager === undefined) {
+            throw new Error("taskmanger not available");
+        }
+
+        if(reset) {
+            await LoadTestDataStoreModel.waitForCatchup(runtime);
+            runDir.set("startTime",Date.now());
+            runDir.set("taskTime",0);
+            counter.increment(-1 * counter.value);
+        }
+
+        return new LoadTestDataStoreModel(
+            config,
+            runtime,
+            taskmanager,
+            runDir,
+            counter,
         );
     }
 
-    public async run(config: IRunConfig) {
-        // Wait for all runners to join
-        console.log(`${config.runId.toString().padStart(3)}> waiting`);
-        await new Promise<void>((resolve) => {
-            let memberCount = this.context.getQuorum().getMembers().size;
-            if (memberCount >= config.testConfig.numClients) { resolve(); }
-            this.context.getQuorum().on("addMember", () => {
-                memberCount++;
-                if (memberCount >= config.testConfig.numClients) { resolve(); }
+    private readonly taskId: string;
+    private taskStartTime: number =0;
+
+    private constructor(
+        private readonly config: IRunConfig,
+        private readonly runtime: IFluidDataStoreRuntime,
+        private readonly taskManager: ITaskManager,
+        private readonly dir: IDirectory,
+        public readonly counter: ISharedCounter) {
+            this.taskId = `op_sender${Math.floor(config.runId / 2)}`;
+        }
+
+    public get startTime(): number {
+        return this.dir.get<number>("startTime") ?? 0;
+    }
+    public get totalTaskTime(): number {
+        return (this.dir.get<number>("taskTime") ?? 0) + this.currentTaskTime;
+    }
+    public get currentTaskTime(): number {
+        return this.haveTaskLock() ? Date.now() - this.taskStartTime : 0;
+    }
+
+    public haveTaskLock() {
+        return this.taskManager.haveTaskLock(this.taskId);
+    }
+
+    public abandonTask() {
+        if(this.haveTaskLock()) {
+            this.taskManager.abandon(this.taskId);
+        }
+    }
+
+    public async lockTask() {
+        if(!this.runtime.connected) {
+            await new Promise((res,rej)=>{
+                this.runtime.once("connected",res);
+                this.runtime.once("dispose", rej);
             });
+        }
+        await this.taskManager.lockTask(this.taskId);
+        this.taskStartTime = Date.now();
+        this.taskManager.once("lost",(taskId)=>{
+            if(taskId === this.taskId) {
+                this.dir.set("taskTime", Date.now() - this.taskStartTime);
+                this.taskStartTime = 0;
+            }
         });
+    }
+
+    public printStatus(alwaysPrint: boolean = false) {
+        if(alwaysPrint || this.haveTaskLock()) {
+            const now = Date.now();
+            const totalMin = (now - this.startTime) / 60000;
+            const taskMin = this.totalTaskTime / 60000;
+            const opCount  = this.runtime.deltaManager.lastKnownSeqNumber;
+            const opRate = Math.floor(this.runtime.deltaManager.lastKnownSeqNumber / totalMin);
+            const sendRate = Math.floor(this.counter.value / taskMin);
+            console.log(
+                `${this.config.runId.toString().padStart(3)}>` +
+                ` seen: ${opCount.toString().padStart(8)} (${opRate.toString().padStart(4)}/min),` +
+                ` sent: ${this.counter.value.toString().padStart(8)} (${sendRate.toString().padStart(2)}/min),` +
+                ` run time: ${taskMin.toFixed(2).toString().padStart(5)} min`,
+                ` total time: ${totalMin.toFixed(2).toString().padStart(5)} min`,
+            );
+        }
+    }
+}
+
+class LoadTestDataStore extends DataObject implements ILoadTest {
+    public static DataStoreName = "StressTestDataStore";
+
+    protected async initializingFirstTime() {
+        LoadTestDataStoreModel.initializingFirstTime(
+            this.root,
+            this.runtime);
+    }
+
+    public async run(config: IRunConfig, reset: boolean = false) {
         console.log(`${config.runId.toString().padStart(3)}> begin`);
 
-        // At every moment, we want half the client to be concurrent writers, and start and stop
+        const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
+            config, reset, this.root, this.runtime);
+
+         // At every moment, we want half the client to be concurrent writers, and start and stop
         // in a rotation fashion for every cycle.
         // To set that up we start each client in a staggered way, each will independently go thru write
         // and listen cycles
 
         const cycleMs = config.testConfig.readWriteCycleMs;
 
-        // the time gap to start each client over two cycles  (or one full read/write cycle)
-        // to get half the client active at a time
-        const clientStartGapMs = cycleMs * 2 / config.testConfig.numClients;
-
-        const startTimeMs = Date.now();
-        let runningStartTimeMs = startTimeMs + await this.pause(config.runId * clientStartGapMs);
-
         console.log(`${config.runId.toString().padStart(3)}> started`);
 
         let t: NodeJS.Timeout;
         const printProgress = () => {
-            if (this.state !== "paused") {
-                this.printStatus(config, startTimeMs, runningStartTimeMs);
-            }
+            dataModel.printStatus();
             t = setTimeout(printProgress, config.testConfig.progressIntervalMs);
         };
         t = setTimeout(printProgress, config.testConfig.progressIntervalMs);
@@ -96,35 +191,38 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
         const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
         const opsGapMs = cycleMs / opsPerCycle;
-        while (this.sentCount < clientSendCount) {
-            await this.runStep();
-            // Send cycle worth of Ops
-            if (this.sentCount % opsPerCycle === 0) {
-                // Pause writing for cycle before resuming
-                runningStartTimeMs += await this.pause(cycleMs);
-            } else {
-                // Random jitter of +- 50% of opWaitMs
-                await wait(opsGapMs + opsGapMs * (Math.random() - 0.5));
-            }
+        while (dataModel.counter.value < clientSendCount && !this.disposed) {
+            try{
+                if(dataModel.haveTaskLock()) {
+                    dataModel.counter.increment(1);
+                    if (dataModel.counter.value % opsPerCycle === 0) {
+                        dataModel.abandonTask();
+                        await wait(cycleMs);
+                    }else{
+                        // Random jitter of +- 50% of opWaitMs
+                        await wait(opsGapMs + opsGapMs * (Math.random() - 0.5));
+                    }
+                }else{
+                    await dataModel.lockTask();
+                }
+            }catch {}
         }
+        dataModel.abandonTask();
 
-        this.state = "stopped";
         clearTimeout(t);
 
-        this.printStatus(config, startTimeMs, runningStartTimeMs);
+        dataModel.printStatus(true);
         console.log(`${config.runId.toString().padStart(3)}> finished`);
-    }
-
-    public async runStep() {
-        this.root.set(Math.floor(Math.random() * 32).toString(), Math.random());
-        this.sentCount++;
     }
 }
 
 const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
     LoadTestDataStore.DataStoreName,
     LoadTestDataStore,
-    [],
+    [
+        SharedCounter.getFactory(),
+        TaskManager.getFactory(),
+    ],
     {},
 );
 
