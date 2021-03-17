@@ -204,7 +204,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                     res();
                 } else if (!this.queued(taskId)) {
                     this.queueWatcher.off("queueChange", checkIfAcquiredLock);
-                    rej(new Error(`Removed from queue: ${taskId}`));
+                    rej(new Error(`Removed from queue before acquiring lock: ${taskId}`));
                 }
             };
             this.queueWatcher.on("queueChange", checkIfAcquiredLock);
