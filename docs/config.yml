@@ -25,10 +25,10 @@ menu:
     url: "/docs/get-started/quick-start/"
     weight: -100
   - name: "Recipes"
-    url: "/docs/recipes/"
+    url: "/docs/recipes/react/"
     weight: -90
   - name: "Docs"
-    url: "/reference"
+    url: "/reference/"
     weight: -80
   - name: "Community"
     url: "/community/"
