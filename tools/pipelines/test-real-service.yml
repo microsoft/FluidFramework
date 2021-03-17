@@ -134,7 +134,6 @@ jobs:
         fluid__webpack__fluidHost: $(fluid-webpack-fluidHost)
         fluid__webpack__tenantId: $(fluid-webpack-tenantId)
         fluid__webpack__tenantSecret: $(fluid-webpack-tenantSecret)
-        FLUID_PIPELINE_BUILD_ID: ${Build.BuildId}
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
       inputs:
         command: 'custom'
@@ -165,6 +164,7 @@ jobs:
         login__microsoft__clientId: $(login-microsoft-clientId)
         login__microsoft__secret: $(login-microsoft-secret)
         login__odsp__test__accounts: $(login-odsp-test-accounts)
+        FLUID_PIPELINE_BUILD_ID: $(Build.BuildId)
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
       inputs:
         command: 'custom'
