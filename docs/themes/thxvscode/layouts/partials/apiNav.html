@@ -1,7 +1,7 @@
 {{ $current := . }}
 {{ $currentURL := . | relURL }}
 {{ $package := $current.Params.package }}
-{{ $area := "" }}
+{{ $area := $current.Params.area }}
 {{ range $name, $packages := $.Site.Data.packages }}
     {{ range $packages }}
         {{ if eq $package .}}
@@ -11,18 +11,21 @@
 {{ end }}
 
 {{ $section := .CurrentSection }}
-<!-- {{ printf "%#v" $section.Name }} -->
-<!-- {{ $api_section := eq .Kind "section" }} -->
-<!-- {{ $api_section := and (eq .Kind "section") (eq .Type "apis") }} -->
-{{ $api_section := and (eq .Kind "section") (eq (path.Base .) "apis") }}
-<!-- {{ $api_section := or (and (eq .Kind "section") (eq .Section "apis")) (eq .Type "apis") }} -->
+{{ $api_section := .Site.GetPage "/reference/apis/_index.md" }}
+{{ $in_api_section := (.IsDescendant $api_section) }}
+{{ $ref_home_active := and .IsSection (not $in_api_section) }}
+{{ $api_home_active := and .IsSection $in_api_section }}
+
 {{ $packagePages := where .Site.RegularPages "Params.kind" "Package"}}
+
+<!-- {{ printf "%#v" .Kind }}
+{{ printf "%#v" $in_api_section }} -->
 
 <nav id="docs-navbar" aria-label="Topics" class="docs-nav visible-md visible-lg">
     <ul class="nav" id="main-nav">
 
-        <li {{ if not $api_section }} class="active" {{ end }}>
-            <a class="docs-home" href="/reference/" {{ if not $api_section }}
+        <li {{ if $ref_home_active }} class="active" {{ end }}>
+            <a class="docs-home" href="/reference/" {{ if $ref_home_active }}
                 aria-label="Current Page: Documentation for FluidFramework" {{ end }}>Overview</a>
         </li>
 
@@ -30,8 +33,12 @@
         {{ $menuArea := .Identifier}}
         {{ $isCurrentArea := (eq $menuArea $area) }}
 
+        <!-- {{ printf "%#v" $menuArea }}
+        {{ printf "%#v" $area }} -->
+
         {{- if ne .URL "" -}}
         {{ $isCurrentPage := eq .URL $current.RelPermalink }}
+
         <li class="panel {{if $isCurrentPage }}active{{end}}">
             <a class="area{{if $isCurrentPage }} active expanded{{ end }}" aria-label="{{ .Name }}" href="{{.URL}}"
                 data-parent="#main-nav">{{ .Name }}</a>
@@ -45,6 +52,10 @@
                 <!-- list all pages in area -->
                 {{- range ((where $current.Site.RegularPages "Params.area" "==" $menuArea).ByParam "menuPosition") }}
                 {{ $isCurrentPage := eq .RelPermalink $current.RelPermalink }}
+
+                <!-- {{ printf "%#v" .URL }}
+                {{ printf "%#v" $current.RelPermalink }} -->
+
                 <li {{ if $isCurrentPage }}class="active" {{ end }}>
                     <a href="{{ .RelPermalink }}"
                         {{ if $isCurrentPage }}aria-label="Current Page: {{ .Title | safeHTML }} " {{ end }}>
@@ -58,8 +69,8 @@
 
         <hr/>
 
-        <li {{ if $api_section }} class="active" {{ end }}>
-            <a class="docs-home" href="/reference/apis/" {{ if $api_section }}
+        <li {{ if $in_api_section }} class="active" {{ end }}>
+            <a class="docs-home" href="/reference/apis/" {{ if $in_api_section }}
                 aria-label="Current Page: API Overview" {{ end }}>API Overview</a>
         </li>
 
