@@ -38,8 +38,6 @@ loader:
 - "@fluidframework/web-code-loader"
 tools:
 - "@fluidframework/debugger"
-- "@fluidframework/merge-tree-client-replay"
-- "@fluidframework/replay-tool"
 driver:
 - "@fluidframework/driver-utils"
 - "@fluidframework/driver-base"
@@ -53,13 +51,13 @@ miscellaneous:
 - "@fluidframework/common-utils"
 - "@fluidframework/common-definitions"
 - "@fluidframework/dds-interceptions"
-- "@fluidframework/react-inputs"
-- "@fluidframework/react"
 - "@fluidframework/telemetry-utils"
 - "@fluidframework/test-utils"
 protocol:
 - "@fluidframework/protocol-base"
 - "@fluidframework/protocol-definitions"
 experimental:
-- "@fluidframework/last-edited-experimental"
 - "@fluidframework/data-object-base"
+- "@fluidframework/last-edited-experimental"
+- "@fluidframework/react-inputs"
+- "@fluidframework/react"
