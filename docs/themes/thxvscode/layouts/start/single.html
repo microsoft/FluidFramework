@@ -3,23 +3,21 @@
 {{ end }}
 
 {{ define "main" }}
-<!-- REFERENCE LIST -->
 <div class="container body-content docs">
     <div class="row">
-        <!-- <div class="col-md-2 docs-navbar-container">{{ partial "docNav.html" (dict "context" . "menu" .Site.Menus.reference "mainURL" "reference" "sectionTitle" "Overview") }}</div> -->
-        <div class="col-md-2 docs-navbar-container"> {{ partial "apiNav.html" .}} </div>
-
+        <div class="col-md-2 docs-navbar-container">{{ partial "docNav.html" (dict "context" . "menu" .Site.Menus.start "mainURL" "docs") }}</div>
         <div role="main" id="main-content" class="col-sm-9 col-md-8 body">
             <div>
-                <h1>{{ title .Title }}</h1>
-                <div>{{ .Content }}</div>
+                <h1>{{.Title}}</h1>
+            </div>
+            <div>
+                {{ .Content }}
             </div>
         </div>
-        <div class="hidden-xs col-sm-3 col-md-2 docs-subnavbar-container">
-            {{ partial "toc.html" .}}
-            <!-- TODO: OR subnav -->
-        </div>
 
+        <div class="hidden-xs col-sm-3 col-md-2 docs-subnavbar-container">
+            {{ partial "toc.html"  .}}
+        </div>
     </div>
 </div>
 

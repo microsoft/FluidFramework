@@ -1,4 +1,4 @@
-{{ $context := .context }}
+<!-- {{ $context := .context }} -->
 {{ $menu := .menu }}
 {{ $mainURL := .mainURL }}
 {{ $sectionTitle := .sectionTitle }}
@@ -53,7 +53,7 @@
     <h4>Topics</h4>
     <select id="small-nav-dropdown">
         <option value="/docs" {{if .IsHome}}selected{{end}}>Overview</option>
-        {{- range .Site.Menus.docs }}
+        {{- range .Site.Menus.start }}
         {{ $menuArea := .Identifier}}
         {{ $isCurrentPage := eq .URL $current.RelPermalink }}
 

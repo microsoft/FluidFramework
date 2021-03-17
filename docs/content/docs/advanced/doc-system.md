@@ -237,7 +237,7 @@ build time.
 **Input**
 
 ```
-{{% include file="content/reference/advanced/images/example.ditaa" safeHTML=true %}}
+{{% include file="content/docs/advanced/images/example.ditaa" safeHTML=true %}}
 ```
 
 **Output**

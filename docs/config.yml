@@ -22,13 +22,13 @@ params:
 menu:
   main:
   - name: "Getting started"
-    url: "/docs/get-started/quick-start/"
+    url: "/start/get-started/quick-start/"
     weight: -100
   - name: "Recipes"
-    url: "/docs/recipes/react/"
+    url: "/start/recipes/react/"
     weight: -90
   - name: "Docs"
-    url: "/reference/"
+    url: "/docs/"
     weight: -80
   - name: "Community"
     url: "/community/"
@@ -37,7 +37,7 @@ menu:
     url: "/playground/"
     weight: -50
 
-  docs:
+  start:
   - identifier: "get-started"
     name: "Get Started"
     weight: -500
@@ -54,7 +54,7 @@ menu:
     weight: -90
 
   # this menu supplements one generated in the apiNav partial
-  reference:
+  docs:
   - identifier: "concepts"
     name: "Concepts"
     weight: -400

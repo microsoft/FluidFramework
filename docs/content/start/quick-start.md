@@ -1,6 +1,6 @@
 ---
 title: Quick Start
-menuPosition: 2
+# menuPosition: 2
 codeCopyButton: true
 ---
 
