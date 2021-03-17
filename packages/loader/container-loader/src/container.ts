@@ -598,10 +598,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this._deltaManager = this.createDeltaManager();
         this.connectionStateHandler = new ConnectionStateHandler(
-            () => this._protocolHandler,
-            (value, oldState, reason) => this.logConnectionStateChangeTelemetry(value, oldState, reason),
-            () => this.propagateConnectionState(),
-            () => this.loaded,
+            {
+                protocolHandler: () => this._protocolHandler,
+                logConnectionStateChangeTelemetry: (value, oldState, reason) =>
+                    this.logConnectionStateChangeTelemetry(value, oldState, reason),
+                propagateConnectionState: () => this.propagateConnectionState(),
+                isContainerLoaded: () => this.loaded,
+            },
             this.logger,
         );
 
@@ -1628,7 +1631,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    public propagateConnectionState() {
+    private propagateConnectionState() {
         const logOpsOnReconnect: boolean =
             this.connectionState === ConnectionState.Connected &&
             !this.firstConnection &&

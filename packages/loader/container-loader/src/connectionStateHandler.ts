@@ -5,11 +5,18 @@
 
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { ProtocolOpHandler, Quorum } from "@fluidframework/protocol-base";
 import { ConnectionMode } from "@fluidframework/protocol-definitions";
 import { connectEventName, ConnectionState, ILocalSequencedClient } from "./container";
+
+export interface IConnectionStateHandler {
+    protocolHandler: () => ProtocolOpHandler | undefined,
+    logConnectionStateChangeTelemetry:
+        (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
+    propagateConnectionState: () => void,
+    isContainerLoaded: () => boolean,
+}
 
 export class ConnectionStateHandler {
     private _connectionState = ConnectionState.Disconnected;
@@ -33,11 +40,7 @@ export class ConnectionStateHandler {
     }
 
     constructor(
-        private readonly protocolHandler: () => ProtocolOpHandler | undefined,
-        private readonly logConnectionStateChangeTelemetry:
-            (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
-        private readonly propagateConnectionState: () => void,
-        private readonly isContainerLoaded: () => boolean,
+        private readonly handler: IConnectionStateHandler,
         private readonly logger: ITelemetryLogger,
     ) {
     }
@@ -73,9 +76,9 @@ export class ConnectionStateHandler {
         emitter.emit(connectEventName, opsBehind);
 
         // Report telemetry after we set client id!
-        this.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
+        this.handler.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
 
-        const protocolHandler = this.protocolHandler();
+        const protocolHandler = this.handler.protocolHandler();
         // Check if we already processed our own join op through delta storage!
         // we are fetching ops from storage in parallel to connecting to ordering service
         // Given async processes, it's possible that we have already processed our own join message before
@@ -89,12 +92,8 @@ export class ConnectionStateHandler {
     }
 
     private setConnectionState(value: ConnectionState.Disconnected, reason: string);
-    private setConnectionState(value: ConnectionState.Connecting | ConnectionState.Connected);
-    private setConnectionState(
-        value: ConnectionState,
-        reason?: string,
-    ) {
-        assert(value !== ConnectionState.Connecting, "Trying to set connection state while container is connecting!");
+    private setConnectionState(value: ConnectionState.Connected);
+    private setConnectionState(value: ConnectionState, reason?: string) {
         if (this.connectionState === value) {
             // Already in the desired state - exit early
             this.logger.sendErrorEvent({ eventName: "setConnectionStateSame", value });
@@ -108,7 +107,7 @@ export class ConnectionStateHandler {
             // Mark our old client should have left in the quorum if it's still there
             if (this._clientId !== undefined) {
                 const client: ILocalSequencedClient | undefined =
-                    this.protocolHandler()?.quorum.getMember(this._clientId);
+                    this.handler.protocolHandler()?.quorum.getMember(this._clientId);
                 if (client !== undefined) {
                     client.shouldHaveLeft = true;
                 }
@@ -119,11 +118,11 @@ export class ConnectionStateHandler {
             this._pendingClientId = undefined;
         }
 
-        if (this.isContainerLoaded()) {
-            this.propagateConnectionState();
+        if (this.handler.isContainerLoaded()) {
+            this.handler.propagateConnectionState();
         }
 
         // Report telemetry after we set client id!
-        this.logConnectionStateChangeTelemetry(this._connectionState, oldState, reason);
+        this.handler.logConnectionStateChangeTelemetry(this._connectionState, oldState, reason);
     }
 }
