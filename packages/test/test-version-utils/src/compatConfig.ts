@@ -110,7 +110,6 @@ const options = {
             "local",
         ],
         requiresArg: true,
-        array: true,
     },
 };
 
@@ -144,7 +143,8 @@ const driver = nconf.get("fluid:test:driver");
 
 // set it in the env for parallel workers
 process.env.fluid__test__compatKind = JSON.stringify(compatKind);
-process.env.fluid__test__compatVersion = JSON.stringify(compatVersions);
+// Number arrays needs quote so that single element array can be interpret as array.
+process.env.fluid__test__compatVersion = `"${JSON.stringify(compatVersions)}"`;
 process.env.fluid__test__driver = driver;
 
 let configList: CompatConfig[] = [];

@@ -42,7 +42,8 @@ export interface FluidTestDriverConfig {
 export async function createFluidTestDriver(
     fluidTestDriverType: TestDriverTypes,
     config?: FluidTestDriverConfig,
-    api = DriverApi) {
+    api = DriverApi,
+) {
     switch (fluidTestDriverType) {
         case "local":
             return new LocalServerTestDriver(api.LocalDriverApi);
