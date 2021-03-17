@@ -46,20 +46,20 @@ export class FluidContainer implements Pick<Container, "audience"> {
     public readonly audience: IAudience;
 
     public constructor(
-        readonly container: Container, // we anticipate using this later, e.g. for Audience
+        container: Container, // we anticipate using this later, e.g. for Audience
         namedRegistryEntries: NamedFluidDataStoreRegistryEntry[],
         private readonly rootDataObject: RootDataObject,
         public readonly createNew: boolean) {
-        this.types = new Set();
-        namedRegistryEntries.forEach((value: NamedFluidDataStoreRegistryEntry) => {
-            const type = value[0];
-            if (this.types.has(type)) {
-                throw new Error(`Multiple DataObjects share the same type identifier ${value}`);
-            }
-            this.types.add(type);
-        });
-        this.audience = container.audience;
-    }
+            this.types = new Set();
+            namedRegistryEntries.forEach((value: NamedFluidDataStoreRegistryEntry) => {
+                const type = value[0];
+                if (this.types.has(type)) {
+                    throw new Error(`Multiple DataObjects share the same type identifier ${value}`);
+                }
+                this.types.add(type);
+            });
+            this.audience = container.audience;
+        }
 
     public async createDataObject<T extends DataObject>(
         dataObjectClass: IFluidStaticDataObjectClass,
