@@ -1,5 +1,7 @@
 ---
 title: Glossary
+aliases:
+  - "docs/glossary/"
 ---
 
 ## Aqueduct
