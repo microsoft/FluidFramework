@@ -6,7 +6,7 @@
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { createFluidTestDriver } from "./factory";
 
-const envVar = "FLUID_TEST_DRIVER";
+const envVar = "fluid__test__driver";
 const _global = global as any;
 let fluidTestDriver: ITestDriver;
 _global.getFluidTestDriver = (): ITestDriver => {

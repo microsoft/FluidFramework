@@ -17,10 +17,10 @@ import {
     TestDataObjectType,
 } from "@fluidframework/test-version-utils";
 
-describeFullCompat("FluidObjectHandle", (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("FluidObjectHandle", (argsFactory: () => Promise<ITestObjectProvider>) => {
     let args: ITestObjectProvider;
-    beforeEach(()=>{
-        args = argsFactory();
+    beforeEach(async () => {
+        args = await argsFactory();
     });
     afterEach(() => {
         args.reset();

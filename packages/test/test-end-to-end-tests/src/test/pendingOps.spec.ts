@@ -72,7 +72,7 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
     return pendingState;
 };
 
-describeNoCompat("stashed ops", (argsFactory: () => ITestObjectProvider) => {
+describeNoCompat("stashed ops", (argsFactory: () => Promise<ITestObjectProvider>) => {
     let args: ITestObjectProvider;
     let url;
     let loader: IHostLoader;
@@ -80,7 +80,7 @@ describeNoCompat("stashed ops", (argsFactory: () => ITestObjectProvider) => {
     let map1: SharedMap;
 
     beforeEach(async () => {
-        args = argsFactory();
+        args = await argsFactory();
         loader = args.makeTestLoader(testContainerConfig);
         container1 = await createAndAttachContainer(
             args.defaultCodeDetails,

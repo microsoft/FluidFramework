@@ -19,10 +19,10 @@ const testContainerConfig: ITestContainerConfig = {
     registry: [["sharedString", SharedString.getFactory()]],
 };
 
-describeFullCompat("blobs", (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("blobs", (argsFactory: () => Promise<ITestObjectProvider>) => {
     let args: ITestObjectProvider;
-    beforeEach(() => {
-        args = argsFactory();
+    beforeEach(async () => {
+        args = await argsFactory();
     });
     afterEach(() => {
         args.reset();

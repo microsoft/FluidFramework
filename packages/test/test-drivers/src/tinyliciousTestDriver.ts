@@ -12,12 +12,13 @@ import {
     defaultTinyliciousPort,
 } from "@fluidframework/tinylicious-driver";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
-import { pkgVersion } from "./packageVersion";
+import { RouterliciousDriverApi } from "./routerliciousDriverApi";
 
 export class TinyliciousTestDriver implements ITestDriver {
     public readonly type = "tinylicious";
-    public readonly version = pkgVersion;
+    public get version() { return this.api.version; }
 
+    constructor(private readonly api = RouterliciousDriverApi) {}
     createDocumentServiceFactory(): RouterliciousDocumentServiceFactory {
         return new RouterliciousDocumentServiceFactory(
             new InsecureTinyliciousTokenProvider());

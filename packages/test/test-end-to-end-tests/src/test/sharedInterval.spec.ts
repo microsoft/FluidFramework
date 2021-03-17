@@ -51,10 +51,10 @@ const assertIntervalsHelper = (
     }
 };
 
-describeFullCompat("SharedInterval", (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("SharedInterval", (argsFactory: () => Promise<ITestObjectProvider>) => {
     let args: ITestObjectProvider;
-    beforeEach(()=>{
-        args = argsFactory();
+    beforeEach(async () => {
+        args = await argsFactory();
     });
     afterEach(() => {
         args.reset();

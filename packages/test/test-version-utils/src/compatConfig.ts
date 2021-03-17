@@ -102,6 +102,16 @@ const options = {
         description: "Force compat package to be installed",
         boolean: true,
     },
+    driver: {
+        choices: [
+            "tinylicious",
+            "routerlicious",
+            "odsp",
+            "local",
+        ],
+        requiresArg: true,
+        array: true,
+    },
 };
 
 nconf.argv({
@@ -114,7 +124,7 @@ nconf.argv({
     },
 }).env({
     separator: "__",
-    whitelist: ["fluid__test__compatKind", "fluid__test__compatVersion"],
+    whitelist: ["fluid__test__compatKind", "fluid__test__compatVersion", "fluid__test__driver"],
     parseValues: true,
 }).defaults(
     {
@@ -122,6 +132,7 @@ nconf.argv({
             test: {
                 compat: undefined,
                 compatVersion: [0, -1, -2],
+                driver: "local",
             },
         },
     },
@@ -129,10 +140,12 @@ nconf.argv({
 
 const compatKind = nconf.get("fluid:test:compatKind") as CompatKind[];
 const compatVersions = nconf.get("fluid:test:compatVersion") as number[];
+const driver = nconf.get("fluid:test:driver");
 
 // set it in the env for parallel workers
 process.env.fluid__test__compatKind = JSON.stringify(compatKind);
 process.env.fluid__test__compatVersion = JSON.stringify(compatVersions);
+process.env.fluid__test__driver = driver;
 
 let configList: CompatConfig[] = [];
 compatVersions.forEach((value) => {
@@ -159,9 +172,13 @@ function describeCompat(
     describe(name, () => {
         for (const config of configs) {
             describe(config.name, () => {
-                tests(() => {
+                tests(async () => {
                     return getVersionedTestObjectProvider(
                         config?.loader,
+                        {
+                            type: driver,
+                            // version: config?.loader,
+                        },
                         config?.containerRuntime,
                         config?.dataRuntime,
                     );

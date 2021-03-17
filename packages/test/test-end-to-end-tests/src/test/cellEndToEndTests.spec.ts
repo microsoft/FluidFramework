@@ -23,10 +23,10 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeFullCompat("SharedCell", (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("SharedCell", (argsFactory: () => Promise<ITestObjectProvider>) => {
     let args: ITestObjectProvider;
-    beforeEach(()=>{
-        args = argsFactory();
+    beforeEach(async () => {
+        args = await argsFactory();
     });
     afterEach(() => {
         args.reset();

@@ -3,30 +3,29 @@
  * Licensed under the MIT License.
  */
 import { IRequest } from "@fluidframework/core-interfaces";
-import {
-    LocalDocumentServiceFactory,
-    LocalResolver,
-    createLocalResolverCreateNewRequest,
-} from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
-import { pkgVersion } from "./packageVersion";
+import { LocalDriverApi } from "./localDriverApi";
 
 export class LocalServerTestDriver implements ITestDriver {
     private readonly _server = LocalDeltaConnectionServer.create();
 
     public readonly type = "local";
-    public readonly version = pkgVersion;
+    public get version() { return this.api.version; }
     public get server(): ILocalDeltaConnectionServer { return this._server; }
 
-    createDocumentServiceFactory(): LocalDocumentServiceFactory {
-        return new LocalDocumentServiceFactory(this._server);
+    constructor(private readonly api = LocalDriverApi) {
+
     }
-    createUrlResolver(): LocalResolver {
-        return new LocalResolver();
+
+    createDocumentServiceFactory() {
+        return new this.api.LocalDocumentServiceFactory(this._server);
+    }
+    createUrlResolver() {
+        return new this.api.LocalResolver();
     }
     createCreateNewRequest(testId: string): IRequest {
-        return createLocalResolverCreateNewRequest(testId);
+        return this.api.createLocalResolverCreateNewRequest(testId);
     }
 
     async createContainerUrl(testId: string): Promise<string> {

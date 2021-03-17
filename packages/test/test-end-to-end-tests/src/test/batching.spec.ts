@@ -33,10 +33,10 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("Batching", (argsFactory: () => Promise<ITestObjectProvider>) => {
     let args: ITestObjectProvider;
-    beforeEach(()=>{
-        args = argsFactory();
+    beforeEach(async () => {
+        args = await argsFactory();
     });
     afterEach(() => {
         args.reset();
@@ -77,10 +77,10 @@ describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
 
     // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
     async function waitForCleanContainers(...dataStores: ITestFluidObject[]) {
-        return Promise.all(dataStores.map(async (dataStore)=>{
+        return Promise.all(dataStores.map(async (dataStore) => {
             const runtime = dataStore.context.containerRuntime as IContainerRuntime;
             while (runtime.isDirty) {
-                await timeoutPromise((resolve)=>runtime.once("batchEnd", resolve));
+                await timeoutPromise((resolve) => runtime.once("batchEnd", resolve));
             }
         }));
     }

@@ -84,10 +84,8 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
-    "@fluidframework/local-driver": "^0.37.0",
     "@fluidframework/mocha-test-setup": "^0.37.0",
     "@fluidframework/runtime-utils": "^0.37.0",
-    "@fluidframework/test-drivers": "^0.37.0",
     "@fluidframework/test-utils": "^0.37.0",
     "@fluidframework/test-version-utils": "^0.37.0",
     "@fluidframework/webpack-fluid-loader": "^0.37.0",

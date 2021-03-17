@@ -11,12 +11,12 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { FlowDocument } from "../document";
 
-describeLoaderCompat("FlowDocument", (getTestObjectProvider: () => ITestObjectProvider) => {
+describeLoaderCompat("FlowDocument", (getTestObjectProvider: () => Promise<ITestObjectProvider>) => {
     let doc: FlowDocument;
 
     let provider: ITestObjectProvider;
     beforeEach(async () => {
-        provider = getTestObjectProvider();
+        provider = await getTestObjectProvider();
         const container = await provider.createContainer(FlowDocument.getFactory());
         doc = await requestFluidObject<FlowDocument>(container, "default");
     });

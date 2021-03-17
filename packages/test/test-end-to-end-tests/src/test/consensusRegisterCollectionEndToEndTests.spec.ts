@@ -37,10 +37,10 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {
-    describeFullCompat(name, (argsFactory: () => ITestObjectProvider) => {
+    describeFullCompat(name, (argsFactory: () => Promise<ITestObjectProvider>) => {
         let args: ITestObjectProvider;
-        beforeEach(()=>{
-            args = argsFactory();
+        beforeEach(async () => {
+            args = await argsFactory();
         });
         afterEach(() => {
             args.reset();

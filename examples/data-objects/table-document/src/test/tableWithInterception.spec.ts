@@ -15,7 +15,7 @@ import { TableDocument } from "../document";
 import { TableDocumentType } from "../componentTypes";
 import { createTableWithInterception } from "../interception";
 
-describeLoaderCompat("Table Document with Interception", (getTestObjectProvider: () => ITestObjectProvider) => {
+describeLoaderCompat("Table Document with Interception", (getTestObjectProvider) => {
     describe("Simple User Attribution", () => {
         const userAttributes = { userId: "Fake User" };
         let tableDocument: TableDocument;
@@ -60,7 +60,7 @@ describeLoaderCompat("Table Document with Interception", (getTestObjectProvider:
 
         let provider: ITestObjectProvider;
         beforeEach(async () => {
-            provider = getTestObjectProvider();
+            provider = await getTestObjectProvider();
             const factory = new ContainerRuntimeFactoryWithDefaultDataStore(
                 TableDocument.getFactory(),
                 new Map([

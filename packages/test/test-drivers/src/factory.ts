@@ -12,6 +12,17 @@ import { TinyliciousTestDriver } from "./tinyliciousTestDriver";
 import { RouterliciousTestDriver } from "./routerliciousTestDriver";
 import { OdspTestDriver } from "./odspTestDriver";
 
+import { LocalDriverApi } from "./localDriverApi";
+import { OdspDriverApi } from "./odspDriverApi";
+import { RouterliciousDriverApi } from "./routerliciousDriverApi";
+
+export const DriverApi = {
+    LocalDriverApi,
+    OdspDriverApi,
+    RouterliciousDriverApi,
+};
+
+export
 function setKeepAlive() {
     // Each TCP connect has a delay to allow it to be reuse after close, and unit test make a lot of connection,
     // which might cause port exhaustion.
@@ -22,28 +33,30 @@ function setKeepAlive() {
     Axios.defaults.httpAgent = new http.Agent({ keepAlive: true });
 }
 
-export type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => any> =
+type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => any> =
     T extends (config: infer P, ...args: any) => any ? P : never;
 
+export interface FluidTestDriverConfig {
+    odsp?: CreateFromEnvConfigParam<typeof OdspTestDriver.createFromEnv>,
+}
 export async function createFluidTestDriver(
     fluidTestDriverType: TestDriverTypes,
-    config?: {
-        odsp?: CreateFromEnvConfigParam<typeof OdspTestDriver.createFromEnv>,
-    }) {
+    config?: FluidTestDriverConfig,
+    api = DriverApi) {
     switch (fluidTestDriverType) {
         case "local":
-            return new LocalServerTestDriver();
+            return new LocalServerTestDriver(api.LocalDriverApi);
 
         case "tinylicious":
             setKeepAlive();
-            return new TinyliciousTestDriver();
+            return new TinyliciousTestDriver(api.RouterliciousDriverApi);
 
         case "routerlicious":
             setKeepAlive();
-            return RouterliciousTestDriver.createFromEnv();
+            return RouterliciousTestDriver.createFromEnv(api.RouterliciousDriverApi);
 
         case "odsp":
-            return OdspTestDriver.createFromEnv(config?.odsp);
+            return OdspTestDriver.createFromEnv(config?.odsp, api.OdspDriverApi);
 
         default:
             unreachableCase(fluidTestDriverType, `No Fluid test driver registered for type "${fluidTestDriverType}"`);

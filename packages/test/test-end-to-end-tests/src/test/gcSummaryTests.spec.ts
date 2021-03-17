@@ -84,12 +84,12 @@ describe("GC in summary", () => {
         // For unreferenced nodes, the unreferenced flag in its summary tree is undefined.
         const expectedUnreferenced = referenced ? undefined : true;
         let found = false;
-        for (const [ id, summaryObject ] of Object.entries(summary.tree)) {
+        for (const [id, summaryObject] of Object.entries(summary.tree)) {
             if (id === dataStoreId) {
                 assert(summaryObject.type === SummaryType.Tree, `Data store ${dataStoreId}'s entry is not a tree`);
                 assert(
                     summaryObject.unreferenced === expectedUnreferenced,
-                    `Data store ${dataStoreId} should be ${ referenced ? "referenced" : "unreferenced" }`,
+                    `Data store ${dataStoreId} should be ${referenced ? "referenced" : "unreferenced"}`,
                 );
                 found = true;
                 break;

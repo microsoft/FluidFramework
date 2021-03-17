@@ -6,6 +6,9 @@
 // Loader API
 import { Loader } from "@fluidframework/container-loader";
 
+// Driver API
+import { DriverApi } from "@fluidframework/test-drivers";
+
 // ContainerRuntime API
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 
@@ -41,6 +44,9 @@ const packageList = [
     "@fluidframework/ordered-collection",
     "@fluidframework/register-collection",
     "@fluidframework/sequence",
+    "@fluidframework/local-driver",
+    "@fluidframework/odsp-driver",
+    "@fluidframework/routerlicious-driver",
 ];
 
 export const ensurePackageInstalled =
@@ -131,5 +137,45 @@ export function getDataRuntimeApi(requested?: number | string): typeof DataRunti
             SharedString: loadPackage(modulePath, "@fluidframework/sequence").SharedString,
             SparseMatrix: loadPackage(modulePath, "@fluidframework/sequence").SparseMatrix,
         },
+    };
+}
+
+export function getDriverApi(requested?: number | string): typeof DriverApi {
+    const requestedStr = getRequestedRange(requested);
+
+    // If the current version satisfies the range, use it.
+    if (semver.satisfies(pkgVersion, requestedStr)) {
+        return DriverApi;
+    }
+
+    const { version, modulePath } = checkInstalled(requestedStr);
+    const localDriverApi: typeof DriverApi.LocalDriverApi = {
+        version,
+        LocalDocumentServiceFactory:
+            loadPackage(modulePath, "@fluidframework/local-driver").LocalDocumentServiceFactory,
+        LocalResolver: loadPackage(modulePath, "@fluidframework/local-driver").LocalResolver,
+        createLocalResolverCreateNewRequest:
+            loadPackage(modulePath, "@fluidframework/local-driver").createLocalResolverCreateNewRequest,
+    };
+
+    const odspDriverApi: typeof DriverApi.OdspDriverApi = {
+        version,
+        OdspDocumentServiceFactory: loadPackage(modulePath, "@fluidframework/odsp-driver").OdspDocumentServiceFactory,
+        OdspDriverUrlResolver: loadPackage(modulePath, "@fluidframework/odsp-driver").OdspDriverUrlResolver,
+        createOdspCreateContainerRequest:
+            loadPackage(modulePath, "@fluidframework/odsp-driver").createOdspCreateContainerRequest,
+        createOdspUrl: loadPackage(modulePath, "@fluidframework/odsp-driver").createOdspUrl,
+    };
+
+    const routerliciousDriverApi: typeof DriverApi.RouterliciousDriverApi = {
+        version,
+        RouterliciousDocumentServiceFactory:
+            loadPackage(modulePath, "@fluidframework/routerlicious-driver").RouterliciousDocumentServiceFactory,
+    };
+
+    return {
+        LocalDriverApi: localDriverApi,
+        OdspDriverApi: odspDriverApi,
+        RouterliciousDriverApi: routerliciousDriverApi,
     };
 }

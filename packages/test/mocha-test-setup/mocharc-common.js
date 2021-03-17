@@ -7,12 +7,11 @@
 
 function getFluidTestMochaConfig(packageDir, additionaRequireModules) {
 
-    const testDriver = process.env.FLUID_TEST_DRIVER ? process.env.FLUID_TEST_DRIVER : "local";
+    const testDriver = process.env.fluid__test__driver ? process.env.fluid__test__driver : "local";
     const moduleDir = `${packageDir}/node_modules`;
 
     const requiredModules = [
         `${moduleDir}/@fluidframework/mocha-test-setup`, // General mocha setup e.g. suppresses console.log
-        `${moduleDir}/@fluidframework/test-drivers`, // Inject implementation of getFluidTestDriver, configured via FLUID_TEST_DRIVER
         ...(additionaRequireModules ? additionaRequireModules : [])
     ];
 

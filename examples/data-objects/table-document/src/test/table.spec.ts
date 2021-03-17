@@ -14,7 +14,7 @@ import { TableDocument } from "../document";
 import { TableSlice } from "../slice";
 import { TableDocumentItem } from "../table";
 
-describeLoaderCompat("TableDocument", (getTestObjectProvider: () => ITestObjectProvider) => {
+describeLoaderCompat("TableDocument", (getTestObjectProvider: () => Promise<ITestObjectProvider>) => {
     let tableDocument: TableDocument;
     let opProcessingController: OpProcessingController;
 
@@ -25,7 +25,7 @@ describeLoaderCompat("TableDocument", (getTestObjectProvider: () => ITestObjectP
 
     let provider: ITestObjectProvider;
     beforeEach(async () => {
-        provider = getTestObjectProvider();
+        provider = await getTestObjectProvider();
         const container = await provider.createContainer(TableDocument.getFactory());
         tableDocument = await requestFluidObject<TableDocument>(container, "default");
 

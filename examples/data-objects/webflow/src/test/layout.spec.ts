@@ -39,14 +39,14 @@ function expectTree(actual: Node, expected: ISnapshotNode) {
     assert.strictEqual(i, children.length);
 }
 
-describeLoaderCompat("Layout", (getTestObjectProvider: () => ITestObjectProvider) => {
+describeLoaderCompat("Layout", (getTestObjectProvider: () => Promise<ITestObjectProvider>) => {
     let doc: FlowDocument;
     let root: HTMLElement;
     let layout: Layout;
 
     let provider: ITestObjectProvider;
     before(async () => {
-        provider = getTestObjectProvider();
+        provider = await getTestObjectProvider();
         const container = await provider.createContainer(FlowDocument.getFactory());
         doc = await requestFluidObject<FlowDocument>(container, "default");
     });

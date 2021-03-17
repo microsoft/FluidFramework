@@ -59,7 +59,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("Detached Container", (argsFactory: () => Promise<ITestObjectProvider>) => {
     let args: ITestObjectProvider;
     let request: IRequest;
     let loader: Loader;
@@ -74,8 +74,8 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
     });
 
     beforeEach(async () => {
-        args = argsFactory();
-        request  = args.driver.createCreateNewRequest(args.documentId);
+        args = await argsFactory();
+        request = args.driver.createCreateNewRequest(args.documentId);
         loader = args.makeTestLoader(testContainerConfig) as Loader;
     });
 
