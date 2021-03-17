@@ -2,7 +2,7 @@
 title: Tutorial
 menuPosition: 3
 aliases:
-  - "docs/get-started/tutorial/"
+  - "/docs/get-started/tutorial/"
 ---
 
 In this walkthrough, we'll learn about using the Fluid Framework by building a simple
