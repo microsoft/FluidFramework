@@ -20,25 +20,30 @@ import {
     TestObjectProvider,
     LoaderContainerTracker,
     TestContainerRuntimeFactory,
+    ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { getDataStoreFactory, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
+import {
+    getDataStoreFactory,
+    ITestDataObject,
+    TestDataObjectType,
+    describeNoCompat,
+} from "@fluidframework/test-version-utils";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
 
-describe("Container", () => {
-    let driver: ITestDriver;
+describeNoCompat("Container", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
     const loaderContainerTracker = new LoaderContainerTracker();
     before(function() {
-        driver = getFluidTestDriver();
+        provider = getTestObjectProvider();
 
         // TODO: Convert these to mocked unit test. These are all API tests and doesn't
         // need the service.  For new disable the tests other than local driver
-        if (driver.type !== "local") {
+        if (provider.driver.type !== "local") {
             this.skip();
         }
     });
@@ -48,10 +53,10 @@ describe("Container", () => {
     async function loadContainer(props?: Partial<ILoaderProps>) {
         const loader = new Loader({
             ...props,
-            logger: ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}}),
-            urlResolver: props?.urlResolver ?? driver.createUrlResolver(),
+            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { testDriverType: provider.driver.type } }),
+            urlResolver: props?.urlResolver ?? provider.urlResolver,
             documentServiceFactory:
-                props?.documentServiceFactory ?? driver.createDocumentServiceFactory(),
+                props?.documentServiceFactory ?? provider.documentServiceFactory,
             codeLoader: props?.codeLoader ?? new LocalCodeLoader([]),
         });
         loaderContainerTracker.add(loader);
@@ -82,7 +87,7 @@ describe("Container", () => {
     it("Load container unsuccessfully", async () => {
         let success: boolean = true;
         try {
-            const documentServiceFactory = driver.createDocumentServiceFactory();
+            const documentServiceFactory = provider.documentServiceFactory;
             const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
             // Issue typescript-eslint/typescript-eslint #1256
             mockFactory.createDocumentService = async (resolvedUrl) => {
@@ -105,7 +110,7 @@ describe("Container", () => {
     it("Load container with error", async () => {
         let success: boolean = true;
         try {
-            const documentServiceFactory = driver.createDocumentServiceFactory();
+            const documentServiceFactory = provider.documentServiceFactory;
             const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
             // Issue typescript-eslint/typescript-eslint #1256
             mockFactory.createDocumentService = async (resolvedUrl) => {
@@ -129,7 +134,7 @@ describe("Container", () => {
         const deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
-        const documentServiceFactory = driver.createDocumentServiceFactory();
+        const documentServiceFactory = provider.documentServiceFactory;
         const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
         // Issue typescript-eslint/typescript-eslint #1256
         mockFactory.createDocumentService = async (resolvedUrl) => {
@@ -152,7 +157,7 @@ describe("Container", () => {
         const deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
-        const documentServiceFactory = driver.createDocumentServiceFactory();
+        const documentServiceFactory = provider.documentServiceFactory;
         const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
         // Issue typescript-eslint/typescript-eslint #1256
         mockFactory.createDocumentService = async (resolvedUrl) => {
@@ -185,7 +190,7 @@ describe("Container", () => {
         const deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
-        const documentServiceFactory = driver.createDocumentServiceFactory();
+        const documentServiceFactory = provider.documentServiceFactory;
         const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
         // Issue typescript-eslint/typescript-eslint #1256
         mockFactory.createDocumentService = async (resolvedUrl) => {
@@ -214,7 +219,7 @@ describe("Container", () => {
 
         const localTestObjectProvider = new TestObjectProvider(
             Loader,
-            driver,
+            provider.driver,
             runtimeFactory);
 
         const container = await localTestObjectProvider.makeTestContainer() as Container;

@@ -17,8 +17,11 @@ import {
     createAndAttachContainer,
     createDocumentId,
     createLoader,
+    ITestObjectProvider,
     OpProcessingController,
 } from "@fluidframework/test-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -34,7 +37,9 @@ class TestDataObject extends DataObject {
     }
 }
 
-describe("GC Data Store Requests", () => {
+// REVIEW: enable compat testing?
+describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
     let documentId: string;
     const codeDetails: IFluidCodeDetails = {
         package: "garbageCollectionTestPackage",
@@ -71,22 +76,24 @@ describe("GC Data Store Requests", () => {
     let container1: IContainer;
 
     async function createContainer(): Promise<IContainer> {
-        const driver = getFluidTestDriver();
         const loader = createLoader(
             [[codeDetails, runtimeFactory]],
-            driver.createDocumentServiceFactory(),
-            driver.createUrlResolver());
+            provider.documentServiceFactory,
+            provider.urlResolver,
+            ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
+        );
         return createAndAttachContainer(
-            codeDetails, loader, driver.createCreateNewRequest(documentId));
+            codeDetails, loader, provider.driver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(): Promise<IContainer> {
-        const driver = getFluidTestDriver();
         const loader = createLoader(
             [[codeDetails, runtimeFactory]],
-            driver.createDocumentServiceFactory(),
-            driver.createUrlResolver());
-        return loader.resolve({ url: await driver.createContainerUrl(documentId) });
+            provider.documentServiceFactory,
+            provider.urlResolver,
+            ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
+        );
+        return loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
     }
 
     async function waitForSummary(container: IContainer): Promise<string | undefined> {
@@ -104,6 +111,7 @@ describe("GC Data Store Requests", () => {
     }
 
     beforeEach(async () => {
+        provider = getTestObjectProvider();
         documentId = createDocumentId();
         opProcessingController = new OpProcessingController();
 

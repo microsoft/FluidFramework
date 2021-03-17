@@ -45,7 +45,7 @@ export interface FluidTestDriverConfig {
 }
 
 export async function createFluidTestDriver(
-    fluidTestDriverType: TestDriverTypes,
+    fluidTestDriverType: TestDriverTypes = "local",
     config?: FluidTestDriverConfig,
     api = DriverApi,
 ) {

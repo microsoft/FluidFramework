@@ -22,6 +22,7 @@ import {
     OpProcessingController,
 } from "@fluidframework/test-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
 
 class TestDataObject extends DataObject {
     public static readonly type = "@fluid-example/test-dataObject";
@@ -38,7 +39,7 @@ class TestDataObject extends DataObject {
     public get _root() { return this.root; }
 }
 
-describe("UpgradeManager (hot-swap)", () => {
+describeNoCompat("UpgradeManager (hot-swap)", (getTestObjectProvider) => {
     const codeDetails: IFluidCodeDetails = {
         package: "localLoaderTestPackage",
         config: {},
@@ -47,35 +48,35 @@ describe("UpgradeManager (hot-swap)", () => {
 
     async function createContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-        const driver = getFluidTestDriver();
+        const provider = getTestObjectProvider();
         const loader = new Loader({
-            urlResolver: driver.createUrlResolver(),
-            documentServiceFactory: driver.createDocumentServiceFactory(),
+            urlResolver: provider.urlResolver,
+            documentServiceFactory: provider.documentServiceFactory,
             codeLoader,
             options: { hotSwapContext: true },
-            logger: ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}}),
+            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { testDriverType: provider.driver.type } }),
         });
 
         return createAndAttachContainer(
-            codeDetails, loader, driver.createCreateNewRequest(documentId));
+            codeDetails, loader, provider.driver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-        const driver = getFluidTestDriver();
+        const provider = getTestObjectProvider();
         const loader = new Loader({
-            urlResolver: driver.createUrlResolver(),
-            documentServiceFactory: driver.createDocumentServiceFactory(),
+            urlResolver: provider.urlResolver,
+            documentServiceFactory: provider.documentServiceFactory,
             codeLoader,
             options: { hotSwapContext: true },
-            logger: ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}}),
+            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { testDriverType: provider.driver.type } }),
         });
 
-        return loader.resolve({ url: await driver.createContainerUrl(documentId) });
+        return loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
     }
 
     beforeEach(async () => {
-        opProcessingController = new OpProcessingController();
+        opProcessingController = getTestObjectProvider().opProcessingController;
     });
 
     it("prevents multiple approved proposals", async () => {
@@ -116,7 +117,7 @@ describe("UpgradeManager (hot-swap)", () => {
         dataObjects.map((dataObject) => {
             dataObject._root.set("tempKey", "tempValue");
         });
-        while (containers.filter((c)=>!c.deltaManager.active).length !== 0) {
+        while (containers.filter((c) => !c.deltaManager.active).length !== 0) {
             await opProcessingController.process();
         }
 

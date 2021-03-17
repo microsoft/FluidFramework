@@ -74,7 +74,7 @@ describeNoCompat(`Attach/Bind Api Tests For Attached Container`, (getTestObjectP
             urlResolver,
             documentServiceFactory,
             codeLoader,
-            logger: ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}}),
+            logger: ChildLogger.create(getTestLogger?.(), undefined, {all: {testDriverType: driver.type}}),
         });
         loaderContainerTracker.add(testLoader);
         return testLoader;

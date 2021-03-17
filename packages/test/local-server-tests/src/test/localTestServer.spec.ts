@@ -37,6 +37,7 @@ function createLocalLoader(
         packageEntries,
         documentServiceFactory,
         urlResolver,
+        undefined,
         options,
     );
 }

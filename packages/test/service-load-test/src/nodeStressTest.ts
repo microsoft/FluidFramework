@@ -21,9 +21,8 @@ const packageName = `${pkgName}@${pkgVersion}`;
 
 // Provide default implementation of getTestLogger since it's declared as always defined
 const nullLogger: ITelemetryBufferedLogger = { send: () => {}, flush: async () => {} };
-(global as any).getTestLogger = () => nullLogger;
 
-let logger: ITelemetryBufferedLogger = getTestLogger();
+let logger: ITelemetryBufferedLogger = nullLogger;
 
 const codeDetails: IFluidCodeDetails = {
     package: packageName,
@@ -75,8 +74,9 @@ const createTestDriver =
 async function main() {
     if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {
         await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
-        logger = getTestLogger();
-        assert(logger, "Expected getTestLogger to return something");
+        const testLogger = getTestLogger?.();
+        assert(testLogger, "Expected getTestLogger to return something");
+        logger = testLogger;
     }
 
     commander

@@ -16,12 +16,15 @@ import {
     createDocumentId,
     createLoader as createLoaderUtil,
     ITestFluidObject,
+    ITestObjectProvider,
     OpProcessingController,
     SupportedExportInterfaces,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 interface ICodeProposalTestPackage extends IFluidPackage{
     version: number,
@@ -35,7 +38,8 @@ function isCodeProposalTestPackage(pkg: unknown): pkg is ICodeProposalTestPackag
     && isFluidPackage(maybe);
 }
 
-describe("CodeProposal.EndToEnd", () => {
+// REVIEW: enable compat testing?
+describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
     const packageV1: ICodeProposalTestPackage = {
         name: "test",
         version: 1,
@@ -75,32 +79,32 @@ describe("CodeProposal.EndToEnd", () => {
             IFluidCodeDetailsComparer: codeDetailsComparer,
 
         };
-        const driver = getFluidTestDriver();
         return createLoaderUtil(
             [
                 [{ package: packageV1 }, fluidExport],
                 [{ package: packageV2 },fluidExport],
                 [{ package: packageV1dot5 }, fluidExport],
             ],
-            driver.createDocumentServiceFactory(),
-            driver.createUrlResolver(),
+            provider.documentServiceFactory,
+            provider.urlResolver,
+            ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
             { hotSwapContext });
     }
 
     async function createContainer(code: IFluidCodeDetails, documentId: string): Promise<IContainer> {
         const loader = createLoader();
-        const driver = getFluidTestDriver();
-        return createAndAttachContainer(code, loader, driver.createCreateNewRequest(documentId));
+        return createAndAttachContainer(code, loader, provider.driver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(documentId: string): Promise<IContainer> {
         const loader = createLoader();
-        const driver = getFluidTestDriver();
-        return loader.resolve({ url: await driver.createContainerUrl(documentId) });
+        return loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
     }
 
+    let provider: ITestObjectProvider;
     let containers: IContainer[];
     beforeEach(async () => {
+        provider = getTestObjectProvider();
         containers = [];
         const documentId = createDocumentId();
         const codeDetails: IFluidCodeDetails = { package: packageV1 };

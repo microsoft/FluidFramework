@@ -72,6 +72,8 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
     return pendingState;
 };
 
+// Introduced in 0.37
+// REVIEW: enable compat testing
 describeNoCompat("stashed ops", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     let url;

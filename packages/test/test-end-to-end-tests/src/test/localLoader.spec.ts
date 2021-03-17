@@ -19,7 +19,10 @@ import {
     TestFluidObjectFactory,
     createLoader,
     createDocumentId,
+    ITestObjectProvider,
 } from "@fluidframework/test-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 const counterKey = "count";
 
@@ -85,7 +88,12 @@ const testDataObjectFactory = new DataObjectFactory(
     {},
 );
 
-describe("LocalLoader", () => {
+// REVIEW: enable compat testing?
+describeNoCompat("LocalLoader", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    before(() => {
+        provider = getTestObjectProvider();
+    });
     const codeDetails: IFluidCodeDetails = {
         package: "localLoaderTestPackage",
         config: {},
@@ -94,22 +102,24 @@ describe("LocalLoader", () => {
     let opProcessingController: OpProcessingController;
 
     async function createContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
-        const driver = getFluidTestDriver();
         const loader = createLoader(
             [[codeDetails, factory]],
-            driver.createDocumentServiceFactory(),
-            driver.createUrlResolver());
+            provider.documentServiceFactory,
+            provider.urlResolver,
+            ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
+        );
         return createAndAttachContainer(
-            codeDetails, loader, driver.createCreateNewRequest(documentId));
+            codeDetails, loader, provider.driver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
-        const driver = getFluidTestDriver();
         const loader = createLoader(
             [[codeDetails, factory]],
-            driver.createDocumentServiceFactory(),
-            driver.createUrlResolver());
-        return loader.resolve({ url: await driver.createContainerUrl(documentId) });
+            provider.documentServiceFactory,
+            provider.urlResolver,
+            ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
+        );
+        return loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
     }
 
     describe("1 dataObject", () => {

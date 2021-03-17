@@ -15,13 +15,15 @@ import { Container } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import {
     createAndAttachContainer,
     createDocumentId,
     createLoader,
+    ITestObjectProvider,
     OpProcessingController,
 } from "@fluidframework/test-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -33,7 +35,8 @@ class TestDataObject extends DataObject {
     }
 }
 
-describe("GC in summary", () => {
+// REVIEW: enable compat testing?
+describeNoCompat("GC in summary", (getTestObjectProvider) => {
     let documentId: string;
     const codeDetails: IFluidCodeDetails = {
         package: "garbageCollectionTestPackage",
@@ -57,7 +60,7 @@ describe("GC in summary", () => {
         runtimeOptions,
     );
 
-    let driver: ITestDriver;
+    let provider: ITestObjectProvider;
     let opProcessingController: OpProcessingController;
     let containerRuntime: ContainerRuntime;
     let defaultDataStore: TestDataObject;
@@ -65,10 +68,12 @@ describe("GC in summary", () => {
     async function createContainer(): Promise<IContainer> {
         const loader = createLoader(
             [[codeDetails, runtimeFactory]],
-            driver.createDocumentServiceFactory(),
-            driver.createUrlResolver());
+            provider.documentServiceFactory,
+            provider.urlResolver,
+            ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
+        );
         return createAndAttachContainer(
-            codeDetails, loader, driver.createCreateNewRequest(documentId));
+            codeDetails, loader, provider.driver.createCreateNewRequest(documentId));
     }
 
     // Summarizes the container and validates that the data store's reference state is correct in the summary.
@@ -99,8 +104,8 @@ describe("GC in summary", () => {
     }
 
     beforeEach(async () => {
+        provider = getTestObjectProvider();
         documentId = createDocumentId();
-        driver = getFluidTestDriver() as unknown as ITestDriver;
         opProcessingController = new OpProcessingController();
 
         const container = await createContainer() as Container;

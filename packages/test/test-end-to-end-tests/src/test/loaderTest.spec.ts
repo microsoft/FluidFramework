@@ -12,15 +12,21 @@ import {
 } from "@fluidframework/aqueduct";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { IFluidCodeDetails, IRequest,
-    IResponse } from "@fluidframework/core-interfaces";
+import {
+    IFluidCodeDetails,
+    IRequest,
+    IResponse,
+} from "@fluidframework/core-interfaces";
 import {
     createAndAttachContainer,
     createDocumentId,
     createLoader,
+    ITestObjectProvider,
     OpProcessingController,
 } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 class TestSharedDataObject1 extends DataObject {
     public get _root() {
@@ -43,7 +49,7 @@ class TestSharedDataObject1 extends DataObject {
         // eslint-disable-next-line no-null/no-null
         if (parsed.search !== null) {
             // returning query params instead of the data object for testing purposes
-            return { mimeType: "text/plain", status: 200, value : `${parsed.search}` };
+            return { mimeType: "text/plain", status: 200, value: `${parsed.search}` };
         } else {
             return super.request(request);
         }
@@ -80,7 +86,8 @@ const testSharedDataObjectFactory2 = new DataObjectFactory(
     [],
     []);
 
-describe("Loader.request", () => {
+describeNoCompat("Loader.request", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
     const codeDetails: IFluidCodeDetails = {
         package: "loaderRequestTestPackage",
         config: {},
@@ -100,17 +107,18 @@ describe("Loader.request", () => {
                     [testSharedDataObjectFactory2.type, Promise.resolve(testSharedDataObjectFactory2)],
                 ],
             );
-        const driver = getFluidTestDriver();
         loader = createLoader(
             [[codeDetails, runtimeFactory]],
-            driver.createDocumentServiceFactory(),
-            driver.createUrlResolver(),
+            provider.documentServiceFactory,
+            provider.urlResolver,
+            ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
         );
         return createAndAttachContainer(
-            codeDetails, loader, driver.createCreateNewRequest(documentId));
+            codeDetails, loader, provider.driver.createCreateNewRequest(documentId));
     }
     let container: IContainer;
     beforeEach(async () => {
+        provider = getTestObjectProvider();
         const documentId = createDocumentId();
         container = await createContainer(documentId);
         dataStore1 = await requestFluidObject(container, "default");
@@ -126,10 +134,10 @@ describe("Loader.request", () => {
 
     it("can create the data objects with correct types", async () => {
         const testUrl1 = await container.getAbsoluteUrl(dataStore1.handle.absolutePath);
-        assert(testUrl1,"dataStore1 url is undefined");
+        assert(testUrl1, "dataStore1 url is undefined");
         const testDataStore1 = await requestFluidObject(loader, testUrl1);
         const testUrl2 = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
-        assert(testUrl2,"dataStore2 url is undefined");
+        assert(testUrl2, "dataStore2 url is undefined");
         const testDataStore2 = await requestFluidObject(loader, testUrl2);
 
         assert(testDataStore1 instanceof TestSharedDataObject1, "requestFromLoader returns the wrong type for default");

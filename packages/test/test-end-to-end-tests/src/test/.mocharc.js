@@ -10,7 +10,6 @@ const moduleDir = `${packageDir}/node_modules`;
 
 const getFluidTestMochaConfig = require("@fluidframework/mocha-test-setup/mocharc-common.js");
 const config = getFluidTestMochaConfig(packageDir, [
-    `${moduleDir}/@fluidframework/test-version-utils`,
-    `${moduleDir}/@fluidframework/test-drivers`, // Inject implementation of getFluidTestDriver, configured via fluid__test__driver
+    `${moduleDir}/@fluidframework/test-version-utils`
 ]);
 module.exports = config;

@@ -113,9 +113,9 @@ describeNoCompat("context reload (hot-swap)", (getTestObjectProvider) => {
         const loader = new LoaderConstructor({
             codeLoader: new LocalCodeLoader(packageEntries),
             options: { hotSwapContext: true },
-            urlResolver: driver.createUrlResolver(),
-            documentServiceFactory: driver.createDocumentServiceFactory(),
-            logger: ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}}),
+            urlResolver: provider.urlResolver,
+            documentServiceFactory: provider.documentServiceFactory,
+            logger: ChildLogger.create(getTestLogger?.(), undefined, {all: {testDriverType: driver.type}}),
         });
         loaderContainerTracker.add(loader);
         return createAndAttachContainer(
@@ -235,9 +235,9 @@ describeNoCompat("context reload (hot-swap)", (getTestObjectProvider) => {
             const loader = new Loader({
                 codeLoader: new LocalCodeLoader(packageEntries),
                 options: { hotSwapContext: true },
-                urlResolver: driver.createUrlResolver(),
-                documentServiceFactory: driver.createDocumentServiceFactory(),
-                logger: ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}}),
+                urlResolver: provider.urlResolver,
+                documentServiceFactory: provider.documentServiceFactory,
+                logger: ChildLogger.create(getTestLogger?.(), undefined, {all: {testDriverType: driver.type}}),
             });
             loaderContainerTracker.add(loader);
             return loader.resolve({ url: await driver.createContainerUrl(documentId) });

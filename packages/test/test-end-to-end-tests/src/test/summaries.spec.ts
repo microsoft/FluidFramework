@@ -22,6 +22,7 @@ import {
     createLoader,
     OpProcessingController,
 } from "@fluidframework/test-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 const defaultDataStoreId = "default";
 
@@ -37,7 +38,6 @@ async function createContainer(provider: ITestObjectProvider): Promise<{
     opProcessingController: OpProcessingController;
 }> {
     const documentId = createDocumentId();
-    const driver = provider.driver;
     const codeDetails: IFluidCodeDetails = {
         package: "summarizerTestPackage",
     };
@@ -66,13 +66,14 @@ async function createContainer(provider: ITestObjectProvider): Promise<{
 
     const loader = createLoader(
         [[codeDetails, runtimeFactory]],
-        driver.createDocumentServiceFactory(),
-        driver.createUrlResolver(),
+        provider.documentServiceFactory,
+        provider.urlResolver,
+        ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
     );
     const container = await createAndAttachContainer(
         codeDetails,
         loader,
-        driver.createCreateNewRequest(documentId));
+        provider.driver.createCreateNewRequest(documentId));
 
     const opProcessingController = new OpProcessingController();
     opProcessingController.addDeltaManagers(container.deltaManager);

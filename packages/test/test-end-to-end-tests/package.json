@@ -24,7 +24,7 @@
     "start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
     "test": "npm run test:realsvc",
     "test:realsvc": "npm run test:realsvc:local && npm run test:realsvc:tinylicious",
-    "test:realsvc:local": "cross-env fluid__test__driver= npm run test:realsvc:run -- --parallel",
+    "test:realsvc:local": "cross-env fluid__test__driver=local npm run test:realsvc:run -- --parallel",
     "test:realsvc:odsp": "cross-env fluid__test__driver=odsp FLUID_TEST_TIMEOUT=20s npm run test:realsvc:run",
     "test:realsvc:odsp:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc:odsp",
     "test:realsvc:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc",
