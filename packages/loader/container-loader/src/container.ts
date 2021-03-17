@@ -596,7 +596,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Prefix all events in this file with container-loader
         this.logger = ChildLogger.create(this.subLogger, "Container");
 
-        this._deltaManager = this.createDeltaManager();
         this.connectionStateHandler = new ConnectionStateHandler(
             {
                 protocolHandler: () => this._protocolHandler,
@@ -607,6 +606,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             },
             this.logger,
         );
+
+        this.connectionStateHandler.on(connectEventName, (opsBehind?: number) => {
+            this.emit(connectEventName, opsBehind);
+        });
+
+        this._deltaManager = this.createDeltaManager();
 
         // keep track of last time page was visible for telemetry
         if (typeof document === "object" && document !== null) {
@@ -1511,10 +1516,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._canReconnect,
             () => this.activeConnection(),
         );
-
-        this.connectionStateHandler.on(connectEventName, (opsBehind?: number) => {
-            this.emit(connectEventName, opsBehind);
-        });
 
         deltaManager.on(connectEventName, (details: IConnectionDetails, opsBehind?: number) => {
             this.connectionStateHandler.receivedConnectEvent(
