@@ -7,15 +7,13 @@ import { strict as assert } from "assert";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    ChannelFactoryRegistry,
-    ITestFluidObject,
-} from "@fluidframework/test-utils";
-import {
-    generateTest,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
-} from "./compatUtils";
+    ChannelFactoryRegistry,
+    ITestFluidObject,
+} from "@fluidframework/test-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 const counterId = "counterKey";
 const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
@@ -24,7 +22,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("SharedCounter", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();
@@ -147,8 +145,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             }
         });
     });
-};
-
-describe("SharedCounter", () => {
-    generateTest(tests);
 });

@@ -8,15 +8,13 @@ import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import {
-    ChannelFactoryRegistry,
-    ITestFluidObject,
-} from "@fluidframework/test-utils";
-import {
-    generateTest,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
-} from "./compatUtils";
+    ChannelFactoryRegistry,
+    ITestFluidObject,
+} from "@fluidframework/test-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 const stringId = "sharedStringKey";
 const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
@@ -25,7 +23,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("SharedString", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();
@@ -73,8 +71,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         assert.equal(
             newSharedString.getText(), text, "The new container should receive the inserted text on creation");
     });
-};
-
-describe("SharedString", () => {
-    generateTest(tests);
 });
