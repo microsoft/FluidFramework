@@ -12,36 +12,15 @@ import {
 import { Loader } from "@fluidframework/container-loader";
 import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
-import { LocalDocumentServiceFactory } from "@fluidframework/local-driver";
-import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 
 /**
- * Creates a loader with the given package entries and a delta connection server.
+ * Creates a loader with the given package entries and driver.
  * @param packageEntries - A list of code details to Fluid entry points.
- * @param deltaConnectionServer - The delta connection server to use as the server.
- */
-export function createLocalLoader(
-    packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
-    deltaConnectionServer: ILocalDeltaConnectionServer,
-    urlResolver: IUrlResolver,
-    options?: ILoaderOptions,
-): IHostLoader {
-    const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
-
-    return createLoader(
-        packageEntries,
-        documentServiceFactory,
-        urlResolver,
-        options,
-    );
-}
-
-/**
- * Creates a loader with the given package entries and a delta connection server.
- * @param packageEntries - A list of code details to Fluid entry points.
- * @param deltaConnectionServer - The delta connection server to use as the server.
+ * @param documentServiceFactory - the driver factory to use
+ * @param urlResolver - the url resolver to use
+ * @param options - loader options
  */
 export function createLoader(
     packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
@@ -60,7 +39,7 @@ export function createLoader(
         urlResolver,
         documentServiceFactory,
         codeLoader,
-        logger: ChildLogger.create(logger, undefined, {driverType: driver?.type}),
+        logger: ChildLogger.create(logger, undefined, {all:{driverType: driver?.type}}),
         options,
     });
 }

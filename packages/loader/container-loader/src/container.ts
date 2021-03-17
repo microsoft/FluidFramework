@@ -217,13 +217,14 @@ export async function waitContainerToCatchUp(container: Container) {
 }
 
 export class CollabWindowTracker {
-    private updateSequenceNumberTimer: ReturnType<typeof setTimeout> | undefined;
-
-    private static readonly NoopFrequency = 2000;
+    private opsCountSinceNoop = 0;
+    private lastNoopTime: number  | undefined;
 
     constructor(
         private readonly submit: (type: MessageType, contents: any) => void,
         private readonly activeConnection: () => boolean,
+        private readonly NoopTimeFrequency: number = 2000,
+        private readonly NoopCountFrequency: number = 300,
     ) {}
     /**
      * Schedules as ack to the server to update the reference sequence number
@@ -244,31 +245,38 @@ export class CollabWindowTracker {
             return;
         }
 
-        // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
-        // update, which updates the MSN, then ack the update, etc...).
-        if (message.type === MessageType.NoOp) {
+        // Filter out system messages.
+        if (isSystemMessage(message)) {
             return;
         }
 
-        // We will queue a message to update our reference sequence number upon receiving a server
+        // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
+        // update, which updates the MSN, then ack the update, etc...). Also, don't
+        // count system messages in ops count.
+        assert(message.type !== MessageType.NoOp, "Don't acknowledge no-ops");
+
+        if (this.lastNoopTime === undefined) {
+            this.lastNoopTime = Date.now();
+        }
+
+        this.opsCountSinceNoop++;
+
+        // If the ops count since last op is greater than NoopCountFrequency and time since last noop is
+        // greater than NoopTimeFrequency, then send a Noop.
+        // We will send a message(Noop) to update our reference sequence number upon receiving a server
         // operation. This allows the server to know our true reference sequence number and be able to
         // correctly update the minimum sequence number (MSN).
-        if (this.updateSequenceNumberTimer === undefined) {
-            // Clear an update in 2 s
-            this.updateSequenceNumberTimer = setTimeout(() => {
-                this.updateSequenceNumberTimer = undefined;
-                if (this.activeConnection()) {
-                    this.submit(MessageType.NoOp, null);
-                }
-            }, CollabWindowTracker.NoopFrequency);
+        if (this.opsCountSinceNoop >= this.NoopCountFrequency
+            && Date.now() - this.lastNoopTime >= this.NoopTimeFrequency
+        ) {
+            this.stopSequenceNumberUpdate();
+            this.submit(MessageType.NoOp, null);
         }
     }
 
     public stopSequenceNumberUpdate(): void {
-        if (this.updateSequenceNumberTimer !== undefined) {
-            clearTimeout(this.updateSequenceNumberTimer);
-        }
-        this.updateSequenceNumberTimer = undefined;
+        this.opsCountSinceNoop = 0;
+        this.lastNoopTime = undefined;
     }
 }
 
@@ -418,6 +426,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private readonly collabWindowTracker = new CollabWindowTracker(
         (type, contents) => this._deltaManager.submit(type, contents),
         () => this.activeConnection(),
+        this.loader.services.options?.noopTimeFrequency,
+        this.loader.services.options?.noopCountFrequency,
     );
 
     public get IFluidRouter(): IFluidRouter { return this; }
@@ -574,14 +584,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             loader.services.subLogger,
             undefined,
             {
-                clientType, // Differentiating summarizer container from main container
-                loaderVersion: pkgVersion,
-                containerId: uuid(),
-            },
-            {
-                docId: () => this.id,
-                containerAttachState: () => this._attachState,
-                containerLoaded: () => this.loaded,
+                all:{
+                    clientType, // Differentiating summarizer container from main container
+                    loaderVersion: pkgVersion,
+                    containerId: uuid(),
+                    docId: () => this.id,
+                    containerAttachState: () => this._attachState,
+                    containerLoaded: () => this.loaded,
+                },
             });
 
         // Prefix all events in this file with container-loader
