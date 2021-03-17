@@ -4,6 +4,8 @@
  */
 
 import nconf from "nconf";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { getVersionedTestObjectProvider } from "./compatUtils";
 import { ensurePackageInstalled } from "./testApi";
 
@@ -139,7 +141,7 @@ nconf.argv({
 
 const compatKind = nconf.get("fluid:test:compatKind") as CompatKind[];
 const compatVersions = nconf.get("fluid:test:compatVersion") as number[];
-const driver = nconf.get("fluid:test:driver");
+const driver = nconf.get("fluid:test:driver") as TestDriverTypes;
 
 // set it in the env for parallel workers
 process.env.fluid__test__compatKind = JSON.stringify(compatKind);
@@ -161,7 +163,7 @@ if (compatKind !== undefined) {
  */
 function describeCompat(
     name: string,
-    tests: (provider: () => ReturnType<typeof getVersionedTestObjectProvider>) => void,
+    tests: (provider: () => ITestObjectProvider) => void,
     compatFilter?: CompatKind[],
 ) {
     let configs = configList;
@@ -172,8 +174,9 @@ function describeCompat(
     describe(name, () => {
         for (const config of configs) {
             describe(config.name, () => {
-                tests(async () => {
-                    return getVersionedTestObjectProvider(
+                let provider: ITestObjectProvider;
+                before(async () => {
+                    provider = await getVersionedTestObjectProvider(
                         config?.loader,
                         {
                             type: driver,
@@ -183,6 +186,10 @@ function describeCompat(
                         config?.dataRuntime,
                     );
                 });
+                afterEach(() => {
+                    provider.reset();
+                });
+                tests(() => { return provider; });
             });
         }
     });
@@ -190,21 +197,21 @@ function describeCompat(
 
 export function describeNoCompat(
     name: string,
-    tests: (provider: () => ReturnType<typeof getVersionedTestObjectProvider>) => void,
+    tests: (provider: () => ITestObjectProvider) => void,
 ) {
     describeCompat(name, tests, [CompatKind.None]);
 }
 
 export function describeLoaderCompat(
     name: string,
-    tests: (provider: () => ReturnType<typeof getVersionedTestObjectProvider>) => void,
+    tests: (provider: () => ITestObjectProvider) => void,
 ) {
     describeCompat(name, tests, [CompatKind.None, CompatKind.Loader]);
 }
 
 export function describeFullCompat(
     name: string,
-    tests: (provider: () => ReturnType<typeof getVersionedTestObjectProvider>) => void,
+    tests: (provider: () => ITestObjectProvider) => void,
 ) {
     describeCompat(name, tests);
 }

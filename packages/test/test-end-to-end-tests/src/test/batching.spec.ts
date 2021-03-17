@@ -33,13 +33,10 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeFullCompat("Batching", (argsFactory: () => Promise<ITestObjectProvider>) => {
+describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
-    beforeEach(async () => {
-        args = await argsFactory();
-    });
-    afterEach(() => {
-        args.reset();
+    beforeEach(() => {
+        args = argsFactory();
     });
 
     let dataObject1: ITestFluidObject;

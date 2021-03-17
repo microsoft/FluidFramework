@@ -72,7 +72,7 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
     return pendingState;
 };
 
-describeNoCompat("stashed ops", (argsFactory: () => Promise<ITestObjectProvider>) => {
+describeNoCompat("stashed ops", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     let url;
     let loader: IHostLoader;
@@ -80,7 +80,7 @@ describeNoCompat("stashed ops", (argsFactory: () => Promise<ITestObjectProvider>
     let map1: SharedMap;
 
     beforeEach(async () => {
-        args = await argsFactory();
+        args = argsFactory();
         loader = args.makeTestLoader(testContainerConfig);
         container1 = await createAndAttachContainer(
             args.defaultCodeDetails,
@@ -90,10 +90,6 @@ describeNoCompat("stashed ops", (argsFactory: () => Promise<ITestObjectProvider>
         url = await container1.getAbsoluteUrl("");
         const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
-    });
-
-    afterEach(async () => {
-        args.reset();
     });
 
     it("resends op", async function() {

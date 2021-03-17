@@ -24,15 +24,11 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeFullCompat("SharedDictionary", (argsFactory: () => Promise<ITestObjectProvider>) => {
+describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
-    beforeEach(async () => {
-        args = await argsFactory();
+    beforeEach(() => {
+        args = argsFactory();
     });
-    afterEach(() => {
-        args.reset();
-    });
-
     let dataObject1: ITestFluidObject;
     let sharedDirectory1: ISharedDirectory;
     let sharedDirectory2: ISharedDirectory;

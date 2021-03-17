@@ -43,13 +43,10 @@ const testContainerConfig: ITestContainerConfig = {
 function generate(
     name: string, ctor: ISharedObjectConstructor<IConsensusOrderedCollection>,
     input: any[], output: any[]) {
-    describeFullCompat(name, (argsFactory: () => Promise<ITestObjectProvider>) => {
+    describeFullCompat(name, (argsFactory: () => ITestObjectProvider) => {
         let args: ITestObjectProvider;
-        beforeEach(async () => {
-            args = await argsFactory();
-        });
-        afterEach(() => {
-            args.reset();
+        beforeEach(() => {
+            args = argsFactory();
         });
         let dataStore1: ITestFluidObject;
         let dataStore2: ITestFluidObject;

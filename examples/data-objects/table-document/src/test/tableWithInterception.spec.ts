@@ -60,7 +60,7 @@ describeLoaderCompat("Table Document with Interception", (getTestObjectProvider)
 
         let provider: ITestObjectProvider;
         beforeEach(async () => {
-            provider = await getTestObjectProvider();
+            provider = getTestObjectProvider();
             const factory = new ContainerRuntimeFactoryWithDefaultDataStore(
                 TableDocument.getFactory(),
                 new Map([

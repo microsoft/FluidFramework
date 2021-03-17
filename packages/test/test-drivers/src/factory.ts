@@ -24,6 +24,7 @@ export const DriverApi = {
 
 let hasSetKeepAlive = false;
 function setKeepAlive() {
+    // Make sure we only do it once so that createFluidTestDriver can be called multiple times.
     if (!hasSetKeepAlive) {
         // Each TCP connect has a delay to allow it to be reuse after close, and unit test make a lot of connection,
         // which might cause port exhaustion.
@@ -42,6 +43,7 @@ type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => any> =
 export interface FluidTestDriverConfig {
     odsp?: CreateFromEnvConfigParam<typeof OdspTestDriver.createFromEnv>,
 }
+
 export async function createFluidTestDriver(
     fluidTestDriverType: TestDriverTypes,
     config?: FluidTestDriverConfig,

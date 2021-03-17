@@ -31,6 +31,7 @@ import {
     getContainerRuntimeApi,
     getDataRuntimeApi,
     TestDataObjectType,
+    describeNoCompat,
 } from "@fluidframework/test-version-utils";
 
 interface ITestDataStore {
@@ -72,7 +73,11 @@ function getTestDataStoreClasses(api: ReturnType<typeof getDataRuntimeApi>) {
 
 const { TestDataStoreV1, TestDataStoreV2 } = getTestDataStoreClasses(getDataRuntimeApi());
 
-describe("context reload (hot-swap)", function() {
+describeNoCompat("context reload (hot-swap)", (getTestObjectProvider) => {
+    let provider;
+    beforeEach(() => {
+        provider = getTestObjectProvider();
+    });
     let container: IContainer;
     let containerError = false;
     let dataStoreV1: ITestDataStore;
@@ -103,7 +108,7 @@ describe("context reload (hot-swap)", function() {
         packageEntries,
         documentId: string,
         LoaderConstructor = Loader): Promise<IContainer> {
-        const driver = getFluidTestDriver();
+        const driver = provider.driver;
 
         const loader = new LoaderConstructor({
             codeLoader: new LocalCodeLoader(packageEntries),
@@ -226,7 +231,7 @@ describe("context reload (hot-swap)", function() {
 
     describe("two containers", () => {
         async function loadContainer(packageEntries, documentId): Promise<IContainer> {
-            const driver = getFluidTestDriver();
+            const driver = provider.driver;
             const loader = new Loader({
                 codeLoader: new LocalCodeLoader(packageEntries),
                 options: { hotSwapContext: true },

@@ -13,8 +13,10 @@ import { SharedMatrix } from "@fluidframework/matrix";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedObjectSequence } from "@fluidframework/sequence";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
+
 import {
+    ITestObjectProvider,
     createAndAttachContainer,
     createDocumentId,
     createLoader,
@@ -30,12 +32,12 @@ class TestDataObject extends DataObject {
     public readonly getContext = () => this.context;
 }
 
-async function createContainer(): Promise<{
+async function createContainer(provider: ITestObjectProvider): Promise<{
     container: IContainer;
     opProcessingController: OpProcessingController;
 }> {
     const documentId = createDocumentId();
-    const driver = getFluidTestDriver() as unknown as ITestDriver;
+    const driver = provider.driver;
     const codeDetails: IFluidCodeDetails = {
         package: "summarizerTestPackage",
     };
@@ -78,9 +80,15 @@ async function createContainer(): Promise<{
     return { container, opProcessingController };
 }
 
-describe("Summaries", () => {
+// REVIEW: enable compat testing?
+describeNoCompat("Summaries", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    beforeEach(() => {
+        provider = getTestObjectProvider();
+    });
+
     it("Should generate summary tree", async () => {
-        const { container, opProcessingController } = await createContainer();
+        const { container, opProcessingController } = await createContainer(provider);
         const defaultDataStore = await requestFluidObject<TestDataObject>(container, defaultDataStoreId);
         const containerRuntime = defaultDataStore.getContext().containerRuntime as ContainerRuntime;
 
