@@ -58,48 +58,47 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
      */
     public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
-        if (typeof error !== "object" || error === null) {
-            event.error = error;
-        } else {
+        if (isILoggingError(error)) {
+            const taggableProps = error.getTelemetryProperties();
+            for (const key of Object.keys(taggableProps)) {
+                const taggableProp = taggableProps[key];
+                const { value, tag } = (typeof taggableProp === "object")
+                    ? taggableProp
+                    : { value: taggableProp, tag: undefined };
+                switch (tag) {
+                    case undefined:
+                        // No tag means we can log plainly
+                        event[key] = value;
+                        break;
+                    case TelemetryDataTag.PackageData:
+                        // For Microsoft applications, PackageData is safe for now
+                        // (we don't load 3P code in 1P apps)
+                        // But this determination really belongs in the host layer
+                        event[key] = value;
+                        break;
+                    case TelemetryDataTag.UserData:
+                        // Strip out anything tagged explicitly as PII.
+                        // Alternate strategy would be to hash these props
+                        event[key] = "REDACTED (UserData)";
+                        break;
+                    default:
+                        // This will help us keep this switch statement up to date
+                        (function(_: never) {})(tag);
+
+                        // If we encounter a tag we don't recognize
+                        // (e.g. due to interaction between different versions)
+                        // then we must assume we should scrub.
+                        event[key] = "REDACTED (unknown tag)";
+                        break;
+                }
+            }
+        } else if (typeof error === "object" && error !== null) {
+            // Try to pull the stack and message off if it's not an ILoggingError
             const errorAsObject = error as Partial<Error>;
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
-
-            if (isILoggingError(error)) {
-                const taggableProps = error.getTelemetryProperties();
-                for (const key of Object.keys(taggableProps)) {
-                    if (event[key] !== undefined) {
-                        continue; //* test this
-                    }
-                    const taggableProp = taggableProps[key];
-                    const { value, tag } = (typeof taggableProp === "object")
-                        ? taggableProp
-                        : { value: taggableProp, tag: TelemetryDataTag.None };
-                    switch (tag) {
-                        case TelemetryDataTag.None:
-                        case TelemetryDataTag.PackageData:
-                            // For Microsoft applications, PackageData is safe for now
-                            // (we don't load 3P code in 1P apps)
-                            // But this determination really belongs in the host layer
-                            event[key] = value;
-                            break;
-                        case TelemetryDataTag.UserData:
-                            // Strip out anything tagged explicitly as PII.
-                            // Alternate strategy would be to hash these props
-                            event[key] = undefined;
-                            break;
-                        default:
-                            // This will help us keep this switch statement up to date
-                            (function(_: never) {})(tag);
-
-                            // If we encounter a tag we don't recognize
-                            // (e.g. due to interaction between different versions)
-                            // then we must assume we should scrub.
-                            event[key] = undefined;
-                            break;
-                    }
-                }
-            }
+        } else {
+            event.error = error;
         }
 
         // Collect stack if we were not able to extract it from error
@@ -512,8 +511,6 @@ export class PerformanceEvent {
  * Please do not modify existing entries for backwards compatibility.
  */
 export enum TelemetryDataTag {
-    /** Non-sensitive data that can be logged plainly */
-    None = "None",
     /** Data containing terms from code packages that may have been dynamically loaded */
     PackageData = "PackageData",
     /** Personal data of a variety of classifications that pertains to the user */
@@ -549,7 +546,7 @@ export interface ILoggingError extends Error {
     /** Return all properties from this object that should be logged to telemetry */
     getTelemetryProperties(): ITaggableTelemetryProperties;
 }
-export const isILoggingError = (x: any): x is ILoggingError => typeof x.getTelemetryProperties === "function";
+export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
 
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.
@@ -568,6 +565,9 @@ function getValidTelemetryProps(obj: any): ITaggableTelemetryProperties {
             default: {
                 if (isTaggedTelemetryPropertyValue(val)) {
                     props[key] = val;
+                } else {
+                    // We don't support logging arbitrary objects
+                    props[key] = "REDACTED (arbitrary object)";
                 }
                 break;
             }
@@ -605,11 +605,11 @@ export class LoggingError extends Error implements ILoggingError {
     public getTelemetryProperties(): ITaggableTelemetryProperties {
         const taggableProps = getValidTelemetryProps(this);
         // Include non-enumerable props inherited from Error that would not be returned by getValidTelemetryProps
-        // But if any were overwritten (e.g. with a tagged property), then use the result from getValidTelemetryProps
+        // But if any were overwritten (e.g. with a tagged property), then use the result from getValidTelemetryProps.
+        // Not including the 'name' property because it's likely always "Error"
         return  {
             stack: this.stack,
             message: this.message,
-            name: this.name,
             ...taggableProps,
         };
     }
