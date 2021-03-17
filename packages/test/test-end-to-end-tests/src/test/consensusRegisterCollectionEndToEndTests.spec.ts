@@ -14,15 +14,13 @@ import {
 } from "@fluidframework/register-collection";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    ITestFluidObject,
-    ChannelFactoryRegistry,
-} from "@fluidframework/test-utils";
-import {
-    generateTest,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
-} from "./compatUtils";
+    ITestFluidObject,
+    ChannelFactoryRegistry,
+} from "@fluidframework/test-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IFluidDataStoreRuntime, id?: string): T;
@@ -39,7 +37,7 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {
-    const tests = (argsFactory: () => ITestObjectProvider) => {
+    describeFullCompat(name, (argsFactory: () => ITestObjectProvider) => {
         let args: ITestObjectProvider;
         beforeEach(()=>{
             args = argsFactory();
@@ -213,10 +211,6 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             assert.equal(sharedMap1Prime.get("test"), "sampleValue");
             assert.equal(sharedMap2Prime.get("test"), "sampleValue");
         });
-    };
-
-    describe(name, () => {
-        generateTest(tests);
     });
 }
 

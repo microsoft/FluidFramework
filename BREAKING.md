@@ -1,5 +1,6 @@
 ## 0.37 Breaking changes
 - [Loader in data stores deprecated](#Loader-in-data-stores-deprecated)
+- [TelemetryLogger Properties Format](#TelemetryLogger-Properties-Format)
 
 ### Loader in data stores deprecated
 The `loader` property on the `IContainerRuntime`, `IFluidDataStoreRuntime`, and `IFluidDataStoreContext` interfaces is now deprecated and will be removed in an upcoming release.  Data store objects will no longer have access to an `ILoader` by default.  To replicate the same behavior, existing users can make the `ILoader` used to create a `Container` available on the `scope` property of these interfaces instead by setting the `provideScopeLoader` `ILoaderOptions` flag when creating the loader.
@@ -14,6 +15,13 @@ const loader = new Loader({
 ```typescript
 const loader: ILoader | undefined = this.context.scope.ILoader;
 ```
+
+### TelemetryLogger Properties Format
+The TelemetryLogger's properties format has been updated to support error only properties. This includes: `ChildLogger`, `MultiSinkLogger`,`DebugLogger`.
+The previous format was just a property bag:
+    `ChildLogger.create(logger, undefined, { someProperty: uuid() });`
+Whereas now it has nested property bags for error categories including `all` and `error`:
+    `ChildLogger.create(logger, undefined, {all:{ someProperty: uuid() }});`
 
 ## 0.36 Breaking changes
 - [Some `ILoader` APIs moved to `IHostLoader`](#Some-ILoader-APIs-moved-to-IHostLoader)

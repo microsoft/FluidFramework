@@ -9,6 +9,9 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import {
+    ITestContainerConfig,
+    DataObjectFactoryType,
+    ITestObjectProvider,
     ChannelFactoryRegistry,
     ITestFluidObject,
 } from "@fluidframework/test-utils";
@@ -25,13 +28,7 @@ import { MessageType, ISequencedDocumentMessage } from "@fluidframework/protocol
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { convertContainerToDriverSerializedFormat, requestFluidObject } from "@fluidframework/runtime-utils";
-import {
-    generateTest,
-    generateNonCompatTest,
-    ITestContainerConfig,
-    DataObjectFactoryType,
-    ITestObjectProvider,
-} from "./compatUtils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -62,7 +59,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     let request: IRequest;
     let loader: Loader;
@@ -605,38 +602,17 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         await containerP;
         await defPromise.promise;
     });
-};
 
-describe("Detached Container", () => {
-    generateTest(tests);
+    it("Load attached container from cache and check if they are same", async () => {
+        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
 
-    // non compat test
-    generateNonCompatTest((argsFactory: () => ITestObjectProvider) => {
-        let args: ITestObjectProvider;
-        let request: IRequest;
-        let loader: Loader;
+        // Now attach the container and get the sub dataStore.
+        await container.attach(request);
 
-        beforeEach(async () => {
-            args = argsFactory();
-            request = (args.driver ?? getFluidTestDriver()).createCreateNewRequest(args.documentId);
-            loader = args.makeTestLoader(testContainerConfig) as Loader;
-        });
-
-        afterEach(() => {
-            args.reset();
-        });
-
-        it("Load attached container from cache and check if they are same", async () => {
-            const container = await loader.createDetachedContainer(args.defaultCodeDetails);
-
-            // Now attach the container and get the sub dataStore.
-            await container.attach(request);
-
-            // Create a new request url from the resolvedUrl of the first container.
-            assert(container.resolvedUrl);
-            const requestUrl2 = await args.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
-            const container2 = await loader.resolve({ url: requestUrl2 });
-            assert.strictEqual(container, container2, "Both containers should be same");
-        });
+        // Create a new request url from the resolvedUrl of the first container.
+        assert(container.resolvedUrl);
+        const requestUrl2 = await args.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
+        const container2 = await loader.resolve({ url: requestUrl2 });
+        assert.strictEqual(container, container2, "Both containers should be same");
     });
 });

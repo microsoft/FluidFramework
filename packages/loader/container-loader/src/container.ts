@@ -584,14 +584,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             loader.services.subLogger,
             undefined,
             {
-                clientType, // Differentiating summarizer container from main container
-                loaderVersion: pkgVersion,
-                containerId: uuid(),
-            },
-            {
-                docId: () => this.id,
-                containerAttachState: () => this._attachState,
-                containerLoaded: () => this.loaded,
+                all:{
+                    clientType, // Differentiating summarizer container from main container
+                    loaderVersion: pkgVersion,
+                    containerId: uuid(),
+                    docId: () => this.id,
+                    containerAttachState: () => this._attachState,
+                    containerLoaded: () => this.loaded,
+                },
             });
 
         // Prefix all events in this file with container-loader

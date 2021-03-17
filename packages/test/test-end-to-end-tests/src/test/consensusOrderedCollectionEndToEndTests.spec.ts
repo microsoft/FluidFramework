@@ -16,9 +16,15 @@ import {
     waitAcquireAndComplete,
 } from "@fluidframework/ordered-collection";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ChannelFactoryRegistry, ITestFluidObject } from "@fluidframework/test-utils";
+import {
+    ChannelFactoryRegistry,
+    ITestFluidObject,
+    ITestContainerConfig,
+    ITestObjectProvider,
+    DataObjectFactoryType,
+} from "@fluidframework/test-utils";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { DataObjectFactoryType, generateTest, ITestContainerConfig, ITestObjectProvider } from "./compatUtils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IFluidDataStoreRuntime, id?: string): T;
@@ -37,9 +43,9 @@ const testContainerConfig: ITestContainerConfig = {
 function generate(
     name: string, ctor: ISharedObjectConstructor<IConsensusOrderedCollection>,
     input: any[], output: any[]) {
-    const tests = (argsFactory: () => ITestObjectProvider) => {
+    describeFullCompat(name, (argsFactory: () => ITestObjectProvider) => {
         let args: ITestObjectProvider;
-        beforeEach(()=>{
+        beforeEach(() => {
             args = argsFactory();
         });
         afterEach(() => {
@@ -349,10 +355,6 @@ function generate(
             assert.strictEqual(removeCount2, 3, "Incorrect number remove events in document 2");
             assert.strictEqual(removeCount3, 3, "Incorrect number remove events in document 3");
         });
-    };
-
-    describe(name, () => {
-        generateTest(tests);
     });
 }
 

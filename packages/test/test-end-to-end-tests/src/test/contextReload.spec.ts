@@ -26,8 +26,12 @@ import {
 } from "@fluidframework/test-utils";
 import { Loader } from "@fluidframework/container-loader";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { getLoaderApi, getContainerRuntimeApi, getDataRuntimeApi, DataRuntimeApiType } from "./testApi";
-import { TestDataObjectType } from "./compatUtils";
+import {
+    getLoaderApi,
+    getContainerRuntimeApi,
+    getDataRuntimeApi,
+    TestDataObjectType,
+} from "@fluidframework/test-version-utils";
 
 interface ITestDataStore {
     readonly version: string;
@@ -39,7 +43,7 @@ const V1 = "0.1.0";
 const V2 = "0.2.0";
 
 const TestDataStoreType = "@fluid-example/test-dataStore";
-function getTestDataStoreClasses(api: DataRuntimeApiType) {
+function getTestDataStoreClasses(api: ReturnType<typeof getDataRuntimeApi>) {
     // A simple dataStore with runtime/root exposed for testing purposes. Two
     // different versions (defined below) are used to test context reload.
     abstract class TestDataStore extends api.DataObject implements ITestDataStore {
@@ -106,7 +110,7 @@ describe("context reload (hot-swap)", function() {
             options: { hotSwapContext: true },
             urlResolver: driver.createUrlResolver(),
             documentServiceFactory: driver.createDocumentServiceFactory(),
-            logger: ChildLogger.create(getTestLogger(), undefined, {testDriverType: driver.type}),
+            logger: ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}}),
         });
         loaderContainerTracker.add(loader);
         return createAndAttachContainer(
@@ -228,7 +232,7 @@ describe("context reload (hot-swap)", function() {
                 options: { hotSwapContext: true },
                 urlResolver: driver.createUrlResolver(),
                 documentServiceFactory: driver.createDocumentServiceFactory(),
-                logger: ChildLogger.create(getTestLogger(), undefined, {testDriverType: driver.type}),
+                logger: ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}}),
             });
             loaderContainerTracker.add(loader);
             return loader.resolve({ url: await driver.createContainerUrl(documentId) });

@@ -50,7 +50,6 @@
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/mocha-test-setup": "^0.37.0",
     "@fluidframework/runtime-utils": "^0.37.0",
-    "@fluidframework/test-driver-definitions": "^0.37.0",
     "@fluidframework/test-drivers": "^0.37.0",
     "@fluidframework/test-runtime-utils": "^0.37.0",
     "@fluidframework/test-utils": "^0.37.0",
