@@ -4,10 +4,11 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { ProtocolOpHandler, Quorum } from "@fluidframework/protocol-base";
 import { ConnectionMode } from "@fluidframework/protocol-definitions";
+import { EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { connectEventName, ConnectionState, ILocalSequencedClient } from "./container";
 
 export interface IConnectionStateHandler {
@@ -18,7 +19,17 @@ export interface IConnectionStateHandler {
     isContainerLoaded: () => boolean,
 }
 
-export class ConnectionStateHandler {
+/**
+ * Events emitted by the ConnectionStateHandler.
+ */
+ export interface IConnectionStateHandlerEvents extends IEvent {
+    /**
+     * @param opsBehind - number of ops this client is behind (if present).
+     */
+    (event: "connect", listener: (opsBehind?: number) => void);
+}
+
+export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConnectionStateHandlerEvents> {
     private _connectionState = ConnectionState.Disconnected;
     private _pendingClientId: string | undefined;
     private _clientId: string | undefined;
@@ -43,6 +54,7 @@ export class ConnectionStateHandler {
         private readonly handler: IConnectionStateHandler,
         private readonly logger: ITelemetryLogger,
     ) {
+        super();
     }
 
     public receivedAddMemberEvent(clientId: string, quorum: Quorum) {
@@ -73,7 +85,7 @@ export class ConnectionStateHandler {
         // we know there can no longer be outstanding ops that we sent with the previous client id.
         this._pendingClientId = details.clientId;
 
-        emitter.emit(connectEventName, opsBehind);
+        this.emit(connectEventName, opsBehind);
 
         // Report telemetry after we set client id!
         this.handler.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);

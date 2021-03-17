@@ -1512,6 +1512,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             () => this.activeConnection(),
         );
 
+        this.connectionStateHandler.on(connectEventName, (opsBehind?: number) => {
+            this.emit(connectEventName, opsBehind);
+        });
+
         deltaManager.on(connectEventName, (details: IConnectionDetails, opsBehind?: number) => {
             this.connectionStateHandler.receivedConnectEvent(
                 this,
