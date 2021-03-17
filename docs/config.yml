@@ -22,7 +22,7 @@ params:
 menu:
   main:
   - name: "Getting started"
-    url: "/start/get-started/quick-start/"
+    url: "/start/quick-start/"
     weight: -100
   - name: "Recipes"
     url: "/start/recipes/react/"
@@ -38,19 +38,28 @@ menu:
     weight: -50
 
   start:
-  - identifier: "get-started"
-    name: "Get Started"
-    weight: -500
+  - identifier: "quick-start"
+    name: "Quick Start"
+    url: "/start/quick-start/"
+    weight: -800
+  - identifier: "tutorial"
+    name: "Tutorial"
+    url: "/start/tutorial/"
+    weight: -700
+  - identifier: "examples"
+    name: "Examples"
+    url: "/start/examples/"
+    weight: -600
   - identifier: "recipes"
     name: "Recipes"
     weight: -200
   - identifier: "faq"
     name: "FAQ"
-    url: "/docs/faq/"
+    url: "/start/faq/"
     weight: -100
   - identifier: "glossary"
     name: "Glossary"
-    url: "/docs/glossary/"
+    url: "/start/glossary/"
     weight: -90
 
   # this menu supplements one generated in the apiNav partial

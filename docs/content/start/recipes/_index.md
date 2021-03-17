@@ -1,5 +1,5 @@
 ---
-title: "Recipes"
+title: "How to use recipes"
 draft: false
 area: recipes
 cascade:

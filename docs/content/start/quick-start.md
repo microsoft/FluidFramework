@@ -68,7 +68,7 @@ that the state of the dice changes in both clients.
 Start learning how to work with the Fluid Framework APIs with our [tutorial](./tutorial.md).
 
 Or, if you would like to start a new Fluid project from scratch, the available packages
-are labeled in the [Fluid API Section](https://fluidframework.com/apis/) of the documentation.
+are labeled in the [Fluid API Section]({{< relref "/docs/apis/_index.md" >}}) of the documentation.
 
 To install your packages you can follow this format: `npm i package-name` if you use [npm](https://docs.npmjs.com/) or
 `yarn add package-name` if you use [yarn](https://yarnpkg.com/).
@@ -80,5 +80,5 @@ We use the following Fluid packages in this quickstart:
 - **@fluidframework/map**
 - **tinylicious**
   - Note: Tinylicious is only a development dependency, since it is the
-    [service]({{< relref "/reference/concepts/service.md" >}}) used when developing your Fluid app. You can install it as
+    [service]({{< relref "concepts/service.md" >}}) used when developing your Fluid app. You can install it as
     a development dependency using `npm i tinylicious --save-dev` or `yarn add tinylicious --dev`.

@@ -10,7 +10,7 @@ title: "Fluid Framework"
 {{< cta_container  >}}
   {{< cta
     linkClasses="get-started"
-    linkURL="/start/get-started/quick-start/"
+    linkURL="/start/quick-start/"
     iconClasses="get-started"
     linkText="Get Started"
   >}}

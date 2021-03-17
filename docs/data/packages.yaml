@@ -9,7 +9,7 @@ distributed-data-structures:
 - "@fluidframework/sequence"
 - custom:
     title: "SharedString"
-    url: "/reference/apis/sequence/sharedstring/"
+    url: "/docs/apis/sequence/sharedstring/"
 - "@fluidframework/shared-object-base"
 - "@fluidframework/synthesize"
 - "@fluidframework/shared-summary-block"

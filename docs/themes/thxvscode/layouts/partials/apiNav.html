@@ -11,7 +11,7 @@
 {{ end }}
 
 {{ $section := .CurrentSection }}
-{{ $api_section := .Site.GetPage "/reference/apis/_index.md" }}
+{{ $api_section := .Site.GetPage "/docs/apis/_index.md" }}
 {{ $in_api_section := (.IsDescendant $api_section) }}
 {{ $ref_home_active := and .IsSection (not $in_api_section) }}
 {{ $api_home_active := and .IsSection $in_api_section }}
@@ -25,7 +25,7 @@
     <ul class="nav" id="main-nav">
 
         <li {{ if $ref_home_active }} class="active" {{ end }}>
-            <a class="docs-home" href="/reference/" {{ if $ref_home_active }}
+            <a class="docs-home" href="/docs/" {{ if $ref_home_active }}
                 aria-label="Current Page: Documentation for FluidFramework" {{ end }}>Overview</a>
         </li>
 
@@ -70,7 +70,7 @@
         <hr/>
 
         <li {{ if $in_api_section }} class="active" {{ end }}>
-            <a class="docs-home" href="/reference/apis/" {{ if $in_api_section }}
+            <a class="docs-home" href="/docs/apis/" {{ if $in_api_section }}
                 aria-label="Current Page: API Overview" {{ end }}>API Overview</a>
         </li>
 
