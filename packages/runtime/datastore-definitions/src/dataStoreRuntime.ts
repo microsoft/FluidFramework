@@ -81,6 +81,14 @@ export interface IFluidDataStoreRuntime extends
     readonly attachState: AttachState;
 
     /**
+     * Returns the number of messages currently pending acknowledgement from the service.
+     *
+     * Clients that produces high volumes of messages should check this count periodically
+     * and reduce production if the service/network is falling behind.
+     */
+    readonly pendingMessageCount: number;
+
+    /**
      * Returns the channel with the given id
      */
     getChannel(id: string): Promise<IChannel>;

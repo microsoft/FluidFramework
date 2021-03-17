@@ -389,6 +389,9 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public readonly loader: ILoader;
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockFluidDataStoreRuntime");
     public readonly quorum = new MockQuorum();
+    private _pendingMessageCount = 0;
+
+    public get pendingMessageCount() { return this._pendingMessageCount; }
 
     public get absolutePath() {
         return `/${this.id}`;
@@ -468,6 +471,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     }
 
     public submitMessage(type: MessageType, content: any) {
+        this._pendingMessageCount++;
         return null;
     }
 
@@ -476,6 +480,11 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean): void {
+        if (local) {
+            assert(this._pendingMessageCount > 0,
+                "Calls to process(local=true) must be balanced with submitMessage().");
+            this._pendingMessageCount--;
+        }
         return;
     }
 

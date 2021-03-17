@@ -75,6 +75,14 @@ export interface IContainerRuntimeBase extends
     readonly clientDetails: IClientDetails;
 
     /**
+     * Returns the number of messages currently pending acknowledgement from the service.
+     *
+     * Clients that produces high volumes of messages should check this count periodically
+     * and reduce production if the service/network is falling behind.
+     */
+    readonly pendingMessageCount: number;
+
+    /**
      * Invokes the given callback and guarantees that all operations generated within the callback will be ordered
      * sequentially. Total size of all messages must be less than maxOpSize.
      */
@@ -136,14 +144,6 @@ export interface IContainerRuntimeBase extends
      * Returns the current audience.
      */
     getAudience(): IAudience;
-
-    /**
-     * Returns the number of messages currently pending acknowledgement from the service.
-     *
-     * Clients that produces high volumes of messages should check this count periodically
-     * and reduce production if the service/network is falling behind.
-     */
-    pendingMessageCount: number;
 }
 
 /**
@@ -286,6 +286,14 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
      * Ambient services provided with the context
      */
     readonly scope: IFluidObject;
+
+    /**
+     * Returns the number of messages currently pending acknowledgement from the service.
+     *
+     * Clients that produces high volumes of messages should check this count periodically
+     * and reduce production if the service/network is falling behind.
+     */
+    readonly pendingMessageCount: number;
 
     /**
      * Returns the current quorum.

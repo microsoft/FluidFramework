@@ -52,6 +52,7 @@ import {
     IGarbageCollectionSummaryDetails,
     IInboundSignalMessage,
     ISummaryTreeWithStats,
+    IFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 import {
     convertSnapshotTreeToSummaryTree,
@@ -307,6 +308,12 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.deferredAttached.resolve();
         }
     }
+
+    public get pendingMessageCount() {
+        return this.dataStoreContext.pendingMessageCount;
+    }
+
+    IFluidDataStoreRegistry?: IFluidDataStoreRegistry | undefined;
 
     public dispose(): void {
         if (this._disposed) {

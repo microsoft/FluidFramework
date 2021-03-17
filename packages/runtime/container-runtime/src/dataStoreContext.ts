@@ -227,6 +227,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             async () => this.getInitialGCSummaryDetails(),
         );
     }
+    createProps?: any;
+
+    public get pendingMessageCount() {
+        return this.containerRuntime.pendingMessageCount;
+    }
 
     public dispose(): void {
         if (this._disposed) {
