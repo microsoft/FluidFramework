@@ -89,7 +89,6 @@
     "@fluidframework/shared-object-base": "^0.37.0",
     "@fluidframework/telemetry-utils": "^0.37.0",
     "@fluidframework/test-driver-definitions": "^0.37.0",
-    "@fluidframework/test-drivers": "^0.37.0",
     "@fluidframework/test-loader-utils": "^0.37.0",
     "@fluidframework/test-runtime-utils": "^0.37.0",
     "@fluidframework/test-utils": "^0.37.0",
