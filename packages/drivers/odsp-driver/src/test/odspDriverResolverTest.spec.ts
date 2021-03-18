@@ -48,14 +48,31 @@ describe("Odsp Driver Resolver", () => {
 
     it("Should resolve url with a data store", async () => {
         const resolvedUrl = await resolver.resolve(request);
+        assert.deepStrictEqual(resolvedUrl, {
+            endpoints: {
+                snapshotStorageUrl: "",
+                attachmentGETStorageUrl: "",
+                attachmentPOSTStorageUrl: "",
+            },
+            tokens: {},
+            type: "fluid",
+            url: "fluid-odsp://https://localhost?driveId=driveId&path=path&version=null",
+            siteUrl: "https://localhost",
+            hashedDocumentId: "",
+            driveId: "driveId",
+            itemId: "",
+            fileName: "fileName",
+            summarizer: false,
+            codeHint: { containerPackageName: undefined },
+        });
         const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore");
 
         const [url, queryString] = response?.split("?") ?? [];
         const searchParams = new URLSearchParams(queryString);
         assert.strictEqual(searchParams.get("itemId"), resolvedUrl.itemId, "Item id should match");
         assert.strictEqual(searchParams.get("driveId"), driveId, "Drive Id should match");
-        assert.strictEqual(searchParams.get("path"), "/", "Path should match");
-        assert.strictEqual(url, `${siteUrl}/datastore`, "Url should match");
+        assert.strictEqual(searchParams.get("path"), "datastore", "Path should match");
+        assert.strictEqual(url, `${siteUrl}`, "Url should match");
     });
 
     it("Should add codeHint if request contains containerPackageName", async () => {
@@ -76,9 +93,9 @@ describe("Odsp Driver Resolver", () => {
         const searchParams = new URLSearchParams(queryString);
         assert.strictEqual(searchParams.get("itemId"), resolvedUrl.itemId, "Item id should match");
         assert.strictEqual(searchParams.get("driveId"), driveId, "Drive Id should match");
-        assert.strictEqual(searchParams.get("path"), "/", "Path should match");
+        assert.strictEqual(searchParams.get("path"), "datastore", "Path should match");
         assert.strictEqual(searchParams.get("containerPackageName"), packageName, "ContainerPackageName should match");
-        assert.strictEqual(url, `${siteUrl}/datastore`, "Url should match");
+        assert.strictEqual(url, `${siteUrl}`, "Url should match");
     });
 
     it("Should resolve url with a IFluidPackage in the codeDetails package", async () => {
@@ -94,9 +111,9 @@ describe("Odsp Driver Resolver", () => {
         const searchParams = new URLSearchParams(queryString);
         assert.strictEqual(searchParams.get("itemId"), resolvedUrl.itemId, "Item id should match");
         assert.strictEqual(searchParams.get("driveId"), driveId, "Drive Id should match");
-        assert.strictEqual(searchParams.get("path"), "/", "Path should match");
+        assert.strictEqual(searchParams.get("path"), "datastore", "Path should match");
         assert.strictEqual(searchParams.get("containerPackageName"), packageName, "ContainerPackageName should match");
-        assert.strictEqual(url, `${siteUrl}/datastore`, "Url should match");
+        assert.strictEqual(url, `${siteUrl}`, "Url should match");
     });
 
     it("Should resolve url with a codeHint in the resolved url", async () => {
@@ -109,9 +126,9 @@ describe("Odsp Driver Resolver", () => {
         const searchParams = new URLSearchParams(queryString);
         assert.strictEqual(searchParams.get("itemId"), resolvedUrl.itemId, "Item id should match");
         assert.strictEqual(searchParams.get("driveId"), driveId, "Drive Id should match");
-        assert.strictEqual(searchParams.get("path"), "/", "Path should match");
+        assert.strictEqual(searchParams.get("path"), "datastore", "Path should match");
         assert.strictEqual(searchParams.get("containerPackageName"), packageName, "ContainerPackageName should match");
-        assert.strictEqual(url, `${siteUrl}/datastore`, "Url should match");
+        assert.strictEqual(url, `${siteUrl}`, "Url should match");
     });
 
     it("Should resolve url with empty file path", async () => {
@@ -240,5 +257,16 @@ describe("Odsp Driver Resolver", () => {
         const expectedResolvedUrl = `fluid-odsp://placeholder/placeholder/${resolvedUrl.hashedDocumentId}/`
             + `${testFilePath}?driveId=${driveId}&path=${testFilePath}&itemId=${itemId}`;
         assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+    });
+
+    it("resolves urls with datastore path in url path", async () => {
+        const absoluteUrl = "https://localhost/datastore?driveId=driveId&itemId=&path=/";
+        const resolvedUrl = await resolver.resolve({ url: absoluteUrl });
+
+        assert.strictEqual(
+            resolvedUrl.url,
+            // eslint-disable-next-line max-len
+            "fluid-odsp://placeholder/placeholder/AV5r7rhbMqs3T5cL8TUpqk6FpWldev0qKsKlnjkC5mg%3D/?driveId=driveId&itemId=&path=/",
+        );
     });
 });

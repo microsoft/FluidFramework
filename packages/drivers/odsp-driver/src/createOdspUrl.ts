@@ -21,12 +21,16 @@ export function createOdspUrl(
     itemId: string,
     path: string,
     containerPackageName?: string,
+    fileVersion?: string,
 ): string {
     let odspUrl = `${siteUrl}?driveId=${encodeURIComponent(driveId)}&itemId=${encodeURIComponent(
         itemId,
     )}&path=${encodeURIComponent(path)}`;
     if (containerPackageName) {
         odspUrl += `&containerPackageName=${encodeURIComponent(containerPackageName)}`;
+    }
+    if (fileVersion) {
+        odspUrl += `&fileVersion=${encodeURIComponent(fileVersion)}`;
     }
 
     return odspUrl;

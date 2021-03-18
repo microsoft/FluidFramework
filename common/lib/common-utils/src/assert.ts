@@ -10,7 +10,7 @@
  * @param message - The message to include in the error when the condition does not hold.
  *  A number should not be specificed manually. Run policy-check to get shortcode number assigned.
  */
- export function assert(condition: boolean, message?: string | number): asserts condition {
+ export function assert(condition: boolean, message: string | number): asserts condition {
      if (!condition) {
          throw new Error(typeof message === "number" ? message.toString(16) : message);
      }
