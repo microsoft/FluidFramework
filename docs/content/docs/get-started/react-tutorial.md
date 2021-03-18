@@ -3,8 +3,11 @@ title: 'Tutorial: Create a Fluid Framework application with React'
 menuPosition: 4
 ---
 
-In this tutorial, you'll learn about using the Fluid Framework by building a simple [DiceRoller](https://github.com/microsoft/FluidHelloWorld) application. The development framework for this tutorial is [React](https://reactjs.org/). 
+In this tutorial, you'll learn about using the Fluid Framework by building a simple  application that enables every client of the application to change a dynamic time stamp on itself and all other clients almost instantly. This animated GIF shows what the application looks like when it is open in four clients.
 
+{{- $image := resources.Get "https://user-images.githubusercontent.com/1434956/111496992-faf2dc00-86fd-11eb-815d-5cc539d8f3c8.gif" -}}
+
+The development framework for this tutorial is [React](https://reactjs.org/).
 
 {{< callout note >}}
 
@@ -12,8 +15,127 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 {{< /callout >}}
 
+## Create the project
 
+1. Open a Command Prompt and navigate to the parent folder where you want to create the project; e.g., `c:\My Fluid Projects`.
+1. Run the following command at the prompt. (Note that the CLI is np_x_, not npm. It was installed when you installed npm.):
 
+```dotnetcli
+npx create-react-app fluid-react-tutorial --use-npm --template typescript
+```
+
+1. The project is created in a subfolder named `fluid-react-tutorial`. Navigate to it with the command `cd fluid-react-tutorial`.
+1. The project uses three Fluid libraries:
+
+    fluid-static
+    : Manages creating and getting Fluid [containers](https://fluidframework.com/docs/concepts/containers-runtime/).
+
+    data-objects
+    : Contains the KeyValuePair [DataObject](https://fluidframework.com/docs/glossary/#dataobject) that synchronizes data across clients. _This object will hold the most recent timestamp update made by any client._
+
+    get-container
+    : Defines the service connection to a local Fluid server that runs on localhost.
+
+    Run the following command to install the libraries.
+
+    ```dotnetcli
+    npm install @fluid-experimental/fluid-static @fluid-experimental/data-objects @fluid-experimental/get-container
+    ```
+
+## Code the project
+
+1. Open the file `\src\App.tsx` in your code editor. Delete all the default `import` statements except the one that imports `React`. Then delete all the markup from the `return` statement. The file should look like the following:
+
+    ```typescript
+    import React from 'react';
+    
+    function App() {
+      return (
+    
+      );
+    }
+    
+    export default App;
+    ```
+
+1. Add the following `import` statements:
+
+    ```typescript
+    import { Fluid } from "@fluid-experimental/fluid-static";
+    import { KeyValueDataObject } from "@fluid-experimental/data-objects";
+    import { TinyliciousService } from "@fluid-experimental/get-container";
+    ```
+
+### Create a container ID helper function
+
+Add the following helper function to the file below the `import` statements. Note the following about this code:
+
+- Every [container](https://fluidframework.com/docs/glossary/#container) must have a unique ID. For the ID, this application will use a truncated version of the UNIX epoch time when the container is first created.
+- The ID is stored in the `window.location.hash` property.
+- The function is called every time the application (re)renders, so it will be called in a useEffect hook that you create in a later step.
+
+```typescript
+const getContainerId = (): { containerId: string; isNew: boolean } => {
+    let isNew = false;
+    if (window.location.hash.length === 0) {
+        isNew = true;
+        window.location.hash = Date.now().toString();
+    }
+    const containerId = window.location.hash.substring(1);
+    return { containerId, isNew };
+};
+```
+
+### Create the hooks
+
+The Fluid server will bring changes made to the timestamp from any client to this client. But Fluid is agnostic about the UI framework. We need to get the shared `KeyValueDataObject` into the React application's state, so add the following code at the top of the App() function (above the `return` statement). You will replace the `TODO` in a later step.
+
+```typescript
+const [dataObject, setDataObject] = React.useState<KeyValueDataObject>();
+
+// TODO 1: Call the useState hook for simple objects.
+```
+
+To create the hook that will run when the application first renders and then again whenever a change in the timestamp causes the application to rerender, add the following code just below the lines you added above. Note the following about this code:
+
+- The `dataObject` state is undefined only when the App component is rendering for the first time.
+- Passing `dataObject` in the second parameter of the `useEffect` hook ensures that the hook will not pointlessly run if `dataObject` has not changed since the last time the App component rendered.
+
+```typescript
+React.useEffect(() => {
+  if (dataObject === undefined) {
+
+    // TODO 2: Create and load the container and KeyValueDataObject.
+
+  } else {
+        
+    // TODO 3: Set the value of the dataObject (of type KeyValueDataObject) state.
+    // TODO 4: Register handlers.
+    // TODO 5: Delete handler registration when the React App component is unMounted.
+
+  }, [dataObject]);
+```
+
+Replace `TODO 2` with the following code.
+
+```typescript
+// First time: create/get the Fluid container, then create/get KeyValueDataObject
+const { containerId, isNew } = getContainerId();
+const load = async () => {
+    const service = new TinyliciousService();
+    const fluidContainer = isNew
+        ? await Fluid.createContainer(service, containerId, [KeyValueDataObject])
+        : await Fluid.getContainer(service, containerId, [KeyValueDataObject]);
+
+    const keyValueDataObject: KeyValueDataObject = isNew
+        ? await fluidContainer.createDataObject(KeyValueDataObject, 'someUniqueId')
+        : await fluidContainer.getDataObject('someUniqueId');
+
+    setDataObject(keyValueDataObject);
+}
+
+load();
+```
 
 
 To get started, and follow along, go
