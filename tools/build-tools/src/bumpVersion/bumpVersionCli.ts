@@ -6,7 +6,7 @@
 import { commonOptionString, parseOption } from "../common/commonOptions";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { MonoRepoKind } from "../common/monoRepo";
-import { GitRepo, fatal, exec } from "./utils";
+import { GitRepo, fatal, exec, runPolicyCheck } from "./utils";
 import { Context, VersionBumpType, VersionChangeType } from "./context";
 import { bumpVersionCommand } from "./bumpVersion";
 import { createReleaseBranch } from "./createBranch";
@@ -265,14 +265,7 @@ async function main() {
             fatal(`Local repo is dirty\n${status}`);
         }
 
-        console.log("Running Policy Check with Resolution(fix)");
-        await exec(`node ${__dirname}\\..\\repoPolicyCheck\\repoPolicyCheck.js -r -q`,resolvedRoot,"policy-check:fix failed");
-
-        // check for policy check violation
-        const afterPolicyCheckStatus = await context.gitRepo.getStatus();
-        if (afterPolicyCheckStatus !== "") {
-            fatal(`Policy check made modifications, please submit these before version bumping\n${status}`);
-        }
+        await runPolicyCheck(context.gitRepo);
 
         switch (command) {
             case "branch":

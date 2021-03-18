@@ -229,3 +229,19 @@ export class GitRepo {
         return execNoError(`git ${command}`, this.resolvedRoot, pipeStdIn);
     }
 }
+
+
+export async function runPolicyCheck(gitRepo: GitRepo){
+    console.log("Running Policy Check with Resolution(fix)");
+    await exec(
+        `node ${__dirname}\\..\\repoPolicyCheck\\repoPolicyCheck.js -r -q`,
+        gitRepo.resolvedRoot,
+        "policy-check:fix failed");
+
+    // check for policy check violation
+    const afterPolicyCheckStatus = await gitRepo.getStatus();
+    if (afterPolicyCheckStatus !== "") {
+        console.log("======================================================================================================");
+        fatal(`Policy check needed to make modifications. Please create PR for the changes and merge before retrying.\n${afterPolicyCheckStatus}`);
+    }
+}
