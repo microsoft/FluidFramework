@@ -265,7 +265,7 @@ async function main() {
             fatal(`Local repo is dirty\n${status}`);
         }
 
-        console.log("Running Policy Check");
+        console.log("Running Policy Check with Resolution(fix)");
         await exec(`node ${__dirname}\\..\\repoPolicyCheck\\repoPolicyCheck.js -r -q`,resolvedRoot,"policy-check:fix failed");
 
         // check for policy check violation
