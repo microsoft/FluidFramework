@@ -12,7 +12,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const mongoUrl = config.get("mongo:endpoint") as string;
     const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
-    const createSortIndexes = config.get("mongo:createSortIndexes");
+    const createCosmosDBIndexes = config.get("mongo:createCosmosDBIndexes");
     const mongoFactory = new services.MongoDbFactory(mongoUrl);
     const mongoManager = new MongoManager(mongoFactory, false);
 
@@ -27,7 +27,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
         },
         true);
 
-    if (createSortIndexes) {
+    if (createCosmosDBIndexes) {
         await opCollection.createIndex({
             "operation.term": 1,
             "operation.sequenceNumber": 1,
@@ -36,6 +36,8 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
         await opCollection.createIndex({
             "operation.sequenceNumber": 1,
         }, false);
+
+        await opCollection.createTTLIndex({_ts:1}, mongoExpireAfterSeconds);
     }
 
     if (mongoExpireAfterSeconds > 0) {

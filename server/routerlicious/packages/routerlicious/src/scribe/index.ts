@@ -20,7 +20,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     const mongoUrl = config.get("mongo:endpoint") as string;
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
     const messagesCollectionName = config.get("mongo:collectionNames:scribeDeltas");
-    const createSortIndexes = config.get("mongo:createSortIndexes");
+    const createCosmosDBIndexes = config.get("mongo:createCosmosDBIndexes");
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
     const kafkaLibrary = config.get("kafka:lib:name");
     const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
@@ -52,8 +52,9 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
         },
         true);
 
-    if (createSortIndexes) {
+    if (createCosmosDBIndexes) {
         await scribeDeltas.createIndex({ "operation.sequenceNumber": 1 }, false);
+        await scribeDeltas.createTTLIndex({_ts:1}, mongoExpireAfterSeconds);
     }
 
     if (mongoExpireAfterSeconds > 0) {

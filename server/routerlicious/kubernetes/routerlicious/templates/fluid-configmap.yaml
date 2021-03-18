@@ -22,7 +22,7 @@ data:
         "mongo": {
             "endpoint": "{{ .Values.mongodb.url }}",
             "expireAfterSeconds": "{{ .Values.mongodb.expireAfterSeconds }}",
-            "createSortIndexes": "{{ .Values.mongodb.createSortIndexes }}",
+            "createCosmosDBIndexes": "{{ .Values.mongodb.createCosmosDBIndexes }}",
             "collectionNames": {
                 "deltas": "deltas",
                 "documents": "documents",
