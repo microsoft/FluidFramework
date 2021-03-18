@@ -1682,9 +1682,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const oldState = this._connectionState;
         this._connectionState = value;
-        // Set it to undefined in both "Disconnected" and "Connected" case as we only require it in
-        // transition from "Disconnected" to "Connected" and we cannot come here in "Connecting" event.
-        this.prevClientLeftP = undefined;
 
         if (value === ConnectionState.Connected) {
             // Mark our old client should have left in the quorum if it's still there
@@ -1695,13 +1692,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     client.shouldHaveLeft = true;
                 }
             }
+
+            // Set it to undefined in "Connected" case as we only require it in transition
+            // from "Disconnected" to "Connected"
+            this.prevClientLeftP = undefined;
             this._clientId = this.pendingClientId;
         } else if (value === ConnectionState.Disconnected) {
             // Important as we process our own joinSession message through delta request
             this.pendingClientId = undefined;
             // Only wait for "leave" message if we have some outstanding ops and the client was write client as
-            // server would not accept ops from read client.
-            if (this._deltaManager.shouldJoinWrite() && this.client.mode === "write") {
+            // server would not accept ops from read client. Also check if the promise is not already set as we
+            // could receive "Disconnected" event multiple times without getting connected.
+            if (this._deltaManager.shouldJoinWrite() && this.client.mode === "write" && this.prevClientLeftP !== undefined) {
                 this.prevClientLeftP = new Deferred();
                 // Default is 90 sec for which we are going to wait for its own "leave" message.
                 setTimeout(() => {
