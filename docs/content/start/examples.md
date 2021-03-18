@@ -1,6 +1,8 @@
 ---
 title: Examples
 menuPosition: 4
+aliases:
+  - "/docs/get-started/examples/"
 ---
 
 We've included several example apps in a [GitHub repository](https://github.com/microsoft/FluidExamples) to demonstrate
