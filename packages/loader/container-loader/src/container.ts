@@ -596,27 +596,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     containerAttachState: () => this._attachState,
                     containerLoaded: () => this.loaded,
                 },
+                // we need to be judicious with our logging here to avoid generting too much data
+                // all data logged here should be broadly applicable, and not specific to a
+                // specific error or class of errors
                 error: {
-                    initialSequenceNumber: () => this._deltaManager?.initialSequenceNumber,
-                    lastKnownSeqNumber: () => this._deltaManager?.lastKnownSeqNumber,
-                    lastSequenceNumber: () => this._deltaManager?.lastSequenceNumber,
-                    minimumSequenceNumber: () => this._deltaManager?.minimumSequenceNumber,
-                    connectionMode: () => this._deltaManager?.connectionMode,
-                    lastMessageSequenceNumber: ()=>this.deltaManager?.lastMessage?.sequenceNumber,
-                    lastMessageTimestamp: ()=>this.deltaManager?.lastMessage?.timestamp,
-                    lastMessageClientId: ()=>this.deltaManager?.lastMessage?.clientId,
-                    clientId: () => this.clientId,
-                    pendingClientId: () => this.pendingClientId,
-                    loadedFromVersionId: () => this.loadedFromVersion?.id,
-                    loadedFromVersionDate: () => this.loadedFromVersion?.date,
-                    isDirty: () => this.isDirty,
-                    attachInProgress: () => this.attachInProgress,
-                    connected: () => this.connected,
-                    connectionState: () => this.connectionState,
-                    existing: () => this.existing,
-                    firstConnection: () => this.firstConnection,
-                    manualReconnectInProgress: () => this.manualReconnectInProgress,
-                    messageCountAfterDisconnection: () => this.messageCountAfterDisconnection,
+                    // load information to associate errors with the specific load point
+                    dmInitialSeqNumber: () => this._deltaManager?.initialSequenceNumber,
+                    dmLastKnownSeqNumber: () => this._deltaManager?.lastKnownSeqNumber,
+                    containerLoadedFromVersionId: () => this.loadedFromVersion?.id,
+                    containerLoadedFromVersionDate: () => this.loadedFromVersion?.date,
+                    // message information to associate errors with the specific execution state
+                    dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
+                    dmLastMsqSeqTimestamp: () => this.deltaManager?.lastMessage?.timestamp,
+                    dmLastMsqSeqClientId: () => this.deltaManager?.lastMessage?.clientId,
                 },
             });
 
