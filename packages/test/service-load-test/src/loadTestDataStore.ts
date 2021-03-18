@@ -47,7 +47,11 @@ class LoadTestDataStoreModel {
     }
 
     public static async createRunnerInstance(
-        config: IRunConfig, reset: boolean, root: ISharedDirectory, runtime: IFluidDataStoreRuntime) {
+        config: IRunConfig,
+        reset: boolean,
+        root: ISharedDirectory,
+        runtime: IFluidDataStoreRuntime,
+    ) {
         if(!root.hasSubDirectory(config.runId.toString())) {
             root.createSubDirectory(config.runId.toString());
         }
