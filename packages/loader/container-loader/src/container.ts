@@ -1536,6 +1536,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         });
 
+        deltaManager.on("submitOp", (message: IDocumentMessage) => {
+            this.connectionStateHandler.setDirtyState();
+        });
+
         deltaManager.on("disconnect", (reason: string) => {
             this.manualReconnectInProgress = false;
             this.connectionStateHandler.receivedDisconnectEvent(reason);

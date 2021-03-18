@@ -42,6 +42,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     private _pendingClientId: string | undefined;
     private _clientId: string | undefined;
     private prevClientLeftP: Deferred<boolean> | undefined;
+    private isDirty: boolean| undefined;
 
     public get connectionState(): ConnectionState {
         return this._connectionState;
@@ -64,6 +65,10 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         private readonly logger: ITelemetryLogger,
     ) {
         super();
+    }
+
+    public setDirtyState() {
+        this.isDirty = true;
     }
 
     public receivedAddMemberEvent(clientId: string, quorum: Quorum) {
@@ -158,15 +163,24 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
                 }
             }
             this._clientId = this.pendingClientId;
+            // Set isDirty to false as this is a fresh connection.
+            this.isDirty = false;
         } else if (value === ConnectionState.Disconnected) {
             // Important as we process our own joinSession message through delta request
             this._pendingClientId = undefined;
             // Only wait for "leave" message if we have some outstanding ops and the client was write client as
             // server would not accept ops from read client. Also check if the promise is not already set as we
-            // could receive "Disconnected" event multiple times without getting connected.
+            // could receive "Disconnected" event multiple times without getting connected and in that case we
+            // don't want to reset the promise as we still want to wait on original client which created this promise.
+            // We also check the dirty state of this connection as we only want to wait for the client leave of the
+            // client which created the ops. This helps with situation where a client disconnects immediately after
+            // getting connected without sending any ops. In that case, we would join as write because there would be
+            // a diff between client seq number and clientSeqNumberObserved but then we don't want to wait for newly
+            // disconnected client to leave as it has not sent any ops yet.
             if (this.handler.shouldClientJoinWrite()
                 && this.handler.client().mode === "write"
                 && this.prevClientLeftP === undefined
+                && this.isDirty
             ) {
                 this.prevClientLeftP = new Deferred();
                 // Default is 90 sec for which we are going to wait for its own "leave" message.
