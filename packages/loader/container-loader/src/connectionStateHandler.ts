@@ -78,12 +78,15 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             if (this.prevClientLeftP) {
                 const event = PerformanceEvent.start(this.logger, {
                     eventName: "WaitBeforeClientLeave",
-                    clientId: this._clientId,
+                    waitOnClientId: this._clientId,
                     hadOutstandingOps: this.handler.shouldClientJoinWrite(),
                 });
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.prevClientLeftP.promise.then((leaveReceived: boolean) => {
-                    const props = { leaveReceived, sameClient: clientId === this.pendingClientId }
+                    const props = {
+                        leaveReceived,
+                        waitingClientChanged: this.pendingClientId === undefined || clientId !== this.pendingClientId,
+                    };
                     // Move to connected state only if we are still waiting on right client. It may happen that
                     // during wait, the client again got Disconnected/Connecting and pending client Id changed,
                     // so then we don't want to move to connected state here.
