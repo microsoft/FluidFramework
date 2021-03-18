@@ -263,6 +263,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * @returns the snapshot of the current state of the task manager
      */
     protected snapshotCore(serializer: IFluidSerializer): ITree {
+        // TODO filter out tasks with no clients, some are still getting in.
         const content = [...this.taskQueues.entries()];
 
         // And then construct the tree for it
