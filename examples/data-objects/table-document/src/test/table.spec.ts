@@ -4,24 +4,17 @@
  */
 
 import { strict as assert } from "assert";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
-    createAndAttachContainer,
-    createLocalLoader,
+    ITestObjectProvider,
     OpProcessingController,
 } from "@fluidframework/test-utils";
+import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { TableDocument } from "../document";
 import { TableSlice } from "../slice";
 import { TableDocumentItem } from "../table";
 
-describe("TableDocument", () => {
-    const documentId = "fluid-test://localhost/tableTest";
-    const codeDetails = {
-        package: "tableTestPkg",
-        config: {},
-    };
+describeLoaderCompat("TableDocument", (getTestObjectProvider: () => ITestObjectProvider) => {
     let tableDocument: TableDocument;
     let opProcessingController: OpProcessingController;
 
@@ -30,19 +23,13 @@ describe("TableDocument", () => {
         return newId;
     }
 
+    let provider: ITestObjectProvider;
     beforeEach(async () => {
-        const deltaConnectionServer = LocalDeltaConnectionServer.create();
-        const urlResolver = new LocalResolver();
-        const loader = createLocalLoader(
-            [[codeDetails, TableDocument.getFactory()]],
-            deltaConnectionServer,
-            urlResolver);
-        const container = await createAndAttachContainer(
-            codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
+        provider = getTestObjectProvider();
+        const container = await provider.createContainer(TableDocument.getFactory());
         tableDocument = await requestFluidObject<TableDocument>(container, "default");
 
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
-        opProcessingController.addDeltaManagers(container.deltaManager);
+        opProcessingController = provider.opProcessingController;
     });
 
     const extract = (table: TableDocument) => {

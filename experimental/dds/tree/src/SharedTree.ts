@@ -246,7 +246,7 @@ export class SharedTree extends SharedObject {
 		super(id, runtime, SharedTreeFactory.Attributes);
 		this.expensiveValidation = expensiveValidation;
 
-		this.logger = ChildLogger.create(runtime.logger, 'SharedTree', sharedTreeTelemetryProperties);
+		this.logger = ChildLogger.create(runtime.logger, 'SharedTree', { all: sharedTreeTelemetryProperties });
 		const { editLog, logViewer } = this.createEditLogFromSummary(initialSummary);
 
 		this.editLog = editLog;
@@ -491,5 +491,9 @@ export class SharedTree extends SharedObject {
 		this.submitLocalMessage(editOp);
 		this.editLog.addLocalEdit(edit);
 		this.emit(SharedTreeEvent.EditCommitted, edit.id);
+	}
+
+	protected applyStashedOp() {
+		throw new Error('not implemented');
 	}
 }

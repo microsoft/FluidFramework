@@ -97,6 +97,11 @@ export interface IRuntime extends IDisposable {
      * @param attachState - State of the container.
      */
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+
+    /**
+     * Get pending local state in a serializable format to be given back to a newly loaded container
+     */
+    getPendingLocalState(): unknown;
 }
 
 /**
@@ -127,6 +132,7 @@ export interface IContainerContext extends IDisposable {
     readonly logger: ITelemetryLogger;
     readonly serviceConfiguration: IClientConfiguration | undefined;
     readonly previousRuntimeState: IRuntimeState;
+    pendingLocalState?: unknown;
 
     /**
      * Ambient services provided with the context

@@ -24,9 +24,8 @@ import {
     invalidFileNameStatusCode,
     OdspErrorType,
 } from "@fluidframework/odsp-doclib-utils";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { ChildLogger, LoggingError } from "@fluidframework/telemetry-utils";
 import { createDocumentId, LocalCodeLoader, LoaderContainerTracker } from "@fluidframework/test-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 describe("Errors Types", () => {
     let urlResolver: IUrlResolver;
@@ -35,11 +34,7 @@ describe("Errors Types", () => {
     let documentServiceFactory: IDocumentServiceFactory;
     let codeLoader: LocalCodeLoader;
     let loader: Loader;
-    let driver: ITestDriver;
     const loaderContainerTracker = new LoaderContainerTracker();
-    before(() => {
-        driver = getFluidTestDriver() as unknown as ITestDriver;
-    });
     afterEach(() => {
         loaderContainerTracker.reset();
     });
@@ -47,6 +42,7 @@ describe("Errors Types", () => {
     it("GeneralError Test", async () => {
         const id = createDocumentId();
         // Setup
+        const driver = getFluidTestDriver();
         urlResolver = driver.createUrlResolver();
         testRequest = { url: await driver.createContainerUrl(id) };
         testResolved =
@@ -67,6 +63,7 @@ describe("Errors Types", () => {
             urlResolver,
             documentServiceFactory: mockFactory,
             codeLoader,
+            logger: ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}}),
         });
         loaderContainerTracker.add(loader);
 

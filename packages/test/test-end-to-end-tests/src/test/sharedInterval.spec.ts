@@ -16,15 +16,13 @@ import {
     SharedString,
 } from "@fluidframework/sequence";
 import {
-    ITestFluidObject,
-    ChannelFactoryRegistry,
-} from "@fluidframework/test-utils";
-import {
-    generateTest,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
-} from "./compatUtils";
+    ITestFluidObject,
+    ChannelFactoryRegistry,
+} from "@fluidframework/test-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
@@ -53,7 +51,7 @@ const assertIntervalsHelper = (
     }
 };
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("SharedInterval", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();
@@ -326,8 +324,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
                 "Incorrect handle type in shared interval's summary");
         });
     });
-};
-
-describe("SharedInterval", () => {
-    generateTest(tests);
 });

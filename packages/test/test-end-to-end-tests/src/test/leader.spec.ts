@@ -6,19 +6,16 @@
 import { strict as assert } from "assert";
 import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
-import {
-    generateNonCompatTest,
-    ITestObjectProvider,
-} from "./compatUtils";
+import { ITestObjectProvider, ITestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 async function ensureConnected(container: Container) {
     if (!container.connected) {
-        await timeoutPromise((resolve, rejected) => container.on("connected", resolve));
+        await timeoutPromise((resolve, rejected) => container.on("connected", resolve), { durationMs: 4000 });
     }
 }
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("Leader", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     let container1: Container;
     let dataObject1: ITestFluidObject;
@@ -48,9 +45,10 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         // Once that is fix, this needs to change
         assert(container2.deltaManager.active);
         if (!dataObject2.context.leader) {
-            await timeoutPromise((resolve) => {
-                dataObject2.context.once("leader", () => { resolve(); });
-            });
+            await timeoutPromise(
+                (resolve) => { dataObject2.context.once("leader", () => { resolve(); }); },
+                { durationMs: 4000 },
+            );
         }
         assert(dataObject2.context.leader);
     });
@@ -189,8 +187,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         checkExpected(config2);
         checkExpected(config3);
     });
-};
-
-describe("Leader", () => {
-    generateNonCompatTest(tests);
 });
