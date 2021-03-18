@@ -121,8 +121,6 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
             [[codeDetails, factory]],
             provider.documentServiceFactory,
             provider.urlResolver,
-            driver.createDocumentServiceFactory(),
-            driver.createUrlResolver());
             ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
         );
         if (loaderContainerTracker) {
