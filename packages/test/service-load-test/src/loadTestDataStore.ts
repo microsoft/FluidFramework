@@ -25,9 +25,13 @@ export interface ILoadTest {
 }
 const wait = async (timeMs: number) => new Promise((resolve) => setTimeout(resolve, timeMs));
 
+const taskManagerKey = "taskManager";
+const counterKey = "counter";
+const startTimeKey = "startTime";
+const taskTimeKey = "taskTime";
 class LoadTestDataStoreModel {
     public static initializingFirstTime(root: ISharedDirectory, runtime: IFluidDataStoreRuntime) {
-        root.set("taskmanager", TaskManager.create(runtime).handle);
+        root.set(taskManagerKey, TaskManager.create(runtime).handle);
     }
 
     private static async waitForCatchup(runtime: IFluidDataStoreRuntime) {
@@ -60,15 +64,15 @@ class LoadTestDataStoreModel {
             throw new Error(`runDir for runId ${config.runId} not available`);
         }
 
-        if(!runDir.has("counter")) {
+        if(!runDir.has(counterKey)) {
             await LoadTestDataStoreModel.waitForCatchup(runtime);
-            if(!runDir.has("counter")) {
-                runDir.set("counter", SharedCounter.create(runtime).handle);
-                runDir.set("startTime",Date.now());
+            if(!runDir.has(counterKey)) {
+                runDir.set(counterKey, SharedCounter.create(runtime).handle);
+                runDir.set(startTimeKey,Date.now());
             }
         }
-        const counter = await runDir.get<IFluidHandle<ISharedCounter>>("counter")?.get();
-        const taskmanager = await root.wait<IFluidHandle<ITaskManager>>("taskmanager").then(async (h)=>h.get());
+        const counter = await runDir.get<IFluidHandle<ISharedCounter>>(counterKey)?.get();
+        const taskmanager = await root.wait<IFluidHandle<ITaskManager>>(taskManagerKey).then(async (h)=>h.get());
 
         if(counter === undefined) {
             throw new Error("counter not available");
@@ -79,8 +83,8 @@ class LoadTestDataStoreModel {
 
         if(reset) {
             await LoadTestDataStoreModel.waitForCatchup(runtime);
-            runDir.set("startTime",Date.now());
-            runDir.set("taskTime",0);
+            runDir.set(startTimeKey,Date.now());
+            runDir.set(taskTimeKey, 0);
             counter.increment(-1 * counter.value);
         }
 
@@ -107,10 +111,10 @@ class LoadTestDataStoreModel {
     }
 
     public get startTime(): number {
-        return this.dir.get<number>("startTime") ?? 0;
+        return this.dir.get<number>(startTimeKey) ?? 0;
     }
     public get totalTaskTime(): number {
-        return (this.dir.get<number>("taskTime") ?? 0) + this.currentTaskTime;
+        return (this.dir.get<number>(taskTimeKey) ?? 0) + this.currentTaskTime;
     }
     public get currentTaskTime(): number {
         return this.haveTaskLock() ? Date.now() - this.taskStartTime : 0;
@@ -137,7 +141,7 @@ class LoadTestDataStoreModel {
         this.taskStartTime = Date.now();
         this.taskManager.once("lost",(taskId)=>{
             if(taskId === this.taskId) {
-                this.dir.set("taskTime", Date.now() - this.taskStartTime);
+                this.dir.set(taskTimeKey, Date.now() - this.taskStartTime);
                 this.taskStartTime = 0;
             }
         });
