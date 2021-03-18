@@ -265,12 +265,13 @@ async function main() {
             fatal(`Local repo is dirty\n${status}`);
         }
 
-        await exec("npm run policy-check:fix",resolvedRoot,"policy-check:fix failed");
+        console.log("Running Policy Check");
+        await exec(`node ${__dirname}\\..\\repoPolicyCheck\\repoPolicyCheck.js -r -q`,resolvedRoot,"policy-check:fix failed");
 
-        // Make sure we are operating on a clean repo
+        // check for policy check violation
         const afterPolicyCheckStatus = await context.gitRepo.getStatus();
         if (afterPolicyCheckStatus !== "") {
-            fatal(`Policy check made modifications, please commit these before version bumping\n${status}`);
+            fatal(`Policy check made modifications, please submit these before version bumping\n${status}`);
         }
 
         switch (command) {
