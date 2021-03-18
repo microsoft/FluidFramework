@@ -1,5 +1,33 @@
 # Change Log
 
+## 0.73.2
+
+* build: Update package dependencies
+  * Associated pull request: [28975](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28975)
+  * Commit: [a96783e76284d559a633e89ab0eae9416f171df6](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/a96783e76284d559a633e89ab0eae9416f171df6)
+* improvement: Enable strict mode for unhandled promise rejections in shared-tree
+  * Associated pull request: [28680](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28680)
+  * Commit: [bddabc784b0d742fe9bab60dffcb3b0d9a4f4a76](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/bddabc784b0d742fe9bab60dffcb3b0d9a4f4a76)
+* perf: specify comparison functions for BTree
+  * Associated pull request: [28866](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28866)
+  * Commit: [598d118d3508f5767950103f80f8713082e74f8f](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/598d118d3508f5767950103f80f8713082e74f8f)
+* docs: Revert unwanted change log changes
+  * Commit: [0a3f68585c0aafd7bd53c56a9fc821c247d09577](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/0a3f68585c0aafd7bd53c56a9fc821c247d09577)
+* merge: branch 'releases/2021.03.2' into josmithr/merge-releases-2021.03.2
+  * Commit: [e57bd3f88116b126f25ed32ea4d892525acdc291](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/e57bd3f88116b126f25ed32ea4d892525acdc291)
+* perf: optimize Checkout to reuse edit results, and defer diff
+  * Associated pull request: [28831](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28831)
+  * Commit: [808b55de84d15f1f3daa8a0fa66261b26a937fe4](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/808b55de84d15f1f3daa8a0fa66261b26a937fe4)
+* feat: Implement optimized delta in Forest
+  * Associated pull request: [28828](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28828)
+  * Commit: [81895c8360272d83b584671bdbef31fdeb1b6aae](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/81895c8360272d83b584671bdbef31fdeb1b6aae)
+* merge: releases/2021.03.2 into master
+  * Associated pull request: [28821](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28821)
+  * Commit: [8e08d23d8ee8d5750c5164f83054d4a448d28d22](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/8e08d23d8ee8d5750c5164f83054d4a448d28d22)
+* feat: SharedTreeUndoRedoHandler for integration with Fluid's UndoRedoStackManager
+  * Associated pull request: [28751](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28751)
+  * Commit: [40ee5e9aecee52916c787cc91c521b80a3732fc2](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/40ee5e9aecee52916c787cc91c521b80a3732fc2)
+
 ## 0.70.3
 
 * merge: branch 'releases/2021.03.1' into `releases/2021.03.2`
