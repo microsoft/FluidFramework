@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as redis from "redis";
+import { Redis } from "ioredis";
 import { ISocketIoRedisConnection, ISocketIoRedisSubscriptionConnection } from "./redisSocketIoAdapter";
 
 /**
@@ -11,9 +11,10 @@ import { ISocketIoRedisConnection, ISocketIoRedisSubscriptionConnection } from "
  * and only provides Pub functionality
  */
 export class SocketIORedisConnection implements ISocketIoRedisConnection {
-    constructor(protected readonly client: redis.RedisClient) {}
+    constructor(protected readonly client: Redis) {}
 
     public async publish(channel: string, message: string) {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.client.publish(channel, message);
     }
 }
@@ -30,7 +31,7 @@ export class SocketIoRedisSubscriptionConnection
      */
     private readonly subscriptions: Map<string, (channel: string, messageBuffer: Buffer) => void> = new Map();
 
-    constructor(client: redis.RedisClient) {
+    constructor(client: Redis) {
         super(client);
 
         client.on("messageBuffer", (channelBuffer: Buffer, messageBuffer: Buffer) => {
@@ -59,7 +60,7 @@ export class SocketIoRedisSubscriptionConnection
             }
         }
 
-        this.client.subscribe(...channelsArray);
+        await this.client.subscribe(...channelsArray);
 
         for (const channel of channelsArray) {
             subscriptionsMap.set(channel, callback);
@@ -75,7 +76,7 @@ export class SocketIoRedisSubscriptionConnection
             return;
         }
 
-        this.client.unsubscribe(channelsArray);
+        await this.client.unsubscribe(channelsArray);
 
         for (const channel of channelsArray) {
             subscriptionsMap.delete(channel);

@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as util from "util";
 import {
     IThrottleStorageManager,
     IThrottlingMetrics,
 } from "@fluidframework/server-services-core";
-import { RedisClient } from "redis";
+import { Redis } from "ioredis";
 
 /**
  * Manages storage of throttling metrics in redis hashes with an expiry of 'expireAfterSeconds'.
@@ -19,13 +18,13 @@ export class RedisThrottleStorageManager implements IThrottleStorageManager {
     private readonly expire: any;
 
     constructor(
-        client: RedisClient,
+        client: Redis,
         private readonly expireAfterSeconds = 60 * 60 * 24,
         private readonly prefix = "throttle",
     ) {
-        this.setAsync = util.promisify(client.hmset.bind(client));
-        this.getAsync = util.promisify(client.hgetall.bind(client));
-        this.expire = util.promisify(client.expire.bind(client));
+        this.setAsync = client.hmset.bind(client);
+        this.getAsync = client.hgetall.bind(client);
+        this.expire = client.expire.bind(client);
     }
 
     public async setThrottlingMetric(
@@ -44,7 +43,7 @@ export class RedisThrottleStorageManager implements IThrottleStorageManager {
     public async getThrottlingMetric(id: string): Promise<IThrottlingMetrics | undefined> {
         const throttlingMetric = await this.getAsync(this.getKey(id));
 
-        if (!throttlingMetric) {
+        if (Object.keys(throttlingMetric).length === 0) {
             return undefined;
         }
 
