@@ -1703,7 +1703,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // Only wait for "leave" message if we have some outstanding ops and the client was write client as
             // server would not accept ops from read client. Also check if the promise is not already set as we
             // could receive "Disconnected" event multiple times without getting connected.
-            if (this._deltaManager.shouldJoinWrite() && this.client.mode === "write" && this.prevClientLeftP !== undefined) {
+            if (this._deltaManager.shouldJoinWrite()
+                && this.client.mode === "write"
+                && this.prevClientLeftP !== undefined
+            ) {
                 this.prevClientLeftP = new Deferred();
                 // Default is 90 sec for which we are going to wait for its own "leave" message.
                 setTimeout(() => {
