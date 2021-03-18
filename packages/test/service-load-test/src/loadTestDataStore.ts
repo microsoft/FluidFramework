@@ -107,6 +107,7 @@ class LoadTestDataStoreModel {
         private readonly dir: IDirectory,
         public readonly counter: ISharedCounter,
     ) {
+        // The runners are paired up and each pair shares a single taskId
         this.taskId = `op_sender${Math.floor(config.runId / 2)}`;
     }
 
