@@ -16,3 +16,5 @@ export const LocalDriverApi = {
     LocalResolver,
     createLocalResolverCreateNewRequest,
 };
+
+export type LocalDriverApiType = typeof LocalDriverApi;

@@ -18,3 +18,5 @@ export const OdspDriverApi = {
     createOdspCreateContainerRequest,
     createOdspUrl,                          // REVIEW: does this need to be back compat?
 };
+
+export type OdspDriverApiType = typeof OdspDriverApi;

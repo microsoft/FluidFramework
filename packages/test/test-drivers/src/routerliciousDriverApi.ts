@@ -10,3 +10,5 @@ export const RouterliciousDriverApi = {
     version: pkgVersion,
     RouterliciousDocumentServiceFactory,
 };
+
+export type RouterliciousDriverApiType = typeof RouterliciousDriverApi;

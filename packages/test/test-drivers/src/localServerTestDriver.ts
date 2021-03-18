@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 import { IRequest } from "@fluidframework/core-interfaces";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
-import { LocalDriverApi } from "./localDriverApi";
+import { LocalDriverApiType, LocalDriverApi } from "./localDriverApi";
 
 export class LocalServerTestDriver implements ITestDriver {
     private readonly _server = LocalDeltaConnectionServer.create();
@@ -14,14 +15,14 @@ export class LocalServerTestDriver implements ITestDriver {
     public get version() { return this.api.version; }
     public get server(): ILocalDeltaConnectionServer { return this._server; }
 
-    constructor(private readonly api = LocalDriverApi) {
+    constructor(private readonly api: LocalDriverApiType = LocalDriverApi) {
 
     }
 
-    createDocumentServiceFactory() {
+    createDocumentServiceFactory(): IDocumentServiceFactory {
         return new this.api.LocalDocumentServiceFactory(this._server);
     }
-    createUrlResolver() {
+    createUrlResolver(): IUrlResolver {
         return new this.api.LocalResolver();
     }
     createCreateNewRequest(testId: string): IRequest {

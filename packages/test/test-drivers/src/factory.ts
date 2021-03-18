@@ -11,12 +11,17 @@ import { LocalServerTestDriver } from "./localServerTestDriver";
 import { TinyliciousTestDriver } from "./tinyliciousTestDriver";
 import { RouterliciousTestDriver } from "./routerliciousTestDriver";
 import { OdspTestDriver } from "./odspTestDriver";
+import { LocalDriverApiType, LocalDriverApi } from "./localDriverApi";
+import { OdspDriverApiType, OdspDriverApi } from "./odspDriverApi";
+import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
 
-import { LocalDriverApi } from "./localDriverApi";
-import { OdspDriverApi } from "./odspDriverApi";
-import { RouterliciousDriverApi } from "./routerliciousDriverApi";
+export interface DriverApiType {
+    LocalDriverApi: LocalDriverApiType,
+    OdspDriverApi: OdspDriverApiType,
+    RouterliciousDriverApi: RouterliciousDriverApiType,
+}
 
-export const DriverApi = {
+export const DriverApi: DriverApiType = {
     LocalDriverApi,
     OdspDriverApi,
     RouterliciousDriverApi,
@@ -37,7 +42,7 @@ function setKeepAlive() {
     }
 }
 
-type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => any> =
+export type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => any> =
     T extends (config: infer P, ...args: any) => any ? P : never;
 
 export interface FluidTestDriverConfig {
@@ -47,7 +52,7 @@ export interface FluidTestDriverConfig {
 export async function createFluidTestDriver(
     fluidTestDriverType: TestDriverTypes = "local",
     config?: FluidTestDriverConfig,
-    api = DriverApi,
+    api: DriverApiType = DriverApi,
 ) {
     switch (fluidTestDriverType) {
         case "local":

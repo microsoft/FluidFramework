@@ -9,7 +9,8 @@ import { DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
 import { InsecureTokenProvider, InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
-import { RouterliciousDriverApi } from "./routerliciousDriverApi";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
 
 export interface IServiceEndpoint {
     hostUrl: string;
@@ -18,7 +19,7 @@ export interface IServiceEndpoint {
 }
 
 export class RouterliciousTestDriver implements ITestDriver {
-    public static createFromEnv(api = RouterliciousDriverApi) {
+    public static createFromEnv(api: RouterliciousDriverApiType = RouterliciousDriverApi) {
         let bearerSecret = process.env.fluid__webpack__bearerSecret;
         let tenantSecret = process.env.fluid__webpack__tenantSecret;
         const tenantId = process.env.fluid__webpack__tenantId ?? "fluid";
@@ -68,7 +69,7 @@ export class RouterliciousTestDriver implements ITestDriver {
         private readonly tenantSecret: string,
         private readonly serviceEndpoints: IServiceEndpoint,
         testIdPrefix: string | undefined,
-        private readonly api = RouterliciousDriverApi,
+        private readonly api: RouterliciousDriverApiType = RouterliciousDriverApi,
     ) {
         this.testIdPrefix = `${testIdPrefix ?? ""}-`;
     }
@@ -82,7 +83,7 @@ export class RouterliciousTestDriver implements ITestDriver {
         return `${this.serviceEndpoints.hostUrl}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.createDocumentId(testId))}`;
     }
 
-    createDocumentServiceFactory() {
+    createDocumentServiceFactory(): IDocumentServiceFactory {
         const tokenProvider = new InsecureTokenProvider(
             this.tenantSecret,
             {

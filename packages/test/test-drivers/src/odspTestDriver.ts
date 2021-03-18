@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/tool-utils";
 import { getDriveId, getDriveItemByRootFileName, IClientConfig } from "@fluidframework/odsp-doclib-utils";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
-import { OdspDriverApi } from "./odspDriverApi";
+import { OdspDriverApiType, OdspDriverApi } from "./odspDriverApi";
 
 const passwordTokenConfig = (username, password): OdspTokenConfig => ({
     type: "password",
@@ -52,7 +52,7 @@ export class OdspTestDriver implements ITestDriver {
 
     public static async createFromEnv(
         config?: { directory?: string, username?: string },
-        api = OdspDriverApi,
+        api: OdspDriverApiType = OdspDriverApi,
     ) {
         const loginAccounts = process.env.login__odsp__test__accounts;
         assert(loginAccounts !== undefined, "Missing login__odsp__test__accounts");
