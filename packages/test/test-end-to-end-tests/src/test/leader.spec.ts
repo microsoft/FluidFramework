@@ -11,7 +11,7 @@ import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 async function ensureConnected(container: Container) {
     if (!container.connected) {
-        await timeoutPromise((resolve, rejected) => container.on("connected", resolve));
+        await timeoutPromise((resolve, rejected) => container.on("connected", resolve), { durationMs: 4000 });
     }
 }
 
@@ -45,9 +45,10 @@ describeFullCompat("Leader", (argsFactory: () => ITestObjectProvider) => {
         // Once that is fix, this needs to change
         assert(container2.deltaManager.active);
         if (!dataObject2.context.leader) {
-            await timeoutPromise((resolve) => {
-                dataObject2.context.once("leader", () => { resolve(); });
-            });
+            await timeoutPromise(
+                (resolve) => { dataObject2.context.once("leader", () => { resolve(); }); },
+                { durationMs: 4000 },
+            );
         }
         assert(dataObject2.context.leader);
     });
