@@ -1710,7 +1710,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // could receive "Disconnected" event multiple times without getting connected.
             if (this._deltaManager.shouldJoinWrite()
                 && this.client.mode === "write"
-                && this.prevClientLeftP !== undefined
+                && this.prevClientLeftP === undefined
             ) {
                 this.prevClientLeftP = new Deferred();
                 // Default is 90 sec for which we are going to wait for its own "leave" message.
