@@ -1397,9 +1397,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     const event = PerformanceEvent.start(this.logger, { eventName: "ConnectedAfterWait" });
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     this.prevClientLeftP.promise.then((leaveReceived: boolean) => {
-                        // Set it to undefined as the desired client has left or timeout has occured and we don't
-                        // want to wait for it anymore.
-                        this.prevClientLeftP = undefined;
                         event.end({
                             timeout: !leaveReceived,
                             hadOutstandingOps: this._deltaManager.shouldJoinWrite(),
@@ -1418,6 +1415,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // If the client which has left was us, then resolve the def. promise.
             if (this.clientId === clientId) {
                 this.prevClientLeftP?.resolve(true);
+                // Set it to undefined as the desired client has left we don't want to wait for it anymore.
+                this.prevClientLeftP = undefined;
             }
         });
 
@@ -1698,9 +1697,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 }
             }
 
-            // Set it to undefined in "Connected" case as we only require it in transition
-            // from "Disconnected" to "Connected"
-            this.prevClientLeftP = undefined;
             this._clientId = this.pendingClientId;
         } else if (value === ConnectionState.Disconnected) {
             // Important as we process our own joinSession message through delta request
@@ -1716,6 +1712,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // Default is 90 sec for which we are going to wait for its own "leave" message.
                 setTimeout(() => {
                     this.prevClientLeftP?.resolve(false);
+                    this.prevClientLeftP = undefined;
                 }, this.maxClientLeaveWaitTime ?? 90000);
             }
         }
