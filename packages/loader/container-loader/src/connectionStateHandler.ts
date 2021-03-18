@@ -76,15 +76,23 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         if (clientId === this.pendingClientId) {
             // Wait for previous client to leave the quorum before firing "connected" event.
             if (this.prevClientLeftP) {
-                const event = PerformanceEvent.start(this.logger, { eventName: "ConnectedAfterWait" });
+                const event = PerformanceEvent.start(this.logger, {
+                    eventName: "WaitBeforeClientLeave",
+                    clientId: this._clientId,
+                    hadOutstandingOps: this.handler.shouldClientJoinWrite(),
+                });
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.prevClientLeftP.promise.then((leaveReceived: boolean) => {
-                    event.end({
-                        timeout: !leaveReceived,
-                        hadOutstandingOps: this.handler.shouldClientJoinWrite(),
-                    });
+                    const props = { leaveReceived, sameClient: clientId === this.pendingClientId }
+                    // Move to connected state only if we are still waiting on right client. It may happen that
+                    // during wait, the client again got Disconnected/Connecting and pending client Id changed,
+                    // so then we don't want to move to connected state here.
                     if (clientId === this.pendingClientId) {
+                        event.end(props);
                         this.setConnectionState(ConnectionState.Connected);
+                    } else {
+                        // Cancel the event here as we don't want to record multiple successful events.
+                        event.cancel(props);
                     }
                 });
             } else {
@@ -97,7 +105,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         // If the client which has left was us, then resolve the def. promise.
         if (this.clientId === clientId) {
             this.prevClientLeftP?.resolve(true);
-            // Set it to undefined as the desired client has left we don't want to wait for it anymore.
+            // Set it to undefined as the desired client has left and we don't want to wait for it anymore.
             this.prevClientLeftP = undefined;
         }
     }
