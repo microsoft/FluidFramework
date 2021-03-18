@@ -20,9 +20,9 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 1. Open a Command Prompt and navigate to the parent folder where you want to create the project; e.g., `c:\My Fluid Projects`.
 1. Run the following command at the prompt. (Note that the CLI is np_x_, not npm. It was installed when you installed npm.):
 
-```dotnetcli
-npx create-react-app fluid-react-tutorial --use-npm --template typescript
-```
+    ```dotnetcli
+    npx create-react-app fluid-react-tutorial --use-npm --template typescript
+    ```
 
 1. The project is created in a subfolder named `fluid-react-tutorial`. Navigate to it with the command `cd fluid-react-tutorial`.
 1. The project uses three Fluid libraries:
@@ -31,7 +31,7 @@ npx create-react-app fluid-react-tutorial --use-npm --template typescript
     : Manages creating and getting Fluid [containers](https://fluidframework.com/docs/concepts/containers-runtime/).
 
     data-objects
-    : Contains the KeyValuePair [DataObject](https://fluidframework.com/docs/glossary/#dataobject) that synchronizes data across clients. _This object will hold the most recent timestamp update made by any client._
+    : Contains the KeyValue [DataObject](https://fluidframework.com/docs/glossary/#dataobject) that synchronizes data across clients. _This object will hold the most recent timestamp update made by any client._
 
     get-container
     : Defines the service connection to a local Fluid server that runs on localhost.
@@ -46,7 +46,7 @@ npx create-react-app fluid-react-tutorial --use-npm --template typescript
 
 1. Open the file `\src\App.tsx` in your code editor. Delete all the default `import` statements except the one that imports `React`. Then delete all the markup from the `return` statement. The file should look like the following:
 
-    ```typescript
+    ```ts
     import React from 'react';
     
     function App() {
@@ -60,7 +60,7 @@ npx create-react-app fluid-react-tutorial --use-npm --template typescript
 
 1. Add the following `import` statements:
 
-    ```typescript
+    ```ts
     import { Fluid } from "@fluid-experimental/fluid-static";
     import { KeyValueDataObject } from "@fluid-experimental/data-objects";
     import { TinyliciousService } from "@fluid-experimental/get-container";
@@ -74,7 +74,7 @@ Add the following helper function to the file below the `import` statements. Not
 - The ID is stored in the `window.location.hash` property.
 - The function is called every time the application (re)renders, so it will be called in a useEffect hook that you create in a later step.
 
-```typescript
+```ts
 const getContainerId = (): { containerId: string; isNew: boolean } => {
     let isNew = false;
     if (window.location.hash.length === 0) {
@@ -90,282 +90,150 @@ const getContainerId = (): { containerId: string; isNew: boolean } => {
 
 The Fluid server will bring changes made to the timestamp from any client to this client. But Fluid is agnostic about the UI framework. We need to get the shared `KeyValueDataObject` into the React application's state, so add the following code at the top of the App() function (above the `return` statement). You will replace the `TODO` in a later step.
 
-```typescript
-const [dataObject, setDataObject] = React.useState<KeyValueDataObject>();
+```ts
+const [fluidKVObject, setFluidKVObject] = React.useState<KeyValueDataObject>();
 
-// TODO 1: Call the useState hook for simple objects.
+// TODO 1: Call the useState hook for a timestamp state value.
 ```
 
 To create the hook that will run when the application first renders and then again whenever a change in the timestamp causes the application to rerender, add the following code just below the lines you added above. Note the following about this code:
 
-- The `dataObject` state is undefined only when the App component is rendering for the first time.
-- Passing `dataObject` in the second parameter of the `useEffect` hook ensures that the hook will not pointlessly run if `dataObject` has not changed since the last time the App component rendered.
+- The `fluidKVObject` state is undefined only when the `App` component is rendering for the first time.
+- Passing `fluidKVObject` in the second parameter of the `useEffect` hook ensures that the hook will not pointlessly run if `fluidKVObject` has not changed since the last time the App component rendered.
 
-```typescript
+```ts
 React.useEffect(() => {
-  if (dataObject === undefined) {
+  if (fluidKVObject === undefined) {
 
     // TODO 2: Create and load the container and KeyValueDataObject.
 
   } else {
         
-    // TODO 3: Set the value of the dataObject (of type KeyValueDataObject) state.
+    // TODO 3: Set the value of the timestamp state object that will appear in the UI.
     // TODO 4: Register handlers.
     // TODO 5: Delete handler registration when the React App component is unMounted.
 
-  }, [dataObject]);
+  }, [fluidKVObject]);
 ```
 
-Replace `TODO 2` with the following code.
+#### Create the App component's first render
 
-```typescript
-// First time: create/get the Fluid container, then create/get KeyValueDataObject
+Replace `TODO 2` with the following code. Note that `TinyliciousService` is a Fluid server that runs on localhost.
+
+```ts
 const { containerId, isNew } = getContainerId();
 const load = async () => {
     const service = new TinyliciousService();
-    const fluidContainer = isNew
-        ? await Fluid.createContainer(service, containerId, [KeyValueDataObject])
-        : await Fluid.getContainer(service, containerId, [KeyValueDataObject]);
-
-    const keyValueDataObject: KeyValueDataObject = isNew
-        ? await fluidContainer.createDataObject(KeyValueDataObject, 'someUniqueId')
-        : await fluidContainer.getDataObject('someUniqueId');
-
-    setDataObject(keyValueDataObject);
+    // TODO 2a: Get the container from the service.
+    // TODO 2b: Get the KeyValueDataObject from the service.
+    // TODO 2c: Set the application's setFluidKVObject state.  
 }
 
 load();
 ```
 
-
-To get started, and follow along, go
-through our [Quick Start]({{< relref "./quick-start.md" >}}) guide.
-
-{{< fluid_bundle_loader idPrefix="dice-roller"
-    bundleName="dice-roller.12142020.js" >}}
-
-In our DiceRoller app we'll show users a die with a button to roll it.  When the die is rolled, we'll use Fluid
-Framework to sync the data across clients so everyone sees the same result.  We'll do this using the following steps.
-
-1. Write the view.
-1. Define the interface our model will expose.
-1. Write the model using the Fluid Framework.
-1. Include our model in our container.
-1. Connect our container to the service for collaboration.
-1. Connect our model instance to our view for rendering.
-
-
-## The view
-
-In this app we're just going to render our view without any UI libraries such as React, Vue, or Angular. We'll be using
-[TypeScript](https://www.typescriptlang.org/) and HTML/DOM methods.  Fluid is impartial to how you write your view, so
-you could use your favorite view framework instead if you'd like.
-
-Since we haven't created our model yet, we'll just hardcode a "1" and log to the console when the button is clicked.
+Replace `TODO 2a` with the following code. Note that `isNew` was returned by the `getContainerId` helper method and it is true if the application has no Fluid container yet.
 
 ```ts
-export function renderDiceRoller(div: HTMLDivElement) {
-    const wrapperDiv = document.createElement("div");
-    wrapperDiv.style.textAlign = "center";
-    div.append(wrapperDiv);
-    const diceCharDiv = document.createElement("div");
-    diceCharDiv.style.fontSize = "200px";
-    const rollButton = document.createElement("button");
-    rollButton.style.fontSize = "50px";
-    rollButton.textContent = "Roll";
-
-    rollButton.addEventListener("click", () => { console.log("Roll!"); });
-    wrapperDiv.append(diceCharDiv, rollButton);
-
-    const updateDiceChar = () => {
-        const diceValue = 1;
-        // Unicode 0x2680-0x2685 are the sides of a die (⚀⚁⚂⚃⚄⚅).
-        diceCharDiv.textContent = String.fromCodePoint(0x267F + diceValue);
-        diceCharDiv.style.color = `hsl(${diceValue * 60}, 70%, 50%)`;
-    };
-    updateDiceChar();
-}
+const fluidContainer = isNew
+        ? await Fluid.createContainer(service, containerId, [KeyValueDataObject])
+        : await Fluid.getContainer(service, containerId, [KeyValueDataObject]);
 ```
 
-
-## The model interface
-
-To clarify what our model needs to support, let's start by defining its public interface.
+Replace `TODO 2b` with the following code. Note that `timestamp` is the ID of the `KeyValueDataObject` object and it must be unique within the container.
 
 ```ts
-export interface IDiceRoller extends EventEmitter {
-    readonly value: number;
-    roll: () => void;
-    on(event: "diceRolled", listener: () => void): this;
-}
+const keyValueDataObject: KeyValueDataObject = isNew
+        ? await fluidContainer.createDataObject(KeyValueDataObject, 'timestamp')
+        : await fluidContainer.getDataObject('timestamp');
 ```
 
-As you might expect, we have the ability to read its value and command it to roll.  However, we also need to declare an
-event `"diceRolled"` in our interface.  We'll fire this event whenever the die is rolled (using
-[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)).
-
-This event is particularly important because we're building a collaborative experience. It's how each client will
-observe that other clients have rolled the die remotely, so they know to update with the new value.
-
-## Implementing the model
-
-Up to this point, we've just been using TypeScript.  Now that we're implementing the model for our collaborative
-DiceRoller, we'll start to use features from the Fluid Framework.
-
-The Fluid Framework provides a class called **[DataObject][]** which we can extend to build our model.  We'll use a few
-features from DataObject, but let's take a look at the code first.
+Replace `TODO 2c` with the following code. This sets the value of the application's `fluidKVObject` state. It also triggers a rerendering of the `App` component, _so this `useEffect` hook will run again immediately_. On the second execution, `fluidKVObject` is not undefined, so the `else` path of the hook runs.
 
 ```ts
-export class DiceRoller extends DataObject implements IDiceRoller {
-    protected async initializingFirstTime() {
-        this.root.set(diceValueKey, 1);
-    }
-
-    protected async hasInitialized() {
-        this.root.on("valueChanged", (changed: IValueChanged) => {
-            if (changed.key === diceValueKey) {
-                this.emit("diceRolled");
-            }
-        });
-    }
-
-    public get value() {
-        return this.root.get(diceValueKey);
-    }
-
-    public readonly roll = () => {
-        const rollValue = Math.floor(Math.random() * 6) + 1;
-        this.root.set(diceValueKey, rollValue);
-    };
-}
+setFluidKVObject(keyValueDataObject);
 ```
 
-Since the models you create will be persisted over time as users load and close the app, DataObject provides lifecycle
-methods to control the first-time creation and subsequent loading of your model.
+#### Create the App component's second render
 
-- `initializingFirstTime()` runs when a client creates the DiceRoller for the first time. It does not run when
-  additional clients connect to the application. We'll use this to provide an initial value for the die.
+The timestamp that is rendered in the application's UI does not come directly from the `fluidKVObject` state object because that object can be changed by other clients and these changes do not call the `setFluidKVObject` method, so they do not trigger a rerender of the `App` component. Thus, remote changes would not appear in the current client's UI.
 
-- `hasInitialized()` runs when clients load the DiceRoller. We'll use this to hook up our event listeners to respond to
-  data changes made in other clients.
+To ensure that both local and remote changes to the timestamp are reflected in the UI, create a second application state value for the timestamp and ensure that it is updated, with a state setting function, whenever any client changes the `fluidKVObject` value.
 
-DataObject also provides a `root` **distributed data structure (DDS)**.  DDSes are collaborative data structures that
-you'll use like local data structures, but as each client modifies the data, all other clients will see the changes.
-This `root` DDS is a [SharedDirectory][] which stores key/value pairs and works very similarly to a
-[Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map), providing methods like
-`set()` and `get()`.  However, it also fires a `"valueChanged"` event so we can observe changes to the data coming in
-from other users.
-
-To instantiate the DataObject, the Fluid Framework needs a corresponding factory. Since we're using the DataObject class,
-we'll also use the [DataObjectFactory][] which pairs with it. In this case we just need to provide it with a unique name
-("dice-roller" in this case) and the class constructor. The third and fourth parameters provide additional options that
-we will not be using in this example.
+Create the new state value by replacing `TODO 1` with the following code.
 
 ```ts
-export const DiceRollerInstantiationFactory = new DataObjectFactory(
-    "dice-roller",
-    DiceRoller,
-    [],
-    {},
-);
+const [timestamp, setTimestamp] = React.useState<{ [key: string]: any }>({});
 ```
 
-And that's it -- our DiceRoller model is done!
-
-
-## Defining the container contents
-
-In our app, we only need a single instance of this single model for our single die.  However, in more complex scenarios
-we might have multiple model types with many model instances.  The code you'll write to specify the type and number of
-data objects your application uses is the **container code**.
-
-Since we only need a single die, the Fluid Framework provides a class called
-[ContainerRuntimeFactoryWithDefaultDataStore][] that we can use as our container code.  We'll give it two arguments:
-the type of the model factory that we want a single instance of, and the list of model types that our container code
-needs (in this case, just the single model type).  This list is called the **container registry**.
+In the second render of the `App` component, set the value of the timestamp by replacing `TODO 3` with the following code. Note that the Fluid `DataObject.query` method returns the data of the `DataObject` (in this case the `KeyValueDataObject` object), which is roughly the `DataObject` without any of its methods. So the `setTimestamp` function is setting the `timestamp` state to a copy of the data of the `KeyValueDataObject` object.
 
 ```ts
-export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DiceRollerInstantiationFactory.type,
-    new Map([
-        DiceRollerInstantiationFactory.registryEntry,
-    ]),
-);
+const updateTimestamp = () => setTimestamp(fluidKVObject.query());
+updateTimestamp();
 ```
 
-Now we've defined all the pieces and it's just time to put them all together!
-
-
-## Connect container to service for collaboration
-
-To orchestrate the collaboration, we need to connect to a service to send and receive the updates to the data.  The way
-we do this is to connect a [Fluid container][] object to the service and load our container code into it.
-
-For now, we'll just run on a local test service called Tinylicious, and to make it easier to connect to this service
-we've provided a helper function `getTinyliciousContainer()`.  The helper function takes a unique ID to identify our
-**document** (the collection of data used by our app), the container code, and a flag to indicate whether we want to
-create a new document or load an existing one.  You can use any app logic you'd like to generate the ID and determine
-whether to create a new document.  In the [example
-repository](https://github.com/microsoft/FluidHelloWorld/blob/main/src/app.ts) we use the timestamp and URL hash as just
-one way of doing it.
+Now to ensure that the `timestamp` state is updated whenever the `fluidKVObject` is changed even by other clients, replace `TODO 4` with the following code. Note that because `updateTimestamp` calls the state-setting function `setTimestamp`, a rerender is triggered whenever any client changes the Fluid `fluidKVObject`.
 
 ```ts
-const container =
-    await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
+fluidKVObject.on("changed", updateTimestamp);
 ```
 
-This will look a little different when moving to a production service, but you'll still ultimately be getting a
-reference to a `Container` object running your code and connected to a service.
-
-After we have the connected `Container` object, our container code will have already run to create an instance of our
-model.  Because we used a `ContainerRuntimeFactoryWithDefaultDataStore` to build our container code, we can also use a
-helper function Fluid provides called `getDefaultObjectFromContainer` to get a reference to the model instance:
+It is a good practice to deregister event handlers when the React component unmounts, so replace `TODO 5` with the following code.
 
 ```ts
-const diceRoller: IDiceRoller = await getDefaultObjectFromContainer<IDiceRoller>(container);
+return () => { fluidKVObject.off("changed", updateTimestamp) }
 ```
 
+### Create the view
 
-## Connect model instance to view for rendering
+Below the `useEffect` hook, add the following lines to the `App` component. Note the following about this code:
 
-Now that we have a model instance, we can wire it to our view! We'll update the function to take an
-`IDiceRoller`, connect our button to the `roll()` method, listen to the `"diceRolled"` event to detect value changes,
-and read that value from the model.
+- If the `fluidKVObject` has not been initialized, a blank screen is rendered.
+- The `fluidKVObject.set` method sets the key of the `fluidKVObject` object to "time" and the value to the current UNIX epoch time. This triggers the changed event on the object, so the `updateTimestamp` function runs and sets the `timestamp` state to the same object; for example, `{ time: "1615996266675 }`. The `App` component rerenders and the `<span>` is updated with the latest timestamp.
+- All other clients update too because the Fluid server propagates the change to the `fluidKVObject` on all of them and this `changed` event updates the `timestamp` state on all of them.
 
 ```ts
-export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
-    const wrapperDiv = document.createElement("div");
-    wrapperDiv.style.textAlign = "center";
-    div.append(wrapperDiv);
-    const diceCharDiv = document.createElement("div");
-    diceCharDiv.style.fontSize = "200px";
-    const rollButton = document.createElement("button");
-    rollButton.style.fontSize = "50px";
-    rollButton.textContent = "Roll";
+if (!fluidKVObject) return <div />;
 
-    // Call the roll method to modify the shared data when the button is clicked.
-    rollButton.addEventListener("click", diceRoller.roll);
-    wrapperDiv.append(diceCharDiv, rollButton);
-
-    // Get the current value of the shared data to update the view whenever it changes.
-    const updateDiceChar = () => {
-        // Unicode 0x2680-0x2685 are the sides of a die (⚀⚁⚂⚃⚄⚅).
-        diceCharDiv.textContent = String.fromCodePoint(0x267F + diceRoller.value);
-        diceCharDiv.style.color = `hsl(${diceRoller.value * 60}, 70%, 50%)`;
-    };
-    updateDiceChar();
-
-    // Use the diceRolled event to trigger the re-render whenever the value changes.
-    diceRoller.on("diceRolled", updateDiceChar);
-}
+return (
+    <div className="App">
+        <button onClick={() => fluidKVObject.set("time", Date.now().toString())}>
+            Get time
+        </button>
+        <span>{timestamp["time"]}</span>
+    </div>
+)
 ```
 
+## Start the Fluid server and run the application
 
-## Running the app
+In the Command Prompt, run the following command to start the Fluid server:
 
-At this point we can run our app.  The [full code for this application is
-available](https://github.com/microsoft/FluidHelloWorld) for you to try out. Try opening it in multiple browser windows
-to see the changes reflected between clients.
+```dotnetcli
+npx tinylicious@0.4.17169
+```
+
+Start the application server with the following command. The application opens in your browser.
+
+```dotnetcli
+npm run start
+```
+
+{{< callout note >}}
+
+If you are prompted to run the application server on port 3001, press Enter to accept.
+
+{{< /callout >}}
+
+Paste the URL of the application into the address bar of another window or even another browser to have more than one client open at a time. Press the **Get time** button on any client and see the value change and synchronize on all the clients. 
+
+## Next steps
+
+- Try extending the demo with more key/value pairs and a more complex UI
+- Consider using the Fluent UI React controls (https://developer.microsoft.com/fluentui#/) to give the application the look and feel of Microsoft 365. To install them in your project run the following in the command prompt: `npm install @fluentui/react`.
+- Try extending the KeyValueDataObject class and adding your own custom functionality.
+
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->
