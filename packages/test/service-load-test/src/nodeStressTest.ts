@@ -39,7 +39,7 @@ function createLoader(testDriver: ITestDriver, runId?: number) {
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
         codeLoader,
-        logger: ChildLogger.create(logger, undefined, {all: {buildId: process.env.FLUID_PIPELINE_BUILD_ID,
+        logger: ChildLogger.create(logger, undefined, {all: {buildId: process.env.BUILD_BUILDID,
             runId }}),
     });
     return loader;
