@@ -137,6 +137,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
     private readonly opWatcher: EventEmitter = new EventEmitter();
     private readonly queueWatcher: EventEmitter = new EventEmitter();
+    private readonly abandonWatcher: EventEmitter = new EventEmitter();
 
     /**
      * Constructs a new task manager. If the object is non-local an id and service interfaces will
@@ -201,12 +202,23 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
                 if (this.haveTaskLock(taskId)) {
                     this.queueWatcher.off("queueChange", checkIfAcquiredLock);
+                    this.abandonWatcher.off("abandon", checkIfAbandoned);
                     res();
                 } else if (!this.queued(taskId)) {
                     this.queueWatcher.off("queueChange", checkIfAcquiredLock);
+                    this.abandonWatcher.off("abandon", checkIfAbandoned);
                     rej(new Error(`Removed from queue before acquiring lock: ${taskId}`));
                 }
             };
+            const checkIfAbandoned = (eventTaskId: string) => {
+                if (eventTaskId !== taskId) {
+                    return;
+                }
+                this.queueWatcher.off("queueChange", checkIfAcquiredLock);
+                this.abandonWatcher.off("abandon", checkIfAbandoned);
+                rej(new Error(`Abandoned before acquiring lock: ${taskId}`));
+            };
+            this.abandonWatcher.on("abandon", checkIfAbandoned);
             this.queueWatcher.on("queueChange", checkIfAcquiredLock);
         });
 
@@ -242,6 +254,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         if (this.runtime.clientId !== undefined) {
             this.removeClientFromQueue(taskId, this.runtime.clientId);
         }
+        this.abandonWatcher.emit("abandon", taskId);
     }
 
     public haveTaskLock(taskId: string) {
