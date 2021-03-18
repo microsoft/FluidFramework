@@ -25,7 +25,7 @@ import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { getDataStoreFactory, ITestDataObject, TestDataObjectType } from "./compatUtils";
+import { getDataStoreFactory, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
@@ -48,7 +48,7 @@ describe("Container", () => {
     async function loadContainer(props?: Partial<ILoaderProps>) {
         const loader = new Loader({
             ...props,
-            logger: ChildLogger.create(getTestLogger(), undefined, {testDriverType: driver.type}),
+            logger: ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}}),
             urlResolver: props?.urlResolver ?? driver.createUrlResolver(),
             documentServiceFactory:
                 props?.documentServiceFactory ?? driver.createDocumentServiceFactory(),

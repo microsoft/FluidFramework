@@ -9,15 +9,15 @@ import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     TestFluidObject,
+    ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import {
-    generateTest,
-    ITestObjectProvider,
+    describeFullCompat,
     ITestDataObject,
     TestDataObjectType,
-} from "./compatUtils";
+} from "@fluidframework/test-version-utils";
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("FluidObjectHandle", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();
@@ -168,8 +168,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             firstContainerObject2.handle.absolutePath,
             "The urls do not match");
     });
-};
-
-describe("FluidObjectHandle", () => {
-    generateTest(tests);
 });

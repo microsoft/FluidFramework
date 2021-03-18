@@ -21,10 +21,9 @@ import {
     IDocumentStorageService,
     LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
-import { NetworkErrorBasic } from "@fluidframework/driver-utils";
+import { NetworkErrorBasic, readAndParse } from "@fluidframework/driver-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
-import { bufferToString } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 describe("SharedString", () => {
@@ -37,7 +36,7 @@ describe("SharedString", () => {
         const text = "hello world";
         const documentId = createDocumentId();
         const driver = getFluidTestDriver();
-        const logger = ChildLogger.create(getTestLogger(), undefined, {testDriverType: driver.type});
+        const logger = ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}});
 
         { // creating client
             const codeDetails = { package: "no-dynamic-pkg" };
@@ -95,7 +94,7 @@ describe("SharedString", () => {
                         };
                         mockstorage.readBlob = async (id) => {
                             const blob = await realStorage.readBlob(id);
-                            const blobObj = JSON.parse(bufferToString(blob, "utf8"));
+                            const blobObj = await readAndParse<any>(realStorage, id);
                             // throw when trying to load the header blob
                             if (blobObj.headerMetadata !== undefined) {
                                 throw new NetworkErrorBasic(
@@ -142,7 +141,7 @@ describe("SharedString", () => {
         const text = "hello world";
         const documentId = createDocumentId();
         const driver = getFluidTestDriver();
-        const logger = ChildLogger.create(getTestLogger(), undefined, {testDriverType: driver.type});
+        const logger = ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}});
 
         let initialText = "";
         { // creating client

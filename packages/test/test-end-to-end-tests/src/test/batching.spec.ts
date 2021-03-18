@@ -14,13 +14,13 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
     timeoutPromise,
-} from "@fluidframework/test-utils";
-import {
-    generateTest,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
-} from "./compatUtils";
+} from "@fluidframework/test-utils";
+import {
+    describeFullCompat,
+} from "@fluidframework/test-version-utils";
 
 const map1Id = "map1Key";
 const map2Id = "map2Key";
@@ -33,7 +33,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();
@@ -521,8 +521,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             });
         });
     });
-};
-
-describe("Batching", () => {
-    generateTest(tests);
 });
