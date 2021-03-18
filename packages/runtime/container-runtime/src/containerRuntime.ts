@@ -94,6 +94,7 @@ import {
     IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
+    IAttachMessage,
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
@@ -117,7 +118,7 @@ import { SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
-import { PendingStateManager } from "./pendingStateManager";
+import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager } from "./blobManager";
 import { DataStores, getSnapshotForDataStores } from "./dataStores";
@@ -372,7 +373,7 @@ export class ScheduleManager {
         }
     }
 
-    private setPaused(localPaused: boolean) {
+    public setPaused(localPaused: boolean) {
         // Return early if no change in value
         if (this.localPaused === localPaused) {
             return;
@@ -478,7 +479,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         containerScope: IFluidObject = context.scope,
     ): Promise<ContainerRuntime> {
         const logger = ChildLogger.create(context.logger, undefined, {
-            runtimeVersion: pkgVersion,
+            all: {
+                runtimeVersion: pkgVersion,
+            },
         });
 
         let storage = context.storage;
@@ -628,6 +631,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private _connected: boolean;
 
+    private paused: boolean = false;
+
     public get connected(): boolean {
         return this._connected;
     }
@@ -750,7 +755,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.deltaSender = this.deltaManager;
 
-        this.pendingStateManager = new PendingStateManager(this);
+        this.pendingStateManager = new PendingStateManager(
+            this,
+            async (type, content) => this.applyStashedOp(type, content),
+            context.pendingLocalState as IPendingLocalState);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
             this.clearPartialChunks(clientId);
@@ -816,6 +824,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             this.replayPendingStates();
         });
+
+        if (context.pendingLocalState !== undefined) {
+            this.deltaManager.on("op", this.onOp);
+        }
 
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
@@ -1033,6 +1045,42 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.updateDocumentDirtyState(newState);
     }
 
+    /**
+     * Used to apply stashed ops at their reference sequence number.
+     * Normal op processing is synchronous, but rebasing is async since the
+     * data store may not be loaded yet, so we pause DeltaManager between ops.
+     * It's also important that we see each op so we know all stashed ops have
+     * been applied by "connected" event, but process() doesn't see system ops,
+     * so we listen directly from DeltaManager instead.
+     */
+    private readonly onOp = (op: ISequencedDocumentMessage) => {
+        assert(!this.paused);
+        this.paused = true;
+        this.scheduleManager.setPaused(true);
+        const stashP = this.pendingStateManager.applyStashedOpsAt(op.sequenceNumber);
+        stashP.then(() => {
+            this.paused = false;
+            this.scheduleManager.setPaused(false);
+        }, (error) => {
+            this.closeFn(CreateContainerError(error));
+        });
+    };
+
+    private async applyStashedOp(type: ContainerMessageType, op: ISequencedDocumentMessage): Promise<unknown> {
+        switch (type) {
+            case ContainerMessageType.FluidDataStoreOp:
+                return this.dataStores.applyStashedOp(op);
+            case ContainerMessageType.Attach:
+                return this.dataStores.applyStashedAttachOp(op as unknown as IAttachMessage);
+            case ContainerMessageType.BlobAttach:
+                return;
+            case ContainerMessageType.ChunkedOp:
+                throw new Error(`chunkedOp not expected here`);
+            default:
+                unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
+        }
+    }
+
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
@@ -1041,7 +1089,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._connected = connected;
 
         if (changeOfState) {
-           this.replayPendingStates();
+            this.deltaManager.off("op", this.onOp);
+            this.context.pendingLocalState = undefined;
+            this.replayPendingStates();
         }
 
         this.dataStores.setConnectionState(connected, clientId);
@@ -1084,27 +1134,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // once all pieces are available
             message = this.processRemoteChunkedMessage(message);
 
-            let localMessageMetadata: unknown;
-            if (local) {
-                // Call the PendingStateManager to process local messages.
-                // Do not process local chunked ops until all pieces are available.
-                if (message.type !== ContainerMessageType.ChunkedOp) {
-                    localMessageMetadata = this.pendingStateManager.processPendingLocalMessage(message);
-                }
+            // Call the PendingStateManager to process messages.
+            const { localAck, localOpMetadata } = this.pendingStateManager.processMessage(message, local);
 
-                // If there are no more pending messages after processing a local message,
-                // the document is no longer dirty.
-                if (!this.pendingStateManager.hasPendingMessages()) {
-                    this.updateDocumentDirtyState(false);
-                }
+            // If there are no more pending messages after processing a local message,
+            // the document is no longer dirty.
+            if (!this.pendingStateManager.hasPendingMessages()) {
+                this.updateDocumentDirtyState(false);
             }
 
             switch (message.type) {
                 case ContainerMessageType.Attach:
-                    this.dataStores.processAttachMessage(message, local);
+                    this.dataStores.processAttachMessage(message, local || localAck);
                     break;
                 case ContainerMessageType.FluidDataStoreOp:
-                    this.dataStores.processFluidDataStoreOp(message, local, localMessageMetadata);
+                    // if localAck === true, treat this as a local op because it's one we sent on a previous container
+                    this.dataStores.processFluidDataStoreOp(message, local || localAck, localOpMetadata);
                     break;
                 case ContainerMessageType.BlobAttach:
                     assert(message?.metadata?.blobId, "Missing blob id on metadata");
@@ -1486,7 +1531,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 await this.refreshLatestSummaryAck(
                     undefined,
                     version.id,
-                    new ChildLogger(summaryLogger, undefined, { safeSummary: true }),
+                    ChildLogger.create(summaryLogger, undefined, {all: { safeSummary: true }}),
                     version,
                 );
             }
@@ -1615,6 +1660,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ): void {
         this.verifyNotClosed();
 
+        if (this.context.pendingLocalState !== undefined) {
+            this.closeFn(CreateContainerError("op submitted while processing pending initial state"));
+        }
         // There should be no ops in detached container state!
         assert(this.attachState !== AttachState.Detached, "sending ops in detached container");
 
@@ -1661,6 +1709,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.pendingStateManager.onSubmitMessage(
             type,
             clientSequenceNumber,
+            this.deltaManager.lastSequenceNumber,
             content,
             localOpMetadata,
             opMetadataInternal,
@@ -1875,5 +1924,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const snapshot = await this.storage.getSnapshotTree(version);
         assert(!!snapshot, "Failed to get snapshot from storage");
         return snapshot;
+    }
+
+    public getPendingLocalState() {
+        return this.pendingStateManager.getLocalState();
     }
 }

@@ -40,8 +40,8 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
         const lambdaFactory = await plugin.create(config) as IPartitionLambdaFactory;
 
         // Inbound Kafka configuration
-        const kafkaEndpoint = config.get("kafka:lib:endpoint");
-        const zookeeperEndpoint = config.get("zookeeper:endpoint");
+        const kafkaEndpoint: string = config.get("kafka:lib:endpoint");
+        const zookeeperEndpoint: string = config.get("zookeeper:endpoint");
         const numberOfPartitions = config.get("kafka:lib:numberOfPartitions");
         const replicationFactor = config.get("kafka:lib:replicationFactor");
 
@@ -53,7 +53,11 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
 
         const clientId = moniker.choose();
 
-        const endpoints = { kafka: [kafkaEndpoint], zooKeeper: [zookeeperEndpoint] };
+        const endpoints = {
+            kafka: kafkaEndpoint ? kafkaEndpoint.split(",") : [],
+            zooKeeper: zookeeperEndpoint ? zookeeperEndpoint.split(",") : [],
+         };
+
         const consumer = new RdkafkaConsumer(
             endpoints,
             clientId,

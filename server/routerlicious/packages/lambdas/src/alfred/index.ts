@@ -1,17 +1,14 @@
-/* eslint-disable no-null/no-null */
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { isSystemType } from "@fluidframework/protocol-base";
 import {
     ConnectionMode,
     IClient,
     IConnect,
     IConnected,
     IDocumentMessage,
-    IDocumentSystemMessage,
     INack,
     ISignalMessage,
     MessageType,
@@ -75,13 +72,7 @@ function sanitizeMessage(message: any): IDocumentMessage {
         type: message.type,
     };
 
-    if (isSystemType(sanitizedMessage.type)) {
-        const systemMessage = sanitizedMessage as IDocumentSystemMessage;
-        systemMessage.data = message.data;
-        return systemMessage;
-    } else {
-        return sanitizedMessage;
-    }
+    return sanitizedMessage;
 }
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
@@ -188,7 +179,10 @@ export function configureWebSocketServices(
             }
             if (!message.token) {
                 // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject("Must provide an authorization token");
+                return Promise.reject({
+                    code: 403,
+                    message: "Must provide an authorization token",
+                });
             }
 
             // Validate token signature and claims
@@ -200,14 +194,14 @@ export function configureWebSocketServices(
                 isTokenExpiryEnabled);
             if (!claims) {
                 // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject("Invalid claims");
+                return Promise.reject({ code: 401, message: "Invalid claims" });
             }
 
             try {
                 await tenantManager.verifyToken(claims.tenantId, token);
             } catch (err) {
                 // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject("Invalid token");
+                return Promise.reject({ code: 403, message: "Invalid token" });
             }
 
             const clientId = generateClientId();
@@ -237,10 +231,12 @@ export function configureWebSocketServices(
             const version = selectProtocolVersion(connectVersions);
             if (!version) {
                 // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject(
-                    `Unsupported client protocol.` +
+                return Promise.reject({
+                    code: 400,
+                    message: `Unsupported client protocol. ` +
                     `Server: ${protocolVersions}. ` +
-                    `Client: ${JSON.stringify(connectVersions)}`);
+                    `Client: ${JSON.stringify(connectVersions)}`,
+                });
             }
 
             const detailsP = storage.getOrCreateDocument(claims.tenantId, claims.documentId);
@@ -251,8 +247,8 @@ export function configureWebSocketServices(
             if (clients.length > maxNumberOfClientsPerDocument) {
                 // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject({
-                    code: 400,
-                    message: "Too many clients are already connected to this document.",
+                    code: 429,
+                    message: "Too Many Clients Connected to Document",
                     retryAfter: 5 * 60,
                 });
             }
@@ -269,7 +265,10 @@ export function configureWebSocketServices(
                     setExpirationTimer(lifeTimeMSec);
                 } else {
                     // eslint-disable-next-line prefer-promise-reject-errors
-                    return Promise.reject("Invalid token expiry");
+                    return Promise.reject({
+                        code: 401,
+                        message: "Invalid token expiry",
+                    });
                 }
             }
 

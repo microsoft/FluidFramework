@@ -8,15 +8,13 @@ import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    ITestFluidObject,
-    ChannelFactoryRegistry,
-} from "@fluidframework/test-utils";
-import {
-    generateTest,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
-} from "./compatUtils";
+    ITestFluidObject,
+    ChannelFactoryRegistry,
+} from "@fluidframework/test-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 const cellId = "cellKey";
 const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
@@ -25,7 +23,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("SharedCell", (argsFactory: () => ITestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(()=>{
         args = argsFactory();
@@ -220,8 +218,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         verifyCellValue(await getCellDataStore(getCellDataStore(Promise.resolve(sharedCell2))), cellValue, 2);
         verifyCellValue(await getCellDataStore(getCellDataStore(Promise.resolve(sharedCell3))), cellValue, 3);
     });
-};
-
-describe("Cell", () => {
-    generateTest(tests);
 });

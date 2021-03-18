@@ -4,13 +4,14 @@
  */
 
 import { getContainer, IGetContainerService } from "@fluid-experimental/get-container";
-import { DataObject, getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
+import { DataObject } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
 import {
-    IdToDataObjectCollection,
     DOProviderContainerRuntimeFactory,
+    IdToDataObjectCollection,
     IFluidStaticDataObjectClass,
+    RootDataObject,
 } from "./containerCode";
 
 export interface ContainerConfig {
@@ -41,21 +42,24 @@ export interface ContainerCreateConfig extends ContainerConfig {
 export class FluidContainer {
     private readonly types: Set<string>;
     public constructor(
-        private readonly container: IContainer,
+        container: IContainer, // we anticipate using this later, e.g. for Audience
         namedRegistryEntries: NamedFluidDataStoreRegistryEntry[],
+        private readonly rootDataObject: RootDataObject,
         public readonly createNew: boolean) {
-        this.types = new Set();
-        namedRegistryEntries.forEach((value: NamedFluidDataStoreRegistryEntry) => {
-            const type = value[0];
-            if (this.types.has(type)) {
-                throw new Error(`Multiple DataObjects share the same type identifier ${value}`);
-            }
-            this.types.add(type);
-        });
-    }
+            this.types = new Set();
+            namedRegistryEntries.forEach((value: NamedFluidDataStoreRegistryEntry) => {
+                const type = value[0];
+                if (this.types.has(type)) {
+                    throw new Error(`Multiple DataObjects share the same type identifier ${value}`);
+                }
+                this.types.add(type);
+            });
+        }
 
     public async createDataObject<T extends DataObject>(
-        dataObjectClass: IFluidStaticDataObjectClass, id: string): Promise<T> {
+        dataObjectClass: IFluidStaticDataObjectClass,
+        id: string,
+    ) {
         const type = dataObjectClass.factory.type;
         // This is a runtime check to ensure the developer doesn't try to create something they have not defined.
         if (!this.types.has(type)) {
@@ -63,14 +67,11 @@ export class FluidContainer {
                 `Trying to create a DataObject with type ${type} that was not defined in Container initialization`);
         }
 
-        await this.container.request({ url: `/create/${type}/${id}` });
-        const dataObject = await this.getDataObject<T>(id);
-        return dataObject;
+        return this.rootDataObject.createDataObject<T>(dataObjectClass, id);
     }
 
-    public async getDataObject<T extends DataObject>(id: string): Promise<T> {
-        const dataObject = await getObjectWithIdFromContainer<T>(id, this.container);
-        return dataObject;
+    public async getDataObject<T extends DataObject>(id: string) {
+        return this.rootDataObject.getDataObject<T>(id);
     }
 }
 
@@ -98,7 +99,8 @@ export class FluidInstance {
             new DOProviderContainerRuntimeFactory(registryEntries, config.initialDataObjects),
             true, /* createNew */
         );
-        return new FluidContainer(container, registryEntries, true /* createNew */);
+        const rootDataObject = (await container.request({ url: "/" })).value;
+        return new FluidContainer(container, registryEntries, rootDataObject, true /* createNew */);
     }
 
     public async getContainer(id: string, config: ContainerConfig): Promise<FluidContainer> {
@@ -109,7 +111,8 @@ export class FluidInstance {
             new DOProviderContainerRuntimeFactory(registryEntries),
             false, /* createNew */
         );
-        return new FluidContainer(container, registryEntries, false /* createNew */);
+        const rootDataObject = (await container.request({ url: "/" })).value;
+        return new FluidContainer(container, registryEntries, rootDataObject, false /* createNew */);
     }
 
     private getRegistryEntries(dataObjects: IFluidStaticDataObjectClass[]) {
