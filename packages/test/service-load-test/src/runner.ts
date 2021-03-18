@@ -57,7 +57,7 @@ async function runnerProcess(
 
         const testDriver = await createTestDriver(driver);
 
-        const stressTest = await load(testDriver, testId);
+        const stressTest = await load(testDriver, testId, runId);
         await stressTest.run(runConfig);
         console.log(`${runId.toString().padStart(3)}> exit`);
         return 0;

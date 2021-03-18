@@ -11,6 +11,7 @@ import { ITestDriver, TestDriverTypes, ITelemetryBufferedLogger } from "@fluidfr
 import { createFluidTestDriver } from "@fluidframework/test-drivers";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { fluidExport, ILoadTest } from "./loadTestDataStore";
 import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
@@ -35,19 +36,20 @@ const codeDetails: IFluidCodeDetails = {
 
 const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 
-export async function createLoader(testDriver: ITestDriver) {
+export async function createLoader(testDriver: ITestDriver, runId: number | undefined) {
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
         codeLoader,
-        logger: await loggerP,
+        logger: ChildLogger.create(await loggerP, undefined, {all: {buildId: process.env.BUILD_BUILDID,
+            runId }}),
     });
     return loader;
 }
 
 export async function initialize(testDriver: ITestDriver) {
-    const loader = await createLoader(testDriver);
+    const loader = await createLoader(testDriver, undefined);
     const container = await loader.createDetachedContainer(codeDetails);
     container.on("error", (error) => {
         console.log(error);
@@ -61,8 +63,8 @@ export async function initialize(testDriver: ITestDriver) {
     return testId;
 }
 
-export async function load(testDriver: ITestDriver, testId: string) {
-    const loader = await createLoader(testDriver);
+export async function load(testDriver: ITestDriver, testId: string, runId: number) {
+    const loader = await createLoader(testDriver, runId);
     const url =  await testDriver.createContainerUrl(testId);
     const container = await loader.resolve({ url });
     return requestFluidObject<ILoadTest>(container,"/");
