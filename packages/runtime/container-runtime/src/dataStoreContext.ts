@@ -61,6 +61,7 @@ import {
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "./containerRuntime";
 import {
     dataStoreAttributesBlobName,
@@ -246,12 +247,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         }
     }
 
-    private rejectDeferredRealize(reason: string): never {
-        const error = new Error(reason);
-        // Error messages contain package names that is considered Personal Identifiable Information
-        // Mark it as such, so that if it ever reaches telemetry pipeline, it has a chance to remove it.
-        (error as any).containsPII = true;
-        throw error;
+    private rejectDeferredRealize(reason: string, packageName?: string): never {
+        throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.PackageData }});
     }
 
     public async realize(): Promise<IFluidDataStoreChannel> {
@@ -265,26 +262,29 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this.channelDeferred.promise;
     }
 
-    protected async factoryFromPackagePath(packages) {
+    protected async factoryFromPackagePath(packages?: readonly string[]) {
         assert(this.pkg === packages, "Unexpected package path");
+        if (packages === undefined) {
+            this.rejectDeferredRealize("packages is undefined");
+        }
 
         let entry: FluidDataStoreRegistryEntry | undefined;
         let registry: IFluidDataStoreRegistry | undefined = this._containerRuntime.IFluidDataStoreRegistry;
         let lastPkg: string | undefined;
         for (const pkg of packages) {
             if (!registry) {
-                this.rejectDeferredRealize(`No registry for ${lastPkg} package`);
+                this.rejectDeferredRealize("No registry for package", lastPkg);
             }
             lastPkg = pkg;
             entry = await registry.get(pkg);
             if (!entry) {
-                this.rejectDeferredRealize(`Registry does not contain entry for the package ${pkg}`);
+                this.rejectDeferredRealize("Registry does not contain entry for the package", pkg);
             }
             registry = entry.IFluidDataStoreRegistry;
         }
         const factory = entry?.IFluidDataStoreFactory;
         if (factory === undefined) {
-            this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
+            this.rejectDeferredRealize("Can't find factory for package", lastPkg);
         }
 
         return { factory, registry };
