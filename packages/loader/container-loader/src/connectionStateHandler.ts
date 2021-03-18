@@ -42,7 +42,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     private _pendingClientId: string | undefined;
     private _clientId: string | undefined;
     private prevClientLeftP: Deferred<boolean> | undefined;
-    private isDirty: boolean| undefined;
+    private isDirty: boolean = false;
 
     public get connectionState(): ConnectionState {
         return this._connectionState;
@@ -188,7 +188,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             if (this.handler.shouldClientJoinWrite()
                 && this.handler.client().mode === "write"
                 && this.prevClientLeftP === undefined
-                && this.isDirty === true
+                && this.isDirty
             ) {
                 this.prevClientLeftP = new Deferred();
                 // Default is 90 sec for which we are going to wait for its own "leave" message.
