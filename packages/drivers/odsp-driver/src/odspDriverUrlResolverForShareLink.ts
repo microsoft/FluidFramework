@@ -30,15 +30,17 @@ import { getFileLink } from "./getFileLink";
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     private readonly logger: ITelemetryLogger;
     private readonly sharingLinkCache = new PromiseCache<string, string>();
-    private readonly instrumentedTokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>;
+    private readonly instrumentedTokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions> | undefined;
     public constructor(
-        tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
+        tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions> | undefined = undefined,
         private readonly identityType: IdentityType = "Enterprise",
         logger?: ITelemetryBaseLogger,
         private readonly appName?: string,
     ) {
         this.logger = ChildLogger.create(logger, "OdspDriver");
-        this.instrumentedTokenFetcher = this.toInstrumentedTokenFetcher(this.logger, tokenFetcher);
+        if (tokenFetcher) {
+            this.instrumentedTokenFetcher = this.toInstrumentedTokenFetcher(this.logger, tokenFetcher);
+        }
     }
 
     public createCreateNewRequest(
@@ -138,6 +140,10 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     }
 
     private async getShareLinkPromise(resolvedUrl: IOdspResolvedUrl): Promise<string> {
+        if (this.instrumentedTokenFetcher === undefined) {
+            throw new Error("Failed to get share link because token fetcher is missing");
+        }
+
         if (!(resolvedUrl.siteUrl && resolvedUrl.driveId && resolvedUrl.itemId)) {
             throw new Error("Failed to get share link because necessary information is missing " +
                 "(e.g. siteUrl, driveId or itemId)");
