@@ -83,10 +83,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
                 });
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.prevClientLeftP.promise.then((leaveReceived: boolean) => {
-                    const props = {
-                        leaveReceived,
-                        waitingClientChanged: this.pendingClientId === undefined || clientId !== this.pendingClientId,
-                    };
+                    const props = { leaveReceived, waitingClientChanged: clientId !== this.pendingClientId };
                     // Move to connected state only if we are still waiting on right client. It may happen that
                     // during wait, the client again got Disconnected/Connecting and pending client Id changed,
                     // so then we don't want to move to connected state here.
@@ -191,7 +188,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             if (this.handler.shouldClientJoinWrite()
                 && this.handler.client().mode === "write"
                 && this.prevClientLeftP === undefined
-                && this.isDirty
+                && this.isDirty === true
             ) {
                 this.prevClientLeftP = new Deferred();
                 // Default is 90 sec for which we are going to wait for its own "leave" message.
