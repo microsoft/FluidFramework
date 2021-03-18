@@ -21,7 +21,7 @@ export interface IRunConfig {
 }
 
 export interface ILoadTest {
-    run(config: IRunConfig): Promise<void>;
+    run(config: IRunConfig, reset: boolean): Promise<void>;
 }
 const wait = async (timeMs: number) => new Promise((resolve) => setTimeout(resolve, timeMs));
 
@@ -29,6 +29,12 @@ const taskManagerKey = "taskManager";
 const counterKey = "counter";
 const startTimeKey = "startTime";
 const taskTimeKey = "taskTime";
+/**
+ * Encapsulate the data model and to not expose raw DSS to the main loop.
+ * Eventually this can  spawn isolated sub-dirs for workloads,
+ * and provide common abstractions for workload scheduling
+ * via task picking.
+ */
 class LoadTestDataStoreModel {
     public static initializingFirstTime(root: ISharedDirectory, runtime: IFluidDataStoreRuntime) {
         root.set(taskManagerKey, TaskManager.create(runtime).handle);
@@ -84,7 +90,7 @@ class LoadTestDataStoreModel {
         if(reset) {
             await LoadTestDataStoreModel.waitForCatchup(runtime);
             runDir.set(startTimeKey,Date.now());
-            runDir.set(taskTimeKey, 0);
+            runDir.delete(taskTimeKey);
             counter.increment(-1 * counter.value);
         }
 
@@ -121,30 +127,45 @@ class LoadTestDataStoreModel {
     }
 
     public haveTaskLock() {
-        return this.taskManager.haveTaskLock(this.taskId);
+        try{
+            return this.taskManager.haveTaskLock(this.taskId);
+        }catch{
+            // remove try catch after taskManager fixes
+            return false;
+        }
     }
 
     public abandonTask() {
         if(this.haveTaskLock()) {
-            this.taskManager.abandon(this.taskId);
+            try{
+                this.taskManager.abandon(this.taskId);
+            }catch{
+                // remove try catch after taskManager fixes
+            }
         }
     }
 
     public async lockTask() {
-        if(!this.runtime.connected) {
-            await new Promise((res,rej)=>{
-                this.runtime.once("connected",res);
-                this.runtime.once("dispose", rej);
-            });
-        }
-        await this.taskManager.lockTask(this.taskId);
-        this.taskStartTime = Date.now();
-        this.taskManager.once("lost",(taskId)=>{
-            if(taskId === this.taskId) {
-                this.dir.set(taskTimeKey, Date.now() - this.taskStartTime);
-                this.taskStartTime = 0;
+        if(!this.haveTaskLock()) {
+            if(!this.runtime.connected) {
+                await new Promise((res,rej)=>{
+                    this.runtime.once("connected",res);
+                    this.runtime.once("dispose", rej);
+                });
             }
-        });
+            try{
+                await this.taskManager.lockTask(this.taskId);
+                this.taskStartTime = Date.now();
+                this.taskManager.once("lost",(taskId)=>{
+                    if(taskId === this.taskId) {
+                        this.dir.set(taskTimeKey, Date.now() - this.taskStartTime);
+                        this.taskStartTime = 0;
+                    }
+                });
+            }catch{
+                // remove try catch after taskManager fixes
+            }
+        }
     }
 
     public printStatus(alwaysPrint: boolean = false) {
@@ -175,7 +196,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
             this.runtime);
     }
 
-    public async run(config: IRunConfig, reset: boolean = false) {
+    public async run(config: IRunConfig, reset: boolean) {
         console.log(`${config.runId.toString().padStart(3)}> begin`);
 
         const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
@@ -201,20 +222,18 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
         const opsGapMs = cycleMs / opsPerCycle;
         while (dataModel.counter.value < clientSendCount && !this.disposed) {
-            try{
-                if(dataModel.haveTaskLock()) {
-                    dataModel.counter.increment(1);
-                    if (dataModel.counter.value % opsPerCycle === 0) {
-                        dataModel.abandonTask();
-                        await wait(cycleMs);
-                    }else{
-                        // Random jitter of +- 50% of opWaitMs
-                        await wait(opsGapMs + opsGapMs * (Math.random() - 0.5));
-                    }
+            if(dataModel.haveTaskLock()) {
+                dataModel.counter.increment(1);
+                if (dataModel.counter.value % opsPerCycle === 0) {
+                    dataModel.abandonTask();
+                    await wait(cycleMs);
                 }else{
-                    await dataModel.lockTask();
+                    // Random jitter of +- 50% of opWaitMs
+                    await wait(opsGapMs + opsGapMs * (Math.random() - 0.5));
                 }
-            }catch {}
+            }else{
+                await dataModel.lockTask();
+            }
         }
         dataModel.abandonTask();
 
