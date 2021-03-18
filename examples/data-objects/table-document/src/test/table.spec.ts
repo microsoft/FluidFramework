@@ -14,7 +14,7 @@ import { TableDocument } from "../document";
 import { TableSlice } from "../slice";
 import { TableDocumentItem } from "../table";
 
-describeLoaderCompat("TableDocument", (getTestObjectProvider: () => ITestObjectProvider) => {
+describeLoaderCompat("TableDocument", (getTestObjectProvider) => {
     let tableDocument: TableDocument;
     let opProcessingController: OpProcessingController;
 

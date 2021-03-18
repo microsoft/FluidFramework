@@ -33,10 +33,10 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("Batching", (getTestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(() => {
-        args = argsFactory();
+        args = getTestObjectProvider();
     });
 
     let dataObject1: ITestFluidObject;

@@ -25,10 +25,10 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeFullCompat("SharedMap", (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("SharedMap", (getTestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(() => {
-        args = argsFactory();
+        args = getTestObjectProvider();
     });
 
     let dataObject1: ITestFluidObject;

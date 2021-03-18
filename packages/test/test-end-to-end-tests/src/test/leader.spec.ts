@@ -15,12 +15,12 @@ async function ensureConnected(container: Container) {
     }
 }
 
-describeFullCompat("Leader", (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("Leader", (getTestObjectProvider) => {
     let args: ITestObjectProvider;
     let container1: Container;
     let dataObject1: ITestFluidObject;
     beforeEach(async () => {
-        args = argsFactory();
+        args = getTestObjectProvider();
         container1 = await args.makeTestContainer() as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         await ensureConnected(container1);

@@ -37,10 +37,10 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {
-    describeFullCompat(name, (argsFactory: () => ITestObjectProvider) => {
+    describeFullCompat(name, (getTestObjectProvider) => {
         let args: ITestObjectProvider;
         beforeEach(() => {
-            args = argsFactory();
+            args = getTestObjectProvider();
         });
         let dataStore1: ITestFluidObject;
         let sharedMap1: ISharedMap;

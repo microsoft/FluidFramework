@@ -74,7 +74,7 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
 
 // Introduced in 0.37
 // REVIEW: enable compat testing
-describeNoCompat("stashed ops", (argsFactory: () => ITestObjectProvider) => {
+describeNoCompat("stashed ops", (getTestObjectProvider) => {
     let args: ITestObjectProvider;
     let url;
     let loader: IHostLoader;
@@ -82,7 +82,7 @@ describeNoCompat("stashed ops", (argsFactory: () => ITestObjectProvider) => {
     let map1: SharedMap;
 
     beforeEach(async () => {
-        args = argsFactory();
+        args = getTestObjectProvider();
         loader = args.makeTestLoader(testContainerConfig);
         container1 = await createAndAttachContainer(
             args.defaultCodeDetails,

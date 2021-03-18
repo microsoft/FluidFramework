@@ -32,13 +32,13 @@ const waitForSignal =
                             errorMsg: `Signaller[${index}] Timeout`,
                         })));
 
-describeFullCompat("TestSignals", (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("TestSignals", (getTestObjectProvider) => {
     let args: ITestObjectProvider;
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;
 
     beforeEach(async () => {
-        args = argsFactory();
+        args = getTestObjectProvider();
         const container1 = await args.makeTestContainer(testContainerConfig) as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 

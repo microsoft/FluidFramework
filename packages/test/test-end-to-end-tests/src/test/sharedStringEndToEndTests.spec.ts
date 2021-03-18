@@ -23,10 +23,10 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeFullCompat("SharedString", (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("SharedString", (getTestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(() => {
-        args = argsFactory();
+        args = getTestObjectProvider();
     });
 
     let sharedString1: SharedString;

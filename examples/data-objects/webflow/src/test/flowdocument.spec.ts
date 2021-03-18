@@ -11,7 +11,7 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { FlowDocument } from "../document";
 
-describeLoaderCompat("FlowDocument", (getTestObjectProvider: () => ITestObjectProvider) => {
+describeLoaderCompat("FlowDocument", (getTestObjectProvider) => {
     let doc: FlowDocument;
 
     let provider: ITestObjectProvider;

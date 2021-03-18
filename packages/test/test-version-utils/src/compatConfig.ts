@@ -175,6 +175,7 @@ function describeCompat(
         for (const config of configs) {
             describe(config.name, () => {
                 let provider: ITestObjectProvider;
+                let resetAfterEach: boolean;
                 before(async () => {
                     provider = await getVersionedTestObjectProvider(
                         config?.loader,
@@ -186,10 +187,18 @@ function describeCompat(
                         config?.dataRuntime,
                     );
                 });
-                afterEach(() => {
-                    provider.reset();
+                tests((reset: boolean = true) => {
+                    if (reset) {
+                        provider.reset();
+                        resetAfterEach = true;
+                    }
+                    return provider;
                 });
-                tests(() => { return provider; });
+                afterEach(() => {
+                    if (resetAfterEach) {
+                        provider.reset();
+                    }
+                });
             });
         }
     });
@@ -197,21 +206,21 @@ function describeCompat(
 
 export function describeNoCompat(
     name: string,
-    tests: (provider: () => ITestObjectProvider) => void,
+    tests: (provider: (resetAfterEach?: boolean) => ITestObjectProvider) => void,
 ) {
     describeCompat(name, tests, [CompatKind.None]);
 }
 
 export function describeLoaderCompat(
     name: string,
-    tests: (provider: () => ITestObjectProvider) => void,
+    tests: (provider: (resetAfterEach?: boolean) => ITestObjectProvider) => void,
 ) {
     describeCompat(name, tests, [CompatKind.None, CompatKind.Loader]);
 }
 
 export function describeFullCompat(
     name: string,
-    tests: (provider: () => ITestObjectProvider) => void,
+    tests: (provider: (resetAfterEach?: boolean) => ITestObjectProvider) => void,
 ) {
     describeCompat(name, tests);
 }

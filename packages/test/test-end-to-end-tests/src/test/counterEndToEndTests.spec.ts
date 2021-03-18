@@ -22,10 +22,10 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeFullCompat("SharedCounter", (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("SharedCounter", (getTestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(() => {
-        args = argsFactory();
+        args = getTestObjectProvider();
     });
     let dataStore1: ITestFluidObject;
     let sharedCounter1: ISharedCounter;

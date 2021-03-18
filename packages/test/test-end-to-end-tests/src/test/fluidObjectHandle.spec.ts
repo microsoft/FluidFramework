@@ -17,10 +17,10 @@ import {
     TestDataObjectType,
 } from "@fluidframework/test-version-utils";
 
-describeFullCompat("FluidObjectHandle", (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(() => {
-        args = argsFactory();
+        args = getTestObjectProvider();
     });
 
     let firstContainerObject1: ITestDataObject;

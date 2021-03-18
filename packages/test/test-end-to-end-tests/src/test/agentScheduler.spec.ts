@@ -11,7 +11,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, timeoutPromise, defaultTimeoutDurationMs } from "@fluidframework/test-utils";
 import { describeFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 
-describeFullCompat("AgentScheduler", (getTestObjectProvider: () => ITestObjectProvider) => {
+describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
     let leaderTimeout = defaultTimeoutDurationMs;
     let args: ITestObjectProvider;
     beforeEach(() => {

@@ -19,10 +19,10 @@ const testContainerConfig: ITestContainerConfig = {
     registry: [["sharedString", SharedString.getFactory()]],
 };
 
-describeFullCompat("blobs", (argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("blobs", (getTestObjectProvider) => {
     let args: ITestObjectProvider;
     beforeEach(async () => {
-        args = argsFactory();
+        args = getTestObjectProvider();
     });
     it("attach sends an op", async function() {
         const container = await args.makeTestContainer(testContainerConfig);
