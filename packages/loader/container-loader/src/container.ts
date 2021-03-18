@@ -810,6 +810,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._attachState = AttachState.Attached;
             this.emit("attached");
             this.cachedAttachSummary = undefined;
+
             // Propagate current connection state through the system.
             this.propagateConnectionState();
             if (!this.closed) {
