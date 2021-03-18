@@ -26,6 +26,7 @@ function App() {
 
     const [dataObject, setDataObject] = React.useState<KeyValueDataObject>();
     const [container, setContainer] = React.useState<FluidContainer>();
+    const [id, setId] = React.useState<string | undefined>();
     const [data, setData] = React.useState<{ [key: string]: any }>({});
 
     const createSession = () => {
@@ -57,14 +58,13 @@ function App() {
 
     const setupListeners = () => {
         const updateData = () => setData(dataObject?.query());
+        const updateId = (clientId: string) =>  setId(clientId);
         updateData();
         dataObject?.on("changed", updateData);
-        container?.container.audience.on("addMember", updateData)
-        container?.container.audience.on("removeMember", updateData)
+        container?.on("connected", updateId);
         return () => {
-            dataObject?.off("change", updateData)
-            container?.container.audience.off("addMember", updateData)
-            container?.container.audience.off("removeMember", updateData)
+            dataObject?.off("changed", updateData)
+            container?.off("connected", updateId);
         }
     }
 
@@ -79,11 +79,9 @@ function App() {
 
     if (!dataObject || !container) return <div />;
 
-    const id = container?.container.clientId;
 
     const MemberList = () => {
-        const members: string[] = Array.from(container.container.audience.getMembers().keys());
-
+        const members: string[] = Array.from(container.audience.getMembers().keys());
         return (
             <ul>
                 { members && members.map((member: string) => {
@@ -97,7 +95,13 @@ function App() {
 
     return (
         <div className="App">
-            Name <input value={id ? dataObject.get(id) : ''} type="text" autoComplete="off" onChange={(e) => id && dataObject.set(id, e.target.value)} />
+            Name
+            <input
+                value={id ? dataObject.get(id) : ''}
+                type="text"
+                autoComplete="off"
+                onChange={(e) => id && dataObject.set(id, e.target.value)}
+            />
             <div>
                 <button onClick={() => {
                     dataObject.set("time", Date.now().toString())
