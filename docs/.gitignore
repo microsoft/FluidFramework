@@ -1,6 +1,6 @@
 assets/doc-models/*.json
 bin/
-content/apis/
+content/docs/apis/
 node_modules/
 public/
 scripts/api-documenter/temp

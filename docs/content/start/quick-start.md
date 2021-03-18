@@ -2,6 +2,8 @@
 title: Quick Start
 menuPosition: 2
 codeCopyButton: true
+aliases:
+  - "/docs/get-started/quick-start/"
 ---
 
 In this Quick Start we will be getting a dice roller Fluid application up and running on your computer's
@@ -68,7 +70,7 @@ that the state of the dice changes in both clients.
 Start learning how to work with the Fluid Framework APIs with our [tutorial](./tutorial.md).
 
 Or, if you would like to start a new Fluid project from scratch, the available packages
-are labeled in the [Fluid API Section](https://fluidframework.com/apis/) of the documentation.
+are labeled in the [Fluid API Section]({{< relref "/docs/apis/_index.md" >}}) of the documentation.
 
 To install your packages you can follow this format: `npm i package-name` if you use [npm](https://docs.npmjs.com/) or
 `yarn add package-name` if you use [yarn](https://yarnpkg.com/).
