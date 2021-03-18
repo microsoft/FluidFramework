@@ -7,9 +7,9 @@ import { EventEmitter } from "events";
 import { IEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { ProtocolOpHandler, Quorum } from "@fluidframework/protocol-base";
-import { ConnectionMode } from "@fluidframework/protocol-definitions";
+import { ConnectionMode, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
-import { connectEventName, ConnectionState, ILocalSequencedClient } from "./container";
+import { connectEventName, ConnectionState } from "./container";
 
 export interface IConnectionStateHandler {
     protocolHandler: () => ProtocolOpHandler | undefined,
@@ -17,6 +17,10 @@ export interface IConnectionStateHandler {
         (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
     propagateConnectionState: () => void,
     isContainerLoaded: () => boolean,
+}
+
+export interface ILocalSequencedClient extends ISequencedClient {
+    shouldHaveLeft?: boolean;
 }
 
 /**

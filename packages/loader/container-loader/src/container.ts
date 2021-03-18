@@ -96,17 +96,13 @@ import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
 import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
-import { ConnectionStateHandler } from "./connectionStateHandler";
+import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 
 const detachedContainerRefSeqNumber = 0;
 
 export const connectEventName = "connect";
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
-
-export interface ILocalSequencedClient extends ISequencedClient {
-    shouldHaveLeft?: boolean;
-}
 
 export interface IContainerLoadOptions {
     /**
