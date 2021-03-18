@@ -67,6 +67,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         super();
     }
 
+    // This is true when this client submitted any ops.
     public setDirtyState() {
         this.isDirty = true;
     }
@@ -182,7 +183,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             // don't want to reset the promise as we still want to wait on original client which created this promise.
             // We also check the dirty state of this connection as we only want to wait for the client leave of the
             // client which created the ops. This helps with situation where a client disconnects immediately after
-            // getting connected without sending any ops. In that case, we would join as write because there would be
+            // getting connected without sending any ops. In this case, we would join as write because there would be
             // a diff between client seq number and clientSeqNumberObserved but then we don't want to wait for newly
             // disconnected client to leave as it has not sent any ops yet.
             if (this.handler.shouldClientJoinWrite()
