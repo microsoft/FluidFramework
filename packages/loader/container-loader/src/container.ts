@@ -9,7 +9,7 @@ import { v4 as uuid } from "uuid";
 import {
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
-import { assert, Deferred, performance } from "@fluidframework/common-utils";
+import { assert, performance } from "@fluidframework/common-utils";
 import {
     IRequest,
     IResponse,

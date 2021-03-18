@@ -7,8 +7,9 @@ import { EventEmitter } from "events";
 import { IEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { ProtocolOpHandler, Quorum } from "@fluidframework/protocol-base";
-import { ConnectionMode, ISequencedClient } from "@fluidframework/protocol-definitions";
-import { EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
+import { ConnectionMode, IClient, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { EventEmitterWithErrorHandling, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import { connectEventName, ConnectionState } from "./container";
 
 export interface IConnectionStateHandler {
@@ -17,6 +18,9 @@ export interface IConnectionStateHandler {
         (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
     propagateConnectionState: () => void,
     isContainerLoaded: () => boolean,
+    client: () => IClient,
+    shouldClientJoinWrite: () => boolean,
+    maxClientLeaveWaitTime: number | undefined,
 }
 
 export interface ILocalSequencedClient extends ISequencedClient {
@@ -37,6 +41,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     private _connectionState = ConnectionState.Disconnected;
     private _pendingClientId: string | undefined;
     private _clientId: string | undefined;
+    private prevClientLeftP: Deferred<boolean> | undefined;
 
     public get connectionState(): ConnectionState {
         return this._connectionState;
@@ -64,7 +69,31 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     public receivedAddMemberEvent(clientId: string, quorum: Quorum) {
         // This is the only one that requires the pending client ID
         if (clientId === this.pendingClientId) {
-            this.setConnectionState(ConnectionState.Connected);
+            // Wait for previous client to leave the quorum before firing "connected" event.
+            if (this.prevClientLeftP) {
+                const event = PerformanceEvent.start(this.logger, { eventName: "ConnectedAfterWait" });
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                this.prevClientLeftP.promise.then((leaveReceived: boolean) => {
+                    event.end({
+                        timeout: !leaveReceived,
+                        hadOutstandingOps: this.handler.shouldClientJoinWrite(),
+                    });
+                    if (clientId === this.pendingClientId) {
+                        this.setConnectionState(ConnectionState.Connected);
+                    }
+                });
+            } else {
+                this.setConnectionState(ConnectionState.Connected);
+            }
+        }
+    }
+
+    public receivedRemoveMemberEvent(clientId: string) {
+        // If the client which has left was us, then resolve the def. promise.
+        if (this.clientId === clientId) {
+            this.prevClientLeftP?.resolve(true);
+            // Set it to undefined as the desired client has left we don't want to wait for it anymore.
+            this.prevClientLeftP = undefined;
         }
     }
 
@@ -132,6 +161,20 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         } else if (value === ConnectionState.Disconnected) {
             // Important as we process our own joinSession message through delta request
             this._pendingClientId = undefined;
+            // Only wait for "leave" message if we have some outstanding ops and the client was write client as
+            // server would not accept ops from read client. Also check if the promise is not already set as we
+            // could receive "Disconnected" event multiple times without getting connected.
+            if (this.handler.shouldClientJoinWrite()
+                && this.handler.client().mode === "write"
+                && this.prevClientLeftP === undefined
+            ) {
+                this.prevClientLeftP = new Deferred();
+                // Default is 90 sec for which we are going to wait for its own "leave" message.
+                setTimeout(() => {
+                    this.prevClientLeftP?.resolve(false);
+                    this.prevClientLeftP = undefined;
+                }, this.handler.maxClientLeaveWaitTime ?? 90000);
+            }
         }
 
         if (this.handler.isContainerLoaded()) {
