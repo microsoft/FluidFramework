@@ -270,7 +270,7 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
             });
 
             it("Controlled inbounds and outbounds", async function() {
-                if (getFluidTestDriver().type !== "local") {
+                if (provider.driver.type !== "local") {
                     this.skip();
                 }
                 opProcessingController = new OpProcessingController();
