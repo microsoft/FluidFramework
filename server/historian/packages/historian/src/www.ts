@@ -5,6 +5,7 @@
 
 import * as path from "path";
 import * as nconf from "nconf";
+import * as winston from "winston";
 import { runService } from "@fluidframework/server-services-utils";
 import { HistorianResourcesFactory, HistorianRunnerFactory } from "@fluidframework/historian-base";
 
@@ -13,5 +14,6 @@ const config = nconf.argv().env({ separator: "__", parseValues: true }).file(con
 runService(
     new HistorianResourcesFactory(),
     new HistorianRunnerFactory(),
+    winston,
     "historian",
     config);

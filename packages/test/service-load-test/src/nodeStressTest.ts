@@ -13,6 +13,7 @@ import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { ITestDriver, TestDriverTypes, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import { createFluidTestDriver } from "@fluidframework/test-drivers";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ITestConfig, ILoadTestConfig } from "./testConfigFile";
 import { IRunConfig, fluidExport, ILoadTest } from "./loadTestDataStore";
@@ -32,13 +33,14 @@ const codeDetails: IFluidCodeDetails = {
 
 const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 
-function createLoader(testDriver: ITestDriver) {
+function createLoader(testDriver: ITestDriver, runId?: number) {
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
         codeLoader,
-        logger,
+        logger: ChildLogger.create(logger, undefined, {all: {buildId: process.env.BUILD_BUILDID,
+            runId }}),
     });
     return loader;
 }
@@ -58,8 +60,8 @@ async function initialize(testDriver: ITestDriver) {
     return testId;
 }
 
-async function load(testDriver: ITestDriver, testId: string) {
-    const loader = createLoader(testDriver);
+async function load(testDriver: ITestDriver, testId: string, runId: number) {
+    const loader = createLoader(testDriver, runId);
     const url =  await testDriver.createContainerUrl(testId);
     const container = await loader.resolve({ url });
     return requestFluidObject<ILoadTest>(container,"/");
@@ -157,7 +159,7 @@ async function runnerProcess(
 
         const testDriver = await createTestDriver(driver);
 
-        const stressTest = await load(testDriver, testId);
+        const stressTest = await load(testDriver, testId, runId);
         await stressTest.run(runConfig);
         console.log(`${runId.toString().padStart(3)}> exit`);
         return 0;
