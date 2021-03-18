@@ -101,9 +101,10 @@ class LoadTestDataStoreModel {
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly taskManager: ITaskManager,
         private readonly dir: IDirectory,
-        public readonly counter: ISharedCounter) {
-            this.taskId = `op_sender${Math.floor(config.runId / 2)}`;
-        }
+        public readonly counter: ISharedCounter,
+    ) {
+        this.taskId = `op_sender${Math.floor(config.runId / 2)}`;
+    }
 
     public get startTime(): number {
         return this.dir.get<number>("startTime") ?? 0;
