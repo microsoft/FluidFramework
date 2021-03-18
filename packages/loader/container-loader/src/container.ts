@@ -1397,11 +1397,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     const event = PerformanceEvent.start(this.logger, { eventName: "ConnectedAfterWait" });
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     this.prevClientLeftP.promise.then((leaveReceived: boolean) => {
+                        // Set it to undefined as the desired client has left or timeout has occured and we don't
+                        // want to wait for it anymore.
+                        this.prevClientLeftP = undefined;
                         event.end({
                             timeout: !leaveReceived,
                             hadOutstandingOps: this._deltaManager.shouldJoinWrite(),
                         });
-                        this.setConnectionState(ConnectionState.Connected);
+                        if (clientId === this.pendingClientId) {
+                            this.setConnectionState(ConnectionState.Connected);
+                        }
                     });
                 } else {
                     this.setConnectionState(ConnectionState.Connected);
