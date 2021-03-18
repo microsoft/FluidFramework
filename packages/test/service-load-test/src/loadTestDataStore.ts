@@ -57,7 +57,7 @@ class LoadTestDataStoreModel {
         }
         const runDir = root.getSubDirectory(config.runId.toString());
         if(runDir === undefined) {
-            throw new Error("runDir not available");
+            throw new Error(`runDir for runId ${config.runId} not available`);
         }
 
         if(!runDir.has("counter")) {
