@@ -154,6 +154,7 @@ export class MockContainerRuntime {
 
     public process(message: ISequencedDocumentMessage) {
         this.deltaManager.lastSequenceNumber = message.sequenceNumber;
+        this.deltaManager.lastMessage = message;
         this.deltaManager.minimumSequenceNumber = message.minimumSequenceNumber;
         const [local, localOpMetadata] = this.processInternal(message);
         this.deltaConnections.forEach((dc) => {
