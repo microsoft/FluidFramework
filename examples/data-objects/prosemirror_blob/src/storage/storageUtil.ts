@@ -51,7 +51,7 @@ export class StorageUtil implements IStorageUtil {
         if (webView) {
             sasUrl = ""
         }
-        const azureStorage = new AzureBlobStorage("", sasUrl)
+        const azureStorage = new AzureBlobStorage(" **Enter azure blob storage connection String** ", sasUrl)
         //const data = await azureStorage.getBlockBlob("samples", "sampletext.txt");
         //console.log(data);
         return azureStorage;
