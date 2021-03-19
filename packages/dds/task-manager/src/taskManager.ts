@@ -236,8 +236,8 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     public async lockTask(taskId: string) {
-        // If we have the lock and don't anticipate that changing due to pending ops, resolve immediately
-        if (this.haveTaskLock(taskId) && this.latestPendingOps.get(taskId) === undefined) {
+        // If we have the lock, resolve immediately
+        if (this.haveTaskLock(taskId)) {
             return;
         }
 
@@ -297,7 +297,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         const currentAssignee = this.taskQueues.get(taskId)?.[0];
         return currentAssignee !== undefined
             && currentAssignee === this.runtime.clientId
-            && this.latestPendingOps.get(taskId) === undefined;
+            && !this.latestPendingOps.has(taskId);
     }
 
     public queued(taskId: string) {
@@ -307,7 +307,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         return (
                 clientQueue !== undefined
                 && clientQueue.includes(this.runtime.clientId)
-                && this.latestPendingOps.get(taskId) === undefined
+                && !this.latestPendingOps.has(taskId)
             )
             || this.latestPendingOps.get(taskId)?.type === "volunteer";
     }
