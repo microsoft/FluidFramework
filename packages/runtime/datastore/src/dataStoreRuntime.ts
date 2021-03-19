@@ -566,15 +566,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.emit("op", message);
         } catch (error) {
             // eslint-disable-next-line @typescript-eslint/no-throw-literal
-            throw CreateProcessingError(error, {
-                clientId: this.clientId,
-                messageClientId: message.clientId,
-                sequenceNumber: message.sequenceNumber,
-                clientSequenceNumber: message.clientSequenceNumber,
-                referenceSequenceNumber: message.referenceSequenceNumber,
-                minimumSequenceNumber: message.minimumSequenceNumber,
-                messageTimestamp: message.timestamp,
-            });
+            throw CreateProcessingError(error, message);
         }
     }
 
