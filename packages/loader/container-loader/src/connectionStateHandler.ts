@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { IEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
-import { ProtocolOpHandler, Quorum } from "@fluidframework/protocol-base";
+import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { ConnectionMode, IClient, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { EventEmitterWithErrorHandling, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, Timer } from "@fluidframework/common-utils";
@@ -76,7 +75,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         this.isDirty = true;
     }
 
-    public receivedAddMemberEvent(clientId: string, quorum: Quorum) {
+    public receivedAddMemberEvent(clientId: string) {
         // This is the only one that requires the pending client ID
         if (clientId === this.pendingClientId) {
             // Wait for previous client to leave the quorum before firing "connected" event.
@@ -118,7 +117,6 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     }
 
     public receivedConnectEvent(
-        emitter: EventEmitter,
         connectionMode: ConnectionMode,
         details: IConnectionDetails,
         opsBehind?: number,
@@ -163,7 +161,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
 
         const oldState = this._connectionState;
         this._connectionState = value;
-        // Set it to undefined as now there is not client waiting to get connected.
+        // Set it to undefined as now there is no client waiting to get connected.
         this.waitingClientId = undefined;
         if (value === ConnectionState.Connected) {
             // Mark our old client should have left in the quorum if it's still there
@@ -186,9 +184,9 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             // don't want to reset the timer as we still want to wait on original client which started this timer.
             // We also check the dirty state of this connection as we only want to wait for the client leave of the
             // client which created the ops. This helps with situation where a client disconnects immediately after
-            // getting connected without sending any ops. In this case, we would join as write because there would be
-            // a diff between client seq number and clientSeqNumberObserved but then we don't want to wait for newly
-            // disconnected client to leave as it has not sent any ops yet.
+            // getting connected without sending any ops(from previous client). In this case, we would join as write
+            // because there would be a diff between client seq number and clientSeqNumberObserved but then we don't
+            // want to wait for newly disconnected client to leave as it has not sent any ops yet.
             if (this.handler.shouldClientJoinWrite()
                 && this.handler.client().mode === "write"
                 && (this.prevClientLeftTimer === undefined || this.prevClientLeftTimer.hasTimer === false)

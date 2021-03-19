@@ -1400,7 +1400,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Track membership changes and update connection state accordingly
         protocol.quorum.on("addMember", (clientId, details) => {
-            this.connectionStateHandler.receivedAddMemberEvent(clientId, this.protocolHandler.quorum);
+            this.connectionStateHandler.receivedAddMemberEvent(clientId);
         });
 
         protocol.quorum.on("removeMember", (clientId) => {
@@ -1523,7 +1523,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         deltaManager.on(connectEventName, (details: IConnectionDetails, opsBehind?: number) => {
             this.connectionStateHandler.receivedConnectEvent(
-                this,
                 this._deltaManager.connectionMode,
                 details,
                 opsBehind,
