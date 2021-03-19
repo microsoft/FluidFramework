@@ -713,8 +713,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // a new clientId and a future container using stale pending state without the new clientId would resubmit them
         this._deltaManager.close();
 
-        assert(this.attachState === AttachState.Attached);
-        assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid");
+        assert(this.attachState === AttachState.Attached, "Container should be attached before close");
+        assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
+            "resolved url should be valid fluid url");
         const pendingState: IPendingLocalState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
