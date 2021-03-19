@@ -65,7 +65,10 @@ that the state of the dice changes in both clients.
 
 ## Next Steps
 
-Start learning how to work with the Fluid Framework APIs with our [tutorial](./tutorial.md).
+Start learning how to work with the Fluid Framework APIs with one of our tutorials:
+
+- [Create a Fluid Framework application](./tutorial.md)
+- [Create a Fluid Framework application with React](./react-tutorial.md)
 
 Or, if you would like to start a new Fluid project from scratch, the available packages
 are labeled in the [Fluid API Section](https://fluidframework.com/apis/) of the documentation.

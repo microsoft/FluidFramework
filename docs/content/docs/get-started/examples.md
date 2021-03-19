@@ -1,6 +1,6 @@
 ---
 title: Examples
-menuPosition: 4
+menuPosition: 5
 ---
 
 We've included several example apps in a [GitHub repository](https://github.com/microsoft/FluidExamples) to demonstrate
