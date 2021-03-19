@@ -6,9 +6,11 @@
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
-interface IFluidDataStoreAttributes1 {
+type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
+interface IFluidDataStoreAttributes0 {
+    readonly snapshotFormatVersion?: undefined;
+    readonly summaryFormatVersion?: undefined;
     pkg: string;
-    readonly snapshotFormatVersion?: "0.1";
     /**
      * This tells whether a data store is root. Root data stores are never collected.
      * Non-root data stores may be collected if they are not used. If this is not present, default it to
@@ -16,10 +18,20 @@ interface IFluidDataStoreAttributes1 {
      */
     readonly isRootDataStore?: boolean;
 }
-interface IFluidDataStoreAttributes2 extends IFluidDataStoreAttributes1 {
+interface IFluidDataStoreAttributes1 extends OmitAttributesVersions<IFluidDataStoreAttributes0> {
+    readonly snapshotFormatVersion: "0.1";
+    readonly summaryFormatVersion?: undefined;
+}
+interface IFluidDataStoreAttributes2 extends OmitAttributesVersions<IFluidDataStoreAttributes1> {
+    /** Switch from snapshotFormatVersion to summaryFormatVersion */
     readonly snapshotFormatVersion?: undefined;
     readonly summaryFormatVersion: 2;
-    /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
+    /**
+     * True if channels are not isolated in .channels subtrees, otherwise isolated.
+     * This is required in both datastore attributes as well as the root container,
+     * because reused summary handles may cause different format versions in each
+     * datastore subtree within the summary.
+     */
     readonly disableIsolatedChannels?: true;
 }
 /**
@@ -27,11 +39,14 @@ interface IFluidDataStoreAttributes2 extends IFluidDataStoreAttributes1 {
  * store like the package, snapshotFormatVersion to take different decisions based on a particular
  * snapshotFormatVersion.
  */
-export type ReadFluidDataStoreAttributes = IFluidDataStoreAttributes1 | IFluidDataStoreAttributes2;
-export type WriteFluidDataStoreAttributes = IFluidDataStoreAttributes2;
+export type ReadFluidDataStoreAttributes =
+    | IFluidDataStoreAttributes0
+    | IFluidDataStoreAttributes1
+    | IFluidDataStoreAttributes2;
+export type WriteFluidDataStoreAttributes = IFluidDataStoreAttributes1 | IFluidDataStoreAttributes2;
 
 export function getAttributesFormatVersion(attributes: ReadFluidDataStoreAttributes): number {
-    if ("summaryFormatVersion" in attributes && attributes.summaryFormatVersion !== undefined) {
+    if (attributes.summaryFormatVersion) {
         /**
          * Version 2+: Introduces .channels trees for isolation of
          * channel trees from data store objects.
@@ -51,12 +66,9 @@ export function getAttributesFormatVersion(attributes: ReadFluidDataStoreAttribu
     return 0;
 }
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): boolean {
-    const version = getAttributesFormatVersion(attributes);
-    if (version < 2) {
-        return false;
-    }
-    return !("disableIsolatedChannels" in attributes && attributes.disableIsolatedChannels);
+    return !!attributes.summaryFormatVersion && !attributes.disableIsolatedChannels;
 }
 
 export interface IContainerRuntimeMetadata {
@@ -81,12 +93,9 @@ export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
 export const blobsTreeName = ".blobs";
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function rootHasIsolatedChannels(metadata: IContainerRuntimeMetadata | undefined): boolean {
-    const version = getMetadataFormatVersion(metadata);
-    if (version < 1) {
-        return false;
-    }
-    return !(metadata && "disableIsolatedChannels" in metadata && metadata.disableIsolatedChannels);
+    return !!metadata && !metadata.disableIsolatedChannels;
 }
 
 export const protocolTreeName = ".protocol";

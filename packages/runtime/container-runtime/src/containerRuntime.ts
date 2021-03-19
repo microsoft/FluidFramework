@@ -1006,17 +1006,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public async snapshot(): Promise<ITree> {
         const root: ITree = { entries: [] };
+        const entries = await this.dataStores.snapshot();
 
         if (this.disableIsolatedChannels) {
-            root.entries = root.entries.concat(await this.dataStores.snapshot());
+            root.entries = root.entries.concat(entries);
         } else {
-            root.entries.push(new TreeTreeEntry(
-                channelsTreeName,
-                { entries: await this.dataStores.snapshot() },
-            ));
+            root.entries.push(new TreeTreeEntry(channelsTreeName, { entries }));
+            root.entries.push(new BlobTreeEntry(metadataBlobName, JSON.stringify(this.formMetadata())));
         }
-
-        root.entries.push(new BlobTreeEntry(metadataBlobName, JSON.stringify(this.formMetadata())));
 
         if (this.chunkMap.size > 0) {
             root.entries.push(new BlobTreeEntry(chunksBlobName, JSON.stringify([...this.chunkMap])));
@@ -1026,7 +1023,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {
-        addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
+        if (!this.disableIsolatedChannels) {
+            addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
+        }
         if (this.chunkMap.size > 0) {
             const content = JSON.stringify([...this.chunkMap]);
             addBlobToSummary(summaryTree, chunksBlobName, content);

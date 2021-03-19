@@ -76,11 +76,14 @@ function createAttributes(
     disableIsolatedChannels: boolean,
 ): WriteFluidDataStoreAttributes {
     const stringifiedPkg = JSON.stringify(pkg);
-    return {
+    return disableIsolatedChannels ? {
+        pkg: stringifiedPkg,
+        snapshotFormatVersion: "0.1",
+        isRootDataStore,
+    } : {
         pkg: stringifiedPkg,
         summaryFormatVersion: 2,
         isRootDataStore,
-        disableIsolatedChannels: disableIsolatedChannels || undefined,
     };
 }
 export function createAttributesBlob(
