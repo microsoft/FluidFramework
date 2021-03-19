@@ -78,7 +78,9 @@ export class RelativeLoader extends EventEmitter implements ILoader {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        assert(request.url.startsWith("/"));
+        if (!request.url.startsWith("/")) {
+            return { status: 404, mimeType: "text/plain", value: "nonrelative url disallowed" };
+        };
 
         const containerUrl = this.containerUrl();
         let container: IContainer;
