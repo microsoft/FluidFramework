@@ -42,8 +42,7 @@ export async function createLoader(testDriver: ITestDriver, runId: number | unde
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
         codeLoader,
-        logger: ChildLogger.create(await loggerP, undefined, {all: {buildId: process.env.BUILD_BUILDID,
-            runId }}),
+        logger: ChildLogger.create(await loggerP, undefined, {all: { runId }}),
     });
     return loader;
 }

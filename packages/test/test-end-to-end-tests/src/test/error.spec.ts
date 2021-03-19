@@ -74,7 +74,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
             urlResolver,
             documentServiceFactory: mockFactory,
             codeLoader,
-            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { testDriverType: provider.driver.type } }),
+            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver.type } }),
         });
         loaderContainerTracker.add(loader);
 

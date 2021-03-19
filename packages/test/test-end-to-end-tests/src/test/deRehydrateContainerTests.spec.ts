@@ -84,7 +84,7 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             urlResolver: provider.urlResolver,
             documentServiceFactory,
             codeLoader,
-            logger: ChildLogger.create(getTestLogger?.(), undefined, {all: {testDriverType: provider.driver.type}}),
+            logger: ChildLogger.create(getTestLogger?.(), undefined, {all: {driverType: provider.driver.type}}),
         });
         loaderContainerTracker.add(testLoader);
         return testLoader;

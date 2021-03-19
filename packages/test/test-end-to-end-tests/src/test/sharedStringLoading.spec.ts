@@ -37,7 +37,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
         const text = "hello world";
         const documentId = createDocumentId();
         const provider = getTestObjectProvider();
-        const logger = ChildLogger.create(getTestLogger?.(), undefined, {all: {testDriverType: provider.driver.type}});
+        const logger = ChildLogger.create(getTestLogger?.(), undefined, {all: {driverType: provider.driver.type}});
 
         { // creating client
             const codeDetails = { package: "no-dynamic-pkg" };
@@ -142,7 +142,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
         const text = "hello world";
         const documentId = createDocumentId();
         const provider = getTestObjectProvider();
-        const logger = ChildLogger.create(getTestLogger?.(), undefined, {all: {testDriverType: provider.driver.type}});
+        const logger = ChildLogger.create(getTestLogger?.(), undefined, {all: {driverType: provider.driver.type}});
 
         let initialText = "";
         { // creating client

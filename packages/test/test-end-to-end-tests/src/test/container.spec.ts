@@ -53,7 +53,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     async function loadContainer(props?: Partial<ILoaderProps>) {
         const loader = new Loader({
             ...props,
-            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { testDriverType: provider.driver.type } }),
+            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver.type } }),
             urlResolver: props?.urlResolver ?? provider.urlResolver,
             documentServiceFactory:
                 props?.documentServiceFactory ?? provider.documentServiceFactory,

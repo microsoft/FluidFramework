@@ -54,7 +54,7 @@ describeNoCompat("UpgradeManager (hot-swap)", (getTestObjectProvider) => {
             documentServiceFactory: provider.documentServiceFactory,
             codeLoader,
             options: { hotSwapContext: true },
-            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { testDriverType: provider.driver.type } }),
+            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver.type } }),
         });
 
         return createAndAttachContainer(
@@ -69,7 +69,7 @@ describeNoCompat("UpgradeManager (hot-swap)", (getTestObjectProvider) => {
             documentServiceFactory: provider.documentServiceFactory,
             codeLoader,
             options: { hotSwapContext: true },
-            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { testDriverType: provider.driver.type } }),
+            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver.type } }),
         });
 
         return loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
