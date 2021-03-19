@@ -31,16 +31,18 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 // We have to first ship with this gate off, such that we can get to saturation bits
 // that can understand compressed format. And only after that flip it.
 function gatesAllowPacking() {
-    // Leave override for testing purposes
-    // eslint-disable-next-line no-null/no-null
-    if (typeof localStorage === "object" && localStorage !== null) {
-        if  (localStorage.FluidAggregateBlobs === "1") {
-            return true;
+    try {
+        // Leave override for testing purposes
+        // eslint-disable-next-line no-null/no-null
+        if (typeof localStorage === "object" && localStorage !== null) {
+            if  (localStorage.FluidAggregateBlobs === "1") {
+                return true;
+            }
+            if  (localStorage.FluidAggregateBlobs === "0") {
+                return false;
+            }
         }
-        if  (localStorage.FluidAggregateBlobs === "0") {
-            return false;
-        }
-    }
+    } catch (e) {}
 
     // We are starting disabled.
     return false;
