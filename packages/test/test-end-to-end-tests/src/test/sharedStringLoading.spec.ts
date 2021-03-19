@@ -36,7 +36,7 @@ describe("SharedString", () => {
         const text = "hello world";
         const documentId = createDocumentId();
         const driver = getFluidTestDriver();
-        const logger = ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}});
+        const logger = ChildLogger.create(getTestLogger(), undefined, {all: {driverType: driver.type}});
 
         { // creating client
             const codeDetails = { package: "no-dynamic-pkg" };
@@ -141,7 +141,7 @@ describe("SharedString", () => {
         const text = "hello world";
         const documentId = createDocumentId();
         const driver = getFluidTestDriver();
-        const logger = ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}});
+        const logger = ChildLogger.create(getTestLogger(), undefined, {all: {driverType: driver.type}});
 
         let initialText = "";
         { // creating client
