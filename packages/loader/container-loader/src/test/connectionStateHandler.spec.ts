@@ -77,7 +77,6 @@ describe("ConnectionStateHandler Tests", () => {
                 maxClientLeaveWaitTime: expectedTimeout,
                 protocolHandler: () => protocolHandler,
                 shouldClientJoinWrite: () => shouldClientJoinWrite,
-                client: () => client,
             },
             new TelemetryNullLogger(),
         );
@@ -115,8 +114,8 @@ describe("ConnectionStateHandler Tests", () => {
 
         // Mock as though the client sent some ops.
         shouldClientJoinWrite = true;
-        connectionStateHandler.setDirtyState();
         client.mode = "write";
+        connectionStateHandler.clientSentOps(client.mode);
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -144,8 +143,8 @@ describe("ConnectionStateHandler Tests", () => {
 
         // Mock as though the client sent some ops.
         shouldClientJoinWrite = true;
-        connectionStateHandler.setDirtyState();
         client.mode = "write";
+        connectionStateHandler.clientSentOps(client.mode);
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -179,8 +178,8 @@ describe("ConnectionStateHandler Tests", () => {
 
         // Mock as though the client sent some ops.
         shouldClientJoinWrite = true;
-        connectionStateHandler.setDirtyState();
         client.mode = "write";
+        connectionStateHandler.clientSentOps(client.mode);
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -225,8 +224,8 @@ describe("ConnectionStateHandler Tests", () => {
 
         // Mock as though the client sent some ops.
         shouldClientJoinWrite = true;
-        connectionStateHandler.setDirtyState();
         client.mode = "write";
+        connectionStateHandler.clientSentOps(client.mode);
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -277,8 +276,8 @@ describe("ConnectionStateHandler Tests", () => {
 
         // Mock as though the client sent some ops.
         shouldClientJoinWrite = true;
-        connectionStateHandler.setDirtyState();
         client.mode = "write";
+        connectionStateHandler.clientSentOps(client.mode);
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -326,8 +325,8 @@ describe("ConnectionStateHandler Tests", () => {
 
         // Mock as though the client sent some ops.
         shouldClientJoinWrite = true;
-        connectionStateHandler.setDirtyState();
         client.mode = "write";
+        connectionStateHandler.clientSentOps(client.mode);
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -380,8 +379,8 @@ describe("ConnectionStateHandler Tests", () => {
 
         // Mock as though the client sent some ops.
         shouldClientJoinWrite = true;
-        connectionStateHandler.setDirtyState();
         client.mode = "write";
+        connectionStateHandler.clientSentOps(client.mode);
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,

@@ -6,7 +6,7 @@
 import { IEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
-import { ConnectionMode, IClient, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { ConnectionMode, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { EventEmitterWithErrorHandling, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { connectEventName, ConnectionState } from "./container";
@@ -17,7 +17,6 @@ export interface IConnectionStateHandler {
         (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
     propagateConnectionState: () => void,
     isContainerLoaded: () => boolean,
-    client: () => IClient,
     shouldClientJoinWrite: () => boolean,
     maxClientLeaveWaitTime: number | undefined,
 }
@@ -40,12 +39,13 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     private _connectionState = ConnectionState.Disconnected;
     private _pendingClientId: string | undefined;
     private _clientId: string | undefined;
-    private prevClientLeftTimer: Timer;
+    private readonly prevClientLeftTimer: Timer;
     // This is client id of client for which we have received the addMember event but we are waiting on some previous
     // client to leave before moving to Connected state.
     private waitingClientId: string | undefined;
     private waitEvent: PerformanceEvent | undefined;
     private _clientSentOps: boolean = false;
+    private clientConnectionMode: ConnectionMode | undefined;
 
     public get connectionState(): ConnectionState {
         return this._connectionState;
@@ -78,8 +78,9 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     }
 
     // This is true when this client submitted any ops.
-    public clientSentOps() {
+    public clientSentOps(connectionMode: ConnectionMode) {
         this._clientSentOps = true;
+        this.clientConnectionMode = connectionMode;
     }
 
     public receivedAddMemberEvent(clientId: string) {
@@ -196,7 +197,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             // because there would be a diff between client seq number and clientSeqNumberObserved but then we don't
             // want to wait for newly disconnected client to leave as it has not sent any ops yet.
             if (this.handler.shouldClientJoinWrite()
-                && this.handler.client().mode === "write"
+                && this.clientConnectionMode === "write"
                 && this.prevClientLeftTimer.hasTimer === false
                 && this._clientSentOps
             ) {

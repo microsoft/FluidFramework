@@ -600,7 +600,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
                 propagateConnectionState: () => this.propagateConnectionState(),
                 isContainerLoaded: () => this.loaded,
-                client: () => this.client,
                 shouldClientJoinWrite: () => this._deltaManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
             },
@@ -1537,7 +1536,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         deltaManager.once("submitOp", (message: IDocumentMessage) => {
-            this.connectionStateHandler.clientSentOps();
+            this.connectionStateHandler.clientSentOps(this._deltaManager.connectionMode);
         });
 
         deltaManager.on("disconnect", (reason: string) => {
