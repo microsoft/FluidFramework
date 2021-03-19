@@ -82,6 +82,7 @@ export function create(
     server: http.Server,
     socketIoAdapterConfig?: any): core.IWebSocketServer {
     const options: Redis.RedisOptions = {
+        host: redisConfig.host,
         port: redisConfig.port,
         password: redisConfig.pass,
     };

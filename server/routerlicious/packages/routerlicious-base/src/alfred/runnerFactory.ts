@@ -129,6 +129,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         // Redis connection for client manager.
         const redisConfig2 = config.get("redis2");
         const redisOptions2: Redis.RedisOptions = {
+            host: redisConfig2.host,
             port: redisConfig2.port,
             password: redisConfig2.pass,
         };
@@ -177,6 +178,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         // Redis connection for throttling.
         const redisConfigForThrottling = config.get("redisForThrottling");
         const redisOptionsForThrottling: Redis.RedisOptions = {
+            host: redisConfigForThrottling.host,
             port: redisConfigForThrottling.port,
             password: redisConfigForThrottling.pass,
         };
