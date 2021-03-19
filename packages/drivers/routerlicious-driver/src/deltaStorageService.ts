@@ -79,7 +79,8 @@ export class DeltaStorageService implements IDeltaStorageService {
             this.logger,
             {
                 eventName: "getDeltas",
-                range: `${from}..${to}`,
+                from,
+                to,
             },
             async (event) => {
                 const response = await ordererRestWrapper.get<ISequencedDocumentMessage[]>(this.url, { from, to });
