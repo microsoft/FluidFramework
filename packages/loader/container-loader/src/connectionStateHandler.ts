@@ -40,9 +40,9 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     private _pendingClientId: string | undefined;
     private _clientId: string | undefined;
     private readonly prevClientLeftTimer: Timer;
-    // This is client id of client for which we have received the addMember event but we are waiting on some previous
-    // client to leave before moving to Connected state.
-    private waitingClientId: string | undefined;
+    // True if we received the leave. False if timed out. Undefined when
+    // starting the timer.
+    private leaveReceivedResult: boolean | undefined;
     private waitEvent: PerformanceEvent | undefined;
     private _clientSentOps: boolean = false;
     private clientConnectionMode: ConnectionMode | undefined;
@@ -72,7 +72,8 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             // Default is 90 sec for which we are going to wait for its own "leave" message.
             this.handler.maxClientLeaveWaitTime ?? 90000,
             () => {
-                this.clientLeaveWaitEnded(false);
+                this.leaveReceivedResult = false;
+                this.applyForConnectedState();
             },
         );
     }
@@ -86,28 +87,29 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     public receivedAddMemberEvent(clientId: string) {
         // This is the only one that requires the pending client ID
         if (clientId === this.pendingClientId) {
-            // Wait for previous client to leave the quorum before firing "connected" event.
+            // Start the event in case we are waiting for leave or timeout.
             if (this.prevClientLeftTimer.hasTimer) {
                 this.waitEvent = PerformanceEvent.start(this.logger, {
                     eventName: "WaitBeforeClientLeave",
                     waitOnClientId: this._clientId,
                     hadOutstandingOps: this.handler.shouldClientJoinWrite(),
                 });
-                this.waitingClientId = clientId;
-            } else {
-                this.setConnectionState(ConnectionState.Connected);
             }
+            this.applyForConnectedState();
         }
     }
 
-    private clientLeaveWaitEnded(leaveReceived: boolean) {
-        // Move to connected state only if there was a client waiting for client leave. It may happen that
-        // during wait, the waiting client again got Disconnected/Connecting and then we don't want to
-        // move to connected state here for a non waiting client.
-        if (this.waitingClientId !== undefined) {
-            assert(this.waitingClientId === this.pendingClientId, "Pending Client Id should match the waiting client");
-            assert(this.waitEvent !== undefined, "Wait event should be set");
-            this.waitEvent.end({ leaveReceived });
+    private applyForConnectedState() {
+        const protocolHandler = this.handler.protocolHandler();
+        // Move to connected state only if we are in Connecting state, we have seen our join op
+        // and there is no timer running which means we are not waiting for previous client to leave
+        // or timeout has occured while doing so.
+        if (this.pendingClientId !== this.clientId
+            && this.pendingClientId !== undefined
+            && protocolHandler !== undefined && protocolHandler.quorum.getMember(this.pendingClientId) !== undefined
+            && !this.prevClientLeftTimer.hasTimer
+        ) {
+            this.waitEvent?.end({ leaveReceived: this.leaveReceivedResult });
             this.setConnectionState(ConnectionState.Connected);
         }
     }
@@ -115,8 +117,9 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     public receivedRemoveMemberEvent(clientId: string) {
         // If the client which has left was us, then finish the timer.
         if (this.clientId === clientId) {
-            this.prevClientLeftTimer?.clear();
-            this.clientLeaveWaitEnded(true);
+            this.prevClientLeftTimer.clear();
+            this.leaveReceivedResult = true;
+            this.applyForConnectedState();
         }
     }
 
@@ -151,7 +154,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         // Given async processes, it's possible that we have already processed our own join message before
         // connection was fully established.
         // Note that we might be still initializing quorum - connection is established proactively on load!
-        if ((protocolHandler !== undefined && protocolHandler.quorum.has(details.clientId))
+        if ((protocolHandler !== undefined && protocolHandler.quorum.getMember(details.clientId) !== undefined)
             || connectionMode === "read"
         ) {
             this.setConnectionState(ConnectionState.Connected);
@@ -169,8 +172,6 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
 
         const oldState = this._connectionState;
         this._connectionState = value;
-        // Set it to undefined as now there is no client waiting to get connected.
-        this.waitingClientId = undefined;
         if (value === ConnectionState.Connected) {
             assert(oldState === ConnectionState.Connecting, "Should only transition from Connecting state");
             // Mark our old client should have left in the quorum if it's still there
@@ -201,6 +202,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
                 && this.prevClientLeftTimer.hasTimer === false
                 && this._clientSentOps
             ) {
+                this.leaveReceivedResult = undefined;
                 this.prevClientLeftTimer.restart();
             }
         }
