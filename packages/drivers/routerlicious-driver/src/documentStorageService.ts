@@ -96,11 +96,7 @@ export class DocumentStorageService implements IDocumentStorageService {
                 versionId: id,
                 count,
             },
-            async (event) => {
-                const response = await this.manager.getCommits(id, count);
-                event.end();
-                return response;
-            },
+            async () =>  this.manager.getCommits(id, count),
         );
         return commits.map((commit) => ({
             date: commit.commit.author.date,
@@ -126,11 +122,7 @@ export class DocumentStorageService implements IDocumentStorageService {
                 eventName: "write",
                 id: branch,
             },
-            async (event) => {
-                const response = await this.manager.write(branch, tree, parents, message);
-                event.end();
-                return response;
-            },
+            async () => this.manager.write(branch, tree, parents, message),
         );
         return { date: commit.committer.date, id: commit.sha, treeId: commit.tree.sha };
     }
@@ -149,11 +141,7 @@ export class DocumentStorageService implements IDocumentStorageService {
             {
                 eventName: "uploadSummaryWithContext",
             },
-            async (event) => {
-                const response = this.writeSummaryTree(summary, snapshot ?? undefined);
-                event.end();
-                return response;
-            },
+            async () => this.writeSummaryTree(summary, snapshot ?? undefined),
         );
     }
 
