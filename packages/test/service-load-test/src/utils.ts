@@ -12,20 +12,61 @@ import { createFluidTestDriver } from "@fluidframework/test-drivers";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { fluidExport, ILoadTest } from "./loadTestDataStore";
 import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
-const loggerP = new LazyPromise<ITelemetryBufferedLogger>(async ()=>{
+class FileLogger implements ITelemetryBufferedLogger {
+    private error: boolean = false;
+    private readonly schema = new Set<string>();
+    private  logs: ITelemetryBaseEvent[] = [];
+
+    public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {}
+
+    async flush(runInfo?: {testId: string,  runId?: number}): Promise<void> {
+        if(this.error && runInfo !== undefined) {
+            const logs = this.logs;
+            new Promise<void>((res)=>{
+                const path = `${__dirname}/output/${runInfo.testId}/`;
+                if(!fs.existsSync(path)) {
+                    fs.mkdirSync(path, {recursive: true});
+                }
+                const schema = [...this.schema];
+                fs.writeFileSync(
+                    `${path}/${runInfo.runId ?? "orchestrator"}_${Date.now()}.csv`,
+                    logs.reduce(
+                        (file, event)=> `${file}\n${schema.reduce((line,k)=>`${line}${event[k] ?? ""},`,"")}`,
+                        schema.join(",")));
+                res();
+            }).catch(()=>{});
+        }
+        this.error = false;
+        this.logs = [];
+        await this.baseLogger?.flush();
+    }
+    send(event: ITelemetryBaseEvent): void {
+        this.baseLogger?.send(event);
+
+        Object.keys(event).forEach((k)=>this.schema.add(k));
+        if(event.category === "error") {
+            this.error = true;
+        }
+        event.Event_Time = Date.now();
+        this.logs.push(event);
+    }
+}
+
+export const loggerP = new LazyPromise<FileLogger>(async ()=>{
     if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {
         await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
         const logger = getTestLogger();
         assert(logger !== undefined, "Expected getTestLogger to return something");
-        return logger;
+        return new FileLogger(logger);
     }else{
-        return { send: () => {}, flush: async () => {} };
+        return new FileLogger();
     }
 });
 
@@ -94,11 +135,11 @@ export function getProfile(profileArg: string) {
     return profile;
 }
 
-export async function safeExit(code: number) {
+export async function safeExit(code: number, testId: string, runId?: number) {
     // There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
     await(new Promise((res) => { setTimeout(res, 1000); }));
     // Flush the logs
-    await loggerP.then(async (l)=>l.flush());
+    await loggerP.then(async (l)=>l.flush({testId, runId}));
 
     process.exit(code);
 }
