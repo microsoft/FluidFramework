@@ -27,34 +27,34 @@ class FileLogger implements ITelemetryBufferedLogger {
     public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {}
 
     async flush(runInfo?: {testId: string,  runId?: number}): Promise<void> {
+        const baseFlushP =  this.baseLogger?.flush();
+
         if(this.error && runInfo !== undefined) {
             const logs = this.logs;
-            new Promise<void>((res)=>{
-                const path = `${__dirname}/output/${runInfo.testId}/`;
-                if(!fs.existsSync(path)) {
-                    fs.mkdirSync(path, {recursive: true});
-                }
-                const schema = [...this.schema];
-                fs.writeFileSync(
-                    `${path}/${runInfo.runId ?? "orchestrator"}_${Date.now()}.csv`,
-                    logs.reduce(
-                        (file, event)=> `${file}\n${schema.reduce((line,k)=>`${line}${event[k] ?? ""},`,"")}`,
-                        schema.join(",")));
-                res();
-            }).catch(()=>{});
+            const path = `${__dirname}/output/${runInfo.testId}/`;
+            if(!fs.existsSync(path)) {
+                fs.mkdirSync(path, {recursive: true});
+            }
+            const schema = [...this.schema];
+            fs.writeFileSync(
+                `${path}/${runInfo.runId ?? "orchestrator"}_${Date.now()}.csv`,
+                logs.reduce(
+                    (file, event)=> `${file}\n${schema.reduce((line,k)=>`${line}${event[k] ?? ""},`,"")}`,
+                    schema.join(",")));
         }
+
         this.error = false;
         this.logs = [];
-        await this.baseLogger?.flush();
+        return baseFlushP;
     }
     send(event: ITelemetryBaseEvent): void {
         this.baseLogger?.send(event);
 
+        event.Event_Time = Date.now();
         Object.keys(event).forEach((k)=>this.schema.add(k));
         if(event.category === "error") {
             this.error = true;
         }
-        event.Event_Time = Date.now();
         this.logs.push(event);
     }
 }
