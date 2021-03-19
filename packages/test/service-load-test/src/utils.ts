@@ -59,12 +59,11 @@ export async function initialize(testDriver: ITestDriver) {
     await container.attach(request);
     container.close();
 
-    return testId;
+    return testDriver.createContainerUrl(testId);
 }
 
-export async function load(testDriver: ITestDriver, testId: string, runId: number) {
+export async function load(testDriver: ITestDriver, url: string, runId: number) {
     const loader = await createLoader(testDriver, runId);
-    const url =  await testDriver.createContainerUrl(testId);
     const container = await loader.resolve({ url });
     return requestFluidObject<ILoadTest>(container,"/");
 }

@@ -49,10 +49,12 @@ async function orchestratorProcess(
     const testDriver = await createTestDriver(driver);
 
     // Create a new file if a testId wasn't provided
-    const testId = args.testId ?? await initialize(testDriver);
+    const url = args.testId !== undefined
+        ? await testDriver.createContainerUrl(args.testId)
+        : await initialize(testDriver);
 
     const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
-    console.log(`Connecting to ${args.testId ? "existing" : "new"} Container targeting with testId:\n${testId }`);
+    console.log(`Connecting to ${args.testId ? "existing" : "new"} Container targeting with url:\n${url }`);
     console.log(`Selected test profile: ${profile.name}`);
     console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
 
@@ -63,7 +65,7 @@ async function orchestratorProcess(
             "--driver", driver,
             "--profile", profile.name,
             "--runId", i.toString(),
-            "--testId", testId];
+            "--url", url];
         if (args.debug) {
             const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
             childArgs.unshift(`--inspect-brk=${debugPort}`);
