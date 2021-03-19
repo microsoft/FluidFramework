@@ -36,11 +36,13 @@ class FileLogger implements ITelemetryBufferedLogger {
                 fs.mkdirSync(path, {recursive: true});
             }
             const schema = [...this.schema];
+            const data = logs.reduce(
+                (file, event)=> `${file}\n${schema.reduce((line,k)=>`${line}${event[k] ?? ""},`,"")}`,
+                schema.join(","));
+
             fs.writeFileSync(
                 `${path}/${runInfo.runId ?? "orchestrator"}_${Date.now()}.csv`,
-                logs.reduce(
-                    (file, event)=> `${file}\n${schema.reduce((line,k)=>`${line}${event[k] ?? ""},`,"")}`,
-                    schema.join(",")));
+                data);
         }
 
         this.error = false;
