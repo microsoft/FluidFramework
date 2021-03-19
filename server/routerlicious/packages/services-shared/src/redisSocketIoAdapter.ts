@@ -368,6 +368,8 @@ export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapt
                 };
             }
 
+            // TODO: remove after testing
+            console.log("onRoomMessage() DEBUG: channel=",channel, "packet=", packet, "opts=", opts);
             this.broadcast(packet, opts, true);
 
             if (RedisSocketIoAdapter.options.onReceive) {

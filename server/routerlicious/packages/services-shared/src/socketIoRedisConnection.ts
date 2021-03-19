@@ -14,8 +14,7 @@ export class SocketIORedisConnection implements ISocketIoRedisConnection {
     constructor(protected readonly client: Redis) {}
 
     public async publish(channel: string, message: string) {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.client.publish(channel, message);
+        await this.client.publish(channel, message);
     }
 }
 

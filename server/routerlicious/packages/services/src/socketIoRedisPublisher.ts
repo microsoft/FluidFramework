@@ -39,10 +39,14 @@ export class SocketIoRedisPublisher implements core.IPublisher {
     public to(topic: string): core.ITopic {
         // NOTE - socket.io-emitter maintains local state during an emit request so we cannot cache the result of
         // doing a to, etc...
+        // TODO: remove after testing
+        console.log("to() DEBUG: topic=",topic);
         return new SocketIoRedisTopic(this.io.to(topic));
     }
 
     public async emit(topic: string, event: string, ...args: any[]): Promise<void> {
+        // TODO: remove after testing
+        console.log("emit() DEBUG: topic=",topic, "event=",event);
         this.io.to(topic).emit(event, ...args);
     }
 
