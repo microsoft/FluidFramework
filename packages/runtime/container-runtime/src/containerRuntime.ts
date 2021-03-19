@@ -1054,7 +1054,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * so we listen directly from DeltaManager instead.
      */
     private readonly onOp = (op: ISequencedDocumentMessage) => {
-        assert(!this.paused);
+        assert(!this.paused, "Container should not already be paused before applying stashed ops");
         this.paused = true;
         this.scheduleManager.setPaused(true);
         const stashP = this.pendingStateManager.applyStashedOpsAt(op.sequenceNumber);
@@ -1186,7 +1186,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
         const context = await this.dataStores.getDataStore(id, wait);
-        assert(await context.isRoot());
+        assert(await context.isRoot(), "did not get root data store");
         return context.realize();
     }
 

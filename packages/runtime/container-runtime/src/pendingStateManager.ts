@@ -407,7 +407,7 @@ export class PendingStateManager {
         assert(this.clientId !== this.containerRuntime.clientId, "replayPendingStates called twice for same clientId!");
         this.clientId = this.containerRuntime.clientId;
 
-        assert(this.initialStates.isEmpty());
+        assert(this.initialStates.isEmpty(), "initial states should be empty before replaying pending");
 
         let pendingStatesCount = this.pendingStates.length;
         if (pendingStatesCount === 0) {

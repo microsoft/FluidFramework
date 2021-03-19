@@ -881,7 +881,7 @@ export class DeltaManager
 
                 // Issue async request for deltas - limit the number fetched to MaxBatchDeltas
                 canRetry = true;
-                assert(deltaStorage !== undefined);
+                assert(deltaStorage !== undefined, "delta storage undefined while getting single batch!");
                 // left is inclusive for ParallelRequests, but exclusive for IDocumentDeltaStorageService
                 // right is exclusive for both
                 const deltasP = deltaStorage.get(from - 1, to);
