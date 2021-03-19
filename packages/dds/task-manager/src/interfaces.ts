@@ -32,15 +32,15 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
     abandon(taskId: string): void;
 
     /**
-     * Check whether this client is the current assignee for the task AND we don't anticipate that changing
-     * due to outstanding ops.
+     * Check whether this client is the current assignee for the task and there is no outstanding abandon op that
+     * would release the lock.
      * @param taskId - Identifier for the task
      */
     haveTaskLock(taskId: string): boolean;
 
     /**
-     * Check whether this client is either the current assignee for the task or is waiting in line AND we don't
-     * anticipate that changing due to outstanding ops.
+     * Check whether this client is either the current assignee for the task or is waiting in line or we expect they
+     * will be in line after outstanding ops have been ack'd.
      * @param taskId - Identifier for the task
      */
     queued(taskId: string): boolean;
