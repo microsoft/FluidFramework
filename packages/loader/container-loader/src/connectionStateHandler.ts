@@ -204,7 +204,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
                             this.clientLeaveWaitEnded(false);
                         },
                     );
-                    this.prevClientLeftTimer.restart();
+                    this.prevClientLeftTimer.start();
                 }
             }
         }
