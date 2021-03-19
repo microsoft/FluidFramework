@@ -109,8 +109,7 @@ describeNoCompat("stashed ops", (argsFactory: () => ITestObjectProvider) => {
         assert.strictEqual(await map2.wait(testKey), testValue);
     });
 
-    // TODO: Remove the skip for the following test once issue #5593 ("doesn't resend successful op" test
-    // in pendingOps.spec.ts is flaky) has been resolved
+    // Skip this flaky test. See issue #5593
     it.skip("doesn't resend successful op", async function() {
         const pendingOps = await getPendingOps(args, true, (c, d, map) => {
             map.set(testKey, "something unimportant");
