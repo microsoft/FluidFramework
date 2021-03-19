@@ -105,7 +105,7 @@ async function* loadAllSequencedMessages(
         requests++;
 
         // Empty buckets should never be returned
-        assert(messages.length !== 0);
+        assert(messages.length !== 0, "should not return empty buckets");
         // console.log(`Loaded ops at ${messages[0].sequenceNumber}`);
 
         // This parsing of message contents happens in delta manager. But when we analyze messages
