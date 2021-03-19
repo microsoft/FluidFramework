@@ -80,4 +80,31 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client should be in connected state");
     });
+
+    it("Should wait for previous client to leave before moving to conencted state", async () => {
+        client.mode = "write";
+        connectionStateHandler.receivedConnectEvent(new EventEmitter(), client.mode, connectionDetails, 0);
+        connectionStateHandler.receivedAddMemberEvent(pendingClientId, protocolHandler.quorum);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
+            "Client should be in connected state");
+
+        // Mock as though the client sent some ops.
+        shouldClientJoinWrite = true;
+        connectionStateHandler.setDirtyState();
+        client.mode = "write";
+        connectionStateHandler.receivedDisconnectEvent("Test");
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
+            "Client should be in disconnected state");
+
+        connectionDetails.clientId = "pendingClientId2";
+        connectionStateHandler.receivedConnectEvent(new EventEmitter(), client.mode, connectionDetails, 0);
+        connectionStateHandler.receivedAddMemberEvent(connectionDetails.clientId, protocolHandler.quorum);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+            "Client 2 should be in connecting state as we are waiting for leave");
+
+        // Send leave
+        connectionStateHandler.receivedRemoveMemberEvent(pendingClientId);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
+            "Client 2 should be in connected state");
+    });
 });

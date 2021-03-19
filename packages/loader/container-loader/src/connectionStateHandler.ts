@@ -9,7 +9,7 @@ import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { ProtocolOpHandler, Quorum } from "@fluidframework/protocol-base";
 import { ConnectionMode, IClient, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { EventEmitterWithErrorHandling, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { Deferred } from "@fluidframework/common-utils";
+import { assert, Timer } from "@fluidframework/common-utils";
 import { connectEventName, ConnectionState } from "./container";
 
 export interface IConnectionStateHandler {
@@ -41,7 +41,11 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     private _connectionState = ConnectionState.Disconnected;
     private _pendingClientId: string | undefined;
     private _clientId: string | undefined;
-    private prevClientLeftP: Deferred<boolean> | undefined;
+    private prevClientLeftTimer: Timer | undefined;
+    // This is client id of client for which we have received the addMember event but we are waiting on some previous
+    // client to leave before moving to Connected state.
+    private waitingClientId: string | undefined;
+    private waitEvent: PerformanceEvent | undefined;
     private isDirty: boolean = false;
 
     public get connectionState(): ConnectionState {
@@ -76,38 +80,36 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         // This is the only one that requires the pending client ID
         if (clientId === this.pendingClientId) {
             // Wait for previous client to leave the quorum before firing "connected" event.
-            if (this.prevClientLeftP) {
-                const event = PerformanceEvent.start(this.logger, {
+            if (this.prevClientLeftTimer !== undefined && this.prevClientLeftTimer.hasTimer) {
+                this.waitEvent = PerformanceEvent.start(this.logger, {
                     eventName: "WaitBeforeClientLeave",
                     waitOnClientId: this._clientId,
                     hadOutstandingOps: this.handler.shouldClientJoinWrite(),
                 });
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                this.prevClientLeftP.promise.then((leaveReceived: boolean) => {
-                    const props = { leaveReceived, waitingClientChanged: clientId !== this.pendingClientId };
-                    // Move to connected state only if we are still waiting on right client. It may happen that
-                    // during wait, the client again got Disconnected/Connecting and pending client Id changed,
-                    // so then we don't want to move to connected state here.
-                    if (clientId === this.pendingClientId) {
-                        event.end(props);
-                        this.setConnectionState(ConnectionState.Connected);
-                    } else {
-                        // Cancel the event here as we don't want to record multiple successful events.
-                        event.cancel(props);
-                    }
-                });
+                this.waitingClientId = clientId;
             } else {
                 this.setConnectionState(ConnectionState.Connected);
             }
         }
     }
 
+    private clientLeaveWaitEnded(leaveReceived: boolean) {
+        // Move to connected state only if there was a client waiting for client leave. It may happen that
+        // during wait, the waiting client again got Disconnected/Connecting and then we don't want to
+        // move to connected state here for a non waiting client.
+        if (this.waitingClientId !== undefined) {
+            assert(this.waitingClientId === this.pendingClientId, "Pending Client Id should match the waiting client");
+            assert(this.waitEvent !== undefined, "Wait event should be set");
+            this.waitEvent.end({ leaveReceived });
+            this.setConnectionState(ConnectionState.Connected);
+        }
+    }
+
     public receivedRemoveMemberEvent(clientId: string) {
-        // If the client which has left was us, then resolve the def. promise.
+        // If the client which has left was us, then finish the timer.
         if (this.clientId === clientId) {
-            this.prevClientLeftP?.resolve(true);
-            // Set it to undefined as the desired client has left and we don't want to wait for it anymore.
-            this.prevClientLeftP = undefined;
+            this.prevClientLeftTimer?.clear();
+            this.clientLeaveWaitEnded(true);
         }
     }
 
@@ -161,7 +163,8 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
 
         const oldState = this._connectionState;
         this._connectionState = value;
-
+        // Set it to undefined as now there is not client waiting to get connected.
+        this.waitingClientId = undefined;
         if (value === ConnectionState.Connected) {
             // Mark our old client should have left in the quorum if it's still there
             if (this._clientId !== undefined) {
@@ -178,9 +181,9 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             // Important as we process our own joinSession message through delta request
             this._pendingClientId = undefined;
             // Only wait for "leave" message if we have some outstanding ops and the client was write client as
-            // server would not accept ops from read client. Also check if the promise is not already set as we
+            // server would not accept ops from read client. Also check if the timer is not already set as we
             // could receive "Disconnected" event multiple times without getting connected and in that case we
-            // don't want to reset the promise as we still want to wait on original client which created this promise.
+            // don't want to reset the timer as we still want to wait on original client which started this timer.
             // We also check the dirty state of this connection as we only want to wait for the client leave of the
             // client which created the ops. This helps with situation where a client disconnects immediately after
             // getting connected without sending any ops. In this case, we would join as write because there would be
@@ -188,15 +191,21 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             // disconnected client to leave as it has not sent any ops yet.
             if (this.handler.shouldClientJoinWrite()
                 && this.handler.client().mode === "write"
-                && this.prevClientLeftP === undefined
+                && (this.prevClientLeftTimer === undefined || this.prevClientLeftTimer.hasTimer === false)
                 && this.isDirty
             ) {
-                this.prevClientLeftP = new Deferred();
-                // Default is 90 sec for which we are going to wait for its own "leave" message.
-                setTimeout(() => {
-                    this.prevClientLeftP?.resolve(false);
-                    this.prevClientLeftP = undefined;
-                }, this.handler.maxClientLeaveWaitTime ?? 90000);
+                if (this.prevClientLeftTimer) {
+                    this.prevClientLeftTimer.restart();
+                } else {
+                    this.prevClientLeftTimer = new Timer(
+                        // Default is 90 sec for which we are going to wait for its own "leave" message.
+                        this.handler.maxClientLeaveWaitTime ?? 90000,
+                        () => {
+                            this.clientLeaveWaitEnded(false);
+                        },
+                    );
+                    this.prevClientLeftTimer.restart();
+                }
             }
         }
 
