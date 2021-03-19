@@ -4,13 +4,13 @@
  */
 
 import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { assert, TelemetryNullLogger } from "@fluidframework/common-utils";
+import { assert, bufferToString, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
-import { SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedObjectSequence } from "@fluidframework/sequence";
@@ -80,6 +80,11 @@ async function createContainer(runtimeOptions: Omit<IContainerRuntimeOptions, "g
     return { container, opProcessingController };
 }
 
+function readBlobContent(content: ISummaryBlob["content"]): unknown {
+    const json = typeof content === "string" ? content : bufferToString(content, "utf8");
+    return JSON.parse(json);
+}
+
 describe("Summaries", () => {
     it("Should generate summary tree", async () => {
         const { container, opProcessingController } = await createContainer({ disableIsolatedChannels: false });
@@ -106,6 +111,9 @@ describe("Summaries", () => {
         assert(!summary.unreferenced, "Root summary should be referenced.");
 
         assert(summary.tree[".metadata"]?.type === SummaryType.Blob, "Expected .metadata blob in summary root.");
+        const metadata = readBlobContent(summary.tree[".metadata"].content) as Record<string, unknown>;
+        assert(metadata.summaryFormatVersion === 1, "Metadata blob should have summaryFormatVersion 1");
+        assert(metadata.disableIsolatedChannels === undefined, "Unexpected metadata blob disableIsolatedChannels");
 
         const channelsTree = summary.tree[channelsTreeName];
         assert(channelsTree?.type === SummaryType.Tree, "Expected .channels tree in summary root.");
@@ -116,6 +124,11 @@ describe("Summaries", () => {
         assert(defaultDataStoreNode.tree[".component"]?.type === SummaryType.Blob,
             "Expected .component blob in default data store summary tree.");
         const dataStoreChannelsTree = defaultDataStoreNode.tree[channelsTreeName];
+        const attributes = readBlobContent(defaultDataStoreNode.tree[".component"].content) as Record<string, unknown>;
+        assert(attributes.snapshotFormatVersion === undefined, "Unexpected datastore attributes snapshotFormatVersion");
+        assert(attributes.summaryFormatVersion === 2, "Datastore attributes summaryFormatVersion should be 2");
+        assert(attributes.disableIsolatedChannels === undefined,
+            "Unexpected datastore attributes disableIsolatedChannels");
         assert(dataStoreChannelsTree?.type === SummaryType.Tree, "Expected .channels tree in default data store.");
 
         const defaultDdsNode = dataStoreChannelsTree.tree.root;
@@ -155,7 +168,7 @@ describe("Summaries", () => {
         // Validate summary
         assert(!summary.unreferenced, "Root summary should be referenced.");
 
-        assert(summary.tree[".metadata"]?.type === SummaryType.Blob, "Expected .metadata blob in summary root.");
+        assert(summary.tree[".metadata"] === undefined, "Unexpected .metadata blob in summary root.");
 
         assert(summary.tree[channelsTreeName] === undefined, "Unexpected .channels tree in summary root.");
 
@@ -164,6 +177,11 @@ describe("Summaries", () => {
         assert(!defaultDataStoreNode.unreferenced, "Default data store should be referenced.");
         assert(defaultDataStoreNode.tree[".component"]?.type === SummaryType.Blob,
             "Expected .component blob in default data store summary tree.");
+        const attributes = readBlobContent(defaultDataStoreNode.tree[".component"].content) as Record<string, unknown>;
+        assert(attributes.snapshotFormatVersion === "0.1", "Datastore attributes snapshotFormatVersion should be 0.1");
+        assert(attributes.summaryFormatVersion === undefined, "Unexpected datastore attributes summaryFormatVersion");
+        assert(attributes.disableIsolatedChannels === undefined,
+            "Unexpected datastore attributes disableIsolatedChannels");
         assert(defaultDataStoreNode.tree[channelsTreeName] === undefined,
             "Unexpected .channels tree in default data store.");
 
