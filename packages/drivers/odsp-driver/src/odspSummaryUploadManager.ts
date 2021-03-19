@@ -31,15 +31,17 @@ import { TokenFetchOptions } from "./tokenFetch";
 
 // Gate that when flipped, instructs to mark unreferenced nodes as such in the summary sent to SPO.
 function gatesMarkUnreferencedNodes() {
-    // Leave override for testing purposes
-    if (typeof localStorage === "object" && localStorage !== null) {
-        if  (localStorage.FluidMarkUnreferencedNodes === "1") {
-            return true;
+    try {
+        // Leave override for testing purposes
+        if (typeof localStorage === "object" && localStorage !== null) {
+            if  (localStorage.FluidMarkUnreferencedNodes === "1") {
+                return true;
+            }
+            if  (localStorage.FluidMarkUnreferencedNodes === "0") {
+                return false;
+            }
         }
-        if  (localStorage.FluidMarkUnreferencedNodes === "0") {
-            return false;
-        }
-    }
+    } catch (e) {}
 
     // We are starting disabled. This will be enabled once Apps (Bohemia) have finished GC work.
     // See - https://github.com/microsoft/FluidFramework/issues/5127
