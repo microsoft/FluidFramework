@@ -12,15 +12,16 @@ import { TypedEventEmitter, EventEmitterEventType } from "@fluidframework/common
  */
 export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> extends TypedEventEmitter<TEvent> {
     public emit(event: EventEmitterEventType, ...args: any[]): boolean {
-        if (event === "error") {
-            // Note: This will throw if no listeners are registered
-            return super.emit("error", ...args);
-        }
-
         try {
             return super.emit(event, ...args);
         } catch (error) {
-            // Note: This will throw if no listeners are registered
+            // Some listener threw an error, we'll try emitting that error via the error event
+            // But not if we're already dealing with the error event, in that case just let the error be thrown
+            if (event === "error") {
+                throw error;
+            }
+
+            // Note: This will throw if no listeners are registered for the error event
             return super.emit("error", error);
         }
     }
