@@ -37,7 +37,7 @@ async function main() {
     }
     const result = await runnerProcess(driver, profile, runId, testId);
 
-    await safeExit(result);
+    await safeExit(result, testId, runId);
 }
 
 /**
