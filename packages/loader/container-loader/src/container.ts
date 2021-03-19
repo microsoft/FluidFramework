@@ -715,7 +715,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         assert(this.attachState === AttachState.Attached, "Container should be attached before close");
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
-            "resolved url should be valid fluid url");
+            "resolved url should be valid Fluid url");
         const pendingState: IPendingLocalState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
