@@ -9,7 +9,8 @@ import * as git from "@fluidframework/gitresources";
 import assert from "assert";
 import Axios, { AxiosRequestConfig } from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
-import { Historian, ICredentials } from "../historian";
+import { Historian, ICredentials, getAuthorizationTokenFromCredentials } from "../historian";
+import { BasicRestWrapper, RestWrapper } from "../restWrapper";
 
 describe.only("Historian", () => {
     const endpoint = "http://test:3000";
@@ -25,14 +26,6 @@ describe.only("Historian", () => {
         user: "test-user",
         password: "new-test-password",
     };
-    let sendFreshCredentials: boolean = false;
-    const getCredentials = async () => {
-        if (sendFreshCredentials) {
-            return freshCredentials;
-        }
-        sendFreshCredentials = true;
-        return initialCredentials;
-    }
 
     const mockAuthor: git.IAuthor = {
         name: "Fabrikam",
@@ -94,6 +87,7 @@ describe.only("Historian", () => {
     };
 
     let historian: Historian;
+    let restWrapper: RestWrapper;
     // Same decoding as FluidFramework/server/historian/packages/historian-base/src/routes/utils.ts createGitService()
     const decodeHistorianCredentials = (authHeader: string): ICredentials => {
         if (!authHeader) {
@@ -130,12 +124,28 @@ describe.only("Historian", () => {
     };
 
     beforeEach(() => {
-        sendFreshCredentials = false;
+        const initialHeaders = {
+            Authorization: getAuthorizationTokenFromCredentials(initialCredentials),
+        };
+        const initialQueryString = {
+            token: fromUtf8ToBase64(`${initialCredentials.user}`),
+        };
+        const newHeaders = {
+            Authorization: getAuthorizationTokenFromCredentials(freshCredentials),
+        };
+        restWrapper = new BasicRestWrapper(
+            endpoint,
+            initialQueryString,
+            undefined,
+            initialHeaders,
+            undefined,
+            undefined,
+            () => newHeaders)
         historian = new Historian(
             endpoint,
             true,
             false,
-            getCredentials,
+            restWrapper,
         );
         axiosMock.reset();
     });

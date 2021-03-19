@@ -38,7 +38,6 @@ import {
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
 } from "./summary";
-import { ITaskManager } from "./agent";
 
 /**
  * Runtime flush mode handling
@@ -127,8 +126,6 @@ export interface IContainerRuntimeBase extends
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
-    getTaskManager(): Promise<ITaskManager>;
-
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 
     /**
@@ -215,6 +212,8 @@ export interface IFluidDataStoreChannel extends
      * @param localOpMetadata - The local metadata associated with the original message.
      */
     reSubmit(type: string, content: any, localOpMetadata: unknown);
+
+    applyStashedOp(content: any): Promise<unknown>;
 }
 
 export type CreateChildSummarizerNodeFn = (
@@ -259,6 +258,10 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     readonly baseSnapshot: ISnapshotTree | undefined;
+    /**
+     * @deprecated 0.37 Use the provideScopeLoader flag to make the loader
+     * available through scope instead
+     */
     readonly loader: ILoader;
     /**
      * Indicates the attachment state of the data store to a host service.

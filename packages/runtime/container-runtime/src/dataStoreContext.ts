@@ -61,6 +61,7 @@ import {
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "./containerRuntime";
 import {
     dataStoreAttributesBlobName,
@@ -122,7 +123,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public get packagePath(): readonly string[] {
-        assert(this.pkg !== undefined);
+        assert(this.pkg !== undefined, "Undefined package path");
         return this.pkg;
     }
 
@@ -211,9 +212,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.containerRuntime.attachState : AttachState.Detached;
 
         this.bindToContext = () => {
-            assert(this.bindState === BindState.NotBound);
+            assert(this.bindState === BindState.NotBound, "datastore context is already in bound state");
             this.bindState = BindState.Binding;
-            assert(this.channel !== undefined);
+            assert(this.channel !== undefined, "undefined channel on datastore context");
             bindChannel(this.channel);
             this.bindState = BindState.Bound;
         };
@@ -246,16 +247,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         }
     }
 
-    private rejectDeferredRealize(reason: string): never {
-        const error = new Error(reason);
-        // Error messages contain package names that is considered Personal Identifiable Information
-        // Mark it as such, so that if it ever reaches telemetry pipeline, it has a chance to remove it.
-        (error as any).containsPII = true;
-        throw error;
+    private rejectDeferredRealize(reason: string, packageName?: string): never {
+        throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.PackageData }});
     }
 
     public async realize(): Promise<IFluidDataStoreChannel> {
-        assert(!this.detachedRuntimeCreation);
+        assert(!this.detachedRuntimeCreation, "Detached runtime creation on realize()");
         if (!this.channelDeferred) {
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore().catch((error) => {
@@ -265,26 +262,29 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this.channelDeferred.promise;
     }
 
-    protected async factoryFromPackagePath(packages) {
-        assert(this.pkg === packages);
+    protected async factoryFromPackagePath(packages?: readonly string[]) {
+        assert(this.pkg === packages, "Unexpected package path");
+        if (packages === undefined) {
+            this.rejectDeferredRealize("packages is undefined");
+        }
 
         let entry: FluidDataStoreRegistryEntry | undefined;
         let registry: IFluidDataStoreRegistry | undefined = this._containerRuntime.IFluidDataStoreRegistry;
         let lastPkg: string | undefined;
         for (const pkg of packages) {
             if (!registry) {
-                this.rejectDeferredRealize(`No registry for ${lastPkg} package`);
+                this.rejectDeferredRealize("No registry for package", lastPkg);
             }
             lastPkg = pkg;
             entry = await registry.get(pkg);
             if (!entry) {
-                this.rejectDeferredRealize(`Registry does not contain entry for the package ${pkg}`);
+                this.rejectDeferredRealize("Registry does not contain entry for the package", pkg);
             }
             registry = entry.IFluidDataStoreRegistry;
         }
         const factory = entry?.IFluidDataStoreFactory;
         if (factory === undefined) {
-            this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
+            this.rejectDeferredRealize("Can't find factory for package", lastPkg);
         }
 
         return { factory, registry };
@@ -300,11 +300,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         const { factory, registry } = await this.factoryFromPackagePath(packages);
 
-        assert(this.registry === undefined);
+        assert(this.registry === undefined, "datastore context registry is already set");
         this.registry = registry;
 
         const channel = await factory.instantiateDataStore(this);
-        assert(channel !== undefined);
+        assert(channel !== undefined, "undefined channel on datastore context");
         this.bindRuntime(channel);
     }
 
@@ -322,7 +322,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             return;
         }
 
-        assert(this.connected === connected);
+        assert(this.connected === connected, "Unexpected connected state");
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.channel!.setConnectionState(connected, clientId);
@@ -476,7 +476,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
         this.verifyNotClosed();
-        assert(!!this.channel);
+        assert(!!this.channel, "Channel must exist when submitting message");
         const fluidDataStoreContent: FluidDataStoreMessage = {
             content,
             type,
@@ -513,7 +513,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
-        assert(!!this.channel);
+        assert(!!this.channel, "Channel must exist on submitting signal");
         return this._containerRuntime.submitDataStoreSignal(this.id, type, content);
     }
 
@@ -544,9 +544,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         try
         {
-            assert(!this.detachedRuntimeCreation);
-            assert(this.channelDeferred !== undefined);
-            assert(this.pkg !== undefined);
+            assert(!this.detachedRuntimeCreation, "Detached runtime creation on runtime bind");
+            assert(this.channelDeferred !== undefined, "Undefined channel defferal");
+            assert(this.pkg !== undefined, "Undefined package path");
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const pending = this.pending!;
@@ -604,6 +604,15 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         assert(!!this.channel, "Channel must exist when resubmitting ops");
         const innerContents = contents as FluidDataStoreMessage;
         this.channel.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
+    }
+
+    public async applyStashedOp(contents: any): Promise<unknown> {
+        if (!this.channel) {
+            await this.realize();
+        }
+        assert(!!this.channel, "Channel must exist when rebasing ops");
+        const innerContents = contents as FluidDataStoreMessage;
+        return this.channel.applyStashedOp(innerContents.content);
     }
 
     private verifyNotClosed() {
@@ -919,15 +928,15 @@ export class LocalDetachedFluidDataStoreContext
         registry: IProvideFluidDataStoreFactory,
         dataStoreRuntime: IFluidDataStoreChannel)
     {
-        assert(this.detachedRuntimeCreation);
-        assert(this.channelDeferred === undefined);
+        assert(this.detachedRuntimeCreation, "runtime creation is already attached");
+        assert(this.channelDeferred === undefined, "channel deferral is already set");
 
         const factory = registry.IFluidDataStoreFactory;
 
         const entry = await this.factoryFromPackagePath(this.pkg);
-        assert(entry.factory === factory);
+        assert(entry.factory === factory, "Unexpected factory for package path");
 
-        assert(this.registry === undefined);
+        assert(this.registry === undefined, "datastore registry already attached");
         this.registry = entry.registry;
 
         this.detachedRuntimeCreation = false;

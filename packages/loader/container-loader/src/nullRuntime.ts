@@ -80,7 +80,7 @@ export class NullRuntime extends EventEmitter implements IRuntime {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return { status: 404, mimeType: "text/plain", value: null };
+        return { status: 404, mimeType: "text/plain", value: "NullRuntime can't resolve" };
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
@@ -90,6 +90,10 @@ export class NullRuntime extends EventEmitter implements IRuntime {
     public processSignal(message: any, local: boolean) {
         // Null runtime can receive signals but it's okay to miss those.
         return;
+    }
+
+    public getPendingLocalState() {
+        throw new Error("Null runtime should not be asked for pending state");
     }
 }
 

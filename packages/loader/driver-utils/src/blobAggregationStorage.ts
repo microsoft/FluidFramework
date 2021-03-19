@@ -5,9 +5,11 @@
 
 import {
      IDocumentStorageService,
+    IDocumentStorageServicePolicies,
      ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import {
+    ICreateBlobResponse,
     ISnapshotTree,
     ISummaryHandle,
     ISummaryTree,
@@ -200,7 +202,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         await converter.unpackSnapshotCore(snapshot);
     }
 
-    public get policies() {
+    public get policies(): IDocumentStorageServicePolicies | undefined {
         const policies = this.storage.policies;
         if (policies) {
             return { ...policies, minBlobSize: undefined };
@@ -252,7 +254,9 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 
     // for now we are not optimizing these blobs, with assumption that this API is used only
     // for big blobs (images)
-    public async createBlob(file: ArrayBufferLike) { return this.storage.createBlob(file); }
+    public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
+        return this.storage.createBlob(file);
+    }
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
         const tree = await this.storage.getSnapshotTree(version);
@@ -265,7 +269,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
     public async read(id: string): Promise<string> {
         // optimize it a bit to avoid unneeded conversions while we transition to using readBlob everywhere.
         if (this.isRealStorageId(id)) {
-            return this.storage.read(id);
+            return bufferToString2(await this.storage.readBlob(id),"base64");
         }
         const blob = await this.readBlob(id);
         return bufferToString2(blob, "base64");

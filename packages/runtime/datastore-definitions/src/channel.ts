@@ -71,6 +71,8 @@ export interface IDeltaHandler {
      * @param localOpMetadata - The local metadata associated with the original message.
      */
     reSubmit(message: any, localOpMetadata: unknown): void;
+
+    applyStashedOp(message: any): unknown;
 }
 
 /**
@@ -105,11 +107,10 @@ export interface IDeltaConnection {
  */
 export interface IChannelStorageService {
     /**
-     * Reads the object contained at the given path. Returns a base64 string representation for the object.
+     * Reads the object contained at the given path. Returns a buffer representation for the object.
      */
-    read(path: string): Promise<string>;
-
     readBlob(path: string): Promise<ArrayBufferLike>;
+
     /**
      * Determines if there is an object contained at the given path.
      */

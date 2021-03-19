@@ -17,7 +17,9 @@ import {
 import {
     ICodeLoader,
     IContainer,
+    IHostLoader,
     ILoader,
+    IPendingLocalState,
     ILoaderOptions,
     IProxyLoaderFactory,
     LoaderHeader,
@@ -79,41 +81,22 @@ export class RelativeLoader extends EventEmitter implements ILoader {
     public async request(request: IRequest): Promise<IResponse> {
         const containerUrl = this.containerUrl();
         if (request.url.startsWith("/")) {
-            if (this.needExecutionContext(request)) {
-                if (containerUrl === undefined) {
-                    throw new Error("Container url is not provided");
-                }
-                return (this.loader as Loader).requestWorker(containerUrl, request);
+            let container: IContainer;
+            if (canUseCache(request)) {
+                container = await this.containerDeferred.promise;
+            } else if (containerUrl === undefined) {
+                throw new Error("Container url is not provided");
             } else {
-                let container: IContainer;
-                if (canUseCache(request)) {
-                    container = await this.containerDeferred.promise;
-                } else if (containerUrl === undefined) {
-                    throw new Error("Container url is not provided");
-                } else {
-                    container = await this.loader.resolve({ url: containerUrl, headers: request.headers });
-                }
-                return container.request(request);
+                container = await this.loader.resolve({ url: containerUrl, headers: request.headers });
             }
+            return container.request(request);
         }
 
         return this.loader.request(request);
     }
 
-    public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
-        throw new Error("Relative loader should not create a detached container");
-    }
-
-    public async rehydrateDetachedContainerFromSnapshot(source: string): Promise<Container> {
-        throw new Error("Relative loader should not create a detached container from snapshot");
-    }
-
     public resolveContainer(container: Container) {
         this.containerDeferred.resolve(container);
-    }
-
-    private needExecutionContext(request: IRequest): boolean {
-        return (request.headers !== undefined && request.headers[LoaderHeader.executionContext] !== undefined);
     }
 }
 
@@ -228,7 +211,7 @@ export interface ILoaderServices {
 /**
  * Manages Fluid resource loading
  */
-export class Loader extends EventEmitter implements ILoader {
+export class Loader extends EventEmitter implements IHostLoader {
     private readonly containers = new Map<string, Promise<Container>>();
     public readonly services: ILoaderServices;
     private readonly logger: ITelemetryLogger;
@@ -259,13 +242,19 @@ export class Loader extends EventEmitter implements ILoader {
 
     constructor(loaderProps: ILoaderProps) {
         super();
+
+        const scope = { ...loaderProps.scope };
+        if (loaderProps.options?.provideScopeLoader === true) {
+            scope.ILoader = this;
+        }
+
         this.services = {
             urlResolver: createCachedResolver(MultiUrlResolver.create(loaderProps.urlResolver)),
             documentServiceFactory: MultiDocumentServiceFactory.create(loaderProps.documentServiceFactory),
             codeLoader: loaderProps.codeLoader,
             options: loaderProps.options ?? {},
-            scope: loaderProps.scope ?? {},
-            subLogger: DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { loaderId: uuid() }),
+            scope,
+            subLogger: DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all:{loaderId: uuid()} }),
             proxyLoaderFactories: loaderProps.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
         };
         this.logger = ChildLogger.create(this.services.subLogger, "Loader");
@@ -302,9 +291,13 @@ export class Loader extends EventEmitter implements ILoader {
             JSON.parse(snapshot));
     }
 
-    public async resolve(request: IRequest): Promise<Container> {
-        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Resolve" }, async () => {
-            const resolved = await this.resolveCore(request);
+    public async resolve(request: IRequest, pendingLocalState?: string): Promise<Container> {
+        const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
+        return PerformanceEvent.timedExecAsync(this.logger, { eventName }, async () => {
+            const resolved = await this.resolveCore(
+                request,
+                pendingLocalState !== undefined ? JSON.parse(pendingLocalState) : undefined,
+            );
             return resolved.container;
         });
     }
@@ -314,35 +307,6 @@ export class Loader extends EventEmitter implements ILoader {
             const resolved = await this.resolveCore(request);
             return resolved.container.request({ url: `${resolved.parsed.path}${resolved.parsed.query}` });
         });
-    }
-
-    public async requestWorker(containerUrl: string, request: IRequest): Promise<IResponse> {
-        // Currently the loader only supports web worker environment. Eventually we will
-        // detect environment and bring appropriate loader (e.g., worker_thread for node).
-        const supportedEnvironment = "webworker";
-        const proxyLoaderFactory = this.services.proxyLoaderFactories.get(supportedEnvironment);
-
-        // If the loader does not support any other environment, request falls back to current loader.
-        if (proxyLoaderFactory === undefined) {
-            const container = await this.resolve({ url: containerUrl, headers: request.headers });
-            return container.request(request);
-        } else {
-            const resolved = await this.services.urlResolver.resolve({ url: containerUrl, headers: request.headers });
-            const resolvedAsFluid = resolved as IFluidResolvedUrl;
-            const parsed = parseUrl(resolvedAsFluid.url);
-            if (parsed === undefined) {
-                return Promise.reject(new Error(`Invalid URL ${resolvedAsFluid.url}`));
-            }
-            const { fromSequenceNumber } =
-                this.parseHeader(parsed, { url: containerUrl, headers: request.headers });
-            const proxyLoader = await proxyLoaderFactory.createProxyLoader(
-                parsed.id,
-                this.services.options,
-                resolvedAsFluid,
-                fromSequenceNumber,
-            );
-            return proxyLoader.request(request);
-        }
     }
 
     private getKeyForContainerCache(request: IRequest, parsedUrl: IParsedUrl): string {
@@ -368,6 +332,7 @@ export class Loader extends EventEmitter implements ILoader {
 
     private async resolveCore(
         request: IRequest,
+        pendingLocalState?: IPendingLocalState,
     ): Promise<{ container: Container; parsed: IParsedUrl }> {
         const resolvedAsFluid = await this.services.urlResolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
@@ -378,12 +343,22 @@ export class Loader extends EventEmitter implements ILoader {
             throw new Error(`Invalid URL ${resolvedAsFluid.url}`);
         }
 
+        if (pendingLocalState !== undefined) {
+            const parsedPendingUrl = parseUrl(pendingLocalState.url);
+            if (parsedPendingUrl?.id !== parsed.id ||
+                parsedPendingUrl?.path.replace(/\/$/, "") !== parsed.path.replace(/\/$/, "")) {
+                const message = `URL ${resolvedAsFluid.url} does not match pending state URL ${pendingLocalState.url}`;
+                throw new Error(message);
+            }
+        }
+
         // parseUrl's id is expected to be of format "tenantId/docId"
         const [, docId] = parsed.id.split("/");
         const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
+        const shouldCache = pendingLocalState !== undefined ? false : canCache;
 
         let container: Container;
-        if (canCache) {
+        if (shouldCache) {
             const key = this.getKeyForContainerCache(request, parsed);
             const maybeContainer = await this.containers.get(key);
             if (maybeContainer !== undefined) {
@@ -402,7 +377,8 @@ export class Loader extends EventEmitter implements ILoader {
                 await this.loadContainer(
                     docId,
                     request,
-                    resolvedAsFluid);
+                    resolvedAsFluid,
+                    pendingLocalState?.pendingRuntimeState);
         }
 
         if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
@@ -460,6 +436,7 @@ export class Loader extends EventEmitter implements ILoader {
         encodedDocId: string,
         request: IRequest,
         resolved: IFluidResolvedUrl,
+        pendingLocalState?: unknown,
     ): Promise<Container> {
         const docId = decodeURI(encodedDocId);
         return Container.load(
@@ -473,6 +450,7 @@ export class Loader extends EventEmitter implements ILoader {
                 version: request.headers?.[LoaderHeader.version],
                 pause: request.headers?.[LoaderHeader.pause],
             },
+            pendingLocalState,
         );
     }
 }

@@ -3,55 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IFluidLoadable,
-    IFluidRouter,
-    IFluidRunnable,
-} from "@fluidframework/core-interfaces";
-
-/**
- * Definition of a Task.
- */
-export interface ITask {
-    /**
-     * Id of the task
-     */
-    id: string;
-
-    /**
-     * Instance of the task that implements IFluidRunnable
-     */
-    instance: IFluidRunnable;
-}
-
-export const ITaskManager: keyof IProvideTaskManager = "ITaskManager";
-
-export interface IProvideTaskManager {
-    readonly ITaskManager: ITaskManager;
-}
-
-/**
- * Task manager enables app to register and pick tasks.
- */
-export interface ITaskManager extends IProvideTaskManager, IFluidLoadable, IFluidRouter {
-    /**
-     * access to IAgentScheduler
-     */
-    readonly IAgentScheduler: IAgentScheduler;
-
-    /**
-     * Registers tasks task so that the client can run the task later.
-     */
-    register(...tasks: ITask[]): void;
-
-    /**
-     * Pick a task that was registered prior.
-     *
-     * @param worker - Flag that will execute tasks in web worker if connected to a service that supports them.
-     */
-    pick(taskId: string, worker?: boolean): Promise<void>;
-}
-
 export const IAgentScheduler: keyof IProvideAgentScheduler = "IAgentScheduler";
 
 export interface IProvideAgentScheduler {
@@ -116,5 +67,5 @@ export interface IAgentScheduler extends IProvideAgentScheduler {
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends
-        Readonly<Partial<IProvideTaskManager & IProvideAgentScheduler>> { }
+        Readonly<Partial<IProvideAgentScheduler>> { }
 }

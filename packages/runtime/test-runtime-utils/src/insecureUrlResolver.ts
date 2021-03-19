@@ -55,8 +55,8 @@ export class InsecureUrlResolver implements IUrlResolver {
         // If hosts match then we use the local tenant information. Otherwise we make a REST call out to the hosting
         // service using our bearer token.
         if (this.isForNodeTest) {
-            const documentId = parsedUrl.pathname.substr(1).split("/")[1];
-            return this.resolveHelper(documentId, "");
+            const [, documentId, relativePath] = parsedUrl.pathname.substr(1).split("/");
+            return this.resolveHelper(documentId, relativePath, parsedUrl.search);
         } else if (parsedUrl.host === window.location.host) {
             const fullPath = parsedUrl.pathname.substr(1);
             const documentId = fullPath.split("/")[0];
@@ -86,11 +86,13 @@ export class InsecureUrlResolver implements IUrlResolver {
         }
     }
 
-    private resolveHelper(documentId: string, documentRelativePath: string) {
+    private resolveHelper(documentId: string, documentRelativePath: string, queryParams: string = "") {
         const encodedTenantId = encodeURIComponent(this.tenantId);
         const encodedDocId = encodeURIComponent(documentId);
         const host = new URL(this.ordererUrl).host;
-        const documentUrl = `fluid://${host}/${encodedTenantId}/${encodedDocId}${documentRelativePath}`;
+        const relativePath = !documentRelativePath || documentRelativePath.startsWith("/")
+            ? documentRelativePath : `/${documentRelativePath}`;
+        const documentUrl = `fluid://${host}/${encodedTenantId}/${encodedDocId}${relativePath}${queryParams}`;
 
         const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodedTenantId}/${encodedDocId}`;
         const storageUrl = `${this.storageUrl}/repos/${encodedTenantId}`;
@@ -113,7 +115,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 
         const parsedUrl = parse(fluidResolvedUrl.url);
         const [, , documentId] = parsedUrl.pathname?.split("/");
-        assert(!!documentId);
+        assert(!!documentId, "Invalid document id from parsed URL");
 
         let url = relativeUrl;
         if (url.startsWith("/")) {

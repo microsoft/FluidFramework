@@ -69,7 +69,7 @@ describe("Map", () => {
                     assert.equal(changed.previousValue, previousValue);
 
                     assert.equal(local, true, "local should be true for local action for valueChanged event");
-                    assert.equal(op, null, "op should be null for local actions for valueChanged event");
+                    assert.equal(op, undefined, "op should be undefined for local actions for valueChanged event");
                     assert.equal(target, dummyMap, "target should be the map for valueChanged event");
                 });
                 dummyMap.on("clear", (local, op, target) => {
@@ -77,7 +77,7 @@ describe("Map", () => {
                     clearExpected = false;
 
                     assert.equal(local, true, "local should be true for local action  for clear event");
-                    assert.equal(op, null, "op should be null for local actions for clear event");
+                    assert.equal(op, undefined, "op should be undefined for local actions for clear event");
                     assert.equal(target, dummyMap, "target should be the map for clear event");
                 });
                 dummyMap.on("error", (error) => {
@@ -202,6 +202,7 @@ describe("Map", () => {
                     Object.keys(summaryTree.tree).length, 1, "summary tree should only have one blob");
                 const summaryContent = (summaryTree.tree.header as ISummaryBlob)?.content;
                 const expectedContent = JSON.stringify({
+                    absolutePath: map.handle.absolutePath,
                     blobs: [],
                     content: {
                         key: {
@@ -235,6 +236,7 @@ describe("Map", () => {
                 assert.strictEqual(
                     Object.keys(summaryTree.tree).length, 2, "There should be 2 entries in the summary tree");
                 const expectedContent1 = JSON.stringify({
+                    absolutePath: map.handle.absolutePath,
                     blobs: ["blob0"],
                     content: {
                         key: {

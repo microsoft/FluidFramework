@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString ,TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert,TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
+import { readAndParse } from "@fluidframework/driver-utils";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
@@ -230,11 +231,13 @@ export interface IDirectoryDataObject {
 }
 
 export interface IDirectoryNewStorageFormat {
+    /** @deprecated - added to prevent buggy caching. remove once all loaders past 0.35 */
+    absolutePath?: string;
     blobs: string[];
     content: IDirectoryDataObject;
 }
 
-function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): ITree {
+function serializeDirectory(absolutePath: string, root: SubDirectory, serializer: IFluidSerializer): ITree {
     const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
 
     const tree: ITree = { entries: [] };
@@ -288,6 +291,7 @@ function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): I
     }
 
     const newFormat: IDirectoryNewStorageFormat = {
+        absolutePath,
         blobs,
         content,
     };
@@ -593,7 +597,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
      */
     protected snapshotCore(serializer: IFluidSerializer): ITree {
-        return serializeDirectory(this.root, serializer);
+        return serializeDirectory(this.handle.absolutePath, this.root, serializer);
     }
 
     /**
@@ -658,16 +662,13 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService) {
-        const blob = await storage.readBlob(snapshotFileName);
-        const header = bufferToString(blob, "utf8");
-        const data = JSON.parse(header);
+        const data = await readAndParse(storage, snapshotFileName);
         const newFormat = data as IDirectoryNewStorageFormat;
         if (Array.isArray(newFormat.blobs)) {
             // New storage format
             this.populate(newFormat.content);
             await Promise.all(newFormat.blobs.map(async (value) => {
-                const newBlob = await storage.readBlob(value);
-                const dataExtra = JSON.parse(bufferToString(newBlob, "utf8"));
+                const dataExtra = await readAndParse(storage, value);
                 this.populate(dataExtra as IDirectoryDataObject);
             }));
         } else {
@@ -911,6 +912,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                 },
             },
         );
+    }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
     }
 }
 

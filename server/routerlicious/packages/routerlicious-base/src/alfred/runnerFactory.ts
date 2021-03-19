@@ -121,6 +121,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             kafkaProducerPollIntervalMs,
             kafkaNumberOfPartitions,
             kafkaReplicationFactor);
+
         const redisConfig = config.get("redis");
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const authEndpoint = config.get("auth:endpoint");

@@ -71,17 +71,20 @@ export class FluidPackageCheck {
         const testScript = testMochaScript ?? pkg.getScript(testScriptName);
         if (testScript && /(ts-)?mocha/.test(testScript)) {
             const isClient = pkg.monoRepo?.kind === MonoRepoKind.Client;
+            const hasConfig = testScript.includes(" --config ");
             if (isClient) {
-                const pkgstring = "@fluidframework/mocha-test-setup"
-                const requireString = `node_modules/${pkgstring}`;
+                const pkgstring = "@fluidframework/mocha-test-setup";
                 if (this.ensureDevDependency(pkg, fix, pkgstring)) {
                     fixed = true;
                 }
-                if (!testScript.includes(requireString)) {
-                    this.logWarn(pkg, `no ${requireString} require in test script`, fix);
-                    if (fix) {
-                        pkg.packageJson.scripts[testScriptName] += " -r " + requireString;
-                        fixed = true;
+                if (!hasConfig) {
+                    const requireString = `node_modules/${pkgstring}`;
+                    if (!testScript.includes(requireString)) {
+                        this.logWarn(pkg, `no ${requireString} require in test script`, fix);
+                        if (fix) {
+                            pkg.packageJson.scripts[testScriptName] += " -r " + requireString;
+                            fixed = true;
+                        }
                     }
                 }
 
@@ -101,13 +104,15 @@ export class FluidPackageCheck {
                 }
             }
 
-            // Make sure --unhandled-rejections=strict switch used
-            const unhandledRejectionsSwitch = "--unhandled-rejections=strict";
-            if (!testScript.includes(unhandledRejectionsSwitch)) {
-                this.logWarn(pkg, `missing --unhandled-rejection switch in test script`, fix);
-                if (fix) {
-                    pkg.packageJson.scripts[testScriptName] += ` ${unhandledRejectionsSwitch}`;
-                    fixed = true;
+            if (!hasConfig) {
+                // Make sure --unhandled-rejections=strict switch used
+                const unhandledRejectionsSwitch = "--unhandled-rejections=strict";
+                if (!testScript.includes(unhandledRejectionsSwitch)) {
+                    this.logWarn(pkg, `missing --unhandled-rejection switch in test script`, fix);
+                    if (fix) {
+                        pkg.packageJson.scripts[testScriptName] += ` ${unhandledRejectionsSwitch}`;
+                        fixed = true;
+                    }
                 }
             }
         }
@@ -419,14 +424,18 @@ export class FluidPackageCheck {
             return;
         }
         const filename = path.join(pkg.directory, ".npmignore");
-        const expected = [
+        const expectedCommon = [
             "nyc",
             "*.log",
             "**/*.tsbuildinfo",
-            "src/test",
-            "dist/test",
             "**/_api-extractor-temp/**",
-        ];
+        ]
+        const expected = pkg.name.startsWith("@fluidframework/test-") ?
+            expectedCommon :
+            [...expectedCommon,
+                "src/test",
+                "dist/test",
+            ];
         if (!existsSync(filename)) {
             this.logWarn(pkg, `.npmignore not exist`, fix);
             if (fix) {
@@ -500,11 +509,15 @@ export class FluidPackageCheck {
         const command = pkg.getScript("tsc");
         if (command) {
             const parsedCommand = TscUtils.parseCommandLine(command);
-            if (!parsedCommand) { return undefined; }
+            if (!parsedCommand) { return; }
 
             // Assume tsc with no argument.
             const configFile = TscUtils.findConfigFile(pkg.directory, parsedCommand);
             const configJson = TscUtils.readConfigFile(configFile);
+            if (configJson === undefined) {
+                this.logWarn(pkg, `Failed to load config file '${configFile}'`, false);
+                return;
+            }
 
             let changed = false;
             if (await this.checkTsConfigExtend(pkg, fix, configJson)) {

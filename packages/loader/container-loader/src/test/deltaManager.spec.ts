@@ -8,7 +8,7 @@ import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import { IClient, IDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-internal/test-loader-utils";
+import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { DeltaManager } from "../deltaManager";
 import { CollabWindowTracker } from "../container";
@@ -26,11 +26,13 @@ describe("Loader", () => {
             let immediateNoOp: boolean;
             const docId = "docId";
             const submitEvent = "test-submit";
+            const expectedTimeout = 2000;
+            const noopCountFrequency = 300;
             // Stash the real setTimeout because sinon fake timers will hijack it.
             const realSetTimeout = setTimeout;
 
             async function startDeltaManager() {
-                await deltaManager.connect();
+                await deltaManager.connect({ reason: "test" });
                 deltaManager.inbound.resume();
                 deltaManager.outbound.resume();
                 deltaManager.inboundSignal.resume();
@@ -43,14 +45,16 @@ describe("Loader", () => {
                 });
             }
 
-            async function emitSequentialOp(type: MessageType = MessageType.Operation) {
-                deltaConnection.emitOp(docId, [{
-                    clientId: "Some client ID",
-                    clientSequenceNumber: ++clientSeqNumber,
-                    minimumSequenceNumber: 0,
-                    sequenceNumber: seq++,
-                    type,
-                }]);
+            async function emitSequentialOps(type: MessageType = MessageType.Operation, count = 1) {
+                for (let num = 0; num < count; ++num) {
+                    deltaConnection.emitOp(docId, [{
+                        clientId: "Some client ID",
+                        clientSequenceNumber: ++clientSeqNumber,
+                        minimumSequenceNumber: 0,
+                        sequenceNumber: seq++,
+                        type,
+                    }]);
+                }
 
                 // Yield the event loop because the inbound op will be processed asynchronously.
                 await yieldEventLoop();
@@ -95,6 +99,8 @@ describe("Loader", () => {
                 const tracker = new CollabWindowTracker(
                     (type: MessageType, contents: any) => deltaManager.submit(type, contents),
                     () => true,
+                    expectedTimeout,
+                    noopCountFrequency,
                 );
 
                 deltaManager.attachOpHandler(0, 0, 1, {
@@ -112,8 +118,6 @@ describe("Loader", () => {
             });
 
             describe("Update Minimum Sequence Number", () => {
-                const expectedTimeout = 2000;
-
                 // helper function asserting that there is exactly one well-formed no-op
                 function assertOneValidNoOp(messages: IDocumentMessage[], immediate: boolean = false) {
                     assert.strictEqual(1, messages.length);
@@ -121,26 +125,41 @@ describe("Loader", () => {
                     assert.strictEqual(immediate ? "" : null, JSON.parse(messages[0].contents as string));
                 }
 
-                it("Should update after timeout with single op", async () => {
+                it("Should not update after timeout with op lesser the threshold", async () => {
                     let runCount = 0;
                     await startDeltaManager();
                     emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
                         assertOneValidNoOp(messages);
                         runCount++;
+                        assert.fail("Should not fire noop");
                     });
 
-                    await emitSequentialOp();
+                    await emitSequentialOps(MessageType.Operation, noopCountFrequency - 1);
 
                     await tickClock(expectedTimeout - 1);
                     assert.strictEqual(runCount, 0);
 
                     await tickClock(1);
-                    assert.strictEqual(runCount, 1);
+                    assert.strictEqual(runCount, 0);
                 });
 
-                it("Should update after first timeout with successive ops", async () => {
-                    const numberOfSuccessiveOps = 10;
-                    assert(expectedTimeout > numberOfSuccessiveOps + 1);
+                it("Should not update after op count threshold but time lesser than timeout", async () => {
+                    let runCount = 0;
+                    await startDeltaManager();
+                    emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
+                        assertOneValidNoOp(messages);
+                        runCount++;
+                        assert.fail("Should not fire noop");
+                    });
+
+                    await emitSequentialOps(MessageType.Operation, noopCountFrequency);
+                    assert.strictEqual(runCount, 0);
+
+                    await tickClock(expectedTimeout - 1);
+                    assert.strictEqual(runCount, 0);
+                });
+
+                it("Should not update after ops freq until time threshold reached", async () => {
                     let runCount = 0;
 
                     await startDeltaManager();
@@ -149,34 +168,48 @@ describe("Loader", () => {
                         runCount++;
                     });
 
-                    // initial op
-                    await emitSequentialOp();
-
-                    for (let i = 0; i < numberOfSuccessiveOps; i++) {
-                        await tickClock(1);
-                        await emitSequentialOp();
-                    }
+                    await emitSequentialOps(MessageType.Operation, noopCountFrequency);
                     // should not run until timeout
-                    await tickClock(expectedTimeout - numberOfSuccessiveOps - 1);
+                    await tickClock(expectedTimeout - 1);
                     assert.strictEqual(runCount, 0);
 
                     // should run after timeout
                     await tickClock(1);
+                    await emitSequentialOps();
                     assert.strictEqual(runCount, 1);
 
-                    // should not run again (make sure no additional timeouts created)
+                    // Now timeout again should not cause noop
                     await tickClock(expectedTimeout);
                     assert.strictEqual(runCount, 1);
                 });
 
-                it("Should not update when receiving no-ops", async () => {
+                it("Should update after timeout until ops threshold reached", async () => {
+                    let runCount = 0;
+
+                    await startDeltaManager();
+                    emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
+                        assertOneValidNoOp(messages);
+                        runCount++;
+                    });
+
+                    await emitSequentialOps(MessageType.Operation, noopCountFrequency - 1);
+                    // should not run until ops count
+                    await tickClock(expectedTimeout);
+                    assert.strictEqual(runCount, 0);
+
+                    // should run after ops count
+                    await emitSequentialOps();
+                    assert.strictEqual(runCount, 1);
+                });
+
+                it("Should not update when receiving just no-ops even after timeout", async () => {
                     await startDeltaManager();
                     emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
                         assertOneValidNoOp(messages);
                         assert.fail("Should not send no-op.");
                     });
 
-                    await emitSequentialOp(MessageType.NoOp);
+                    await emitSequentialOps(MessageType.NoOp, noopCountFrequency + 1);
                     await tickClock(expectedTimeout);
                 });
 
@@ -190,7 +223,7 @@ describe("Loader", () => {
                         runCount++;
                     });
 
-                    await emitSequentialOp(MessageType.NoOp);
+                    await emitSequentialOps(MessageType.NoOp);
                     assert.strictEqual(runCount, 1);
                 });
 
@@ -214,7 +247,7 @@ describe("Loader", () => {
                         assert.fail("Should not send no-op.");
                     });
 
-                    await emitSequentialOp();
+                    await emitSequentialOps();
                     await tickClock(expectedTimeout - 1);
                     deltaManager.submit(MessageType.Operation, ignoreContent);
                     await tickClock(1);

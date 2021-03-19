@@ -34,7 +34,7 @@ describe('Summary format', () => {
 	const setupEditId = '9406d301-7449-48a5-b2ea-9be637b0c6e4' as EditId;
 
 	let expectedTree: SharedTree;
-	let localTestObjectProvider: TestObjectProvider<ITestContainerConfig>;
+	let localTestObjectProvider: TestObjectProvider;
 
 	// Resets the tree before each test
 	beforeEach(async () => {

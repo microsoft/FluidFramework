@@ -17,9 +17,9 @@ export const dockerUrls = {
 };
 
 export const tinyliciousUrls = {
-    hostUrl: "http://localhost:3000",
-    ordererUrl: "http://localhost:3000",
-    storageUrl: "http://localhost:3000",
+    hostUrl: "http://localhost:35843",
+    ordererUrl: "http://localhost:35843",
+    storageUrl: "http://localhost:35843",
 };
 
 function getUrlResolver(options: RouteOptions): IUrlResolver {

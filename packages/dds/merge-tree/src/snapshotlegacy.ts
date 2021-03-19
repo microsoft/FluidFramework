@@ -5,7 +5,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IsoBuffer } from "@fluidframework/common-utils";
+import { assert, IsoBuffer } from "@fluidframework/common-utils";
 import {
     IFluidHandle,
     IFluidSerializer,
@@ -151,13 +151,13 @@ export class SnapshotLegacy {
             });
         }
 
-        this.logger.shipAssert(
+        assert(
             length === this.header!.segmentsTotalLength,
-            { eventName: "emit: mismatch in segmentsTotalLength" });
+            "emit: mismatch in segmentsTotalLength");
 
-        this.logger.shipAssert(
+        assert(
             segments === chunk1.totalSegmentCount,
-            { eventName: "emit: mismatch in totalSegmentCount" });
+            "emit: mismatch in totalSegmentCount");
 
         if(catchUpMsgs !== undefined && catchUpMsgs.length > 0) {
             tree.entries.push({

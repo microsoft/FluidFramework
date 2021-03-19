@@ -60,6 +60,9 @@ import {
     generateHandleContextPath,
     RequestParser,
     SummaryTreeBuilder,
+    create404Response,
+    createResponseError,
+    exceptionToResponse,
 } from "@fluidframework/runtime-utils";
 import {
     IChannel,
@@ -197,7 +200,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     ) {
         super();
 
-        this.logger = ChildLogger.create(dataStoreContext.containerRuntime.logger, undefined, { dataStoreId: uuid() });
+        this.logger = ChildLogger.create(
+            dataStoreContext.containerRuntime.logger, undefined, {all:{ dataStoreId: uuid() }});
         this.documentId = dataStoreContext.documentId;
         this.id = dataStoreContext.id;
         this.existing = dataStoreContext.existing;
@@ -320,34 +324,34 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        const parser = RequestParser.create(request);
-        const id = parser.pathParts[0];
+        try {
+            const parser = RequestParser.create(request);
+            const id = parser.pathParts[0];
 
-        if (id === "_channels" || id === "_custom") {
-            return this.request(parser.createSubRequest(1));
-        }
-
-        // Check for a data type reference first
-        if (this.contextsDeferred.has(id) && parser.isLeaf(1)) {
-            try {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                const value = await this.contextsDeferred.get(id)!.promise;
-                const channel = await value.getChannel();
-
-                return { mimeType: "fluid/object", status: 200, value: channel };
-            } catch (error) {
-                this.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
-
-                return {
-                    status: 500,
-                    mimeType: "text/plain",
-                    value: `Failed to get Channel with id:[${id}] error:{${error}}`,
-                };
+            if (id === "_channels" || id === "_custom") {
+                return this.request(parser.createSubRequest(1));
             }
-        }
 
-        // Otherwise defer to an attached request handler
-        return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+            // Check for a data type reference first
+            if (this.contextsDeferred.has(id) && parser.isLeaf(1)) {
+                try {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    const value = await this.contextsDeferred.get(id)!.promise;
+                    const channel = await value.getChannel();
+
+                    return { mimeType: "fluid/object", status: 200, value: channel };
+                } catch (error) {
+                    this.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
+
+                    return createResponseError(500, `Failed to get Channel: ${error}`, request);
+                }
+            }
+
+            // Otherwise defer to an attached request handler
+            return create404Response(request);
+        } catch (error) {
+            return exceptionToResponse(error);
+        }
     }
 
     public async getChannel(id: string): Promise<IChannel> {
@@ -516,7 +520,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                             is in pendingAttach set: ${this.pendingAttach.has(id)},
                             is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContext}`);
 
-                        const flatBlobs = new Map<string, string>();
+                        const flatBlobs = new Map<string, ArrayBufferLike>();
                         const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
 
                         const remoteChannelContext = new RemoteChannelContext(
@@ -869,6 +873,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             default:
                 unreachableCase(type);
         }
+    }
+
+    public async applyStashedOp(content: any): Promise<unknown> {
+        const envelope = content as IEnvelope;
+        const channelContext = this.contexts.get(envelope.address);
+        assert(!!channelContext, "There should be a channel context for the op");
+        await channelContext.getChannel();
+        return channelContext.applyStashedOp(envelope.contents);
     }
 
     private setChannelDirty(address: string): void {

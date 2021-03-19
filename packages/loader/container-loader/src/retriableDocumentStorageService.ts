@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
 import { CreateContainerError } from "@fluidframework/container-utils";
-import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+    IDocumentStorageService,
+    IDocumentStorageServicePolicies,
+    ISummaryContext,
+} from "@fluidframework/driver-definitions";
 import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
 import {
     ICreateBlobResponse,
@@ -16,7 +19,8 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { performance } from "@fluidframework/common-utils";
+import { performance, bufferToString } from "@fluidframework/common-utils";
+import { v4 as uuid } from "uuid";
 import { DeltaManager } from "./deltaManager";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService {
@@ -28,7 +32,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
     ) {
     }
 
-    public get policies() {
+    public get policies(): IDocumentStorageServicePolicies | undefined {
         return this.internalStorageService.policies;
     }
 
@@ -48,7 +52,8 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
     }
 
     public async read(blobId: string): Promise<string> {
-        return this.readWithRetry(async () => this.internalStorageService.read(blobId), "read");
+        return this.readWithRetry(async () =>
+        bufferToString(await this.internalStorageService.readBlob(blobId),"base64"), "read");
     }
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {
@@ -94,7 +99,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
     private async readWithRetry<T>(api: () => Promise<T>, fetchCallName: string): Promise<T> {
         let result: T | undefined;
         let success = false;
-        let retryAfter = 0;
+        let retryAfter = 1; // has to be positive!
         let numRetries = 0;
         const startTime = performance.now();
         let lastError: any;

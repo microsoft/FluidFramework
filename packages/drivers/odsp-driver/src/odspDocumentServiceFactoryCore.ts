@@ -170,12 +170,16 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 logger,
                 {
                     eventName: `${name || defaultEventName}_GetToken`,
-                    refresh: options.refresh,
+                    attempts: options.refresh ? 2 : 1,
                     hasClaims: !!options.claims,
                     hasTenantId: !!options.tenantId,
                 },
-                async (event) => tokenFetcher({ ...options, siteUrl: resolvedUrl.siteUrl })
-                .then((tokenResponse) => {
+                async (event) => tokenFetcher({
+                    ...options,
+                    siteUrl: resolvedUrl.siteUrl,
+                    driveId: resolvedUrl.driveId,
+                    itemId: resolvedUrl.itemId,
+                }).then((tokenResponse) => {
                     const token = tokenFromResponse(tokenResponse);
                     event.end({ fromCache: isTokenFromCache(tokenResponse), isNull: token === null ? true : false });
                     if (token === null && throwOnNullToken) {

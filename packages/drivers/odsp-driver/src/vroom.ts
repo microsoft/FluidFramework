@@ -36,9 +36,16 @@ export async function fetchJoinSession(
         const token = await getStorageToken(options, "JoinSession");
 
         const extraProps = options.refresh
-            ? { secondAttempt: 1, hasClaims: !!options.claims, hasTenantId: !!options.tenantId }
+            ? { hasClaims: !!options.claims, hasTenantId: !!options.tenantId }
             : {};
-        return PerformanceEvent.timedExecAsync(logger, { eventName: "JoinSession", ...extraProps }, async (event) => {
+        return PerformanceEvent.timedExecAsync(
+            logger, {
+                eventName: "JoinSession",
+                attempts: options.refresh ? 2 : 1,
+                ...extraProps,
+            },
+            async (event) =>
+        {
             // TODO Extract the auth header-vs-query logic out
             const siteOrigin = getOrigin(siteUrl);
             let queryParams = `access_token=${token}`;
@@ -55,10 +62,7 @@ export async function fetchJoinSession(
             );
 
             // TODO SPO-specific telemetry
-            event.end({
-                sprequestguid: response.headers.get("sprequestguid"),
-                sprequestduration: response.headers.get("sprequestduration"),
-            });
+            event.end(response.commonSpoHeaders);
 
             if (response.content.runtimeTenantId && !response.content.tenantId) {
                 response.content.tenantId = response.content.runtimeTenantId;

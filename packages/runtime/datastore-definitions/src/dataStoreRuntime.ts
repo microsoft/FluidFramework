@@ -67,6 +67,10 @@ export interface IFluidDataStoreRuntime extends
 
     readonly connected: boolean;
 
+    /**
+     * @deprecated 0.37 Use the provideScopeLoader flag to make the loader
+     * available through scope instead
+     */
     readonly loader: ILoader;
 
     readonly logger: ITelemetryLogger;

@@ -133,7 +133,7 @@ export class OdspTestDriver implements ITestDriver {
                     accessToken: await this.getStorageToken({ siteUrl, refresh: false }),
                     refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: false }),
                 },
-                false,
+                true,
                 this.config.driveId);
 
             this.testIdToUrl.set(
