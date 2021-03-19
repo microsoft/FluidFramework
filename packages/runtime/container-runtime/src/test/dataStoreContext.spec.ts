@@ -294,17 +294,9 @@ describe("Data Store Context Tests", () => {
         let dataStoreAttributes: ReadFluidDataStoreAttributes;
         const storage: Partial<IDocumentStorageService> = {};
         let scope: IFluidObject;
-        let containerRuntime: ContainerRuntime;
         let summarizerNode: IRootSummarizerNodeWithGC;
 
-        beforeEach(async () => {
-            summarizerNode = createRootSummarizerNodeWithGC(
-                new TelemetryNullLogger(),
-                (() => undefined) as unknown as SummarizeInternalFn,
-                0,
-                0);
-            summarizerNode.startSummary(0, new TelemetryNullLogger());
-
+        function mockContainerRuntime(disableIsolatedChannels = true): ContainerRuntime {
             const factory: { [key: string]: any } = {};
             factory.IFluidDataStoreFactory = factory;
             factory.instantiateDataStore =
@@ -314,14 +306,24 @@ describe("Data Store Context Tests", () => {
             registry.get = async (pkg) => Promise.resolve(factory);
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            containerRuntime = {
+            return {
+                disableIsolatedChannels,
                 IFluidDataStoreRegistry: registry,
                 notifyDataStoreInstantiated: (c) => { },
                 on: (event, listener) => { },
             } as ContainerRuntime;
+        }
+
+        beforeEach(async () => {
+            summarizerNode = createRootSummarizerNodeWithGC(
+                new TelemetryNullLogger(),
+                (() => undefined) as unknown as SummarizeInternalFn,
+                0,
+                0);
+            summarizerNode.startSummary(0, new TelemetryNullLogger());
         });
 
-        describe("Initialization", () => {
+        describe("Initialization - can correctly initialize and generate attributes", () => {
             beforeEach(() => {
                 createSummarizerNodeFn = (
                     summarizeInternal: SummarizeInternalFn,
@@ -337,138 +339,80 @@ describe("Data Store Context Tests", () => {
                     getInitialGCSummaryDetailsFn,
                 );
             });
+            const pkgName = "TestDataStore1";
 
-            it("can correctly initialize and generate attributes", async () => {
-                dataStoreAttributes = {
-                    pkg: JSON.stringify(["TestDataStore1"]),
+            function testGenerateAttributes(disableIsolatedChannels: boolean, expected: WriteFluidDataStoreAttributes) {
+                async function testGenerateAttributesCore(attributes: ReadFluidDataStoreAttributes) {
+                    const buffer = stringToBuffer(JSON.stringify(attributes), "utf8");
+                    const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
+                    const snapshotTree: ISnapshotTree = {
+                        blobs: { [dataStoreAttributesBlobName]: "fluidDataStoreAttributes" },
+                        commits: {},
+                        trees: {},
+                    };
+
+                    remotedDataStoreContext = new RemotedFluidDataStoreContext(
+                        dataStoreId,
+                        snapshotTree,
+                        mockContainerRuntime(disableIsolatedChannels),
+                        new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                        scope,
+                        createSummarizerNodeFn,
+                    );
+
+                    const isRootNode = await remotedDataStoreContext.isRoot();
+                    assert.strictEqual(isRootNode, true, "The data store should be root.");
+
+                    const summarizeResult = await remotedDataStoreContext.summarize(true /* fullTree */);
+                    assert(summarizeResult.summary.type === SummaryType.Tree,
+                        "summarize should always return a tree when fullTree is true");
+                    const blob = summarizeResult.summary.tree[dataStoreAttributesBlobName] as ISummaryBlob;
+
+                    const contents = JSON.parse(blob.content as string) as WriteFluidDataStoreAttributes;
+
+                    // Validate that generated attributes are as expected.
+                    assert.deepStrictEqual(contents, expected, "Unexpected datastore attributes written");
+                }
+
+                it("reading from latest with isolated channels", async () => testGenerateAttributesCore({
+                    pkg: JSON.stringify([pkgName]),
                     summaryFormatVersion: 2,
                     isRootDataStore: true,
-                };
-                const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
-                const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
-                const snapshotTree: ISnapshotTree = {
-                    blobs: { [dataStoreAttributesBlobName]: "fluidDataStoreAttributes" },
-                    commits: {},
-                    trees: {},
-                };
+                }));
 
-                remotedDataStoreContext = new RemotedFluidDataStoreContext(
-                    dataStoreId,
-                    snapshotTree,
-                    containerRuntime,
-                    new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
-                    scope,
-                    createSummarizerNodeFn,
-                );
-
-                const isRootNode = await remotedDataStoreContext.isRoot();
-                assert.strictEqual(isRootNode, true, "The data store should be root.");
-
-                remotedDataStoreContext.updateUsedRoutes([""]);
-
-                const summarizeResult = await remotedDataStoreContext.summarize(true /* fullTree */);
-                assert(summarizeResult.summary.type === SummaryType.Tree,
-                    "summarize should always return a tree when fullTree is true");
-                const blob = summarizeResult.summary.tree[dataStoreAttributesBlobName] as ISummaryBlob;
-
-                const contents = JSON.parse(blob.content as string) as WriteFluidDataStoreAttributes;
-                assert.strictEqual(contents.pkg, dataStoreAttributes.pkg, "Remote DataStore package does not match.");
-                assert.strictEqual(
-                    contents.summaryFormatVersion,
-                    dataStoreAttributes.summaryFormatVersion,
-                    "Remote DataStore snapshot version does not match.");
-                assert.strictEqual(
-                    contents.isRootDataStore,
-                    dataStoreAttributes.isRootDataStore,
-                    "Remote DataStore root state does not match");
-            });
-
-            it("can correctly initialize and generate attributes without version and isRootDataStore", async () => {
-                dataStoreAttributes = { pkg: "TestDataStore1" };
-                const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
-                const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
-                const snapshotTree: ISnapshotTree = {
-                    blobs: { [dataStoreAttributesBlobName]: "fluidDataStoreAttributes" },
-                    commits: {},
-                    trees: {},
-                };
-
-                remotedDataStoreContext = new RemotedFluidDataStoreContext(
-                    dataStoreId,
-                    snapshotTree,
-                    containerRuntime,
-                    new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
-                    scope,
-                    createSummarizerNodeFn,
-                );
-
-                const isRootNode = await remotedDataStoreContext.isRoot();
-                assert.strictEqual(isRootNode, true, "The data store should be root.");
-
-                const summarizeResult = await remotedDataStoreContext.summarize(true /* fullTree */);
-                assert(summarizeResult.summary.type === SummaryType.Tree,
-                    "summarize should always return a tree when fullTree is true");
-                const blob = summarizeResult.summary.tree[dataStoreAttributesBlobName] as ISummaryBlob;
-
-                const contents = JSON.parse(blob.content as string) as WriteFluidDataStoreAttributes;
-                assert.strictEqual(
-                    contents.pkg,
-                    JSON.stringify([dataStoreAttributes.pkg]),
-                    "Remote DataStore package does not match.");
-                assert.strictEqual(
-                    contents.summaryFormatVersion,
-                    2,
-                    "Remote DataStore snapshot version does not match.");
-                // Remote context without the isRootDataStore flag in the snapshot should default it to true.
-                assert.strictEqual(contents.isRootDataStore, true, "Remote DataStore root state does not match.");
-            });
-
-            it("can correctly initialize and generate attributes with isolated channels disabled", async () => {
-                dataStoreAttributes = {
-                    pkg: JSON.stringify(["TestDataStore1"]),
+                it("reading from latest without isolated channels", async () => testGenerateAttributesCore({
+                    pkg: JSON.stringify([pkgName]),
                     summaryFormatVersion: 2,
                     isRootDataStore: true,
-                };
-                (containerRuntime as any).disableIsolatedChannels = true;
+                    disableIsolatedChannels: true,
+                }));
 
-                const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
-                const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
-                const snapshotTree: ISnapshotTree = {
-                    blobs: { [dataStoreAttributesBlobName]: "fluidDataStoreAttributes" },
-                    commits: {},
-                    trees: {},
-                };
+                it("reading from previous snapshot format", async () => testGenerateAttributesCore({
+                    pkg: JSON.stringify([pkgName]),
+                    snapshotFormatVersion: "0.1",
+                    isRootDataStore: true,
+                }));
 
-                remotedDataStoreContext = new RemotedFluidDataStoreContext(
-                    dataStoreId,
-                    snapshotTree,
-                    containerRuntime,
-                    new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
-                    scope,
-                    createSummarizerNodeFn,
-                );
+                it("reading from oldest snapshot format", async () => testGenerateAttributesCore({ pkg: pkgName }));
+            }
 
-                const isRootNode = await remotedDataStoreContext.isRoot();
-                assert.strictEqual(isRootNode, true, "The data store should be root.");
+            describe("writing with isolated channels disabled", () => testGenerateAttributes(
+                true, /* disableIsolatedChannels */
+                {
+                    pkg: JSON.stringify([pkgName]),
+                    snapshotFormatVersion: "0.1",
+                    isRootDataStore: true,
+                },
+            ));
 
-                const summarizeResult = await remotedDataStoreContext.summarize(true /* fullTree */);
-                assert(summarizeResult.summary.type === SummaryType.Tree,
-                    "summarize should always return a tree when fullTree is true");
-                const blob = summarizeResult.summary.tree[dataStoreAttributesBlobName] as ISummaryBlob;
-
-                const contents = JSON.parse(blob.content as string) as WriteFluidDataStoreAttributes;
-                assert.strictEqual(
-                    contents.pkg,
-                    dataStoreAttributes.pkg,
-                    "Remote DataStore package does not match.");
-                assert.strictEqual(
-                    contents.summaryFormatVersion,
-                    2,
-                    "Remote DataStore snapshot version does not match.");
-                // Remote context without the isRootDataStore flag in the snapshot should default it to true.
-                assert.strictEqual(contents.isRootDataStore, true, "Remote DataStore root state does not match.");
-                assert.strictEqual(contents.disableIsolatedChannels, true, "Disable isolated channels should be true.");
-            });
+            describe("writing with isolated channels enabled", () => testGenerateAttributes(
+                false, /* disableIsolatedChannels */
+                {
+                    pkg: JSON.stringify([pkgName]),
+                    summaryFormatVersion: 2,
+                    isRootDataStore: true,
+                },
+            ));
         });
 
         describe("Garbage Collection", () => {
@@ -505,7 +449,7 @@ describe("Data Store Context Tests", () => {
                 remotedDataStoreContext = new RemotedFluidDataStoreContext(
                     dataStoreId,
                     snapshotTree,
-                    containerRuntime,
+                    mockContainerRuntime(),
                     new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
@@ -553,7 +497,7 @@ describe("Data Store Context Tests", () => {
                 remotedDataStoreContext = new RemotedFluidDataStoreContext(
                     dataStoreId,
                     snapshotTree,
-                    containerRuntime,
+                    mockContainerRuntime(),
                     new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
@@ -608,7 +552,7 @@ describe("Data Store Context Tests", () => {
                 remotedDataStoreContext = new RemotedFluidDataStoreContext(
                     dataStoreId,
                     snapshotTree,
-                    containerRuntime,
+                    mockContainerRuntime(),
                     new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
@@ -645,7 +589,7 @@ describe("Data Store Context Tests", () => {
                 remotedDataStoreContext = new RemotedFluidDataStoreContext(
                     dataStoreId,
                     snapshotTree,
-                    containerRuntime,
+                    mockContainerRuntime(),
                     new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
@@ -682,7 +626,7 @@ describe("Data Store Context Tests", () => {
                 remotedDataStoreContext = new RemotedFluidDataStoreContext(
                     dataStoreId,
                     snapshotTree,
-                    containerRuntime,
+                    mockContainerRuntime(),
                     new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
