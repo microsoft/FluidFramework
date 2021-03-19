@@ -6,6 +6,10 @@
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 export interface ITaskManagerEvents extends ISharedObjectEvents {
+    /**
+     * Notifies when the local client has reached or left the front of the queue.  Does not account for known pending
+     * ops, but instead only reflects the current state.
+     */
     (event: "assigned" | "lost", listener: (taskId: string) => void);
 }
 
@@ -22,19 +26,21 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
     lockTask(taskId: string): Promise<void>;
 
     /**
-     * Exit the queue immediately.
+     * Exit the queue, releasing the task if currently locked.
      * @param taskId - Identifier for the task
      */
     abandon(taskId: string): void;
 
     /**
-     * Check whether this client is the current assignee for the task.
+     * Check whether this client is the current assignee for the task AND we don't anticipate that changing
+     * due to outstanding ops.
      * @param taskId - Identifier for the task
      */
     haveTaskLock(taskId: string): boolean;
 
     /**
-     * Check whether this client is either the current assignee for the task or is waiting in line.
+     * Check whether this client is either the current assignee for the task or is waiting in line AND we don't
+     * anticipate that changing due to outstanding ops.
      * @param taskId - Identifier for the task
      */
     queued(taskId: string): boolean;
