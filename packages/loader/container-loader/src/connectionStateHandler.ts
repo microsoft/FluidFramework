@@ -40,7 +40,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     private _connectionState = ConnectionState.Disconnected;
     private _pendingClientId: string | undefined;
     private _clientId: string | undefined;
-    private prevClientLeftTimer: Timer | undefined;
+    private prevClientLeftTimer: Timer;
     // This is client id of client for which we have received the addMember event but we are waiting on some previous
     // client to leave before moving to Connected state.
     private waitingClientId: string | undefined;
@@ -68,6 +68,13 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         private readonly logger: ITelemetryLogger,
     ) {
         super();
+        this.prevClientLeftTimer = new Timer(
+            // Default is 90 sec for which we are going to wait for its own "leave" message.
+            this.handler.maxClientLeaveWaitTime ?? 90000,
+            () => {
+                this.clientLeaveWaitEnded(false);
+            },
+        );
     }
 
     // This is true when this client submitted any ops.
@@ -79,7 +86,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         // This is the only one that requires the pending client ID
         if (clientId === this.pendingClientId) {
             // Wait for previous client to leave the quorum before firing "connected" event.
-            if (this.prevClientLeftTimer !== undefined && this.prevClientLeftTimer.hasTimer) {
+            if (this.prevClientLeftTimer.hasTimer) {
                 this.waitEvent = PerformanceEvent.start(this.logger, {
                     eventName: "WaitBeforeClientLeave",
                     waitOnClientId: this._clientId,
@@ -180,7 +187,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             // Important as we process our own joinSession message through delta request
             this._pendingClientId = undefined;
             // Only wait for "leave" message if we have some outstanding ops and the client was write client as
-            // server would not accept ops from read client. Also check if the timer is not already set as we
+            // server would not accept ops from read client. Also check if the timer is not already running as we
             // could receive "Disconnected" event multiple times without getting connected and in that case we
             // don't want to reset the timer as we still want to wait on original client which started this timer.
             // We also check the dirty state of this connection as we only want to wait for the client leave of the
@@ -190,21 +197,10 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             // want to wait for newly disconnected client to leave as it has not sent any ops yet.
             if (this.handler.shouldClientJoinWrite()
                 && this.handler.client().mode === "write"
-                && (this.prevClientLeftTimer === undefined || this.prevClientLeftTimer.hasTimer === false)
-                && this.isDirty
+                && this.prevClientLeftTimer.hasTimer === false
+                && this._clientSentOps
             ) {
-                if (this.prevClientLeftTimer) {
-                    this.prevClientLeftTimer.restart();
-                } else {
-                    this.prevClientLeftTimer = new Timer(
-                        // Default is 90 sec for which we are going to wait for its own "leave" message.
-                        this.handler.maxClientLeaveWaitTime ?? 90000,
-                        () => {
-                            this.clientLeaveWaitEnded(false);
-                        },
-                    );
-                    this.prevClientLeftTimer.start();
-                }
+                this.prevClientLeftTimer.restart();
             }
         }
 
