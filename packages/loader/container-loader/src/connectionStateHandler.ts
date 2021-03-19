@@ -45,7 +45,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     // client to leave before moving to Connected state.
     private waitingClientId: string | undefined;
     private waitEvent: PerformanceEvent | undefined;
-    private isDirty: boolean = false;
+    private _clientSentOps: boolean = false;
 
     public get connectionState(): ConnectionState {
         return this._connectionState;
@@ -71,8 +71,8 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     }
 
     // This is true when this client submitted any ops.
-    public setDirtyState() {
-        this.isDirty = true;
+    public clientSentOps() {
+        this._clientSentOps = true;
     }
 
     public receivedAddMemberEvent(clientId: string) {
@@ -164,6 +164,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         // Set it to undefined as now there is no client waiting to get connected.
         this.waitingClientId = undefined;
         if (value === ConnectionState.Connected) {
+            assert(oldState === ConnectionState.Connecting, "Should only transition from Connecting state");
             // Mark our old client should have left in the quorum if it's still there
             if (this._clientId !== undefined) {
                 const client: ILocalSequencedClient | undefined =
@@ -173,8 +174,8 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
                 }
             }
             this._clientId = this.pendingClientId;
-            // Set isDirty to false as this is a fresh connection.
-            this.isDirty = false;
+            // Set _clientSentOps to false as this is a fresh connection.
+            this._clientSentOps = false;
         } else if (value === ConnectionState.Disconnected) {
             // Important as we process our own joinSession message through delta request
             this._pendingClientId = undefined;
