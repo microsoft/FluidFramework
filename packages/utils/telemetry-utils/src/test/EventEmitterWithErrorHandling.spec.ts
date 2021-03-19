@@ -69,7 +69,7 @@ describe.only("EventEmitterWithErrorHandling", () => {
         } catch (error) {
             assert.strictEqual(error.message, "error listener throws", "error thrown from listener should win");
         }
-        assert.strictEqual(errorListenerCallCount, 2, "error listener should be called twice");
+        assert.strictEqual(errorListenerCallCount, 1, "error listener should be called only once");
     });
     it("exception in listener will be thrown if no error listener", ()=> {
         const emitter = new EventEmitterWithErrorHandling();
