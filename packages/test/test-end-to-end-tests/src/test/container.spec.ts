@@ -48,7 +48,7 @@ describe("Container", () => {
     async function loadContainer(props?: Partial<ILoaderProps>) {
         const loader = new Loader({
             ...props,
-            logger: ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}}),
+            logger: ChildLogger.create(getTestLogger(), undefined, {all: {driverType: driver.type}}),
             urlResolver: props?.urlResolver ?? driver.createUrlResolver(),
             documentServiceFactory:
                 props?.documentServiceFactory ?? driver.createDocumentServiceFactory(),
