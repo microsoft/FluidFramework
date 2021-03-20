@@ -78,7 +78,7 @@ async function orchestratorProcess(
     try{
         await Promise.all(p);
     } finally{
-        await safeExit(0, testId);
+        await safeExit(0, url);
     }
 }
 
