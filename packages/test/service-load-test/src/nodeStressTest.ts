@@ -31,12 +31,10 @@ async function main() {
         process.env.DEBUG = log;
     }
 
-    const result = await orchestratorProcess(
+    await orchestratorProcess(
         driver,
         { ...profile, name: profileArg },
         { testId, debug });
-
-    await safeExit(result);
 }
 /**
  * Implementation of the orchestrator process. Returns the return code to exit the process with.
@@ -45,7 +43,7 @@ async function orchestratorProcess(
     driver: TestDriverTypes,
     profile: ILoadTestConfig & { name: string },
     args: { testId?: string, debug?: true },
-): Promise<number> {
+) {
     const testDriver = await createTestDriver(driver);
 
     // Create a new file if a testId wasn't provided
@@ -77,8 +75,11 @@ async function orchestratorProcess(
         );
         p.push(new Promise((resolve) => process.on("close", resolve)));
     }
-    await Promise.all(p);
-    return 0;
+    try{
+        await Promise.all(p);
+    } finally{
+        await safeExit(0, testId);
+    }
 }
 
 main().catch(

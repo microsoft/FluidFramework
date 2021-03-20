@@ -84,7 +84,7 @@ export class DocumentService implements api.IDocumentService {
             }
         }
 
-        this.documentStorageService = new DocumentStorageService(this.documentId, gitManager);
+        this.documentStorageService = new DocumentStorageService(this.documentId, gitManager, this.logger);
         return this.documentStorageService;
     }
 
