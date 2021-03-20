@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import util from "util";
-import { assert, bufferToString, stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
+import { assert, bufferToString, stringToBuffer, TelemetryNullLogger, IsoBuffer } from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -243,10 +243,13 @@ async function saveSnapshot(name: string, fetchedData: IFetchedData[], saveDir: 
             console.error(`ERROR: Unable to get data for blob ${item.blobId}`);
             return;
         }
-        const data = bufferToString(buffer,"base64");
 
         if (!isFetchedTree(item)) {
-            fs.writeFileSync(`${outDir}/${item.filename}`, data);
+            // Just write the data as is.
+            fs.writeFileSync(`${outDir}/${item.filename}`, IsoBuffer.from(buffer));
+
+            // we assume that the buffer is utf8 here, which currently is true for
+            // all of our snapshot blobs.  It doesn't necessary be true in the future
             let decoded = bufferToString(buffer,"utf8");
             try {
                 if (!paramActualFormatting) {
@@ -257,11 +260,11 @@ async function saveSnapshot(name: string, fetchedData: IFetchedData[], saveDir: 
             fs.writeFileSync(
                 `${outDir}/decoded/${item.filename}.json`, decoded);
         } else {
-            // Write out same data for tree
-            fs.writeFileSync(`${outDir}/${item.filename}.json`, data);
-            const decoded = bufferToString(buffer,"utf8");
+            // Write out same data for tree decoded or not, except for formatting
+            const treeString = bufferToString(buffer,"utf8");
+            fs.writeFileSync(`${outDir}/${item.filename}.json`, treeString);
             fs.writeFileSync(`${outDir}/decoded/${item.filename}.json`,
-                paramActualFormatting ? decoded : JSON.stringify(JSON.parse(decoded), undefined, 2));
+                paramActualFormatting ? treeString : JSON.stringify(JSON.parse(treeString), undefined, 2));
         }
     }));
 }

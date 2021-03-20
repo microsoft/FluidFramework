@@ -4,7 +4,7 @@
  */
 
 import fs from "fs";
-import { assert, bufferToString } from "@fluidframework/common-utils";
+import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
 import {
     IDocumentStorageService,
     IDocumentStorageServicePolicies,
@@ -53,9 +53,9 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
                 return null;
             }
             rootTree = true;
-            filename = `${this.path}/${this.versionName}/decoded/tree.json`;
+            filename = `${this.path}/${this.versionName}/tree.json`;
         } else {
-            filename = `${this.path}/${this.versionName}/decoded/${version.id}.json`;
+            filename = `${this.path}/${this.versionName}/${version.id}.json`;
         }
 
         if (!fs.existsSync(filename)) {
@@ -96,7 +96,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
 
     public async readBlob(sha: string): Promise<ArrayBufferLike> {
         if (this.versionName !== undefined) {
-            const fileName = `${this.path}/${this.versionName}/decoded/${sha}`;
+            const fileName = `${this.path}/${this.versionName}/${sha}`;
             if (fs.existsSync(fileName)) {
                 const data = fs.readFileSync(fileName);
                 return data;
