@@ -92,7 +92,7 @@ describe('Summary format', () => {
 				expectedTree.processLocalEdit({ ...edit, id: uuidv5(i.toString(), uuidNamespace) as EditId });
 			}
 
-			await localTestObjectProvider.opProcessingController.process();
+			await localTestObjectProvider.ensureSynchronized();
 
 			validateSummaryRead('0.0.2-history');
 			validateSummaryWrite(fullHistorySummarizer);
@@ -104,7 +104,7 @@ describe('Summary format', () => {
 		const catchupExpectedTree = async () => {
 			expectedTree.saveSummary();
 			await new Promise((resolve) => expectedTree.once(SharedTreeEvent.ChunksUploaded, resolve));
-			await localTestObjectProvider.opProcessingController.process();
+			await localTestObjectProvider.ensureSynchronized();
 		};
 
 		it('can be read and written with no history', async () => {
@@ -130,7 +130,7 @@ describe('Summary format', () => {
 				expectedTree.processLocalEdit({ ...edit, id: uuidv5(i.toString(), uuidNamespace) as EditId });
 			}
 
-			await localTestObjectProvider.opProcessingController.process();
+			await localTestObjectProvider.ensureSynchronized();
 
 			await catchupExpectedTree();
 

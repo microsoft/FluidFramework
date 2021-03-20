@@ -35,6 +35,7 @@ import {
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
 
+// REVIEW: enable compat testing?
 describeNoCompat("Container", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const loaderContainerTracker = new LoaderContainerTracker();

@@ -20,7 +20,6 @@ import {
     createAndAttachContainer,
     createDocumentId,
     createLoader,
-    OpProcessingController,
 } from "@fluidframework/test-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 
@@ -33,10 +32,7 @@ class TestDataObject extends DataObject {
     public readonly getContext = () => this.context;
 }
 
-async function createContainer(provider: ITestObjectProvider): Promise<{
-    container: IContainer;
-    opProcessingController: OpProcessingController;
-}> {
+async function createContainer(provider: ITestObjectProvider): Promise<IContainer> {
     const documentId = createDocumentId();
     const codeDetails: IFluidCodeDetails = {
         package: "summarizerTestPackage",
@@ -75,10 +71,9 @@ async function createContainer(provider: ITestObjectProvider): Promise<{
         loader,
         provider.driver.createCreateNewRequest(documentId));
 
-    const opProcessingController = new OpProcessingController();
-    opProcessingController.addDeltaManagers(container.deltaManager);
+    provider.opProcessingController.addDeltaManagers(container.deltaManager);
 
-    return { container, opProcessingController };
+    return container;
 }
 
 // REVIEW: enable compat testing?
@@ -89,11 +84,11 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
     });
 
     it("Should generate summary tree", async () => {
-        const { container, opProcessingController } = await createContainer(provider);
+        const container = await createContainer(provider);
         const defaultDataStore = await requestFluidObject<TestDataObject>(container, defaultDataStoreId);
         const containerRuntime = defaultDataStore.getContext().containerRuntime as ContainerRuntime;
 
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
 
         const { gcData, stats, summary } = await containerRuntime.summarize({
             runGC: false,

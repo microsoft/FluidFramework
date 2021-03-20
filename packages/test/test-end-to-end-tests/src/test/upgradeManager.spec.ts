@@ -18,6 +18,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     createAndAttachContainer,
     createDocumentId,
+    ITestObjectProvider,
     LocalCodeLoader,
     OpProcessingController,
 } from "@fluidframework/test-utils";
@@ -44,11 +45,11 @@ describeNoCompat("UpgradeManager (hot-swap)", (getTestObjectProvider) => {
         package: "localLoaderTestPackage",
         config: {},
     };
+    let provider: ITestObjectProvider;
     let opProcessingController: OpProcessingController;
 
     async function createContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-        const provider = getTestObjectProvider();
         const loader = new Loader({
             urlResolver: provider.urlResolver,
             documentServiceFactory: provider.documentServiceFactory,
@@ -63,7 +64,7 @@ describeNoCompat("UpgradeManager (hot-swap)", (getTestObjectProvider) => {
 
     async function loadContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-        const provider = getTestObjectProvider();
+
         const loader = new Loader({
             urlResolver: provider.urlResolver,
             documentServiceFactory: provider.documentServiceFactory,
@@ -76,7 +77,8 @@ describeNoCompat("UpgradeManager (hot-swap)", (getTestObjectProvider) => {
     }
 
     beforeEach(async () => {
-        opProcessingController = getTestObjectProvider().opProcessingController;
+        provider = getTestObjectProvider();
+        opProcessingController = provider.opProcessingController;
     });
 
     it("prevents multiple approved proposals", async () => {
@@ -118,7 +120,7 @@ describeNoCompat("UpgradeManager (hot-swap)", (getTestObjectProvider) => {
             dataObject._root.set("tempKey", "tempValue");
         });
         while (containers.filter((c) => !c.deltaManager.active).length !== 0) {
-            await opProcessingController.process();
+            await provider.ensureSynchronized();
         }
 
         // upgrade all containers at once
@@ -153,12 +155,12 @@ describeNoCompat("UpgradeManager (hot-swap)", (getTestObjectProvider) => {
         // We should wait for this to happen before we send a new code proposal so that it doesn't get nack'd.
         dataObject._root.set("tempKey", "tempValue");
         while (!container.deltaManager.active) {
-            await opProcessingController.process();
+            await provider.ensureSynchronized();
         }
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         upgradeManager.upgrade(codeDetails);
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
         await upgradeP;
     });
 
@@ -191,7 +193,7 @@ describeNoCompat("UpgradeManager (hot-swap)", (getTestObjectProvider) => {
         // We should wait for this to happen before we send a new code proposal so that it doesn't get nack'd.
         dataObject._root.set("tempKey", "tempValue");
         while (!container1.deltaManager.active || !container2.deltaManager.active) {
-            await opProcessingController.process();
+            await provider.ensureSynchronized();
         }
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         upgradeManager.upgrade(codeDetails);

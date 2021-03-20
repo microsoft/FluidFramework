@@ -20,9 +20,9 @@ import {
     createAndAttachContainer,
     createDocumentId,
     LocalCodeLoader,
-    OpProcessingController,
     timeoutPromise,
     LoaderContainerTracker,
+    ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { Loader } from "@fluidframework/container-loader";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -73,15 +73,15 @@ function getTestDataStoreClasses(api: ReturnType<typeof getDataRuntimeApi>) {
 
 const { TestDataStoreV1, TestDataStoreV2 } = getTestDataStoreClasses(getDataRuntimeApi());
 
+// REVIEW: enable compat testing?
 describeNoCompat("context reload (hot-swap)", (getTestObjectProvider) => {
-    let provider;
+    let provider: ITestObjectProvider;
     beforeEach(() => {
         provider = getTestObjectProvider();
     });
     let container: IContainer;
     let containerError = false;
     let dataStoreV1: ITestDataStore;
-    let opProcessingController: OpProcessingController;
     const loaderContainerTracker = new LoaderContainerTracker();
     const codeDetails = (version: string): IFluidCodeDetails => {
         return {
@@ -154,7 +154,7 @@ describeNoCompat("context reload (hot-swap)", (getTestObjectProvider) => {
             dataStoreV1._root.set(test[0], test[1]);
 
             while (!dataStoreV1._runtime.deltaManager.active) {
-                await opProcessingController.process();
+                await provider.ensureSynchronized();
             }
 
             await container.getQuorum().propose("code", codeDetails(V2));
@@ -177,7 +177,7 @@ describeNoCompat("context reload (hot-swap)", (getTestObjectProvider) => {
             dataStoreV1._root.set(test[0], test[1]);
 
             while (!dataStoreV1._runtime.deltaManager.active) {
-                await opProcessingController.process();
+                await provider.ensureSynchronized();
             }
 
             await proposeAndWaitForReload(V2, container);
@@ -197,7 +197,7 @@ describeNoCompat("context reload (hot-swap)", (getTestObjectProvider) => {
             dataStoreV1._root.set(test[0], test[1]);
 
             while (!dataStoreV1._runtime.deltaManager.active) {
-                await opProcessingController.process();
+                await provider.ensureSynchronized();
             }
 
             await proposeAndWaitForReload(V2, container);
@@ -222,8 +222,7 @@ describeNoCompat("context reload (hot-swap)", (getTestObjectProvider) => {
             dataStoreV1 = await requestFluidObject<ITestDataStore>(container, "default");
             assert.strictEqual(dataStoreV1.version, TestDataStoreV1.version);
 
-            opProcessingController = new OpProcessingController();
-            opProcessingController.addDeltaManagers(container.deltaManager);
+            provider.opProcessingController.addDeltaManagers(container.deltaManager);
         });
 
         tests();
@@ -245,7 +244,6 @@ describeNoCompat("context reload (hot-swap)", (getTestObjectProvider) => {
 
         it("loads version 2", async () => {
             const docId = createDocumentId();
-            opProcessingController = new OpProcessingController();
 
             const packageEntries = [
                 [codeDetails(V1), createRuntimeFactory(TestDataStoreV1)],
@@ -260,7 +258,7 @@ describeNoCompat("context reload (hot-swap)", (getTestObjectProvider) => {
             containers.map((c) => c.on("warning", () => success = false));
             containers.map((c) => c.on("closed", (error) => success = success && error === undefined));
 
-            containers.map((c) => opProcessingController.addDeltaManagers(c.deltaManager));
+            containers.map((c) => provider.opProcessingController.addDeltaManagers(c.deltaManager));
 
             let dataStores = await Promise.all(containers.map(
                 async (c) => requestFluidObject<ITestDataStore>(c, "default")));
@@ -275,7 +273,7 @@ describeNoCompat("context reload (hot-swap)", (getTestObjectProvider) => {
             dataStores[0]._root.set(test[0], test[1]);
 
             while (!dataStores[0]._runtime.deltaManager.active) {
-                await opProcessingController.process();
+                await provider.ensureSynchronized();
             }
 
             await proposeAndWaitForReload(V2, ...containers);
@@ -329,8 +327,7 @@ describeNoCompat("context reload (hot-swap)", (getTestObjectProvider) => {
                 dataStoreV1 = await requestFluidObject<ITestDataStore>(container, "default");
                 assert.strictEqual(dataStoreV1.version, TestDataStoreV1.version);
 
-                opProcessingController = new OpProcessingController();
-                opProcessingController.addDeltaManagers(container.deltaManager);
+                provider.opProcessingController.addDeltaManagers(container.deltaManager);
             });
 
             tests();
@@ -346,8 +343,7 @@ describeNoCompat("context reload (hot-swap)", (getTestObjectProvider) => {
                 dataStoreV1 = await requestFluidObject<ITestDataStore>(container, "default");
                 assert.strictEqual(dataStoreV1.version, TestDataStoreV1.version);
 
-                opProcessingController = new OpProcessingController();
-                opProcessingController.addDeltaManagers(container.deltaManager);
+                provider.opProcessingController.addDeltaManagers(container.deltaManager);
             });
 
             tests();

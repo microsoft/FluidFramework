@@ -112,10 +112,10 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
         // Create a Container for the first client.
         containers.push(await createContainer(codeDetails, documentId));
 
-        opProcessingController = new OpProcessingController();
+        opProcessingController = provider.opProcessingController;
         opProcessingController.addDeltaManagers(containers[0].deltaManager);
 
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
 
         // Load the Container that was created by the first client.
         containers.push(await loadContainer(documentId));
@@ -155,10 +155,10 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 
         const res = await Promise.all([
             containers[0].proposeCodeDetails(proposal),
-            opProcessingController.process(),
+            provider.ensureSynchronized(),
         ]);
         assert.strictEqual(res[0], true, "Code proposal should be accepted");
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
 
         for (let i = 0; i < containers.length; i++) {
             assert.strictEqual(containers[i].closed, true, `containers[${i}] should be closed`);
@@ -187,7 +187,7 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 
         const res = await Promise.all([
             containers[0].proposeCodeDetails(proposal),
-            opProcessingController.process(),
+            provider.ensureSynchronized(),
         ]);
 
         assert.strictEqual(res[0], false, "Code proposal should be rejected");
@@ -214,7 +214,7 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
         const proposal: IFluidCodeDetails = { package: packageV1dot5 };
         const res = await Promise.all([
             containers[0].proposeCodeDetails(proposal),
-            opProcessingController.process(),
+            provider.ensureSynchronized(),
         ]);
 
         assert.strictEqual(res[0], true, "Code proposal should be accepted");
@@ -252,11 +252,11 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 
             const res = await Promise.all([
                 containers[0].proposeCodeDetails(proposal),
-                opProcessingController.process(),
+                provider.ensureSynchronized(),
             ]);
 
             assert.strictEqual(res[0], true, "Code proposal should be accepted");
-            await opProcessingController.process();
+            await provider.ensureSynchronized();
 
             for (let i = 0; i < containers.length; i++) {
                 assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
@@ -289,7 +289,7 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 
             const res = await Promise.all([
                 containers[0].proposeCodeDetails(proposal),
-                opProcessingController.process(),
+                provider.ensureSynchronized(),
             ]);
 
             assert.strictEqual(res[0], false, "Code proposal should be rejected");
@@ -323,12 +323,12 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 
             const res = await Promise.all([
                 containers[0].proposeCodeDetails(proposal),
-                opProcessingController.process(),
+                provider.ensureSynchronized(),
             ]);
 
             assert.strictEqual(res[0], true, "Code proposal should be accepted");
             assert.strictEqual(containers[0].closed, false, "containers[0] should not be closed");
-            await opProcessingController.process();
+            await provider.ensureSynchronized();
 
             assert.deepStrictEqual(
                 containers[0].codeDetails,
@@ -351,7 +351,7 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
             const proposal: IFluidCodeDetails = { package: packageV1dot5 };
             const res = await Promise.all([
                 containers[0].proposeCodeDetails(proposal),
-                opProcessingController.process(),
+                provider.ensureSynchronized(),
             ]);
 
             assert.strictEqual(res[0], true, "Code proposal should be accepted");
@@ -384,7 +384,7 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
             waiters.push(... keys.map(async (k)=>map.wait(k)));
         }
 
-        await Promise.all([opProcessingController.process(), ...waiters]);
+        await Promise.all([provider.ensureSynchronized(), ...waiters]);
 
         for (const map of maps) {
             for (const key of keys) {

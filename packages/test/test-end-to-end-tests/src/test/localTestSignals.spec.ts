@@ -33,16 +33,16 @@ const waitForSignal =
                         })));
 
 describeFullCompat("TestSignals", (getTestObjectProvider) => {
-    let args: ITestObjectProvider;
+    let provider: ITestObjectProvider;
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;
 
     beforeEach(async () => {
-        args = getTestObjectProvider();
-        const container1 = await args.makeTestContainer(testContainerConfig) as Container;
+        provider = getTestObjectProvider();
+        const container1 = await provider.makeTestContainer(testContainerConfig) as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 
-        const container2 = await args.loadTestContainer(testContainerConfig) as Container;
+        const container2 = await provider.loadTestContainer(testContainerConfig) as Container;
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
         // need to be connected to send signals

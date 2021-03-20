@@ -273,7 +273,7 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
                 if (provider.driver.type !== "local") {
                     this.skip();
                 }
-                opProcessingController = new OpProcessingController();
+                opProcessingController = provider.opProcessingController;
                 opProcessingController.addDeltaManagers(
                     container1.deltaManager,
                     container2.deltaManager);

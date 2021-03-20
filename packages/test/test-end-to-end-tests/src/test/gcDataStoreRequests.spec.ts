@@ -113,7 +113,7 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
     beforeEach(async () => {
         provider = getTestObjectProvider();
         documentId = createDocumentId();
-        opProcessingController = new OpProcessingController();
+        opProcessingController = provider.opProcessingController;
 
         // Create a Container for the first client.
         container1 = await createContainer();
@@ -128,7 +128,7 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
         dataStore1._root.set("dataStore2", dataStore2.handle);
 
         // Wait for ops to be processed so that summarizer creates dataStore2.
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
 
         // Now delete the handle so that dataStore2 is marked as unreferenced.
         dataStore1._root.delete("dataStore2");
@@ -162,7 +162,7 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
         dataStore1._root.set("dataStore2", dataStore2.handle);
 
         // Wait for ops to be processed so that summarizer creates dataStore2.
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
 
         // Now delete the handle so that dataStore2 is marked as unreferenced.
         dataStore1._root.delete("dataStore2");

@@ -95,6 +95,7 @@ const testSharedDataObjectFactory2 = new DataObjectFactory(
     [],
     []);
 
+// REVIEW: enable compat testing?
 describeNoCompat("Loader.request", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const codeDetails: IFluidCodeDetails = {
@@ -137,7 +138,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
         // this binds dataStore2 to dataStore1
         dataStore1._root.set("key", dataStore2.handle);
 
-        opProcessingController = new OpProcessingController();
+        opProcessingController = provider.opProcessingController;
         opProcessingController.addDeltaManagers(container.deltaManager);
     });
 
@@ -206,7 +207,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
         (container2 as Container).resume();
 
         // Flush all the ops
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
 
         const newDataStore2 = await requestFluidObject(container2, { url: newDataStore.id });
         assert(newDataStore2 instanceof TestSharedDataObject2, "requestFromLoader returns the wrong type for object2");
@@ -230,7 +231,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
         (container1 as Container).resume();
 
         // Flush all the ops
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
 
         const sameDataStore1 = await requestFluidObject(container1, {
             url: newDataStore.id,

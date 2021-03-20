@@ -27,6 +27,7 @@ import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 
+// REVIEW: enable compat testing?
 describeNoCompat("SharedString", (getTestObjectProvider) => {
     it("Failure to Load in Shared String", async () => {
         const stringId = "sharedStringKey";

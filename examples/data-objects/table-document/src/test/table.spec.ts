@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ITestObjectProvider,
-    OpProcessingController,
 } from "@fluidframework/test-utils";
 import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { TableDocument } from "../document";
@@ -16,7 +15,6 @@ import { TableDocumentItem } from "../table";
 
 describeLoaderCompat("TableDocument", (getTestObjectProvider) => {
     let tableDocument: TableDocument;
-    let opProcessingController: OpProcessingController;
 
     function makeId(type: string) {
         const newId = Math.random().toString(36).substr(2);
@@ -28,8 +26,6 @@ describeLoaderCompat("TableDocument", (getTestObjectProvider) => {
         provider = getTestObjectProvider();
         const container = await provider.createContainer(TableDocument.getFactory());
         tableDocument = await requestFluidObject<TableDocument>(container, "default");
-
-        opProcessingController = provider.opProcessingController;
     });
 
     const extract = (table: TableDocument) => {
@@ -49,7 +45,7 @@ describeLoaderCompat("TableDocument", (getTestObjectProvider) => {
         assert.deepStrictEqual(extract(tableDocument), expected);
 
         // Paranoid check that awaiting incoming messages does not change test results.
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
         assert.strictEqual(tableDocument.numRows, expected.length);
         assert.deepStrictEqual(extract(tableDocument), expected);
     };

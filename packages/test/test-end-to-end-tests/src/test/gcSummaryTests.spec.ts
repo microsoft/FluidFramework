@@ -20,7 +20,6 @@ import {
     createDocumentId,
     createLoader,
     ITestObjectProvider,
-    OpProcessingController,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -61,7 +60,6 @@ describeNoCompat("GC in summary", (getTestObjectProvider) => {
     );
 
     let provider: ITestObjectProvider;
-    let opProcessingController: OpProcessingController;
     let containerRuntime: ContainerRuntime;
     let defaultDataStore: TestDataObject;
 
@@ -78,7 +76,7 @@ describeNoCompat("GC in summary", (getTestObjectProvider) => {
 
     // Summarizes the container and validates that the data store's reference state is correct in the summary.
     async function validateDataStoreReferenceState(dataStoreId: string, referenced: boolean) {
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
         const { summary } = await containerRuntime.summarize({
             runGC: true,
             fullTree: true,
@@ -106,12 +104,11 @@ describeNoCompat("GC in summary", (getTestObjectProvider) => {
     beforeEach(async () => {
         provider = getTestObjectProvider();
         documentId = createDocumentId();
-        opProcessingController = new OpProcessingController();
 
         const container = await createContainer() as Container;
         defaultDataStore = await requestFluidObject<TestDataObject>(container, "/");
         containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
-        opProcessingController.addDeltaManagers(containerRuntime.deltaManager);
+        provider.opProcessingController.addDeltaManagers(containerRuntime.deltaManager);
 
         // Wait for the Container to get connected.
         if (!container.connected) {
