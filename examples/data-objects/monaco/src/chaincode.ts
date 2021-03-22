@@ -6,7 +6,6 @@
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
 import { DataObject } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import * as ClientUI from "@fluid-example/client-ui-lib";
 import {
     IMergeTreeGroupMsg,
     IMergeTreeInsertMsg,
@@ -15,7 +14,7 @@ import {
     MergeTreeDeltaType,
 } from "@fluidframework/merge-tree";
 import { SharedString } from "@fluidframework/sequence";
-import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidMountableView } from "@fluidframework/view-interfaces";
 // eslint-disable-next-line import/no-unresolved
 import * as monaco from "monaco-editor";
 
@@ -58,12 +57,8 @@ const defaultCompilerOptions = {
 /**
  * Component for using the Monaco text editor.
  */
-export class MonacoRunner extends DataObject implements
-    IFluidHTMLView, ClientUI.controls.IViewLayout {
-    public get IFluidHTMLView() { return this; }
-    public get IFluidLoadable() { return this; }
-    public get IViewLayout() { return this; }
-
+export class MonacoRunner extends DataObject implements IFluidMountableView {
+    public get IFluidMountableView() { return this; }
     /**
      * The chart probably has a preferred aspect ratio - but it can also fill any bounds
      */
@@ -92,7 +87,7 @@ export class MonacoRunner extends DataObject implements
      */
     private codeEditor: monaco.editor.IStandaloneCodeEditor;
 
-    public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
+    public mount(elm: HTMLElement): void {
         if (!this.mapHost) {
             this.mapHost = document.createElement("div");
             elm.appendChild(this.mapHost);
@@ -103,6 +98,10 @@ export class MonacoRunner extends DataObject implements
                 elm.appendChild(this.mapHost);
             }
         }
+    }
+
+    public unmount() {
+        console.log("unmount");
     }
 
     /**
@@ -126,9 +125,6 @@ export class MonacoRunner extends DataObject implements
         this.mapHost.style.minHeight = "480px";
         this.mapHost.style.width = "100%";
         this.mapHost.style.height = "100%";
-        // const outputDiv = document.createElement("div");
-        // outputDiv.style.width = "50%";
-        // hostWrapper.appendChild(outputDiv);
 
         const textHandle = await this.root.wait<IFluidHandle<SharedString>>("text");
         const text = await textHandle.get();
@@ -149,37 +145,13 @@ export class MonacoRunner extends DataObject implements
         }
 
         this.codeModel = monaco.editor.createModel(text.getText(), "typescript");
-        const outputModel = monaco.editor.createModel("", "javascript");
 
         this.codeEditor = monaco.editor.create(
             this.mapHost,
             { model: this.codeModel, automaticLayout: true });
-        // const outputEditor = monaco.editor.create(
-        //     outputDiv,
-        //     { model: outputModel, automaticLayout: true, readOnly: true });
-
-        this.codeEditor.addCommand(
-            monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            () => { this.runCode(outputModel.getValue()); },
-            null);
-
-        // outputEditor.addCommand(
-        //     monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-        //     () => { this.runCode(outputModel.getValue(), platform); },
-        //     null);
 
         let ignoreModelContentChanges = false;
         this.codeEditor.onDidChangeModelContent((e) => {
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            monaco.languages.typescript.getTypeScriptWorker().then((worker) => {
-                worker(this.codeModel.uri.toString()).then((client) => {
-                    client.getEmitOutput(this.codeModel.uri.toString()).then((r) => {
-                        outputModel.setValue(r.outputFiles[0].text);
-                    });
-                });
-            });
-
             if (ignoreModelContentChanges) {
                 return;
             }
@@ -284,25 +256,5 @@ export class MonacoRunner extends DataObject implements
         const pos2 = (typeof offset2 === "number") ? this.codeModel.getPositionAt(offset2) : pos1;
         const range = new monaco.Range(pos1.lineNumber, pos1.column, pos2.lineNumber, pos2.column);
         return range;
-    }
-
-    /**
-     * Evals the passed string as script.  Used to allow code execution on Ctrl+Enter.
-     * @param code String of JS to eval
-     */
-    private async runCode(code: string): Promise<void> {
-        // const root = await platform.queryInterface<any>("root");
-        // const host = root ? root.entry : null;
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.exec(/* host, */ code);
-    }
-
-    /**
-     * Evals the passed string as script.
-     * @param code String of JS to eval
-     */
-    private async exec(/* host: any, */ code: string) {
-        // eslint-disable-next-line no-eval
-        eval(code);
     }
 }
