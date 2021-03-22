@@ -722,7 +722,8 @@ export class Client {
         segmentGroup: SegmentGroup): ops.IMergeTreeDeltaOp[] {
         assert(!!segmentGroup, 0x033 /* "Segment group undefined" */);
         const NACKedSegmentGroup = this.mergeTree.pendingSegments?.dequeue();
-        assert(segmentGroup === NACKedSegmentGroup, 0x034 /* "Segment group not at head of merge tree pending queue" */);
+        assert(segmentGroup === NACKedSegmentGroup,
+            0x034 /* "Segment group not at head of merge tree pending queue" */);
 
         const opList: ops.IMergeTreeDeltaOp[] = [];
         // We need to sort the segments by ordinal, as the segments are not sorted in the segment group.
@@ -830,7 +831,8 @@ export class Client {
     public updateSeqNumbers(min: number, seq: number) {
         const collabWindow = this.mergeTree.getCollabWindow();
         // Equal is fine here due to SharedSegmentSequence<>.snapshotContent() potentially updating with same #
-        assert(collabWindow.currentSeq <= seq, 0x038 /* "Incoming op sequence# < local collabWindow's currentSequence#" */);
+        assert(collabWindow.currentSeq <= seq,
+            0x038 /* "Incoming op sequence# < local collabWindow's currentSequence#" */);
         collabWindow.currentSeq = seq;
         assert(min <= seq, 0x039 /* "Incoming op sequence# < minSequence#" */);
         this.updateMinSeq(min);

@@ -144,7 +144,8 @@ export class LocalChannelContext implements IChannelContext {
         assert(!this.isLoaded, 0x18e /* "Channel must not already be loaded when loading" */);
         assert(!!this.snapshotTree, 0x18f /* "Snapshot should be provided to load from!!" */);
 
-        assert(await this.services.value.objectStorage.contains(".attributes"), 0x190 /* ".attributes blob should be present" */);
+        assert(await this.services.value.objectStorage.contains(".attributes"),
+            0x190 /* ".attributes blob should be present" */);
         const attributes = await readAndParse<IChannelAttributes>(
             this.services.value.objectStorage,
             ".attributes");

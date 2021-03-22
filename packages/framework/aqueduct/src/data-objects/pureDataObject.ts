@@ -157,7 +157,8 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
     public async initializeInternal(): Promise<void> {
         await this.preInitialize();
         if (this.runtime.existing) {
-            assert(this.initProps === undefined, 0x0be /* "Trying to initialize from existing while initProps is set!" */);
+            assert(this.initProps === undefined,
+                0x0be /* "Trying to initialize from existing while initProps is set!" */);
             await this.initializingFromExisting();
         } else {
             await this.initializingFirstTime(this.context.createProps as S ?? this.initProps);

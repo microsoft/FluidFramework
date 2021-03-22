@@ -110,7 +110,8 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         // TaskManager. In the future, as new usage shows up, we may need to reconsider that.
         // I'm adding assert here to catch that case and make decision on which way we go - push requirements
         // to consumers to make a choice, or centrally make this call here.
-        assert(this.context.deltaManager.clientDetails.capabilities.interactive, 0x118 /* "Bad client interactive check" */);
+        assert(this.context.deltaManager.clientDetails.capabilities.interactive,
+            0x118 /* "Bad client interactive check" */);
 
         // Check the current status and express interest if it's a new one (undefined) or currently unpicked (null).
         if (this.isActive()) {

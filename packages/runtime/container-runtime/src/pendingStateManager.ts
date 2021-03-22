@@ -404,7 +404,8 @@ export class PendingStateManager {
         assert(this.connected, 0x172 /* "The connection state is not consistent with the runtime" */);
 
         // This assert suggests we are about to send same ops twice, which will result in data loss.
-        assert(this.clientId !== this.containerRuntime.clientId, 0x173 /* "replayPendingStates called twice for same clientId!" */);
+        assert(this.clientId !== this.containerRuntime.clientId,
+            0x173 /* "replayPendingStates called twice for same clientId!" */);
         this.clientId = this.containerRuntime.clientId;
 
         assert(this.initialStates.isEmpty(), 0x174 /* "initial states should be empty before replaying pending" */);

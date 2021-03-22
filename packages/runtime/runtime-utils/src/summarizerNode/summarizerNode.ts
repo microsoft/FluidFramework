@@ -66,7 +66,8 @@ export class SummarizerNode implements IRootSummarizerNode {
     private wipSkipRecursion = false;
 
     public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger) {
-        assert(this.wipSummaryLogger === undefined, 0x19f /* "wipSummaryLogger should not be set yet in startSummary" */);
+        assert(this.wipSummaryLogger === undefined,
+            0x19f /* "wipSummaryLogger should not be set yet in startSummary" */);
         assert(this.wipReferenceSequenceNumber === undefined, 0x1a0 /* "Already tracking a summary" */);
 
         this.wipSummaryLogger = summaryLogger;
@@ -79,7 +80,8 @@ export class SummarizerNode implements IRootSummarizerNode {
 
     public async summarize(fullTree: boolean): Promise<ISummarizeResult> {
         assert(this.isTrackingInProgress(), 0x1a1 /* "summarize should not be called when not tracking the summary" */);
-        assert(this.wipSummaryLogger !== undefined, 0x1a2 /* "wipSummaryLogger should have been set in startSummary or ctor" */);
+        assert(this.wipSummaryLogger !== undefined,
+            0x1a2 /* "wipSummaryLogger should have been set in startSummary or ctor" */);
 
         // Try to reuse the tree if unchanged
         if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
@@ -163,7 +165,8 @@ export class SummarizerNode implements IRootSummarizerNode {
         parentPath: EscapedPath | undefined,
         parentSkipRecursion: boolean,
     ) {
-        assert(this.wipSummaryLogger !== undefined, 0x1a3 /* "wipSummaryLogger should have been set in startSummary or ctor" */);
+        assert(this.wipSummaryLogger !== undefined,
+            0x1a3 /* "wipSummaryLogger should have been set in startSummary or ctor" */);
         assert(this.wipReferenceSequenceNumber !== undefined, 0x1a4 /* "Not tracking a summary" */);
         let localPathsToUse = this.wipLocalPaths;
 

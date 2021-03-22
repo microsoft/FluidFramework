@@ -407,7 +407,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * @param channel - channel to be registered.
      */
     public bindChannel(channel: IChannel): void {
-        assert(this.notBoundedChannelContextSet.has(channel.id), 0x17b /* "Channel to be binded should be in not bounded set" */);
+        assert(this.notBoundedChannelContextSet.has(channel.id),
+        0x17b /* "Channel to be binded should be in not bounded set" */);
         this.notBoundedChannelContextSet.delete(channel.id);
         // If our data store is attached, then attach the channel.
         if (this.isAttached) {
@@ -516,9 +517,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         assert(this.pendingAttach.has(id), 0x17c /* "Unexpected attach (local) channel OP" */);
                         this.pendingAttach.delete(id);
                     } else {
-                        assert(!this.contexts.has(id), 0x17d /* `Unexpected attach channel OP,
-                                                        is in pendingAttach set: ${this.pendingAttach.has(id)},
-                                                        is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContext}` */);
+                        assert(!this.contexts.has(id),
+                        0x17d, /* `Unexpected attach channel OP,
+                            is in pendingAttach set: ${this.pendingAttach.has(id)},
+                            is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContext}` */);
 
                         const flatBlobs = new Map<string, ArrayBufferLike>();
                         const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
@@ -906,14 +908,16 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.emit("notleader");
         });
         this.dataStoreContext.once("attaching", () => {
-            assert(this.bindState !== BindState.NotBound, 0x186 /* "Data store attaching should not occur if it is not bound" */);
+            assert(this.bindState !== BindState.NotBound,
+                0x186 /* "Data store attaching should not occur if it is not bound" */);
             this._attachState = AttachState.Attaching;
             // This promise resolution will be moved to attached event once we fix the scheduler.
             this.deferredAttached.resolve();
             this.emit("attaching");
         });
         this.dataStoreContext.once("attached", () => {
-            assert(this.bindState === BindState.Bound, 0x187 /* "Data store should only be attached after it is bound" */);
+            assert(this.bindState === BindState.Bound,
+                0x187 /* "Data store should only be attached after it is bound" */);
             this._attachState = AttachState.Attached;
             this.emit("attached");
         });

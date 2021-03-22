@@ -206,7 +206,8 @@ export class ParallelRequests<T> {
                     //    one user of this class, we assert that to catch issues earlier.
                     // These invariant can be relaxed if needed.
                     assert(!partial, 0x10f /* "empty/partial chunks should not be returned by caching" */);
-                    assert(!this.knewTo, 0x110 /* "callback should retry until valid fetch before it learns new boundary" */);
+                    assert(!this.knewTo,
+                        0x110 /* "callback should retry until valid fetch before it learns new boundary" */);
                 }
 
                 let fullChunk = (requestedLength <= payload.length); // we can possible get more than we asked.

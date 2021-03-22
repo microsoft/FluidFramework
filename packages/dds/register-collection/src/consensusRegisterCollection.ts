@@ -218,6 +218,7 @@ export class ConsensusRegisterCollection<T>
 
         for (const key of Object.keys(dataObj)) {
             assert(dataObj[key].atomic?.value.type !== "Shared",
+                // eslint-disable-next-line max-len
                 0x06d /* "SharedObjects contained in ConsensusRegisterCollection can no longer be deserialized as of 0.17" */);
 
             this.data.set(key, dataObj[key]);
@@ -322,7 +323,8 @@ export class ConsensusRegisterCollection<T>
 
         // Asserts for data integrity
         if (!this.isAttached()) {
-            assert(refSeq === 0 && sequenceNumber === 0, 0x070 /* "sequence numbers are expected to be 0 when unattached" */);
+            assert(refSeq === 0 && sequenceNumber === 0,
+                0x070 /* "sequence numbers are expected to be 0 when unattached" */);
         }
         else if (data.versions.length > 0) {
             assert(sequenceNumber > data.versions[data.versions.length - 1].sequenceNumber,

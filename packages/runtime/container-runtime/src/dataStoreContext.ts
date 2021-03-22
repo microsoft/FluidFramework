@@ -810,7 +810,8 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     public generateAttachMessage(): IAttachMessage {
         assert(this.channel !== undefined, 0x14f /* "There should be a channel when generating attach message" */);
         assert(this.pkg !== undefined, 0x150 /* "pkg should be available in local data store context" */);
-        assert(this.isRootDataStore !== undefined, 0x151 /* "isRootDataStore should be available in local data store context" */);
+        assert(this.isRootDataStore !== undefined,
+            0x151 /* "isRootDataStore should be available in local data store context" */);
 
         const summarizeResult = this.channel.getAttachSummary();
 
@@ -839,7 +840,8 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         assert(this.pkg !== undefined, 0x152 /* "pkg should be available in local data store" */);
-        assert(this.isRootDataStore !== undefined, 0x153 /* "isRootDataStore should be available in local data store" */);
+        assert(this.isRootDataStore !== undefined,
+            0x153 /* "isRootDataStore should be available in local data store" */);
         return {
             pkg: this.pkg,
             snapshot: this.snapshotTree,

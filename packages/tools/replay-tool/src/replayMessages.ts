@@ -83,7 +83,8 @@ class ContainerContent {
         });
 
         this._snapshotExpanded = new Lazy(() => {
-            assert(this.snapshot !== undefined, 0x1c7 /* "snapshot should be set before retreiving it as expanded string" */);
+            assert(this.snapshot !== undefined,
+                0x1c7 /* "snapshot should be set before retreiving it as expanded string" */);
             const snapshotExpanded: IFileSnapshot = {
                 commits: {},
                 tree: expandTreeForReadability(this.snapshot.tree),

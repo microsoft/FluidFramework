@@ -366,7 +366,8 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
                     }
                     // Ensure only whole data stores can be reused, no reusing at deeper level!
                     assert(level === 0, 0x0fc /* "tree reuse at lower level" */);
-                    assert(handlePath.indexOf("/") === -1, 0x0fd /* "data stores are writing incremental summaries!" */);
+                    assert(handlePath.indexOf("/") === -1,
+                        0x0fd /* "data stores are writing incremental summaries!" */);
                     break;
                 }
                 case SummaryType.Attachment:

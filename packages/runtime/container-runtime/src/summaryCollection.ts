@@ -101,7 +101,8 @@ class Summary implements ISummary {
     }
 
     public ackNack(op: ISummaryAckMessage | ISummaryNackMessage) {
-        assert(this.state === SummaryState.Broadcast, 0x176 /* "Can only ack/nack if summarizer is in broadcasting state" */);
+        assert(this.state === SummaryState.Broadcast,
+            0x176 /* "Can only ack/nack if summarizer is in broadcasting state" */);
         this._summaryAckNack = op;
         this.defSummaryAck.resolve();
         this.state = op.type === MessageType.SummaryAck ? SummaryState.Acked : SummaryState.Nacked;

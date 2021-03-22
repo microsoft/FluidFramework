@@ -146,7 +146,8 @@ export class DataStores implements IDisposable {
         const attachMessage = message.contents as InboundAttachMessage;
         // The local object has already been attached
         if (local) {
-            assert(this.pendingAttach.has(attachMessage.id), 0x15e /* "Local object does not have matching attach message id" */);
+            assert(this.pendingAttach.has(attachMessage.id),
+                0x15e /* "Local object does not have matching attach message id" */);
             this.contexts.get(attachMessage.id)?.emit("attached");
             this.pendingAttach.delete(attachMessage.id);
             return;

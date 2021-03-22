@@ -135,7 +135,8 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
     private resolveDeferred(id: string) {
         const context = this._contexts.get(id);
         assert(!!context, 0x15a /* "Cannot find context to resolve to" */);
-        assert(!this.notBoundContexts.has(id), 0x15b /* "Expected this id to already be removed from notBoundContexts" */);
+        assert(!this.notBoundContexts.has(id),
+            0x15b /* "Expected this id to already be removed from notBoundContexts" */);
 
         const deferred = this.deferredContexts.get(id);
         assert(!!deferred, 0x15c /* "Cannot find deferred to resolve" */);

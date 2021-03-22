@@ -264,7 +264,8 @@ export async function loadContainer(
     });
     const container: Container = await loader.resolve({ url: resolved.url });
 
-    assert(container.existing, 0x1c4 /* "Container does not exist!" */); // ReplayFileDeltaConnection.create() guarantees that
+    assert(container.existing,
+        0x1c4 /* "Container does not exist!" */); // ReplayFileDeltaConnection.create() guarantees that
 
     return container;
 }

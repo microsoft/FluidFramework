@@ -935,7 +935,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 const subRequest = requestParser.createSubRequest(1);
                 // We always expect createSubRequest to include a leading slash, but asserting here to protect against
                 // unintentionally modifying the url if that changes.
-                assert(subRequest.url.startsWith("/"), 0x126 /* "Expected createSubRequest url to include a leading slash" */);
+                assert(subRequest.url.startsWith("/"),
+                    0x126 /* "Expected createSubRequest url to include a leading slash" */);
                 return dataStore.IFluidRouter.request(subRequest);
             }
 
@@ -1387,7 +1388,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             assert(this.attachState === AttachState.Attaching,
                 0x12d /* "Container Context should already be in attaching state" */);
         } else {
-            assert(this.attachState === AttachState.Attached, 0x12e /* "Container Context should already be in attached state" */);
+            assert(this.attachState === AttachState.Attached,
+                0x12e /* "Container Context should already be in attached state" */);
         }
         this.dataStores.setAttachState(attachState);
     }

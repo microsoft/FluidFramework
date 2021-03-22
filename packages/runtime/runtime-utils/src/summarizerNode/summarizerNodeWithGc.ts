@@ -141,7 +141,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // If GC is not disabled and we are tracking a summary, GC should have run and updated the used routes for this
         //  summary by calling updateUsedRoutes which sets wipSerializedUsedRoutes.
         if (!this.gcDisabled && this.isTrackingInProgress()) {
-            assert(this.wipSerializedUsedRoutes !== undefined, 0x1b1 /* "wip used routes should be set if tracking a summary" */);
+            assert(this.wipSerializedUsedRoutes !== undefined,
+                0x1b1 /* "wip used routes should be set if tracking a summary" */);
         }
 
         // If trackState is true, get summary from base summarizer node which tracks summary state.
@@ -149,7 +150,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         if (trackState) {
             const summarizeResult = await super.summarize(fullTree);
 
-            // If there is no cached GC data, return empty data in summarize result. It is the caller's responsiblity
+            // If there is no cached GC data, return empty data in summarize result. It is the caller's responsibility
             // to ensure that GC data is available by calling getGCData before calling summarize.
             const gcData = this.gcData !== undefined ? cloneGCData(this.gcData) : { gcNodes: {} };
 
