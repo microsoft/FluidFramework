@@ -256,6 +256,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     public async lockTask(taskId: string) {
+        if (!this.connected) {
+            throw new Error(`Attempted to lock in disconnected state: ${taskId}`);
+        }
+
         // If we have the lock, resolve immediately
         if (this.haveTaskLock(taskId)) {
             return;
@@ -310,6 +314,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     public abandon(taskId: string) {
+        if (!this.connected) {
+            throw new Error(`Attempted to abandon in disconnected state: ${taskId}`);
+        }
+
         // Nothing to do if we're not at least trying to get the lock.
         if (!this.queued(taskId)) {
             return;

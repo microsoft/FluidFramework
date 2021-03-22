@@ -284,6 +284,7 @@ describe("TaskManager", () => {
                 assert.ok(!taskManager2.haveTaskLock(taskId), "Task manager 2 should not have lock");
                 assert.ok(p2Rejected, "Should have rejected the P2 promise");
             });
+
             it("Disconnect while pending: Rejects the lock promise", async () => {
                 const taskId = "taskId";
                 let rejected = false;
@@ -298,7 +299,20 @@ describe("TaskManager", () => {
         });
 
         describe("Behavior while disconnected", () => {
-            it.skip("Immediately rejects attempts to lock", async () => {
+            it("Immediately rejects attempts to lock and throws on abandon", async () => {
+                const taskId = "taskId";
+                containerRuntime1.connected = false;
+                containerRuntimeFactory.processAllMessages();
+
+                const lockTaskP = taskManager1.lockTask(taskId);
+                assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+                assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
+                await assert.rejects(lockTaskP);
+                containerRuntimeFactory.processAllMessages();
+                assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+                assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
+
+                assert.throws(() => { taskManager1.abandon(taskId); }, ".abandon() should throw when disconnected");
             });
         });
 
