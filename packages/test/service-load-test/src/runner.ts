@@ -14,14 +14,14 @@ async function main() {
         .version("0.0.1")
         .requiredOption("-d, --driver <driver>", "Which test driver info to use", "odsp")
         .requiredOption("-p, --profile <profile>", "Which test profile to use from testConfig.json", "ci")
-        .requiredOption("-id, --testId <testId>", "Load an existing data store rather than creating new")
-        .requiredOption("-r, --runId <runId>", "run a child process with the given id. Requires --testId option.")
+        .requiredOption("-u --url <url>", "Load an existing data store from the url")
+        .requiredOption("-r, --runId <runId>", "run a child process with the given id. Requires --url option.")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .parse(process.argv);
 
     const driver: TestDriverTypes = commander.driver;
     const profileArg: string = commander.profile;
-    const testId: string = commander.testId;
+    const url: string = commander.url;
     const runId: number  = commander.runId;
     const log: string | undefined = commander.log;
 
@@ -31,13 +31,13 @@ async function main() {
         process.env.DEBUG = log;
     }
 
-    if (testId === undefined) {
-        console.error("Missing --testId argument needed to run child process");
+    if (url === undefined) {
+        console.error("Missing --url argument needed to run child process");
         process.exit(-1);
     }
-    const result = await runnerProcess(driver, profile, runId, testId);
+    const result = await runnerProcess(driver, profile, runId, url);
 
-    await safeExit(result, testId, runId);
+    await safeExit(result, url, runId);
 }
 
 /**
@@ -47,7 +47,7 @@ async function runnerProcess(
     driver: TestDriverTypes,
     profile: ILoadTestConfig,
     runId: number,
-    testId: string,
+    url: string,
 ): Promise<number> {
     try {
         const runConfig: IRunConfig = {
@@ -57,7 +57,7 @@ async function runnerProcess(
 
         const testDriver = await createTestDriver(driver);
 
-        const stressTest = await load(testDriver, testId, runId);
+        const stressTest = await load(testDriver, url, runId);
         await stressTest.run(runConfig, true);
         console.log(`${runId.toString().padStart(3)}> exit`);
         return 0;
