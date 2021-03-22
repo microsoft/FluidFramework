@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import util from "util";
-import { assert, bufferToString, stringToBuffer, TelemetryNullLogger, IsoBuffer } from "@fluidframework/common-utils";
+import { assert, bufferToString, stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -246,7 +246,7 @@ async function saveSnapshot(name: string, fetchedData: IFetchedData[], saveDir: 
 
         if (!isFetchedTree(item)) {
             // Just write the data as is.
-            fs.writeFileSync(`${outDir}/${item.filename}`, IsoBuffer.from(buffer));
+            fs.writeFileSync(`${outDir}/${item.filename}`, Buffer.from(buffer));
 
             // we assume that the buffer is utf8 here, which currently is true for
             // all of our snapshot blobs.  It doesn't necessary be true in the future

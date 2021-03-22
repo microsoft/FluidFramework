@@ -4,12 +4,8 @@
  */
 
 import fs from "fs";
-import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
-import {
-    IDocumentStorageService,
-    IDocumentStorageServicePolicies,
-    ISummaryContext,
-} from "@fluidframework/driver-definitions";
+import { assert, bufferToString } from "@fluidframework/common-utils";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@fluidframework/replay-driver";
