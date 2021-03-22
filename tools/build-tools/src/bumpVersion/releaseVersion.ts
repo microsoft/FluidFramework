@@ -26,7 +26,7 @@ export function getPackageShortName(pkgName: string) {
  */
 export async function releaseVersion(context: Context, releaseName: string, updateLock: boolean, releaseVersion?: VersionBumpType) {
 
-    // run policy check before creating release branch.
+    // run policy check before releasing a version.
     // right now this only does assert short codes
     // but could also apply other fixups in the future
     await runPolicyCheckWithFix(context.gitRepo);
