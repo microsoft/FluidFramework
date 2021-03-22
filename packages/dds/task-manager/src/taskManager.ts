@@ -208,7 +208,18 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
         this.disconnectWatcher.on("disconnect", () => {
             assert(this.runtime.clientId !== undefined, "Missing client id on disconnect");
-            this.removeClientFromAllQueues(this.runtime.clientId);
+
+            // We don't modify the taskQueues on disconnect (they still reflect the latest known consensus state).
+            // After reconnect these will get cleaned up by observing the clientLeaves.
+            // However we do need to recognize that we lost the lock if we had it.  Calls to .queued() and
+            // .haveTaskLock() are also connection-state-aware to be consistent.
+            for (const [taskId, clientQueue] of this.taskQueues.entries()) {
+                if (clientQueue[0] === this.runtime.clientId) {
+                    this.emit("lost", taskId);
+                }
+            }
+
+            // All of our outstanding ops will be for the old clientId even if they get ack'd
             this.latestPendingOps.clear();
         });
     }
@@ -313,6 +324,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     public haveTaskLock(taskId: string) {
+        if (!this.connected) {
+            return false;
+        }
+
         const currentAssignee = this.taskQueues.get(taskId)?.[0];
         return currentAssignee !== undefined
             && currentAssignee === this.runtime.clientId
@@ -320,6 +335,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     public queued(taskId: string) {
+        if (!this.connected) {
+            return false;
+        }
+
         assert(this.runtime.clientId !== undefined, "clientId undefined"); // TODO, handle disconnected/detached case
         const clientQueue = this.taskQueues.get(taskId);
         // If we have no queue for the taskId, then no one has signed up for it.
