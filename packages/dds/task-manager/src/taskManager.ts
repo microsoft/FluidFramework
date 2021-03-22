@@ -259,13 +259,13 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     public async lockTask(taskId: string) {
-        if (!this.connected) {
-            throw new Error(`Attempted to lock in disconnected state: ${taskId}`);
-        }
-
         // If we have the lock, resolve immediately
         if (this.haveTaskLock(taskId)) {
             return;
+        }
+
+        if (!this.connected) {
+            throw new Error(`Attempted to lock in disconnected state: ${taskId}`);
         }
 
         // This promise works even if we already have an outstanding volunteer op.

@@ -218,7 +218,12 @@ describe("TaskManager", () => {
         });
     });
 
-    describe("Disconnection", () => {
+    describe.skip("Detached/Attach", () => {
+        describe("Behavior before attach", () => { });
+        describe("Behavior after attaching", () => { });
+    });
+
+    describe("Disconnect/Reconnect", () => {
         let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
         let containerRuntime1: MockContainerRuntimeForReconnection;
         let containerRuntime2: MockContainerRuntimeForReconnection;
