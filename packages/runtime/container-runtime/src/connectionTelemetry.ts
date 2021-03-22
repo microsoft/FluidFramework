@@ -133,7 +133,7 @@ class OpPerfTelemetry {
 
         if (this.clientId === message.clientId &&
             this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber) {
-            assert(this.opSendTimeForLatencyStatistics !== undefined, "Undefined latency statistics (op send time)");
+            assert(this.opSendTimeForLatencyStatistics !== undefined, 0x120 /* "Undefined latency statistics (op send time)" */);
             this.logger.sendPerformanceEvent({
                 eventName: "OpRoundtripTime",
                 sequenceNumber,

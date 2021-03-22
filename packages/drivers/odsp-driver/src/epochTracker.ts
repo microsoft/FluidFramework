@@ -36,8 +36,8 @@ export class EpochTracker {
     }
 
     public set fileEntry(fileEntry: IFileEntry | undefined) {
-        assert(this._fileEntry === undefined, "File Entry should be set only once");
-        assert(fileEntry !== undefined, "Passed file entry should not be undefined");
+        assert(this._fileEntry === undefined, 0x09b /* "File Entry should be set only once" */);
+        assert(fileEntry !== undefined, 0x09c /* "Passed file entry should not be undefined" */);
         this._fileEntry = fileEntry;
     }
 
@@ -51,7 +51,7 @@ export class EpochTracker {
 
     public async validateEpochFromPush(details: IConnected) {
         const epoch = details.epoch;
-        assert(epoch !== undefined, "Connection details should contain epoch");
+        assert(epoch !== undefined, 0x09d /* "Connection details should contain epoch" */);
         try {
             this.validateEpochFromResponse(epoch, "push");
         } catch (error) {
@@ -220,7 +220,7 @@ export class EpochTracker {
                     fetchType,
                 };
                 this.logger.sendErrorEvent({ eventName: "EpochVersionMismatch" }, err);
-                assert(!!this.fileEntry, "File Entry should be set to clear the cached entries!!");
+                assert(!!this.fileEntry, 0x09e /* "File Entry should be set to clear the cached entries!!" */);
                 // If the epoch mismatches, then clear all entries for such file entry from cache.
                 await this.persistedCache.removeEntries(this.fileEntry);
                 throw epochError;

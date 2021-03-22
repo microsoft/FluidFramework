@@ -116,7 +116,7 @@ async function fetchBlobsFromSnapshotTree(
     prefix: string = "/",
     perCommitBlobIdMap?: Map<string, number>): Promise<IFetchedData[]> {
     assert(Object.keys(tree.commits).length === 0 || (prefix === "/"),
-        "Unexpected tree input to fetch");
+        0x1be /* "Unexpected tree input to fetch" */);
     const commit = !perCommitBlobIdMap;
     if (commit && dumpSnapshotTrees) {
         console.log(tree);
@@ -151,9 +151,9 @@ async function fetchBlobsFromSnapshotTree(
             continue;
         }
         assert(dataStoreSnapShotTree.id === undefined || dataStoreSnapShotTree.id === tree.commits[dataStore],
-            `Unexpected id for tree: ${dataStoreSnapShotTree.id}`);
+            0x1bf /* `Unexpected id for tree: ${dataStoreSnapShotTree.id}` */);
         assert(tree.commits[dataStore] === dataStoreVersions[0].id,
-            "Mismatch between commit id and fetched tree id");
+            0x1c0 /* "Mismatch between commit id and fetched tree id" */);
         const dataStoreBlobs = await fetchBlobsFromSnapshotTree(
             storage,
             dataStoreSnapShotTree,
@@ -163,7 +163,7 @@ async function fetchBlobsFromSnapshotTree(
 
     for (const subtreeId of Object.keys(tree.trees)) {
         const subtree = tree.trees[subtreeId];
-        assert(Object.keys(subtree.commits).length === 0, "Unexpected subtree properties");
+        assert(Object.keys(subtree.commits).length === 0, 0x1c1 /* "Unexpected subtree properties" */);
         const dataStoreBlobs = await fetchBlobsFromSnapshotTree(
             storage,
             subtree,

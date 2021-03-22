@@ -240,7 +240,7 @@ export function convertToSummaryTree(
 export function convertSnapshotTreeToSummaryTree(
     snapshot: ISnapshotTree,
 ): ISummaryTreeWithStats {
-    assert(Object.keys(snapshot.commits).length === 0, "There should not be commit tree entries in snapshot");
+    assert(Object.keys(snapshot.commits).length === 0, 0x19e /* "There should not be commit tree entries in snapshot" */);
 
     const builder = new SummaryTreeBuilder();
     for (const [key, value] of Object.entries(snapshot.blobs)) {

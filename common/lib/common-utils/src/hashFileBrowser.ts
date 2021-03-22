@@ -31,7 +31,7 @@ export function setInsecureContextHashFn(hashFn: (f: IsoBuffer) => Promise<strin
 export async function hashFile(file: IsoBuffer): Promise<string> {
     // Use the function override if provided
     if (insecureContextHashFn !== undefined) {
-        assert(crypto.subtle === undefined, "Both crypto.subtle and insecureContextHashFn are defined!");
+        assert(crypto.subtle === undefined, 0x002 /* "Both crypto.subtle and insecureContextHashFn are defined!" */);
         return insecureContextHashFn(file);
     }
 
