@@ -197,10 +197,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         });
 
         this.queueWatcher.on("queueChange", (taskId: string, oldLockHolder: string, newLockHolder: string) => {
-            if (this.runtime.clientId === undefined) {
-                // TODO handle disconnected case
-                return;
-            }
+            assert(this.runtime.clientId !== undefined, "Unexpected queue change while disconnected");
 
             if (oldLockHolder !== this.runtime.clientId && newLockHolder === this.runtime.clientId) {
                 this.emit("assigned", taskId);
@@ -210,9 +207,9 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         });
 
         this.disconnectWatcher.on("disconnect", () => {
-            // TODO also reject outstanding promises and wipe our pending ops
             assert(this.runtime.clientId !== undefined, "Missing client id on disconnect");
             this.removeClientFromAllQueues(this.runtime.clientId);
+            this.latestPendingOps.clear();
         });
     }
 

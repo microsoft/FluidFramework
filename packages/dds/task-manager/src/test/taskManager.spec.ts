@@ -284,7 +284,16 @@ describe("TaskManager", () => {
                 assert.ok(!taskManager2.haveTaskLock(taskId), "Task manager 2 should not have lock");
                 assert.ok(p2Rejected, "Should have rejected the P2 promise");
             });
-            it.skip("Disconnect while pending: Rejects the lock promise", async () => {
+            it("Disconnect while pending: Rejects the lock promise", async () => {
+                const taskId = "taskId";
+                let rejected = false;
+                const lockTaskP = taskManager1.lockTask(taskId).catch(() => { rejected = true; });
+                containerRuntime1.connected = false;
+                containerRuntimeFactory.processAllMessages();
+                await lockTaskP;
+                assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+                assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
+                assert.ok(rejected, "Should have rejected the promise");
             });
         });
 
