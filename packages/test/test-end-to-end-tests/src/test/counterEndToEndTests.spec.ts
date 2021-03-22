@@ -22,13 +22,10 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeFullCompat("SharedCounter", (argsFactory: () => ITestObjectProvider) => {
-    let args: ITestObjectProvider;
-    beforeEach(()=>{
-        args = argsFactory();
-    });
-    afterEach(() => {
-        args.reset();
+describeFullCompat("SharedCounter", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    beforeEach(() => {
+        provider = getTestObjectProvider();
     });
     let dataStore1: ITestFluidObject;
     let sharedCounter1: ISharedCounter;
@@ -37,21 +34,21 @@ describeFullCompat("SharedCounter", (argsFactory: () => ITestObjectProvider) => 
 
     beforeEach(async () => {
         // Create a Container for the first client.
-        const container1 = await args.makeTestContainer(testContainerConfig);
+        const container1 = await provider.makeTestContainer(testContainerConfig);
         dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         sharedCounter1 = await dataStore1.getSharedObject<SharedCounter>(counterId);
 
         // Load the Container that was created by the first client.
-        const container2 = await args.loadTestContainer(testContainerConfig);
+        const container2 = await provider.loadTestContainer(testContainerConfig);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         sharedCounter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 
         // Load the Container that was created by the first client.
-        const container3 = await args.loadTestContainer(testContainerConfig);
+        const container3 = await provider.loadTestContainer(testContainerConfig);
         const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
         sharedCounter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
     });
 
     function verifyCounterValue(counter: ISharedCounter, expectedValue, index: number) {
@@ -83,10 +80,10 @@ describeFullCompat("SharedCounter", (argsFactory: () => ITestObjectProvider) => 
 
         it("can increment and decrement the value in 3 containers correctly", async () => {
             sharedCounter2.increment(7);
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             verifyCounterValues(7, 7, 7);
             sharedCounter3.increment(-20);
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             verifyCounterValues(-13, -13, -13);
         });
 
@@ -130,7 +127,7 @@ describeFullCompat("SharedCounter", (argsFactory: () => ITestObjectProvider) => 
 
                 // do the increment
                 incrementer.increment(incrementAmount);
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 // event count is correct
                 assert.equal(eventCount1, expectedEventCount);

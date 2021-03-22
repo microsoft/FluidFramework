@@ -14,13 +14,15 @@ import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions"
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedObjectSequence } from "@fluidframework/sequence";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
+
 import {
+    ITestObjectProvider,
     createAndAttachContainer,
     createDocumentId,
     createLoader,
-    OpProcessingController,
 } from "@fluidframework/test-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 const defaultDataStoreId = "default";
 
@@ -31,12 +33,14 @@ class TestDataObject extends DataObject {
     public readonly getContext = () => this.context;
 }
 
-async function createContainer(runtimeOptions: Omit<IContainerRuntimeOptions, "generateSummaries">): Promise<{
+async function createContainer(
+    provider: ITestObjectProvider,
+    runtimeOptions: Omit<IContainerRuntimeOptions, "generateSummaries">,
+): Promise<{
     container: IContainer;
     opProcessingController: OpProcessingController;
 }> {
     const documentId = createDocumentId();
-    const driver = getFluidTestDriver() as unknown as ITestDriver;
     const codeDetails: IFluidCodeDetails = {
         package: "summarizerTestPackage",
     };
@@ -66,18 +70,18 @@ async function createContainer(runtimeOptions: Omit<IContainerRuntimeOptions, "g
 
     const loader = createLoader(
         [[codeDetails, runtimeFactory]],
-        driver.createDocumentServiceFactory(),
-        driver.createUrlResolver(),
+        provider.documentServiceFactory,
+        provider.urlResolver,
+        ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
     );
     const container = await createAndAttachContainer(
         codeDetails,
         loader,
-        driver.createCreateNewRequest(documentId));
+        provider.driver.createCreateNewRequest(documentId));
 
-    const opProcessingController = new OpProcessingController();
-    opProcessingController.addDeltaManagers(container.deltaManager);
+    provider.opProcessingController.addDeltaManagers(container.deltaManager);
 
-    return { container, opProcessingController };
+    return container;
 }
 
 function readBlobContent(content: ISummaryBlob["content"]): unknown {
@@ -85,9 +89,18 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
     return JSON.parse(json);
 }
 
-describe("Summaries", () => {
+// REVIEW: enable compat testing?
+describeNoCompat("Summaries", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    beforeEach(() => {
+        provider = getTestObjectProvider();
+    });
+
     it("Should generate summary tree", async () => {
-        const { container, opProcessingController } = await createContainer({ disableIsolatedChannels: false });
+        const { container, opProcessingController } = await createContainer(
+            provider,
+            { disableIsolatedChannels: false },
+        );
         const defaultDataStore = await requestFluidObject<TestDataObject>(container, defaultDataStoreId);
         const containerRuntime = defaultDataStore.getContext().containerRuntime as ContainerRuntime;
 
@@ -145,11 +158,14 @@ describe("Summaries", () => {
     });
 
     it("Should generate summary tree with isolated channels disabled", async () => {
-        const { container, opProcessingController } = await createContainer({ disableIsolatedChannels: true });
+        const { container, opProcessingController } = await createContainer(
+            provider,
+            { disableIsolatedChannels: true },
+        );
         const defaultDataStore = await requestFluidObject<TestDataObject>(container, defaultDataStoreId);
         const containerRuntime = defaultDataStore.getContext().containerRuntime as ContainerRuntime;
 
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
 
         const { gcData, stats, summary } = await containerRuntime.summarize({
             runGC: false,

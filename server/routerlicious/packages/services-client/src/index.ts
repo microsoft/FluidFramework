@@ -4,6 +4,7 @@
  */
 
 export * from "./auth";
+export * from "./error";
 export * from "./generateNames";
 export * from "./gitManager";
 export * from "./historian";

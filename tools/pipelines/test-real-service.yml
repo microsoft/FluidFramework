@@ -46,6 +46,7 @@ jobs:
   - job: run
     displayName: Build and Run Tests
     pool: ${{ parameters.poolBuild }}
+    timeoutInMinutes: 240
     steps:
     # Setup
     - checkout: self
@@ -128,7 +129,7 @@ jobs:
     - task: Npm@1
       displayName: '[end-to-end tests] npm run test:realsvc:routerlicious:report'
       continueOnError: true
-      timeoutInMinutes: 15
+      timeoutInMinutes: 60
       env:
         fluid__webpack__bearerSecret: $(fluid-webpack-bearerSecret)
         fluid__webpack__fluidHost: $(fluid-webpack-fluidHost)
@@ -144,7 +145,7 @@ jobs:
     - task: Npm@1
       displayName: '[end-to-end tests] npm run test:realsvc:odsp:report'
       continueOnError: true
-      timeoutInMinutes: 15
+      timeoutInMinutes: 60
       env:
         login__microsoft__clientId: $(login-microsoft-clientId)
         login__microsoft__secret: $(login-microsoft-secret)
@@ -159,7 +160,7 @@ jobs:
     - task: Npm@1
       displayName: '[stress tests] npm run start'
       continueOnError: true
-      timeoutInMinutes: 15
+      timeoutInMinutes: 60
       env:
         login__microsoft__clientId: $(login-microsoft-clientId)
         login__microsoft__secret: $(login-microsoft-secret)

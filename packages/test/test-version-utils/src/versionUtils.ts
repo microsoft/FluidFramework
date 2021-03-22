@@ -20,7 +20,11 @@ const getModulePath = (version: string) => path.join(baseModulePath, version);
 
 const resolutionCache = new Map<string, string>();
 
+// Increment the revision if we want to force installation (e.g. package list changed)
+const revision = 1;
+
 interface InstalledJson {
+    revision: number,
     installed: string[],
 }
 
@@ -32,7 +36,7 @@ async function ensureInstalledJson() {
         if (existsSync(installedJsonPath)) { return; }
         // Create the directory
         mkdirSync(baseModulePath, { recursive: true });
-        const data: InstalledJson = { installed: [] };
+        const data: InstalledJson = { revision, installed: [] };
 
         writeFileSync(installedJsonPath, JSON.stringify(data, undefined, 2), { encoding: "utf8" });
     } finally {
@@ -42,7 +46,12 @@ async function ensureInstalledJson() {
 
 function readInstalledJsonNoLock(): InstalledJson {
     const data = readFileSync(installedJsonPath, { encoding: "utf8" });
-    return JSON.parse(data) as InstalledJson;
+    const installedJson = JSON.parse(data) as InstalledJson;
+    if (installedJson.revision !== revision) {
+        // if the revision doesn't match assume that it doesn't match
+        return { revision, installed: [] };
+    }
+    return installedJson;
 }
 
 async function readInstalledJson(): Promise<InstalledJson> {

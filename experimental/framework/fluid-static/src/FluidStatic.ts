@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { getContainer, IGetContainerService } from "@fluid-experimental/get-container";
 import { DataObject } from "@fluidframework/aqueduct";
-import { IContainer } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
 import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
 import {
     DOProviderContainerRuntimeFactory,
@@ -39,13 +40,19 @@ export interface ContainerCreateConfig extends ContainerConfig {
     initialDataObjects?: IdToDataObjectCollection;
 }
 
-export class FluidContainer {
+export class FluidContainer extends EventEmitter implements Pick<Container, "audience" | "clientId"> {
     private readonly types: Set<string>;
+
+    private readonly container: Container;
+
+    public readonly audience: Container["audience"];
+
     public constructor(
-        container: IContainer, // we anticipate using this later, e.g. for Audience
+        container: Container, // we anticipate using this later, e.g. for Audience
         namedRegistryEntries: NamedFluidDataStoreRegistryEntry[],
         private readonly rootDataObject: RootDataObject,
         public readonly createNew: boolean) {
+            super();
             this.types = new Set();
             namedRegistryEntries.forEach((value: NamedFluidDataStoreRegistryEntry) => {
                 const type = value[0];
@@ -54,7 +61,14 @@ export class FluidContainer {
                 }
                 this.types.add(type);
             });
+            this.audience = container.audience;
+            this.container = container;
+            container.on("connected", (id: string) =>  this.emit("connected", id));
         }
+
+    public get clientId() {
+        return this.container.clientId;
+    }
 
     public async createDataObject<T extends DataObject>(
         dataObjectClass: IFluidStaticDataObjectClass,

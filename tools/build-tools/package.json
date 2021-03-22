@@ -22,8 +22,10 @@
     "debug:layer-check": "node --inspect-brk dist/layerCheck/layerCheck.js --root ../..",
     "layer-check": "node dist/layerCheck/layerCheck.js --root ../..",
     "list-repo-files": "cd ../.. && git ls-files -co --exclude-standard",
-    "policy-check": "cd ../.. && git ls-files -co --exclude-standard --full-name | node tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js -s",
+    "policy-check": "cd ../.. && node tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
+    "policy-check:debug": "cd ../.. && node --inspect-brk tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js ",
     "policy-check:fix": "npm run policy-check -- -r",
+    "policy-check:fix:debug": "cd ../.. && node --inspect-brk tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js -r",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
@@ -43,7 +45,8 @@
     "rimraf": "^2.6.2",
     "semver": "^7.1.2",
     "shelljs": "^0.8.4",
-    "sort-package-json": "1.40.0"
+    "sort-package-json": "1.40.0",
+    "ts-morph": "^7.1.2"
   },
   "devDependencies": {
     "@types/async": "^2.4.1",

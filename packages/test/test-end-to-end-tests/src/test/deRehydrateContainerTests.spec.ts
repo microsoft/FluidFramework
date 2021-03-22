@@ -13,6 +13,7 @@ import {
     TestFluidObject,
     createDocumentId,
     LoaderContainerTracker,
+    ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/protocol-definitions";
@@ -27,10 +28,11 @@ import { SharedCounter } from "@fluidframework/counter";
 import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
 
 const detachedContainerRefSeqNumber = 0;
 
-describe(`Dehydrate Rehydrate Container Test`, () => {
+describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) => {
     let disableIsolatedChannels = false;
 
     function assertSubtree(tree: ISnapshotTree, key: string, msg?: string): ISnapshotTree {
@@ -82,6 +84,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
     const sparseMatrixId = "sparsematrixKey";
     const sharedCounterId = "sharedcounterKey";
 
+    let provider: ITestObjectProvider;
     let loader: Loader;
     let request: IRequest;
     const loaderContainerTracker = new LoaderContainerTracker();
@@ -111,13 +114,11 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             [sharedCounterId, SharedCounter.getFactory()],
         ]);
         const codeLoader = new LocalCodeLoader([[codeDetails, factory]], { disableIsolatedChannels });
-        const driver = getFluidTestDriver();
-        const documentServiceFactory = driver.createDocumentServiceFactory();
         const testLoader = new Loader({
-            urlResolver: driver.createUrlResolver(),
-            documentServiceFactory,
+            urlResolver: provider.urlResolver,
+            documentServiceFactory: provider.documentServiceFactory,
             codeLoader,
-            logger: ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}}),
+            logger: ChildLogger.create(getTestLogger?.(), undefined, {all: {driverType: provider.driver.type}}),
         });
         loaderContainerTracker.add(testLoader);
         return testLoader;
@@ -136,9 +137,9 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
     };
 
     beforeEach(async () => {
+        provider = getTestObjectProvider();
         const documentId = createDocumentId();
-        const driver = getFluidTestDriver();
-        request = driver.createCreateNewRequest(documentId);
+        request = provider.driver.createCreateNewRequest(documentId);
         loader = createTestLoader();
     });
 
@@ -390,8 +391,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             await rehydratedContainer.attach(request);
 
             // Now load the container from another loader.
-            const driver = getFluidTestDriver();
-            const urlResolver2 = driver.createUrlResolver();
+            const urlResolver2 = provider.urlResolver;
             const loader2 = createTestLoader();
             assert(rehydratedContainer.resolvedUrl);
             const requestUrl2 = await urlResolver2.getAbsoluteUrl(rehydratedContainer.resolvedUrl, "");
@@ -436,8 +436,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             await rehydratedContainer.attach(request);
 
             // Now load the container from another loader.
-            const driver = getFluidTestDriver();
-            const urlResolver2 = driver.createUrlResolver();
+            const urlResolver2 = provider.urlResolver;
             const loader2 = createTestLoader();
             assert(rehydratedContainer.resolvedUrl);
             const requestUrl2 = await urlResolver2.getAbsoluteUrl(rehydratedContainer.resolvedUrl, "");

@@ -30,15 +30,29 @@ import { getFileLink } from "./getFileLink";
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     private readonly logger: ITelemetryLogger;
     private readonly sharingLinkCache = new PromiseCache<string, string>();
-    private readonly instrumentedTokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>;
+    private readonly instrumentedTokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions> | undefined;
+    /**
+     * Creates url resolver instance
+     * @param tokenFetcher - Function that returns access token used to fetch share link.
+     * Can be set as 'undefined' for cases where share link is not needed. Currently, only
+     * getAbsoluteUrl() method requires share link.
+     * @param identityType - identity type for signed in user. This value determines the shape
+     * of share link as it differs for Enterprise and Consumer users
+     * @param logger - logger object that is used as telemetry sink
+     * @param appName - application name hint that is encoded with url produced by getAbsoluteUrl() method.
+     * This hint is used by link handling logic which determines which app to redirect to when user
+     * navigates directly to the link.
+     */
     public constructor(
-        tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
+        tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions> | undefined = undefined,
         private readonly identityType: IdentityType = "Enterprise",
         logger?: ITelemetryBaseLogger,
         private readonly appName?: string,
     ) {
         this.logger = ChildLogger.create(logger, "OdspDriver");
-        this.instrumentedTokenFetcher = this.toInstrumentedTokenFetcher(this.logger, tokenFetcher);
+        if (tokenFetcher) {
+            this.instrumentedTokenFetcher = this.toInstrumentedTokenFetcher(this.logger, tokenFetcher);
+        }
     }
 
     public createCreateNewRequest(
@@ -138,6 +152,10 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     }
 
     private async getShareLinkPromise(resolvedUrl: IOdspResolvedUrl): Promise<string> {
+        if (this.instrumentedTokenFetcher === undefined) {
+            throw new Error("Failed to get share link because token fetcher is missing");
+        }
+
         if (!(resolvedUrl.siteUrl && resolvedUrl.driveId && resolvedUrl.itemId)) {
             throw new Error("Failed to get share link because necessary information is missing " +
                 "(e.g. siteUrl, driveId or itemId)");

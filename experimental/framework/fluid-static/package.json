@@ -12,7 +12,9 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
-    "build:compile": "npm run tsc",
+    "build:commonjs": "npm run tsc",
+    "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
@@ -28,6 +30,7 @@
     "@fluid-experimental/get-container": "^0.37.0",
     "@fluidframework/aqueduct": "^0.37.0",
     "@fluidframework/container-definitions": "^0.37.0",
+    "@fluidframework/container-loader": "^0.37.0",
     "@fluidframework/container-runtime-definitions": "^0.37.0",
     "@fluidframework/core-interfaces": "^0.37.0",
     "@fluidframework/request-handler": "^0.37.0",
