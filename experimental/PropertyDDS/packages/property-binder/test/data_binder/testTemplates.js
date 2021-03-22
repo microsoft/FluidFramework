@@ -2,7 +2,7 @@
  * Copyright (c) Autodesk, Inc. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PropertyFactory } from '@adsk/forge-hfdm';
+import { PropertyFactory } from  '@fluid-experimental/property-properties';
 
 const ParentTemplate = {
   typeid: 'Test:ParentID-0.0.1',

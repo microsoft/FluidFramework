@@ -12,7 +12,7 @@ import {
 } from './catch_console_errors';
 
 import { DataBinding } from '../../src/data_binder/data_binding';
-import { HFDM, PropertyFactory } from '@adsk/forge-hfdm';
+import { PropertyFactory } from '@fluid-experimental/property-properties';
 import { UpgradeType } from '../../src';
 
 const versions = [
@@ -45,185 +45,182 @@ class D200 extends DataBinding {
 class D400 extends DataBinding {
 }
 
-(function() {
+describe('DataBinder databinding semversioning', function () {
 
-  describe('DataBinder databinding semversioning', function() {
+  let dataBinder;
+  let workspace;
 
-    let dataBinder;
-    let workspace;
+  // Silence the actual console.error, so the test logs are clean
+  console.error = function () {
+  };
 
-    // Silence the actual console.error, so the test logs are clean
-    console.error = function() {
-    };
+  catchConsoleErrors();
 
-    catchConsoleErrors();
+  beforeEach(function () {
+    const hfdm = new HFDM();
+    workspace = hfdm.createWorkspace();
+    return workspace.initialize({ local: true }).then(function () {
+      dataBinder = new DataBinder();
+      // Bind to the workspace
+      dataBinder.attachTo(workspace);
+    });
+  });
 
-    beforeEach(function() {
-      const hfdm = new HFDM();
-      workspace = hfdm.createWorkspace();
-      return workspace.initialize({ local: true }).then(function() {
-        dataBinder = new DataBinder();
-        // Bind to the workspace
-        dataBinder.attachTo(workspace);
+  afterEach(function () {
+    // Unbind checkout view
+    dataBinder.detach();
+    dataBinder = null;
+  });
+
+  describe('inheritance cases, scenario 1', function () {
+    beforeAll(function () {
+      versions.forEach(version => {
+        PropertyFactory.register({
+          typeid: version,
+          properties: [
+          ]
+        });
+      });
+
+      PropertyFactory.register({
+        typeid: 'test1:inheritMyType-1.0.0',
+        inherits: 'test1:mytype-1.0.1',
+        properties: []
+      });
+
+      PropertyFactory.register({
+        typeid: 'test1:inheritMyType-2.0.0',
+        inherits: 'test1:mytype-1.2.0',
+        properties: []
+      });
+
+      PropertyFactory.register({
+        typeid: 'test1:myrelationship-1.0.0',
+        inherits: ['RelationshipProperty'],
+        properties: []
       });
     });
 
-    afterEach(function() {
-      // Unbind checkout view
-      dataBinder.detach();
-      dataBinder = null;
+    it('versioning, define', function () {
+      versions.forEach(version => {
+        const nodots = version.replace(/\./g, '_');
+        workspace.insert(nodots, PropertyFactory.create(version));
+      });
+
+      dataBinder.defineDataBinding('bindingtype', 'test1:mytype-1.0.0', D100, {
+        upgradeType: UpgradeType.MINOR
+      });
+
+      dataBinder.defineDataBinding('bindingtype', 'test1:mytype-1.0.2', D102, {
+        upgradeType: UpgradeType.PATCH
+      });
+
+      dataBinder.defineDataBinding('bindingtype', 'test1:mytype-1.2.0', D120, {
+        upgradeType: UpgradeType.MINOR
+      });
+
+      dataBinder.defineDataBinding('bindingtype', 'test1:mytype-2.0.0', D200, {
+        upgradeType: UpgradeType.MAJOR
+      });
+
+      dataBinder.defineDataBinding('bindingtype', 'test1:mytype-4.0.0', D400, {
+        upgradeType: UpgradeType.MAJOR
+      });
+
+      // Activate everything
+      dataBinder.activateDataBinding('bindingtype', 'test1:mytype-1.0.0');
+      dataBinder.activateDataBinding('bindingtype', 'test1:mytype-1.0.2');
+      dataBinder.activateDataBinding('bindingtype', 'test1:mytype-1.2.0');
+      dataBinder.activateDataBinding('bindingtype', 'test1:mytype-2.0.0');
+      dataBinder.activateDataBinding('bindingtype', 'test1:mytype-4.0.0');
+
+      // Nothing defined for 0_0_9
+      expect(dataBinder.resolve('/test1:mytype-0_0_9', 'bindingtype')).to.not.exist;
+
+      // We defined 1_0_0
+      expect(dataBinder.resolve('/test1:mytype-1_0_0', 'bindingtype')).to.be.instanceOf(D100);
+      // 1_0_1 defaults to 1_0_0
+      expect(dataBinder.resolve('/test1:mytype-1_0_1', 'bindingtype')).to.be.instanceOf(D100);
+      // We provided something for 1_0_2
+      expect(dataBinder.resolve('/test1:mytype-1_0_2', 'bindingtype')).to.be.instanceOf(D102);
+      // Nothing for 1_0_3, patch upgradetype applies so we get 1_0_2
+      expect(dataBinder.resolve('/test1:mytype-1_0_3', 'bindingtype')).to.be.instanceOf(D102);
+      // The setting on 1_0_2 was 'patch', so 1_1_0 gets the previous minor update for d100
+      expect(dataBinder.resolve('/test1:mytype-1_1_0', 'bindingtype')).to.be.instanceOf(D100);
+      // New definition for 1_2_0
+      expect(dataBinder.resolve('/test1:mytype-1_2_0', 'bindingtype')).to.be.instanceOf(D120);
+      // 1_3_0 gets 1_2_0 because there's nothing changed
+      expect(dataBinder.resolve('/test1:mytype-1_3_0', 'bindingtype')).to.be.instanceOf(D120);
+      // New Major version for 2_0_0! Exciting.
+      expect(dataBinder.resolve('/test1:mytype-2_0_0', 'bindingtype')).to.be.instanceOf(D200);
+      // Majors affect patches, get d200
+      expect(dataBinder.resolve('/test1:mytype-2_0_1', 'bindingtype')).to.be.instanceOf(D200);
+      // Majors affect everything, actually
+      expect(dataBinder.resolve('/test1:mytype-3_0_0', 'bindingtype')).to.be.instanceOf(D200);
+      // Until the next major, that is.
+      expect(dataBinder.resolve('/test1:mytype-4_0_0', 'bindingtype')).to.be.instanceOf(D400);
     });
 
-    describe('inheritance cases, scenario 1', function() {
-      before(function() {
-        versions.forEach(version => {
-          PropertyFactory.register({
-            typeid: version,
-            properties: [
-            ]
-          });
-        });
+    it('should not create a binding for a version that is not activated', function () {
+      workspace.insert('myprop', PropertyFactory.create('test1:mytype-2.0.0'));
 
-        PropertyFactory.register({
-          typeid: 'test1:inheritMyType-1.0.0',
-          inherits: 'test1:mytype-1.0.1',
-          properties: []
-        });
-
-        PropertyFactory.register({
-          typeid: 'test1:inheritMyType-2.0.0',
-          inherits: 'test1:mytype-1.2.0',
-          properties: []
-        });
-
-        PropertyFactory.register({
-          typeid: 'test1:myrelationship-1.0.0',
-          inherits: ['RelationshipProperty'],
-          properties: []
-        });
+      dataBinder.defineDataBinding('bindingtype', 'test1:mytype-1.0.0', D100, {
+        upgradeType: UpgradeType.MINOR
       });
+      dataBinder.activateDataBinding('bindingtype', 'test1:mytype-1.0.0');
 
-      it('versioning, define', function() {
-        versions.forEach(version => {
-          const nodots = version.replace(/\./g, '_');
-          workspace.insert(nodots, PropertyFactory.create(version));
-        });
+      expect(dataBinder.resolve('/myprop', 'bindingtype')).to.not.exist;
+    });
 
-        dataBinder.defineDataBinding('bindingtype', 'test1:mytype-1.0.0', D100, {
-          upgradeType: UpgradeType.MINOR
-        });
+    it('should not create a binding for a version that is not defined but activated', function () {
+      workspace.insert('myprop', PropertyFactory.create('test1:mytype-2.0.0'));
 
-        dataBinder.defineDataBinding('bindingtype', 'test1:mytype-1.0.2', D102, {
-          upgradeType: UpgradeType.PATCH
-        });
-
-        dataBinder.defineDataBinding('bindingtype', 'test1:mytype-1.2.0', D120, {
-          upgradeType: UpgradeType.MINOR
-        });
-
-        dataBinder.defineDataBinding('bindingtype', 'test1:mytype-2.0.0', D200, {
-          upgradeType: UpgradeType.MAJOR
-        });
-
-        dataBinder.defineDataBinding('bindingtype', 'test1:mytype-4.0.0', D400, {
-          upgradeType: UpgradeType.MAJOR
-        });
-
-        // Activate everything
-        dataBinder.activateDataBinding('bindingtype', 'test1:mytype-1.0.0');
-        dataBinder.activateDataBinding('bindingtype', 'test1:mytype-1.0.2');
-        dataBinder.activateDataBinding('bindingtype', 'test1:mytype-1.2.0');
-        dataBinder.activateDataBinding('bindingtype', 'test1:mytype-2.0.0');
-        dataBinder.activateDataBinding('bindingtype', 'test1:mytype-4.0.0');
-
-        // Nothing defined for 0_0_9
-        expect(dataBinder.resolve('/test1:mytype-0_0_9', 'bindingtype')).to.not.exist;
-
-        // We defined 1_0_0
-        expect(dataBinder.resolve('/test1:mytype-1_0_0', 'bindingtype')).to.be.instanceOf(D100);
-        // 1_0_1 defaults to 1_0_0
-        expect(dataBinder.resolve('/test1:mytype-1_0_1', 'bindingtype')).to.be.instanceOf(D100);
-        // We provided something for 1_0_2
-        expect(dataBinder.resolve('/test1:mytype-1_0_2', 'bindingtype')).to.be.instanceOf(D102);
-        // Nothing for 1_0_3, patch upgradetype applies so we get 1_0_2
-        expect(dataBinder.resolve('/test1:mytype-1_0_3', 'bindingtype')).to.be.instanceOf(D102);
-        // The setting on 1_0_2 was 'patch', so 1_1_0 gets the previous minor update for d100
-        expect(dataBinder.resolve('/test1:mytype-1_1_0', 'bindingtype')).to.be.instanceOf(D100);
-        // New definition for 1_2_0
-        expect(dataBinder.resolve('/test1:mytype-1_2_0', 'bindingtype')).to.be.instanceOf(D120);
-        // 1_3_0 gets 1_2_0 because there's nothing changed
-        expect(dataBinder.resolve('/test1:mytype-1_3_0', 'bindingtype')).to.be.instanceOf(D120);
-        // New Major version for 2_0_0! Exciting.
-        expect(dataBinder.resolve('/test1:mytype-2_0_0', 'bindingtype')).to.be.instanceOf(D200);
-        // Majors affect patches, get d200
-        expect(dataBinder.resolve('/test1:mytype-2_0_1', 'bindingtype')).to.be.instanceOf(D200);
-        // Majors affect everything, actually
-        expect(dataBinder.resolve('/test1:mytype-3_0_0', 'bindingtype')).to.be.instanceOf(D200);
-        // Until the next major, that is.
-        expect(dataBinder.resolve('/test1:mytype-4_0_0', 'bindingtype')).to.be.instanceOf(D400);
+      dataBinder.defineDataBinding('bindingtype', 'test1:mytype-1.0.0', D100, {
+        upgradeType: UpgradeType.MINOR
       });
+      dataBinder.activateDataBinding('bindingtype', 'test1:mytype-2.0.0');
 
-      it('should not create a binding for a version that is not activated', function() {
-        workspace.insert('myprop', PropertyFactory.create('test1:mytype-2.0.0'));
+      expect(dataBinder.resolve('/myprop', 'bindingtype')).to.not.exist;
+    });
 
-        dataBinder.defineDataBinding('bindingtype', 'test1:mytype-1.0.0', D100, {
-          upgradeType: UpgradeType.MINOR
-        });
-        dataBinder.activateDataBinding('bindingtype', 'test1:mytype-1.0.0');
+    it('versioning, inheritance, patch', function () {
+      // Simulate a new piece of data using mytype-1.0.1 appearing in the workspace.
+      // Will the 1.0.0 binding get called?
+      workspace.insert('myprop', PropertyFactory.create('test1:inheritMyType-1.0.0'));
 
-        expect(dataBinder.resolve('/myprop', 'bindingtype')).to.not.exist;
+      dataBinder.defineDataBinding('bindingtype', 'test1:mytype-1.0.0', D100, {
+        upgradeType: UpgradeType.MINOR
       });
+      dataBinder.activateDataBinding('bindingtype', 'test1:mytype-1.0.0');
 
-      it('should not create a binding for a version that is not defined but activated', function() {
-        workspace.insert('myprop', PropertyFactory.create('test1:mytype-2.0.0'));
+      expect(dataBinder.resolve('/myprop', 'bindingtype')).to.be.instanceOf(D100);
+    });
 
-        dataBinder.defineDataBinding('bindingtype', 'test1:mytype-1.0.0', D100, {
-          upgradeType: UpgradeType.MINOR
-        });
-        dataBinder.activateDataBinding('bindingtype', 'test1:mytype-2.0.0');
+    it('versioning, inheritance, minor', function () {
+      // Simulate a new piece of data using mytype-1.2.0 appearing in the workspace.
+      // Will the 1.0.0 binding get called?
+      workspace.insert('myprop', PropertyFactory.create('test1:inheritMyType-2.0.0'));
 
-        expect(dataBinder.resolve('/myprop', 'bindingtype')).to.not.exist;
+      dataBinder.defineDataBinding('bindingtype', 'test1:mytype-1.0.0', D100, {
+        upgradeType: UpgradeType.MINOR
       });
+      dataBinder.activateDataBinding('bindingtype', 'test1:mytype-1.0.0');
 
-      it('versioning, inheritance, patch', function() {
-        // Simulate a new piece of data using mytype-1.0.1 appearing in the workspace.
-        // Will the 1.0.0 binding get called?
-        workspace.insert('myprop', PropertyFactory.create('test1:inheritMyType-1.0.0'));
+      expect(dataBinder.resolve('/myprop', 'bindingtype')).to.be.instanceOf(D100);
+    });
 
-        dataBinder.defineDataBinding('bindingtype', 'test1:mytype-1.0.0', D100, {
-          upgradeType: UpgradeType.MINOR
-        });
-        dataBinder.activateDataBinding('bindingtype', 'test1:mytype-1.0.0');
+    it('versioning, base type', function () {
+      // Simulate a new piece of data using mytype-1.2.0 appearing in the workspace.
+      // Will the 1.0.0 binding get called?
+      workspace.insert('myprop', PropertyFactory.create('test1:myrelationship-1.0.0'));
 
-        expect(dataBinder.resolve('/myprop', 'bindingtype')).to.be.instanceOf(D100);
-      });
+      dataBinder.defineDataBinding('bindingtype', 'RelationshipProperty', D100);
+      dataBinder.activateDataBinding('bindingtype', 'RelationshipProperty');
 
-      it('versioning, inheritance, minor', function() {
-        // Simulate a new piece of data using mytype-1.2.0 appearing in the workspace.
-        // Will the 1.0.0 binding get called?
-        workspace.insert('myprop', PropertyFactory.create('test1:inheritMyType-2.0.0'));
-
-        dataBinder.defineDataBinding('bindingtype', 'test1:mytype-1.0.0', D100, {
-          upgradeType: UpgradeType.MINOR
-        });
-        dataBinder.activateDataBinding('bindingtype', 'test1:mytype-1.0.0');
-
-        expect(dataBinder.resolve('/myprop', 'bindingtype')).to.be.instanceOf(D100);
-      });
-
-      it('versioning, base type', function() {
-        // Simulate a new piece of data using mytype-1.2.0 appearing in the workspace.
-        // Will the 1.0.0 binding get called?
-        workspace.insert('myprop', PropertyFactory.create('test1:myrelationship-1.0.0'));
-
-        dataBinder.defineDataBinding('bindingtype', 'RelationshipProperty', D100);
-        dataBinder.activateDataBinding('bindingtype', 'RelationshipProperty');
-
-        expect(dataBinder.resolve('/myprop', 'bindingtype')).to.be.instanceOf(D100);
-      });
-
+      expect(dataBinder.resolve('/myprop', 'bindingtype')).to.be.instanceOf(D100);
     });
 
   });
 
-})();
+});
+
