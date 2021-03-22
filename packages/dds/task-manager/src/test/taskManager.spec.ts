@@ -265,7 +265,24 @@ describe("TaskManager", () => {
                 assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
                 assert.ok(lostRaised, "Should have raised a lost event");
             });
-            it("Disconnect while queued: Rejects the lock promise and exits the queue", async () => {
+
+            it.skip("Disconnect while queued: Rejects the lock promise and exits the queue", async () => {
+                const taskId = "taskId";
+                let p2Rejected = false;
+                const lockTaskP1 = taskManager1.lockTask(taskId);
+                const lockTaskP2 = taskManager2.lockTask(taskId).catch(() => { p2Rejected = true; });
+                containerRuntimeFactory.processAllMessages();
+                await lockTaskP1;
+                assert.ok(taskManager1.haveTaskLock(taskId), "Task manager 1 should have lock");
+                assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
+                assert.ok(!taskManager2.haveTaskLock(taskId), "Task manager 2 should not have lock");
+
+                containerRuntime2.connected = false;
+                containerRuntimeFactory.processAllMessages();
+                await lockTaskP2;
+                assert.ok(!taskManager2.queued(taskId), "Task manager 2 should not be queued");
+                assert.ok(!taskManager2.haveTaskLock(taskId), "Task manager 2 should not have lock");
+                assert.ok(p2Rejected, "Should have rejected the P2 promise");
             });
             it("Disconnect while pending: Rejects the lock promise and treats the ack as a remote client", async () => {
             });
