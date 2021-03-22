@@ -358,6 +358,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         // TODO knock ourselves out of the queues here, and wipe our pending ops probably
     }
 
+    // Override resubmit core to avoid resubmission on reconnect.  On disconnect we accept our removal from the
+    // queues, and leave it up to the user to decide whether they want to attempt to re-enter a queue on reconnect.
+    protected reSubmitCore() { }
+
     /**
      * Process a task manager operation
      *
