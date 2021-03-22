@@ -68,6 +68,8 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
         pendingState = container.closeAndGetPendingLocalState();
     }
 
+    args.opProcessingController.resumeProcessing();
+
     assert.ok(pendingState);
     return pendingState;
 };
@@ -107,8 +109,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         assert.strictEqual(await map2.wait(testKey), testValue);
     });
 
-    // Skip this flaky test. See issue #5593
-    it.skip("doesn't resend successful op", async function() {
+    it("doesn't resend successful op", async function() {
         const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
             map.set(testKey, "something unimportant");
         });
