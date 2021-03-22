@@ -268,9 +268,8 @@ describe("TaskManager", () => {
 
             it("Disconnect while queued: Rejects the lock promise and exits the queue", async () => {
                 const taskId = "taskId";
-                let p2Rejected = false;
                 const lockTaskP1 = taskManager1.lockTask(taskId);
-                const lockTaskP2 = taskManager2.lockTask(taskId).catch(() => { p2Rejected = true; });
+                const lockTaskP2 = taskManager2.lockTask(taskId);
                 containerRuntimeFactory.processAllMessages();
                 await lockTaskP1;
                 assert.ok(taskManager1.haveTaskLock(taskId), "Task manager 1 should have lock");
@@ -279,22 +278,19 @@ describe("TaskManager", () => {
 
                 containerRuntime2.connected = false;
                 containerRuntimeFactory.processAllMessages();
-                await lockTaskP2;
+                await assert.rejects(lockTaskP2, "Should have rejected the P2 promise");
                 assert.ok(!taskManager2.queued(taskId), "Task manager 2 should not be queued");
                 assert.ok(!taskManager2.haveTaskLock(taskId), "Task manager 2 should not have lock");
-                assert.ok(p2Rejected, "Should have rejected the P2 promise");
             });
 
             it("Disconnect while pending: Rejects the lock promise", async () => {
                 const taskId = "taskId";
-                let rejected = false;
-                const lockTaskP = taskManager1.lockTask(taskId).catch(() => { rejected = true; });
+                const lockTaskP = taskManager1.lockTask(taskId);
                 containerRuntime1.connected = false;
                 containerRuntimeFactory.processAllMessages();
-                await lockTaskP;
+                await assert.rejects(lockTaskP, "Should have rejected the promise");
                 assert.ok(!taskManager1.queued(taskId), "Should not be queued");
                 assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
-                assert.ok(rejected, "Should have rejected the promise");
             });
         });
 
