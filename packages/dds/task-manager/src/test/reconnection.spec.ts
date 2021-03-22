@@ -13,8 +13,8 @@ import {
 import { TaskManager } from "../taskManager";
 import { TaskManagerFactory } from "../taskManagerFactory";
 
-describe("Reconnection", () => {
-    describe("TaskManager", () => {
+describe("TaskManager", () => {
+    describe("Reconnection", () => {
         let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
         let containerRuntime1: MockContainerRuntimeForReconnection;
         let containerRuntime2: MockContainerRuntimeForReconnection;
@@ -45,22 +45,38 @@ describe("Reconnection", () => {
             taskManager2.connect(services2);
         });
 
-        it("Disconnect while locked: Raises a lost event and loses the lock", async () => {
-            const taskId = "taskId";
-            const lockTaskP = taskManager1.lockTask(taskId);
-            containerRuntimeFactory.processAllMessages();
-            await lockTaskP;
-            assert.ok(taskManager1.haveTaskLock(taskId), "Should have lock");
+        describe("Behavior transitioning to disconnect", () => {
+            it("Disconnect while locked: Raises a lost event and loses the lock", async () => {
+                const taskId = "taskId";
+                const lockTaskP = taskManager1.lockTask(taskId);
+                containerRuntimeFactory.processAllMessages();
+                await lockTaskP;
+                assert.ok(taskManager1.haveTaskLock(taskId), "Should have lock");
 
-            containerRuntime1.connected = false;
-            containerRuntimeFactory.processAllMessages();
-            assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
+                let lostRaised = false;
+                taskManager1.once("lost", () => { lostRaised = true; });
+
+                containerRuntime1.connected = false;
+                containerRuntimeFactory.processAllMessages();
+                assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
+                assert.ok(lostRaised, "Should have raised a lost event");
+            });
+            it("Disconnect while queued: Rejects the lock promise and exits the queue", async () => {
+            });
+            it("Disconnect while pending: Rejects the lock promise and treats the ack as a remote client", async () => {
+            });
         });
-        it("Disconnect while queued: Rejects the lock promise and exits the queue", async () => {
+
+        describe("Behavior while disconnected", () => {
+            it("Immediately rejects attempts to lock", async () => {
+            });
         });
-        it("Disconnect while pending: Rejects the lock promise and treats the ack as a remote client", async () => {
-        });
-        it("Does nothing on reconnect", async () => {
+
+        describe("Behavior transitioning to connected", () => {
+            it("Does not resubmit", async () => {
+            });
+            it("Ignores late acks", async () => {
+            });
         });
 
         // it("can resend unacked ops on reconnection", async () => {
