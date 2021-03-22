@@ -109,7 +109,8 @@ describeNoCompat("stashed ops", (argsFactory: () => ITestObjectProvider) => {
         assert.strictEqual(await map2.wait(testKey), testValue);
     });
 
-    it("doesn't resend successful op", async function() {
+    // Skip this flaky test. See issue #5593
+    it.skip("doesn't resend successful op", async function() {
         const pendingOps = await getPendingOps(args, true, (c, d, map) => {
             map.set(testKey, "something unimportant");
         });
@@ -119,6 +120,7 @@ describeNoCompat("stashed ops", (argsFactory: () => ITestObjectProvider) => {
 
         // load with pending ops, which it should not resend because they were already sent successfully
         const container2 = await loader.resolve({ url }, pendingOps);
+        args.opProcessingController.addDeltaManagers(container2.deltaManager);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 

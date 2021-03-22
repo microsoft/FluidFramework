@@ -28,6 +28,7 @@
     "@fluid-experimental/get-container": "^0.37.0",
     "@fluidframework/aqueduct": "^0.37.0",
     "@fluidframework/container-definitions": "^0.37.0",
+    "@fluidframework/container-loader": "^0.37.0",
     "@fluidframework/container-runtime-definitions": "^0.37.0",
     "@fluidframework/core-interfaces": "^0.37.0",
     "@fluidframework/request-handler": "^0.37.0",

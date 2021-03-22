@@ -250,7 +250,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     public queued(taskId: string) {
-        assert(this.runtime.clientId !== undefined); // TODO, handle disconnected/detached case
+        assert(this.runtime.clientId !== undefined, "clientId undefined"); // TODO, handle disconnected/detached case
         const clientQueue = this.taskQueues.get(taskId);
         // If we have no queue for the taskId, then no one has signed up for it.
         return (clientQueue !== undefined && clientQueue.includes(this.runtime.clientId))

@@ -19,7 +19,7 @@ If you intend to check in the new username, please reach out to someone on the t
 
 ## Usage
 
-This script runs in two different modes: Orchestrator Mode and Test Runner mode
+This package runs in two different modes: Orchestrator Mode and Test Runner mode
 
 ### Orchestrator Mode
 

@@ -50,11 +50,11 @@
   "dependencies": {
     "@fluidframework/aqueduct": "^0.37.0",
     "@fluidframework/common-definitions": "^0.19.1",
-    "@fluidframework/common-utils": "^0.28.0-0",
+    "@fluidframework/common-utils": "^0.29.0-0",
     "@fluidframework/core-interfaces": "^0.37.0",
     "@fluidframework/datastore-definitions": "^0.37.0",
     "@fluidframework/merge-tree": "^0.37.0",
-    "@fluidframework/protocol-definitions": "^0.1021.0-0",
+    "@fluidframework/protocol-definitions": "^0.1022.0-0",
     "@fluidframework/runtime-definitions": "^0.37.0",
     "@fluidframework/sequence": "^0.37.0",
     "debug": "^4.1.1"

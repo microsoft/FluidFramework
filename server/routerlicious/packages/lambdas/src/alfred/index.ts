@@ -14,7 +14,12 @@ import {
     MessageType,
     NackErrorType,
 } from "@fluidframework/protocol-definitions";
-import { canSummarize, canWrite, validateTokenClaims } from "@fluidframework/server-services-client";
+import {
+    canSummarize,
+    canWrite,
+    validateTokenClaims,
+    validateTokenClaimsExpiration,
+} from "@fluidframework/server-services-client";
 
 import safeStringify from "json-stringify-safe";
 import * as semver from "semver";
@@ -189,13 +194,7 @@ export function configureWebSocketServices(
             const token = message.token;
             const claims = validateTokenClaims(token,
                 message.id,
-                message.tenantId,
-                maxTokenLifetimeSec,
-                isTokenExpiryEnabled);
-            if (!claims) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject({ code: 401, message: "Invalid claims" });
-            }
+                message.tenantId);
 
             try {
                 await tenantManager.verifyToken(claims.tenantId, token);
@@ -259,17 +258,9 @@ export function configureWebSocketServices(
                 clientId,
                 messageClient as IClient);
 
-            if (isTokenExpiryEnabled && claims.exp) {
-                const lifeTimeMSec = (claims.exp * 1000) - Math.round((new Date()).getTime());
-                if (lifeTimeMSec > 0) {
-                    setExpirationTimer(lifeTimeMSec);
-                } else {
-                    // eslint-disable-next-line prefer-promise-reject-errors
-                    return Promise.reject({
-                        code: 401,
-                        message: "Invalid token expiry",
-                    });
-                }
+            if (isTokenExpiryEnabled) {
+                const lifeTimeMSec = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
+                setExpirationTimer(lifeTimeMSec);
             }
 
             let connectedMessage: IConnected;

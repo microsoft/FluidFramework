@@ -110,7 +110,7 @@ describe("context reload (hot-swap)", function() {
             options: { hotSwapContext: true },
             urlResolver: driver.createUrlResolver(),
             documentServiceFactory: driver.createDocumentServiceFactory(),
-            logger: ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}}),
+            logger: ChildLogger.create(getTestLogger(), undefined, {all: {driverType: driver.type}}),
         });
         loaderContainerTracker.add(loader);
         return createAndAttachContainer(
@@ -232,7 +232,7 @@ describe("context reload (hot-swap)", function() {
                 options: { hotSwapContext: true },
                 urlResolver: driver.createUrlResolver(),
                 documentServiceFactory: driver.createDocumentServiceFactory(),
-                logger: ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}}),
+                logger: ChildLogger.create(getTestLogger(), undefined, {all: {driverType: driver.type}}),
             });
             loaderContainerTracker.add(loader);
             return loader.resolve({ url: await driver.createContainerUrl(documentId) });
