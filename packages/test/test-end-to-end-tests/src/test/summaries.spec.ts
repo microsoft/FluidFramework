@@ -36,10 +36,7 @@ class TestDataObject extends DataObject {
 async function createContainer(
     provider: ITestObjectProvider,
     runtimeOptions: Omit<IContainerRuntimeOptions, "generateSummaries">,
-): Promise<{
-    container: IContainer;
-    opProcessingController: OpProcessingController;
-}> {
+): Promise<IContainer> {
     const documentId = createDocumentId();
     const codeDetails: IFluidCodeDetails = {
         package: "summarizerTestPackage",
@@ -97,14 +94,11 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
     });
 
     it("Should generate summary tree", async () => {
-        const { container, opProcessingController } = await createContainer(
-            provider,
-            { disableIsolatedChannels: false },
-        );
+        const container = await createContainer(provider, { disableIsolatedChannels: false });
         const defaultDataStore = await requestFluidObject<TestDataObject>(container, defaultDataStoreId);
         const containerRuntime = defaultDataStore.getContext().containerRuntime as ContainerRuntime;
 
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
 
         const { gcData, stats, summary } = await containerRuntime.summarize({
             runGC: false,
@@ -158,10 +152,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
     });
 
     it("Should generate summary tree with isolated channels disabled", async () => {
-        const { container, opProcessingController } = await createContainer(
-            provider,
-            { disableIsolatedChannels: true },
-        );
+        const container = await createContainer(provider, { disableIsolatedChannels: true });
         const defaultDataStore = await requestFluidObject<TestDataObject>(container, defaultDataStoreId);
         const containerRuntime = defaultDataStore.getContext().containerRuntime as ContainerRuntime;
 
