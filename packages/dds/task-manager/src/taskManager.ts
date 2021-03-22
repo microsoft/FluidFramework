@@ -197,7 +197,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         });
 
         this.queueWatcher.on("queueChange", (taskId: string, oldLockHolder: string, newLockHolder: string) => {
-            assert(this.runtime.clientId !== undefined, "Unexpected queue change while disconnected");
+            // Exit early if we are still catching up on reconnect -- we can't be the leader yet anyway.
+            if (this.runtime.clientId === undefined) {
+                return;
+            }
 
             if (oldLockHolder !== this.runtime.clientId && newLockHolder === this.runtime.clientId) {
                 this.emit("assigned", taskId);
