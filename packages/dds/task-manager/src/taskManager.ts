@@ -355,7 +355,9 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     protected registerCore() { }
 
     protected onDisconnect() {
-        // TODO knock ourselves out of the queues here, and wipe our pending ops probably
+        // TODO also reject outstanding promises and wipe our pending ops
+        assert(this.runtime.clientId !== undefined, "Missing client id on disconnect");
+        this.removeClientFromAllQueues(this.runtime.clientId);
     }
 
     // Override resubmit core to avoid resubmission on reconnect.  On disconnect we accept our removal from the
