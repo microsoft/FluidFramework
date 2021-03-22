@@ -31,6 +31,18 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     private readonly logger: ITelemetryLogger;
     private readonly sharingLinkCache = new PromiseCache<string, string>();
     private readonly instrumentedTokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions> | undefined;
+    /**
+     * Creates url resolver instance
+     * @param tokenFetcher Function that returns access token used to fetch share link.
+     * Can be set as 'undefined' for cases where share link is not needed. Currently, only
+     * getAbsoluteUrl() method requires share link.
+     * @param identityType identity type for signed in user. This value determines the shape
+     * of share link as it differs for Enterprise and Consumer users
+     * @param logger logger object that is used as telemetry sink
+     * @param appName application name hint that is encoded with url produced by getAbsoluteUrl() method.
+     * This hint is used by link handling logic which determines which app to redirect to when user
+     * navigates directly to the link.
+     */
     public constructor(
         tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions> | undefined = undefined,
         private readonly identityType: IdentityType = "Enterprise",
