@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
+import assert from "assert";
+import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IContainer, IDeltaManager, IHostLoader } from "@fluidframework/container-definitions";
 import { Container, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
@@ -14,13 +16,54 @@ import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { LoaderContainerTracker } from "./loaderContainerTracker";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
-import { OpProcessingController } from "./opProcessingController";
 import { ChannelFactoryRegistry } from "./testFluidObject";
 
 const defaultCodeDetails: IFluidCodeDetails = {
     package: "defaultTestPackage",
     config: {},
 };
+
+interface IOpProcessingController {
+    addDeltaManagers(...deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>[]);
+    processIncoming(): Promise<void>;
+    processOutgoing(): Promise<void>;
+    pauseProcessing(...deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>[]): Promise<void>;
+    process(): Promise<void>;
+}
+
+class OpProcessingControllerShim implements IOpProcessingController {
+    constructor(private readonly tracker: LoaderContainerTracker) {
+
+    }
+
+    addDeltaManagers(...deltaManagers: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>[]) {
+        const trackedDeltaManagers =
+            Array.from(this.tracker.trackedContainers).map((container) => container.deltaManager);
+        for (const deltaManager of deltaManagers) {
+            assert(trackedDeltaManagers.includes(deltaManager));
+        }
+    }
+
+    async processIncoming(): Promise<void> {
+        return this.tracker.processIncoming();
+    }
+
+    async processOutgoing(): Promise<void> {
+        return this.tracker.processOutgoing();
+    }
+    async pauseProcessing(
+        ...deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>[]
+    ): Promise<void> {
+        const containers =
+            Array.from(this.tracker.trackedContainers).filter(
+                (container) => deltaManager.includes(container.deltaManager),
+            );
+        await this.tracker.pauseProcessing(containers);
+    }
+    async process(): Promise<void> {
+        return this.tracker.ensureSynchronized();
+    }
+}
 
 export interface ITestObjectProvider {
     createContainer(entryPoint: fluidEntryPoint): Promise<IContainer>;
@@ -36,7 +79,7 @@ export interface ITestObjectProvider {
     documentServiceFactory: IDocumentServiceFactory,
     urlResolver: IUrlResolver,
     defaultCodeDetails: IFluidCodeDetails,
-    opProcessingController: OpProcessingController,
+    opProcessingController: IOpProcessingController,
 
     ensureSynchronized(): Promise<void>;
     reset(): void,
@@ -71,7 +114,7 @@ export class TestObjectProvider {
     private readonly _loaderContainerTracker = new LoaderContainerTracker();
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _urlResolver: IUrlResolver | undefined;
-    private _opProcessingController?: OpProcessingController;
+    private _opProcessingController?: IOpProcessingController;
     private _documentId?: string;
 
     /**
@@ -112,9 +155,9 @@ export class TestObjectProvider {
         return defaultCodeDetails;
     }
 
-    get opProcessingController(): OpProcessingController {
+    get opProcessingController(): IOpProcessingController {
         if (this._opProcessingController === undefined) {
-            this._opProcessingController = new OpProcessingController();
+            this._opProcessingController = new OpProcessingControllerShim(this._loaderContainerTracker);
         }
         return this._opProcessingController;
     }
@@ -208,7 +251,6 @@ export class TestObjectProvider {
     }
 
     public async ensureSynchronized() {
-        await this.opProcessingController.process();
         return this._loaderContainerTracker.ensureSynchronized();
     }
 }
