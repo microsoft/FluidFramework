@@ -218,7 +218,7 @@ describe("TaskManager", () => {
         });
     });
 
-    describe("Reconnection", () => {
+    describe("Disconnection", () => {
         let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
         let containerRuntime1: MockContainerRuntimeForReconnection;
         let containerRuntime2: MockContainerRuntimeForReconnection;
@@ -266,7 +266,7 @@ describe("TaskManager", () => {
                 assert.ok(lostRaised, "Should have raised a lost event");
             });
 
-            it.skip("Disconnect while queued: Rejects the lock promise and exits the queue", async () => {
+            it("Disconnect while queued: Rejects the lock promise and exits the queue", async () => {
                 const taskId = "taskId";
                 let p2Rejected = false;
                 const lockTaskP1 = taskManager1.lockTask(taskId);
@@ -284,19 +284,19 @@ describe("TaskManager", () => {
                 assert.ok(!taskManager2.haveTaskLock(taskId), "Task manager 2 should not have lock");
                 assert.ok(p2Rejected, "Should have rejected the P2 promise");
             });
-            it("Disconnect while pending: Rejects the lock promise and treats the ack as a remote client", async () => {
+            it.skip("Disconnect while pending: Rejects the lock promise", async () => {
             });
         });
 
         describe("Behavior while disconnected", () => {
-            it("Immediately rejects attempts to lock", async () => {
+            it.skip("Immediately rejects attempts to lock", async () => {
             });
         });
 
         describe("Behavior transitioning to connected", () => {
-            it("Does not resubmit", async () => {
+            it.skip("Does not resubmit", async () => {
             });
-            it("Ignores late acks", async () => {
+            it.skip("Ignores late acks", async () => {
             });
         });
 

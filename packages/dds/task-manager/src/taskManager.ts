@@ -136,9 +136,15 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      */
     private readonly taskQueues: Map<string, string[]> = new Map();
 
+    // opWatcher emits for every op on this data store.  This is just a repackaging of processCore into events.
     private readonly opWatcher: EventEmitter = new EventEmitter();
+    // queueWatcher emits an event whenever the consensus state of the task queues changes
+    // TODO currently could event even if the queue doesn't actually change
     private readonly queueWatcher: EventEmitter = new EventEmitter();
+    // abandonWatcher emits an event whenever the local client calls abandon() on a task.
     private readonly abandonWatcher: EventEmitter = new EventEmitter();
+    // disconnectWatcher emits an event whenever we get disconnected.
+    private readonly disconnectWatcher: EventEmitter = new EventEmitter();
 
     private messageId: number = -1;
     /**
@@ -202,6 +208,12 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 this.emit("lost", taskId);
             }
         });
+
+        this.disconnectWatcher.on("disconnect", () => {
+            // TODO also reject outstanding promises and wipe our pending ops
+            assert(this.runtime.clientId !== undefined, "Missing client id on disconnect");
+            this.removeClientFromAllQueues(this.runtime.clientId);
+        });
     }
 
     // TODO Remove or hide from interface, this is just for debugging
@@ -254,6 +266,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 if (this.haveTaskLock(taskId) && !this.latestPendingOps.has(taskId)) {
                     this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                     this.abandonWatcher.off("abandon", checkIfAbandoned);
+                    this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
                     res();
                 }
             };
@@ -265,11 +278,20 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
                 this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                 this.abandonWatcher.off("abandon", checkIfAbandoned);
+                this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
                 rej(new Error(`Abandoned before acquiring lock: ${taskId}`));
+            };
+
+            const rejectOnDisconnect = () => {
+                this.queueWatcher.off("queueChange", checkIfAcquiredLock);
+                this.abandonWatcher.off("abandon", checkIfAbandoned);
+                this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
+                rej(new Error(`Disconnected before acquiring lock: ${taskId}`));
             };
 
             this.queueWatcher.on("queueChange", checkIfAcquiredLock);
             this.abandonWatcher.on("abandon", checkIfAbandoned);
+            this.disconnectWatcher.on("disconnect", rejectOnDisconnect);
         });
 
         if (!this.queued(taskId)) {
@@ -355,9 +377,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     protected registerCore() { }
 
     protected onDisconnect() {
-        // TODO also reject outstanding promises and wipe our pending ops
-        assert(this.runtime.clientId !== undefined, "Missing client id on disconnect");
-        this.removeClientFromAllQueues(this.runtime.clientId);
+        this.disconnectWatcher.emit("disconnect");
     }
 
     // Override resubmit core to avoid resubmission on reconnect.  On disconnect we accept our removal from the
