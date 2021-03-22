@@ -15,13 +15,14 @@ import { Container } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import {
     createAndAttachContainer,
     createDocumentId,
     createLoader,
-    OpProcessingController,
+    ITestObjectProvider,
 } from "@fluidframework/test-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -33,7 +34,8 @@ class TestDataObject extends DataObject {
     }
 }
 
-describe("GC in summary", () => {
+// REVIEW: enable compat testing?
+describeNoCompat("GC in summary", (getTestObjectProvider) => {
     let documentId: string;
     const codeDetails: IFluidCodeDetails = {
         package: "garbageCollectionTestPackage",
@@ -57,23 +59,24 @@ describe("GC in summary", () => {
         runtimeOptions,
     );
 
-    let driver: ITestDriver;
-    let opProcessingController: OpProcessingController;
+    let provider: ITestObjectProvider;
     let containerRuntime: ContainerRuntime;
     let defaultDataStore: TestDataObject;
 
     async function createContainer(): Promise<IContainer> {
         const loader = createLoader(
             [[codeDetails, runtimeFactory]],
-            driver.createDocumentServiceFactory(),
-            driver.createUrlResolver());
+            provider.documentServiceFactory,
+            provider.urlResolver,
+            ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
+        );
         return createAndAttachContainer(
-            codeDetails, loader, driver.createCreateNewRequest(documentId));
+            codeDetails, loader, provider.driver.createCreateNewRequest(documentId));
     }
 
     // Summarizes the container and validates that the data store's reference state is correct in the summary.
     async function validateDataStoreReferenceState(dataStoreId: string, referenced: boolean) {
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
         const { summary } = await containerRuntime.summarize({
             runGC: true,
             fullTree: true,
@@ -84,12 +87,12 @@ describe("GC in summary", () => {
         // For unreferenced nodes, the unreferenced flag in its summary tree is undefined.
         const expectedUnreferenced = referenced ? undefined : true;
         let found = false;
-        for (const [ id, summaryObject ] of Object.entries(summary.tree)) {
+        for (const [id, summaryObject] of Object.entries(summary.tree)) {
             if (id === dataStoreId) {
                 assert(summaryObject.type === SummaryType.Tree, `Data store ${dataStoreId}'s entry is not a tree`);
                 assert(
                     summaryObject.unreferenced === expectedUnreferenced,
-                    `Data store ${dataStoreId} should be ${ referenced ? "referenced" : "unreferenced" }`,
+                    `Data store ${dataStoreId} should be ${referenced ? "referenced" : "unreferenced"}`,
                 );
                 found = true;
                 break;
@@ -99,14 +102,13 @@ describe("GC in summary", () => {
     }
 
     beforeEach(async () => {
+        provider = getTestObjectProvider();
         documentId = createDocumentId();
-        driver = getFluidTestDriver() as unknown as ITestDriver;
-        opProcessingController = new OpProcessingController();
 
         const container = await createContainer() as Container;
         defaultDataStore = await requestFluidObject<TestDataObject>(container, "/");
         containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
-        opProcessingController.addDeltaManagers(containerRuntime.deltaManager);
+        provider.opProcessingController.addDeltaManagers(containerRuntime.deltaManager);
 
         // Wait for the Container to get connected.
         if (!container.connected) {

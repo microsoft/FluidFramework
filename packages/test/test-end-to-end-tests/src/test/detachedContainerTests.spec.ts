@@ -59,8 +59,8 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider) => {
-    let args: ITestObjectProvider;
+describeFullCompat("Detached Container", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
     let request: IRequest;
     let loader: Loader;
 
@@ -73,25 +73,21 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
             "");
     });
 
-    beforeEach(async () => {
-        args = argsFactory();
-        request  = args.driver.createCreateNewRequest(args.documentId);
-        loader = args.makeTestLoader(testContainerConfig) as Loader;
-    });
-
-    afterEach(() => {
-        args.reset();
+    beforeEach(() => {
+        provider = getTestObjectProvider();
+        request = provider.driver.createCreateNewRequest(provider.documentId);
+        loader = provider.makeTestLoader(testContainerConfig) as Loader;
     });
 
     it("Create detached container", async () => {
-        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         assert.strictEqual(container.attachState, AttachState.Detached, "Container should be detached");
         assert.strictEqual(container.closed, false, "Container should be open");
         assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
         assert.strictEqual(container.getQuorum().getMembers().size, 0, "Quorum should not contain any members");
         assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
             "Container should be in disconnected state!!");
-        assert.strictEqual(container.chaincodePackage?.package, args.defaultCodeDetails.package,
+        assert.strictEqual(container.chaincodePackage?.package, provider.defaultCodeDetails.package,
             "Package should be same as provided");
         assert.strictEqual(container.id, "", "Detached container's id should be empty string");
         assert.strictEqual(container.clientDetails.capabilities.interactive, true,
@@ -99,20 +95,20 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
     });
 
     it("Attach detached container", async () => {
-        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         await container.attach(request);
         assert.strictEqual(container.attachState, AttachState.Attached, "Container should be attached");
         assert.strictEqual(container.closed, false, "Container should be open");
         assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
-        if (args.driver.type === "odsp") {
+        if (provider.driver.type === "odsp") {
             assert.ok(container.id, "No container ID");
         } else {
-            assert.strictEqual(container.id, args.documentId, "Doc id is not matching!!");
+            assert.strictEqual(container.id, provider.documentId, "Doc id is not matching!!");
         }
     });
 
     it("DataStores in detached container", async () => {
-        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
         if (response.mimeType !== "fluid/object" && response.status !== 200) {
@@ -132,7 +128,7 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
     });
 
     it("DataStores in attached container", async () => {
-        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
         const dataStore = response.value as ITestFluidObject;
@@ -155,7 +151,7 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
     });
 
     it("Load attached container and check for dataStores", async () => {
-        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
         const dataStore = response.value as ITestFluidObject;
@@ -168,10 +164,10 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
         await container.attach(request);
 
         // Now load the container from another loader.
-        const loader2 = args.makeTestLoader(testContainerConfig);
+        const loader2 = provider.makeTestLoader(testContainerConfig);
         // Create a new request url from the resolvedUrl of the first container.
         assert(container.resolvedUrl);
-        const requestUrl2 = await args.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
+        const requestUrl2 = await provider.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
 
         // Get the sub dataStore and assert that it is attached.
@@ -192,16 +188,16 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
     });
 
     it("ReAttach detached container on failed attach", async () => {
-        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        const oldFunc = args.documentServiceFactory.createContainer;
-        args.documentServiceFactory.createContainer = (a, b, c) => { throw new Error("Test Error"); };
+        const oldFunc = provider.documentServiceFactory.createContainer;
+        provider.documentServiceFactory.createContainer = (a, b, c) => { throw new Error("Test Error"); };
         let failedOnce = false;
         try {
             await container.attach(request);
         } catch (e) {
             failedOnce = true;
-            args.documentServiceFactory.createContainer = oldFunc;
+            provider.documentServiceFactory.createContainer = oldFunc;
         }
         assert.strictEqual(failedOnce, true, "Attach call should fail");
         assert.strictEqual(container.attachState, AttachState.Attaching, "Container should be in attaching state");
@@ -225,10 +221,10 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
         await defP.promise;
 
         // Now load the container from another loader.
-        const loader2 = args.makeTestLoader(testContainerConfig);
+        const loader2 = provider.makeTestLoader(testContainerConfig);
         // Create a new request url from the resolvedUrl of the first container.
         assert(container.resolvedUrl);
-        const requestUrl2 = await args.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
+        const requestUrl2 = await provider.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
 
         // Get the sub data store and assert that it is attached.
@@ -240,7 +236,7 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
     });
 
     it("Directly attach container through service factory, should resolve to same container", async () => {
-        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
         const dataStore = response.value as ITestFluidObject;
@@ -251,10 +247,10 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
 
         const snapshotTree = container.serialize();
         const summaryForAttach = convertContainerToDriverSerializedFormat(snapshotTree);
-        const resolvedUrl = await args.urlResolver.resolve(request);
+        const resolvedUrl = await provider.urlResolver.resolve(request);
         assert(resolvedUrl);
-        const service = await args.documentServiceFactory.createContainer(summaryForAttach as any, resolvedUrl);
-        const absoluteUrl = await args.urlResolver.getAbsoluteUrl(service.resolvedUrl, "/");
+        const service = await provider.documentServiceFactory.createContainer(summaryForAttach as any, resolvedUrl);
+        const absoluteUrl = await provider.urlResolver.getAbsoluteUrl(service.resolvedUrl, "/");
 
         const container2 = await loader.resolve({ url: absoluteUrl });
         // Get the root dataStore from the detached container.
@@ -267,7 +263,7 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
     it("Fire ops during container attach for shared string", async () => {
         const ops = { pos1: 0, seg: "b", type: 0 };
         const defPromise = new Deferred<void>();
-        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.equal(type, MessageType.Operation);
             assert.equal(contents.type, ContainerMessageType.FluidDataStoreOp);
@@ -301,7 +297,7 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
     it("Fire ops during container attach for shared map", async () => {
         const ops = { key: "1", type: "set", value: { type: "Plain", value: "b" } };
         const defPromise = new Deferred<void>();
-        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 sharedMapId, "Address should be shared map");
@@ -330,7 +326,7 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
     it("Fire channel attach ops during container attach", async () => {
         const testChannelId = "testChannel1";
         const defPromise = new Deferred<void>();
-        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.id,
                 testChannelId, "Channel id should match");
@@ -358,7 +354,7 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
     it("Fire dataStore attach ops during container attach", async () => {
         const testDataStoreType = "default";
         const defPromise = new Deferred<void>();
-        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
@@ -393,7 +389,7 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
             refSeq: detachedContainerRefSeqNumber,
         };
         const defPromise = new Deferred<void>();
-        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 crcId, "Address should be consensus register collection");
@@ -427,7 +423,7 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
             value: { type: "Plain", value: "b" },
         };
         const defPromise = new Deferred<void>();
-        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 sharedDirectoryId, "Address should be shared directory");
@@ -455,7 +451,7 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
     it("Fire ops during container attach for shared cell", async () => {
         const op = { type: "setCell", value: { type: "Plain", value: "b" } };
         const defPromise = new Deferred<void>();
-        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 sharedCellId, "Address should be shared directory");
@@ -482,7 +478,7 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
 
     it("Fire ops during container attach for shared ink", async () => {
         const defPromise = new Deferred<void>();
-        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 sharedInkId, "Address should be ink");
@@ -515,7 +511,7 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
     it("Fire ops during container attach for consensus ordered collection", async () => {
         const op = { opName: "add", value: JSON.stringify("s") };
         const defPromise = new Deferred<void>();
-        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 cocId, "Address should be consensus queue");
@@ -545,7 +541,7 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
     it("Fire ops during container attach for sparse matrix", async () => {
         const seg = { items: ["s"] };
         const defPromise = new Deferred<void>();
-        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 sparseMatrixId, "Address should be sparse matrix");
@@ -580,7 +576,7 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
     it.skip("Fire ops during container attach for shared matrix", async () => {
         const op = { pos1: 0, seg: 9, type: 0, target: "rows" };
         const defPromise = new Deferred<void>();
-        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 sharedMatrixId, "Address should be shared matrix");
@@ -608,14 +604,14 @@ describeFullCompat("Detached Container", (argsFactory: () => ITestObjectProvider
     });
 
     it("Load attached container from cache and check if they are same", async () => {
-        const container = await loader.createDetachedContainer(args.defaultCodeDetails);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         // Now attach the container and get the sub dataStore.
         await container.attach(request);
 
         // Create a new request url from the resolvedUrl of the first container.
         assert(container.resolvedUrl);
-        const requestUrl2 = await args.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
+        const requestUrl2 = await provider.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
         const container2 = await loader.resolve({ url: requestUrl2 });
         assert.strictEqual(container, container2, "Both containers should be same");
     });

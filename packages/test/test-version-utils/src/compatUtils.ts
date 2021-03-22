@@ -16,8 +16,10 @@ import {
     createTestContainerRuntimeFactory,
     TestObjectProvider,
 } from "@fluidframework/test-utils";
+import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { FluidTestDriverConfig, createFluidTestDriver } from "@fluidframework/test-drivers";
 
-import { getLoaderApi, getContainerRuntimeApi, getDataRuntimeApi } from "./testApi";
+import { getLoaderApi, getContainerRuntimeApi, getDataRuntimeApi, getDriverApi } from "./testApi";
 
 export const TestDataObjectType = "@fluid-example/test-dataStore";
 
@@ -74,15 +76,35 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 
 export const getDataStoreFactory = createGetDataStoreFactoryFunction(getDataRuntimeApi());
 
-export function getVersionedTestObjectProvider(
+async function createVersionedFluidTestDriver(
+    driverConfig?: {
+        type?: TestDriverTypes,
+        config?: FluidTestDriverConfig,
+        version?: number | string,
+    },
+) {
+    const driverApi = getDriverApi(driverConfig?.version);
+    return createFluidTestDriver(
+        driverConfig?.type ?? "local",
+        driverConfig?.config,
+        driverApi,
+    );
+}
+
+export async function getVersionedTestObjectProvider(
     loaderVersion?: number | string,
+    driverConfig?: {
+        type?: TestDriverTypes,
+        config?: FluidTestDriverConfig,
+        version?: number | string,
+    },
     runtimeVersion?: number | string,
     dataRuntimeVersion?: number | string,
-): ITestObjectProvider {
+): Promise<ITestObjectProvider> {
     const loaderApi = getLoaderApi(loaderVersion);
     const containerRuntimeApi = getContainerRuntimeApi(runtimeVersion);
     const dataRuntimeApi = getDataRuntimeApi(dataRuntimeVersion);
-    const driver = getFluidTestDriver();
+    const driver = await createVersionedFluidTestDriver(driverConfig);
 
     const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(dataRuntimeApi);
     const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {

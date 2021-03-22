@@ -32,9 +32,9 @@ async function main() {
     }
 
     await orchestratorProcess(
-        driver,
-        { ...profile, name: profileArg },
-        { testId, debug });
+            driver,
+            { ...profile, name: profileArg },
+            { testId, debug });
 }
 /**
  * Implementation of the orchestrator process. Returns the return code to exit the process with.
@@ -74,7 +74,7 @@ async function orchestratorProcess(
         p.push(new Promise((resolve) => process.on("close", resolve)));
     }
     try{
-        await Promise.all(p);
+    await Promise.all(p);
     } finally{
         await safeExit(0, testId);
     }

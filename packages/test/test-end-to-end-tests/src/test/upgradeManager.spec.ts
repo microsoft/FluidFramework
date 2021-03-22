@@ -18,10 +18,12 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     createAndAttachContainer,
     createDocumentId,
+    ITestObjectProvider,
     LocalCodeLoader,
     OpProcessingController,
 } from "@fluidframework/test-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
 
 class TestDataObject extends DataObject {
     public static readonly type = "@fluid-example/test-dataObject";
@@ -38,44 +40,45 @@ class TestDataObject extends DataObject {
     public get _root() { return this.root; }
 }
 
-describe("UpgradeManager (hot-swap)", () => {
+describeNoCompat("UpgradeManager (hot-swap)", (getTestObjectProvider) => {
     const codeDetails: IFluidCodeDetails = {
         package: "localLoaderTestPackage",
         config: {},
     };
+    let provider: ITestObjectProvider;
     let opProcessingController: OpProcessingController;
 
     async function createContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-        const driver = getFluidTestDriver();
         const loader = new Loader({
-            urlResolver: driver.createUrlResolver(),
-            documentServiceFactory: driver.createDocumentServiceFactory(),
+            urlResolver: provider.urlResolver,
+            documentServiceFactory: provider.documentServiceFactory,
             codeLoader,
             options: { hotSwapContext: true },
-            logger: ChildLogger.create(getTestLogger(), undefined, {all: {driverType: driver.type}}),
+            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver.type } }),
         });
 
         return createAndAttachContainer(
-            codeDetails, loader, driver.createCreateNewRequest(documentId));
+            codeDetails, loader, provider.driver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-        const driver = getFluidTestDriver();
+
         const loader = new Loader({
-            urlResolver: driver.createUrlResolver(),
-            documentServiceFactory: driver.createDocumentServiceFactory(),
+            urlResolver: provider.urlResolver,
+            documentServiceFactory: provider.documentServiceFactory,
             codeLoader,
             options: { hotSwapContext: true },
-            logger: ChildLogger.create(getTestLogger(), undefined, {all: {driverType: driver.type}}),
+            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver.type } }),
         });
 
-        return loader.resolve({ url: await driver.createContainerUrl(documentId) });
+        return loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
     }
 
     beforeEach(async () => {
-        opProcessingController = new OpProcessingController();
+        provider = getTestObjectProvider();
+        opProcessingController = provider.opProcessingController;
     });
 
     it("prevents multiple approved proposals", async () => {
@@ -116,8 +119,8 @@ describe("UpgradeManager (hot-swap)", () => {
         dataObjects.map((dataObject) => {
             dataObject._root.set("tempKey", "tempValue");
         });
-        while (containers.filter((c)=>!c.deltaManager.active).length !== 0) {
-            await opProcessingController.process();
+        while (containers.filter((c) => !c.deltaManager.active).length !== 0) {
+            await provider.ensureSynchronized();
         }
 
         // upgrade all containers at once
@@ -152,12 +155,12 @@ describe("UpgradeManager (hot-swap)", () => {
         // We should wait for this to happen before we send a new code proposal so that it doesn't get nack'd.
         dataObject._root.set("tempKey", "tempValue");
         while (!container.deltaManager.active) {
-            await opProcessingController.process();
+            await provider.ensureSynchronized();
         }
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         upgradeManager.upgrade(codeDetails);
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
         await upgradeP;
     });
 
@@ -190,7 +193,7 @@ describe("UpgradeManager (hot-swap)", () => {
         // We should wait for this to happen before we send a new code proposal so that it doesn't get nack'd.
         dataObject._root.set("tempKey", "tempValue");
         while (!container1.deltaManager.active || !container2.deltaManager.active) {
-            await opProcessingController.process();
+            await provider.ensureSynchronized();
         }
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         upgradeManager.upgrade(codeDetails);

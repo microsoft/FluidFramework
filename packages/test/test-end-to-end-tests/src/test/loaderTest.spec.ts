@@ -17,9 +17,12 @@ import {
     createAndAttachContainer,
     createDocumentId,
     createLoader,
+    ITestObjectProvider,
     OpProcessingController,
 } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 class TestSharedDataObject1 extends DataObject {
     public inspectRequest: boolean = false;
@@ -43,7 +46,7 @@ class TestSharedDataObject1 extends DataObject {
         const parsed = parse(url, true);
         if (this.inspectRequest) {
             // returning query params instead of the data object for testing purposes
-            return { mimeType: "text/plain", status: 200, value : `${parsed.search}` };
+            return { mimeType: "text/plain", status: 200, value: `${parsed.search}` };
         } else if (parsed?.pathname === "/") {
             return { value: this, status: 200, mimeType: "fluid/object" };
         } else {
@@ -92,7 +95,9 @@ const testSharedDataObjectFactory2 = new DataObjectFactory(
     [],
     []);
 
-describe("Loader.request", () => {
+// REVIEW: enable compat testing?
+describeNoCompat("Loader.request", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
     const codeDetails: IFluidCodeDetails = {
         package: "loaderRequestTestPackage",
         config: {},
@@ -112,17 +117,18 @@ describe("Loader.request", () => {
                     [testSharedDataObjectFactory2.type, Promise.resolve(testSharedDataObjectFactory2)],
                 ],
             );
-        const driver = getFluidTestDriver();
         loader = createLoader(
             [[codeDetails, runtimeFactory]],
-            driver.createDocumentServiceFactory(),
-            driver.createUrlResolver(),
+            provider.documentServiceFactory,
+            provider.urlResolver,
+            ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
         );
         return createAndAttachContainer(
-            codeDetails, loader, driver.createCreateNewRequest(documentId));
+            codeDetails, loader, provider.driver.createCreateNewRequest(documentId));
     }
     let container: IContainer;
     beforeEach(async () => {
+        provider = getTestObjectProvider();
         const documentId = createDocumentId();
         container = await createContainer(documentId);
         dataStore1 = await requestFluidObject(container, "default");
@@ -132,16 +138,16 @@ describe("Loader.request", () => {
         // this binds dataStore2 to dataStore1
         dataStore1._root.set("key", dataStore2.handle);
 
-        opProcessingController = new OpProcessingController();
+        opProcessingController = provider.opProcessingController;
         opProcessingController.addDeltaManagers(container.deltaManager);
     });
 
     it("can create the data objects with correct types", async () => {
         const testUrl1 = await container.getAbsoluteUrl(dataStore1.handle.absolutePath);
-        assert(testUrl1,"dataStore1 url is undefined");
+        assert(testUrl1, "dataStore1 url is undefined");
         const testDataStore1 = await requestFluidObject(loader, testUrl1);
         const testUrl2 = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
-        assert(testUrl2,"dataStore2 url is undefined");
+        assert(testUrl2, "dataStore2 url is undefined");
         const testDataStore2 = await requestFluidObject(loader, testUrl2);
 
         assert(testDataStore1 instanceof TestSharedDataObject1, "requestFromLoader returns the wrong type for default");
@@ -201,7 +207,7 @@ describe("Loader.request", () => {
         (container2 as Container).resume();
 
         // Flush all the ops
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
 
         const newDataStore2 = await requestFluidObject(container2, { url: newDataStore.id });
         assert(newDataStore2 instanceof TestSharedDataObject2, "requestFromLoader returns the wrong type for object2");
@@ -225,7 +231,7 @@ describe("Loader.request", () => {
         (container1 as Container).resume();
 
         // Flush all the ops
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
 
         const sameDataStore1 = await requestFluidObject(container1, {
             url: newDataStore.id,

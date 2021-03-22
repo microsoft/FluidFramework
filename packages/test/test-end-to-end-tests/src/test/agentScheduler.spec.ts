@@ -11,23 +11,19 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, timeoutPromise, defaultTimeoutDurationMs } from "@fluidframework/test-utils";
 import { describeFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 
-describeFullCompat("AgentScheduler",(argsFactory: () => ITestObjectProvider) => {
+describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
     let leaderTimeout = defaultTimeoutDurationMs;
-    let args: ITestObjectProvider;
+    let provider: ITestObjectProvider;
     beforeEach(() => {
-        args = argsFactory();
-        leaderTimeout = args.driver.type === "odsp" ? 5000 : defaultTimeoutDurationMs;
+        provider = getTestObjectProvider();
+        leaderTimeout = provider.driver.type === "odsp" ? 5000 : defaultTimeoutDurationMs;
     });
-    afterEach(() => {
-        args.reset();
-    });
-
     const leader = "leader";
     describe("Single client", () => {
         let scheduler: IAgentScheduler;
 
         beforeEach(async () => {
-            const container = await args.makeTestContainer();
+            const container = await provider.makeTestContainer();
             // Back-compat: querying for IAgentScheduler since this request would return an ITaskManager prior to 0.36.
             // Remove the query in 0.38 when back compat is no longer a concern.
             scheduler = await requestFluidObject<IAgentScheduler>(container, taskSchedulerId)
@@ -53,7 +49,7 @@ describeFullCompat("AgentScheduler",(argsFactory: () => ITestObjectProvider) => 
 
         it("Can pick tasks", async () => {
             await scheduler.pick("task1", async () => { });
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             assert.deepStrictEqual(scheduler.pickedTasks(), [leader, "task1"]);
         });
 
@@ -109,7 +105,7 @@ describeFullCompat("AgentScheduler",(argsFactory: () => ITestObjectProvider) => 
 
         beforeEach(async () => {
             // Create a new Container for the first document.
-            container1 = await args.makeTestContainer();
+            container1 = await provider.makeTestContainer();
             // Back-compat: querying for IAgentScheduler since this request would return an ITaskManager prior to 0.36.
             // Remove the query in 0.38 when back compat is no longer a concern.
             scheduler1 = await requestFluidObject<IAgentScheduler>(container1, taskSchedulerId)
@@ -126,7 +122,7 @@ describeFullCompat("AgentScheduler",(argsFactory: () => ITestObjectProvider) => 
                 });
             }
             // Load existing Container for the second document.
-            container2 = await args.loadTestContainer();
+            container2 = await provider.loadTestContainer();
             // Back-compat: querying for IAgentScheduler since this request would return an ITaskManager prior to 0.36.
             // Remove the query in 0.38 when back compat is no longer a concern.
             scheduler2 = await requestFluidObject<IAgentScheduler>(container2, taskSchedulerId)
@@ -136,7 +132,7 @@ describeFullCompat("AgentScheduler",(argsFactory: () => ITestObjectProvider) => 
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
             dataObject2._root.set("tempKey2", "tempValue2");
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
         });
 
         it("No tasks initially", async () => {
@@ -147,12 +143,12 @@ describeFullCompat("AgentScheduler",(argsFactory: () => ITestObjectProvider) => 
         it("Clients agree on picking tasks sequentially", async () => {
             await scheduler1.pick("task1", async () => { });
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), []);
             await scheduler2.pick("task2", async () => { });
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task2"]);
         });
@@ -165,7 +161,7 @@ describeFullCompat("AgentScheduler",(argsFactory: () => ITestObjectProvider) => 
             await scheduler2.pick("task3", async () => { });
             await scheduler2.pick("task4", async () => { });
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task3"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4"]);
         });
@@ -181,7 +177,7 @@ describeFullCompat("AgentScheduler",(argsFactory: () => ITestObjectProvider) => 
             await scheduler2.pick("task5", async () => { });
             await scheduler2.pick("task6", async () => { });
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task5"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4", "task6"]);
         });
@@ -197,7 +193,7 @@ describeFullCompat("AgentScheduler",(argsFactory: () => ITestObjectProvider) => 
             await scheduler2.pick("task5", async () => { });
             await scheduler2.pick("task6", async () => { });
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             await scheduler1.release("task4").catch((err) => {
                 assert.deepStrictEqual(err.message, "task4 was never picked");
             });
@@ -220,15 +216,15 @@ describeFullCompat("AgentScheduler",(argsFactory: () => ITestObjectProvider) => 
             await scheduler2.pick("task5", async () => { });
             await scheduler2.pick("task6", async () => { });
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task5"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4", "task6"]);
             await scheduler1.release("task2", "task1", "task5");
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader]);
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             assert.deepStrictEqual(scheduler2.pickedTasks().sort(), ["task1", "task2", "task4", "task5", "task6"]);
             await scheduler1.pick("task1", async () => { });
             await scheduler1.pick("task2", async () => { });
@@ -236,7 +232,7 @@ describeFullCompat("AgentScheduler",(argsFactory: () => ITestObjectProvider) => 
             await scheduler1.pick("task6", async () => { });
             await scheduler2.release("task2", "task1", "task4", "task5", "task6");
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             assert.deepStrictEqual(scheduler1.pickedTasks().sort(),
                 [leader, "task1", "task2", "task4", "task5", "task6"]);
         });
@@ -244,7 +240,7 @@ describeFullCompat("AgentScheduler",(argsFactory: () => ITestObjectProvider) => 
         it("Releasing leadership should automatically elect a new leader", async () => {
             await scheduler1.release(leader);
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             assert.deepStrictEqual(scheduler1.pickedTasks(), []);
             assert.deepStrictEqual(scheduler2.pickedTasks(), [leader]);
         });

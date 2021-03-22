@@ -19,16 +19,13 @@ const testContainerConfig: ITestContainerConfig = {
     registry: [["sharedString", SharedString.getFactory()]],
 };
 
-describeFullCompat("blobs", (argsFactory: () => ITestObjectProvider) => {
-    let args: ITestObjectProvider;
-    beforeEach(() => {
-        args = argsFactory();
-    });
-    afterEach(() => {
-        args.reset();
+describeFullCompat("blobs", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    beforeEach(async () => {
+        provider = getTestObjectProvider();
     });
     it("attach sends an op", async function() {
-        const container = await args.makeTestContainer(testContainerConfig);
+        const container = await provider.makeTestContainer(testContainerConfig);
 
         const blobOpP = new Promise<void>((res, rej) => container.on("op", (op) => {
             if (op.contents?.type === ContainerMessageType.BlobAttach) {
@@ -48,14 +45,14 @@ describeFullCompat("blobs", (argsFactory: () => ITestObjectProvider) => {
     it("can get remote attached blob", async function() {
         const testString = "this is a test string";
         const testKey = "a blob";
-        const container1 = await args.makeTestContainer(testContainerConfig);
+        const container1 = await provider.makeTestContainer(testContainerConfig);
 
         const dataStore1 = await requestFluidObject<ITestDataObject>(container1, "default");
 
         const blob = await dataStore1._runtime.uploadBlob(IsoBuffer.from(testString, "utf-8"));
         dataStore1._root.set(testKey, blob);
 
-        const container2 = await args.loadTestContainer(testContainerConfig);
+        const container2 = await provider.loadTestContainer(testContainerConfig);
         const dataStore2 = await requestFluidObject<ITestDataObject>(container2, "default");
 
         const blobHandle = await dataStore2._root.wait<IFluidHandle<ArrayBufferLike>>(testKey);
@@ -64,7 +61,7 @@ describeFullCompat("blobs", (argsFactory: () => ITestObjectProvider) => {
     });
 
     it("loads from snapshot", async function() {
-        const container1 = await args.makeTestContainer(testContainerConfig);
+        const container1 = await provider.makeTestContainer(testContainerConfig);
         const dataStore = await requestFluidObject<ITestDataObject>(container1, "default");
         const blob = await dataStore._runtime.uploadBlob(IsoBuffer.from("some random text"));
 
@@ -94,15 +91,15 @@ describeFullCompat("blobs", (argsFactory: () => ITestObjectProvider) => {
             });
         });
 
-        const container2 = await args.loadTestContainer(testContainerConfig);
+        const container2 = await provider.loadTestContainer(testContainerConfig);
         const snapshot2 = (container2 as any).context.runtime.blobManager.snapshot();
         assert.strictEqual(snapshot2.entries.length, 1);
         assert.strictEqual(snapshot1.entries[0].id, snapshot2.entries[0].id);
     });
 
     it("round trip blob handle on shared string property", async function() {
-        const container1 = await args.makeTestContainer(testContainerConfig);
-        const container2 = await args.loadTestContainer(testContainerConfig);
+        const container1 = await provider.makeTestContainer(testContainerConfig);
+        const container2 = await provider.loadTestContainer(testContainerConfig);
         const testString = "this is a test string";
         // setup
         {
@@ -132,7 +129,7 @@ describeFullCompat("blobs", (argsFactory: () => ITestObjectProvider) => {
         }
 
         // validate on remote container, local container, and container loaded from summary
-        for (const container of [container1, container2, await args.loadTestContainer(testContainerConfig)]) {
+        for (const container of [container1, container2, await provider.loadTestContainer(testContainerConfig)]) {
             const dataStore2 = await requestFluidObject<ITestDataObject>(container, "default");
             const handle = await dataStore2._root.wait<IFluidHandle<SharedString>>("sharedString");
             assert(handle);

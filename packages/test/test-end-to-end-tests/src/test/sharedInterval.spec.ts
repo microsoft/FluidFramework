@@ -51,15 +51,11 @@ const assertIntervalsHelper = (
     }
 };
 
-describeFullCompat("SharedInterval", (argsFactory: () => ITestObjectProvider) => {
-    let args: ITestObjectProvider;
-    beforeEach(()=>{
-        args = argsFactory();
+describeFullCompat("SharedInterval", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    beforeEach(() => {
+        provider = getTestObjectProvider();
     });
-    afterEach(() => {
-        args.reset();
-    });
-
     describe("one client", () => {
         const stringId = "stringKey";
 
@@ -76,7 +72,7 @@ describeFullCompat("SharedInterval", (argsFactory: () => ITestObjectProvider) =>
                 fluidDataObjectType: DataObjectFactoryType.Test,
                 registry,
             };
-            const container = await args.makeTestContainer(testContainerConfig);
+            const container = await provider.makeTestContainer(testContainerConfig);
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
             sharedString = await dataObject.getSharedObject<SharedString>(stringId);
             sharedString.insertText(0, "012");
@@ -176,7 +172,7 @@ describeFullCompat("SharedInterval", (argsFactory: () => ITestObjectProvider) =>
                     assertIntervals([{ start: 0, end: 2 }]);
                 }
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
             }
         });
     });
@@ -191,7 +187,7 @@ describeFullCompat("SharedInterval", (argsFactory: () => ITestObjectProvider) =>
             };
 
             // Create a Container for the first client.
-            const container1 = await args.makeTestContainer(testContainerConfig);
+            const container1 = await provider.makeTestContainer(testContainerConfig);
             const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
             const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
@@ -201,10 +197,10 @@ describeFullCompat("SharedInterval", (argsFactory: () => ITestObjectProvider) =>
             assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
 
             // Load the Container that was created by the first client.
-            const container2 = await args.loadTestContainer(testContainerConfig);
+            const container2 = await provider.loadTestContainer(testContainerConfig);
             const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
 
             const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
             const intervals2 = await sharedString2.getIntervalCollection("intervals").getView();
@@ -216,7 +212,7 @@ describeFullCompat("SharedInterval", (argsFactory: () => ITestObjectProvider) =>
             sharedString2.insertText(4, "x");
             assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 7 }]);
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
         });
     });
@@ -241,17 +237,17 @@ describeFullCompat("SharedInterval", (argsFactory: () => ITestObjectProvider) =>
 
         beforeEach(async () => {
             // Create a Container for the first client.
-            const container1 = await args.makeTestContainer(testContainerConfig);
+            const container1 = await provider.makeTestContainer(testContainerConfig);
             dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
             sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
 
             // Load the Container that was created by the first client.
-            const container2 = await args.loadTestContainer(testContainerConfig);
+            const container2 = await provider.loadTestContainer(testContainerConfig);
             const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
             sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
 
             // Load the Container that was created by the first client.
-            const container3 = await args.loadTestContainer(testContainerConfig);
+            const container3 = await provider.loadTestContainer(testContainerConfig);
             const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
             sharedMap3 = await dataObject3.getSharedObject<SharedMap>(mapId);
         });
@@ -259,7 +255,7 @@ describeFullCompat("SharedInterval", (argsFactory: () => ITestObjectProvider) =>
         // This functionality is used in Word and FlowView's "add comment" functionality.
         it("Can store shared objects in a shared string's interval collection via properties", async () => {
             sharedMap1.set("outerString", SharedString.create(dataObject1.runtime).handle);
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
 
             const outerString1 = await sharedMap1.get<IFluidHandle<SharedString>>("outerString")?.get();
             const outerString2 = await sharedMap2.get<IFluidHandle<SharedString>>("outerString")?.get();
@@ -271,7 +267,7 @@ describeFullCompat("SharedInterval", (argsFactory: () => ITestObjectProvider) =>
             outerString1.insertText(0, "outer string");
 
             const intervalCollection1 = outerString1.getIntervalCollection("comments");
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
 
             const intervalCollection2 = outerString2.getIntervalCollection("comments");
             const intervalCollection3 = outerString3.getIntervalCollection("comments");
@@ -288,7 +284,7 @@ describeFullCompat("SharedInterval", (argsFactory: () => ITestObjectProvider) =>
             const nestedMap = SharedMap.create(dataObject1.runtime);
             nestedMap.set("nestedKey", "nestedValue");
             intervalCollection1.add(8, 9, IntervalType.SlideOnRemove, { story: nestedMap.handle });
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
 
             const serialized1 = intervalCollection1.serializeInternal();
             const serialized2 = intervalCollection2.serializeInternal();
