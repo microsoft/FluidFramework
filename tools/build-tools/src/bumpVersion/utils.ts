@@ -230,8 +230,13 @@ export class GitRepo {
     }
 }
 
-
-export async function runPolicyCheck(gitRepo: GitRepo){
+/**
+ * Runs policy check in fix/resolution mode the apply any an necessary changes
+ * Currently this should only apply assert short codes, but could apply
+ * additional policies in the future
+ * @param gitRepo - the git repo context to run policy check on
+ */
+export async function runPolicyCheckWithFix(gitRepo: GitRepo){
     console.log("Running Policy Check with Resolution(fix)");
     await exec(
         `node ${__dirname}\\..\\repoPolicyCheck\\repoPolicyCheck.js -r -q`,

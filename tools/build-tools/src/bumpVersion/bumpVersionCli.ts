@@ -6,7 +6,7 @@
 import { commonOptionString, parseOption } from "../common/commonOptions";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { MonoRepoKind } from "../common/monoRepo";
-import { GitRepo, fatal, exec, runPolicyCheck } from "./utils";
+import { GitRepo, fatal } from "./utils";
 import { Context, VersionBumpType, VersionChangeType } from "./context";
 import { bumpVersionCommand } from "./bumpVersion";
 import { createReleaseBranch } from "./createBranch";
@@ -264,8 +264,6 @@ async function main() {
         if (status !== "") {
             fatal(`Local repo is dirty\n${status}`);
         }
-
-        await runPolicyCheck(context.gitRepo);
 
         switch (command) {
             case "branch":
