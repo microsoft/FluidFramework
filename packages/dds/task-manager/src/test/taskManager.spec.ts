@@ -313,80 +313,17 @@ describe("TaskManager", () => {
         });
 
         describe("Behavior transitioning to connected", () => {
-            it.skip("Does not resubmit", async () => {
-            });
-            it.skip("Ignores late acks", async () => {
+            it("Does not re-attempt to enter the queue for un-ack'd ops", async () => {
+                const taskId = "taskId";
+                const lockTaskP = taskManager1.lockTask(taskId);
+                containerRuntime1.connected = false;
+                containerRuntimeFactory.processAllMessages();
+                await assert.rejects(lockTaskP, "Should have rejected the promise");
+                containerRuntime1.connected = true;
+                containerRuntimeFactory.processAllMessages();
+                assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+                assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
             });
         });
-
-        // it("can resend unacked ops on reconnection", async () => {
-        //     const key = "testKey";
-        //     const value = "testValue";
-
-        //     // Set a value on the first SharedMap.
-        //     taskManager1.set(key, value);
-
-        //     // Disconnect and reconnect the first client.
-        //     containerRuntime1.connected = false;
-        //     containerRuntime1.connected = true;
-
-        //     // Process the messages.
-        //     containerRuntimeFactory.processAllMessages();
-
-        //     // Verify that the set value is processed by both clients.
-        //     assert.equal(taskManager1.get(key), value, "The local client did not process the set");
-        //     assert.equal(taskManager2.get(key), value, "The remote client did not process the set");
-
-        //     // Delete the value from the second SharedMap.
-        //     taskManager2.delete(key);
-
-        //     // Disconnect and reconnect the second client.
-        //     containerRuntime2.connected = false;
-        //     containerRuntime2.connected = true;
-
-        //     // Process the messages.
-        //     containerRuntimeFactory.processAllMessages();
-
-        //     // Verify that the deleted value is processed by both clients.
-        //     assert.equal(taskManager1.get(key), undefined, "The local client did not process the delete");
-        //     assert.equal(taskManager2.get(key), undefined, "The remote client did not process the delete");
-        // });
-
-        // it("can store ops in disconnected state and resend them on reconnection", async () => {
-        //     const key = "testKey";
-        //     const value = "testValue";
-
-        //     // Disconnect the first client.
-        //     containerRuntime1.connected = false;
-
-        //     // Set a value on the first SharedMap.
-        //     taskManager1.set(key, value);
-
-        //     // Reconnect the first client.
-        //     containerRuntime1.connected = true;
-
-        //     // Process the messages.
-        //     containerRuntimeFactory.processAllMessages();
-
-        //     // Verify that the set value is processed by both clients.
-        //     assert.equal(taskManager1.get(key), value, "The local client did not process the set");
-        //     assert.equal(taskManager2.get(key), value, "The remote client did not process the set");
-
-        //     // Disconnect the second client.
-        //     containerRuntime2.connected = false;
-
-        //     // Delete the value from the second SharedMap.
-        //     taskManager2.delete(key);
-
-        //     // Reconnect the second client.
-        //     containerRuntime2.connected = true;
-
-        //     // Process the messages.
-        //     containerRuntimeFactory.processAllMessages();
-
-        //     // Verify that the deleted value is processed by both clients.
-        //     assert.equal(taskManager1.get(key), undefined, "The local client did not process the delete");
-        //     assert.equal(taskManager2.get(key), undefined, "The remote client did not process the delete");
-        // });
     });
 });
