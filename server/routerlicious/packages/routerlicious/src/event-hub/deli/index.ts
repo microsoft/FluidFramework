@@ -38,9 +38,10 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
     const redisConfig = config.get("redis");
     const redisOptions: RedisOptions = {
-        // host: redisConfig.host,
+        host: redisConfig.host,
         port: redisConfig.port,
         password: redisConfig.pass,
+        connectTimeout: 20000,
     };
     if (redisConfig.tls) {
         redisOptions.tls = {

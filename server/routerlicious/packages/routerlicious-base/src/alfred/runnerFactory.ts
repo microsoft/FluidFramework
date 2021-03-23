@@ -132,6 +132,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             host: redisConfig2.host,
             port: redisConfig2.port,
             password: redisConfig2.pass,
+            connectTimeout: 20000,
         };
         if (redisConfig2.tls) {
             redisOptions2.tls = {
@@ -181,6 +182,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             host: redisConfigForThrottling.host,
             port: redisConfigForThrottling.port,
             password: redisConfigForThrottling.pass,
+            connectTimeout: 20000,
         };
         if (redisConfigForThrottling.tls) {
             redisOptionsForThrottling.tls = {
