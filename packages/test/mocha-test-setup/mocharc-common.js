@@ -5,26 +5,40 @@
 
 'use strict';
 
-function getFluidTestMochaConfig(packageDir, additionaRequireModules) {
+const { existsSync } = require("fs");
+const path = require("path");
 
-    const testDriver = process.env.FLUID_TEST_DRIVER ? process.env.FLUID_TEST_DRIVER : "local";
+function getFluidTestMochaConfig(packageDir, additionalRequiredModules) {
+
+    const testDriver = process.env.fluid__test__driver ? process.env.fluid__test__driver : "local";
     const moduleDir = `${packageDir}/node_modules`;
 
     const requiredModules = [
-        `${moduleDir}/@fluidframework/mocha-test-setup`, // General mocha setup e.g. suppresses console.log
-        `${moduleDir}/@fluidframework/test-drivers`, // Inject implementation of getFluidTestDriver, configured via FLUID_TEST_DRIVER
-        ...(additionaRequireModules ? additionaRequireModules : [])
+        `@fluidframework/mocha-test-setup`, // General mocha setup e.g. suppresses console.log
+        ...(additionalRequiredModules ? additionalRequiredModules : [])
     ];
+
+    // mocha install node_modules directory might not be the same as the module required because of hoisting
+    // We need to give the full path in that case.
+    const requiredModulePaths = requiredModules.map((mod) => {
+        // Just return if it is path already
+        if (existsSync(mod) || existsSync(`${mod}.js`)) { return mod; }
+
+        // Try the test's packageDirectory
+        const modulePath = path.join(moduleDir, mod);
+        if (existsSync(modulePath)) { return modulePath; }
+        return mod;
+    });
 
     if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {
         // Inject implementation of getTestLogger
-        requiredModules.push(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+        requiredModulePaths.push(process.env.FLUID_TEST_LOGGER_PKG_PATH);
     }
 
     const config = {
         "exit": true,
         "recursive": true,
-        "require": requiredModules,
+        "require": requiredModulePaths,
         "unhandled-rejections": "strict"
     };
 

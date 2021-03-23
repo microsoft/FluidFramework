@@ -40,6 +40,11 @@ interface ITaskManagerAbandonOperation {
     taskId: string;
 }
 
+interface IPendingOp {
+    type: "volunteer" | "abandon";
+    messageId: number;
+}
+
 const snapshotFileName = "header";
 
 /**
@@ -126,17 +131,20 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     /**
-     * Mapping of taskId to a queue of clientIds that are waiting on the task.
+     * Mapping of taskId to a queue of clientIds that are waiting on the task.  Maintains the consensus state of the
+     * queue, even if we know we've submitted an op that should eventually modify the queue.
      */
     private readonly taskQueues: Map<string, string[]> = new Map();
 
-    /**
-     * taskIds for tasks that we've sent a volunteer for but have not yet been ack'd.
-     */
-    private readonly pendingTaskQueues: Set<string> = new Set();
-
     private readonly opWatcher: EventEmitter = new EventEmitter();
     private readonly queueWatcher: EventEmitter = new EventEmitter();
+    private readonly abandonWatcher: EventEmitter = new EventEmitter();
+
+    private messageId: number = -1;
+    /**
+     * Tracks the most recent pending op for a given task
+     */
+    private readonly latestPendingOps: Map<string, IPendingOp> = new Map();
 
     /**
      * Constructs a new task manager. If the object is non-local an id and service interfaces will
@@ -148,11 +156,33 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
 
-        this.opWatcher.on("volunteer", (taskId: string, clientId: string) => {
+        this.opWatcher.on("volunteer", (taskId: string, clientId: string, local: boolean, messageId: number) => {
+            if (local) {
+                const pendingOp = this.latestPendingOps.get(taskId);
+                assert(pendingOp !== undefined, "Unexpected op");
+                // Need to check the id, since it's possible to volunteer and abandon multiple times before the acks
+                if (messageId === pendingOp.messageId) {
+                    assert(pendingOp.type === "volunteer", "Unexpected op type");
+                    // Delete the pending, because we no longer have an outstanding op
+                    this.latestPendingOps.delete(taskId);
+                }
+            }
+
             this.addClientToQueue(taskId, clientId);
         });
 
-        this.opWatcher.on("abandon", (taskId: string, clientId: string) => {
+        this.opWatcher.on("abandon", (taskId: string, clientId: string, local: boolean, messageId: number) => {
+            if (local) {
+                const pendingOp = this.latestPendingOps.get(taskId);
+                assert(pendingOp !== undefined, "Unexpected op");
+                // Need to check the id, since it's possible to abandon and volunteer multiple times before the acks
+                if (messageId === pendingOp.messageId) {
+                    assert(pendingOp.type === "abandon", "Unexpected op type");
+                    // Delete the pending, because we no longer have an outstanding op
+                    this.latestPendingOps.delete(taskId);
+                }
+            }
+
             this.removeClientFromQueue(taskId, clientId);
         });
 
@@ -184,38 +214,12 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             type: "volunteer",
             taskId,
         };
-        this.pendingTaskQueues.add(taskId);
-        this.submitLocalMessage(op);
-    }
-
-    public async lockTask(taskId: string) {
-        if (this.haveTaskLock(taskId)) {
-            return;
-        }
-
-        const lockAcquireP = new Promise<void>((res, rej) => {
-            const checkIfAcquiredLock = (eventTaskId: string) => {
-                if (eventTaskId !== taskId) {
-                    return;
-                }
-
-                if (this.haveTaskLock(taskId)) {
-                    this.queueWatcher.off("queueChange", checkIfAcquiredLock);
-                    res();
-                } else if (!this.queued(taskId)) {
-                    this.queueWatcher.off("queueChange", checkIfAcquiredLock);
-                    rej(new Error(`Removed from queue: ${taskId}`));
-                }
-            };
-            this.queueWatcher.on("queueChange", checkIfAcquiredLock);
-        });
-
-        if (!this.queued(taskId)) {
-            // TODO simulate auto-ack in detached scenario
-            this.submitVolunteerOp(taskId);
-        }
-
-        return lockAcquireP;
+        const pendingOp: IPendingOp = {
+            type: "volunteer",
+            messageId: ++this.messageId,
+        };
+        this.submitLocalMessage(op, pendingOp.messageId);
+        this.latestPendingOps.set(taskId, pendingOp);
     }
 
     private submitAbandonOp(taskId: string) {
@@ -223,7 +227,56 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             type: "abandon",
             taskId,
         };
-        this.submitLocalMessage(op);
+        const pendingOp: IPendingOp = {
+            type: "abandon",
+            messageId: ++this.messageId,
+        };
+        this.submitLocalMessage(op, pendingOp.messageId);
+        this.latestPendingOps.set(taskId, pendingOp);
+    }
+
+    public async lockTask(taskId: string) {
+        // If we have the lock, resolve immediately
+        if (this.haveTaskLock(taskId)) {
+            return;
+        }
+
+        // This promise works even if we already have an outstanding volunteer op.
+        const lockAcquireP = new Promise<void>((res, rej) => {
+            const checkIfAcquiredLock = (eventTaskId: string) => {
+                if (eventTaskId !== taskId) {
+                    return;
+                }
+
+                // Also check pending ops here because it's possible we are currently in the queue from a previous
+                // lock attempt, but have an outstanding abandon AND the outstanding volunteer for this lock attempt.
+                // If we reach the head of the queue based on the previous lock attempt, we don't want to resolve.
+                if (this.haveTaskLock(taskId) && !this.latestPendingOps.has(taskId)) {
+                    this.queueWatcher.off("queueChange", checkIfAcquiredLock);
+                    this.abandonWatcher.off("abandon", checkIfAbandoned);
+                    res();
+                }
+            };
+
+            const checkIfAbandoned = (eventTaskId: string) => {
+                if (eventTaskId !== taskId) {
+                    return;
+                }
+
+                this.queueWatcher.off("queueChange", checkIfAcquiredLock);
+                this.abandonWatcher.off("abandon", checkIfAbandoned);
+                rej(new Error(`Abandoned before acquiring lock: ${taskId}`));
+            };
+
+            this.queueWatcher.on("queueChange", checkIfAcquiredLock);
+            this.abandonWatcher.on("abandon", checkIfAbandoned);
+        });
+
+        if (!this.queued(taskId)) {
+            // TODO simulate auto-ack in detached scenario
+            this.submitVolunteerOp(taskId);
+        }
+        return lockAcquireP;
     }
 
     public abandon(taskId: string) {
@@ -237,24 +290,26 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         }
 
         this.submitAbandonOp(taskId);
-
-        // Proactively remove ourselves from the queue without waiting for the ack.
-        if (this.runtime.clientId !== undefined) {
-            this.removeClientFromQueue(taskId, this.runtime.clientId);
-        }
+        this.abandonWatcher.emit("abandon", taskId);
     }
 
     public haveTaskLock(taskId: string) {
         const currentAssignee = this.taskQueues.get(taskId)?.[0];
-        return (currentAssignee !== undefined && currentAssignee === this.runtime.clientId);
+        return currentAssignee !== undefined
+            && currentAssignee === this.runtime.clientId
+            && !this.latestPendingOps.has(taskId);
     }
 
     public queued(taskId: string) {
         assert(this.runtime.clientId !== undefined, "clientId undefined"); // TODO, handle disconnected/detached case
         const clientQueue = this.taskQueues.get(taskId);
         // If we have no queue for the taskId, then no one has signed up for it.
-        return (clientQueue !== undefined && clientQueue.includes(this.runtime.clientId))
-            || this.pendingTaskQueues.has(taskId);
+        return (
+                clientQueue !== undefined
+                && clientQueue.includes(this.runtime.clientId)
+                && !this.latestPendingOps.has(taskId)
+            )
+            || this.latestPendingOps.get(taskId)?.type === "volunteer";
     }
 
     /**
@@ -263,6 +318,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * @returns the snapshot of the current state of the task manager
      */
     protected snapshotCore(serializer: IFluidSerializer): ITree {
+        // TODO filter out tasks with no clients, some are still getting in.
         const content = [...this.taskQueues.entries()];
 
         // And then construct the tree for it
@@ -299,7 +355,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     protected registerCore() { }
 
     protected onDisconnect() {
-        // TODO knock ourselves out of the queues here probably
+        // TODO knock ourselves out of the queues here, and wipe our pending ops probably
     }
 
     /**
@@ -313,14 +369,15 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
             const op = message.contents as ITaskManagerOperation;
+            const messageId = localOpMetadata as number;
 
             switch (op.type) {
                 case "volunteer":
-                    this.opWatcher.emit("volunteer", op.taskId, message.clientId);
+                    this.opWatcher.emit("volunteer", op.taskId, message.clientId, local, messageId);
                     break;
 
                 case "abandon":
-                    this.opWatcher.emit("abandon", op.taskId, message.clientId);
+                    this.opWatcher.emit("abandon", op.taskId, message.clientId, local, messageId);
                     break;
 
                 default:
@@ -330,10 +387,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     private addClientToQueue(taskId: string, clientId: string) {
-        if (clientId === this.runtime.clientId) {
-            this.pendingTaskQueues.delete(taskId);
-        }
-
         // Create the queue if it doesn't exist, and push the client on the back.
         let clientQueue = this.taskQueues.get(taskId);
         if (clientQueue === undefined) {
@@ -351,10 +404,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     private removeClientFromQueue(taskId: string, clientId: string) {
-        if (clientId === this.runtime.clientId) {
-            this.pendingTaskQueues.delete(taskId);
-        }
-
         const clientQueue = this.taskQueues.get(taskId);
         if (clientQueue === undefined) {
             return;
@@ -377,12 +426,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     private removeClientFromAllQueues(clientId: string) {
-        if (clientId === this.runtime.clientId) {
-            // TODO consider whether this should:
-            // 1. remove from ONLY queues we have been ack'd in OR
-            // 2. remove from pending queues as well, and also send abandons if we get ack'd
-            this.pendingTaskQueues.clear();
-        }
         for (const taskId of this.taskQueues.keys()) {
             this.removeClientFromQueue(taskId, clientId);
         }

@@ -32,17 +32,17 @@ const waitForSignal =
                             errorMsg: `Signaller[${index}] Timeout`,
                         })));
 
-describeFullCompat("TestSignals", (argsFactory: () => ITestObjectProvider) => {
-    let args: ITestObjectProvider;
+describeFullCompat("TestSignals", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;
 
     beforeEach(async () => {
-        args = argsFactory();
-        const container1 = await args.makeTestContainer(testContainerConfig) as Container;
+        provider = getTestObjectProvider();
+        const container1 = await provider.makeTestContainer(testContainerConfig) as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 
-        const container2 = await args.loadTestContainer(testContainerConfig) as Container;
+        const container2 = await provider.loadTestContainer(testContainerConfig) as Container;
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
         // need to be connected to send signals
@@ -53,10 +53,6 @@ describeFullCompat("TestSignals", (argsFactory: () => ITestObjectProvider) => {
             await new Promise((res) => container2.once("connected", res));
         }
     });
-    afterEach(() => {
-        args.reset();
-    });
-
     describe("Attach signal Handlers on Both Clients", () => {
         it("Validate data store runtime signals", async () => {
             let user1SignalReceivedCount = 0;

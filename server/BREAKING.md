@@ -1,14 +1,66 @@
 > **Note:** These breaking changes are only relevant to the server packages and images released from `./routerlicious`.
 
+## 0.1022 Breaking Changes
+
+- [@fluidframework/server-services-client@0.1022](#@fluidframework/server-services-client@0.1022)
+  - [`client.validateTokenClaims` no longer contains token expiration logic](#`client.validateTokenClaims`-no-longer-contains-token-expiration-logic)
+  - [`client.validateTokenClaims` throws on invalid claims](#`client.validateTokenClaims`-throws-on-invalid-claims)
+- [@fluidframework/server-services-utils@0.1022](#@fluidframework/server-services-utils@0.1022)
+  - [`utils.validateTokenClaims` no longer contains token expiration logic](#`utils.validateTokenClaims`-no-longer-contains-token-expiration-logic)
+  - [`utils.validateTokenClaims` throws on invalid claims](#`utils.validateTokenClaims`-throws-on-invalid-claims)
+
+### @fluidframework/server-services-client@0.1022
+
+#### `client.validateTokenClaims` no longer contains token expiration logic
+
+Token expiration logic has been moved from `validateTokenClaims` to `validateTokenClaimsExpiration`. To maintain functionality, use the two in succession. For example,
+
+```ts
+import {
+    validateTokenClaims,
+    validateTokenClaimsExpiration,
+} from "@fluidframework/server-services-client";
+
+const claims = validateTokenClaims(token, tenantId, documentId);
+if (isTokenExpiryEnabled) {
+    validateTokenClaimsExpiration(claims, maxTokenLifetimeSec)
+}
+```
+
+#### `client.validateTokenClaims` throws on invalid claims
+
+`validateTokenClaims` previously returned `undefined` if claims were invalid. Now, instead, it will throw a NetworkError that contains a status code (i.e. 401 or 403).
+
+### @fluidframework/server-services-utils@0.1022
+
+#### `utils.validateTokenClaims` no longer contains token expiration logic
+
+Token expiration logic has been moved from `validateTokenClaims` to @fluidframework/server-services-client's `validateTokenClaimsExpiration`. To maintain functionality, use the two in succession. For example,
+
+```ts
+import { validateTokenClaims } from "@fluidframework/server-services-utils";
+import { validateTokenClaimsExpiration } from "@fluidframework/server-services-client";
+
+const claims = validateTokenClaims(token, tenantId, documentId);
+if (isTokenExpiryEnabled) {
+    validateTokenClaimsExpiration(claims, maxTokenLifetimeSec)
+}
+```
+
+
+#### `utils.validateTokenClaims` throws on invalid claims
+
+`validateTokenClaims` previously returned `undefined` if claims were invalid. Now, instead, it will throw a NetworkError that contains a status code (i.e. 401 or 403).
+
 ## 0.1020 Breaking Changes
 
-- [@fluidframework/server-services-client](#@fluidframework/server-services-client)
+- [@fluidframework/server-services-client@0.1020](#@fluidframework/server-services-client@0.1020)
   - [`RestWrapper` is now an abstract class](#`restwrapper`-is-now-an-abstract-class)
   - [`Historian` class no longer handles request headers](#`historian`-class-no-longer-handles-request-headers)
-- [@fluidframework/server-routerlicious-base](#@fluidframework/server-routerlicious-base)
+- [@fluidframework/server-routerlicious-base@0.1020](#@fluidframework/server-routerlicious-base@0.1020)
   - [`Alfred` endpoints deltas/ and documents/ now validate token for every incoming request](#`alfred`-endpoints-deltas-and-documents-now-validate-token-for-every-incoming-request)
 
-### @fluidframework/server-services-client
+### @fluidframework/server-services-client@0.1020
 
 #### `RestWrapper` is now an abstract class
 

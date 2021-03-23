@@ -13,13 +13,15 @@ import { SharedMatrix } from "@fluidframework/matrix";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedObjectSequence } from "@fluidframework/sequence";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
+
 import {
+    ITestObjectProvider,
     createAndAttachContainer,
     createDocumentId,
     createLoader,
-    OpProcessingController,
 } from "@fluidframework/test-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 const defaultDataStoreId = "default";
 
@@ -30,12 +32,8 @@ class TestDataObject extends DataObject {
     public readonly getContext = () => this.context;
 }
 
-async function createContainer(): Promise<{
-    container: IContainer;
-    opProcessingController: OpProcessingController;
-}> {
+async function createContainer(provider: ITestObjectProvider): Promise<IContainer> {
     const documentId = createDocumentId();
-    const driver = getFluidTestDriver() as unknown as ITestDriver;
     const codeDetails: IFluidCodeDetails = {
         package: "summarizerTestPackage",
     };
@@ -64,27 +62,33 @@ async function createContainer(): Promise<{
 
     const loader = createLoader(
         [[codeDetails, runtimeFactory]],
-        driver.createDocumentServiceFactory(),
-        driver.createUrlResolver(),
+        provider.documentServiceFactory,
+        provider.urlResolver,
+        ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
     );
     const container = await createAndAttachContainer(
         codeDetails,
         loader,
-        driver.createCreateNewRequest(documentId));
+        provider.driver.createCreateNewRequest(documentId));
 
-    const opProcessingController = new OpProcessingController();
-    opProcessingController.addDeltaManagers(container.deltaManager);
+    provider.opProcessingController.addDeltaManagers(container.deltaManager);
 
-    return { container, opProcessingController };
+    return container;
 }
 
-describe("Summaries", () => {
+// REVIEW: enable compat testing?
+describeNoCompat("Summaries", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    beforeEach(() => {
+        provider = getTestObjectProvider();
+    });
+
     it("Should generate summary tree", async () => {
-        const { container, opProcessingController } = await createContainer();
+        const container = await createContainer(provider);
         const defaultDataStore = await requestFluidObject<TestDataObject>(container, defaultDataStoreId);
         const containerRuntime = defaultDataStore.getContext().containerRuntime as ContainerRuntime;
 
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
 
         const { gcData, stats, summary } = await containerRuntime.summarize({
             runGC: false,

@@ -4,6 +4,8 @@
  */
 
 import nconf from "nconf";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { getVersionedTestObjectProvider } from "./compatUtils";
 import { ensurePackageInstalled } from "./testApi";
 
@@ -102,6 +104,15 @@ const options = {
         description: "Force compat package to be installed",
         boolean: true,
     },
+    driver: {
+        choices: [
+            "tinylicious",
+            "routerlicious",
+            "odsp",
+            "local",
+        ],
+        requiresArg: true,
+    },
 };
 
 nconf.argv({
@@ -114,7 +125,7 @@ nconf.argv({
     },
 }).env({
     separator: "__",
-    whitelist: ["fluid__test__compatKind", "fluid__test__compatVersion"],
+    whitelist: ["fluid__test__compatKind", "fluid__test__compatVersion", "fluid__test__driver"],
     parseValues: true,
 }).defaults(
     {
@@ -122,6 +133,7 @@ nconf.argv({
             test: {
                 compat: undefined,
                 compatVersion: [0, -1, -2],
+                driver: "local",
             },
         },
     },
@@ -129,10 +141,13 @@ nconf.argv({
 
 const compatKind = nconf.get("fluid:test:compatKind") as CompatKind[];
 const compatVersions = nconf.get("fluid:test:compatVersion") as number[];
+const driver = nconf.get("fluid:test:driver") as TestDriverTypes;
 
 // set it in the env for parallel workers
 process.env.fluid__test__compatKind = JSON.stringify(compatKind);
-process.env.fluid__test__compatVersion = JSON.stringify(compatVersions);
+// Number arrays needs quote so that single element array can be interpret as array.
+process.env.fluid__test__compatVersion = `"${JSON.stringify(compatVersions)}"`;
+process.env.fluid__test__driver = driver;
 
 let configList: CompatConfig[] = [];
 compatVersions.forEach((value) => {
@@ -148,7 +163,7 @@ if (compatKind !== undefined) {
  */
 function describeCompat(
     name: string,
-    tests: (provider: () => ReturnType<typeof getVersionedTestObjectProvider>) => void,
+    tests: (provider: () => ITestObjectProvider) => void,
     compatFilter?: CompatKind[],
 ) {
     let configs = configList;
@@ -159,12 +174,30 @@ function describeCompat(
     describe(name, () => {
         for (const config of configs) {
             describe(config.name, () => {
-                tests(() => {
-                    return getVersionedTestObjectProvider(
+                let provider: ITestObjectProvider;
+                let resetAfterEach: boolean;
+                before(async () => {
+                    provider = await getVersionedTestObjectProvider(
                         config?.loader,
+                        {
+                            type: driver,
+                            version: config?.loader,
+                        },
                         config?.containerRuntime,
                         config?.dataRuntime,
                     );
+                });
+                tests((reset: boolean = true) => {
+                    if (reset) {
+                        provider.reset();
+                        resetAfterEach = true;
+                    }
+                    return provider;
+                });
+                afterEach(() => {
+                    if (resetAfterEach) {
+                        provider.reset();
+                    }
                 });
             });
         }
@@ -173,21 +206,21 @@ function describeCompat(
 
 export function describeNoCompat(
     name: string,
-    tests: (provider: () => ReturnType<typeof getVersionedTestObjectProvider>) => void,
+    tests: (provider: (resetAfterEach?: boolean) => ITestObjectProvider) => void,
 ) {
     describeCompat(name, tests, [CompatKind.None]);
 }
 
 export function describeLoaderCompat(
     name: string,
-    tests: (provider: () => ReturnType<typeof getVersionedTestObjectProvider>) => void,
+    tests: (provider: (resetAfterEach?: boolean) => ITestObjectProvider) => void,
 ) {
     describeCompat(name, tests, [CompatKind.None, CompatKind.Loader]);
 }
 
 export function describeFullCompat(
     name: string,
-    tests: (provider: () => ReturnType<typeof getVersionedTestObjectProvider>) => void,
+    tests: (provider: (resetAfterEach?: boolean) => ITestObjectProvider) => void,
 ) {
     describeCompat(name, tests);
 }

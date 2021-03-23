@@ -59,12 +59,12 @@ describe("TaskManager", () => {
         it("Can lock a task", async () => {
             const taskId = "taskId";
             const lockTaskP = taskManager1.lockTask(taskId);
-            assert.ok(taskManager1.queued(taskId), "Not queued");
+            assert.ok(taskManager1.queued(taskId), "Should be queued");
             assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
             containerRuntimeFactory.processAllMessages();
             await lockTaskP;
-            assert.ok(taskManager1.queued(taskId), "Not queued");
-            assert.ok(taskManager1.haveTaskLock(taskId), "Don't have lock");
+            assert.ok(taskManager1.queued(taskId), "Should be queued");
+            assert.ok(taskManager1.haveTaskLock(taskId), "Should have lock");
         });
 
         it("Can wait for a task", async () => {
@@ -72,27 +72,147 @@ describe("TaskManager", () => {
             const lockTaskP1 = taskManager1.lockTask(taskId);
             const lockTaskP2 = taskManager2.lockTask(taskId);
 
-            assert.ok(taskManager1.queued(taskId), "Task manager 1 not queued");
+            assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
             assert.ok(!taskManager1.haveTaskLock(taskId), "Task manager 1 should not have lock");
-            assert.ok(taskManager2.queued(taskId), "Task manager 2 not queued");
+            assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
             assert.ok(!taskManager2.haveTaskLock(taskId), "Task manager 2 should not have lock");
 
             containerRuntimeFactory.processAllMessages();
             await lockTaskP1;
 
-            assert.ok(taskManager1.queued(taskId), "Task manager 1 not queued");
+            assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
             assert.ok(taskManager1.haveTaskLock(taskId), "Task manager 1 does not have lock");
-            assert.ok(taskManager2.queued(taskId), "Task manager 2 not queued");
+            assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
             assert.ok(!taskManager2.haveTaskLock(taskId), "Task manager 2 should not have lock");
 
             taskManager1.abandon(taskId);
             containerRuntimeFactory.processAllMessages();
             await lockTaskP2;
 
-            assert.ok(!taskManager1.queued(taskId), "Task manager 1 not queued");
+            assert.ok(!taskManager1.queued(taskId), "Task manager 1 should be queued");
             assert.ok(!taskManager1.haveTaskLock(taskId), "Task manager 1 should not have lock");
-            assert.ok(taskManager2.queued(taskId), "Task manager 2 not queued");
+            assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
             assert.ok(taskManager2.haveTaskLock(taskId), "Task manager 2 should not have lock");
+        });
+
+        it("Rejects the promise if abandon before ack", async () => {
+            const taskId = "taskId";
+            const lockTaskP = taskManager1.lockTask(taskId);
+            taskManager1.abandon(taskId);
+            // Will reject due to exiting the queue without first acquiring lock
+            // Promise should be settled already prior to processing messages
+            await assert.rejects(lockTaskP);
+            containerRuntimeFactory.processAllMessages();
+            assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+            assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
+        });
+
+        it("Rejects the promise if abandon after ack but before acquire", async () => {
+            const taskId = "taskId";
+            const lockTaskP1 = taskManager1.lockTask(taskId);
+            const lockTaskP2 = taskManager2.lockTask(taskId);
+
+            assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
+            assert.ok(!taskManager1.haveTaskLock(taskId), "Task manager 1 should not have lock");
+            assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
+            assert.ok(!taskManager2.haveTaskLock(taskId), "Task manager 2 should not have lock");
+
+            containerRuntimeFactory.processAllMessages();
+            await lockTaskP1;
+
+            assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
+            assert.ok(taskManager1.haveTaskLock(taskId), "Task manager 1 does not have lock");
+            assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
+            assert.ok(!taskManager2.haveTaskLock(taskId), "Task manager 2 should not have lock");
+
+            taskManager2.abandon(taskId);
+            // Will reject due to exiting the queue without first acquiring lock
+            // Promise should be settled already prior to processing messages
+            await assert.rejects(lockTaskP2);
+            containerRuntimeFactory.processAllMessages();
+            assert.ok(!taskManager2.queued(taskId), "Should not be queued");
+            assert.ok(!taskManager2.haveTaskLock(taskId), "Should not have lock");
+        });
+
+        it("Can abandon and immediately attempt to reacquire a task", async () => {
+            const taskId = "taskId";
+            const lockTaskP = taskManager1.lockTask(taskId);
+            assert.ok(taskManager1.queued(taskId), "Should be queued");
+            assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
+            containerRuntimeFactory.processAllMessages();
+            await lockTaskP;
+            assert.ok(taskManager1.queued(taskId), "Should be queued");
+            assert.ok(taskManager1.haveTaskLock(taskId), "Should have lock");
+
+            taskManager1.abandon(taskId);
+            assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+            assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
+            const relockTaskP = taskManager1.lockTask(taskId);
+            assert.ok(taskManager1.queued(taskId), "Should be queued");
+            assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
+            containerRuntimeFactory.processAllMessages();
+            await relockTaskP;
+            assert.ok(taskManager1.queued(taskId), "Should be queued");
+            assert.ok(taskManager1.haveTaskLock(taskId), "Should have lock");
+        });
+
+        it("Can attempt to lock twice and abandon twice (after ack)", async () => {
+            const taskId = "taskId";
+            const lockTaskP1 = taskManager1.lockTask(taskId);
+            assert.ok(taskManager1.queued(taskId), "Should be queued");
+            assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
+            containerRuntimeFactory.processAllMessages();
+            await lockTaskP1;
+            assert.ok(taskManager1.queued(taskId), "Should be queued");
+            assert.ok(taskManager1.haveTaskLock(taskId), "Should have lock");
+
+            const lockTaskP2 = taskManager1.lockTask(taskId);
+            assert.ok(taskManager1.queued(taskId), "Should be queued");
+            assert.ok(taskManager1.haveTaskLock(taskId), "Should have lock");
+            containerRuntimeFactory.processAllMessages();
+            await lockTaskP2;
+            assert.ok(taskManager1.queued(taskId), "Should be queued");
+            assert.ok(taskManager1.haveTaskLock(taskId), "Should have lock");
+
+            taskManager1.abandon(taskId);
+            assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+            assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
+            containerRuntimeFactory.processAllMessages();
+            assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+            assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
+
+            taskManager1.abandon(taskId);
+            assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+            assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
+            containerRuntimeFactory.processAllMessages();
+            assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+            assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
+        });
+
+        it("Can attempt to lock twice and abandon twice (before ack)", async () => {
+            const taskId = "taskId";
+            const lockTaskP1 = taskManager1.lockTask(taskId);
+            assert.ok(taskManager1.queued(taskId), "Should be queued");
+            assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
+
+            const lockTaskP2 = taskManager1.lockTask(taskId);
+            assert.ok(taskManager1.queued(taskId), "Should be queued");
+            assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
+            containerRuntimeFactory.processAllMessages();
+            await lockTaskP1;
+            await lockTaskP2;
+            assert.ok(taskManager1.queued(taskId), "Should be queued");
+            assert.ok(taskManager1.haveTaskLock(taskId), "Should have lock");
+
+            taskManager1.abandon(taskId);
+            assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+            assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
+            taskManager1.abandon(taskId);
+            assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+            assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
+            containerRuntimeFactory.processAllMessages();
+            assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+            assert.ok(!taskManager1.haveTaskLock(taskId), "Should not have lock");
         });
     });
 });

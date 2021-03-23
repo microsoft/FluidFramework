@@ -47,8 +47,8 @@ export class ParallelRequests<T> {
     }
 
     public async run(concurrency: number) {
-        assert(concurrency > 0);
-        assert(this.working);
+        assert(concurrency > 0, "invalid level of concurrency");
+        assert(this.working, "trying to parallel run while not working");
 
         let c = concurrency;
         while (c > 0) {
@@ -61,8 +61,8 @@ export class ParallelRequests<T> {
 
     private done() {
         // We should satisfy request fully.
-        assert(this.to !== undefined);
-        assert(this.nextToDeliver === this.to);
+        assert(this.to !== undefined, "undefined end point for parallel fetch");
+        assert(this.nextToDeliver === this.to, "unexpected end point for parallel fetch");
         this.working = false;
         this.endEvent.resolve();
     }
@@ -85,17 +85,19 @@ export class ParallelRequests<T> {
 
         // Account for cancellation - state might be not in consistent state on cancelling operation
         if (this.working) {
-            assert(this.requestsInFlight !== 0 || this.results.size === 0);
+            assert(this.requestsInFlight !== 0 || this.results.size === 0,
+                "in unexpected state after dispatching results");
 
             if (this.requestsInFlight === 0) {
                 // we should have dispatched everything, no matter whether we knew about the end or not.
                 // see comment in addRequestCore() around throwing away chunk if it's above this.to
-                assert(this.results.size === 0);
+                assert(this.results.size === 0,
+                    "ending dispatch with remaining results to be sent");
                 this.done();
             } else if (this.to !== undefined && this.nextToDeliver >= this.to) {
                 // Learned about the end and dispatched all the ops up to it.
                 // Ignore all the in-flight requests above boundary - unblock caller sooner.
-                assert(!this.knewTo);
+                assert(!this.knewTo, "ending results dispatch but knew in advance about more requests");
                 this.done();
             }
         }
@@ -121,7 +123,7 @@ export class ParallelRequests<T> {
             this.latestRequested = Math.min(this.to, this.latestRequested);
         }
 
-        assert(from < this.latestRequested);
+        assert(from < this.latestRequested, "unexpected next chunk position");
 
         return { from, to: this.latestRequested};
     }
@@ -135,7 +137,7 @@ export class ParallelRequests<T> {
     }
 
     private async addRequestCore(fromArg: number, toArg: number) {
-        assert(this.working);
+        assert(this.working, "cannot add parallel request while not working");
 
         let from = fromArg;
         let to = toArg;
@@ -144,12 +146,12 @@ export class ParallelRequests<T> {
         this.requestsInFlight++;
         while (this.working) {
             const requestedLength = to - from;
-            assert(requestedLength > 0);
+            assert(requestedLength > 0, "invalid parallel request range");
 
             // We should not be wasting time asking for something useless.
             if (this.to !== undefined) {
-                assert(from < this.to);
-                assert(to <= this.to);
+                assert(from < this.to, "invalid parallel request start point");
+                assert(to <= this.to, "invalid parallel request end point");
             }
 
             this.requests++;
@@ -172,7 +174,7 @@ export class ParallelRequests<T> {
                 // While it's useful not to throw this result, this is very corner cases and makes logic
                 // (including consistency checks) much harder to write correctly.
                 // So for now, we are throwing this result out the window.
-                assert(!this.knewTo);
+                assert(!this.knewTo, "should not throw result if we knew about boundary in advance");
                 // Learn how often it happens and if it's too wasteful to throw these chunks.
                 // If it pops into our view a lot, we would need to reconsider how we approach it.
                 // Note that this is not visible to user other than potentially not hitting 100% of
@@ -203,8 +205,8 @@ export class ParallelRequests<T> {
                     //    This is very specific property of storage / ops, so this logic is not here, but given only
                     //    one user of this class, we assert that to catch issues earlier.
                     // These invariant can be relaxed if needed.
-                    assert(!partial);
-                    assert(!this.knewTo);
+                    assert(!partial, "empty/partial chunks should not be returned by caching");
+                    assert(!this.knewTo, "callback should retry until valid fetch before it learns new boundary");
                 }
 
                 let fullChunk = (requestedLength <= payload.length); // we can possible get more than we asked.
@@ -214,7 +216,7 @@ export class ParallelRequests<T> {
                     if (!this.knewTo) {
                         if (this.to === undefined || this.to > from) {
                             // The END
-                            assert(!this.knewTo);
+                            assert(!this.knewTo, "should not know futher boundary at end");
                             this.to = from;
                         }
                         break;
@@ -283,9 +285,9 @@ export class Queue<T> implements IReadPipe<T> {
     }
 
     protected pushCore(value: Promise<T | undefined>) {
-        assert(!this.done);
+        assert(!this.done, "cannot push onto queue if done");
         if (this.deferred) {
-            assert(this.queue.length === 0);
+            assert(this.queue.length === 0, "deferred queue should be empty");
             this.deferred.resolve(value);
             this.deferred = undefined;
         } else {
@@ -294,12 +296,12 @@ export class Queue<T> implements IReadPipe<T> {
     }
 
     public async pop(): Promise<T | undefined> {
-        assert(this.deferred === undefined);
+        assert(this.deferred === undefined, "cannot pop if deferred");
         const el = this.queue.shift();
         if (el !== undefined) {
             return el;
         }
-        assert(!this.done);
+        assert(!this.done, "queue should not be done during pop");
         this.deferred = new Deferred<T>();
         return this.deferred.promise;
     }

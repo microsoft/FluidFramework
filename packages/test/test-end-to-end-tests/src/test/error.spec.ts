@@ -25,9 +25,17 @@ import {
     OdspErrorType,
 } from "@fluidframework/odsp-doclib-utils";
 import { ChildLogger, LoggingError } from "@fluidframework/telemetry-utils";
-import { createDocumentId, LocalCodeLoader, LoaderContainerTracker } from "@fluidframework/test-utils";
+import {
+    createDocumentId,
+    LocalCodeLoader,
+    LoaderContainerTracker,
+    ITestObjectProvider,
+} from "@fluidframework/test-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
 
-describe("Errors Types", () => {
+// REVIEW: enable compat testing?
+describeNoCompat("Errors Types", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
     let urlResolver: IUrlResolver;
     let testRequest: IRequest;
     let testResolved: IFluidResolvedUrl;
@@ -35,6 +43,9 @@ describe("Errors Types", () => {
     let codeLoader: LocalCodeLoader;
     let loader: Loader;
     const loaderContainerTracker = new LoaderContainerTracker();
+    before(() => {
+        provider = getTestObjectProvider();
+    });
     afterEach(() => {
         loaderContainerTracker.reset();
     });
@@ -42,12 +53,12 @@ describe("Errors Types", () => {
     it("GeneralError Test", async () => {
         const id = createDocumentId();
         // Setup
-        const driver = getFluidTestDriver();
-        urlResolver = driver.createUrlResolver();
-        testRequest = { url: await driver.createContainerUrl(id) };
+
+        urlResolver = provider.urlResolver;
+        testRequest = { url: await provider.driver.createContainerUrl(id) };
         testResolved =
             await urlResolver.resolve(testRequest) as IFluidResolvedUrl;
-        documentServiceFactory = driver.createDocumentServiceFactory();
+        documentServiceFactory = provider.documentServiceFactory;
 
         const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
         mockFactory.createDocumentService = async (resolvedUrl) => {
@@ -63,7 +74,7 @@ describe("Errors Types", () => {
             urlResolver,
             documentServiceFactory: mockFactory,
             codeLoader,
-            logger: ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}}),
+            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver.type } }),
         });
         loaderContainerTracker.add(loader);
 

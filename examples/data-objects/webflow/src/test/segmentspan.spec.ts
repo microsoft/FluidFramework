@@ -11,11 +11,11 @@ import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { FlowDocument } from "../document";
 import { SegmentSpan } from "../document/segmentspan";
 
-describeLoaderCompat("SegmentSpan", (getTestObjectProvider: () => ITestObjectProvider) => {
+describeLoaderCompat("SegmentSpan", (getTestObjectProvider) => {
     let doc: FlowDocument;
     let provider: ITestObjectProvider;
     before(async () => {
-        provider = getTestObjectProvider();
+        provider = getTestObjectProvider(/* reset */ false);
         const container = await provider.createContainer(FlowDocument.getFactory());
         doc = await requestFluidObject<FlowDocument>(container, "default");
     });

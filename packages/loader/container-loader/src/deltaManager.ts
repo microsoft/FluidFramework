@@ -187,6 +187,7 @@ export class DeltaManager
     private lastQueuedSequenceNumber: number = 0;
     private lastObservedSeqNumber: number = 0;
     private lastProcessedSequenceNumber: number = 0;
+    private lastProcessedMessage: ISequencedDocumentMessage | undefined;
     private baseTerm: number = 0;
 
     private previouslyProcessedMessage: ISequencedDocumentMessage | undefined;
@@ -251,6 +252,10 @@ export class DeltaManager
 
     public get lastSequenceNumber(): number {
         return this.lastProcessedSequenceNumber;
+    }
+
+    public get lastMessage() {
+        return this.lastProcessedMessage;
     }
 
     public get lastKnownSeqNumber() {
@@ -447,7 +452,7 @@ export class DeltaManager
             });
 
         this._inbound.on("error", (error) => {
-            this.close(CreateProcessingError(error, {}));
+            this.close(CreateProcessingError(error, this.lastMessage));
         });
 
         // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
@@ -881,7 +886,7 @@ export class DeltaManager
 
                 // Issue async request for deltas - limit the number fetched to MaxBatchDeltas
                 canRetry = true;
-                assert(deltaStorage !== undefined);
+                assert(deltaStorage !== undefined, "delta storage undefined while getting single batch!");
                 // left is inclusive for ParallelRequests, but exclusive for IDocumentDeltaStorageService
                 // right is exclusive for both
                 const deltasP = deltaStorage.get(from - 1, to);
@@ -1387,6 +1392,7 @@ export class DeltaManager
 
     private processInboundMessage(message: ISequencedDocumentMessage): void {
         const startTime = Date.now();
+        this.lastProcessedMessage = message;
 
         // All non-system messages are coming from some client, and should have clientId
         // System messages may have no clientId (but some do, like propose, noop, summarize)
