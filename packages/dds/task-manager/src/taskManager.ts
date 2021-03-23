@@ -440,7 +440,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     private addClientToQueue(taskId: string, clientId: string) {
-        if(this.runtime.getQuorum().has(clientId)) {
+        if(this.runtime.getQuorum().getMembers().has(clientId)) {
             // Create the queue if it doesn't exist, and push the client on the back.
             let clientQueue = this.taskQueues.get(taskId);
             if (clientQueue === undefined) {
