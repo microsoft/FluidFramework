@@ -17,6 +17,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
 // eslint-disable-next-line import/no-unresolved
 import * as monaco from "monaco-editor";
+import { MonacoRunnerView } from "./view";
 
 /**
  * Compilation options for Monaco to use on Typescript
@@ -59,23 +60,11 @@ const defaultCompilerOptions = {
  */
 export class MonacoRunner extends DataObject implements IFluidMountableView {
     public get IFluidMountableView() { return this; }
-    /**
-     * The chart probably has a preferred aspect ratio - but it can also fill any bounds
-     */
-    public aspectRatio?: number;
-    public minimumWidth?: number;
-    public minimumHeight?: number;
-    public readonly canInline = true;
 
     /**
      * Not used
      */
     public readonly preferInline = false;
-
-    /**
-     * Root HTML element of the component.
-     */
-    private mapHost: HTMLElement;
 
     /**
      * Monaco text model object.
@@ -88,16 +77,7 @@ export class MonacoRunner extends DataObject implements IFluidMountableView {
     private codeEditor: monaco.editor.IStandaloneCodeEditor;
 
     public mount(elm: HTMLElement): void {
-        if (!this.mapHost) {
-            this.mapHost = document.createElement("div");
-            elm.appendChild(this.mapHost);
-            this.initializeEditorDiv().catch((error) => { console.error(error); });
-        } else {
-            if (this.mapHost.parentElement !== elm) {
-                this.mapHost.remove();
-                elm.appendChild(this.mapHost);
-            }
-        }
+        MonacoRunnerView(elm, this);
     }
 
     public unmount() {
@@ -114,40 +94,24 @@ export class MonacoRunner extends DataObject implements IFluidMountableView {
         this.root.set("text", codeString.handle);
     }
 
+    public changeModelLang(language: string) {
+        monaco.editor.setModelLanguage(this.codeModel, language);
+    }
+
     /**
      * Sets up the Monaco editor for use and attaches its HTML element to the mapHost element.
      * Also sets up eventing to send/receive ops as the text is changed.
      */
-    private async initializeEditorDiv(): Promise<void> {
-        // TODO make my dts
-        const hostDts = null; // await platform.queryInterface<any>("dts");
-
-        this.mapHost.style.minHeight = "480px";
-        this.mapHost.style.width = "100%";
-        this.mapHost.style.height = "100%";
-
+    public async initializeEditor(mapHost: HTMLElement, options?: {language: string}): Promise<void> {
         const textHandle = await this.root.wait<IFluidHandle<SharedString>>("text");
         const text = await textHandle.get();
 
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);
-        if (hostDts) {
-            let disposer = monaco.languages.typescript.typescriptDefaults.addExtraLib(
-                hostDts.getDefinition(),
-                "host.d.ts");
-            hostDts.on(
-                "definitionsChanged",
-                () => {
-                    disposer.dispose();
-                    disposer = monaco.languages.typescript.typescriptDefaults.addExtraLib(
-                        hostDts.getDefinition(),
-                        "host.d.ts");
-                });
-        }
 
-        this.codeModel = monaco.editor.createModel(text.getText(), "typescript");
+        this.codeModel = monaco.editor.createModel(text.getText(), options?.language || "typescript");
 
         this.codeEditor = monaco.editor.create(
-            this.mapHost,
+            mapHost,
             { model: this.codeModel, automaticLayout: true });
 
         let ignoreModelContentChanges = false;
