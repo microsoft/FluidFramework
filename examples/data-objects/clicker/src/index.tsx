@@ -68,9 +68,12 @@ export class Clicker extends DataObject implements IFluidHTMLView {
         this.taskManager.lockTask(consoleLogTaskId)
             .then(async () => {
                 console.log(`Picked`);
-                // Attempt to reacquire the task if we lose it
-                this.taskManager.once("lost", () => { this.setupAgent(); });
                 const clickerAgent = new ClickerAgent(this.counter);
+                // Attempt to reacquire the task if we lose it
+                this.taskManager.once("lost", () => {
+                    clickerAgent.stop();
+                    this.setupAgent();
+                });
                 await clickerAgent.run();
             }).catch(() => {
                 // We're not going to abandon our attempt, so if the promise rejects it probably means we got
