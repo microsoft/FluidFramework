@@ -25,8 +25,8 @@ import { SharedString } from "@fluidframework/sequence";
 import {
     createAndAttachContainer,
     ITestFluidObject,
+    LoaderContainerTracker,
     LocalCodeLoader,
-    OpProcessingController,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 
@@ -45,7 +45,7 @@ describe("Ops on Reconnect", () => {
     let urlResolver: LocalResolver;
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let documentServiceFactory: LocalDocumentServiceFactory;
-    let opProcessingController: OpProcessingController;
+    let loaderContainerTracker: LoaderContainerTracker;
     let container1: Container;
     let container1Object1: ITestFluidObject & IFluidLoadable;
     let container1Object1Map1: SharedMap;
@@ -84,11 +84,13 @@ describe("Ops on Reconnect", () => {
 
         const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
-        return new Loader({
+        const loader = new Loader({
             urlResolver,
             documentServiceFactory,
             codeLoader,
         });
+        loaderContainerTracker.add(loader);
+        return loader;
     }
 
     async function createContainer(): Promise<IContainer> {
@@ -130,7 +132,6 @@ describe("Ops on Reconnect", () => {
         const container2Object1 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
             container2,
             "default");
-        opProcessingController.addDeltaManagers(container2.deltaManager);
 
         return container2Object1;
     }
@@ -139,6 +140,7 @@ describe("Ops on Reconnect", () => {
         urlResolver = new LocalResolver();
         deltaConnectionServer = LocalDeltaConnectionServer.create();
         documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+        loaderContainerTracker = new LoaderContainerTracker();
 
         // Create the first container, dataObject and DDSes.
         container1 = await createContainer() as Container;
@@ -150,11 +152,8 @@ describe("Ops on Reconnect", () => {
         container1Object1Directory = await container1Object1.getSharedObject<SharedDirectory>(directoryId);
         container1Object1String = await container1Object1.getSharedObject<SharedString>(stringId);
 
-        opProcessingController = new OpProcessingController();
-        opProcessingController.addDeltaManagers(container1.deltaManager);
-
         // Wait for the attach ops to get processed.
-        await opProcessingController.process();
+        await loaderContainerTracker.ensureSynchronized();
     });
 
     describe("Ops on Container reconnect", () => {
@@ -180,7 +179,7 @@ describe("Ops on Reconnect", () => {
             await waitForContainerReconnection(container1);
 
             // Wait for the ops to get processed by both the containers.
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues = [
                 ["key1", "value1", undefined /* batch */],
@@ -214,7 +213,7 @@ describe("Ops on Reconnect", () => {
             await waitForContainerReconnection(container1);
 
             // Wait for the ops to get processed by both the containers.
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues = [
                 ["key1", "value1", undefined /* batch */],
@@ -251,7 +250,7 @@ describe("Ops on Reconnect", () => {
             await waitForContainerReconnection(container1);
 
             // Wait for the ops to get processed by both the containers.
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues = [
                 ["key1", "value1", undefined /* batch */],
@@ -279,7 +278,7 @@ describe("Ops on Reconnect", () => {
             container1Object1Map1.set("dataStore2Key", container1Object2.handle);
 
             // Wait for the set above to get processed.
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
 
             // Create a second container and set up a listener to store the received map / directory values.
             const container2Object1 = await setupSecondContainersDataObject();
@@ -314,7 +313,7 @@ describe("Ops on Reconnect", () => {
             await waitForContainerReconnection(container1);
 
             // Wait for the ops to get processed by both the containers.
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues = [
                 ["key1", "value1", undefined /* batch */],
@@ -355,7 +354,7 @@ describe("Ops on Reconnect", () => {
             await waitForContainerReconnection(container1);
 
             // Wait for the ops to get processed by both the containers.
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues = [
                 ["key1", "value1", undefined /* batch */],
@@ -383,7 +382,7 @@ describe("Ops on Reconnect", () => {
             container1Object1Map1.set("dataStore2Key", container1Object2.handle);
 
             // Wait for the set above to get processed.
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
 
             // Create a second container and set up a listener to store the received map / directory values.
             const container2Object1 = await setupSecondContainersDataObject();
@@ -417,7 +416,7 @@ describe("Ops on Reconnect", () => {
             await waitForContainerReconnection(container1);
 
             // Wait for the ops to get processed by both the containers.
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues = [
                 ["key1", "value1", undefined /* batch */],
@@ -463,7 +462,7 @@ describe("Ops on Reconnect", () => {
             await waitForContainerReconnection(container1);
 
             // Wait for the ops to get processed by both the containers.
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues: [string, string, boolean | undefined][] = [
                 ["key1", "value1", true /* batch */],
@@ -511,7 +510,7 @@ describe("Ops on Reconnect", () => {
             await waitForContainerReconnection(container1);
 
             // Wait for the ops to get processed by both the containers.
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues: [string, string, boolean | undefined][] = [
                 ["key1", "value1", true /* batch */],
@@ -554,7 +553,7 @@ describe("Ops on Reconnect", () => {
             await waitForContainerReconnection(container1);
 
             // Wait for the ops to get processed by both the containers.
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues: [string, string, boolean | undefined][] = [
                 ["key1", "value1", true /* batch */],

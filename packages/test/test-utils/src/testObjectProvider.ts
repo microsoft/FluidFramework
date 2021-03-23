@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IContainer, IDeltaManager, IHostLoader } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
 import { Container, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
@@ -23,50 +21,17 @@ const defaultCodeDetails: IFluidCodeDetails = {
     config: {},
 };
 
-interface IOpProcessingController {
-    addDeltaManagers(...deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>[]);
-    processIncoming(): Promise<void>;
-    processOutgoing(): Promise<void>;
-    pauseProcessing(...deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>[]): Promise<void>;
-    process(): Promise<void>;
-}
-
-class OpProcessingControllerShim implements IOpProcessingController {
-    constructor(private readonly tracker: LoaderContainerTracker) {
-
-    }
-
-    addDeltaManagers(...deltaManagers: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>[]) {
-        const trackedDeltaManagers =
-            Array.from(this.tracker.trackedContainers).map((container) => container.deltaManager);
-        for (const deltaManager of deltaManagers) {
-            assert(trackedDeltaManagers.includes(deltaManager));
-        }
-    }
-
-    async processIncoming(): Promise<void> {
-        return this.tracker.processIncoming();
-    }
-
-    async processOutgoing(): Promise<void> {
-        return this.tracker.processOutgoing();
-    }
-    async pauseProcessing(
-        ...deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>[]
-    ): Promise<void> {
-        const containers =
-            Array.from(this.tracker.trackedContainers).filter(
-                (container) => deltaManager.includes(container.deltaManager),
-            );
-        await this.tracker.pauseProcessing(containers);
-    }
-    async process(): Promise<void> {
-        return this.tracker.ensureSynchronized();
-    }
+export interface IOpProcessingController {
+    processIncoming(...containers: IContainer[]): Promise<void>;
+    processOutgoing(...containers: IContainer[]): Promise<void>;
+    pauseProcessing(...containers: IContainer[]): Promise<void>;
+    resumeProcessing(...containers: IContainer[]): void;
 }
 
 export interface ITestObjectProvider {
-    createContainer(entryPoint: fluidEntryPoint): Promise<IContainer>;
+    createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, options?: ILoaderOptions): IHostLoader;
+    createContainer(entryPoint: fluidEntryPoint, options?: ILoaderOptions): Promise<IContainer>;
+    loadContainer(entryPoint: fluidEntryPoint, options?: ILoaderOptions): Promise<IContainer>;
 
     /**
      * Used to create a test Container. The Loader/ContainerRuntime/DataRuntime might be different versioned.
@@ -114,7 +79,6 @@ export class TestObjectProvider {
     private readonly _loaderContainerTracker = new LoaderContainerTracker();
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _urlResolver: IUrlResolver | undefined;
-    private _opProcessingController?: IOpProcessingController;
     private _documentId?: string;
 
     /**
@@ -156,10 +120,7 @@ export class TestObjectProvider {
     }
 
     get opProcessingController(): IOpProcessingController {
-        if (this._opProcessingController === undefined) {
-            this._opProcessingController = new OpProcessingControllerShim(this._loaderContainerTracker);
-        }
-        return this._opProcessingController;
+        return this._loaderContainerTracker;
     }
 
     /**
@@ -171,13 +132,14 @@ export class TestObjectProvider {
      *
      * @param packageEntries - list of code details and fluidEntryPoint pairs.
      */
-    private createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>) {
+    public createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, options?: ILoaderOptions) {
         const codeLoader = new LocalCodeLoader(packageEntries);
         const loader = new this.LoaderConstructor({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
             logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: this.driver.type } }),
+            options,
         });
         this._loaderContainerTracker.add(loader);
         return loader;
@@ -192,17 +154,20 @@ export class TestObjectProvider {
      *
      * @param packageEntries - list of code details and fluidEntryPoint pairs.
      */
-    public async createContainer(entryPoint: fluidEntryPoint) {
-        const loader = this.createLoader([[defaultCodeDetails, entryPoint]]);
+    public async createContainer(entryPoint: fluidEntryPoint, options?: ILoaderOptions) {
+        const loader = this.createLoader([[defaultCodeDetails, entryPoint]], options);
         const container = await createAndAttachContainer(
             defaultCodeDetails,
             loader,
-            this.driver.createCreateNewRequest(createDocumentId()),
+            this.driver.createCreateNewRequest(this.documentId),
         );
-        this.opProcessingController.addDeltaManagers(container.deltaManager);
         return container;
     }
 
+    public async loadContainer(entryPoint: fluidEntryPoint, options?: ILoaderOptions) {
+        const loader = this.createLoader([[defaultCodeDetails, entryPoint]], options);
+        return loader.resolve({ url: await this.driver.createContainerUrl(this.documentId) });
+    }
     /**
      * Make a test loader.  Container created/loaded thru this loader will not be automatically added
      * to the OpProcessingController, and will need to be added manually if needed.
@@ -225,7 +190,6 @@ export class TestObjectProvider {
                 defaultCodeDetails,
                 loader,
                 this.driver.createCreateNewRequest(this.documentId));
-        this.opProcessingController.addDeltaManagers(container.deltaManager);
         return container;
     }
 
@@ -238,7 +202,6 @@ export class TestObjectProvider {
         const loader = this.makeTestLoader(testContainerConfig);
         const container = await loader.resolve({ url: await this.driver.createContainerUrl(this.documentId) });
         await waitContainerToCatchUp(container);
-        this.opProcessingController.addDeltaManagers(container.deltaManager);
         return container;
     }
 
@@ -246,7 +209,6 @@ export class TestObjectProvider {
         this._loaderContainerTracker.reset();
         this._documentServiceFactory = undefined;
         this._urlResolver = undefined;
-        this._opProcessingController = undefined;
         this._documentId = undefined;
     }
 

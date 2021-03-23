@@ -5,19 +5,32 @@
 
 import { IContainer, IDeltaQueue, IHostLoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
+import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
+import { IOpProcessingController } from "./testObjectProvider";
 
 const debugOp = debug.extend("ops");
+const debugWait = debug.extend("wait");
 
-export class LoaderContainerTracker {
-    private readonly containers = new Map<IContainer, boolean>();
+interface ContainerRecord {
+    // A short number for debug output
+    index: number;
 
-    /**
-     * @internal Temporary exposing a list of containers for OpProcessingController shim
-     */
-    public get trackedContainers() {
-        return this.containers.keys();
-    }
+    // LoaderContainerTracker paused state
+    paused: boolean;
+
+    // Tracking trailing no-op that may or may be acked by the server so we can discount them
+    // See issue #5629
+    startTrailingNoOps: number;
+    trailingNoOps: number;
+
+    // Track last proposal to ensure no unresolved proposal
+    lastProposal: number;
+}
+
+export class LoaderContainerTracker implements IOpProcessingController {
+    private readonly containers = new Map<IContainer, ContainerRecord>();
+    private lastProposalSeqNum: number = 0;
 
     /**
      * Add a loader to start to track any container created from them
@@ -29,10 +42,7 @@ export class LoaderContainerTracker {
             const boundFn = fn.bind(loader);
             return async (...args: T[]) => {
                 const container = await boundFn(...args);
-                if (!this.containers.has(container)) {
-                    this.containers.set(container, false);
-                    this.setupTrace(container, this.containers.size);
-                }
+                this.addContainer(container);
                 return container;
             };
         };
@@ -45,118 +55,282 @@ export class LoaderContainerTracker {
     }
 
     /**
+     * Utility function to add container to be tracked.
+     *
+     * @param container container to add
+     */
+    private addContainer(container: IContainer) {
+        // ignore summarizer
+        if (!container.deltaManager.clientDetails.capabilities.interactive) { return; }
+
+        // don't add container that is already tracked
+        if (this.containers.has(container)) { return; }
+
+        const record = {
+            index: this.containers.size,
+            paused: false,
+            startTrailingNoOps: 0,
+            trailingNoOps: 0,
+            lastProposal: 0,
+        };
+        this.containers.set(container, record);
+        this.trackTrailingNoOps(container, record);
+        this.trackLastProposal(container);
+        this.setupTrace(container, record.index);
+    }
+
+    /**
+     * Keep track of the trailing NoOp that was sent so we can discount them in the clientSequenceNumber tracking.
+     * The server might coalesce them with other ops, or a single NoOp, or delay it if it don't think it is necessary.
+     *
+     * @param container the container to track
+     * @param record the record to update the trailing op information
+     */
+    private trackTrailingNoOps(container: IContainer, record: ContainerRecord) {
+        container.deltaManager.outbound.on("op", (messages) => {
+            for (const msg of messages) {
+                if (msg.type === MessageType.NoOp) {
+                    // Track the NoOp that was sent.
+                    if (record.startTrailingNoOps === 0) {
+                        record.startTrailingNoOps = msg.clientSequenceNumber;
+                    }
+                    record.trailingNoOps++;
+                } else {
+                    // Other ops has been sent. We would like to see those ack'ed, so no more need to track NoOps
+                    record.startTrailingNoOps = 0;
+                    record.trailingNoOps = 0;
+                }
+            }
+        });
+
+        container.deltaManager.inbound.on("push", (message) => {
+            // Received the no op back, update the record.
+            if (message.type === MessageType.NoOp
+                && message.clientId === (container as Container).clientId
+                && message.clientSequenceNumber === record.startTrailingNoOps) {
+                record.trailingNoOps--;
+                record.startTrailingNoOps++;
+            }
+        });
+
+        container.on("disconnected", () => {
+            // reset on disconnect.
+            record.startTrailingNoOps = 0;
+            record.trailingNoOps = 0;
+        });
+    }
+
+    private trackLastProposal(container: IContainer) {
+        container.deltaManager.inbound.on("op", (message) => {
+            if (message.type === MessageType.Propose && message.sequenceNumber > this.lastProposalSeqNum) {
+                this.lastProposalSeqNum = message.sequenceNumber;
+            }
+        });
+    }
+
+    /**
      * Reset the tracker, closing all containers and stop tracking them.
      */
     public reset() {
+        this.lastProposalSeqNum = 0;
         for (const container of this.containers.keys()) {
             container.close();
         }
         this.containers.clear();
 
-        // TODO: Unpatch the loaders?
+        // REVIEW: do we need to unpatch the loaders?
     }
 
     /**
      * Make sure all the tracked containers are synchronized.
-     * That means all the opened containers
+     * - No isDirty containers
+     * - No extra clientId in quorum of any container that is not tracked and still opened.
+     *      - i.e. no pending Join/Leave message.
+     * - No unresolved proposal (minSeqNum >= lastProposalSeqNum)
+     * - lastSequenceNumber of all container is the same
+     * - clientSequenceNumberObserved is the same as clientSequenceNumber sent
+     *      - this overlaps with !isDirty, but include task scheduler ops.
+     *      - Trailing NoOp is tracked and don't count as pending ops.
      */
-    public async ensureSynchronized() {
-        const resumed = this.resumeProcessing();
+    public async ensureSynchronized(...containers: IContainer[]) {
+        const resumed = this.resumeProcessing(...containers);
+
+        let waitingSequenceNumberSynchronized = false;
         // eslint-disable-next-line no-constant-condition
         while (true) {
-            const containers = Array.from(this.containers.keys());
-            const openedContainers = containers.filter((c) => !c.closed);
-            if (openedContainers.length === 0) { break; }
+            const containersToApply = this.getContainers(containers);
+            if (containersToApply.length === 0) { break; }
 
-            const dirtyContainers = openedContainers.filter((c) => c.isDirty);
-            if (dirtyContainers.length !== 0) {
-                // Wait for all the containers to be saved
-                await Promise.all(dirtyContainers.map(async (c) => new Promise((res) => c.once("saved", res))));
-            } else {
+            const dirtyContainers = containersToApply.filter((c) => c.isDirty);
+            if (dirtyContainers.length === 0) {
                 // Wait for all the leave messages
-                const pendingDisconnectedClients = this.getPendingDisconnectedClients(openedContainers);
-                if (pendingDisconnectedClients.length !== 0) {
-                    await this.waitForDisconnectedClients(pendingDisconnectedClients);
-                } else if (this.isSequenceNumberSynchronized(openedContainers)) {
-                    // done, we are in sync
-                    break;
+                const pendingClients = this.getPendingClients(containersToApply);
+                if (pendingClients.length === 0) {
+                    if (this.isSequenceNumberSynchronized(containersToApply)) {
+                        // done, we are in sync
+                        break;
+                    }
+                    if (!waitingSequenceNumberSynchronized) {
+                        // Only write it out once
+                        waitingSequenceNumberSynchronized = true;
+                        debugWait("Waiting for sequence number synchronized");
+                        await this.waitForAnyInboundOps(containersToApply);
+                    }
+                } else {
+                    waitingSequenceNumberSynchronized = false;
+                    await this.waitForPendingClients(pendingClients);
                 }
+            } else {
+                // Wait for all the containers to be saved
+                debugWait("Waiting container to be saved");
+                waitingSequenceNumberSynchronized = false;
+                await Promise.all(dirtyContainers.map(async (c) => new Promise((res) => c.once("saved", res))));
             }
+
             // yield a turn to allow side effect of the ops we just processed execute before we check again
             await new Promise<void>((res) => { setTimeout(res, 0); });
         }
 
         // Pause all container that was resumed
-        await this.pauseProcessing(resumed);
+        // don't call pause if resumed is empty and pause everything, which is not what we want
+        if (resumed.length !== 0) {
+            await this.pauseProcessing(...resumed);
+        }
+
+        debugWait("Synchronized");
     }
 
-    private getPendingDisconnectedClients(openedContainers: IContainer[]) {
+    /**
+     * Utilities to calculate the set of clientId per container in quorum that is NOT associated with
+     * any container we tracked, indicating there is a pending join or leave op that we need to wait.
+     *
+     * @param containersToApply the set of containers to check
+     */
+    private getPendingClients(containersToApply: IContainer[]) {
         // All the clientId we track should be a superset of the quorum, otherwise, we are missing
         // leave messages
-        const openedClientId = openedContainers.map((container) => (container as Container).clientId);
+        const openedDocuments = Array.from(this.containers.keys()).filter((c) => !c.closed);
+        const openedClientId = openedDocuments.map((container) => (container as Container).clientId);
 
-        const disconnectClients: [IContainer, Set<string>][] = [];
-        openedContainers.forEach((container) => {
-            const disconnectedClientId = new Set<string>();
+        const pendingClients: [IContainer, Set<string>][] = [];
+        containersToApply.forEach((container) => {
+            const pendingClientId = new Set<string>();
             const quorum = container.getQuorum();
             quorum.getMembers().forEach((client, clientId) => {
+                // ignore summarizer
+                if (!client.client.details.capabilities.interactive) { return; }
                 if (!openedClientId.includes(clientId)) {
-                    disconnectedClientId.add(clientId);
+                    pendingClientId.add(clientId);
                 }
             });
 
-            if (disconnectedClientId.size !== 0) {
-                disconnectClients.push([container, disconnectedClientId]);
+            if (pendingClientId.size !== 0) {
+                pendingClients.push([container, pendingClientId]);
             }
         });
-        return disconnectClients;
+        return pendingClients;
     }
 
-    private async waitForDisconnectedClients(disconnectClients: [IContainer, Set<string>][]) {
-        return Promise.all(disconnectClients.map(async ([container, disconnectedClientId]) => {
+    /**
+     * Utilities to check sequence number based synchronization.
+     * See ensureSynchronized for more detail
+     *
+     * @param containersToApply the set of containers to check
+     */
+    private isSequenceNumberSynchronized(containersToApply: IContainer[]) {
+        // TODO: Currently isDirty flag ignores ops for task scheduler.
+        // So we need to look into the deltamanager to use clientSequenceNumber.
+        const isClientSequenceNumberSynchronized = containersToApply.every((container) => {
+            const deltaManager = (container.deltaManager as any);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const { trailingNoOps } = this.containers.get(container)!;
+            return deltaManager.clientSequenceNumber ===
+                (deltaManager.clientSequenceNumberObserved as number) + trailingNoOps;
+        });
+
+        if (!isClientSequenceNumberSynchronized) {
+            return false;
+        }
+
+        const minSeqNum = containersToApply[0].deltaManager.minimumSequenceNumber;
+        if (minSeqNum < this.lastProposalSeqNum) {
+            // There is an unresolved proposal
+            return false;
+        }
+
+        // Check to see if all the container has process the same number of ops.
+        const seqNum = containersToApply[0].deltaManager.lastSequenceNumber;
+        return containersToApply.every((c) => c.deltaManager.lastSequenceNumber === seqNum);
+    }
+
+    /**
+     * Utilities to wait for any clientId in quorum that is NOT associated with any container we
+     * tracked, indicating there is a pending join or leave op that we need to wait.
+     *
+     * Note that this function doesn't account for container that got added after we started waiting
+     *
+     * @param containersToApply the set of containers to wait for any inbound ops for
+     */
+    private async waitForPendingClients(pendingClients: [IContainer, Set<string>][]) {
+        const unconnectedClients =
+            Array.from(this.containers.keys()).filter((c) => !c.closed && !(c as Container).connected);
+        return Promise.all(pendingClients.map(async ([container, pendingClientId]) => {
             return new Promise<void>((res) => {
+                const cleanup = () => {
+                    unconnectedClients.forEach((c) => c.off("connected", handler));
+                    container.getQuorum().off("removeMember", handler);
+                };
                 const handler = (clientId: string) => {
-                    disconnectedClientId.delete(clientId);
-                    if (disconnectedClientId.size === 0) {
-                        container.getQuorum().off("removeMember", handler);
+                    pendingClientId.delete(clientId);
+                    if (pendingClientId.size === 0) {
+                        cleanup();
                         res();
                     }
                 };
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const index = this.containers.get(container)!.index;
+                debugWait(`${index}: Waiting for pending clients ${Array.from(pendingClientId.keys())}`);
+                unconnectedClients.forEach((c) => c.on("connected", handler));
                 container.getQuorum().on("removeMember", handler);
                 container.on("closed", () => {
-                    container.getQuorum().off("removeMember", handler);
+                    cleanup();
                     res();
                 });
             });
         }));
     }
 
-    private isSequenceNumberSynchronized(openedContainers: IContainer[]) {
-        // TODO: Currently isDirty flag ignores ops for task scheduler.
-        // So we need to look into the deltamanager to use clientSequenceNumber.
-        const isClientSequenceNumberSynchronized = openedContainers.every((container) => {
-            const deltaManager = (container.deltaManager as any);
-            return deltaManager.clientSequenceNumber === deltaManager.clientSequenceNumberObserved;
+    /**
+     * Utilities to wait for any inbound ops from a set of containers
+     * @param containersToApply the set of containers to wait for any inbound ops for
+     */
+    private async waitForAnyInboundOps(containersToApply: IContainer[]) {
+        return new Promise<void>((res) => {
+            const handler = () => {
+                containersToApply.map((c) => {
+                    c.deltaManager.inbound.off("push", handler);
+                });
+                res();
+            };
+            containersToApply.map((c) => {
+                c.deltaManager.inbound.on("push", handler);
+            });
         });
-
-        if (!isClientSequenceNumberSynchronized) { return false; }
-
-        // Check to see if all the container has process the same number of ops.
-        const seqNum = openedContainers[0].deltaManager.lastSequenceNumber;
-        return openedContainers.every((c) => c.deltaManager.lastSequenceNumber === seqNum);
     }
 
     /**
      * Resume all queue activities on all paused tracked containers and return them
      */
-    private resumeProcessing() {
+    public resumeProcessing(...containers: IContainer[]) {
         const resumed: IContainer[] = [];
-        for (const [container, paused] of this.containers.entries()) {
-            if (paused) {
+        const containersToApply = this.getContainers(containers);
+        for (const container of containersToApply) {
+            const record = this.containers.get(container);
+            if (record !== undefined && record.paused) {
                 container.deltaManager.inbound.resume();
                 container.deltaManager.outbound.resume();
                 resumed.push(container);
-                this.containers.set(container, false);
+                record.paused = false;
             }
         }
         return resumed;
@@ -166,18 +340,18 @@ export class LoaderContainerTracker {
      * Pause all queue activities on the containers given, or all tracked containers
      * Any containers given that is not tracked will be ignored.
      */
-    public async pauseProcessing(containers?: IContainer[]) {
+    public async pauseProcessing(...containers: IContainer[]) {
         const pauseP: Promise<void>[] = [];
-        const containersToPause = containers ?? this.containers.keys();
-        for (const container of containersToPause) {
-            const paused = this.containers.get(container);
-            if (paused !== undefined && !paused) {
+        const containersToApply = this.getContainers(containers);
+        for (const container of containersToApply) {
+            const record = this.containers.get(container);
+            if (record !== undefined && !record.paused) {
                 pauseP.push(container.deltaManager.inbound.pause());
                 pauseP.push(container.deltaManager.outbound.pause());
-                this.containers.set(container, true);
+                record.paused = true;
             }
         }
-        return Promise.all(pauseP);
+        await Promise.all(pauseP);
     }
 
     /**
@@ -185,8 +359,8 @@ export class LoaderContainerTracker {
      * inbound to process ops until it is idle. All queues are left in the paused state
      * after the function
      */
-    public async processIncoming() {
-        return this.processQueue((container) => container.deltaManager.inbound);
+    public async processIncoming(...containers: IContainer[]) {
+        return this.processQueue(containers, (container) => container.deltaManager.inbound);
     }
 
     /**
@@ -194,34 +368,80 @@ export class LoaderContainerTracker {
      * outbound to process ops until it is idle. All queues are left in the paused state
      * after the function
      */
-    public async processOutgoing() {
-        return this.processQueue((container) => container.deltaManager.outbound);
-    }
-
-    /**
-     * @deprecated Same as ensureSynchronized()
-     */
-    public async process() {
-        return this.ensureSynchronized();
+    public async processOutgoing(...containers: IContainer[]) {
+        return this.processQueue(containers, (container) => container.deltaManager.outbound);
     }
 
     /**
      * Implementation of processIncoming and processOutgoing
      */
-    private async processQueue<U>(getQueue: (container: IContainer) => IDeltaQueue<U>) {
-        await this.pauseProcessing();
+    private async processQueue<U>(containers: IContainer[], getQueue: (container: IContainer) => IDeltaQueue<U>) {
+        await this.pauseProcessing(...containers);
         const resumed: IDeltaQueue<U>[] = [];
-        for (const container of this.containers.keys()) {
+
+        const containersToApply = this.getContainers(containers);
+        const inflightTracker = new Map<IContainer, number>();
+        const cleanup: (() => void)[] = [];
+        for (const container of containersToApply) {
             const queue = getQueue(container);
+
+            // track the outgoing ops (if any) to make sure they make the round trip to at least to the same client
+            // to make sure they are sequenced.
+            cleanup.push(this.setupInOutTracker(container, inflightTracker));
             queue.resume();
             resumed.push(queue);
         }
 
         while (resumed.some((queue) => !queue.idle)) {
+            debugWait("Wait until queue is idle");
             await new Promise<void>((res) => { setTimeout(res, 0); });
         }
 
+        // Make sure all the op that we sent out are acked first
+        // This is no op if we are processing incoming
+        if (inflightTracker.size) {
+            debugWait("Wait for inflight ops");
+            do {
+                await this.waitForAnyInboundOps(containersToApply);
+            } while (inflightTracker.size);
+        }
+
+        // remove the handlers
+        cleanup.forEach((clean) => clean());
+
         await Promise.all(resumed.map(async (queue) => queue.pause()));
+    }
+
+    /**
+     * Utilities to set up listener to track the outbound ops until it round trip back
+     * Returns a function to remove the handler after it is done.
+     *
+     * @param container the container to setup
+     * @param inflightTracker a map to track the clientSequenceNumber per container it expect to get ops back
+     */
+    private setupInOutTracker(container: IContainer, inflightTracker: Map<IContainer, number>) {
+        const outHandler = (messages: IDocumentMessage[]) => {
+            for (const message of messages) {
+                if (message.type !== MessageType.NoOp) {
+                    inflightTracker.set(container, message.clientSequenceNumber);
+                }
+            }
+        };
+        const inHandler = (message: ISequencedDocumentMessage) => {
+            if (message.type !== MessageType.NoOp
+                && message.clientId === (container as Container).clientId
+                && inflightTracker.get(container) === message.clientSequenceNumber) {
+                inflightTracker.delete(container);
+            }
+        };
+
+        container.deltaManager.outbound.on("op", outHandler);
+        container.deltaManager.inbound.on("push", inHandler);
+
+        return () => {
+            container.deltaManager.outbound.off("op", outHandler);
+            container.deltaManager.inbound.off("push", inHandler);
+        };
     }
 
     /**
@@ -229,15 +449,40 @@ export class LoaderContainerTracker {
      */
     private setupTrace(container: IContainer, index: number) {
         if (debugOp.enabled) {
+            const getContentsString = (msgContents: any) => {
+                let address = "";
+                let contents = JSON.parse(msgContents);
+                // eslint-disable-next-line no-null/no-null
+                while (contents !== undefined && contents !== null) {
+                    if (contents.contents?.address !== undefined) {
+                        address += `/${contents.contents.address}`;
+                        contents = contents.contents.contents;
+                    } else if (contents.content?.address !== undefined) {
+                        address += `/${contents.content.address}`;
+                        contents = contents.content.contents;
+                    } else {
+                        break;
+                    }
+                }
+                if (address) {
+                    return `addr=${address} contents=${JSON.stringify(contents)}`;
+                }
+                return JSON.stringify(contents);
+            };
+            debugOp(`${index}: ADD: clientId: ${(container as Container).clientId}`);
             container.deltaManager.outbound.on("op", (messages) => {
                 for (const msg of messages) {
-                    debugOp(`${index}: OUT:         `
-                        + `clientSeq: ${msg.clientSequenceNumber} ${msg.type}`);
+                    debugOp(`${index}: OUT:          `
+                        + `cli: ${msg.clientSequenceNumber.toString().padStart(3)} `
+                        + `         ${msg.type} ${getContentsString(msg.contents)}`);
                 }
             });
             container.deltaManager.inbound.on("push", (msg) => {
-                debugOp(`${index}: IN : seq: ${msg.sequenceNumber} `
-                    + `clientSeq: ${msg.clientSequenceNumber.toString().padStart(3)} ${msg.type} `);
+                const clientSeq = msg.clientId === (container as Container).clientId ?
+                    `cli: ${msg.clientSequenceNumber.toString().padStart(3)}` : "        ";
+                debugOp(`${index}: IN : seq: ${msg.sequenceNumber.toString().padStart(3)} `
+                    + `${clientSeq} min: ${msg.minimumSequenceNumber.toString().padStart(3)} `
+                    + `${msg.type} ${getContentsString(msg.contents)}`);
             });
 
             container.deltaManager.on("connect", (details) => {
@@ -247,5 +492,15 @@ export class LoaderContainerTracker {
                 debugOp(`${index}: DIS: ${reason}`);
             });
         }
+    }
+
+    /**
+     * Filter out the opened containers based on param.
+     * @param containers The container to filter to.  If the array is empty, it means don't filter and return
+     * all open containers.
+     */
+    private getContainers(containers: IContainer[]) {
+        const containersToApply = containers.length === 0 ? Array.from(this.containers.keys()) : containers;
+        return containersToApply.filter((container) => !container.closed);
     }
 }
