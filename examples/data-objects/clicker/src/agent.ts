@@ -13,14 +13,16 @@ export class ClickerAgent implements IFluidRouter, IFluidRunnable {
     public get IFluidRouter() { return this; }
     public get IFluidRunnable() { return this; }
 
+    private readonly logIncrement = (incrementValue: number, currentValue: number) => {
+        console.log(`Incremented by ${incrementValue}. New value ${currentValue}`);
+    };
+
     public async run() {
-        this.counter.on("incremented", (incrementValue: number, currentValue: number) => {
-            console.log(`Incremented by ${incrementValue}. New value ${currentValue}`);
-        });
+        this.counter.on("incremented", this.logIncrement);
     }
 
     public stop() {
-        return;
+        this.counter.off("incremented", this.logIncrement);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
