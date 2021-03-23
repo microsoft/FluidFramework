@@ -133,6 +133,8 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             port: redisConfig2.port,
             password: redisConfig2.pass,
             connectTimeout: 20000,
+            maxRetriesPerRequest: 3,
+            reconnectOnError: (err) => err.message.includes("ETIMEDOUT"),
         };
         if (redisConfig2.tls) {
             redisOptions2.tls = {
@@ -183,6 +185,8 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             port: redisConfigForThrottling.port,
             password: redisConfigForThrottling.pass,
             connectTimeout: 20000,
+            maxRetriesPerRequest: 3,
+            reconnectOnError: (err) => err.message.includes("ETIMEDOUT"),
         };
         if (redisConfigForThrottling.tls) {
             redisOptionsForThrottling.tls = {
