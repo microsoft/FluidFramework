@@ -440,20 +440,22 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     private addClientToQueue(taskId: string, clientId: string) {
-        // Create the queue if it doesn't exist, and push the client on the back.
-        let clientQueue = this.taskQueues.get(taskId);
-        if (clientQueue === undefined) {
-            clientQueue = [];
-            this.taskQueues.set(taskId, clientQueue);
+        if(this.runtime.getQuorum().has(clientId)) {
+            // Create the queue if it doesn't exist, and push the client on the back.
+            let clientQueue = this.taskQueues.get(taskId);
+            if (clientQueue === undefined) {
+                clientQueue = [];
+                this.taskQueues.set(taskId, clientQueue);
+            }
+
+            const oldLockHolder = clientQueue[0];
+            clientQueue.push(clientId);
+            const newLockHolder = clientQueue[0];
+            this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
+
+            // TODO remove, just for debugging
+            this.emit("changed");
         }
-
-        const oldLockHolder = clientQueue[0];
-        clientQueue.push(clientId);
-        const newLockHolder = clientQueue[0];
-        this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
-
-        // TODO remove, just for debugging
-        this.emit("changed");
     }
 
     private removeClientFromQueue(taskId: string, clientId: string) {
