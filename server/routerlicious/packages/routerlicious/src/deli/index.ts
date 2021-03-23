@@ -62,6 +62,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const redisOptions: RedisOptions = {
         host: redisConfig.host,
         port: redisConfig.port,
+        connectTimeout: 20000,
         password: redisConfig.pass,
     };
     if (redisConfig.tls) {
