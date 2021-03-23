@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+import { IAgentScheduler } from "@fluidframework/agent-scheduler";
 import { IContainer } from "@fluidframework/container-definitions";
 import { taskSchedulerId } from "@fluidframework/container-runtime";
-import { IAgentScheduler } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, timeoutPromise, defaultTimeoutDurationMs } from "@fluidframework/test-utils";
 import { describeFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";

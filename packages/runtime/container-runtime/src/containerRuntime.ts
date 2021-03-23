@@ -4,7 +4,11 @@
  */
 
 import { EventEmitter } from "events";
-import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
+import {
+    AgentSchedulerFactory,
+    IProvideAgentScheduler,
+    IAgentScheduler,
+} from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
@@ -90,8 +94,6 @@ import {
     ISummaryStats,
     ISummaryTreeWithStats,
     ISummarizeInternalResult,
-    IProvideAgentScheduler,
-    IAgentScheduler,
     IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
