@@ -50,6 +50,7 @@ export function getAttributesFormatVersion(attributes: ReadFluidDataStoreAttribu
         /**
          * Version 2+: Introduces .channels trees for isolation of
          * channel trees from data store objects.
+         * Also introduces enableGC option stored in the summary.
          */
         return attributes.summaryFormatVersion;
     } else if (attributes.snapshotFormatVersion === "0.1") {
@@ -75,6 +76,8 @@ export interface IContainerRuntimeMetadata {
     readonly summaryFormatVersion: 1;
     /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
     readonly disableIsolatedChannels?: true;
+    /** True to enable GC, false to disable GC, undefined to not specify a preference. */
+    readonly enableGC?: boolean;
 }
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
@@ -96,6 +99,14 @@ export const blobsTreeName = ".blobs";
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function rootHasIsolatedChannels(metadata: IContainerRuntimeMetadata | undefined): boolean {
     return !!metadata && !metadata.disableIsolatedChannels;
+}
+
+export function gcEnabled(metadata: IContainerRuntimeMetadata | undefined): boolean | undefined {
+    if (!metadata) {
+        // Force to false in prior versions
+        return false;
+    }
+    return metadata.enableGC;
 }
 
 export const protocolTreeName = ".protocol";

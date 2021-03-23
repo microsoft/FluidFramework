@@ -127,6 +127,7 @@ import { DataStores, getSummaryForDatastores } from "./dataStores";
 import {
     blobsTreeName,
     chunksBlobName,
+    gcEnabled,
     IContainerRuntimeMetadata,
     metadataBlobName,
     wrapSummaryInChannelsTree,
@@ -214,21 +215,33 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
  * Options for container runtime.
  */
 export interface IContainerRuntimeOptions {
-    // Flag that will generate summaries if connected to a service that supports them.
-    // This defaults to true and must be explicitly set to false to disable.
+    /**
+     * Flag that will generate summaries if connected to a service that supports them.
+     * This defaults to true and must be explicitly set to false to disable.
+     */
     generateSummaries?: boolean;
 
-    // Delay before first attempt to spawn summarizing container
+    /* Delay before first attempt to spawn summarizing container. */
     initialSummarizerDelayMs?: number;
 
-    // Flag that will disable garbage collection if set to true.
+    /* Flag that will disable garbage collection if set to true. */
     disableGC?: boolean;
 
-    // Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether the node
-    // changed or not.
+    /**
+     * Flag representing the document's preference for enabling garbage collection.
+     * This is stored in the summary and unchangeable (for now).
+     * Currently if this is set to false, it will take priority and the document will
+     * never run GC.
+     */
+    documentEnableGC?: boolean;
+
+    /**
+     * Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether the node
+     * changed or not.
+     */
     runFullGC?: boolean;
 
-    // Override summary configurations
+    /** Override summary configurations set by the server. */
     summaryConfigOverrides?: Partial<ISummaryConfiguration>;
 
     // Flag that disables putting channels in isolated subtrees for each data store
@@ -521,12 +534,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
         const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
 
+        // enableGC in metadata is introduced with v1 in the metadata blob. Force to false before that.
+        const documentEnableGC = gcEnabled(metadata);
+
         const runtime = new ContainerRuntime(
             context,
             registry,
             metadata,
             chunks,
-            runtimeOptions,
+            {
+                ...runtimeOptions,
+                ...{ documentEnableGC },
+            },
             containerScope,
             logger,
             requestHandler,
@@ -971,10 +990,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    private get shouldWriteMetadata(): boolean {
+        // We need the metadata blob if either isolated channels are enabled
+        // or GC is enabled at the document level.
+        return !this.disableIsolatedChannels || !!this.runtimeOptions.documentEnableGC;
+    }
+
     private formMetadata(): IContainerRuntimeMetadata {
         return {
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
+            enableGC: this.runtimeOptions.documentEnableGC, // retain preference, this is unchangeable for now
         };
     }
 
@@ -1012,6 +1038,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             root.entries = root.entries.concat(entries);
         } else {
             root.entries.push(new TreeTreeEntry(channelsTreeName, { entries }));
+        }
+
+        if (this.shouldWriteMetadata) {
             root.entries.push(new BlobTreeEntry(metadataBlobName, JSON.stringify(this.formMetadata())));
         }
 
@@ -1023,7 +1052,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {
-        if (!this.disableIsolatedChannels) {
+        if (this.shouldWriteMetadata) {
             addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
         }
         if (this.chunkMap.size > 0) {
@@ -1554,8 +1583,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             const trace = Trace.start();
+            const runGC = (this.runtimeOptions.documentEnableGC ?? true) && !this.runtimeOptions.disableGC;
             const summarizeResult = await this.summarize({
-                runGC: !this.runtimeOptions.disableGC,
+                runGC,
                 fullTree,
                 trackState: true,
                 summaryLogger,
