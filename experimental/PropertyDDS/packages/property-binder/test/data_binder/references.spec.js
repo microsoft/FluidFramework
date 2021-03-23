@@ -103,8 +103,8 @@ describe('DataBinder', function () {
 
       // This code reproduces this case.
 
-      const removeCallback = sinon.spy();
-      const insertCallback = sinon.spy();
+      const removeCallback = jest.fn();
+      const insertCallback = jest.fn();
 
       workspace.insert('target', PropertyFactory.create('NodeProperty'));
       workspace.insert('referrer', PropertyFactory.create(ReferenceParentTemplate.typeid));
@@ -126,36 +126,36 @@ describe('DataBinder', function () {
       MyBinding.initialize();
 
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, MyBinding);
-      insertCallback.callCount.should.equal(0);
+      expect(insertCallback).toHaveBeenCalledTimes(0);
 
       // Removing the referrer should not trigger the event
       workspace.remove('target');
-      removeCallback.callCount.should.equal(0);
+      expect(removeCallback).toHaveBeenCalledTimes(0);
     });
 
     it('should not call callbacks for bad branches', function () {
-      const ref1insertSpy = sinon.spy();
-      const ref1removeSpy = sinon.spy();
-      const ref2insertSpy = sinon.spy();
-      const ref2removeSpy = sinon.spy();
-      const startRefReferenceInsertSpy = sinon.spy();
-      const startRefReferenceRemoveSpy = sinon.spy();
-      const ref1ReferenceInsertSpy = sinon.spy();
-      const ref1ReferenceRemoveSpy = sinon.spy();
-      const ref2ReferenceInsertSpy = sinon.spy();
-      const ref2ReferenceRemoveSpy = sinon.spy();
+      const ref1insertSpy = jest.fn();
+      const ref1removeSpy = jest.fn();
+      const ref2insertSpy = jest.fn();
+      const ref2removeSpy = jest.fn();
+      const startRefReferenceInsertSpy = jest.fn();
+      const startRefReferenceRemoveSpy = jest.fn();
+      const ref1ReferenceInsertSpy = jest.fn();
+      const ref1ReferenceRemoveSpy = jest.fn();
+      const ref2ReferenceInsertSpy = jest.fn();
+      const ref2ReferenceRemoveSpy = jest.fn();
 
       const resetHistory = () => {
-        ref1insertSpy.resetHistory();
-        ref1removeSpy.resetHistory();
-        ref2insertSpy.resetHistory();
-        ref2removeSpy.resetHistory();
-        ref1ReferenceInsertSpy.resetHistory();
-        ref1ReferenceRemoveSpy.resetHistory();
-        ref2ReferenceInsertSpy.resetHistory();
-        ref2ReferenceRemoveSpy.resetHistory();
-        startRefReferenceInsertSpy.resetHistory();
-        startRefReferenceRemoveSpy.resetHistory();
+        ref1insertSpy.mockClear();
+        ref1removeSpy.mockClear();
+        ref2insertSpy.mockClear();
+        ref2removeSpy.mockClear();
+        ref1ReferenceInsertSpy.mockClear();
+        ref1ReferenceRemoveSpy.mockClear();
+        ref2ReferenceInsertSpy.mockClear();
+        ref2ReferenceRemoveSpy.mockClear();
+        startRefReferenceInsertSpy.mockClear();
+        startRefReferenceRemoveSpy.mockClear();
       };
 
       // startRef->refParent.ref1->target1.text
@@ -194,194 +194,194 @@ describe('DataBinder', function () {
       parentProp.insert('startRef', startRef);
 
       // Simple insert fires going through the references
-      ref1insertSpy.callCount.should.equal(1);
-      ref1removeSpy.callCount.should.equal(0);
-      ref2insertSpy.callCount.should.equal(1);
-      ref2removeSpy.callCount.should.equal(0);
-      ref1ReferenceInsertSpy.callCount.should.equal(1);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(1);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(1);
-      startRefReferenceRemoveSpy.callCount.should.equal(0);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(1);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref2insertSpy).toHaveBeenCalledTimes(1);
+      expect(ref2removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(1);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(1);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(1);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       resetHistory();
 
       // break at startRef
       parentProp.remove('startRef');
-      ref1insertSpy.callCount.should.equal(0);
-      ref1removeSpy.callCount.should.equal(1);
-      ref2insertSpy.callCount.should.equal(0);
-      ref2removeSpy.callCount.should.equal(1);
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(1);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(1);
-      startRefReferenceInsertSpy.callCount.should.equal(0);
-      startRefReferenceRemoveSpy.callCount.should.equal(1);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(1);
+      expect(ref2insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2removeSpy).toHaveBeenCalledTimes(1);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(1);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(1);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(1);
       resetHistory();
 
       // put back at startRef
       parentProp.insert('startRef', startRef);
-      ref1insertSpy.callCount.should.equal(1);
-      ref1removeSpy.callCount.should.equal(0);
-      ref2insertSpy.callCount.should.equal(1);
-      ref2removeSpy.callCount.should.equal(0);
-      ref1ReferenceInsertSpy.callCount.should.equal(1);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(1);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(1);
-      startRefReferenceRemoveSpy.callCount.should.equal(0);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(1);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref2insertSpy).toHaveBeenCalledTimes(1);
+      expect(ref2removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(1);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(1);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(1);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       resetHistory();
 
       // Break ref1
       refParent.get('ref1', RESOLVE_NEVER).setValue('/garbage');
-      ref1insertSpy.callCount.should.equal(0);
-      ref1removeSpy.callCount.should.equal(1);
-      ref2insertSpy.callCount.should.equal(0);
-      ref2removeSpy.callCount.should.equal(0);
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(0);
-      startRefReferenceRemoveSpy.callCount.should.equal(0);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(1);
+      expect(ref2insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       resetHistory();
 
       // Fix it back to target2 (instead of target1)
       refParent.get('ref1', RESOLVE_NEVER).setValue('/target2');
-      ref1insertSpy.callCount.should.equal(1);
-      ref1removeSpy.callCount.should.equal(0);
-      ref2insertSpy.callCount.should.equal(0);
-      ref2removeSpy.callCount.should.equal(0);
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(0);
-      startRefReferenceRemoveSpy.callCount.should.equal(0);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(1);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref2insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       resetHistory();
 
       // Change it to target1 - should 'remove' and 'insert'
       refParent.get('ref1', RESOLVE_NEVER).setValue('/target1');
-      ref1insertSpy.callCount.should.equal(1);
-      ref1removeSpy.callCount.should.equal(1);
-      ref2insertSpy.callCount.should.equal(0);
-      ref2removeSpy.callCount.should.equal(0);
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(0);
-      startRefReferenceRemoveSpy.callCount.should.equal(0);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(1);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(1);
+      expect(ref2insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       resetHistory();
 
       // Leave it at target1, but using a different reference. Should not fire!
       refParent.get('ref1', RESOLVE_NEVER).setValue('../target1');
-      ref1insertSpy.callCount.should.equal(0);
-      ref1removeSpy.callCount.should.equal(0);
-      ref2insertSpy.callCount.should.equal(0);
-      ref2removeSpy.callCount.should.equal(0);
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(0);
-      startRefReferenceRemoveSpy.callCount.should.equal(0);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref2insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       resetHistory();
 
       // break at startRef
       parentProp.remove('startRef');
-      ref1insertSpy.callCount.should.equal(0);
-      ref1removeSpy.callCount.should.equal(1);
-      ref2insertSpy.callCount.should.equal(0);
-      ref2removeSpy.callCount.should.equal(1);
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(1);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(1);
-      startRefReferenceInsertSpy.callCount.should.equal(0);
-      startRefReferenceRemoveSpy.callCount.should.equal(1);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(1);
+      expect(ref2insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2removeSpy).toHaveBeenCalledTimes(1);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(1);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(1);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(1);
       resetHistory();
 
       // Change it to target2 while startRef is broken
       refParent.get('ref1', RESOLVE_NEVER).setValue('/target2');
-      ref1insertSpy.callCount.should.equal(0);
-      ref1removeSpy.callCount.should.equal(0);
-      ref2insertSpy.callCount.should.equal(0);
-      ref2removeSpy.callCount.should.equal(0);
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(0);
-      startRefReferenceRemoveSpy.callCount.should.equal(0);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref2insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       resetHistory();
 
       // put back at startRef
       parentProp.insert('startRef', startRef);
-      ref1insertSpy.callCount.should.equal(1);
-      ref1removeSpy.callCount.should.equal(0);
-      ref2insertSpy.callCount.should.equal(1);
-      ref2removeSpy.callCount.should.equal(0);
-      ref1ReferenceInsertSpy.callCount.should.equal(1);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(1);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(1);
-      startRefReferenceRemoveSpy.callCount.should.equal(0);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(1);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref2insertSpy).toHaveBeenCalledTimes(1);
+      expect(ref2removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(1);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(1);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(1);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       resetHistory();
 
       // Break ref1 again
       refParent.get('ref1', RESOLVE_NEVER).setValue('/garbage');
-      ref1insertSpy.callCount.should.equal(0);
-      ref1removeSpy.callCount.should.equal(1);
-      ref2insertSpy.callCount.should.equal(0);
-      ref2removeSpy.callCount.should.equal(0);
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(0);
-      startRefReferenceRemoveSpy.callCount.should.equal(0);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(1);
+      expect(ref2insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       resetHistory();
 
       // Remove parent
       workspace.remove('parentProp');
-      ref1insertSpy.callCount.should.equal(0);
-      ref1removeSpy.callCount.should.equal(0); // << not fired, bad reference
-      ref2insertSpy.callCount.should.equal(0);
-      ref2removeSpy.callCount.should.equal(1);
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(1);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(1);
-      startRefReferenceInsertSpy.callCount.should.equal(0);
-      startRefReferenceRemoveSpy.callCount.should.equal(1);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(0); // << not fired, bad reference
+      expect(ref2insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2removeSpy).toHaveBeenCalledTimes(1);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(1);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(1);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(1);
       resetHistory();
     });
 
     // This test is similar to the last one, but the references go directly to a second reference,
     // instead of going to a property and then following a path
     it('direct chain of references', function () {
-      const ref1insertSpy = sinon.spy();
-      const ref1removeSpy = sinon.spy();
-      const startRefReferenceInsertSpy = sinon.spy();
-      const startRefReferenceRemoveSpy = sinon.spy();
-      const ref1ReferenceInsertSpy = sinon.spy();
-      const ref1ReferenceRemoveSpy = sinon.spy();
-      const ref2ReferenceInsertSpy = sinon.spy();
-      const ref2ReferenceRemoveSpy = sinon.spy();
+      const ref1insertSpy = jest.fn();
+      const ref1removeSpy = jest.fn();
+      const startRefReferenceInsertSpy = jest.fn();
+      const startRefReferenceRemoveSpy = jest.fn();
+      const ref1ReferenceInsertSpy = jest.fn();
+      const ref1ReferenceRemoveSpy = jest.fn();
+      const ref2ReferenceInsertSpy = jest.fn();
+      const ref2ReferenceRemoveSpy = jest.fn();
 
       const resetHistory = () => {
-        ref1insertSpy.resetHistory();
-        ref1removeSpy.resetHistory();
-        ref1ReferenceInsertSpy.resetHistory();
-        ref1ReferenceRemoveSpy.resetHistory();
-        ref2ReferenceInsertSpy.resetHistory();
-        ref2ReferenceRemoveSpy.resetHistory();
-        startRefReferenceInsertSpy.resetHistory();
-        startRefReferenceRemoveSpy.resetHistory();
+        ref1insertSpy.mockClear();
+        ref1removeSpy.mockClear();
+        ref1ReferenceInsertSpy.mockClear();
+        ref1ReferenceRemoveSpy.mockClear();
+        ref2ReferenceInsertSpy.mockClear();
+        ref2ReferenceRemoveSpy.mockClear();
+        startRefReferenceInsertSpy.mockClear();
+        startRefReferenceRemoveSpy.mockClear();
       };
 
       ParentDataBinding.registerOnPath('startRef.text', ['insert'], ref1insertSpy); // startRef->ref1->target1.text
@@ -416,152 +416,152 @@ describe('DataBinder', function () {
       parentProp.insert('startRef', startRef);
 
       // Simple insert fires going through the references
-      ref1insertSpy.callCount.should.equal(1);
-      ref1removeSpy.callCount.should.equal(0);
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(1);
-      startRefReferenceRemoveSpy.callCount.should.equal(0);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(1);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(1);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       resetHistory();
 
       // break at startRef
       parentProp.remove('startRef');
-      ref1insertSpy.callCount.should.equal(0);
-      ref1removeSpy.callCount.should.equal(1);
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(0);
-      startRefReferenceRemoveSpy.callCount.should.equal(1);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(1);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(1);
       resetHistory();
 
       // put back at startRef
       parentProp.insert('startRef', startRef);
-      ref1insertSpy.callCount.should.equal(1);
-      ref1removeSpy.callCount.should.equal(0);
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(1);
-      startRefReferenceRemoveSpy.callCount.should.equal(0);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(1);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(1);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       resetHistory();
 
       // Break ref1
       refParent.get('ref1', RESOLVE_NEVER).setValue('/garbage');
-      ref1insertSpy.callCount.should.equal(0);
-      ref1removeSpy.callCount.should.equal(1);
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(0);
-      startRefReferenceRemoveSpy.callCount.should.equal(0);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(1);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       resetHistory();
 
       // Fix it back to target2 (instead of target1)
       refParent.get('ref1', RESOLVE_NEVER).setValue('/target2');
-      ref1insertSpy.callCount.should.equal(1);
-      ref1removeSpy.callCount.should.equal(0);
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(0);
-      startRefReferenceRemoveSpy.callCount.should.equal(0);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(1);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       resetHistory();
 
       // Change it to target1 - should 'remove' and 'insert'
       refParent.get('ref1', RESOLVE_NEVER).setValue('/target1');
-      ref1insertSpy.callCount.should.equal(1);
-      ref1removeSpy.callCount.should.equal(1);
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(0);
-      startRefReferenceRemoveSpy.callCount.should.equal(0);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(1);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(1);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       resetHistory();
 
       // Leave it at target1, but using a different reference. Should not fire!
       refParent.get('ref1', RESOLVE_NEVER).setValue('../target1');
-      ref1insertSpy.callCount.should.equal(0);
-      ref1removeSpy.callCount.should.equal(0);
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(0);
-      startRefReferenceRemoveSpy.callCount.should.equal(0);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       resetHistory();
 
       // break at startRef
       parentProp.remove('startRef');
-      ref1insertSpy.callCount.should.equal(0);
-      ref1removeSpy.callCount.should.equal(1);
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(0);
-      startRefReferenceRemoveSpy.callCount.should.equal(1);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(1);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(1);
       resetHistory();
 
       // Change it to target2 while startRef is broken
       refParent.get('ref1', RESOLVE_NEVER).setValue('/target2');
-      ref1insertSpy.callCount.should.equal(0);
-      ref1removeSpy.callCount.should.equal(0);
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(0);
-      startRefReferenceRemoveSpy.callCount.should.equal(0);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       resetHistory();
 
       // put back at startRef
       parentProp.insert('startRef', startRef);
-      ref1insertSpy.callCount.should.equal(1);
-      ref1removeSpy.callCount.should.equal(0);
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(1);
-      startRefReferenceRemoveSpy.callCount.should.equal(0);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(1);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(1);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       resetHistory();
 
       // Break ref1 again
       refParent.get('ref1', RESOLVE_NEVER).setValue('/garbage');
-      ref1insertSpy.callCount.should.equal(0);
-      ref1removeSpy.callCount.should.equal(1);
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(0);
-      startRefReferenceRemoveSpy.callCount.should.equal(0);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(1);
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       resetHistory();
 
       // Remove parent
       workspace.remove('parentProp');
-      ref1insertSpy.callCount.should.equal(0);
-      ref1removeSpy.callCount.should.equal(0); // << not fired, bad reference
-      ref1ReferenceInsertSpy.callCount.should.equal(0);
-      ref1ReferenceRemoveSpy.callCount.should.equal(0);
-      ref2ReferenceInsertSpy.callCount.should.equal(0);
-      ref2ReferenceRemoveSpy.callCount.should.equal(0);
-      startRefReferenceInsertSpy.callCount.should.equal(0);
-      startRefReferenceRemoveSpy.callCount.should.equal(1);
+      expect(ref1insertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1removeSpy).toHaveBeenCalledTimes(0); // << not fired, bad reference
+      expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref1ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(ref2ReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(startRefReferenceRemoveSpy).toHaveBeenCalledTimes(1);
       resetHistory();
     });
 
     it('referenceRemoved on root property', function () {
-      const referenceInsertSpy = sinon.spy();
-      const referenceRemoveSpy = sinon.spy();
+      const referenceInsertSpy = jest.fn();
+      const referenceRemoveSpy = jest.fn();
 
       ParentDataBinding.registerOnPath('ref', ['referenceInsert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('ref', ['referenceRemove'], referenceRemoveSpy);
@@ -570,16 +570,16 @@ describe('DataBinder', function () {
       const ref = PropertyFactory.create('Reference');
       workspace.insert('ref', ref);
 
-      referenceInsertSpy.callCount.should.equal(1);
-      referenceRemoveSpy.callCount.should.equal(0);
-      referenceInsertSpy.resetHistory();
-      referenceRemoveSpy.resetHistory();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
+      referenceInsertSpy.mockClear();
+      referenceRemoveSpy.mockClear();
 
       workspace.remove('ref');
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(1);
-      referenceInsertSpy.resetHistory();
-      referenceRemoveSpy.resetHistory();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
+      referenceInsertSpy.mockClear();
+      referenceRemoveSpy.mockClear();
     });
 
     it('should be ok when going through references and traversing', function () {
@@ -618,16 +618,16 @@ describe('DataBinder', function () {
       // Add our child (referenced) pset
       var childPset = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
-      var referenceInsertSpy = sinon.spy();
-      var referenceModifySpy = sinon.spy();
-      var referenceRemoveSpy = sinon.spy();
+      var referenceInsertSpy = jest.fn();
+      var referenceModifySpy = jest.fn();
+      var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref.text', ['insert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('single_ref.text', ['modify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref.text', ['remove'], referenceRemoveSpy);
 
-      var doubleReferenceInsertSpy = sinon.spy();
-      var doubleReferenceModifySpy = sinon.spy();
-      var doubleReferenceRemoveSpy = sinon.spy();
+      var doubleReferenceInsertSpy = jest.fn();
+      var doubleReferenceModifySpy = jest.fn();
+      var doubleReferenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref.single_ref.text', ['insert'], doubleReferenceInsertSpy);
       ParentDataBinding.registerOnPath('single_ref.single_ref.text', ['modify'], doubleReferenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref.single_ref.text', ['remove'], doubleReferenceRemoveSpy);
@@ -643,46 +643,46 @@ describe('DataBinder', function () {
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
       workspace.insert('myReferenceParent', referenceParentPSet);
-      referenceInsertSpy.callCount.should.equal(1);
-      referenceInsertSpy.resetHistory();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
+      referenceInsertSpy.mockClear();
 
       // This should trigger the modify on the reference property
-      referenceModifySpy.callCount.should.equal(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
       childPset.get('text').setValue('newText');
-      referenceModifySpy.callCount.should.equal(1);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
 
       // This should trigger the remove handler
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
       workspace.remove('myChild1');
-      referenceRemoveSpy.callCount.should.equal(1);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
 
       // This should trigger the insert handler
-      referenceInsertSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
       workspace.insert('myChild1', childPset);
-      referenceInsertSpy.callCount.should.equal(1);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
 
       // Now we have a two stage reference
-      doubleReferenceInsertSpy.callCount.should.equal(0);
+      expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(0);
       referenceParentPSet2.get('single_ref', RESOLVE_NEVER)
         .setValue('/myReferenceParent');
       workspace.insert('myReferenceParent2', referenceParentPSet2);
-      doubleReferenceInsertSpy.callCount.should.equal(1);
-      doubleReferenceInsertSpy.resetHistory();
+      expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(1);
+      doubleReferenceInsertSpy.mockClear();
 
-      doubleReferenceModifySpy.callCount.should.equal(0);
+      expect(doubleReferenceModifySpy).toHaveBeenCalledTimes(0);
       childPset.get('text').setValue('newText2');
-      referenceParentPSet2.get(['single_ref', 'single_ref', 'text']).should.equal(childPset.get('text'));
-      doubleReferenceModifySpy.callCount.should.equal(1);
+      expect(referenceParentPSet2.get(['single_ref', 'single_ref', 'text'])).toEqual(childPset.get('text'));
+      expect(doubleReferenceModifySpy).toHaveBeenCalledTimes(1);
 
       // This should trigger the remove handler
-      doubleReferenceRemoveSpy.callCount.should.equal(0);
+      expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       workspace.remove('myChild1');
-      doubleReferenceRemoveSpy.callCount.should.equal(1);
+      expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(1);
 
       // This should trigger the insert handler
-      doubleReferenceInsertSpy.callCount.should.equal(0);
+      expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(0);
       workspace.insert('myChild1', childPset);
-      doubleReferenceInsertSpy.callCount.should.equal(1);
+      expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should be able to bind to referenced properties with relative paths', function () {
@@ -693,16 +693,16 @@ describe('DataBinder', function () {
       // Add our child (referenced) pset
       var childPset = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
-      var referenceInsertSpy = sinon.spy();
-      var referenceModifySpy = sinon.spy();
-      var referenceRemoveSpy = sinon.spy();
+      var referenceInsertSpy = jest.fn();
+      var referenceModifySpy = jest.fn();
+      var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref.text', ['insert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('single_ref.text', ['modify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref.text', ['remove'], referenceRemoveSpy);
 
-      var doubleReferenceInsertSpy = sinon.spy();
-      var doubleReferenceModifySpy = sinon.spy();
-      var doubleReferenceRemoveSpy = sinon.spy();
+      var doubleReferenceInsertSpy = jest.fn();
+      var doubleReferenceModifySpy = jest.fn();
+      var doubleReferenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref.single_ref.text', ['insert'], doubleReferenceInsertSpy);
       ParentDataBinding.registerOnPath('single_ref.single_ref.text', ['modify'], doubleReferenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref.single_ref.text', ['remove'], doubleReferenceRemoveSpy);
@@ -712,106 +712,106 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding, { context: 'all' });
 
       workspace.insert('myChild1', childPset);
-      dataBinder._dataBindingCreatedCounter.should.equal(1);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const childDataBinding = dataBinder.resolve('/myChild1', 'BINDING');
       childDataBinding.should.be.instanceOf(ChildDataBinding);
-      childDataBinding.onModify.callCount.should.equal(0);
-      childDataBinding.onModify.resetHistory();
+      expect(childDataBinding.onModify).toHaveBeenCalledTimes(0);
+      childDataBinding.onModify.mockClear();
 
       // Most basic case, insert with an already valid reference
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('../../myChild1');
       workspace.insert('myParent', PropertyFactory.create('NodeProperty', 'single'));
       workspace.get('myParent').insert('myReferenceParent', referenceParentPSet);
-      dataBinder._dataBindingCreatedCounter.should.equal(1);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve('/myParent.myReferenceParent', 'BINDING');
       parentDataBinding.should.be.instanceOf(ParentDataBinding);
-      parentDataBinding.onModify.callCount.should.equal(0);
-      parentDataBinding.onModify.resetHistory();
+      expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
+      parentDataBinding.onModify.mockClear();
 
       // We should have received an insert when our reference became valid
-      referenceInsertSpy.callCount.should.equal(1);
-      referenceInsertSpy.resetHistory();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
+      referenceInsertSpy.mockClear();
 
       // This should trigger the modify on the reference property
-      referenceModifySpy.callCount.should.equal(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
       childPset.get('text').setValue('newText');
-      referenceModifySpy.callCount.should.equal(1);
-      ////        parentDataBinding.onModify.callCount.should.equal(1);
-      ////        parentDataBinding.onModify.resetHistory();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
+      ////        expect(parentDataBinding.onModify).toHaveBeenCalledTimes(1);
+      ////        parentDataBinding.onModify.mockClear();
 
       // This should trigger the remove handler
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
       workspace.remove('myChild1');
-      referenceRemoveSpy.callCount.should.equal(1);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
 
       // This should trigger the insert handler
-      referenceInsertSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
       workspace.insert('myChild1', childPset);
-      referenceInsertSpy.callCount.should.equal(1);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
 
       // Now we have a two stage reference
       referenceParentPSet2.get('single_ref', RESOLVE_NEVER)
         .setValue('../myReferenceParent');
       workspace.get('myParent').insert('myReferenceParent2', referenceParentPSet2);
 
-      doubleReferenceModifySpy.callCount.should.equal(0);
-      referenceModifySpy.callCount.should.equal(1);
+      expect(doubleReferenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
       childPset.get('text').setValue('newText2');
-      doubleReferenceModifySpy.callCount.should.equal(1);
-      referenceModifySpy.callCount.should.equal(2);
+      expect(doubleReferenceModifySpy).toHaveBeenCalledTimes(1);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(2);
 
-      doubleReferenceInsertSpy.callCount.should.equal(1);
-      doubleReferenceInsertSpy.resetHistory();
+      expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(1);
+      doubleReferenceInsertSpy.mockClear();
 
       // This should trigger the remove handler
-      doubleReferenceRemoveSpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(1);
+      expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
       workspace.remove('myChild1');
-      doubleReferenceRemoveSpy.callCount.should.equal(1);
-      referenceRemoveSpy.callCount.should.equal(2);
+      expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(1);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(2);
 
       // This should trigger the insert handler
-      doubleReferenceInsertSpy.callCount.should.equal(0);
-      referenceInsertSpy.callCount.should.equal(1);
+      expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
       workspace.insert('myChild1', childPset);
-      doubleReferenceInsertSpy.callCount.should.equal(1);
-      referenceInsertSpy.callCount.should.equal(2);
+      expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(1);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(2);
 
-      referenceInsertSpy.resetHistory();
-      referenceModifySpy.resetHistory();
-      referenceRemoveSpy.resetHistory();
+      referenceInsertSpy.mockClear();
+      referenceModifySpy.mockClear();
+      referenceRemoveSpy.mockClear();
       // Insert with an already valid reference *below* us so that the relative path has no leading '..'
       var childPset2 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       workspace.get('myParent').get('myReferenceParent').insert('myChild2', childPset2);
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('myChild2');
       // Triggered when our reference became valid
-      referenceInsertSpy.callCount.should.equal(1);
-      referenceInsertSpy.resetHistory();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
+      referenceInsertSpy.mockClear();
       // We also got a remove for the old property
-      referenceRemoveSpy.callCount.should.equal(1);
-      referenceRemoveSpy.resetHistory();
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
+      referenceRemoveSpy.mockClear();
 
       // This should trigger the modify on the reference property
-      referenceModifySpy.callCount.should.equal(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
       childPset2.get('text').setValue('newText');
-      referenceModifySpy.callCount.should.equal(1);
-      referenceModifySpy.resetHistory();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
+      referenceModifySpy.mockClear();
 
       // This should trigger the remove handler
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
       workspace.get('myParent').get('myReferenceParent').remove('myChild2');
-      referenceRemoveSpy.callCount.should.equal(1);
-      referenceRemoveSpy.resetHistory();
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
+      referenceRemoveSpy.mockClear();
 
       // This should trigger the insert handler
-      referenceInsertSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
       workspace.get('myParent').get('myReferenceParent').insert('myChild2', childPset2);
-      referenceInsertSpy.callCount.should.equal(1);
-      referenceInsertSpy.resetHistory();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
+      referenceInsertSpy.mockClear();
     });
 
     it('should be able to bind to multi hops with relative paths', function () {
@@ -835,7 +835,7 @@ describe('DataBinder', function () {
       root.insert('topoMap', topoMap);
       root.insert('geoMap', geoMap);
       // Register the DataBinding
-      var referenceModifySpy = sinon.spy();
+      var referenceModifySpy = jest.fn();
       ParentDataBinding.registerOnPath('topoRef.geoRef', ['modify'], referenceModifySpy);
       dataBinder.register('BINDING', NodeContainerTemplate.typeid, ParentDataBinding);
 
@@ -845,18 +845,18 @@ describe('DataBinder', function () {
       expect(PropertyFactory.instanceOf(textProp, 'String', 'single')).to.be.true;
       textProp = root.get(['topoRef', 'geoRef', 'text']);
       expect(PropertyFactory.instanceOf(textProp, 'String', 'single')).to.be.true;
-      referenceModifySpy.callCount.should.equal(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
       textProp.setValue('forty-two');
-      referenceModifySpy.callCount.should.equal(1);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
     });
 
     it('should be able to bind to referenced primitives', function () {
       // Add the reference parent pset
       var referenceParentPSet = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
 
-      var referenceInsertSpy = sinon.spy();
-      var referenceModifySpy = sinon.spy();
-      var referenceRemoveSpy = sinon.spy();
+      var referenceInsertSpy = jest.fn();
+      var referenceModifySpy = jest.fn();
+      var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_prim_ref', ['insert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('single_prim_ref', ['modify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('single_prim_ref', ['remove'], referenceRemoveSpy);
@@ -868,41 +868,41 @@ describe('DataBinder', function () {
       workspace.insert('string', PropertyFactory.create('String'));
 
       // Most basic case, insert with an already valid reference
-      referenceInsertSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
       referenceParentPSet.get('single_prim_ref', RESOLVE_NEVER)
         .setValue('/string');
       workspace.insert('myReferenceParent', referenceParentPSet);
-      referenceInsertSpy.callCount.should.equal(1);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
 
       // This should trigger the modify on the reference property
-      referenceModifySpy.callCount.should.equal(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
       workspace.get('string').setValue('newText');
-      referenceModifySpy.callCount.should.equal(1);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
 
       // This should trigger the remove handler
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
       workspace.remove('string');
-      referenceRemoveSpy.callCount.should.equal(1);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
 
       // This should trigger the insert handler
-      referenceInsertSpy.callCount.should.equal(1);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
       workspace.insert('string', PropertyFactory.create('String'));
-      referenceInsertSpy.callCount.should.equal(2);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(2);
     });
 
     it('should be able to bind to the reference itself', function () {
       var referenceParentPSet = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
 
       var refInsertSpy = sinon.spy(function (in_context) {
-        in_context.getProperty().should.equal(referenceParentPSet.get('single_prim_ref', RESOLVE_NEVER));
+        expect(in_context.getProperty()).toEqual(referenceParentPSet.get('single_prim_ref', RESOLVE_NEVER));
       });
-      var refModifySpy = sinon.spy();
-      var refRemoveSpy = sinon.spy();
+      var refModifySpy = jest.fn();
+      var refRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_prim_ref', ['referenceInsert'], refInsertSpy);
       ParentDataBinding.registerOnPath('single_prim_ref', ['referenceModify'], refModifySpy);
       ParentDataBinding.registerOnPath('single_prim_ref', ['referenceRemove'], refRemoveSpy);
 
-      var referencedRemoveSpy = sinon.spy();
+      var referencedRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('dynamic_ref', ['referenceInsert'], refInsertSpy);
       ParentDataBinding.registerOnPath('dynamic_ref', ['referenceModify'], refModifySpy);
       ParentDataBinding.registerOnPath('dynamic_ref', ['referenceRemove'], refRemoveSpy);
@@ -919,16 +919,16 @@ describe('DataBinder', function () {
         .setValue('/string');
       workspace.insert('myReferenceParent', referenceParentPSet);
 
-      refInsertSpy.callCount.should.equal(1);
+      expect(refInsertSpy).toHaveBeenCalledTimes(1);
 
       referenceParentPSet.get('single_prim_ref', RESOLVE_NEVER)
         .setValue('/string2');
 
-      refModifySpy.callCount.should.equal(1);
+      expect(refModifySpy).toHaveBeenCalledTimes(1);
 
       workspace.remove(referenceParentPSet);
 
-      refRemoveSpy.callCount.should.equal(1);
+      expect(refRemoveSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should be able to bind to the reference itself, existing references', function () {
@@ -942,15 +942,15 @@ describe('DataBinder', function () {
       workspace.insert('myReferenceParent', referenceParentPSet);
 
       var refInsertSpy = sinon.spy(function (in_context) {
-        in_context.getProperty().should.equal(referenceParentPSet.get('single_prim_ref', RESOLVE_NEVER));
+        expect(in_context.getProperty()).toEqual(referenceParentPSet.get('single_prim_ref', RESOLVE_NEVER));
       });
-      var refModifySpy = sinon.spy();
-      var refRemoveSpy = sinon.spy();
+      var refModifySpy = jest.fn();
+      var refRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_prim_ref', ['referenceInsert'], refInsertSpy);
       ParentDataBinding.registerOnPath('single_prim_ref', ['referenceModify'], refModifySpy);
       ParentDataBinding.registerOnPath('single_prim_ref', ['referenceRemove'], refRemoveSpy);
 
-      var referencedRemoveSpy = sinon.spy();
+      var referencedRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('dynamic_ref', ['referenceInsert'], refInsertSpy);
       ParentDataBinding.registerOnPath('dynamic_ref', ['referenceModify'], refModifySpy);
       ParentDataBinding.registerOnPath('dynamic_ref', ['referenceRemove'], refRemoveSpy);
@@ -959,33 +959,33 @@ describe('DataBinder', function () {
       // Register the DataBinding
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding, { context: 'single' });
 
-      refInsertSpy.callCount.should.equal(1);
+      expect(refInsertSpy).toHaveBeenCalledTimes(1);
 
       referenceParentPSet.get('single_prim_ref', RESOLVE_NEVER)
         .setValue('/string2');
 
-      refModifySpy.callCount.should.equal(1);
+      expect(refModifySpy).toHaveBeenCalledTimes(1);
 
       workspace.remove(referenceParentPSet);
 
-      refRemoveSpy.callCount.should.equal(1);
+      expect(refRemoveSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should be able to bind to the reference itself', function () {
       var referenceParentPSet = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
 
-      var refInsertSpy = sinon.spy();
-      var refModifySpy = sinon.spy();
+      var refInsertSpy = jest.fn();
+      var refModifySpy = jest.fn();
       var refRemoveSpy = sinon.spy(function (in_modificationContext) {
         if (in_modificationContext instanceof ModificationContext) {
-          in_modificationContext.getAbsolutePath().should.equal('/myReferenceParent.dynamic_ref');
+          expect(in_modificationContext.getAbsolutePath()).toEqual('/myReferenceParent.dynamic_ref');
         }
       });
       ParentDataBinding.registerOnPath('single_prim_ref', ['referenceInsert'], refInsertSpy);
       ParentDataBinding.registerOnPath('single_prim_ref', ['referenceModify'], refModifySpy);
       ParentDataBinding.registerOnPath('single_prim_ref', ['referenceRemove'], refRemoveSpy);
 
-      var referencedRemoveSpy = sinon.spy();
+      var referencedRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('dynamic_ref', ['referenceInsert'], refInsertSpy);
       ParentDataBinding.registerOnPath('dynamic_ref', ['referenceModify'], refModifySpy);
       ParentDataBinding.registerOnPath('dynamic_ref', ['referenceRemove'], refRemoveSpy);
@@ -1003,57 +1003,57 @@ describe('DataBinder', function () {
       workspace.insert('myReferenceParent', referenceParentPSet);
 
       // This should not trigger the modify on the reference property
-      refModifySpy.callCount.should.equal(0);
+      expect(refModifySpy).toHaveBeenCalledTimes(0);
       workspace.get('string').setValue('newText');
-      refModifySpy.callCount.should.equal(0);
+      expect(refModifySpy).toHaveBeenCalledTimes(0);
 
       // This should not trigger the remove handler
-      refRemoveSpy.callCount.should.equal(0);
+      expect(refRemoveSpy).toHaveBeenCalledTimes(0);
       workspace.remove('string');
-      refRemoveSpy.callCount.should.equal(0);
+      expect(refRemoveSpy).toHaveBeenCalledTimes(0);
 
       // This should not trigger the insert handler
-      refInsertSpy.callCount.should.equal(1);
+      expect(refInsertSpy).toHaveBeenCalledTimes(1);
       workspace.insert('string', PropertyFactory.create('String'));
-      refInsertSpy.callCount.should.equal(1);
+      expect(refInsertSpy).toHaveBeenCalledTimes(1);
 
       // This should trigger the remove handler
-      refRemoveSpy.callCount.should.equal(0);
+      expect(refRemoveSpy).toHaveBeenCalledTimes(0);
       workspace.remove('myReferenceParent');
-      refRemoveSpy.callCount.should.equal(1);
+      expect(refRemoveSpy).toHaveBeenCalledTimes(1);
       workspace.insert('myReferenceParent', referenceParentPSet);
-      refInsertSpy.callCount.should.equal(2);
+      expect(refInsertSpy).toHaveBeenCalledTimes(2);
 
-      refInsertSpy.resetHistory();
-      refModifySpy.resetHistory();
-      refRemoveSpy.resetHistory();
+      refInsertSpy.mockClear();
+      refModifySpy.mockClear();
+      refRemoveSpy.mockClear();
 
-      refInsertSpy.callCount.should.equal(0);
+      expect(refInsertSpy).toHaveBeenCalledTimes(0);
       referenceParentPSet.insert('dynamic_ref', PropertyFactory.create('Reference'));
-      refInsertSpy.callCount.should.equal(1);
+      expect(refInsertSpy).toHaveBeenCalledTimes(1);
 
-      refModifySpy.callCount.should.equal(0);
+      expect(refModifySpy).toHaveBeenCalledTimes(0);
       referenceParentPSet.get('dynamic_ref', RESOLVE_NEVER)
         .setValue('/string');
-      refModifySpy.callCount.should.equal(1);
+      expect(refModifySpy).toHaveBeenCalledTimes(1);
 
       // This should not trigger the modify on the reference property
       workspace.get('string').setValue('newText');
-      refModifySpy.callCount.should.equal(1);
+      expect(refModifySpy).toHaveBeenCalledTimes(1);
 
       // This should not trigger the remove handler
       workspace.remove('string');
-      refRemoveSpy.callCount.should.equal(0);
-      referencedRemoveSpy.callCount.should.equal(1);
+      expect(refRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(referencedRemoveSpy).toHaveBeenCalledTimes(1);
 
       // This should not trigger the insert handler
       workspace.insert('string', PropertyFactory.create('String'));
-      refInsertSpy.callCount.should.equal(1);
+      expect(refInsertSpy).toHaveBeenCalledTimes(1);
 
-      refRemoveSpy.callCount.should.equal(0);
+      expect(refRemoveSpy).toHaveBeenCalledTimes(0);
       referenceParentPSet.remove('dynamic_ref');
-      refRemoveSpy.callCount.should.equal(1);
-      referencedRemoveSpy.callCount.should.equal(1);
+      expect(refRemoveSpy).toHaveBeenCalledTimes(1);
+      expect(referencedRemoveSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should be able to bind to the path __registeredDataBindingHandlers and __registeredHandler', function () {
@@ -1062,9 +1062,9 @@ describe('DataBinder', function () {
       // everywhere we have to
       var referenceParentPSet = PropertyFactory.create(NodeContainerTemplate.typeid, 'single');
 
-      var refInsertSpy1 = sinon.spy();
-      var refModifySpy1 = sinon.spy();
-      var refRemoveSpy1 = sinon.spy();
+      var refInsertSpy1 = jest.fn();
+      var refModifySpy1 = jest.fn();
+      var refRemoveSpy1 = jest.fn();
       ParentDataBinding.registerOnPath('__registeredDataBindingHandlers.__subProperty', ['insert'], refInsertSpy1);
       ParentDataBinding.registerOnPath('__registeredDataBindingHandlers.__subProperty', ['modify'], refModifySpy1);
       ParentDataBinding.registerOnPath('__registeredDataBindingHandlers.__subProperty', ['remove'], refRemoveSpy1);
@@ -1083,23 +1083,23 @@ describe('DataBinder', function () {
         '/__registeredHandler'));
 
       // We should have gotten an insert when the ref became valid
-      refInsertSpy1.callCount.should.equal(1);
-      refInsertSpy1.resetHistory();
+      expect(refInsertSpy1).toHaveBeenCalledTimes(1);
+      refInsertSpy1.mockClear();
 
       // This should not trigger the modify on the reference property
-      refModifySpy1.callCount.should.equal(0);
+      expect(refModifySpy1).toHaveBeenCalledTimes(0);
       nodeProp.get('__subProperty').setValue('newText');
-      refModifySpy1.callCount.should.equal(1);
+      expect(refModifySpy1).toHaveBeenCalledTimes(1);
 
       // This should not trigger the remove handler
-      refRemoveSpy1.callCount.should.equal(0);
+      expect(refRemoveSpy1).toHaveBeenCalledTimes(0);
       nodeProp.remove('__subProperty');
-      refRemoveSpy1.callCount.should.equal(1);
+      expect(refRemoveSpy1).toHaveBeenCalledTimes(1);
 
       // This should trigger the insert handler
-      refInsertSpy1.callCount.should.equal(0);
+      expect(refInsertSpy1).toHaveBeenCalledTimes(0);
       nodeProp.insert('__subProperty', PropertyFactory.create('String'));
-      refInsertSpy1.callCount.should.equal(1);
+      expect(refInsertSpy1).toHaveBeenCalledTimes(1);
     });
 
     it('should be able to modify references', function () {
@@ -1110,9 +1110,9 @@ describe('DataBinder', function () {
       var childPset1 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       var childPset2 = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
-      var referenceInsertSpy = sinon.spy();
-      var referenceModifySpy = sinon.spy();
-      var referenceRemoveSpy = sinon.spy();
+      var referenceInsertSpy = jest.fn();
+      var referenceModifySpy = jest.fn();
+      var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref.text', ['insert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('single_ref.text', ['modify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref.text', ['remove'], referenceRemoveSpy);
@@ -1124,7 +1124,7 @@ describe('DataBinder', function () {
       // parentPset should produce a ParentDataBinding
       workspace.insert('myChild1', childPset1);
       workspace.insert('myChild2', childPset2);
-      dataBinder._dataBindingCreatedCounter.should.equal(2);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(2);
       dataBinder._resetDebugCounters();
 
       // We insert with an already valid reference
@@ -1133,60 +1133,60 @@ describe('DataBinder', function () {
       workspace.insert('myReferenceParent', referenceParentPSet);
 
       // references resolved, we get an insert
-      referenceInsertSpy.callCount.should.equal(1);
-      referenceInsertSpy.resetHistory();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
+      referenceInsertSpy.mockClear();
 
-      dataBinder._dataBindingCreatedCounter.should.equal(1);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve('/myReferenceParent', 'BINDING');
       parentDataBinding.should.be.instanceOf(ParentDataBinding);
-      parentDataBinding.onModify.callCount.should.equal(0);
-      parentDataBinding.onModify.resetHistory();
+      expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
+      parentDataBinding.onModify.mockClear();
 
       // And then change to a new reference
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild2');
-      parentDataBinding.onModify.callCount.should.equal(1);
-      parentDataBinding.onModify.resetHistory();
+      expect(parentDataBinding.onModify).toHaveBeenCalledTimes(1);
+      parentDataBinding.onModify.mockClear();
 
       // Reference changed, we get a remove and an insert
-      referenceRemoveSpy.callCount.should.equal(1);
-      referenceInsertSpy.callCount.should.equal(1);
-      referenceRemoveSpy.resetHistory();
-      referenceInsertSpy.resetHistory();
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
+      referenceRemoveSpy.mockClear();
+      referenceInsertSpy.mockClear();
 
       // This should trigger the modify on the reference property
-      referenceModifySpy.callCount.should.equal(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
       childPset2.get('text').setValue('newText');
-      referenceModifySpy.callCount.should.equal(1);
-      ////        parentDataBinding.onModify.callCount.should.equal(1);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
+      ////        expect(parentDataBinding.onModify).toHaveBeenCalledTimes(1);
 
       // This should trigger the remove handler
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
       workspace.remove('myChild2');
-      referenceRemoveSpy.callCount.should.equal(1);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
 
       // This should trigger the insert handler
-      referenceInsertSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
       workspace.insert('myChild2', childPset2);
-      referenceInsertSpy.callCount.should.equal(1);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
 
       // Make sure the old handlers have been removed
       childPset1.get('text').setValue('newText');
-      referenceModifySpy.callCount.should.equal(1);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
       workspace.remove('myChild1');
-      referenceRemoveSpy.callCount.should.equal(1);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
       workspace.insert('myChild1', childPset1);
-      referenceInsertSpy.callCount.should.equal(1);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
 
       // Make sure, removing a reference also removes its
       // bound callbacks
       workspace.remove('myReferenceParent');
 
       // This should no longer trigger the modify on the reference property
-      referenceModifySpy.callCount.should.equal(1);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
       childPset2.get('text').setValue('newText2');
-      referenceModifySpy.callCount.should.equal(1);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
     });
 
     it('should provide access to the DataBinding and Property', function () {
@@ -1234,23 +1234,23 @@ describe('DataBinder', function () {
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
       workspace.insert('myReferenceParent', referenceParentPSet);
-      referenceChangedSpy.callCount.should.equal(1);
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/invalid_ref_value');
-      referenceChangedSpy.callCount.should.equal(2);
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(2);
 
       // Other ref
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild2');
-      referenceChangedSpy.callCount.should.equal(3);
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(3);
 
       // Change it to the nodecontainer to test DataBinding at the relative path
-      referenceChangedSpy.resetHistory();
+      referenceChangedSpy.mockClear();
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/nodeParent');
       // remove, and insert for nodeParent, which also has a 'text' field
-      referenceChangedSpy.callCount.should.equal(2);
-      nodeParentRefChangedSpy.callCount.should.equal(1); // insert for nodeParent
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(2);
+      expect(nodeParentRefChangedSpy).toHaveBeenCalledTimes(1); // insert for nodeParent
     });
 
     const crazyTest = hopName => function () {
@@ -1272,7 +1272,7 @@ describe('DataBinder', function () {
         var prop = in_modificationContext.getProperty();
         expect(PropertyFactory.instanceOf(prop, 'String', 'single')).to.be.true;
       });
-      var referenceRemoveSpy = sinon.spy();
+      var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref.text', ['insert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('single_ref.text', ['modify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref.text', ['remove'], referenceRemoveSpy);
@@ -1285,8 +1285,8 @@ describe('DataBinder', function () {
         var prop = in_modificationContext.getProperty();
         expect(PropertyFactory.instanceOf(prop, 'String', 'single')).to.be.true;
       });
-      var doubleReferenceRemoveSpy = sinon.spy();
-      var doubleReferenceRefChangedSpy = sinon.spy();
+      var doubleReferenceRemoveSpy = jest.fn();
+      var doubleReferenceRefChangedSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref.' + hopName + '.text', ['insert'], doubleReferenceInsertSpy);
       ParentDataBinding.registerOnPath('single_ref.' + hopName + '.text', ['modify'], doubleReferenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref.' + hopName + '.text', ['remove'], doubleReferenceRemoveSpy);
@@ -1305,13 +1305,13 @@ describe('DataBinder', function () {
       var from = undefined;
       var to = '/myChild1.text';
       var runTests = function (in_increment, in_refChangedCount) {
-        doubleReferenceRefChangedSpy.callCount.should.equal(in_refChangedCount);
+        expect(doubleReferenceRefChangedSpy).toHaveBeenCalledTimes(in_refChangedCount);
         // We should have a property if 'to' is defined
         expect(!!doubleReferenceRefChangedSpy.getCall(0).args[0].getProperty()).to.equal(!!to);
         if (to) {
           expect(doubleReferenceRefChangedSpy.getCall(0).args[0].getProperty().getAbsolutePath()).to.equal(to);
         }
-        doubleReferenceRefChangedSpy.resetHistory();
+        doubleReferenceRefChangedSpy.mockClear();
 
         if (in_refChangedCount === 1) {
           var dummy = from;
@@ -1319,28 +1319,28 @@ describe('DataBinder', function () {
           to = dummy;
         }
 
-        doubleReferenceModifySpy.callCount.should.equal(0);
+        expect(doubleReferenceModifySpy).toHaveBeenCalledTimes(0);
         childPset1.get('text').setValue('newText' + (incCounter++));
-        doubleReferenceModifySpy.callCount.should.equal(in_increment);
+        expect(doubleReferenceModifySpy).toHaveBeenCalledTimes(in_increment);
 
         // This should trigger the remove handler
-        doubleReferenceRemoveSpy.callCount.should.equal(in_refChangedCount - in_increment);
-        doubleReferenceRemoveSpy.resetHistory();
+        expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(in_refChangedCount - in_increment);
+        doubleReferenceRemoveSpy.mockClear();
         workspace.remove('myChild1');
-        doubleReferenceRemoveSpy.callCount.should.equal(in_increment);
+        expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(in_increment);
 
         // This should trigger the insert handler
         // the insert was already called once when the reference was made valid
-        doubleReferenceInsertSpy.callCount.should.equal(in_increment);
-        doubleReferenceInsertSpy.resetHistory();
+        expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(in_increment);
+        doubleReferenceInsertSpy.mockClear();
         workspace.insert('myChild1', childPset1);
-        doubleReferenceInsertSpy.callCount.should.equal(in_increment);
+        expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(in_increment);
 
-        doubleReferenceRefChangedSpy.callCount.should.equal(2 * in_increment);
-        doubleReferenceInsertSpy.resetHistory();
-        doubleReferenceModifySpy.resetHistory();
-        doubleReferenceRemoveSpy.resetHistory();
-        doubleReferenceRefChangedSpy.resetHistory();
+        expect(doubleReferenceRefChangedSpy).toHaveBeenCalledTimes(2 * in_increment);
+        doubleReferenceInsertSpy.mockClear();
+        doubleReferenceModifySpy.mockClear();
+        doubleReferenceRemoveSpy.mockClear();
+        doubleReferenceRefChangedSpy.mockClear();
       };
 
       // parentPset should produce a ParentDataBinding
@@ -1459,54 +1459,54 @@ describe('DataBinder', function () {
 
       expected = myData;
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, MyBinding);
-      checkBinding.callCount.should.equal(3);
-      failed.should.equal(false);
+      expect(checkBinding).toHaveBeenCalledTimes(3);
+      expect(failed).toEqual(false);
 
       myData.get('text').setValue('hello');
-      checkBinding.callCount.should.equal(6);
-      failed.should.equal(false);
+      expect(checkBinding).toHaveBeenCalledTimes(6);
+      expect(failed).toEqual(false);
 
       // Change ref1 to point to other data
-      checkBinding.resetHistory();
+      checkBinding.mockClear();
       expected = myOtherData;
       myReferences.get('ref1', RESOLVE_NEVER).setValue('/myOtherData');
-      checkBinding.callCount.should.equal(3); // ref1, ref2 and ref3
-      failed.should.equal(false);
+      expect(checkBinding).toHaveBeenCalledTimes(3); // ref1, ref2 and ref3
+      expect(failed).toEqual(false);
 
       // Go back
-      checkBinding.resetHistory();
+      checkBinding.mockClear();
       expected = myData;
       myReferences.get('ref1', RESOLVE_NEVER).setValue('/myData');
-      checkBinding.callCount.should.equal(3); // ref1, ref2 and ref3
-      failed.should.equal(false);
+      expect(checkBinding).toHaveBeenCalledTimes(3); // ref1, ref2 and ref3
+      expect(failed).toEqual(false);
 
       // Change ref2 to point to other data
-      checkBinding.resetHistory();
+      checkBinding.mockClear();
       expected = myOtherData;
       myReferences.get('ref2', RESOLVE_NEVER).setValue('/myOtherData');
-      checkBinding.callCount.should.equal(2); // ref2 and ref3
-      failed.should.equal(false);
+      expect(checkBinding).toHaveBeenCalledTimes(2); // ref2 and ref3
+      expect(failed).toEqual(false);
 
       // Go back
-      checkBinding.resetHistory();
+      checkBinding.mockClear();
       expected = myData;
       myReferences.get('ref2', RESOLVE_NEVER).setValue('/myData');
-      checkBinding.callCount.should.equal(2); // ref2 and ref3
-      failed.should.equal(false);
+      expect(checkBinding).toHaveBeenCalledTimes(2); // ref2 and ref3
+      expect(failed).toEqual(false);
 
       // Change ref3 to point to other data
-      checkBinding.resetHistory();
+      checkBinding.mockClear();
       expected = myOtherData;
       myReferences.get('ref3', RESOLVE_NEVER).setValue('/myOtherData');
-      checkBinding.callCount.should.equal(1); // ref3
-      failed.should.equal(false);
+      expect(checkBinding).toHaveBeenCalledTimes(1); // ref3
+      expect(failed).toEqual(false);
 
       // Go back
-      checkBinding.resetHistory();
+      checkBinding.mockClear();
       expected = myData;
       myReferences.get('ref3', RESOLVE_NEVER).setValue('/myData');
-      checkBinding.callCount.should.equal(1); // ref3
-      failed.should.equal(false);
+      expect(checkBinding).toHaveBeenCalledTimes(1); // ref3
+      expect(failed).toEqual(false);
     });
 
     it('should give the right property in a primitive array', () => {
@@ -1534,14 +1534,14 @@ describe('DataBinder', function () {
       MyBinding.initialize();
 
       dataBinder.register('BINDING', PrimitiveChildrenTemplate.typeid, MyBinding);
-      checkBinding.callCount.should.equal(3);
-      failed.should.equal(false);
+      expect(checkBinding).toHaveBeenCalledTimes(3);
+      expect(failed).toEqual(false);
 
       stringArray.set(0, 'hey there');
       stringArray.set(1, 'bee cool');
       stringArray.set(2, 'sea here');
-      checkBinding.callCount.should.equal(6);
-      failed.should.equal(false);
+      expect(checkBinding).toHaveBeenCalledTimes(6);
+      expect(failed).toEqual(false);
     });
 
     it('should be able to modify multi-hop references', crazyTest('single_ref'));
@@ -1557,9 +1557,9 @@ describe('DataBinder', function () {
       var childPset1 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       var childPset2 = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
-      var doubleReferenceInsertSpy = sinon.spy();
-      var doubleReferenceModifySpy = sinon.spy();
-      var doubleReferenceRemoveSpy = sinon.spy();
+      var doubleReferenceInsertSpy = jest.fn();
+      var doubleReferenceModifySpy = jest.fn();
+      var doubleReferenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref.single_ref', ['referenceInsert'], doubleReferenceInsertSpy);
       ParentDataBinding.registerOnPath('single_ref.single_ref', ['referenceModify'], doubleReferenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref.single_ref', ['referenceRemove'], doubleReferenceRemoveSpy);
@@ -1582,14 +1582,14 @@ describe('DataBinder', function () {
       referenceParentPSet2.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
       workspace.insert('myReferenceParent2', referenceParentPSet2);
-      doubleReferenceInsertSpy.callCount.should.equal(1);
+      expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(1);
 
       referenceParentPSet2.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild2');
-      doubleReferenceModifySpy.callCount.should.equal(1);
+      expect(doubleReferenceModifySpy).toHaveBeenCalledTimes(1);
 
       workspace.remove('myReferenceParent2');
-      doubleReferenceRemoveSpy.callCount.should.equal(1);
+      expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should be able to handle binding to multi-hop references', function () {
@@ -1601,9 +1601,9 @@ describe('DataBinder', function () {
       var childPset1 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       var childPset2 = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
-      var doublyReferencedInsertSpy = sinon.spy();
-      var doublyReferencedModifySpy = sinon.spy();
-      var doublyReferencedRemoveSpy = sinon.spy();
+      var doublyReferencedInsertSpy = jest.fn();
+      var doublyReferencedModifySpy = jest.fn();
+      var doublyReferencedRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref.single_ref', ['insert'], doublyReferencedInsertSpy);
       ParentDataBinding.registerOnPath('single_ref.single_ref', ['modify'], doublyReferencedModifySpy);
       ParentDataBinding.registerOnPath('single_ref.single_ref', ['remove'], doublyReferencedRemoveSpy);
@@ -1626,28 +1626,28 @@ describe('DataBinder', function () {
       referenceParentPSet2.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
       workspace.insert('myReferenceParent2', referenceParentPSet2);
-      doublyReferencedInsertSpy.callCount.should.equal(1);
-      doublyReferencedRemoveSpy.callCount.should.equal(0);
+      expect(doublyReferencedInsertSpy).toHaveBeenCalledTimes(1);
+      expect(doublyReferencedRemoveSpy).toHaveBeenCalledTimes(0);
 
       // Change from the first parent to the second, we should get a remove then an insert
       referenceParentPSet2.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild2');
-      doublyReferencedInsertSpy.callCount.should.equal(2);
-      doublyReferencedRemoveSpy.callCount.should.equal(1);
+      expect(doublyReferencedInsertSpy).toHaveBeenCalledTimes(2);
+      expect(doublyReferencedRemoveSpy).toHaveBeenCalledTimes(1);
 
-      doublyReferencedModifySpy.callCount.should.equal(0);
+      expect(doublyReferencedModifySpy).toHaveBeenCalledTimes(0);
       childPset2.get('text').setValue('hello');
-      doublyReferencedModifySpy.callCount.should.equal(1);
+      expect(doublyReferencedModifySpy).toHaveBeenCalledTimes(1);
 
       // Now remove the reference completely; we should get a remove
       workspace.remove('myReferenceParent2');
-      doublyReferencedInsertSpy.callCount.should.equal(2);
-      doublyReferencedRemoveSpy.callCount.should.equal(2);
+      expect(doublyReferencedInsertSpy).toHaveBeenCalledTimes(2);
+      expect(doublyReferencedRemoveSpy).toHaveBeenCalledTimes(2);
 
       // Modify while the links are broken should not notify
-      doublyReferencedModifySpy.callCount.should.equal(1);
+      expect(doublyReferencedModifySpy).toHaveBeenCalledTimes(1);
       childPset2.get('text').setValue('hello again');
-      doublyReferencedModifySpy.callCount.should.equal(1);
+      expect(doublyReferencedModifySpy).toHaveBeenCalledTimes(1);
     });
 
     it('binding to multi-hop references, reinserting part of the chain (LYNXDEV-7596)', function () {
@@ -1659,8 +1659,8 @@ describe('DataBinder', function () {
       var childPset1 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       var childPset2 = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
-      var doublyReferencedInsertSpy = sinon.spy();
-      var doublyReferencedRemoveSpy = sinon.spy();
+      var doublyReferencedInsertSpy = jest.fn();
+      var doublyReferencedRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref.single_ref', ['insert'], doublyReferencedInsertSpy);
       ParentDataBinding.registerOnPath('single_ref.single_ref', ['remove'], doublyReferencedRemoveSpy);
 
@@ -1682,41 +1682,41 @@ describe('DataBinder', function () {
       referenceParentPSet2.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
       workspace.insert('myReferenceParent2', referenceParentPSet2);
-      doublyReferencedInsertSpy.callCount.should.equal(1);
-      doublyReferencedRemoveSpy.callCount.should.equal(0);
+      expect(doublyReferencedInsertSpy).toHaveBeenCalledTimes(1);
+      expect(doublyReferencedRemoveSpy).toHaveBeenCalledTimes(0);
 
       // Change from the first parent to the second, we should get a remove then an insert
       referenceParentPSet2.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild2');
-      doublyReferencedInsertSpy.callCount.should.equal(2);
-      doublyReferencedRemoveSpy.callCount.should.equal(1);
+      expect(doublyReferencedInsertSpy).toHaveBeenCalledTimes(2);
+      expect(doublyReferencedRemoveSpy).toHaveBeenCalledTimes(1);
 
       // Now remove the reference completely; we should get a remove
       workspace.remove('myReferenceParent2');
-      doublyReferencedInsertSpy.callCount.should.equal(2);
-      doublyReferencedRemoveSpy.callCount.should.equal(2);
+      expect(doublyReferencedInsertSpy).toHaveBeenCalledTimes(2);
+      expect(doublyReferencedRemoveSpy).toHaveBeenCalledTimes(2);
 
       // Put the intermediate node back
       workspace.insert('myReferenceParent2', referenceParentPSet2);
 
       // Currently, inserting it back again does not fire the insert
       // LYNXDEV-7596
-      doublyReferencedInsertSpy.callCount.should.equal(3);
-      doublyReferencedRemoveSpy.callCount.should.equal(2);
+      expect(doublyReferencedInsertSpy).toHaveBeenCalledTimes(3);
+      expect(doublyReferencedRemoveSpy).toHaveBeenCalledTimes(2);
 
       // Now remove the reference completely; we should get a remove
       workspace.remove('myReferenceParent2');
-      doublyReferencedInsertSpy.callCount.should.equal(3);
-      doublyReferencedRemoveSpy.callCount.should.equal(3);
+      expect(doublyReferencedInsertSpy).toHaveBeenCalledTimes(3);
+      expect(doublyReferencedRemoveSpy).toHaveBeenCalledTimes(3);
     });
 
     // Don't give me reference change if I'm not a reference
     it('should not tell me about references if im not a reference', function () {
       var myChild = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
-      var referenceInsertSpy = sinon.spy();
-      var referenceModifySpy = sinon.spy();
-      var referenceRemoveSpy = sinon.spy();
+      var referenceInsertSpy = jest.fn();
+      var referenceModifySpy = jest.fn();
+      var referenceRemoveSpy = jest.fn();
       ChildDataBinding.registerOnPath('text', ['referenceInsert'], referenceInsertSpy);
       ChildDataBinding.registerOnPath('text', ['referenceModify'], referenceModifySpy);
       ChildDataBinding.registerOnPath('text', ['referenceRemove'], referenceRemoveSpy);
@@ -1725,13 +1725,13 @@ describe('DataBinder', function () {
       workspace.insert('theChild', myChild);
       myChild.get('text').setValue('Hi!');
 
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
     });
 
     it('contracted path reference LYNXDEV-7915', function () {
-      var spy = sinon.spy();
+      var spy = jest.fn();
       ParentDataBinding
         .registerOnProperty('substruct.anotherRef.ref_ref', ['referenceInsert', 'insert', 'modify'], spy);
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding);
@@ -1746,14 +1746,14 @@ describe('DataBinder', function () {
 
       baseTexture.get('ref_ref', RESOLVE_NEVER).setValue('/image');
 
-      spy.callCount.should.equal(0);
+      expect(spy).toHaveBeenCalledTimes(0);
 
       bound.get(['substruct', 'anotherRef'], RESOLVE_NEVER).setValue('/baseTexture');
-      spy.callCount.should.equal(2); // referenceInsert + insert
+      expect(spy).toHaveBeenCalledTimes(2); // referenceInsert + insert
     });
 
     it('referenceChanged, undefined to defined double reference - first reference', function () {
-      var spy = sinon.spy();
+      var spy = jest.fn();
       ParentDataBinding.registerOnProperty('metal_f0.ref_ref.ref_ref', ['referenceChanged'], spy);
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding);
 
@@ -1770,14 +1770,14 @@ describe('DataBinder', function () {
 
       texturemap.get('ref_ref', RESOLVE_NEVER).setValue('/image');
 
-      spy.callCount.should.equal(0);
+      expect(spy).toHaveBeenCalledTimes(0);
       metal_f0.get(['ref_ref'], RESOLVE_NEVER).setValue('/texturemap');
 
-      spy.callCount.should.equal(1);
+      expect(spy).toHaveBeenCalledTimes(1);
     });
 
     it('referenceChanged, undefined to defined double reference - second reference', function () {
-      var spy = sinon.spy();
+      var spy = jest.fn();
       ParentDataBinding.registerOnProperty('metal_f0.ref_ref.ref_ref', ['referenceChanged'], spy);
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding);
 
@@ -1794,14 +1794,14 @@ describe('DataBinder', function () {
 
       metal_f0.get(['ref_ref'], RESOLVE_NEVER).setValue('/texturemap');
 
-      spy.callCount.should.equal(0);
+      expect(spy).toHaveBeenCalledTimes(0);
       texturemap.get('ref_ref', RESOLVE_NEVER).setValue('/image');
 
-      spy.callCount.should.equal(1);
+      expect(spy).toHaveBeenCalledTimes(1);
     });
 
     it('referenceChanged, undefined to defined single reference', function () {
-      var spy = sinon.spy();
+      var spy = jest.fn();
       ParentDataBinding.registerOnProperty('metal_f0.ref_ref', ['insert', 'modify', 'referenceChanged'], spy);
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding);
 
@@ -1818,19 +1818,19 @@ describe('DataBinder', function () {
 
       texturemap.get('ref_ref', RESOLVE_NEVER).setValue('/image');
 
-      spy.callCount.should.equal(0);
+      expect(spy).toHaveBeenCalledTimes(0);
       metal_f0.get(['ref_ref'], RESOLVE_NEVER).setValue('/texturemap');
 
-      spy.callCount.should.equal(2);
+      expect(spy).toHaveBeenCalledTimes(2);
     });
 
     // Don't give me collection change if I'm not a collection
     it('should not tell me about collections if im not a collection', function () {
       var myChild = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
-      var collectionInsertSpy = sinon.spy();
-      var collectionModifySpy = sinon.spy();
-      var collectionRemoveSpy = sinon.spy();
+      var collectionInsertSpy = jest.fn();
+      var collectionModifySpy = jest.fn();
+      var collectionRemoveSpy = jest.fn();
       ChildDataBinding.registerOnPath('text', ['collectionInsert'], collectionInsertSpy);
       ChildDataBinding.registerOnPath('text', ['collectionModify'], collectionModifySpy);
       ChildDataBinding.registerOnPath('text', ['collectionRemove'], collectionRemoveSpy);
@@ -1839,9 +1839,9 @@ describe('DataBinder', function () {
       workspace.insert('theChild', myChild);
       myChild.get('text').setValue('Hi!');
 
-      collectionInsertSpy.callCount.should.equal(0);
-      collectionModifySpy.callCount.should.equal(0);
-      collectionRemoveSpy.callCount.should.equal(0);
+      expect(collectionInsertSpy).toHaveBeenCalledTimes(0);
+      expect(collectionModifySpy).toHaveBeenCalledTimes(0);
+      expect(collectionRemoveSpy).toHaveBeenCalledTimes(0);
     });
 
     // TODO: * support for reference changed notifications (OK)
@@ -1857,9 +1857,9 @@ describe('DataBinder', function () {
       // Add the reference parent pset
       var referenceParentPSet = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
 
-      var referenceInsertSpy = sinon.spy();
-      var referenceModifySpy = sinon.spy();
-      var referenceRemoveSpy = sinon.spy();
+      var referenceInsertSpy = jest.fn();
+      var referenceModifySpy = jest.fn();
+      var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_prim_ref', ['insert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('single_prim_ref', ['modify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('single_prim_ref', ['remove'], referenceRemoveSpy);
@@ -1878,31 +1878,31 @@ describe('DataBinder', function () {
 
       // This should not trigger anything, since we're inserting into a non-referenced path in the map
       mapContainerPset.get('subMap').insert('5', PropertyFactory.create(ChildTemplate.typeid, 'single'));
-      referenceModifySpy.callCount.should.equal(0);
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // This should trigger the insert handler (but not the modify/remove handlers)
       mapContainerPset.get('subMap').insert('10', PropertyFactory.create(ChildTemplate.typeid, 'single'));
-      referenceInsertSpy.callCount.should.equal(1);
-      referenceInsertSpy.resetHistory();
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
+      referenceInsertSpy.mockClear();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // This should trigger the modify handler (but not the insert/remove handlers)
       mapContainerPset.get('subMap').get('10').get('text').setValue('hello');
-      referenceModifySpy.callCount.should.equal(1);
-      referenceModifySpy.resetHistory();
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
+      referenceModifySpy.mockClear();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // This should trigger both the insert and remove handler (but not the modify handler)
       mapContainerPset.get('subMap').set('10', PropertyFactory.create(ChildTemplate.typeid, 'single'));
-      referenceModifySpy.callCount.should.equal(0);
-      referenceInsertSpy.callCount.should.equal(1);
-      referenceRemoveSpy.callCount.should.equal(1);
-      referenceInsertSpy.resetHistory();
-      referenceRemoveSpy.resetHistory();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
+      referenceInsertSpy.mockClear();
+      referenceRemoveSpy.mockClear();
     });
 
     it('should handle a chain of references to a primitive', function () {
@@ -1911,9 +1911,9 @@ describe('DataBinder', function () {
       var referenceModifySpy = [];
       var referenceRemoveSpy = [];
       for (i = 0; i < 4; ++i) {
-        referenceInsertSpy[i] = sinon.spy();
-        referenceModifySpy[i] = sinon.spy();
-        referenceRemoveSpy[i] = sinon.spy();
+        referenceInsertSpy[i] = jest.fn();
+        referenceModifySpy[i] = jest.fn();
+        referenceRemoveSpy[i] = jest.fn();
         ParentDataBinding.registerOnPath('ref' + (i + 1), ['insert'], referenceInsertSpy[i]);
         ParentDataBinding.registerOnPath('ref' + (i + 1), ['modify'], referenceModifySpy[i]);
         ParentDataBinding.registerOnPath('ref' + (i + 1), ['remove'], referenceRemoveSpy[i]);
@@ -1937,32 +1937,32 @@ describe('DataBinder', function () {
 
       // this should trigger the insert handler in all refs
       for (i = 0; i < 3; ++i) {
-        referenceInsertSpy[i].callCount.should.equal(0);
+        expect(referenceInsertSpy[i]).toHaveBeenCalledTimes(0);
       }
       workspace.insert('myString', PropertyFactory.create('String', 'single'));
       for (i = 0; i < 3; ++i) {
-        referenceInsertSpy[i].callCount.should.equal(1);
-        referenceInsertSpy[i].resetHistory();
+        expect(referenceInsertSpy[i]).toHaveBeenCalledTimes(1);
+        referenceInsertSpy[i].mockClear();
       }
 
       // this should trigger the modify handler in all refs
       for (i = 0; i < 4; ++i) {
-        referenceModifySpy[i].callCount.should.equal(0);
+        expect(referenceModifySpy[i]).toHaveBeenCalledTimes(0);
       }
       workspace.get('myString').setValue('hello');
       for (i = 0; i < 3; ++i) {
-        referenceModifySpy[i].callCount.should.equal(1);
-        referenceModifySpy[i].resetHistory();
+        expect(referenceModifySpy[i]).toHaveBeenCalledTimes(1);
+        referenceModifySpy[i].mockClear();
       }
 
       // this should trigger the remove handler in all refs
       for (i = 0; i < 3; ++i) {
-        referenceRemoveSpy[i].callCount.should.equal(0);
+        expect(referenceRemoveSpy[i]).toHaveBeenCalledTimes(0);
       }
       workspace.remove('myString');
       for (i = 0; i < 3; ++i) {
-        referenceRemoveSpy[i].callCount.should.equal(1);
-        referenceRemoveSpy[i].resetHistory();
+        expect(referenceRemoveSpy[i]).toHaveBeenCalledTimes(1);
+        referenceRemoveSpy[i].mockClear();
       }
       workspace.insert('myString', PropertyFactory.create('String', 'single'));
 
@@ -1977,31 +1977,31 @@ describe('DataBinder', function () {
       workspace.get('myString').setValue('hello2');
       var handlers = [0, 1, 3];
       for (i = 0; i < handlers.length; i++) {
-        referenceModifySpy[handlers[i]].callCount.should.equal(0);
-        referenceModifySpy[handlers[i]].resetHistory();
+        expect(referenceModifySpy[handlers[i]]).toHaveBeenCalledTimes(0);
+        referenceModifySpy[handlers[i]].mockClear();
       }
       // ref3 still points to /myString so it should trigger
-      referenceModifySpy[2].callCount.should.equal(1);
-      referenceModifySpy[2].resetHistory();
+      expect(referenceModifySpy[2]).toHaveBeenCalledTimes(1);
+      referenceModifySpy[2].mockClear();
 
       // The new handler should now trigger instead
       workspace.get('myString2').setValue('hello2');
       for (i = 0; i < handlers.length; i++) {
-        referenceModifySpy[handlers[i]].callCount.should.equal(1);
-        referenceModifySpy[handlers[i]].resetHistory();
+        expect(referenceModifySpy[handlers[i]]).toHaveBeenCalledTimes(1);
+        referenceModifySpy[handlers[i]].mockClear();
       }
       // ref3 still points to /myString so it should not trigger
-      referenceModifySpy[2].callCount.should.equal(0);
-      referenceModifySpy[2].resetHistory();
+      expect(referenceModifySpy[2]).toHaveBeenCalledTimes(0);
+      referenceModifySpy[2].mockClear();
     });
 
     it('should handle an array of references to a property - broken in HFDM', function () {
       // Add the reference parent pset
       var referenceParentPSet = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
 
-      var referenceInsertSpy = sinon.spy();
-      var referenceModifySpy = sinon.spy();
-      var referenceRemoveSpy = sinon.spy();
+      var referenceInsertSpy = jest.fn();
+      var referenceModifySpy = jest.fn();
+      var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('array_ref[2].text', ['insert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('array_ref[2].text', ['modify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('array_ref[2].text', ['remove'], referenceRemoveSpy);
@@ -2021,42 +2021,42 @@ describe('DataBinder', function () {
 
       // This shouldn't trigger anything
       workspace.insert('alsoMyChildTemplate', PropertyFactory.create(ChildTemplate.typeid, 'single'));
-      referenceModifySpy.callCount.should.equal(0);
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // This should trigger the insert handler (but not the modify/remove handlers)
       workspace.insert('myChildTemplate', PropertyFactory.create(ChildTemplate.typeid, 'single'));
-      referenceInsertSpy.callCount.should.equal(1);
-      referenceInsertSpy.resetHistory();
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
+      referenceInsertSpy.mockClear();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // This shouldn't trigger anything
       workspace.get('alsoMyChildTemplate').get('text').setValue('hello');
-      referenceModifySpy.callCount.should.equal(0);
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // This also shouldn't trigger anything
       workspace.remove('alsoMyChildTemplate');
-      referenceModifySpy.callCount.should.equal(0);
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // This should trigger the modify handler (but not the insert/remove handlers)
       workspace.get('myChildTemplate').get('text').setValue('hello');
-      referenceModifySpy.callCount.should.equal(1);
-      referenceModifySpy.resetHistory();
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
+      referenceModifySpy.mockClear();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // This should trigger remove handler (but not the insert/modify handler)
       workspace.remove('myChildTemplate');
-      referenceRemoveSpy.callCount.should.equal(1);
-      referenceRemoveSpy.resetHistory();
-      referenceModifySpy.callCount.should.equal(0);
-      referenceInsertSpy.callCount.should.equal(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
+      referenceRemoveSpy.mockClear();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
     });
 
     it('should handle references directly to an array', function () {
@@ -2066,24 +2066,24 @@ describe('DataBinder', function () {
       var arrayPset1 = PropertyFactory.create(ArrayContainerTemplate.typeid, 'single');
       var arrayPset2 = PropertyFactory.create(ArrayContainerTemplate.typeid, 'single');
       // register the reference handlers
-      var referenceInsertSpy = sinon.spy();
-      var referenceModifySpy = sinon.spy();
-      var referenceRemoveSpy = sinon.spy();
+      var referenceInsertSpy = jest.fn();
+      var referenceModifySpy = jest.fn();
+      var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref', ['collectionInsert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('single_ref', ['collectionModify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref', ['collectionRemove'], referenceRemoveSpy);
 
       // Register the DataBinding
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding, { context: 'single' });
-      dataBinder._dataBindingCreatedCounter.should.equal(0);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
       // parentPset should produce a ParentDataBinding
       workspace.insert('myReferenceParent', referenceParentPSet);
-      dataBinder._dataBindingCreatedCounter.should.equal(1);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve('/myReferenceParent', 'BINDING');
       parentDataBinding.should.be.instanceOf(ParentDataBinding);
-      parentDataBinding.onModify.callCount.should.equal(0);
-      parentDataBinding.onModify.resetHistory();
+      expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
+      parentDataBinding.onModify.mockClear();
       workspace.insert('myChild1', arrayPset1);
       workspace.insert('myChild2', arrayPset2);
 
@@ -2091,39 +2091,39 @@ describe('DataBinder', function () {
         .setValue('/myChild1.subArray');
 
       var referencedArray = arrayPset1.get('subArray');
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
       // insert a new element into the array
       var childPset1 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       referencedArray.push(childPset1);
-      referenceInsertSpy.callCount.should.equal(1); /// TODO
-      referenceInsertSpy.resetHistory();
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1); /// TODO
+      referenceInsertSpy.mockClear();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // change a property of that element in the array, this should trigger a modify
       referencedArray.get(0).get('text').setValue('hello');
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceModifySpy.callCount.should.equal(1); /// TODO
-      referenceModifySpy.resetHistory();
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1); /// TODO
+      referenceModifySpy.mockClear();
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // change the first element into a new element, this should trigger a remove/insert
       var childPset2 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       referencedArray.set(0, childPset2);
-      referenceInsertSpy.callCount.should.equal(1); // TODO
-      referenceInsertSpy.resetHistory();
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(1); // TODO
-      referenceRemoveSpy.resetHistory();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1); // TODO
+      referenceInsertSpy.mockClear();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(1); // TODO
+      referenceRemoveSpy.mockClear();
 
       // remove the element, this should trigger a remove
       referencedArray.remove(0);
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(1); // this is correct for some reason :)
-      referenceRemoveSpy.resetHistory();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(1); // this is correct for some reason :)
+      referenceRemoveSpy.mockClear();
     });
 
     it('should handle references with a subpath that points to an array', function () {
@@ -2134,24 +2134,24 @@ describe('DataBinder', function () {
       var arrayPset2 = PropertyFactory.create(ArrayContainerTemplate.typeid, 'single');
 
       // register the reference handlers
-      var referenceInsertSpy = sinon.spy();
-      var referenceModifySpy = sinon.spy();
-      var referenceRemoveSpy = sinon.spy();
+      var referenceInsertSpy = jest.fn();
+      var referenceModifySpy = jest.fn();
+      var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref.subArray', ['collectionInsert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('single_ref.subArray', ['collectionModify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref.subArray', ['collectionRemove'], referenceRemoveSpy);
 
       // Register the DataBinding
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding, { context: 'single' });
-      dataBinder._dataBindingCreatedCounter.should.equal(0);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
       // parentPset should produce a ParentDataBinding
       workspace.insert('myReferenceParent', referenceParentPSet);
-      dataBinder._dataBindingCreatedCounter.should.equal(1);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve('/myReferenceParent', 'BINDING');
       parentDataBinding.should.be.instanceOf(ParentDataBinding);
-      parentDataBinding.onModify.callCount.should.equal(0);
-      parentDataBinding.onModify.resetHistory();
+      expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
+      parentDataBinding.onModify.mockClear();
       workspace.insert('myChild1', arrayPset1);
       workspace.insert('myChild2', arrayPset2);
 
@@ -2159,39 +2159,39 @@ describe('DataBinder', function () {
         .setValue('/myChild1');
 
       var referencedArray = arrayPset1.get('subArray');
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
       // insert a new element into the array
       var childPset1 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       referencedArray.push(childPset1);
-      referenceInsertSpy.callCount.should.equal(1); /// TODO
-      referenceInsertSpy.resetHistory();
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1); /// TODO
+      referenceInsertSpy.mockClear();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // change a property of that element in the array, this should trigger a modify
       referencedArray.get(0).get('text').setValue('hello');
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceModifySpy.callCount.should.equal(1); /// TODO
-      referenceModifySpy.resetHistory();
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1); /// TODO
+      referenceModifySpy.mockClear();
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // change the first element into a new element, this should trigger a remove/insert
       var childPset2 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       referencedArray.set(0, childPset2);
-      referenceInsertSpy.callCount.should.equal(1); // TODO
-      referenceInsertSpy.resetHistory();
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(1); // TODO
-      referenceRemoveSpy.resetHistory();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1); // TODO
+      referenceInsertSpy.mockClear();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(1); // TODO
+      referenceRemoveSpy.mockClear();
 
       // remove the element, this should trigger a remove
       referencedArray.remove(0);
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(1); // this is correct for some reason :)
-      referenceRemoveSpy.resetHistory();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(1); // this is correct for some reason :)
+      referenceRemoveSpy.mockClear();
     });
 
     it('should handle references directly to a map', function () {
@@ -2202,24 +2202,24 @@ describe('DataBinder', function () {
       var mapPset2 = PropertyFactory.create(MapContainerTemplate.typeid, 'single');
 
       // register the reference handlers
-      var referenceInsertSpy = sinon.spy();
-      var referenceModifySpy = sinon.spy();
-      var referenceRemoveSpy = sinon.spy();
+      var referenceInsertSpy = jest.fn();
+      var referenceModifySpy = jest.fn();
+      var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref', ['collectionInsert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('single_ref', ['collectionModify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref', ['collectionRemove'], referenceRemoveSpy);
 
       // Register the DataBinding
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding, { context: 'single' });
-      dataBinder._dataBindingCreatedCounter.should.equal(0);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
 
       // parentPset should produce a ParentDataBinding
       workspace.insert('myReferenceParent', referenceParentPSet);
-      dataBinder._dataBindingCreatedCounter.should.equal(1);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       const parentDataBinding = dataBinder.resolve(referenceParentPSet, 'BINDING');
       parentDataBinding.should.be.instanceOf(ParentDataBinding);
-      parentDataBinding.onModify.callCount.should.equal(0);
-      parentDataBinding.onModify.resetHistory();
+      expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
+      parentDataBinding.onModify.mockClear();
       workspace.insert('myChild1', mapPset1);
       workspace.insert('myChild2', mapPset2);
 
@@ -2227,30 +2227,30 @@ describe('DataBinder', function () {
         .setValue('/myChild1.subMap');
 
       var referencedMap = mapPset1.get('subMap');
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
       // insert a new element into the map
       var childPset1 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       referencedMap.insert(childPset1.getGuid(), childPset1);
-      referenceInsertSpy.callCount.should.equal(1);
-      referenceInsertSpy.resetHistory();
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
+      referenceInsertSpy.mockClear();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // change a property of that element in the map, this should trigger a modify
       referencedMap.get(childPset1.getGuid()).get('text').setValue('hello');
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceModifySpy.callCount.should.equal(1);
-      referenceModifySpy.resetHistory();
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
+      referenceModifySpy.mockClear();
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // remove the element, this should trigger a remove
       referencedMap.remove(childPset1.getGuid());
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(1);
-      referenceRemoveSpy.resetHistory();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
+      referenceRemoveSpy.mockClear();
     });
 
     it('should handle references with a subpath that points to a map', function () {
@@ -2261,24 +2261,24 @@ describe('DataBinder', function () {
       var mapPset2 = PropertyFactory.create(MapContainerTemplate.typeid, 'single');
 
       // register the reference handlers
-      var referenceInsertSpy = sinon.spy();
-      var referenceModifySpy = sinon.spy();
-      var referenceRemoveSpy = sinon.spy();
+      var referenceInsertSpy = jest.fn();
+      var referenceModifySpy = jest.fn();
+      var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref.subMap', ['collectionInsert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('single_ref.subMap', ['collectionModify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref.subMap', ['collectionRemove'], referenceRemoveSpy);
 
       // Register the DataBinding
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding, { context: 'single' });
-      dataBinder._dataBindingCreatedCounter.should.equal(0);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
 
       // parentPset should produce a ParentDataBinding
       workspace.insert('myReferenceParent', referenceParentPSet);
-      dataBinder._dataBindingCreatedCounter.should.equal(1);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve(referenceParentPSet, 'BINDING');
-      parentDataBinding.onModify.callCount.should.equal(0);
-      parentDataBinding.onModify.resetHistory();
+      expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
+      parentDataBinding.onModify.mockClear();
       workspace.insert('myChild1', mapPset1);
       workspace.insert('myChild2', mapPset2);
 
@@ -2286,30 +2286,30 @@ describe('DataBinder', function () {
         .setValue('/myChild1');
 
       var referencedMap = mapPset1.get('subMap');
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
       // insert a new element into the map
       var childPset1 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       referencedMap.insert(childPset1.getGuid(), childPset1);
-      referenceInsertSpy.callCount.should.equal(1);
-      referenceInsertSpy.resetHistory();
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
+      referenceInsertSpy.mockClear();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // change a property of that element in the map, this should trigger a modify
       referencedMap.get(childPset1.getGuid()).get('text').setValue('hello');
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceModifySpy.callCount.should.equal(1);
-      referenceModifySpy.resetHistory();
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
+      referenceModifySpy.mockClear();
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // remove the element, this should trigger a remove
       referencedMap.remove(childPset1.getGuid());
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(1);
-      referenceRemoveSpy.resetHistory();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
+      referenceRemoveSpy.mockClear();
     });
 
     it.skip('should handle double references', function () {
@@ -2327,73 +2327,73 @@ describe('DataBinder', function () {
         { context: 'single' });
       dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding, { context: 'all' });
 
-      dataBinder._dataBindingCreatedCounter.should.equal(0);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
 
       // parentPset should produce a ParentDataBinding
       workspace.insert('myReferenceParent1', doubleReferenceParentPSet1);
       workspace.insert('myReferenceParent2', doubleReferenceParentPSet2);
-      dataBinder._dataBindingCreatedCounter.should.equal(2);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(2);
       dataBinder._resetDebugCounters();
       const parentDataBinding1 = dataBinder.resolve('/myReferenceParent1', 'BINDING');
       parentDataBinding1.should.be.instanceOf(ParentDataBinding);
-      parentDataBinding1.onModify.callCount.should.equal(1);
-      parentDataBinding1.onModify.resetHistory();
+      expect(parentDataBinding1.onModify).toHaveBeenCalledTimes(1);
+      parentDataBinding1.onModify.mockClear();
       const parentDataBinding2 = dataBinder.resolve('/myReferenceParent2', 'BINDING');
       parentDataBinding2.should.be.instanceOf(ParentDataBinding);
-      parentDataBinding2.onModify.callCount.should.equal(1);
-      parentDataBinding2.onModify.resetHistory();
+      expect(parentDataBinding2.onModify).toHaveBeenCalledTimes(1);
+      parentDataBinding2.onModify.mockClear();
       workspace.insert('myChild1', childPset1);
       workspace.insert('myChild2', childPset2);
-      dataBinder._dataBindingCreatedCounter.should.equal(2);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(2);
       dataBinder._resetDebugCounters();
 
       // the first one points to the second one
       doubleReferenceParentPSet1.get('ref_ref').setValue('/myReferenceParent2.ref_ref');
 
       // we changed the reference for the first parent -> we get a notification
-      parentDataBinding1.onModify.callCount.should.equal(1);
+      expect(parentDataBinding1.onModify).toHaveBeenCalledTimes(1);
       var modificationContext = parentDataBinding1.onModify.getCall(0).args[0];
-      modificationContext.length.should.equal(1);
-      modificationContext[0].getAbsolutePath().should.equal('myReferenceParent1.ref_ref');
-      parentDataBinding1.onModify.resetHistory();
+      expect(modificationContext.length).toEqual(1);
+      expect(modificationContext[0].getAbsolutePath()).toEqual('myReferenceParent1.ref_ref');
+      parentDataBinding1.onModify.mockClear();
       // nothing happened to the second parent yet
-      parentDataBinding2.onModify.callCount.should.equal(0);
+      expect(parentDataBinding2.onModify).toHaveBeenCalledTimes(0);
 
       // the second one points to the real property
       doubleReferenceParentPSet2.get('ref_ref').set(childPset2);
       // we changed the reference for the second parent -> we get a notification
-      parentDataBinding2.onModify.callCount.should.equal(1);
+      expect(parentDataBinding2.onModify).toHaveBeenCalledTimes(1);
       modificationContext = parentDataBinding2.onModify.getCall(0).args[0];
-      modificationContext.length.should.equal(1);
-      modificationContext[0].getAbsolutePath().should.equal('myReferenceParent2.ref_ref');
-      parentDataBinding2.onModify.resetHistory();
+      expect(modificationContext.length).toEqual(1);
+      expect(modificationContext[0].getAbsolutePath()).toEqual('myReferenceParent2.ref_ref');
+      parentDataBinding2.onModify.mockClear();
       // the first parent should also be notified
-      parentDataBinding1.onModify.callCount.should.equal(1);
+      expect(parentDataBinding1.onModify).toHaveBeenCalledTimes(1);
       modificationContext = parentDataBinding1.onModify.getCall(0).args[0];
-      modificationContext.length.should.equal(1);
-      modificationContext[0].getAbsolutePath().should.equal('myReferenceParent2.ref_ref'); // the new value!
-      parentDataBinding1.onModify.resetHistory();
+      expect(modificationContext.length).toEqual(1);
+      expect(modificationContext[0].getAbsolutePath()).toEqual('myReferenceParent2.ref_ref'); // the new value!
+      parentDataBinding1.onModify.mockClear();
 
       // change the *value* of the reference (i.e. the "pointed to" object)
       childPset2.get('text').value = 'hello';
 
       // we should get a notification for the second parent
-      parentDataBinding2.onModify.callCount.should.equal(1);
+      expect(parentDataBinding2.onModify).toHaveBeenCalledTimes(1);
       modificationContext = parentDataBinding2.onModify.getCall(0).args[0];
-      modificationContext.length.should.equal(1);
-      modificationContext[0].getAbsolutePath().should.equal('myChild2.text');
-      parentDataBinding2.onModify.resetHistory();
-      parentDataBinding1.onModify.callCount.should.equal(1);
+      expect(modificationContext.length).toEqual(1);
+      expect(modificationContext[0].getAbsolutePath()).toEqual('myChild2.text');
+      parentDataBinding2.onModify.mockClear();
+      expect(parentDataBinding1.onModify).toHaveBeenCalledTimes(1);
       modificationContext = parentDataBinding1.onModify.getCall(0).args[0];
-      modificationContext.length.should.equal(1);
-      modificationContext[0].getAbsolutePath().should.equal('myChild2.text');
-      parentDataBinding1.onModify.resetHistory();
+      expect(modificationContext.length).toEqual(1);
+      expect(modificationContext[0].getAbsolutePath()).toEqual('myChild2.text');
+      parentDataBinding1.onModify.mockClear();
       workspace.remove(doubleReferenceParentPSet2);
       // change the *value* of the reference (i.e. the "pointed to" object) again
       childPset2.get('text').value = 'hello2';
       // we should not get a notification on either parents as we've removed the 2nd reference prop pointing to this
-      parentDataBinding1.onModify.callCount.should.equal(0);
-      parentDataBinding2.onModify.callCount.should.equal(0);
+      expect(parentDataBinding1.onModify).toHaveBeenCalledTimes(0);
+      expect(parentDataBinding2.onModify).toHaveBeenCalledTimes(0);
     });
 
     it.skip('should handle triple references', function () {
@@ -2414,106 +2414,106 @@ describe('DataBinder', function () {
         ChildDataBinding,
         { context: 'all' });
 
-      dataBinder._dataBindingCreatedCounter.should.equal(0);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
 
       // parentPset should produce a ParentDataBinding
       workspace.insert('myReferenceParent1', doubleReferenceParentPSet1);
       workspace.insert('myReferenceParent2', doubleReferenceParentPSet2);
       workspace.insert('myReferenceParent3', doubleReferenceParentPSet3);
-      dataBinder._dataBindingCreatedCounter.should.equal(3);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(3);
       dataBinder._resetDebugCounters();
       const parentDataBinding1 = dataBinder.resolve('/myReferenceParent1', 'BINDING');
       parentDataBinding1.should.be.instanceOf(ParentDataBinding);
-      parentDataBinding1.onModify.callCount.should.equal(1);
-      parentDataBinding1.onModify.resetHistory();
+      expect(parentDataBinding1.onModify).toHaveBeenCalledTimes(1);
+      parentDataBinding1.onModify.mockClear();
       const parentDataBinding2 = dataBinder.resolve('/myReferenceParent2', 'BINDING');
       parentDataBinding2.should.be.instanceOf(ParentDataBinding);
-      parentDataBinding2.onModify.callCount.should.equal(1);
-      parentDataBinding2.onModify.resetHistory();
+      expect(parentDataBinding2.onModify).toHaveBeenCalledTimes(1);
+      parentDataBinding2.onModify.mockClear();
       const parentDataBinding3 = dataBinder.resolve('/myReferenceParent3', 'BINDING');
       parentDataBinding3.should.be.instanceOf(ParentDataBinding);
-      parentDataBinding3.onModify.callCount.should.equal(1);
-      parentDataBinding3.onModify.resetHistory();
+      expect(parentDataBinding3.onModify).toHaveBeenCalledTimes(1);
+      parentDataBinding3.onModify.mockClear();
       workspace.insert('myChild1', childPset1);
-      dataBinder._dataBindingCreatedCounter.should.equal(1);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
 
       // the first one points to the second one
       doubleReferenceParentPSet1.get('ref_ref').setValue('/myReferenceParent2.ref_ref');
 
       // we changed the reference for the first parent -> we get a notification
-      parentDataBinding1.onModify.callCount.should.equal(1);
+      expect(parentDataBinding1.onModify).toHaveBeenCalledTimes(1);
       var modificationContext = parentDataBinding1.onModify.getCall(0).args[0];
-      modificationContext.length.should.equal(1);
-      modificationContext[0].getAbsolutePath().should.equal('myReferenceParent1.ref_ref');
-      parentDataBinding1.onModify.resetHistory();
+      expect(modificationContext.length).toEqual(1);
+      expect(modificationContext[0].getAbsolutePath()).toEqual('myReferenceParent1.ref_ref');
+      parentDataBinding1.onModify.mockClear();
       // nothing happened to the second/third parent yet
-      parentDataBinding2.onModify.callCount.should.equal(0);
-      parentDataBinding3.onModify.callCount.should.equal(0);
+      expect(parentDataBinding2.onModify).toHaveBeenCalledTimes(0);
+      expect(parentDataBinding3.onModify).toHaveBeenCalledTimes(0);
 
       // the second one points to the third one
       doubleReferenceParentPSet2.get('ref_ref').setValue('/myReferenceParent3.ref_ref');
 
       // we changed the reference for the second parent -> we get a notification
-      parentDataBinding2.onModify.callCount.should.equal(1);
+      expect(parentDataBinding2.onModify).toHaveBeenCalledTimes(1);
       modificationContext = parentDataBinding2.onModify.getCall(0).args[0];
-      modificationContext.length.should.equal(1);
-      modificationContext[0].getAbsolutePath().should.equal('myReferenceParent2.ref_ref');
-      parentDataBinding2.onModify.resetHistory();
-      parentDataBinding1.onModify.callCount.should.equal(1);
+      expect(modificationContext.length).toEqual(1);
+      expect(modificationContext[0].getAbsolutePath()).toEqual('myReferenceParent2.ref_ref');
+      parentDataBinding2.onModify.mockClear();
+      expect(parentDataBinding1.onModify).toHaveBeenCalledTimes(1);
       modificationContext = parentDataBinding1.onModify.getCall(0).args[0];
-      modificationContext.length.should.equal(1);
-      modificationContext[0].getAbsolutePath().should.equal('myReferenceParent2.ref_ref');
-      parentDataBinding1.onModify.resetHistory();
+      expect(modificationContext.length).toEqual(1);
+      expect(modificationContext[0].getAbsolutePath()).toEqual('myReferenceParent2.ref_ref');
+      parentDataBinding1.onModify.mockClear();
       // nothing happened to the third parent yet
-      parentDataBinding3.onModify.callCount.should.equal(0);
+      expect(parentDataBinding3.onModify).toHaveBeenCalledTimes(0);
 
       // the third one points to the real property
       doubleReferenceParentPSet3.get('ref_ref').set(childPset1);
       // we changed the reference for the third parent -> we get a notification
-      parentDataBinding3.onModify.callCount.should.equal(1);
+      expect(parentDataBinding3.onModify).toHaveBeenCalledTimes(1);
       modificationContext = parentDataBinding3.onModify.getCall(0).args[0];
-      modificationContext.length.should.equal(1);
-      modificationContext[0].getAbsolutePath().should.equal('myReferenceParent3.ref_ref');
-      parentDataBinding3.onModify.resetHistory();
-      parentDataBinding2.onModify.callCount.should.equal(1);
+      expect(modificationContext.length).toEqual(1);
+      expect(modificationContext[0].getAbsolutePath()).toEqual('myReferenceParent3.ref_ref');
+      parentDataBinding3.onModify.mockClear();
+      expect(parentDataBinding2.onModify).toHaveBeenCalledTimes(1);
       modificationContext = parentDataBinding2.onModify.getCall(0).args[0];
-      modificationContext.length.should.equal(1);
-      modificationContext[0].getAbsolutePath().should.equal('myReferenceParent3.ref_ref');
-      parentDataBinding2.onModify.resetHistory();
+      expect(modificationContext.length).toEqual(1);
+      expect(modificationContext[0].getAbsolutePath()).toEqual('myReferenceParent3.ref_ref');
+      parentDataBinding2.onModify.mockClear();
       // the first parent should also be notified
-      parentDataBinding1.onModify.callCount.should.equal(1);
+      expect(parentDataBinding1.onModify).toHaveBeenCalledTimes(1);
       modificationContext = parentDataBinding1.onModify.getCall(0).args[0];
-      modificationContext.length.should.equal(1);
-      modificationContext[0].getAbsolutePath().should.equal('myReferenceParent3.ref_ref');
-      parentDataBinding1.onModify.resetHistory();
+      expect(modificationContext.length).toEqual(1);
+      expect(modificationContext[0].getAbsolutePath()).toEqual('myReferenceParent3.ref_ref');
+      parentDataBinding1.onModify.mockClear();
 
       // change the *value* of the reference (i.e. the "pointed to" object)
       childPset1.get('text').value = 'hello';
 
       // we should get a notification for the second parent
-      parentDataBinding3.onModify.callCount.should.equal(1);
+      expect(parentDataBinding3.onModify).toHaveBeenCalledTimes(1);
       modificationContext = parentDataBinding3.onModify.getCall(0).args[0];
-      modificationContext.length.should.equal(1);
-      modificationContext[0].getAbsolutePath().should.equal('myChild1.text');
-      parentDataBinding3.onModify.resetHistory();
-      parentDataBinding2.onModify.callCount.should.equal(1);
+      expect(modificationContext.length).toEqual(1);
+      expect(modificationContext[0].getAbsolutePath()).toEqual('myChild1.text');
+      parentDataBinding3.onModify.mockClear();
+      expect(parentDataBinding2.onModify).toHaveBeenCalledTimes(1);
       modificationContext = parentDataBinding2.onModify.getCall(0).args[0];
-      modificationContext.length.should.equal(1);
-      modificationContext[0].getAbsolutePath().should.equal('myChild1.text');
-      parentDataBinding2.onModify.resetHistory();
-      parentDataBinding1.onModify.callCount.should.equal(1);
+      expect(modificationContext.length).toEqual(1);
+      expect(modificationContext[0].getAbsolutePath()).toEqual('myChild1.text');
+      parentDataBinding2.onModify.mockClear();
+      expect(parentDataBinding1.onModify).toHaveBeenCalledTimes(1);
       modificationContext = parentDataBinding1.onModify.getCall(0).args[0];
-      modificationContext.length.should.equal(1);
-      modificationContext[0].getAbsolutePath().should.equal('myChild1.text');
-      parentDataBinding1.onModify.resetHistory();
+      expect(modificationContext.length).toEqual(1);
+      expect(modificationContext[0].getAbsolutePath()).toEqual('myChild1.text');
+      parentDataBinding1.onModify.mockClear();
       workspace.remove(doubleReferenceParentPSet3);
       // change the *value* of the reference (i.e. the "pointed to" object) again
       childPset1.get('text').value = 'hello2';
       // we should not get a notification on either parents as we've removed the 2nd reference prop pointing to this
-      parentDataBinding1.onModify.callCount.should.equal(0);
-      parentDataBinding2.onModify.callCount.should.equal(0);
-      parentDataBinding3.onModify.callCount.should.equal(0);
+      expect(parentDataBinding1.onModify).toHaveBeenCalledTimes(0);
+      expect(parentDataBinding2.onModify).toHaveBeenCalledTimes(0);
+      expect(parentDataBinding3.onModify).toHaveBeenCalledTimes(0);
     });
 
     it('should handle multiple references to the same object', function () {
@@ -2525,9 +2525,9 @@ describe('DataBinder', function () {
       var childPset1 = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
       // register the reference handlers
-      var referenceInsertSpy = sinon.spy();
-      var referenceModifySpy = sinon.spy();
-      var referenceRemoveSpy = sinon.spy();
+      var referenceInsertSpy = jest.fn();
+      var referenceModifySpy = jest.fn();
+      var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref', ['insert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('single_ref', ['modify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref', ['remove'], referenceRemoveSpy);
@@ -2538,7 +2538,7 @@ describe('DataBinder', function () {
       workspace.insert('myReferenceParent1', referenceParentPSet1);
       workspace.insert('myReferenceParent2', referenceParentPSet2);
       workspace.insert('myReferenceParent3', referenceParentPSet3);
-      dataBinder._dataBindingCreatedCounter.should.equal(3);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(3);
       dataBinder._resetDebugCounters();
       const parentDataBinding1 = dataBinder.resolve(referenceParentPSet1, 'BINDING');
       parentDataBinding1.should.be.instanceOf(ParentDataBinding);
@@ -2547,9 +2547,9 @@ describe('DataBinder', function () {
       const parentDataBinding3 = dataBinder.resolve(referenceParentPSet3, 'BINDING');
       parentDataBinding3.should.be.instanceOf(ParentDataBinding);
 
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
       // insert should trigger the insert handler
       referenceParentPSet1.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
@@ -2558,24 +2558,24 @@ describe('DataBinder', function () {
       referenceParentPSet3.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
       workspace.insert('myChild1', childPset1);
-      referenceInsertSpy.callCount.should.equal(3);
-      referenceInsertSpy.resetHistory();
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(3);
+      referenceInsertSpy.mockClear();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // modify should trigger the modify handler
       childPset1.get('text').setValue('hello');
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceModifySpy.callCount.should.equal(3);
-      referenceModifySpy.resetHistory();
-      referenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(3);
+      referenceModifySpy.mockClear();
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // remove should trigger the remove handler
       workspace.remove('myChild1');
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(3);
-      referenceRemoveSpy.resetHistory();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(3);
+      referenceRemoveSpy.mockClear();
     });
 
     it('not follow references if there aren no exactPaths', function () {
@@ -2587,7 +2587,7 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ParentTemplate.typeid, ParentDataBinding);
 
       const binding = dataBinder.resolve('a', 'BINDING');
-      binding._getReferenceCount().should.equal(1);
+      expect(binding._getReferenceCount()).toEqual(1);
     });
 
     it('should not die miserably in an infinite loop', function () {
@@ -2604,7 +2604,7 @@ describe('DataBinder', function () {
 
       dataBinder.register('BINDING', 'NodeProperty', ParentDataBinding);
 
-      dataBinder._dataBindingCreatedCounter.should.equal(3);  // root, a and b
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(3);  // root, a and b
     });
 
     it('should not die miserably in an infinite loop with primitive reference arrays', function () {
@@ -2621,7 +2621,7 @@ describe('DataBinder', function () {
 
       dataBinder.register('BINDING', 'NodeProperty', ParentDataBinding);
 
-      dataBinder._dataBindingCreatedCounter.should.equal(3);  // root, a and b
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(3);  // root, a and b
     });
 
     it('should not die miserably in an infinite loop with primitive reference maps', function () {
@@ -2638,7 +2638,7 @@ describe('DataBinder', function () {
 
       dataBinder.register('BINDING', 'NodeProperty', ParentDataBinding);
 
-      dataBinder._dataBindingCreatedCounter.should.equal(3);  // root, a and b
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(3);  // root, a and b
     });
 
     it('follow references if there is an exactPath', function () {
@@ -2652,7 +2652,7 @@ describe('DataBinder', function () {
       });
 
       const binding = dataBinder.resolve('a', 'BINDING');
-      binding._getReferenceCount().should.equal(1);
+      expect(binding._getReferenceCount()).toEqual(1);
     });
 
     it('follow references if there is an exactPath in arrays', function () {
@@ -2666,7 +2666,7 @@ describe('DataBinder', function () {
       });
 
       const binding = dataBinder.resolve('a', 'BINDING');
-      binding._getReferenceCount().should.equal(1);
+      expect(binding._getReferenceCount()).toEqual(1);
     });
 
     it('should handle multiple nested references to the same object', function () {
@@ -2678,15 +2678,15 @@ describe('DataBinder', function () {
       var childPset1 = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
       // register the reference handlers
-      var referenceInsertSpy = sinon.spy();
-      var referenceModifySpy = sinon.spy();
-      var referenceRemoveSpy = sinon.spy();
+      var referenceInsertSpy = jest.fn();
+      var referenceModifySpy = jest.fn();
+      var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref', ['insert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('single_ref', ['modify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref', ['remove'], referenceRemoveSpy);
-      var referenceReferenceInsertSpy = sinon.spy();
-      var referenceReferenceModifySpy = sinon.spy();
-      var referenceReferenceRemoveSpy = sinon.spy();
+      var referenceReferenceInsertSpy = jest.fn();
+      var referenceReferenceModifySpy = jest.fn();
+      var referenceReferenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref.single_ref', ['insert'], referenceReferenceInsertSpy);
       ParentDataBinding.registerOnPath('single_ref.single_ref', ['modify'], referenceReferenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref.single_ref', ['remove'], referenceReferenceRemoveSpy);
@@ -2697,7 +2697,7 @@ describe('DataBinder', function () {
       workspace.insert('myReferenceParent1', referenceParentPSet1);
       workspace.insert('myReferenceParent2', referenceParentPSet2);
       workspace.insert('myReferenceParent3', referenceParentPSet3);
-      dataBinder._dataBindingCreatedCounter.should.equal(3);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(3);
       dataBinder._resetDebugCounters();
       const parentDataBinding1 = dataBinder.resolve(referenceParentPSet1, 'BINDING');
       parentDataBinding1.should.be.instanceOf(ParentDataBinding);
@@ -2706,12 +2706,12 @@ describe('DataBinder', function () {
       const parentDataBinding3 = dataBinder.resolve(referenceParentPSet3, 'BINDING');
       parentDataBinding3.should.be.instanceOf(ParentDataBinding);
 
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(0);
-      referenceReferenceInsertSpy.callCount.should.equal(0);
-      referenceReferenceModifySpy.callCount.should.equal(0);
-      referenceReferenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(referenceReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceReferenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       // insert should trigger the insert handler
       referenceParentPSet1.get('single_ref', RESOLVE_NEVER)
         .setValue('/myReferenceParent2');
@@ -2719,56 +2719,56 @@ describe('DataBinder', function () {
         .setValue('/myChild1');
 
       // We get an insert when we make the reference valid.
-      referenceInsertSpy.callCount.should.equal(1);
-      referenceInsertSpy.resetHistory();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
+      referenceInsertSpy.mockClear();
 
       // This modification triggers an onModify event on the referenceParentPSet1
       // since it bound to all modification events in myReferenceParent2
-      referenceModifySpy.callCount.should.equal(1);
-      referenceModifySpy.resetHistory();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
+      referenceModifySpy.mockClear();
 
       referenceParentPSet3.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
       workspace.insert('myChild1', childPset1);
-      referenceInsertSpy.callCount.should.equal(2);
-      referenceInsertSpy.resetHistory();
-      referenceModifySpy.callCount.should.equal(0); // TODO: this gets called here
-      referenceModifySpy.resetHistory();
-      referenceRemoveSpy.callCount.should.equal(0);
-      referenceReferenceInsertSpy.callCount.should.equal(1);
-      referenceReferenceInsertSpy.resetHistory();
-      referenceReferenceModifySpy.callCount.should.equal(0); // TODO: this gets called here
-      referenceReferenceModifySpy.resetHistory();
-      referenceReferenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(2);
+      referenceInsertSpy.mockClear();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0); // TODO: this gets called here
+      referenceModifySpy.mockClear();
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(referenceReferenceInsertSpy).toHaveBeenCalledTimes(1);
+      referenceReferenceInsertSpy.mockClear();
+      expect(referenceReferenceModifySpy).toHaveBeenCalledTimes(0); // TODO: this gets called here
+      referenceReferenceModifySpy.mockClear();
+      expect(referenceReferenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // modify should trigger the modify handler
       childPset1.get('text').setValue('hello');
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceModifySpy.callCount.should.equal(2);
-      referenceModifySpy.resetHistory();
-      referenceRemoveSpy.callCount.should.equal(0);
-      referenceReferenceInsertSpy.callCount.should.equal(0);
-      referenceReferenceModifySpy.callCount.should.equal(1);
-      referenceReferenceModifySpy.resetHistory();
-      referenceReferenceRemoveSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(2);
+      referenceModifySpy.mockClear();
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
+      expect(referenceReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceReferenceModifySpy).toHaveBeenCalledTimes(1);
+      referenceReferenceModifySpy.mockClear();
+      expect(referenceReferenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // remove should trigger the remove handler
       workspace.remove('myChild1');
-      referenceInsertSpy.callCount.should.equal(0);
-      referenceModifySpy.callCount.should.equal(0);
-      referenceRemoveSpy.callCount.should.equal(2);
-      referenceRemoveSpy.resetHistory();
-      referenceReferenceInsertSpy.callCount.should.equal(0);
-      referenceReferenceModifySpy.callCount.should.equal(0);
-      referenceReferenceRemoveSpy.callCount.should.equal(1);
-      referenceReferenceRemoveSpy.resetHistory();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(2);
+      referenceRemoveSpy.mockClear();
+      expect(referenceReferenceInsertSpy).toHaveBeenCalledTimes(0);
+      expect(referenceReferenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceReferenceRemoveSpy).toHaveBeenCalledTimes(1);
+      referenceReferenceRemoveSpy.mockClear();
 
     });
 
     it('should not send old modify messages, when the reference has changed', function () {
-      // var referenceInsertSpy = sinon.spy();
-      var referenceModifySpy = sinon.spy();
-      // var referenceRemoveSpy = sinon.spy();
+      // var referenceInsertSpy = jest.fn();
+      var referenceModifySpy = jest.fn();
+      // var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref.text', ['modify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref.ref.text', ['modify'], referenceModifySpy);
 
@@ -2795,7 +2795,7 @@ describe('DataBinder', function () {
       workspace.get(['array', 0, 'text']).setValue('changed');
       expect(referenceModifySpy.callCount).to.equal(1);
 
-      referenceModifySpy.resetHistory();
+      referenceModifySpy.mockClear();
 
       // When a reference is changed a modification should no longer result
       // in a modify event
@@ -2862,7 +2862,7 @@ describe('DataBinder', function () {
       var referenceBoundSpy = sinon.spy(function (in_modificationContext) {
         // console.log(in_modificationContext);
       });
-      var invalidReferenceChangedSpy = sinon.spy();
+      var invalidReferenceChangedSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref', ['referenceChanged'], referenceChangedSpy);
       ParentDataBinding.registerOnPath('single_ref.invalid', ['referenceChanged'],
         invalidReferenceChangedSpy);
@@ -2879,57 +2879,57 @@ describe('DataBinder', function () {
       workspace.insert('myChild2', childPset2);
 
       // Most basic case, insert with an already valid reference
-      referenceChangedSpy.callCount.should.equal(0);
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(0);
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
       workspace.insert('myReferenceParent', referenceParentPSet);
-      referenceChangedSpy.callCount.should.equal(1);
-      referenceChangedSpy.resetHistory();
-      referenceBoundSpy.callCount.should.equal(1);
-      referenceBoundSpy.resetHistory();
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
+      referenceChangedSpy.mockClear();
+      expect(referenceBoundSpy).toHaveBeenCalledTimes(1);
+      referenceBoundSpy.mockClear();
 
       // This should not trigger
       childPset1.get('text').setValue('newText');
-      referenceChangedSpy.callCount.should.equal(0);
-      referenceBoundSpy.callCount.should.equal(0);
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(0);
+      expect(referenceBoundSpy).toHaveBeenCalledTimes(0);
       // Remove our referenced node: this should trigger the referenceChange spy
       workspace.remove('myChild1');
-      referenceChangedSpy.callCount.should.equal(1);
-      referenceChangedSpy.resetHistory();
-      referenceBoundSpy.callCount.should.equal(0);
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
+      referenceChangedSpy.mockClear();
+      expect(referenceBoundSpy).toHaveBeenCalledTimes(0);
       // Reinsert our referenced node: this  should also trigger the referenceChange spy
       workspace.insert('myChild1', childPset1);
-      referenceChangedSpy.callCount.should.equal(1);
-      referenceChangedSpy.resetHistory();
-      referenceBoundSpy.callCount.should.equal(0);
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
+      referenceChangedSpy.mockClear();
+      expect(referenceBoundSpy).toHaveBeenCalledTimes(0);
       // Change the reference value, this should trigger both valid spies
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild2');
-      referenceChangedSpy.callCount.should.equal(2); // remove the old, insert the new
-      referenceChangedSpy.resetHistory();
-      referenceBoundSpy.callCount.should.equal(1);
-      referenceBoundSpy.resetHistory();
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(2); // remove the old, insert the new
+      referenceChangedSpy.mockClear();
+      expect(referenceBoundSpy).toHaveBeenCalledTimes(1);
+      referenceBoundSpy.mockClear();
       workspace.remove('myReferenceParent');
-      referenceChangedSpy.callCount.should.equal(1);
-      referenceChangedSpy.resetHistory();
-      referenceBoundSpy.callCount.should.equal(1);
-      referenceBoundSpy.resetHistory();
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
+      referenceChangedSpy.mockClear();
+      expect(referenceBoundSpy).toHaveBeenCalledTimes(1);
+      referenceBoundSpy.mockClear();
       // Change the reference value, this should not trigger anything because it's not in the workspace
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/invalid');
-      referenceChangedSpy.callCount.should.equal(0);
-      referenceBoundSpy.callCount.should.equal(0);
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(0);
+      expect(referenceBoundSpy).toHaveBeenCalledTimes(0);
       // reinsert with an invalid reference -> the ref. path is already undefined, it won't trigger referenceChanged
       workspace.insert('myReferenceParent', referenceParentPSet);
-      referenceChangedSpy.callCount.should.equal(0);
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(0);
       // but should trigger the reference bound spy
-      referenceBoundSpy.callCount.should.equal(1);
-      referenceBoundSpy.resetHistory();
+      expect(referenceBoundSpy).toHaveBeenCalledTimes(1);
+      referenceBoundSpy.mockClear();
 
       // this should never be called as it relates to an invalid property path
-      invalidReferenceChangedSpy.callCount.should.equal(0);
+      expect(invalidReferenceChangedSpy).toHaveBeenCalledTimes(0);
       // this should not have been changed to true
-      invalidProperty.should.equal(false);
+      expect(invalidProperty).toEqual(false);
     });
 
     it('should be able to bind the same callback to reference *or* referenced modify events', function () {
@@ -2954,60 +2954,60 @@ describe('DataBinder', function () {
       workspace.insert('myChild2', childPset2);
 
       // Most basic case, insert with an already valid reference
-      referenceSpy.callCount.should.equal(0);
+      expect(referenceSpy).toHaveBeenCalledTimes(0);
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
       workspace.insert('myReferenceParent', referenceParentPSet);
       // should not trigger as we only listen to modify events
-      referenceSpy.callCount.should.equal(0);
+      expect(referenceSpy).toHaveBeenCalledTimes(0);
 
       // Change the referenced Property: this should trigger
       childPset1.get('text').setValue('newText');
-      referenceSpy.callCount.should.equal(1);
-      referenceSpy.resetHistory();
+      expect(referenceSpy).toHaveBeenCalledTimes(1);
+      referenceSpy.mockClear();
 
       // Remove the referenced Property: this should not trigger
       workspace.remove('myChild1');
-      referenceSpy.callCount.should.equal(0);
+      expect(referenceSpy).toHaveBeenCalledTimes(0);
 
       // Reinsert the referenced Property: this  should not trigger either
       workspace.insert('myChild1', childPset1);
-      referenceSpy.callCount.should.equal(0);
+      expect(referenceSpy).toHaveBeenCalledTimes(0);
 
       // Remove the reference: this should not trigger
       workspace.remove('myReferenceParent');
-      referenceSpy.callCount.should.equal(0);
+      expect(referenceSpy).toHaveBeenCalledTimes(0);
 
       // Reinsert the reference: this should not trigger
       workspace.insert('myReferenceParent', referenceParentPSet);
-      referenceSpy.callCount.should.equal(0);
+      expect(referenceSpy).toHaveBeenCalledTimes(0);
 
       // Change the reference to something else -> should trigger
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild2');
-      referenceSpy.callCount.should.equal(1);
-      referenceSpy.resetHistory();
+      expect(referenceSpy).toHaveBeenCalledTimes(1);
+      referenceSpy.mockClear();
 
       // Remove the reference again, and set it to an invalid path, should not trigger
       workspace.remove('myReferenceParent');
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/invalid');
-      referenceSpy.callCount.should.equal(0);
+      expect(referenceSpy).toHaveBeenCalledTimes(0);
 
       // reinsert again (with invalid path), should not trigger
       workspace.insert('myReferenceParent', referenceParentPSet);
-      referenceSpy.callCount.should.equal(0);
+      expect(referenceSpy).toHaveBeenCalledTimes(0);
 
       // set it to a valid path -> should trigger
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild2');
-      referenceSpy.callCount.should.equal(1);
-      referenceSpy.resetHistory();
+      expect(referenceSpy).toHaveBeenCalledTimes(1);
+      referenceSpy.mockClear();
 
       // Change the value of the referenced -> should trigger
       childPset2.get('text').setValue('newText');
-      referenceSpy.callCount.should.equal(1);
-      referenceSpy.resetHistory();
+      expect(referenceSpy).toHaveBeenCalledTimes(1);
+      referenceSpy.mockClear();
     });
 
     it('should be able to bind to the general Reference typeid', function () {
@@ -3018,9 +3018,9 @@ describe('DataBinder', function () {
       var regKey = dataBinder.register('BINDING', 'Reference', ParentDataBinding);
 
       // Most basic case, insert with an already valid reference
-      dataBinder._dataBindingCreatedCounter.should.equal(0);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
       workspace.insert('myReferenceParent', referenceParentPSet);
-      dataBinder._dataBindingCreatedCounter.should.equal(7);  // seven types of references in ReferenceParentTemplate
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(7);  // seven types of references in ReferenceParentTemplate
       dataBinder._resetDebugCounters();
       workspace.remove('myReferenceParent');
       // now unregister for 'Reference' and register for 'array<Reference>'
@@ -3028,7 +3028,7 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', 'array<Reference>', ParentDataBinding);
       // reinsert pset
       workspace.insert('myReferenceParent', referenceParentPSet);
-      dataBinder._dataBindingCreatedCounter.should.equal(1);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     });
 
     it('should have basic support for maps of references', function () {
@@ -3039,9 +3039,9 @@ describe('DataBinder', function () {
       var childPset1 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       var childPset2 = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
-      var referenceInsertSpy = sinon.spy();
-      var referenceModifySpy = sinon.spy();
-      var referenceRemoveSpy = sinon.spy();
+      var referenceInsertSpy = jest.fn();
+      var referenceModifySpy = jest.fn();
+      var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('map_ref[one].text', ['insert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('map_ref[one].text', ['modify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('map_ref[one].text', ['remove'], referenceRemoveSpy);
@@ -3059,16 +3059,16 @@ describe('DataBinder', function () {
       ParentDataBinding.registerOnPath('map_ref[one].text', ['referenceChanged'], referenceChangedSpy,
         { requireProperty: true });
 
-      var mapInsertSpy = sinon.spy();
-      var mapModifySpy = sinon.spy();
-      var mapRemoveSpy = sinon.spy();
+      var mapInsertSpy = jest.fn();
+      var mapModifySpy = jest.fn();
+      var mapRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('map_ref', ['collectionInsert'], mapInsertSpy);
       ParentDataBinding.registerOnPath('map_ref', ['collectionModify'], mapModifySpy);
       ParentDataBinding.registerOnPath('map_ref', ['collectionRemove'], mapRemoveSpy);
 
-      var otherReferenceInsertSpy = sinon.spy();
-      var otherReferenceModifySpy = sinon.spy();
-      var otherReferenceRemoveSpy = sinon.spy();
+      var otherReferenceInsertSpy = jest.fn();
+      var otherReferenceModifySpy = jest.fn();
+      var otherReferenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('map_ref[three].text', ['insert'], otherReferenceInsertSpy);
       ParentDataBinding.registerOnPath('map_ref[three].text', ['modify'], otherReferenceModifySpy);
       ParentDataBinding.registerOnPath('map_ref[three].text', ['remove'], otherReferenceRemoveSpy);
@@ -3080,7 +3080,7 @@ describe('DataBinder', function () {
       workspace.insert('myChild1', childPset1);
       workspace.insert('myChild2', childPset2);
       workspace.insert('myReferenceParent', referenceParentPSet);
-      dataBinder._dataBindingCreatedCounter.should.equal(1);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve(referenceParentPSet, 'BINDING');
 
@@ -3089,87 +3089,87 @@ describe('DataBinder', function () {
       referenceMap.insert('two');
       referenceMap.insert('three');
       referenceMap.insert('four', '');
-      mapInsertSpy.callCount.should.equal(4);
-      mapInsertSpy.resetHistory();
+      expect(mapInsertSpy).toHaveBeenCalledTimes(4);
+      mapInsertSpy.mockClear();
       referenceMap.insert('ten');
-      mapInsertSpy.callCount.should.equal(1);
-      mapInsertSpy.resetHistory();
-      parentDataBinding.onModify.callCount.should.equal(5);
-      parentDataBinding.onModify.resetHistory();
+      expect(mapInsertSpy).toHaveBeenCalledTimes(1);
+      mapInsertSpy.mockClear();
+      expect(parentDataBinding.onModify).toHaveBeenCalledTimes(5);
+      parentDataBinding.onModify.mockClear();
       referenceMap.remove('ten');
-      mapRemoveSpy.callCount.should.equal(1);
-      mapRemoveSpy.resetHistory();
+      expect(mapRemoveSpy).toHaveBeenCalledTimes(1);
+      mapRemoveSpy.mockClear();
 
       referenceMap.setValue('one', '/myChild1');
       // The reference insert will be fired
-      referenceInsertSpy.callCount.should.equal(1);
-      referenceInsertSpy.resetHistory();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
+      referenceInsertSpy.mockClear();
 
       // this should also trigger the referenceChanged spy
-      referenceChangedSpy.callCount.should.equal(1);
-      referenceChangedSpy.resetHistory();
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
+      referenceChangedSpy.mockClear();
       referenceMap.setValue('three', '/myChild2');
-      mapModifySpy.callCount.should.equal(2);
-      mapModifySpy.resetHistory();
+      expect(mapModifySpy).toHaveBeenCalledTimes(2);
+      mapModifySpy.mockClear();
 
       // should trigger the modify spy
       childPset1.get('text').setValue('fortytwo');
-      referenceModifySpy.callCount.should.equal(1);
-      referenceModifySpy.resetHistory();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
+      referenceModifySpy.mockClear();
       // should trigger the remove spy
       workspace.remove('myChild1');
-      referenceRemoveSpy.callCount.should.equal(1);
-      referenceRemoveSpy.resetHistory();
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
+      referenceRemoveSpy.mockClear();
       // this should also trigger the referenceChanged spy
-      referenceChangedSpy.callCount.should.equal(1);
-      referenceChangedSpy.resetHistory();
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
+      referenceChangedSpy.mockClear();
       // should trigger the insert spy
       workspace.insert('myChild1', childPset1);
-      referenceInsertSpy.callCount.should.equal(1);
-      referenceInsertSpy.resetHistory();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
+      referenceInsertSpy.mockClear();
       // this should also trigger the referenceChanged spy
-      referenceChangedSpy.callCount.should.equal(1);
-      referenceChangedSpy.resetHistory();
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
+      referenceChangedSpy.mockClear();
 
-      otherReferenceInsertSpy.resetHistory();
-      otherReferenceModifySpy.resetHistory();
-      otherReferenceRemoveSpy.resetHistory();
+      otherReferenceInsertSpy.mockClear();
+      otherReferenceModifySpy.mockClear();
+      otherReferenceRemoveSpy.mockClear();
 
       // should trigger the modify spy
       childPset2.get('text').setValue('fortytwo');
-      otherReferenceModifySpy.callCount.should.equal(1);
-      otherReferenceModifySpy.resetHistory();
+      expect(otherReferenceModifySpy).toHaveBeenCalledTimes(1);
+      otherReferenceModifySpy.mockClear();
       // should trigger the remove spy
       workspace.remove('myChild2');
-      otherReferenceRemoveSpy.callCount.should.equal(1);
-      otherReferenceRemoveSpy.resetHistory();
+      expect(otherReferenceRemoveSpy).toHaveBeenCalledTimes(1);
+      otherReferenceRemoveSpy.mockClear();
       // should trigger the insert spy
       workspace.insert('myChild2', childPset2);
-      otherReferenceInsertSpy.callCount.should.equal(1);
-      otherReferenceInsertSpy.resetHistory();
+      expect(otherReferenceInsertSpy).toHaveBeenCalledTimes(1);
+      otherReferenceInsertSpy.mockClear();
       // should still trigger the original modify spy
       childPset1.get('text').setValue('42');
-      referenceModifySpy.callCount.should.equal(1);
-      referenceModifySpy.resetHistory();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
+      referenceModifySpy.mockClear();
       // but not the other one
-      otherReferenceModifySpy.callCount.should.equal(0);
+      expect(otherReferenceModifySpy).toHaveBeenCalledTimes(0);
 
       // Change the reference value, this should trigger the collectionModify,
       // referenceInsert and referenceRemoved spies
       referenceMap.setValue('one', '/myChild2');
-      mapModifySpy.callCount.should.equal(1);
-      mapModifySpy.resetHistory();
-      referenceChangedSpy.callCount.should.equal(2);
-      referenceChangedSpy.resetHistory();
+      expect(mapModifySpy).toHaveBeenCalledTimes(1);
+      mapModifySpy.mockClear();
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(2);
+      referenceChangedSpy.mockClear();
 
       // now modifying under child2 should trigger both referenceModify spies
       childPset2.get('text').setValue('42');
-      referenceModifySpy.callCount.should.equal(1);
-      referenceModifySpy.resetHistory();
-      otherReferenceModifySpy.callCount.should.equal(1);
-      otherReferenceModifySpy.resetHistory();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
+      referenceModifySpy.mockClear();
+      expect(otherReferenceModifySpy).toHaveBeenCalledTimes(1);
+      otherReferenceModifySpy.mockClear();
 
-      refChangedError.should.equal(false);
+      expect(refChangedError).toEqual(false);
     });
 
     it('should handle a chain of references to a primitive that begins with a map of references', function () {
@@ -3179,9 +3179,9 @@ describe('DataBinder', function () {
       var referenceRemoveSpy = [];
       var i;
       for (i = 0; i < 4; ++i) {
-        referenceInsertSpy[i] = sinon.spy();
-        referenceModifySpy[i] = sinon.spy();
-        referenceRemoveSpy[i] = sinon.spy();
+        referenceInsertSpy[i] = jest.fn();
+        referenceModifySpy[i] = jest.fn();
+        referenceRemoveSpy[i] = jest.fn();
       }
 
       // we create a reference chain like the following:
@@ -3214,32 +3214,32 @@ describe('DataBinder', function () {
 
       // this should trigger the insert handler in all refs
       for (i = 0; i < 3; ++i) {
-        referenceInsertSpy[i].callCount.should.equal(0);
+        expect(referenceInsertSpy[i]).toHaveBeenCalledTimes(0);
       }
       workspace.insert('myString', PropertyFactory.create('String', 'single'));
       for (i = 0; i < 3; ++i) {
-        referenceInsertSpy[i].callCount.should.equal(1);
-        referenceInsertSpy[i].resetHistory();
+        expect(referenceInsertSpy[i]).toHaveBeenCalledTimes(1);
+        referenceInsertSpy[i].mockClear();
       }
 
       // this should trigger the modify handler in all refs
       for (i = 0; i < 3; ++i) {
-        referenceModifySpy[i].callCount.should.equal(0);
+        expect(referenceModifySpy[i]).toHaveBeenCalledTimes(0);
       }
       workspace.get('myString').setValue('hello');
       for (i = 0; i < 3; ++i) {
-        referenceModifySpy[i].callCount.should.equal(1);
-        referenceModifySpy[i].resetHistory();
+        expect(referenceModifySpy[i]).toHaveBeenCalledTimes(1);
+        referenceModifySpy[i].mockClear();
       }
 
       // this should trigger the remove handler in all refs
       for (i = 0; i < 3; ++i) {
-        referenceRemoveSpy[i].callCount.should.equal(0);
+        expect(referenceRemoveSpy[i]).toHaveBeenCalledTimes(0);
       }
       workspace.remove('myString');
       for (i = 0; i < 3; ++i) {
-        referenceRemoveSpy[i].callCount.should.equal(1);
-        referenceRemoveSpy[i].resetHistory();
+        expect(referenceRemoveSpy[i]).toHaveBeenCalledTimes(1);
+        referenceRemoveSpy[i].mockClear();
       }
       workspace.insert('myString', PropertyFactory.create('String', 'single'));
 
@@ -3254,22 +3254,22 @@ describe('DataBinder', function () {
       workspace.get('myString').setValue('hello2');
       var handlers = [0, 1, 3];
       for (i = 0; i < handlers.length; i++) {
-        referenceModifySpy[handlers[i]].callCount.should.equal(0);
-        referenceModifySpy[handlers[i]].resetHistory();
+        expect(referenceModifySpy[handlers[i]]).toHaveBeenCalledTimes(0);
+        referenceModifySpy[handlers[i]].mockClear();
       }
       // ref2 still points to /myString so it should trigger
-      referenceModifySpy[2].callCount.should.equal(1);
-      referenceModifySpy[2].resetHistory();
+      expect(referenceModifySpy[2]).toHaveBeenCalledTimes(1);
+      referenceModifySpy[2].mockClear();
 
       // The new handler should now trigger instead
       workspace.get('myString2').setValue('hello2');
       for (i = 0; i < handlers.length; i++) {
-        referenceModifySpy[handlers[i]].callCount.should.equal(1);
-        referenceModifySpy[handlers[i]].resetHistory();
+        expect(referenceModifySpy[handlers[i]]).toHaveBeenCalledTimes(1);
+        referenceModifySpy[handlers[i]].mockClear();
       }
       // ref2 still points to /myString so it should not trigger
-      referenceModifySpy[2].callCount.should.equal(0);
-      referenceModifySpy[2].resetHistory();
+      expect(referenceModifySpy[2]).toHaveBeenCalledTimes(0);
+      referenceModifySpy[2].mockClear();
     });
 
     it.skip('should handle a chain of references that has a map of refs. in the middle (LYNXDEV-4228)', function () {
@@ -3279,9 +3279,9 @@ describe('DataBinder', function () {
       var referenceRemoveSpy = [];
       var i;
       for (i = 0; i < 4; ++i) {
-        referenceInsertSpy[i] = sinon.spy();
-        referenceModifySpy[i] = sinon.spy();
-        referenceRemoveSpy[i] = sinon.spy();
+        referenceInsertSpy[i] = jest.fn();
+        referenceModifySpy[i] = jest.fn();
+        referenceRemoveSpy[i] = jest.fn();
       }
 
       // we create a reference chain like the following:
@@ -3317,32 +3317,32 @@ describe('DataBinder', function () {
 
       // this should trigger the insert handler in all refs
       for (i = 0; i < 3; ++i) {
-        referenceInsertSpy[i].callCount.should.equal(0);
+        expect(referenceInsertSpy[i]).toHaveBeenCalledTimes(0);
       }
       workspace.insert('myString', PropertyFactory.create('String', 'single'));
       for (i = 0; i < 3; ++i) {
-        referenceInsertSpy[i].callCount.should.equal(1);
-        referenceInsertSpy[i].resetHistory();
+        expect(referenceInsertSpy[i]).toHaveBeenCalledTimes(1);
+        referenceInsertSpy[i].mockClear();
       }
 
       // this should trigger the modify handler in all refs
       for (i = 0; i < 3; ++i) {
-        referenceModifySpy[i].callCount.should.equal(0);
+        expect(referenceModifySpy[i]).toHaveBeenCalledTimes(0);
       }
       workspace.get('myString').setValue('hello');
       for (i = 0; i < 3; ++i) {
-        referenceModifySpy[i].callCount.should.equal(1);
-        referenceModifySpy[i].resetHistory();
+        expect(referenceModifySpy[i]).toHaveBeenCalledTimes(1);
+        referenceModifySpy[i].mockClear();
       }
 
       // this should trigger the remove handler in all refs
       for (i = 0; i < 3; ++i) {
-        referenceRemoveSpy[i].callCount.should.equal(0);
+        expect(referenceRemoveSpy[i]).toHaveBeenCalledTimes(0);
       }
       workspace.remove('myString');
       for (i = 0; i < 3; ++i) {
-        referenceRemoveSpy[i].callCount.should.equal(1);
-        referenceRemoveSpy[i].resetHistory();
+        expect(referenceRemoveSpy[i]).toHaveBeenCalledTimes(1);
+        referenceRemoveSpy[i].mockClear();
       }
       workspace.insert('myString', PropertyFactory.create('String', 'single'));
 
@@ -3357,22 +3357,22 @@ describe('DataBinder', function () {
       workspace.get('myString').setValue('hello2');
       var handlers = [0, 1, 3];
       for (i = 0; i < handlers.length; i++) {
-        referenceModifySpy[handlers[i]].callCount.should.equal(0);
-        referenceModifySpy[handlers[i]].resetHistory();
+        expect(referenceModifySpy[handlers[i]]).toHaveBeenCalledTimes(0);
+        referenceModifySpy[handlers[i]].mockClear();
       }
       // ref2 still points to /myString so it should trigger
-      referenceModifySpy[2].callCount.should.equal(1);
-      referenceModifySpy[2].resetHistory();
+      expect(referenceModifySpy[2]).toHaveBeenCalledTimes(1);
+      referenceModifySpy[2].mockClear();
 
       // The new handler should now trigger instead
       workspace.get('myString2').setValue('hello2');
       for (i = 0; i < handlers.length; i++) {
-        referenceModifySpy[handlers[i]].callCount.should.equal(1);
-        referenceModifySpy[handlers[i]].resetHistory();
+        expect(referenceModifySpy[handlers[i]]).toHaveBeenCalledTimes(1);
+        referenceModifySpy[handlers[i]].mockClear();
       }
       // ref2 still points to /myString so it should not trigger
-      referenceModifySpy[2].callCount.should.equal(0);
-      referenceModifySpy[2].resetHistory();
+      expect(referenceModifySpy[2]).toHaveBeenCalledTimes(0);
+      referenceModifySpy[2].mockClear();
     });
 
     it('should be able to modify multi-hop references that begins with a map of references', function () {
@@ -3394,7 +3394,7 @@ describe('DataBinder', function () {
         var prop = in_modificationContext.getProperty();
         expect(PropertyFactory.instanceOf(prop, 'String', 'single')).to.be.true;
       });
-      var referenceRemoveSpy = sinon.spy();
+      var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref.text', ['insert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('single_ref.text', ['modify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref.text', ['remove'], referenceRemoveSpy);
@@ -3407,8 +3407,8 @@ describe('DataBinder', function () {
         var prop = in_modificationContext.getProperty();
         expect(PropertyFactory.instanceOf(prop, 'String', 'single')).to.be.true;
       });
-      var doubleReferenceRemoveSpy = sinon.spy();
-      var doubleReferenceRefChangedSpy = sinon.spy();
+      var doubleReferenceRemoveSpy = jest.fn();
+      var doubleReferenceRefChangedSpy = jest.fn();
       ParentDataBinding.registerOnPath('map_ref[a].single_ref.text', ['insert'], doubleReferenceInsertSpy);
       ParentDataBinding.registerOnPath('map_ref[a].single_ref.text', ['modify'], doubleReferenceModifySpy);
       ParentDataBinding.registerOnPath('map_ref[a].single_ref.text', ['remove'], doubleReferenceRemoveSpy);
@@ -3427,7 +3427,7 @@ describe('DataBinder', function () {
       var from = undefined;
       var to = '/myChild1.text';
       var runTests = function (in_increment, in_refChangedCount) {
-        doubleReferenceRefChangedSpy.callCount.should.equal(in_refChangedCount);
+        expect(doubleReferenceRefChangedSpy).toHaveBeenCalledTimes(in_refChangedCount);
         // We should have a property if 'to' is defined
         expect(!!doubleReferenceRefChangedSpy.getCall(0).args[0].getProperty()).to.equal(!!to);
         if (to) {
@@ -3439,29 +3439,29 @@ describe('DataBinder', function () {
           to = dummy;
         }
 
-        doubleReferenceModifySpy.callCount.should.equal(0);
+        expect(doubleReferenceModifySpy).toHaveBeenCalledTimes(0);
         childPset1.get('text').setValue('newText' + (incCounter++));
-        doubleReferenceModifySpy.callCount.should.equal(in_increment);
+        expect(doubleReferenceModifySpy).toHaveBeenCalledTimes(in_increment);
         // this should not trigger the referenceChanged handler
-        doubleReferenceRefChangedSpy.callCount.should.equal(in_refChangedCount);
+        expect(doubleReferenceRefChangedSpy).toHaveBeenCalledTimes(in_refChangedCount);
 
         // This should trigger the remove handler
-        doubleReferenceRemoveSpy.callCount.should.equal(in_refChangedCount - in_increment);
-        doubleReferenceRemoveSpy.resetHistory();
+        expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(in_refChangedCount - in_increment);
+        doubleReferenceRemoveSpy.mockClear();
         workspace.remove('myChild1');
-        doubleReferenceRemoveSpy.callCount.should.equal(in_increment);
+        expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(in_increment);
 
         // This should trigger the insert handler
         // It will already have been called once when the reference became valid
-        doubleReferenceInsertSpy.callCount.should.equal(in_increment);
+        expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(in_increment);
         workspace.insert('myChild1', childPset1);
-        doubleReferenceInsertSpy.callCount.should.equal(2 * in_increment);
+        expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(2 * in_increment);
 
-        doubleReferenceRefChangedSpy.callCount.should.equal(in_refChangedCount + 2 * in_increment);
-        doubleReferenceInsertSpy.resetHistory();
-        doubleReferenceModifySpy.resetHistory();
-        doubleReferenceRemoveSpy.resetHistory();
-        doubleReferenceRefChangedSpy.resetHistory();
+        expect(doubleReferenceRefChangedSpy).toHaveBeenCalledTimes(in_refChangedCount + 2 * in_increment);
+        doubleReferenceInsertSpy.mockClear();
+        doubleReferenceModifySpy.mockClear();
+        doubleReferenceRemoveSpy.mockClear();
+        doubleReferenceRefChangedSpy.mockClear();
       };
 
       workspace.insert('myChild1', childPset1);
@@ -3552,9 +3552,9 @@ describe('DataBinder', function () {
       var childPset1 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       var childPset2 = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
-      var referenceInsertSpy = sinon.spy();
-      var referenceModifySpy = sinon.spy();
-      var referenceRemoveSpy = sinon.spy();
+      var referenceInsertSpy = jest.fn();
+      var referenceModifySpy = jest.fn();
+      var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('map_ref[a].text', ['insert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('map_ref[a].text', ['modify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('map_ref[a].text', ['remove'], referenceRemoveSpy);
@@ -3571,9 +3571,9 @@ describe('DataBinder', function () {
       });
       ParentDataBinding.registerOnPath('map_ref[a].text', ['referenceChanged'], referenceChangedSpy);
 
-      var mapInsertSpy = sinon.spy();
-      var mapModifySpy = sinon.spy();
-      var mapRemoveSpy = sinon.spy();
+      var mapInsertSpy = jest.fn();
+      var mapModifySpy = jest.fn();
+      var mapRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('map_ref', ['collectionInsert'], mapInsertSpy);
       ParentDataBinding.registerOnPath('map_ref', ['collectionModify'], mapModifySpy);
       ParentDataBinding.registerOnPath('map_ref', ['collectionRemove'], mapRemoveSpy);
@@ -3585,64 +3585,64 @@ describe('DataBinder', function () {
       workspace.insert('myChild1', childPset1);
       workspace.insert('myChild2', childPset2);
       workspace.insert('myReferenceParent', referenceParentPSet);
-      dataBinder._dataBindingCreatedCounter.should.equal(1);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve(referenceParentPSet, 'BINDING');
 
       var referenceMap = referenceParentPSet.get('map_ref');
       referenceMap.insert('a');
-      mapInsertSpy.callCount.should.equal(1);
-      mapInsertSpy.resetHistory();
-      parentDataBinding.onModify.callCount.should.equal(1);
-      parentDataBinding.onModify.resetHistory();
+      expect(mapInsertSpy).toHaveBeenCalledTimes(1);
+      mapInsertSpy.mockClear();
+      expect(parentDataBinding.onModify).toHaveBeenCalledTimes(1);
+      parentDataBinding.onModify.mockClear();
 
       referenceMap.setValue('a', '/myChild1');
       // this should trigger the referenceChanged spy
-      referenceChangedSpy.callCount.should.equal(1);
-      referenceChangedSpy.getCall(0).args[0].getProperty().getAbsolutePath().should.equal('/myChild1.text');
-      referenceChangedSpy.resetHistory();
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
+      expect(referenceChangedSpy.getCall(0).args[0].getProperty().getAbsolutePath()).toEqual('/myChild1.text');
+      referenceChangedSpy.mockClear();
 
       // should also trigger the modify spy
       childPset1.get('text').setValue('fortytwo');
-      referenceModifySpy.callCount.should.equal(1);
-      referenceModifySpy.resetHistory();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
+      referenceModifySpy.mockClear();
       // set our reference to empty
       referenceMap.setValue('a', '');
       // the modify spy should not be triggered anymore
       childPset1.get('text').setValue('sixtyfour');
-      referenceModifySpy.callCount.should.equal(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
       // this should also trigger the referenceChanged spy
-      referenceChangedSpy.callCount.should.equal(1);
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
       should.not.exist(referenceChangedSpy.getCall(0).args[0].getProperty());
-      referenceChangedSpy.resetHistory();
+      referenceChangedSpy.mockClear();
       // set it to an invalid value
       referenceMap.setValue('a', '/invalid');
       // this should not trigger the referenceChanged spy since it's still undefined
-      referenceChangedSpy.callCount.should.equal(0);
-      referenceChangedSpy.resetHistory();
-      referenceModifySpy.callCount.should.equal(0);
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(0);
+      referenceChangedSpy.mockClear();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
       // set back to valid
       referenceMap.setValue('a', '/myChild1');
       // this should also trigger the referenceChanged spy
-      referenceChangedSpy.callCount.should.equal(1);
-      referenceChangedSpy.getCall(0).args[0].getProperty().getAbsolutePath().should.equal('/myChild1.text');
-      referenceChangedSpy.resetHistory();
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
+      expect(referenceChangedSpy.getCall(0).args[0].getProperty().getAbsolutePath()).toEqual('/myChild1.text');
+      referenceChangedSpy.mockClear();
       // but not the modified spy
-      referenceModifySpy.callCount.should.equal(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
       // now remove (triggers a different code path than just setting it empty)
       referenceMap.remove('a');
       // this should also trigger the referenceChanged spy
-      referenceChangedSpy.callCount.should.equal(1);
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
       should.not.exist(referenceChangedSpy.getCall(0).args[0].getProperty());
-      referenceChangedSpy.resetHistory();
+      referenceChangedSpy.mockClear();
       // but not the modified spy
-      referenceModifySpy.callCount.should.equal(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
       // the modify spy should not be triggered anymore
       childPset1.get('text').setValue('sixtyfour-sixtyfour');
-      referenceModifySpy.callCount.should.equal(0);
-      referenceChangedSpy.callCount.should.equal(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(0);
 
-      refChangedError.should.equal(false);
+      expect(refChangedError).toEqual(false);
     });
 
     it('should have basic support for an array of references', function () {
@@ -3653,9 +3653,9 @@ describe('DataBinder', function () {
       var childPset1 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       var childPset2 = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
-      var referenceInsertSpy = sinon.spy();
-      var referenceModifySpy = sinon.spy();
-      var referenceRemoveSpy = sinon.spy();
+      var referenceInsertSpy = jest.fn();
+      var referenceModifySpy = jest.fn();
+      var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('array_ref[0].text', ['insert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('array_ref[0].text', ['modify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('array_ref[0].text', ['remove'], referenceRemoveSpy);
@@ -3672,17 +3672,17 @@ describe('DataBinder', function () {
       });
       ParentDataBinding.registerOnPath('array_ref[0].text', ['referenceChanged'], referenceChangedSpy);
 
-      var arrayInsertSpy = sinon.spy();
-      var arrayModifySpy = sinon.spy();
-      var arrayRemoveSpy = sinon.spy();
+      var arrayInsertSpy = jest.fn();
+      var arrayModifySpy = jest.fn();
+      var arrayRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('array_ref', ['collectionInsert'], arrayInsertSpy);
       ParentDataBinding.registerOnPath('array_ref', ['collectionModify'], arrayModifySpy);
       ParentDataBinding.registerOnPath('array_ref', ['collectionRemove'], arrayRemoveSpy);
 
       // register these later to make sure we're modifying the right reference property objects in the prototype
-      var otherReferenceInsertSpy = sinon.spy();
-      var otherReferenceModifySpy = sinon.spy();
-      var otherReferenceRemoveSpy = sinon.spy();
+      var otherReferenceInsertSpy = jest.fn();
+      var otherReferenceModifySpy = jest.fn();
+      var otherReferenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('array_ref[2].text', ['insert'], otherReferenceInsertSpy);
       ParentDataBinding.registerOnPath('array_ref[2].text', ['modify'], otherReferenceModifySpy);
       ParentDataBinding.registerOnPath('array_ref[2].text', ['remove'], otherReferenceRemoveSpy);
@@ -3694,7 +3694,7 @@ describe('DataBinder', function () {
       workspace.insert('myChild1', childPset1);
       workspace.insert('myChild2', childPset2);
       workspace.insert('myReferenceParent', referenceParentPSet);
-      dataBinder._dataBindingCreatedCounter.should.equal(1);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve(referenceParentPSet, 'BINDING');
 
@@ -3702,85 +3702,85 @@ describe('DataBinder', function () {
       referenceArray.push();
       referenceArray.push();
       referenceArray.push();
-      arrayInsertSpy.callCount.should.equal(3);
-      arrayInsertSpy.resetHistory();
-      parentDataBinding.onModify.callCount.should.equal(3);
-      parentDataBinding.onModify.resetHistory();
+      expect(arrayInsertSpy).toHaveBeenCalledTimes(3);
+      arrayInsertSpy.mockClear();
+      expect(parentDataBinding.onModify).toHaveBeenCalledTimes(3);
+      parentDataBinding.onModify.mockClear();
       referenceArray.push();
       referenceArray.pop();
-      arrayInsertSpy.callCount.should.equal(1);
-      arrayInsertSpy.resetHistory();
-      arrayRemoveSpy.callCount.should.equal(1);
-      arrayRemoveSpy.resetHistory();
+      expect(arrayInsertSpy).toHaveBeenCalledTimes(1);
+      arrayInsertSpy.mockClear();
+      expect(arrayRemoveSpy).toHaveBeenCalledTimes(1);
+      arrayRemoveSpy.mockClear();
 
       referenceArray.set(0, '/myChild1');
       // The reference becoming valid makes the insert be called
-      referenceInsertSpy.callCount.should.equal(1);
-      referenceInsertSpy.resetHistory();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
+      referenceInsertSpy.mockClear();
 
       // this should also trigger the referenceChanged spy
-      referenceChangedSpy.callCount.should.equal(1);
-      referenceChangedSpy.resetHistory();
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
+      referenceChangedSpy.mockClear();
       referenceArray.set(2, '/myChild2');
       // Reference became valid - insert was fired
-      otherReferenceInsertSpy.callCount.should.equal(1);
-      otherReferenceInsertSpy.resetHistory();
-      arrayModifySpy.callCount.should.equal(2);
-      arrayModifySpy.resetHistory();
+      expect(otherReferenceInsertSpy).toHaveBeenCalledTimes(1);
+      otherReferenceInsertSpy.mockClear();
+      expect(arrayModifySpy).toHaveBeenCalledTimes(2);
+      arrayModifySpy.mockClear();
 
       // should trigger the modify spy
       childPset1.get('text').setValue('fortytwo');
-      referenceModifySpy.callCount.should.equal(1);
-      referenceModifySpy.resetHistory();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
+      referenceModifySpy.mockClear();
       // should trigger the remove spy
       workspace.remove('myChild1');
-      referenceRemoveSpy.callCount.should.equal(1);
-      referenceRemoveSpy.resetHistory();
+      expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
+      referenceRemoveSpy.mockClear();
       // this should also trigger the referenceChanged spy
-      referenceChangedSpy.callCount.should.equal(1);
-      referenceChangedSpy.resetHistory();
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
+      referenceChangedSpy.mockClear();
       // should trigger the insert spy
       workspace.insert('myChild1', childPset1);
-      referenceInsertSpy.callCount.should.equal(1);
-      referenceInsertSpy.resetHistory();
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
+      referenceInsertSpy.mockClear();
       // this should also trigger the referenceChanged spy
-      referenceChangedSpy.callCount.should.equal(1);
-      referenceChangedSpy.resetHistory();
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
+      referenceChangedSpy.mockClear();
 
       // should trigger the modify spy
       childPset2.get('text').setValue('fortytwo');
-      otherReferenceModifySpy.callCount.should.equal(1);
-      otherReferenceModifySpy.resetHistory();
+      expect(otherReferenceModifySpy).toHaveBeenCalledTimes(1);
+      otherReferenceModifySpy.mockClear();
       // should trigger the remove spy
       workspace.remove('myChild2');
-      otherReferenceRemoveSpy.callCount.should.equal(1);
-      otherReferenceRemoveSpy.resetHistory();
+      expect(otherReferenceRemoveSpy).toHaveBeenCalledTimes(1);
+      otherReferenceRemoveSpy.mockClear();
       // should trigger the insert spy
       workspace.insert('myChild2', childPset2);
-      otherReferenceInsertSpy.callCount.should.equal(1);
-      otherReferenceInsertSpy.resetHistory();
+      expect(otherReferenceInsertSpy).toHaveBeenCalledTimes(1);
+      otherReferenceInsertSpy.mockClear();
       // should still trigger the original modify spy
       childPset1.get('text').setValue('42');
-      referenceModifySpy.callCount.should.equal(1);
-      referenceModifySpy.resetHistory();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
+      referenceModifySpy.mockClear();
       // but not the other one
-      otherReferenceModifySpy.callCount.should.equal(0);
+      expect(otherReferenceModifySpy).toHaveBeenCalledTimes(0);
 
       // Change the reference value, this should trigger both the collectionModify & referenceChanged spies
       referenceArray.set(0, '/myChild2');
-      arrayModifySpy.callCount.should.equal(1);
-      arrayModifySpy.resetHistory();
-      referenceChangedSpy.callCount.should.equal(2); // once for 'remove', once for 'insert'
-      referenceChangedSpy.resetHistory();
+      expect(arrayModifySpy).toHaveBeenCalledTimes(1);
+      arrayModifySpy.mockClear();
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(2); // once for 'remove', once for 'insert'
+      referenceChangedSpy.mockClear();
 
       // now modifying under child2 should trigger both referenceModify spies
       childPset2.get('text').setValue('42');
-      referenceModifySpy.callCount.should.equal(1);
-      referenceModifySpy.resetHistory();
-      otherReferenceModifySpy.callCount.should.equal(1);
-      otherReferenceModifySpy.resetHistory();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
+      referenceModifySpy.mockClear();
+      expect(otherReferenceModifySpy).toHaveBeenCalledTimes(1);
+      otherReferenceModifySpy.mockClear();
 
-      refChangedError.should.equal(false);
+      expect(refChangedError).toEqual(false);
     });
 
     it('should handle a chain of references to a primitive that begins with an array of references', function () {
@@ -3790,9 +3790,9 @@ describe('DataBinder', function () {
       var referenceRemoveSpy = [];
       var i;
       for (i = 0; i < 4; ++i) {
-        referenceInsertSpy[i] = sinon.spy();
-        referenceModifySpy[i] = sinon.spy();
-        referenceRemoveSpy[i] = sinon.spy();
+        referenceInsertSpy[i] = jest.fn();
+        referenceModifySpy[i] = jest.fn();
+        referenceRemoveSpy[i] = jest.fn();
       }
 
       // we create a reference chain like the following:
@@ -3825,32 +3825,32 @@ describe('DataBinder', function () {
 
       // this should trigger the insert handler in all refs
       for (i = 0; i < 3; ++i) {
-        referenceInsertSpy[i].callCount.should.equal(0);
+        expect(referenceInsertSpy[i]).toHaveBeenCalledTimes(0);
       }
       workspace.insert('myString', PropertyFactory.create('String', 'single'));
       for (i = 0; i < 3; ++i) {
-        referenceInsertSpy[i].callCount.should.equal(1);
-        referenceInsertSpy[i].resetHistory();
+        expect(referenceInsertSpy[i]).toHaveBeenCalledTimes(1);
+        referenceInsertSpy[i].mockClear();
       }
 
       // this should trigger the modify handler in all refs
       for (i = 0; i < 3; ++i) {
-        referenceModifySpy[i].callCount.should.equal(0);
+        expect(referenceModifySpy[i]).toHaveBeenCalledTimes(0);
       }
       workspace.get('myString').setValue('hello');
       for (i = 0; i < 3; ++i) {
-        referenceModifySpy[i].callCount.should.equal(1);
-        referenceModifySpy[i].resetHistory();
+        expect(referenceModifySpy[i]).toHaveBeenCalledTimes(1);
+        referenceModifySpy[i].mockClear();
       }
 
       // this should trigger the remove handler in all refs
       for (i = 0; i < 3; ++i) {
-        referenceRemoveSpy[i].callCount.should.equal(0);
+        expect(referenceRemoveSpy[i]).toHaveBeenCalledTimes(0);
       }
       workspace.remove('myString');
       for (i = 0; i < 3; ++i) {
-        referenceRemoveSpy[i].callCount.should.equal(1);
-        referenceRemoveSpy[i].resetHistory();
+        expect(referenceRemoveSpy[i]).toHaveBeenCalledTimes(1);
+        referenceRemoveSpy[i].mockClear();
       }
       workspace.insert('myString', PropertyFactory.create('String', 'single'));
 
@@ -3865,22 +3865,22 @@ describe('DataBinder', function () {
       workspace.get('myString').setValue('hello2');
       var handlers = [0, 1, 3];
       for (i = 0; i < handlers.length; i++) {
-        referenceModifySpy[handlers[i]].callCount.should.equal(0);
-        referenceModifySpy[handlers[i]].resetHistory();
+        expect(referenceModifySpy[handlers[i]]).toHaveBeenCalledTimes(0);
+        referenceModifySpy[handlers[i]].mockClear();
       }
       // ref2 still points to /myString so it should trigger
-      referenceModifySpy[2].callCount.should.equal(1);
-      referenceModifySpy[2].resetHistory();
+      expect(referenceModifySpy[2]).toHaveBeenCalledTimes(1);
+      referenceModifySpy[2].mockClear();
 
       // The new handler should now trigger instead
       workspace.get('myString2').setValue('hello2');
       for (i = 0; i < handlers.length; i++) {
-        referenceModifySpy[handlers[i]].callCount.should.equal(1);
-        referenceModifySpy[handlers[i]].resetHistory();
+        expect(referenceModifySpy[handlers[i]]).toHaveBeenCalledTimes(1);
+        referenceModifySpy[handlers[i]].mockClear();
       }
       // ref2 still points to /myString so it should not trigger
-      referenceModifySpy[2].callCount.should.equal(0);
-      referenceModifySpy[2].resetHistory();
+      expect(referenceModifySpy[2]).toHaveBeenCalledTimes(0);
+      referenceModifySpy[2].mockClear();
     });
 
     it('should be able to modify multi-hop references that begins with an array of references', function () {
@@ -3902,7 +3902,7 @@ describe('DataBinder', function () {
         var prop = in_modificationContext.getProperty();
         expect(PropertyFactory.instanceOf(prop, 'String', 'single')).to.be.true;
       });
-      var referenceRemoveSpy = sinon.spy();
+      var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref.text', ['insert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('single_ref.text', ['modify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref.text', ['remove'], referenceRemoveSpy);
@@ -3915,8 +3915,8 @@ describe('DataBinder', function () {
         var prop = in_modificationContext.getProperty();
         expect(PropertyFactory.instanceOf(prop, 'String', 'single')).to.be.true;
       });
-      var doubleReferenceRemoveSpy = sinon.spy();
-      var doubleReferenceRefChangedSpy = sinon.spy();
+      var doubleReferenceRemoveSpy = jest.fn();
+      var doubleReferenceRefChangedSpy = jest.fn();
       ParentDataBinding.registerOnPath('array_ref[0].single_ref.text', ['insert'], doubleReferenceInsertSpy);
       ParentDataBinding.registerOnPath('array_ref[0].single_ref.text', ['modify'], doubleReferenceModifySpy);
       ParentDataBinding.registerOnPath('array_ref[0].single_ref.text', ['remove'], doubleReferenceRemoveSpy);
@@ -3946,29 +3946,29 @@ describe('DataBinder', function () {
           to = dummy;
         }
 
-        doubleReferenceModifySpy.callCount.should.equal(0);
+        expect(doubleReferenceModifySpy).toHaveBeenCalledTimes(0);
         childPset1.get('text').setValue('newText' + (incCounter++));
-        doubleReferenceModifySpy.callCount.should.equal(in_increment);
+        expect(doubleReferenceModifySpy).toHaveBeenCalledTimes(in_increment);
         // this should not trigger the referenceChanged handler
-        doubleReferenceRefChangedSpy.callCount.should.equal(in_refChangedCount);
+        expect(doubleReferenceRefChangedSpy).toHaveBeenCalledTimes(in_refChangedCount);
 
         // This should trigger the remove handler
-        doubleReferenceRemoveSpy.callCount.should.equal(in_refChangedCount - in_increment);
-        doubleReferenceRemoveSpy.resetHistory();
+        expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(in_refChangedCount - in_increment);
+        doubleReferenceRemoveSpy.mockClear();
         workspace.remove('myChild1');
-        doubleReferenceRemoveSpy.callCount.should.equal(in_increment);
+        expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(in_increment);
 
         // This should trigger the insert handler
         // It may have been called once when the insert reference became valid
-        doubleReferenceInsertSpy.callCount.should.equal(in_increment);
+        expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(in_increment);
         workspace.insert('myChild1', childPset1);
-        doubleReferenceInsertSpy.callCount.should.equal(2 * in_increment);
+        expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(2 * in_increment);
 
-        doubleReferenceRefChangedSpy.callCount.should.equal(in_refChangedCount + 2 * in_increment);
-        doubleReferenceInsertSpy.resetHistory();
-        doubleReferenceModifySpy.resetHistory();
-        doubleReferenceRemoveSpy.resetHistory();
-        doubleReferenceRefChangedSpy.resetHistory();
+        expect(doubleReferenceRefChangedSpy).toHaveBeenCalledTimes(in_refChangedCount + 2 * in_increment);
+        doubleReferenceInsertSpy.mockClear();
+        doubleReferenceModifySpy.mockClear();
+        doubleReferenceRemoveSpy.mockClear();
+        doubleReferenceRefChangedSpy.mockClear();
       };
 
       workspace.insert('myChild1', childPset1);
@@ -4061,9 +4061,9 @@ describe('DataBinder', function () {
       var childPset1 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       var childPset2 = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
-      var referenceInsertSpy = sinon.spy();
-      var referenceModifySpy = sinon.spy();
-      var referenceRemoveSpy = sinon.spy();
+      var referenceInsertSpy = jest.fn();
+      var referenceModifySpy = jest.fn();
+      var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('array_ref[2].text', ['insert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('array_ref[2].text', ['modify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('array_ref[2].text', ['remove'], referenceRemoveSpy);
@@ -4087,7 +4087,7 @@ describe('DataBinder', function () {
       workspace.insert('myChild1', childPset1);
       workspace.insert('myChild2', childPset2);
       workspace.insert('myReferenceParent', referenceParentPSet);
-      dataBinder._dataBindingCreatedCounter.should.equal(1);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve(referenceParentPSet, 'BINDING');
 
@@ -4096,24 +4096,24 @@ describe('DataBinder', function () {
       referenceArray.push();
       referenceArray.push();
       referenceArray.push();
-      parentDataBinding.onModify.callCount.should.equal(4);
-      parentDataBinding.onModify.resetHistory();
+      expect(parentDataBinding.onModify).toHaveBeenCalledTimes(4);
+      parentDataBinding.onModify.mockClear();
 
       referenceArray.set(2, '/myChild1');
       // this should also trigger the referenceChanged spy
-      referenceChangedSpy.callCount.should.equal(1);
-      referenceChangedSpy.resetHistory();
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
+      referenceChangedSpy.mockClear();
       if (LYNXDEV4410Fixed) {
-        referenceModifySpy.callCount.should.equal(1);
+        expect(referenceModifySpy).toHaveBeenCalledTimes(1);
       }
       // remove below our reference
       referenceArray.remove(1);
       // this should trigger the referenceChanged spy!
       if (LYNXDEV4410Fixed) {
-        referenceChangedSpy.callCount.should.equal(1);
+        expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
       }
-      referenceChangedSpy.resetHistory();
-      refChangedError.should.equal(false);
+      referenceChangedSpy.mockClear();
+      expect(refChangedError).toEqual(false);
     });
 
     it('should not call callbacks for removed refs in an array of references', function () {
@@ -4124,9 +4124,9 @@ describe('DataBinder', function () {
       var childPset1 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       var childPset2 = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
-      var referenceInsertSpy = sinon.spy();
-      var referenceModifySpy = sinon.spy();
-      var referenceRemoveSpy = sinon.spy();
+      var referenceInsertSpy = jest.fn();
+      var referenceModifySpy = jest.fn();
+      var referenceRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('array_ref[0].text', ['insert'], referenceInsertSpy);
       ParentDataBinding.registerOnPath('array_ref[0].text', ['modify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('array_ref[0].text', ['remove'], referenceRemoveSpy);
@@ -4144,9 +4144,9 @@ describe('DataBinder', function () {
 
       ParentDataBinding.registerOnPath('array_ref[0].text', ['referenceChanged'], referenceChangedSpy);
 
-      var arrayInsertSpy = sinon.spy();
-      var arrayModifySpy = sinon.spy();
-      var arrayRemoveSpy = sinon.spy();
+      var arrayInsertSpy = jest.fn();
+      var arrayModifySpy = jest.fn();
+      var arrayRemoveSpy = jest.fn();
       ParentDataBinding.registerOnPath('array_ref', ['collectionInsert'], arrayInsertSpy);
       ParentDataBinding.registerOnPath('array_ref', ['collectionModify'], arrayModifySpy);
       ParentDataBinding.registerOnPath('array_ref', ['collectionRemove'], arrayRemoveSpy);
@@ -4158,65 +4158,65 @@ describe('DataBinder', function () {
       workspace.insert('myChild1', childPset1);
       workspace.insert('myChild2', childPset2);
       workspace.insert('myReferenceParent', referenceParentPSet);
-      dataBinder._dataBindingCreatedCounter.should.equal(1);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve(referenceParentPSet, 'BINDING');
 
       var referenceArray = referenceParentPSet.get('array_ref');
       referenceArray.push();
-      arrayInsertSpy.callCount.should.equal(1);
-      arrayInsertSpy.resetHistory();
-      parentDataBinding.onModify.callCount.should.equal(1);
-      parentDataBinding.onModify.resetHistory();
+      expect(arrayInsertSpy).toHaveBeenCalledTimes(1);
+      arrayInsertSpy.mockClear();
+      expect(parentDataBinding.onModify).toHaveBeenCalledTimes(1);
+      parentDataBinding.onModify.mockClear();
 
       referenceArray.set(0, '/myChild1');
       // this should trigger the referenceChanged spy
-      referenceChangedSpy.callCount.should.equal(1);
-      referenceChangedSpy.getCall(0).args[0].getProperty().getAbsolutePath().should.equal('/myChild1.text');
-      referenceChangedSpy.resetHistory();
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
+      expect(referenceChangedSpy.getCall(0).args[0].getProperty().getAbsolutePath()).toEqual('/myChild1.text');
+      referenceChangedSpy.mockClear();
 
       // should also trigger the modify spy
       childPset1.get('text').setValue('fortytwo');
-      referenceModifySpy.callCount.should.equal(1);
-      referenceModifySpy.resetHistory();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(1);
+      referenceModifySpy.mockClear();
       // set our reference to empty
       referenceArray.set(0, '');
       // this should also trigger the referenceChanged spy
-      referenceChangedSpy.callCount.should.equal(1);
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
       should.not.exist(referenceChangedSpy.getCall(0).args[0].getProperty());
-      referenceChangedSpy.resetHistory();
+      referenceChangedSpy.mockClear();
       // the modify spy should not be triggered anymore
       childPset1.get('text').setValue('sixtyfour');
-      referenceModifySpy.callCount.should.equal(0);
-      referenceChangedSpy.callCount.should.equal(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(0);
       // set it to an invalid value
       referenceArray.set(0, '/invalid');
       // this should not trigger the referenceChanged spy since it's still undefined
-      referenceChangedSpy.callCount.should.equal(0);
-      referenceChangedSpy.resetHistory();
-      referenceModifySpy.callCount.should.equal(0);
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(0);
+      referenceChangedSpy.mockClear();
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
       // set back to valid
       referenceArray.set(0, '/myChild1');
       // this should also trigger the referenceChanged spy
-      referenceChangedSpy.callCount.should.equal(1);
-      referenceChangedSpy.getCall(0).args[0].getProperty().getAbsolutePath().should.equal('/myChild1.text');
-      referenceChangedSpy.resetHistory();
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
+      expect(referenceChangedSpy.getCall(0).args[0].getProperty().getAbsolutePath()).toEqual('/myChild1.text');
+      referenceChangedSpy.mockClear();
       // but not the modified spy
-      referenceModifySpy.callCount.should.equal(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
       // now remove (triggers a different code path than just setting it empty)
       referenceArray.remove(0);
       // this should also trigger the referenceChanged spy
-      referenceChangedSpy.callCount.should.equal(1);
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
       should.not.exist(referenceChangedSpy.getCall(0).args[0].getProperty());
-      referenceChangedSpy.resetHistory();
+      referenceChangedSpy.mockClear();
       // but not the modified spy
-      referenceModifySpy.callCount.should.equal(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
       // the modify spy should not be triggered anymore
       childPset1.get('text').setValue('sixtyfour-sixtyfour');
-      referenceModifySpy.callCount.should.equal(0);
-      referenceChangedSpy.callCount.should.equal(0);
+      expect(referenceModifySpy).toHaveBeenCalledTimes(0);
+      expect(referenceChangedSpy).toHaveBeenCalledTimes(0);
 
-      refChangedError.should.equal(false);
+      expect(refChangedError).toEqual(false);
     });
 
     it('should handle references to a not-yet-existing primitive array', function () {
@@ -4225,28 +4225,28 @@ describe('DataBinder', function () {
       // Add our child (referenced) pset
       var arrayPset = PropertyFactory.create('Int32', 'array');
       // register the reference handler
-      var referenceInsertSpy = sinon.spy();
+      var referenceInsertSpy = jest.fn();
       ParentDataBinding.registerOnPath('single_ref', ['collectionInsert'], referenceInsertSpy);
 
       // Register the DataBinding
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding, { context: 'single' });
-      dataBinder._dataBindingCreatedCounter.should.equal(0);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
       // parentPset should produce a ParentDataBinding
       workspace.insert('myReferenceParent', referenceParentPSet);
-      dataBinder._dataBindingCreatedCounter.should.equal(1);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve(referenceParentPSet, 'BINDING');
       parentDataBinding.should.be.instanceOf(ParentDataBinding);
-      parentDataBinding.onModify.callCount.should.equal(0);
-      parentDataBinding.onModify.resetHistory();
+      expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
+      parentDataBinding.onModify.mockClear();
 
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myArray');
       // insert the array *after* we've inserted our references -> need to do conversion in DataBindingTree
       workspace.insert('myArray', arrayPset);
-      referenceInsertSpy.callCount.should.equal(0);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
       arrayPset.push(21);
-      referenceInsertSpy.callCount.should.equal(1);
+      expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should be able to bind to properties under already loaded repository references (LYNXDEV-4258)', function () {
@@ -4265,10 +4265,10 @@ describe('DataBinder', function () {
       // Add the repository reference
       workspace.insert('reference', repositoryReference);
       // should create two DataBindings
-      dataBinder._dataBindingCreatedCounter.should.equal(2);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(2);
       dataBinder._resetDebugCounters();
       workspace.remove('reference');
-      dataBinder._dataBindingRemovedCounter.should.equal(2);
+      expect(dataBinder._dataBindingRemovedCounter).toEqual(2);
       dataBinder._resetDebugCounters();
 
       // now detach the workspace, re-add the repository reference and bind to the workspace (with the repository
@@ -4280,7 +4280,7 @@ describe('DataBinder', function () {
     });
 
     it('should be able to use referenceChanged with isDeferred', function () {
-      const eyeSpy = sinon.spy();
+      const eyeSpy = jest.fn();
       workspace.insert('bob', PropertyFactory.create(ReferenceParentTemplate.typeid));
       workspace.insert('target', PropertyFactory.create('String'));
 

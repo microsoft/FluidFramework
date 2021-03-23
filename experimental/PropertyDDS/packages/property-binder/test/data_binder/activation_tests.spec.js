@@ -120,13 +120,13 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('test1:thing-1.0.0', dataBinder);
 
       // test1:thing-1.0.0 can be found in test1:thing-1.0.0
-      scenario.helper.hierarchyMayHaveBindings('test1:thing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test1:thing-1.0.0')).toEqual(true);
       // test1:thing-1.0.0 can be found in test1:inheritsThing-1.0.0
-      scenario.helper.hierarchyMayHaveBindings('test1:inheritsThing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test1:inheritsThing-1.0.0')).toEqual(true);
       // test1:thing-1.0.0 cannot be found in a child subhierarchy of test1:thing-1.0.0
-      scenario.helper.childrenMayHaveBindings('test1:thing-1.0.0').should.equal(false);
+      expect(scenario.helper.childrenMayHaveBindings('test1:thing-1.0.0')).toEqual(false);
       // test1:thing-1.0.0 cannot be found in a child subhierarchy of test1:inheritsThing-1.0.0
-      scenario.helper.childrenMayHaveBindings('test1:inheritsThing-1.0.0').should.equal(false);
+      expect(scenario.helper.childrenMayHaveBindings('test1:inheritsThing-1.0.0')).toEqual(false);
 
       tearDownScenario(scenario);
     });
@@ -135,13 +135,13 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('test1:cube-1.0.0', dataBinder);
 
       // test1:cube-1.0.0 can be found in test1:thing-1.0.0
-      scenario.helper.hierarchyMayHaveBindings('test1:thing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test1:thing-1.0.0')).toEqual(true);
       // test1:cube-1.0.0 can be found in test1:inheritsThing-1.0.0
-      scenario.helper.hierarchyMayHaveBindings('test1:inheritsThing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test1:inheritsThing-1.0.0')).toEqual(true);
       // test1:cube-1.0.0 can be found in a child subhierarchy of test1:thing-1.0.0
-      scenario.helper.childrenMayHaveBindings('test1:thing-1.0.0').should.equal(true);
+      expect(scenario.helper.childrenMayHaveBindings('test1:thing-1.0.0')).toEqual(true);
       // test1:cube-1.0.0 can be found in a child subhierarchy of test1:inheritsThing-1.0.0
-      scenario.helper.childrenMayHaveBindings('test1:inheritsThing-1.0.0').should.equal(true);
+      expect(scenario.helper.childrenMayHaveBindings('test1:inheritsThing-1.0.0')).toEqual(true);
 
       tearDownScenario(scenario);
     });
@@ -150,13 +150,13 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('test1:prism-1.0.0', dataBinder);
 
       // test1:prism-1.0.0 can be found in test1:thing-1.0.0
-      scenario.helper.hierarchyMayHaveBindings('test1:thing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test1:thing-1.0.0')).toEqual(true);
       // test1:prism-1.0.0 can be found in test1:inheritsThing-1.0.0
-      scenario.helper.hierarchyMayHaveBindings('test1:inheritsThing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test1:inheritsThing-1.0.0')).toEqual(true);
       // test1:prism-1.0.0 can be found in a child subhierarchy of test1:thing-1.0.0
-      scenario.helper.childrenMayHaveBindings('test1:thing-1.0.0').should.equal(true);
+      expect(scenario.helper.childrenMayHaveBindings('test1:thing-1.0.0')).toEqual(true);
       // test1:prism-1.0.0 can be found in a child subhierarchy of test1:inheritsThing-1.0.0
-      scenario.helper.childrenMayHaveBindings('test1:inheritsThing-1.0.0').should.equal(true);
+      expect(scenario.helper.childrenMayHaveBindings('test1:inheritsThing-1.0.0')).toEqual(true);
 
       tearDownScenario(scenario);
     });
@@ -165,13 +165,13 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('test1:cylinder-1.0.0', dataBinder);
 
       // test1:cylinder-1.0.0 cannot be found in test1:thing-1.0.0
-      scenario.helper.hierarchyMayHaveBindings('test1:thing-1.0.0').should.equal(false);
+      expect(scenario.helper.hierarchyMayHaveBindings('test1:thing-1.0.0')).toEqual(false);
       // test1:cylinder-1.0.0 can be found in test1:inheritsThing-1.0.0
-      scenario.helper.hierarchyMayHaveBindings('test1:inheritsThing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test1:inheritsThing-1.0.0')).toEqual(true);
       // test1:cylinder-1.0.0 cannot be found in a child subhierarchy of test1:thing-1.0.0
-      scenario.helper.childrenMayHaveBindings('test1:thing-1.0.0').should.equal(false);
+      expect(scenario.helper.childrenMayHaveBindings('test1:thing-1.0.0')).toEqual(false);
       // test1:cylinder-1.0.0 can be found in a child subhierarchy of test1:inheritsThing-1.0.0
-      scenario.helper.childrenMayHaveBindings('test1:inheritsThing-1.0.0').should.equal(true);
+      expect(scenario.helper.childrenMayHaveBindings('test1:inheritsThing-1.0.0')).toEqual(true);
 
       tearDownScenario(scenario);
     });
@@ -180,20 +180,20 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('test1:sphere-1.0.0', dataBinder);
 
       // test1:sphere-1.0.0 cannot be found in test1:thing-1.0.0
-      scenario.helper.hierarchyMayHaveBindings('test1:thing-1.0.0').should.equal(false);
+      expect(scenario.helper.hierarchyMayHaveBindings('test1:thing-1.0.0')).toEqual(false);
       // test1:sphere-1.0.0 can be found in test1:inheritsThing-1.0.0
-      scenario.helper.hierarchyMayHaveBindings('test1:inheritsThing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test1:inheritsThing-1.0.0')).toEqual(true);
       // test1:sphere-1.0.0 cannot be found in a child subhierarchy of test1:thing-1.0.0
-      scenario.helper.childrenMayHaveBindings('test1:thing-1.0.0').should.equal(false);
+      expect(scenario.helper.childrenMayHaveBindings('test1:thing-1.0.0')).toEqual(false);
       // test1:sphere-1.0.0 can be found in a child subhierarchy of test1:inheritsThing-1.0.0
-      scenario.helper.childrenMayHaveBindings('test1:inheritsThing-1.0.0').should.equal(true);
+      expect(scenario.helper.childrenMayHaveBindings('test1:inheritsThing-1.0.0')).toEqual(true);
 
       tearDownScenario(scenario);
     });
   });
 
   describe('Nodeproperty cases', function () {
-    before(function () {
+    beforeAll(function () {
       PropertyFactory.register({
         typeid: 'test2:thing-1.0.0',
         properties: [
@@ -240,24 +240,24 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('test2:thing-1.0.0', dataBinder);
 
       // test2:thing-1.0.0 is obviously in test2:thing-1.0.0
-      scenario.helper.hierarchyMayHaveBindings('test2:thing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test2:thing-1.0.0')).toEqual(true);
       // test2:thing-1.0.0 can be found in test2:inheritsThing-1.0.0
-      scenario.helper.hierarchyMayHaveBindings('test2:inheritsThing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test2:inheritsThing-1.0.0')).toEqual(true);
       // test2:thing-1.0.0 may be in a child subhierarchy of test2:thing-1.0.0 because nodeOfThing is a NodeProperty
-      scenario.helper.childrenMayHaveBindings('test2:thing-1.0.0').should.equal(true);
+      expect(scenario.helper.childrenMayHaveBindings('test2:thing-1.0.0')).toEqual(true);
       // test2:thing-1.0.0 may be in a child subhierarchy of test2:inheritsThing-1.0.0
-      scenario.helper.childrenMayHaveBindings('test2:inheritsThing-1.0.0').should.equal(true);
+      expect(scenario.helper.childrenMayHaveBindings('test2:inheritsThing-1.0.0')).toEqual(true);
       // test2:thing-1.0.0 may be in a child subhierarchy of test2:inheritsNodeProp-1.0.0
-      scenario.helper.childrenMayHaveBindings('test2:inheritsNodeProp-1.0.0').should.equal(true);
+      expect(scenario.helper.childrenMayHaveBindings('test2:inheritsNodeProp-1.0.0')).toEqual(true);
       // test2:thing-1.0.0 may be in a child subhierarchy of test2:inheritsNamedNodeProp-1.0.0
-      scenario.helper.childrenMayHaveBindings('test2:inheritsNamedNodeProp-1.0.0').should.equal(true);
+      expect(scenario.helper.childrenMayHaveBindings('test2:inheritsNamedNodeProp-1.0.0')).toEqual(true);
 
       tearDownScenario(scenario);
     });
   });
 
   describe('Array cases', function () {
-    before(function () {
+    beforeAll(function () {
       PropertyFactory.register({
         typeid: 'test3:cube-1.0.0',
         properties: [
@@ -317,9 +317,9 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('test3:cube-1.0.0', dataBinder);
 
       // Can find a cube type in an array of cubes
-      scenario.helper.hierarchyMayHaveBindings('test3:thing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test3:thing-1.0.0')).toEqual(true);
       // Can find a cube type in an array of cubes in the base class
-      scenario.helper.hierarchyMayHaveBindings('test3:inheritedThing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test3:inheritedThing-1.0.0')).toEqual(true);
 
       tearDownScenario(scenario);
     });
@@ -328,9 +328,9 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('test3:cube-1.0.0', dataBinder);
 
       // Can find a cube type in an array of cubes
-      scenario.helper.hierarchyMayHaveBindings('array<test3:cube-1.0.0>').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('array<test3:cube-1.0.0>')).toEqual(true);
       // A cube in an array is considered a child
-      scenario.helper.childrenMayHaveBindings('array<test3:cube-1.0.0>').should.equal(true);
+      expect(scenario.helper.childrenMayHaveBindings('array<test3:cube-1.0.0>')).toEqual(true);
 
       tearDownScenario(scenario);
     });
@@ -339,11 +339,11 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('array<test3:cube-1.0.0>', dataBinder);
 
       // Cubes aren't arrays of cubes
-      scenario.helper.hierarchyMayHaveBindings('test3:cube-1.0.0').should.equal(false);
+      expect(scenario.helper.hierarchyMayHaveBindings('test3:cube-1.0.0')).toEqual(false);
       // arrays should match
-      scenario.helper.hierarchyMayHaveBindings('array<test3:cube-1.0.0>').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('array<test3:cube-1.0.0>')).toEqual(true);
       // but the children of arrays should not match
-      scenario.helper.childrenMayHaveBindings('array<test3:cube-1.0.0>').should.equal(false);
+      expect(scenario.helper.childrenMayHaveBindings('array<test3:cube-1.0.0>')).toEqual(false);
 
       tearDownScenario(scenario);
     });
@@ -352,9 +352,9 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('test3:cylinder-1.0.0', dataBinder);
 
       // Can find a cylinder type in a array of inheriting cylinders
-      scenario.helper.hierarchyMayHaveBindings('array<test3:inheritingCylinder-1.0.0>').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('array<test3:inheritingCylinder-1.0.0>')).toEqual(true);
       // Children of the array version
-      scenario.helper.childrenMayHaveBindings('array<test3:inheritingCylinder-1.0.0>').should.equal(true);
+      expect(scenario.helper.childrenMayHaveBindings('array<test3:inheritingCylinder-1.0.0>')).toEqual(true);
 
       tearDownScenario(scenario);
     });
@@ -363,9 +363,9 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('test3:cylinder-1.0.0', dataBinder);
 
       // Can find a cylinder type in the nested array of cylinders
-      scenario.helper.hierarchyMayHaveBindings('test3:thing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test3:thing-1.0.0')).toEqual(true);
       // Can find a cylinder type in the nested array of cubes in the base class
-      scenario.helper.hierarchyMayHaveBindings('test3:inheritedThing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test3:inheritedThing-1.0.0')).toEqual(true);
 
       tearDownScenario(scenario);
     });
@@ -374,9 +374,9 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('test3:sphere-1.0.0', dataBinder);
 
       // Cannot find a sphere type in the array of cubes in the thing class
-      scenario.helper.hierarchyMayHaveBindings('test3:thing-1.0.0').should.equal(false);
+      expect(scenario.helper.hierarchyMayHaveBindings('test3:thing-1.0.0')).toEqual(false);
       // Can find a sphere type in an array of sphere in the inherited class
-      scenario.helper.hierarchyMayHaveBindings('test3:inheritedThing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test3:inheritedThing-1.0.0')).toEqual(true);
 
       tearDownScenario(scenario);
     });
@@ -385,9 +385,9 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('test3:prism-1.0.0', dataBinder);
 
       // Cannot find a prism type in the thing class
-      scenario.helper.hierarchyMayHaveBindings('test3:thing-1.0.0').should.equal(false);
+      expect(scenario.helper.hierarchyMayHaveBindings('test3:thing-1.0.0')).toEqual(false);
       // Can find a prism type in the nested array of prism in the inherting class
-      scenario.helper.hierarchyMayHaveBindings('test3:inheritedThing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test3:inheritedThing-1.0.0')).toEqual(true);
 
       tearDownScenario(scenario);
     });
@@ -395,7 +395,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
   });
 
   describe('Map cases', function () {
-    before(function () {
+    beforeAll(function () {
       PropertyFactory.register({
         typeid: 'test4:cube-1.0.0',
         properties: [
@@ -455,9 +455,9 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('test4:cube-1.0.0', dataBinder);
 
       // Can find a cube type in the map of cubes in thing
-      scenario.helper.hierarchyMayHaveBindings('test4:thing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test4:thing-1.0.0')).toEqual(true);
       // Can find a cube type in an map of cubes in the base class
-      scenario.helper.hierarchyMayHaveBindings('test4:inheritedThing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test4:inheritedThing-1.0.0')).toEqual(true);
 
       tearDownScenario(scenario);
     });
@@ -466,11 +466,11 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('map<>', dataBinder);
 
       // map<> matches map<test4:cube-1.0.0>
-      scenario.helper.hierarchyMayHaveBindings('map<test4:cube-1.0.0>').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('map<test4:cube-1.0.0>')).toEqual(true);
       // map<> matches a map of primitive types
-      scenario.helper.hierarchyMayHaveBindings('map<String>').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('map<String>')).toEqual(true);
       // map<> can be found in a child of test4:inheritedThing-1.0.0
-      scenario.helper.hierarchyMayHaveBindings('test4:inheritedThing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test4:inheritedThing-1.0.0')).toEqual(true);
 
       tearDownScenario(scenario);
     });
@@ -479,9 +479,9 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('map<test4:thing-1.0.0>', dataBinder);
 
       // map<test4:thing-1.0.0> does not match map<test4:cube-1.0.0>
-      scenario.helper.hierarchyMayHaveBindings('map<test4:cube-1.0.0>').should.equal(false);
+      expect(scenario.helper.hierarchyMayHaveBindings('map<test4:cube-1.0.0>')).toEqual(false);
       // map<test4:thing-1.0.0> matches map<test4:inheritedThing-1.0.0>
-      scenario.helper.hierarchyMayHaveBindings('map<test4:inheritedThing-1.0.0>').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('map<test4:inheritedThing-1.0.0>')).toEqual(true);
 
       tearDownScenario(scenario);
     });
@@ -490,9 +490,9 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('test4:cube-1.0.0', dataBinder);
 
       // Can find a cube type in a map of cubes
-      scenario.helper.hierarchyMayHaveBindings('map<test4:cube-1.0.0>').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('map<test4:cube-1.0.0>')).toEqual(true);
       // A cube in a map of cubes is considered a child
-      scenario.helper.childrenMayHaveBindings('map<test4:cube-1.0.0>').should.equal(true);
+      expect(scenario.helper.childrenMayHaveBindings('map<test4:cube-1.0.0>')).toEqual(true);
 
       tearDownScenario(scenario);
     });
@@ -501,11 +501,11 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('map<test4:cube-1.0.0>', dataBinder);
 
       // Cubes aren't maps of cubes
-      scenario.helper.hierarchyMayHaveBindings('test4:cube-1.0.0').should.equal(false);
+      expect(scenario.helper.hierarchyMayHaveBindings('test4:cube-1.0.0')).toEqual(false);
       // maps should match
-      scenario.helper.hierarchyMayHaveBindings('map<test4:cube-1.0.0>').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('map<test4:cube-1.0.0>')).toEqual(true);
       // but the children of maps should not match
-      scenario.helper.childrenMayHaveBindings('map<test4:cube-1.0.0>').should.equal(false);
+      expect(scenario.helper.childrenMayHaveBindings('map<test4:cube-1.0.0>')).toEqual(false);
 
       tearDownScenario(scenario);
     });
@@ -514,9 +514,9 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('test4:cylinder-1.0.0', dataBinder);
 
       // Can find a cylinder type in a map of inheriting cylinders
-      scenario.helper.hierarchyMayHaveBindings('map<test4:inheritingCylinder-1.0.0>').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('map<test4:inheritingCylinder-1.0.0>')).toEqual(true);
       // Children of the map version
-      scenario.helper.childrenMayHaveBindings('map<test4:inheritingCylinder-1.0.0>').should.equal(true);
+      expect(scenario.helper.childrenMayHaveBindings('map<test4:inheritingCylinder-1.0.0>')).toEqual(true);
 
       tearDownScenario(scenario);
     });
@@ -525,9 +525,9 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('test4:cylinder-1.0.0', dataBinder);
 
       // Can find a cylinder type in the nested map of cylinders
-      scenario.helper.hierarchyMayHaveBindings('test4:thing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test4:thing-1.0.0')).toEqual(true);
       // Can find a cylinder type in the nested map of cubes in the base class
-      scenario.helper.hierarchyMayHaveBindings('test4:inheritedThing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test4:inheritedThing-1.0.0')).toEqual(true);
 
       tearDownScenario(scenario);
     });
@@ -536,9 +536,9 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('test4:sphere-1.0.0', dataBinder);
 
       // Cannot find a sphere type in an map of cubes
-      scenario.helper.hierarchyMayHaveBindings('test4:thing-1.0.0').should.equal(false);
+      expect(scenario.helper.hierarchyMayHaveBindings('test4:thing-1.0.0')).toEqual(false);
       // Can find a sphere type in an map of sphere in the inherited class
-      scenario.helper.hierarchyMayHaveBindings('test4:inheritedThing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test4:inheritedThing-1.0.0')).toEqual(true);
 
       tearDownScenario(scenario);
     });
@@ -547,9 +547,9 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       const scenario = setupScenario('test4:prism-1.0.0', dataBinder);
 
       // Cannot find a prism type in the thing class
-      scenario.helper.hierarchyMayHaveBindings('test4:thing-1.0.0').should.equal(false);
+      expect(scenario.helper.hierarchyMayHaveBindings('test4:thing-1.0.0')).toEqual(false);
       // Can find a prism type in the nested map of prism in the inherited class
-      scenario.helper.hierarchyMayHaveBindings('test4:inheritedThing-1.0.0').should.equal(true);
+      expect(scenario.helper.hierarchyMayHaveBindings('test4:inheritedThing-1.0.0')).toEqual(true);
 
       tearDownScenario(scenario);
     });

@@ -146,19 +146,19 @@ describe('Decorated DataBinding', function () {
   it('should call onPropertyChange callback', function () {
     dataBindingInstance = dataBinder.resolve('person', 'View');
     testProp.get(['name']).setValue('John Foo');
-    dataBindingInstance.onPropertyRegisteredCallback.callCount.should.equal(1);
+    expect(dataBindingInstance.onPropertyRegisteredCallback).toHaveBeenCalledTimes(1);
     expect(dataBindingInstance.onPropertyRegisteredCallback.args[0][0]).to.be.an.instanceOf(BaseProperty);
   });
 
   it('should call onPathRegisteredCallback callback', function () {
     testProp.get(['lastName']).setValue('Bar');
-    dataBindingInstance.onPathRegisteredCallback.callCount.should.equal(1);
+    expect(dataBindingInstance.onPathRegisteredCallback).toHaveBeenCalledTimes(1);
     expect(dataBindingInstance.onPathRegisteredCallback.args[0][0]).to.be.an.instanceOf(ModificationContext);
   });
 
   it('should call onValuesRegisteredCallback callback', function () {
     testProp.get(['nickname']).setValue('Johnnie');
-    dataBindingInstance.onValuesRegisteredCallback.callCount.should.equal(1);
+    expect(dataBindingInstance.onValuesRegisteredCallback).toHaveBeenCalledTimes(1);
     expect(dataBindingInstance.onValuesRegisteredCallback.args[0][0]).to.equal(testProp.get(['nickname']).value);
   });
 
@@ -169,7 +169,7 @@ describe('Decorated DataBinding', function () {
     new_value = 'Bar';
     testProp.get(['parent', 'lastName']).setValue(new_value);
     expect(dataBindingInstance.commonCallback.args[1][0]).to.equal(new_value);
-    dataBindingInstance.commonCallback.callCount.should.equal(2);
+    expect(dataBindingInstance.commonCallback).toHaveBeenCalledTimes(2);
   });
 
   it('should call decorated callbacks if some decorator changes the callback', function () {
@@ -183,27 +183,27 @@ describe('Decorated DataBinding', function () {
     // if g doesn't change the methods descriptor value f(g(method)) will be f(method). This is why we can
     // stack our registration callbacks as they do not modify the descriptor.
 
-    // logDecoratorSpy.resetHistory();
-    dataBindingInstance.emptyCallback.resetHistory();
-    dataBindingInstance.anotherEmptyCallback.resetHistory();
+    // logDecoratorSpy.mockClear();
+    dataBindingInstance.emptyCallback.mockClear();
+    dataBindingInstance.anotherEmptyCallback.mockClear();
     logData.length = 0;
     let new_value = 'John Foobartoo';
     testProp.get(['parent', 'name']).setValue(new_value);
     // only emptyCallback is log decorated for parent.name and contains a spy
     // as @log is underneath the corresponding registration callback.
-    dataBindingInstance.emptyCallback.callCount.should.equal(1);
-    logData.length.should.equal(1);
-    logData[0].should.equal('emptyCallback person.parent.name');
+    expect(dataBindingInstance.emptyCallback).toHaveBeenCalledTimes(1);
+    expect(logData.length).toEqual(1);
+    expect(logData[0]).toEqual('emptyCallback person.parent.name');
     new_value = 'Foobarthree';
     testProp.get(['parent', 'lastName']).setValue(new_value);
     // emptyCallback and anotherEmptyCallback are bot log decorated for parent.lastName
     // as @log is underneath the registration decorator.
-    dataBindingInstance.emptyCallback.callCount.should.equal(2);
-    dataBindingInstance.anotherEmptyCallback.callCount.should.equal(1);
-    logData.length.should.equal(3);
+    expect(dataBindingInstance.emptyCallback).toHaveBeenCalledTimes(2);
+    expect(dataBindingInstance.anotherEmptyCallback).toHaveBeenCalledTimes(1);
+    expect(logData.length).toEqual(3);
     // should be in this order as we registered the emptyCallback callback first
-    logData[1].should.equal('emptyCallback person.parent.lastName');
-    logData[2].should.equal('anotherEmptyCallback person.parent.lastName');
+    expect(logData[1]).toEqual('emptyCallback person.parent.lastName');
+    expect(logData[2]).toEqual('anotherEmptyCallback person.parent.lastName');
   });
 
   it('should trigger the callback once', function () {
@@ -211,12 +211,12 @@ describe('Decorated DataBinding', function () {
     workspace.insert('anotherPerson', anotherPerson);
     const anotherDataBindingInstance = dataBinder.resolve('anotherPerson', 'View');
     // We need to reset the spy, as it is per class and was already called for our dataBindingInstance.
-    anotherDataBindingInstance.onPropertyRegisteredCallback.resetHistory();
-    anotherDataBindingInstance.onPropertyRegisteredCallback.callCount.should.equal(0);
-    dataBindingInstance.onPropertyRegisteredCallback.callCount.should.equal(
+    anotherDataBindingInstance.onPropertyRegisteredCallback.mockClear();
+    expect(anotherDataBindingInstance.onPropertyRegisteredCallback).toHaveBeenCalledTimes(0);
+    expect(dataBindingInstance.onPropertyRegisteredCallback).toHaveBeenCalledTimes(
       anotherDataBindingInstance.onPropertyRegisteredCallback.callCount);
     anotherPerson.get(['name']).setValue('Jack Foobar');
-    anotherDataBindingInstance.onPropertyRegisteredCallback.callCount.should.equal(1);
+    expect(anotherDataBindingInstance.onPropertyRegisteredCallback).toHaveBeenCalledTimes(1);
   });
 
   it('Documentation example - onValuesChanged decorator', function () {
@@ -253,10 +253,10 @@ describe('Decorated DataBinding', function () {
     const order = PropertyFactory.create(orderEntrySchema.typeid);
     workspace.insert('order', order);
 
-    eventLog.length.should.equal(2);
+    expect(eventLog.length).toEqual(2);
     order.get('price').setValue(100);
-    eventLog.length.should.equal(3);
+    expect(eventLog.length).toEqual(3);
     order.get('quantity').setValue(100);
-    eventLog.length.should.equal(4);
+    expect(eventLog.length).toEqual(4);
   });
 });

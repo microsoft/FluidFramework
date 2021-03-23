@@ -2,7 +2,7 @@
  * Copyright (c) Autodesk, Inc. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PropertyFactory } from  '@fluid-experimental/property-properties';
+import { PropertyFactory } from '@fluid-experimental/property-properties';
 
 const ParentTemplate = {
   typeid: 'Test:ParentID-0.0.1',
@@ -346,7 +346,7 @@ const EscapingTestTemplate = {
     {
       id: 'nested.test',
       properties: [
-        {id: 'child "with" quotes', typeid: 'Test:ChildID-0.0.1'}
+        { id: 'child "with" quotes', typeid: 'Test:ChildID-0.0.1' }
       ]
     }
   ]
@@ -516,7 +516,7 @@ const InheritTestBaseType = {
   ]
 };
 
-const registerTestTemplates = function() {
+const registerTestTemplates = function () {
   if (PropertyFactory.getTemplate(ChildTemplate.typeid)) {
     return;
   }
@@ -559,35 +559,35 @@ const registerTestTemplates = function() {
 
   PropertyFactory.register(InheritTestBaseType);
 
-  PropertyFactory.validate(ParentTemplate).isValid.should.equal(true);
-  PropertyFactory.validate(ChildTemplate).isValid.should.equal(true);
-  PropertyFactory.validate(ExternalEnum).isValid.should.equal(true);
-  PropertyFactory.validate(ArrayContainerTemplate).isValid.should.equal(true);
-  PropertyFactory.validate(SetContainerTemplate).isValid.should.equal(true);
-  PropertyFactory.validate(MapContainerTemplate).isValid.should.equal(true);
-  PropertyFactory.validate(NodeContainerTemplate).isValid.should.equal(true);
-  PropertyFactory.validate(UnrepresentedTemplate).isValid.should.equal(true);
-  PropertyFactory.validate(PrimitiveChildrenTemplate).isValid.should.equal(true);
-  PropertyFactory.validate(InheritedChildTemplate).isValid.should.equal(true);
-  PropertyFactory.validate(InheritedInheritedChildTemplate).isValid.should.equal(true);
-  PropertyFactory.validate(InheritedChildrenTemplate).isValid.should.equal(true);
-  PropertyFactory.validate(MultipleInheritedTemplate).isValid.should.equal(true);
-  PropertyFactory.validate(ReferenceParentTemplate).isValid.should.equal(true);
-  PropertyFactory.validate(DoubleReferenceParentTemplate).isValid.should.equal(true);
-  PropertyFactory.validate(EscapingTestTemplate).isValid.should.equal(true);
+  expect(PropertyFactory.validate(ParentTemplate).isValid).toEqual(true);
+  expect(PropertyFactory.validate(ChildTemplate).isValid).toEqual(true);
+  expect(PropertyFactory.validate(ExternalEnum).isValid).toEqual(true);
+  expect(PropertyFactory.validate(ArrayContainerTemplate).isValid).toEqual(true);
+  expect(PropertyFactory.validate(SetContainerTemplate).isValid).toEqual(true);
+  expect(PropertyFactory.validate(MapContainerTemplate).isValid).toEqual(true);
+  expect(PropertyFactory.validate(NodeContainerTemplate).isValid).toEqual(true);
+  expect(PropertyFactory.validate(UnrepresentedTemplate).isValid).toEqual(true);
+  expect(PropertyFactory.validate(PrimitiveChildrenTemplate).isValid).toEqual(true);
+  expect(PropertyFactory.validate(InheritedChildTemplate).isValid).toEqual(true);
+  expect(PropertyFactory.validate(InheritedInheritedChildTemplate).isValid).toEqual(true);
+  expect(PropertyFactory.validate(InheritedChildrenTemplate).isValid).toEqual(true);
+  expect(PropertyFactory.validate(MultipleInheritedTemplate).isValid).toEqual(true);
+  expect(PropertyFactory.validate(ReferenceParentTemplate).isValid).toEqual(true);
+  expect(PropertyFactory.validate(DoubleReferenceParentTemplate).isValid).toEqual(true);
+  expect(PropertyFactory.validate(EscapingTestTemplate).isValid).toEqual(true);
 
-  PropertyFactory.validate(positionTemplate).isValid.should.equal(true);
-  PropertyFactory.validate(point2DImplicitTemplate).isValid.should.equal(true);
-  PropertyFactory.validate(point2DExplicitTemplate).isValid.should.equal(true);
-  PropertyFactory.validate(referenceContainerTemplate).isValid.should.equal(true);
+  expect(PropertyFactory.validate(positionTemplate).isValid).toEqual(true);
+  expect(PropertyFactory.validate(point2DImplicitTemplate).isValid).toEqual(true);
+  expect(PropertyFactory.validate(point2DExplicitTemplate).isValid).toEqual(true);
+  expect(PropertyFactory.validate(referenceContainerTemplate).isValid).toEqual(true);
 
-  PropertyFactory.validate(VersionedTemplate100).isValid.should.equal(true);
-  PropertyFactory.validate(VersionedTemplate101).isValid.should.equal(true);
-  PropertyFactory.validate(VersionedTemplate110).isValid.should.equal(true);
-  PropertyFactory.validate(VersionedTemplate120).isValid.should.equal(true);
-  PropertyFactory.validate(VersionedTemplate200).isValid.should.equal(true);
+  expect(PropertyFactory.validate(VersionedTemplate100).isValid).toEqual(true);
+  expect(PropertyFactory.validate(VersionedTemplate101).isValid).toEqual(true);
+  expect(PropertyFactory.validate(VersionedTemplate110).isValid).toEqual(true);
+  expect(PropertyFactory.validate(VersionedTemplate120).isValid).toEqual(true);
+  expect(PropertyFactory.validate(VersionedTemplate200).isValid).toEqual(true);
 
-  PropertyFactory.validate(InheritTestBaseType).isValid.should.equal(true);
+  expect(PropertyFactory.validate(InheritTestBaseType).isValid).toEqual(true);
 };
 
 export {

@@ -127,7 +127,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
         this.getDataBinder().registerOnPath('/myPrimitiveChildTemplate', ['insert', 'modify'], function () {
           // Deferred, so this should be false
-          this.getDataBinder()._activeTraversal.should.equal(false);
+          expect(this.getDataBinder()._activeTraversal).toEqual(false);
         }, {
           isDeferred: true
         });
@@ -144,8 +144,8 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
   it('onModify', function () {
     // Register the base (Child) typeid
-    var stringSpy = sinon.spy();
-    var mapSpy = sinon.spy();
+    var stringSpy = jest.fn();
+    var mapSpy = jest.fn();
 
     PrimitiveChildrenDataBinding.registerOnPath('aString', ['modify'], stringSpy);
     PrimitiveChildrenDataBinding.registerOnPath('mapOfNumbers', ['modify'], mapSpy);
@@ -153,54 +153,54 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
     // Create PSet for inherited child typeid
     var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single');
-    dataBinder._dataBindingCreatedCounter.should.equal(0);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
     dataBinder.attachTo(workspace);
 
     // primitiveChildPset should produce a PrimitiveChildrenDataBinding
     workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
-    dataBinder._dataBindingCreatedCounter.should.equal(1);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     const primitiveChildDataBinding = dataBinder.resolve(primitiveChildPset.getAbsolutePath(), 'BINDING');
     primitiveChildDataBinding.should.be.instanceOf(PrimitiveChildrenDataBinding);
     primitiveChildDataBinding.getProperty().should.eql(primitiveChildPset);
-    primitiveChildDataBinding.onModify.callCount.should.equal(0); // !!!
-    primitiveChildDataBinding.onPreModify.callCount.should.equal(primitiveChildDataBinding.onModify.callCount);
-    primitiveChildDataBinding.onModify.resetHistory();
-    primitiveChildDataBinding.onPreModify.resetHistory();
-    primitiveChildDataBinding.onPostCreate.callCount.should.equal(1);
+    expect(primitiveChildDataBinding.onModify).toHaveBeenCalledTimes(0); // !!!
+    expect(primitiveChildDataBinding.onPreModify).toHaveBeenCalledTimes(primitiveChildDataBinding.onModify.callCount);
+    primitiveChildDataBinding.onModify.mockClear();
+    primitiveChildDataBinding.onPreModify.mockClear();
+    expect(primitiveChildDataBinding.onPostCreate).toHaveBeenCalledTimes(1);
     // our specific onModify function shouldn't get called because it was an insert, not a modify operation
-    stringSpy.callCount.should.equal(0);
+    expect(stringSpy).toHaveBeenCalledTimes(0);
     dataBinder._resetDebugCounters();
 
     // Should notify DataBinding when primitive property is changed
     primitiveChildPset.resolvePath('aString').value = 'hello';
-    primitiveChildDataBinding.onModify.callCount.should.equal(1);
-    primitiveChildDataBinding.onPreModify.callCount.should.equal(primitiveChildDataBinding.onModify.callCount);
-    primitiveChildDataBinding.onModify.resetHistory();
-    primitiveChildDataBinding.onPreModify.resetHistory();
-    stringSpy.callCount.should.equal(1);
-    stringSpy.resetHistory();
+    expect(primitiveChildDataBinding.onModify).toHaveBeenCalledTimes(1);
+    expect(primitiveChildDataBinding.onPreModify).toHaveBeenCalledTimes(primitiveChildDataBinding.onModify.callCount);
+    primitiveChildDataBinding.onModify.mockClear();
+    primitiveChildDataBinding.onPreModify.mockClear();
+    expect(stringSpy).toHaveBeenCalledTimes(1);
+    stringSpy.mockClear();
 
     // Should not notify the special callback when a different primitive property is changed
     primitiveChildPset.resolvePath('aNumber').value = 42;
-    primitiveChildDataBinding.onModify.callCount.should.equal(1);
-    primitiveChildDataBinding.onPreModify.callCount.should.equal(primitiveChildDataBinding.onModify.callCount);
-    primitiveChildDataBinding.onModify.resetHistory();
-    primitiveChildDataBinding.onPreModify.resetHistory();
-    stringSpy.callCount.should.equal(0);
+    expect(primitiveChildDataBinding.onModify).toHaveBeenCalledTimes(1);
+    expect(primitiveChildDataBinding.onPreModify).toHaveBeenCalledTimes(primitiveChildDataBinding.onModify.callCount);
+    primitiveChildDataBinding.onModify.mockClear();
+    primitiveChildDataBinding.onPreModify.mockClear();
+    expect(stringSpy).toHaveBeenCalledTimes(0);
 
     // Test modifications on the map
-    mapSpy.callCount.should.equal(0);
+    expect(mapSpy).toHaveBeenCalledTimes(0);
 
     // Insertion into a map is a modify for the map itself
     primitiveChildPset.get('mapOfNumbers').insert('numberKey', 23);
-    mapSpy.callCount.should.equal(1);
+    expect(mapSpy).toHaveBeenCalledTimes(1);
 
     // Modification of an entry in a map is a modify for the map itself
     primitiveChildPset.get('mapOfNumbers').set('numberKey', 42);
-    mapSpy.callCount.should.equal(2);
+    expect(mapSpy).toHaveBeenCalledTimes(2);
 
-    var nodeSpy = sinon.spy();
-    var nestedChildSpy = sinon.spy();
+    var nodeSpy = jest.fn();
+    var nestedChildSpy = jest.fn();
     ParentDataBinding.registerOnPath('node', ['modify'], nodeSpy);
     ParentDataBinding.registerOnPath('node.child', ['modify'], nestedChildSpy);
     dataBinder.register('BINDING', NodeContainerTemplate.typeid, ParentDataBinding);
@@ -208,77 +208,77 @@ describe('DataBinding.registerOnPath() should work for', function () {
     workspace.insert('myNodePropertyTemplate', PropertyFactory.create(NodeContainerTemplate.typeid));
     workspace.get('myNodePropertyTemplate').insert('node', PropertyFactory.create('NodeProperty'));
     workspace.get('myNodePropertyTemplate').get('node').insert('child', PropertyFactory.create('String'));
-    nodeSpy.callCount.should.equal(1);
-    nestedChildSpy.callCount.should.equal(0);
+    expect(nodeSpy).toHaveBeenCalledTimes(1);
+    expect(nestedChildSpy).toHaveBeenCalledTimes(0);
     workspace.get(['myNodePropertyTemplate', 'node', 'child']).setValue('testString');
-    nodeSpy.callCount.should.equal(2);
-    nestedChildSpy.callCount.should.equal(1);
+    expect(nodeSpy).toHaveBeenCalledTimes(2);
+    expect(nestedChildSpy).toHaveBeenCalledTimes(1);
   });
 
   it('onInsert', function () {
     // Register the base (Child) typeid
-    var anotherThingSpy = sinon.spy();
+    var anotherThingSpy = jest.fn();
     ParentDataBinding.registerOnPath('anotherThing', ['insert'], anotherThingSpy);
-    var textSpy = sinon.spy();
+    var textSpy = jest.fn();
     ParentDataBinding.registerOnPath('text', ['insert'], textSpy);
 
-    var nestedChildSpy = sinon.spy();
+    var nestedChildSpy = jest.fn();
     ParentDataBinding.registerOnPath('node.child', ['insert'], nestedChildSpy);
     dataBinder.register('BINDING', NodeContainerTemplate.typeid, ParentDataBinding);
 
     // Create PSet for inherited child typeid
     var nodeContainerPset = PropertyFactory.create(NodeContainerTemplate.typeid, 'single');
-    dataBinder._dataBindingCreatedCounter.should.equal(0);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
     dataBinder.attachTo(workspace);
 
     // primitiveChildPset should produce a PrimitiveChildrenDataBinding
     workspace.insert('myNodeContainerTemplate', nodeContainerPset);
-    dataBinder._dataBindingCreatedCounter.should.equal(1);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     const parentDataBinding = dataBinder.resolve(nodeContainerPset.getAbsolutePath(), 'BINDING');
     parentDataBinding.should.be.instanceOf(ParentDataBinding);
     parentDataBinding.getProperty().should.eql(nodeContainerPset);
-    parentDataBinding.onModify.callCount.should.equal(0); // !!!
-    parentDataBinding.onPreModify.callCount.should.equal(parentDataBinding.onModify.callCount);
-    parentDataBinding.onModify.resetHistory();
-    parentDataBinding.onPreModify.resetHistory();
-    parentDataBinding.onPostCreate.callCount.should.equal(1);
+    expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0); // !!!
+    expect(parentDataBinding.onPreModify).toHaveBeenCalledTimes(parentDataBinding.onModify.callCount);
+    parentDataBinding.onModify.mockClear();
+    parentDataBinding.onPreModify.mockClear();
+    expect(parentDataBinding.onPostCreate).toHaveBeenCalledTimes(1);
     // our specific onModify function shouldn't get called because we haven't inserted anything yet
-    anotherThingSpy.callCount.should.equal(0);
-    textSpy.callCount.should.equal(1);
+    expect(anotherThingSpy).toHaveBeenCalledTimes(0);
+    expect(textSpy).toHaveBeenCalledTimes(1);
     dataBinder._resetDebugCounters();
-    textSpy.resetHistory();
+    textSpy.mockClear();
 
     // Should notify DataBinding when primitive property is inserted into the watched path
     var dummyPset = PropertyFactory.create(ParentTemplate.typeid, 'single');
     nodeContainerPset.insert('anotherThing', dummyPset);
-    parentDataBinding.onModify.callCount.should.equal(1);
-    parentDataBinding.onPreModify.callCount.should.equal(parentDataBinding.onModify.callCount);
-    parentDataBinding.onModify.resetHistory();
-    parentDataBinding.onPreModify.resetHistory();
-    anotherThingSpy.callCount.should.equal(1);
-    anotherThingSpy.resetHistory();
+    expect(parentDataBinding.onModify).toHaveBeenCalledTimes(1);
+    expect(parentDataBinding.onPreModify).toHaveBeenCalledTimes(parentDataBinding.onModify.callCount);
+    parentDataBinding.onModify.mockClear();
+    parentDataBinding.onPreModify.mockClear();
+    expect(anotherThingSpy).toHaveBeenCalledTimes(1);
+    anotherThingSpy.mockClear();
 
     // Should not notify the special callback when a different primitive property is changed
     var dummyPset2 = PropertyFactory.create(ParentTemplate.typeid, 'single');
     nodeContainerPset.insert('anotherAnotherThing', dummyPset2);
-    parentDataBinding.onModify.callCount.should.equal(1);
-    parentDataBinding.onPreModify.callCount.should.equal(parentDataBinding.onModify.callCount);
-    parentDataBinding.onModify.resetHistory();
-    parentDataBinding.onPreModify.resetHistory();
-    anotherThingSpy.callCount.should.equal(0);
-    textSpy.callCount.should.equal(0);
+    expect(parentDataBinding.onModify).toHaveBeenCalledTimes(1);
+    expect(parentDataBinding.onPreModify).toHaveBeenCalledTimes(parentDataBinding.onModify.callCount);
+    parentDataBinding.onModify.mockClear();
+    parentDataBinding.onPreModify.mockClear();
+    expect(anotherThingSpy).toHaveBeenCalledTimes(0);
+    expect(textSpy).toHaveBeenCalledTimes(0);
 
-    nestedChildSpy.callCount.should.equal(0);
+    expect(nestedChildSpy).toHaveBeenCalledTimes(0);
     nodeContainerPset.insert('node', PropertyFactory.create('NodeProperty'));
-    nestedChildSpy.callCount.should.equal(0);
+    expect(nestedChildSpy).toHaveBeenCalledTimes(0);
     nodeContainerPset.get('node').insert('child', PropertyFactory.create('String'));
-    nestedChildSpy.callCount.should.equal(1);
+    expect(nestedChildSpy).toHaveBeenCalledTimes(1);
   });
 
   it('onRemove', function () {
-    var anotherThingRemoveSpy = sinon.spy();
-    var textRemoveSpy = sinon.spy();
-    var nestedChildRemoveSpy = sinon.spy();
+    var anotherThingRemoveSpy = jest.fn();
+    var textRemoveSpy = jest.fn();
+    var nestedChildRemoveSpy = jest.fn();
     ParentDataBinding.registerOnPath('another.nested.thing', ['remove'], anotherThingRemoveSpy);
     ParentDataBinding.registerOnPath('text', ['remove'], textRemoveSpy);
     ParentDataBinding.registerOnPath('node.child', ['remove'], nestedChildRemoveSpy);
@@ -286,7 +286,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.register('BINDING', NodeContainerTemplate.typeid, ParentDataBinding);
 
     // Create PSet for inherited child typeid
-    dataBinder._dataBindingCreatedCounter.should.equal(0);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
     dataBinder.attachTo(workspace);
 
     // primitiveChildPset should produce a PrimitiveChildrenDataBinding
@@ -296,64 +296,64 @@ describe('DataBinding.registerOnPath() should work for', function () {
     nodeContainerPset.get('node').insert('child', PropertyFactory.create('String'));
 
     workspace.remove('myNodeContainerTemplate');
-    textRemoveSpy.callCount.should.equal(1);
-    nestedChildRemoveSpy.callCount.should.equal(1);
-    anotherThingRemoveSpy.callCount.should.equal(0);
+    expect(textRemoveSpy).toHaveBeenCalledTimes(1);
+    expect(nestedChildRemoveSpy).toHaveBeenCalledTimes(1);
+    expect(anotherThingRemoveSpy).toHaveBeenCalledTimes(0);
   });
 
   it('nested Paths', function () {
-    var nestedSpy = sinon.spy();
+    var nestedSpy = jest.fn();
     PrimitiveChildrenDataBinding.registerOnPath('nested', ['modify'], nestedSpy);
-    var numberSpy = sinon.spy();
+    var numberSpy = jest.fn();
     PrimitiveChildrenDataBinding.registerOnPath('nested.aNumber', ['modify'], numberSpy);
     // Register the base (Child) typeid
     dataBinder.register('BINDING', PrimitiveChildrenTemplate.typeid, PrimitiveChildrenDataBinding);
 
     // Create PSet for inherited child typeid
     var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single');
-    dataBinder._dataBindingCreatedCounter.should.equal(0);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
     dataBinder.attachTo(workspace);
 
     // primitiveChildPset should produce a PrimitiveChildrenDataBinding
     workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
-    dataBinder._dataBindingCreatedCounter.should.equal(1);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     const primitiveChildDataBinding = dataBinder.resolve(primitiveChildPset.getAbsolutePath(), 'BINDING');
     primitiveChildDataBinding.should.be.instanceOf(PrimitiveChildrenDataBinding);
     primitiveChildDataBinding.getProperty().should.eql(primitiveChildPset);
-    primitiveChildDataBinding.onModify.callCount.should.equal(0); // !!!
-    primitiveChildDataBinding.onPreModify.callCount.should.equal(primitiveChildDataBinding.onModify.callCount);
-    primitiveChildDataBinding.onModify.resetHistory();
-    primitiveChildDataBinding.onPreModify.resetHistory();
-    primitiveChildDataBinding.onPostCreate.callCount.should.equal(1);
+    expect(primitiveChildDataBinding.onModify).toHaveBeenCalledTimes(0); // !!!
+    expect(primitiveChildDataBinding.onPreModify).toHaveBeenCalledTimes(primitiveChildDataBinding.onModify.callCount);
+    primitiveChildDataBinding.onModify.mockClear();
+    primitiveChildDataBinding.onPreModify.mockClear();
+    expect(primitiveChildDataBinding.onPostCreate).toHaveBeenCalledTimes(1);
 
     primitiveChildPset.resolvePath('nested.aNumber').setValue(23);
-    nestedSpy.callCount.should.equal(1);
-    numberSpy.callCount.should.equal(1);
+    expect(nestedSpy).toHaveBeenCalledTimes(1);
+    expect(numberSpy).toHaveBeenCalledTimes(1);
 
     // Should notify DataBinding when primitive property is inserted into the watched path
     primitiveChildPset.resolvePath('nested.aNumber').setValue(42);
-    primitiveChildDataBinding.onModify.callCount.should.equal(2);
-    primitiveChildDataBinding.onPreModify.callCount.should.equal(primitiveChildDataBinding.onModify.callCount);
-    primitiveChildDataBinding.onModify.resetHistory();
-    primitiveChildDataBinding.onPreModify.resetHistory();
-    numberSpy.callCount.should.equal(2);
-    nestedSpy.callCount.should.equal(2);
-    numberSpy.resetHistory();
+    expect(primitiveChildDataBinding.onModify).toHaveBeenCalledTimes(2);
+    expect(primitiveChildDataBinding.onPreModify).toHaveBeenCalledTimes(primitiveChildDataBinding.onModify.callCount);
+    primitiveChildDataBinding.onModify.mockClear();
+    primitiveChildDataBinding.onPreModify.mockClear();
+    expect(numberSpy).toHaveBeenCalledTimes(2);
+    expect(nestedSpy).toHaveBeenCalledTimes(2);
+    numberSpy.mockClear();
   });
 
   it('primitive collections', function () {
     // Register the base (Child) typeid
 
-    var mapInsertSpy = sinon.spy();
-    var mapModifySpy = sinon.spy();
-    var mapRemoveSpy = sinon.spy();
+    var mapInsertSpy = jest.fn();
+    var mapModifySpy = jest.fn();
+    var mapRemoveSpy = jest.fn();
     PrimitiveChildrenDataBinding.registerOnPath('mapOfNumbers', ['collectionInsert'], mapInsertSpy);
     PrimitiveChildrenDataBinding.registerOnPath('mapOfNumbers', ['collectionModify'], mapModifySpy);
     PrimitiveChildrenDataBinding.registerOnPath('mapOfNumbers', ['collectionRemove'], mapRemoveSpy);
 
-    var arrayInsertSpy = sinon.spy();
-    var arrayModifySpy = sinon.spy();
-    var arrayRemoveSpy = sinon.spy();
+    var arrayInsertSpy = jest.fn();
+    var arrayModifySpy = jest.fn();
+    var arrayRemoveSpy = jest.fn();
     PrimitiveChildrenDataBinding.registerOnPath('arrayOfNumbers', ['collectionInsert'], arrayInsertSpy);
     PrimitiveChildrenDataBinding.registerOnPath('arrayOfNumbers', ['collectionModify'], arrayModifySpy);
     PrimitiveChildrenDataBinding.registerOnPath('arrayOfNumbers', ['collectionRemove'], arrayRemoveSpy);
@@ -366,26 +366,26 @@ describe('DataBinding.registerOnPath() should work for', function () {
     // Expect the insertion of ranges to trigger onInsert messages
     var arrayProperty = workspace.get(['myPrimitiveChildTemplate', 'arrayOfNumbers']);
     arrayProperty.insertRange(0, [1, 2, 3, 4, 5, 6]);
-    arrayInsertSpy.callCount.should.equal(6);
-    arrayInsertSpy.getCall(0).args[0].should.equal(0);
-    arrayInsertSpy.getCall(1).args[0].should.equal(1);
-    arrayInsertSpy.getCall(2).args[0].should.equal(2);
-    arrayInsertSpy.getCall(3).args[0].should.equal(3);
-    arrayInsertSpy.getCall(4).args[0].should.equal(4);
-    arrayInsertSpy.getCall(5).args[0].should.equal(5);
-    arrayInsertSpy.resetHistory();
+    expect(arrayInsertSpy).toHaveBeenCalledTimes(6);
+    expect(arrayInsertSpy.getCall(0).args[0]).toEqual(0);
+    expect(arrayInsertSpy.getCall(1).args[0]).toEqual(1);
+    expect(arrayInsertSpy.getCall(2).args[0]).toEqual(2);
+    expect(arrayInsertSpy.getCall(3).args[0]).toEqual(3);
+    expect(arrayInsertSpy.getCall(4).args[0]).toEqual(4);
+    expect(arrayInsertSpy.getCall(5).args[0]).toEqual(5);
+    arrayInsertSpy.mockClear();
 
     arrayProperty.setRange(1, [5, 6]);
-    arrayModifySpy.callCount.should.equal(2);
-    arrayModifySpy.getCall(0).args[0].should.equal(1);
-    arrayModifySpy.getCall(1).args[0].should.equal(2);
-    arrayModifySpy.resetHistory();
+    expect(arrayModifySpy).toHaveBeenCalledTimes(2);
+    expect(arrayModifySpy.getCall(0).args[0]).toEqual(1);
+    expect(arrayModifySpy.getCall(1).args[0]).toEqual(2);
+    arrayModifySpy.mockClear();
 
     arrayProperty.removeRange(1, 2);
-    arrayRemoveSpy.callCount.should.equal(2);
-    arrayRemoveSpy.getCall(0).args[0].should.equal(1);
-    arrayRemoveSpy.getCall(1).args[0].should.equal(1);
-    arrayRemoveSpy.resetHistory();
+    expect(arrayRemoveSpy).toHaveBeenCalledTimes(2);
+    expect(arrayRemoveSpy.getCall(0).args[0]).toEqual(1);
+    expect(arrayRemoveSpy.getCall(1).args[0]).toEqual(1);
+    arrayRemoveSpy.mockClear();
 
     // Expect the insertion of map values to trigger onInsert messages
     var mapProperty = workspace.get(['myPrimitiveChildTemplate', 'mapOfNumbers']);
@@ -396,13 +396,13 @@ describe('DataBinding.registerOnPath() should work for', function () {
     mapProperty.insert('four', 4);
     mapProperty.insert('five', 5);
     workspace.popModifiedEventScope();
-    mapInsertSpy.callCount.should.equal(5);
-    mapInsertSpy.getCall(0).args[0].should.equal('one');
-    mapInsertSpy.getCall(1).args[0].should.equal('two');
-    mapInsertSpy.getCall(2).args[0].should.equal('three');
-    mapInsertSpy.getCall(3).args[0].should.equal('four');
-    mapInsertSpy.getCall(4).args[0].should.equal('five');
-    mapInsertSpy.resetHistory();
+    expect(mapInsertSpy).toHaveBeenCalledTimes(5);
+    expect(mapInsertSpy.getCall(0).args[0]).toEqual('one');
+    expect(mapInsertSpy.getCall(1).args[0]).toEqual('two');
+    expect(mapInsertSpy.getCall(2).args[0]).toEqual('three');
+    expect(mapInsertSpy.getCall(3).args[0]).toEqual('four');
+    expect(mapInsertSpy.getCall(4).args[0]).toEqual('five');
+    mapInsertSpy.mockClear();
 
     // modify map
     workspace.pushModifiedEventScope();
@@ -410,11 +410,11 @@ describe('DataBinding.registerOnPath() should work for', function () {
     mapProperty.set('two', 20);
     mapProperty.set('three', 30);
     workspace.popModifiedEventScope();
-    mapModifySpy.callCount.should.equal(3);
-    mapModifySpy.getCall(0).args[0].should.equal('one');
-    mapModifySpy.getCall(1).args[0].should.equal('two');
-    mapModifySpy.getCall(2).args[0].should.equal('three');
-    mapModifySpy.resetHistory();
+    expect(mapModifySpy).toHaveBeenCalledTimes(3);
+    expect(mapModifySpy.getCall(0).args[0]).toEqual('one');
+    expect(mapModifySpy.getCall(1).args[0]).toEqual('two');
+    expect(mapModifySpy.getCall(2).args[0]).toEqual('three');
+    mapModifySpy.mockClear();
 
     // remove from map
     workspace.pushModifiedEventScope();
@@ -422,17 +422,17 @@ describe('DataBinding.registerOnPath() should work for', function () {
     mapProperty.remove('two');
     mapProperty.remove('three');
     workspace.popModifiedEventScope();
-    mapRemoveSpy.callCount.should.equal(3);
-    mapRemoveSpy.getCall(0).args[0].should.equal('one');
-    mapRemoveSpy.getCall(1).args[0].should.equal('two');
-    mapRemoveSpy.getCall(2).args[0].should.equal('three');
-    mapRemoveSpy.resetHistory();
+    expect(mapRemoveSpy).toHaveBeenCalledTimes(3);
+    expect(mapRemoveSpy.getCall(0).args[0]).toEqual('one');
+    expect(mapRemoveSpy.getCall(1).args[0]).toEqual('two');
+    expect(mapRemoveSpy.getCall(2).args[0]).toEqual('three');
+    mapRemoveSpy.mockClear();
   });
 
   it('composed type array', function () {
-    var arrayInsertSpy = sinon.spy();
-    var arrayModifySpy = sinon.spy();
-    var arrayRemoveSpy = sinon.spy();
+    var arrayInsertSpy = jest.fn();
+    var arrayModifySpy = jest.fn();
+    var arrayRemoveSpy = jest.fn();
     ParentDataBinding.registerOnPath('subArray', ['collectionInsert'], arrayInsertSpy);
     ParentDataBinding.registerOnPath('subArray', ['collectionModify'], arrayModifySpy);
     ParentDataBinding.registerOnPath('subArray', ['collectionRemove'], arrayRemoveSpy);
@@ -451,48 +451,48 @@ describe('DataBinding.registerOnPath() should work for', function () {
         text: String(i)
       });
     }));
-    arrayInsertSpy.callCount.should.equal(6);
-    arrayInsertSpy.getCall(0).args[0].should.equal(0);
-    arrayInsertSpy.getCall(1).args[0].should.equal(1);
-    arrayInsertSpy.getCall(2).args[0].should.equal(2);
-    arrayInsertSpy.getCall(3).args[0].should.equal(3);
-    arrayInsertSpy.getCall(4).args[0].should.equal(4);
-    arrayInsertSpy.getCall(5).args[0].should.equal(5);
+    expect(arrayInsertSpy).toHaveBeenCalledTimes(6);
+    expect(arrayInsertSpy.getCall(0).args[0]).toEqual(0);
+    expect(arrayInsertSpy.getCall(1).args[0]).toEqual(1);
+    expect(arrayInsertSpy.getCall(2).args[0]).toEqual(2);
+    expect(arrayInsertSpy.getCall(3).args[0]).toEqual(3);
+    expect(arrayInsertSpy.getCall(4).args[0]).toEqual(4);
+    expect(arrayInsertSpy.getCall(5).args[0]).toEqual(5);
 
-    arrayInsertSpy.getCall(0).args[1].getNestedChangeSet().typeid.should.equal('Test:ChildID-0.0.1');
-    arrayInsertSpy.getCall(0).args[1].getNestedChangeSet().String.text.should.equal('1');
-    arrayInsertSpy.getCall(0).args[1].getContext().should.equal('array');
-    arrayInsertSpy.getCall(0).args[1].getOperationType().should.equal('insert');
-    arrayInsertSpy.getCall(0).args[1].getAbsolutePath().should.equal('/myArrayContainerTemplate.subArray[0]');
-    arrayInsertSpy.getCall(4).args[1].getNestedChangeSet().String.text.should.equal('5');
+    expect(arrayInsertSpy.getCall(0).args[1].getNestedChangeSet().typeid).toEqual('Test:ChildID-0.0.1');
+    expect(arrayInsertSpy.getCall(0).args[1].getNestedChangeSet().String.text).toEqual('1');
+    expect(arrayInsertSpy.getCall(0).args[1].getContext()).toEqual('array');
+    expect(arrayInsertSpy.getCall(0).args[1].getOperationType()).toEqual('insert');
+    expect(arrayInsertSpy.getCall(0).args[1].getAbsolutePath()).toEqual('/myArrayContainerTemplate.subArray[0]');
+    expect(arrayInsertSpy.getCall(4).args[1].getNestedChangeSet().String.text).toEqual('5');
 
-    arrayInsertSpy.resetHistory();
+    arrayInsertSpy.mockClear();
 
     arrayProperty.get([1, 'text']).setValue('5');
     arrayProperty.get([2, 'text']).setValue('6');
-    arrayModifySpy.callCount.should.equal(2);
-    arrayModifySpy.getCall(0).args[0].should.equal(1);
-    arrayModifySpy.getCall(1).args[0].should.equal(2);
+    expect(arrayModifySpy).toHaveBeenCalledTimes(2);
+    expect(arrayModifySpy.getCall(0).args[0]).toEqual(1);
+    expect(arrayModifySpy.getCall(1).args[0]).toEqual(2);
 
-    arrayModifySpy.getCall(0).args[1].getNestedChangeSet().typeid.should.equal('Test:ChildID-0.0.1');
-    arrayModifySpy.getCall(0).args[1].getNestedChangeSet().String.text.should.equal('5');
-    arrayModifySpy.getCall(0).args[1].getContext().should.equal('array');
-    arrayModifySpy.getCall(0).args[1].getOperationType().should.equal('modify');
-    arrayModifySpy.getCall(0).args[1].getAbsolutePath().should.equal('/myArrayContainerTemplate.subArray[1]');
-    arrayModifySpy.getCall(1).args[1].getNestedChangeSet().String.text.should.equal('6');
-    arrayModifySpy.resetHistory();
+    expect(arrayModifySpy.getCall(0).args[1].getNestedChangeSet().typeid).toEqual('Test:ChildID-0.0.1');
+    expect(arrayModifySpy.getCall(0).args[1].getNestedChangeSet().String.text).toEqual('5');
+    expect(arrayModifySpy.getCall(0).args[1].getContext()).toEqual('array');
+    expect(arrayModifySpy.getCall(0).args[1].getOperationType()).toEqual('modify');
+    expect(arrayModifySpy.getCall(0).args[1].getAbsolutePath()).toEqual('/myArrayContainerTemplate.subArray[1]');
+    expect(arrayModifySpy.getCall(1).args[1].getNestedChangeSet().String.text).toEqual('6');
+    arrayModifySpy.mockClear();
 
     arrayProperty.removeRange(1, 2);
-    arrayRemoveSpy.callCount.should.equal(2);
-    arrayRemoveSpy.getCall(0).args[0].should.equal(1);
-    arrayRemoveSpy.getCall(1).args[0].should.equal(1);
-    arrayRemoveSpy.resetHistory();
+    expect(arrayRemoveSpy).toHaveBeenCalledTimes(2);
+    expect(arrayRemoveSpy.getCall(0).args[0]).toEqual(1);
+    expect(arrayRemoveSpy.getCall(1).args[0]).toEqual(1);
+    arrayRemoveSpy.mockClear();
   });
 
   it('composed type map', function () {
-    var mapInsertSpy = sinon.spy();
-    var mapModifySpy = sinon.spy();
-    var mapRemoveSpy = sinon.spy();
+    var mapInsertSpy = jest.fn();
+    var mapModifySpy = jest.fn();
+    var mapRemoveSpy = jest.fn();
     ParentDataBinding.registerOnPath('subMap', ['collectionInsert'], mapInsertSpy);
     ParentDataBinding.registerOnPath('subMap', ['collectionModify'], mapModifySpy);
     ParentDataBinding.registerOnPath('subMap', ['collectionRemove'], mapRemoveSpy);
@@ -514,22 +514,22 @@ describe('DataBinding.registerOnPath() should work for', function () {
     mapProperty.insert('five.six', PropertyFactory.create('Test:ChildID-0.0.1', undefined, { text: '5' }));
     workspace.popModifiedEventScope();
 
-    mapInsertSpy.callCount.should.equal(5);
-    mapInsertSpy.getCall(0).args[0].should.equal('one');
-    mapInsertSpy.getCall(1).args[0].should.equal('two');
-    mapInsertSpy.getCall(2).args[0].should.equal('three');
-    mapInsertSpy.getCall(3).args[0].should.equal('four');
-    mapInsertSpy.getCall(4).args[0].should.equal('five.six');
+    expect(mapInsertSpy).toHaveBeenCalledTimes(5);
+    expect(mapInsertSpy.getCall(0).args[0]).toEqual('one');
+    expect(mapInsertSpy.getCall(1).args[0]).toEqual('two');
+    expect(mapInsertSpy.getCall(2).args[0]).toEqual('three');
+    expect(mapInsertSpy.getCall(3).args[0]).toEqual('four');
+    expect(mapInsertSpy.getCall(4).args[0]).toEqual('five.six');
 
     // TODO: How do we report the typeid for these?
-    // mapInsertSpy.getCall(0).args[1].getNestedChangeSet().typeid.should.equal('Test:ChildID-0.0.1');
-    mapInsertSpy.getCall(0).args[1].getNestedChangeSet().String.text.should.equal('1');
-    mapInsertSpy.getCall(0).args[1].getContext().should.equal('map');
-    mapInsertSpy.getCall(0).args[1].getOperationType().should.equal('insert');
-    mapInsertSpy.getCall(0).args[1].getAbsolutePath().should.equal('/myMapContainerTemplate.subMap[one]');
-    mapInsertSpy.getCall(4).args[1].getNestedChangeSet().String.text.should.equal('5');
-    mapInsertSpy.getCall(4).args[1].getAbsolutePath().should.equal('/myMapContainerTemplate.subMap["five.six"]');
-    mapInsertSpy.resetHistory();
+    // expect( mapInsertSpy.getCall(0).args[1].getNestedChangeSet().typeid).toEqual('Test:ChildID-0.0.1');
+    expect(mapInsertSpy.getCall(0).args[1].getNestedChangeSet().String.text).toEqual('1');
+    expect(mapInsertSpy.getCall(0).args[1].getContext()).toEqual('map');
+    expect(mapInsertSpy.getCall(0).args[1].getOperationType()).toEqual('insert');
+    expect(mapInsertSpy.getCall(0).args[1].getAbsolutePath()).toEqual('/myMapContainerTemplate.subMap[one]');
+    expect(mapInsertSpy.getCall(4).args[1].getNestedChangeSet().String.text).toEqual('5');
+    expect(mapInsertSpy.getCall(4).args[1].getAbsolutePath()).toEqual('/myMapContainerTemplate.subMap["five.six"]');
+    mapInsertSpy.mockClear();
 
     // modify map
     workspace.pushModifiedEventScope();
@@ -537,20 +537,20 @@ describe('DataBinding.registerOnPath() should work for', function () {
     mapProperty.get(['two', 'text']).setValue('20');
     mapProperty.get(['five.six', 'text']).setValue('30');
     workspace.popModifiedEventScope();
-    mapModifySpy.callCount.should.equal(3);
-    mapModifySpy.getCall(0).args[0].should.equal('one');
-    mapModifySpy.getCall(1).args[0].should.equal('two');
-    mapModifySpy.getCall(2).args[0].should.equal('five.six');
+    expect(mapModifySpy).toHaveBeenCalledTimes(3);
+    expect(mapModifySpy.getCall(0).args[0]).toEqual('one');
+    expect(mapModifySpy.getCall(1).args[0]).toEqual('two');
+    expect(mapModifySpy.getCall(2).args[0]).toEqual('five.six');
 
     // TODO: How do we report the typeid for these?
-    // mapInsertSpy.getCall(0).args[1].getNestedChangeSet().typeid.should.equal('Test:ChildID-0.0.1');
-    mapModifySpy.getCall(0).args[1].getNestedChangeSet().String.text.should.equal('10');
-    mapModifySpy.getCall(0).args[1].getContext().should.equal('map');
-    mapModifySpy.getCall(0).args[1].getOperationType().should.equal('modify');
-    mapModifySpy.getCall(0).args[1].getAbsolutePath().should.equal('/myMapContainerTemplate.subMap[one]');
-    mapModifySpy.getCall(2).args[1].getNestedChangeSet().String.text.should.equal('30');
-    mapModifySpy.getCall(2).args[1].getAbsolutePath().should.equal('/myMapContainerTemplate.subMap["five.six"]');
-    mapModifySpy.resetHistory();
+    // expect(mapInsertSpy.getCall(0).args[1].getNestedChangeSet().typeid).toEqual('Test:ChildID-0.0.1');
+    expect(mapModifySpy.getCall(0).args[1].getNestedChangeSet().String.text).toEqual('10');
+    expect(mapModifySpy.getCall(0).args[1].getContext()).toEqual('map');
+    expect(mapModifySpy.getCall(0).args[1].getOperationType()).toEqual('modify');
+    expect(mapModifySpy.getCall(0).args[1].getAbsolutePath()).toEqual('/myMapContainerTemplate.subMap[one]');
+    expect(mapModifySpy.getCall(2).args[1].getNestedChangeSet().String.text).toEqual('30');
+    expect(mapModifySpy.getCall(2).args[1].getAbsolutePath()).toEqual('/myMapContainerTemplate.subMap["five.six"]');
+    mapModifySpy.mockClear();
 
     // remove from map
     workspace.pushModifiedEventScope();
@@ -558,17 +558,17 @@ describe('DataBinding.registerOnPath() should work for', function () {
     mapProperty.remove('two');
     mapProperty.remove('five.six');
     workspace.popModifiedEventScope();
-    mapRemoveSpy.callCount.should.equal(3);
-    mapRemoveSpy.getCall(0).args[0].should.equal('one');
-    mapRemoveSpy.getCall(1).args[0].should.equal('two');
-    mapRemoveSpy.getCall(2).args[0].should.equal('five.six');
-    mapRemoveSpy.resetHistory();
+    expect(mapRemoveSpy).toHaveBeenCalledTimes(3);
+    expect(mapRemoveSpy.getCall(0).args[0]).toEqual('one');
+    expect(mapRemoveSpy.getCall(1).args[0]).toEqual('two');
+    expect(mapRemoveSpy.getCall(2).args[0]).toEqual('five.six');
+    mapRemoveSpy.mockClear();
   });
 
   it('set', function () {
-    var setInsertSpy = sinon.spy();
-    var setModifySpy = sinon.spy();
-    var setRemoveSpy = sinon.spy();
+    var setInsertSpy = jest.fn();
+    var setModifySpy = jest.fn();
+    var setRemoveSpy = jest.fn();
     ParentDataBinding.registerOnPath('subSet', ['collectionInsert'], setInsertSpy);
     ParentDataBinding.registerOnPath('subSet', ['collectionModify'], setModifySpy);
     ParentDataBinding.registerOnPath('subSet', ['collectionRemove'], setRemoveSpy);
@@ -592,13 +592,13 @@ describe('DataBinding.registerOnPath() should work for', function () {
     }
     workspace.popModifiedEventScope();
 
-    setInsertSpy.callCount.should.equal(5);
+    expect(setInsertSpy).toHaveBeenCalledTimes(5);
     for (var i = 0; i < 5; i++) {
-      setInsertSpy.getCall(i).args[0].should.equal(children[i].getId());
-      setInsertSpy.getCall(i).args[1].getNestedChangeSet().String.text.should.equal(String(i));
-      setInsertSpy.getCall(i).args[1].getContext().should.equal('set');
-      setInsertSpy.getCall(i).args[1].getOperationType().should.equal('insert');
-      setInsertSpy.getCall(i).args[1].getAbsolutePath().should.equal(
+      expect(setInsertSpy.getCall(i).args[0]).toEqual(children[i].getId());
+      expect(setInsertSpy.getCall(i).args[1].getNestedChangeSet().String.text).toEqual(String(i));
+      expect(setInsertSpy.getCall(i).args[1].getContext()).toEqual('set');
+      expect(setInsertSpy.getCall(i).args[1].getOperationType()).toEqual('insert');
+      expect(setInsertSpy.getCall(i).args[1].getAbsolutePath()).toEqual(
         '/mySetContainerTemplate.subSet[' + children[i].getId() + ']');
     }
 
@@ -606,12 +606,12 @@ describe('DataBinding.registerOnPath() should work for', function () {
     for (var i = 0; i < 5; i++) {
       children[i].get('text').setValue(String(i + 1));
 
-      setModifySpy.callCount.should.equal(i + 1);
-      setModifySpy.getCall(i).args[0].should.equal(children[i].getId());
-      setModifySpy.getCall(i).args[1].getNestedChangeSet().String.text.should.equal(String(i + 1));
-      setModifySpy.getCall(i).args[1].getContext().should.equal('set');
-      setModifySpy.getCall(i).args[1].getOperationType().should.equal('modify');
-      setModifySpy.getCall(i).args[1].getAbsolutePath().should.equal(
+      expect(setModifySpy).toHaveBeenCalledTimes(i + 1);
+      expect(setModifySpy.getCall(i).args[0]).toEqual(children[i].getId());
+      expect(setModifySpy.getCall(i).args[1].getNestedChangeSet().String.text).toEqual(String(i + 1));
+      expect(setModifySpy.getCall(i).args[1].getContext()).toEqual('set');
+      expect(setModifySpy.getCall(i).args[1].getOperationType()).toEqual('modify');
+      expect(setModifySpy.getCall(i).args[1].getAbsolutePath()).toEqual(
         '/mySetContainerTemplate.subSet[' + children[i].getId() + ']');
     }
 
@@ -621,16 +621,16 @@ describe('DataBinding.registerOnPath() should work for', function () {
       setProperty.remove(children[i]);
     }
     workspace.popModifiedEventScope();
-    setRemoveSpy.callCount.should.equal(5);
+    expect(setRemoveSpy).toHaveBeenCalledTimes(5);
     for (var i = 0; i < 5; i++) {
-      setModifySpy.getCall(i).args[0].should.equal(children[i].getId());
+      expect(setModifySpy.getCall(i).args[0]).toEqual(children[i].getId());
     }
   });
 
   it('NodeProperty', function () {
-    var nodeInsertSpy = sinon.spy();
-    var nodeModifySpy = sinon.spy();
-    var nodeRemoveSpy = sinon.spy();
+    var nodeInsertSpy = jest.fn();
+    var nodeModifySpy = jest.fn();
+    var nodeRemoveSpy = jest.fn();
     ParentDataBinding.registerOnPath('nested', ['collectionInsert'], nodeInsertSpy);
     ParentDataBinding.registerOnPath('nested', ['collectionModify'], nodeModifySpy);
     ParentDataBinding.registerOnPath('nested', ['collectionRemove'], nodeRemoveSpy);
@@ -654,13 +654,13 @@ describe('DataBinding.registerOnPath() should work for', function () {
     }
     workspace.popModifiedEventScope();
 
-    nodeInsertSpy.callCount.should.equal(5);
+    expect(nodeInsertSpy).toHaveBeenCalledTimes(5);
     for (var i = 0; i < 5; i++) {
-      nodeInsertSpy.getCall(i).args[0].should.equal(children[i].getId());
-      nodeInsertSpy.getCall(i).args[1].getNestedChangeSet().String.text.should.equal(String(i));
-      nodeInsertSpy.getCall(i).args[1].getContext().should.equal('NodeProperty');
-      nodeInsertSpy.getCall(i).args[1].getOperationType().should.equal('insert');
-      nodeInsertSpy.getCall(i).args[1].getAbsolutePath().should.equal(
+      expect(nodeInsertSpy.getCall(i).args[0]).toEqual(children[i].getId());
+      expect(nodeInsertSpy.getCall(i).args[1].getNestedChangeSet().String.text).toEqual(String(i));
+      expect(nodeInsertSpy.getCall(i).args[1].getContext()).toEqual('NodeProperty');
+      expect(nodeInsertSpy.getCall(i).args[1].getOperationType()).toEqual('insert');
+      expect(nodeInsertSpy.getCall(i).args[1].getAbsolutePath()).toEqual(
         '/myNodeContainerTemplate.nested[' + children[i].getId() + ']');
     }
 
@@ -668,12 +668,12 @@ describe('DataBinding.registerOnPath() should work for', function () {
     for (var i = 0; i < 5; i++) {
       children[i].get('text').setValue(String(i + 1));
 
-      nodeModifySpy.callCount.should.equal(i + 1);
-      nodeModifySpy.getCall(i).args[0].should.equal(children[i].getId());
-      nodeModifySpy.getCall(i).args[1].getNestedChangeSet().String.text.should.equal(String(i + 1));
-      nodeModifySpy.getCall(i).args[1].getContext().should.equal('NodeProperty');
-      nodeModifySpy.getCall(i).args[1].getOperationType().should.equal('modify');
-      nodeModifySpy.getCall(i).args[1].getAbsolutePath().should.equal(
+      expect(nodeModifySpy).toHaveBeenCalledTimes(i + 1);
+      expect(nodeModifySpy.getCall(i).args[0]).toEqual(children[i].getId());
+      expect(nodeModifySpy.getCall(i).args[1].getNestedChangeSet().String.text).toEqual(String(i + 1));
+      expect(nodeModifySpy.getCall(i).args[1].getContext()).toEqual('NodeProperty');
+      expect(nodeModifySpy.getCall(i).args[1].getOperationType()).toEqual('modify');
+      expect(nodeModifySpy.getCall(i).args[1].getAbsolutePath()).toEqual(
         '/myNodeContainerTemplate.nested[' + children[i].getId() + ']');
     }
 
@@ -683,16 +683,16 @@ describe('DataBinding.registerOnPath() should work for', function () {
       nodeProperty.remove(children[i]);
     }
     workspace.popModifiedEventScope();
-    nodeRemoveSpy.callCount.should.equal(5);
+    expect(nodeRemoveSpy).toHaveBeenCalledTimes(5);
     for (var i = 0; i < 5; i++) {
-      nodeModifySpy.getCall(i).args[0].should.equal(children[i].getId());
+      expect(nodeModifySpy.getCall(i).args[0]).toEqual(children[i].getId());
     }
   });
 
   it('arrays with primitive types (extra checks)', function () {
-    var arrayInsertSpy = sinon.spy();
-    var arrayModifySpy = sinon.spy();
-    var arrayRemoveSpy = sinon.spy();
+    var arrayInsertSpy = jest.fn();
+    var arrayModifySpy = jest.fn();
+    var arrayRemoveSpy = jest.fn();
     PrimitiveChildrenDataBinding.registerOnPath('arrayOfNumbers', ['collectionInsert'], arrayInsertSpy);
     PrimitiveChildrenDataBinding.registerOnPath('arrayOfNumbers', ['collectionModify'], arrayModifySpy);
     PrimitiveChildrenDataBinding.registerOnPath('arrayOfNumbers', ['collectionRemove'], arrayRemoveSpy);
@@ -707,29 +707,29 @@ describe('DataBinding.registerOnPath() should work for', function () {
     // Expect the insertion of ranges to trigger onInsert messages
     var arrayProperty = workspace.get(['myPrimitiveChildTemplate', 'arrayOfNumbers']);
     arrayProperty.insertRange(0, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
-    arrayInsertSpy.callCount.should.equal(9);
-    arrayInsertSpy.getCall(0).args[0].should.equal(0);
-    arrayInsertSpy.getCall(1).args[0].should.equal(1);
-    arrayInsertSpy.getCall(2).args[0].should.equal(2);
-    arrayInsertSpy.getCall(3).args[0].should.equal(3);
-    arrayInsertSpy.getCall(4).args[0].should.equal(4);
-    arrayInsertSpy.getCall(5).args[0].should.equal(5);
-    arrayInsertSpy.getCall(6).args[0].should.equal(6);
-    arrayInsertSpy.getCall(7).args[0].should.equal(7);
-    arrayInsertSpy.getCall(8).args[0].should.equal(8);
-    arrayInsertSpy.resetHistory();
+    expect(arrayInsertSpy).toHaveBeenCalledTimes(9);
+    expect(arrayInsertSpy.getCall(0).args[0]).toEqual(0);
+    expect(arrayInsertSpy.getCall(1).args[0]).toEqual(1);
+    expect(arrayInsertSpy.getCall(2).args[0]).toEqual(2);
+    expect(arrayInsertSpy.getCall(3).args[0]).toEqual(3);
+    expect(arrayInsertSpy.getCall(4).args[0]).toEqual(4);
+    expect(arrayInsertSpy.getCall(5).args[0]).toEqual(5);
+    expect(arrayInsertSpy.getCall(6).args[0]).toEqual(6);
+    expect(arrayInsertSpy.getCall(7).args[0]).toEqual(7);
+    expect(arrayInsertSpy.getCall(8).args[0]).toEqual(8);
+    arrayInsertSpy.mockClear();
 
     arrayProperty.setRange(5, [50, 60]);
-    arrayModifySpy.callCount.should.equal(2);
-    arrayModifySpy.getCall(0).args[0].should.equal(5);
-    arrayModifySpy.getCall(1).args[0].should.equal(6);
-    arrayModifySpy.resetHistory();
+    expect(arrayModifySpy).toHaveBeenCalledTimes(2);
+    expect(arrayModifySpy.getCall(0).args[0]).toEqual(5);
+    expect(arrayModifySpy.getCall(1).args[0]).toEqual(6);
+    arrayModifySpy.mockClear();
 
     arrayProperty.removeRange(0, 2);
-    arrayRemoveSpy.callCount.should.equal(2);
-    arrayRemoveSpy.getCall(0).args[0].should.equal(0);
-    arrayRemoveSpy.getCall(1).args[0].should.equal(0);
-    arrayRemoveSpy.resetHistory();
+    expect(arrayRemoveSpy).toHaveBeenCalledTimes(2);
+    expect(arrayRemoveSpy.getCall(0).args[0]).toEqual(0);
+    expect(arrayRemoveSpy.getCall(1).args[0]).toEqual(0);
+    arrayRemoveSpy.mockClear();
 
     workspace.pushModifiedEventScope();
     arrayProperty.insert(1, 5);
@@ -737,18 +737,18 @@ describe('DataBinding.registerOnPath() should work for', function () {
     arrayProperty.removeRange(2, 2);
     arrayProperty.set(2, 7);
     workspace.popModifiedEventScope();
-    arrayRemoveSpy.callCount.should.equal(3);
-    arrayRemoveSpy.getCall(0).args[0].should.equal(0);
-    arrayRemoveSpy.getCall(1).args[0].should.equal(2);
-    arrayRemoveSpy.getCall(2).args[0].should.equal(2);
+    expect(arrayRemoveSpy).toHaveBeenCalledTimes(3);
+    expect(arrayRemoveSpy.getCall(0).args[0]).toEqual(0);
+    expect(arrayRemoveSpy.getCall(1).args[0]).toEqual(2);
+    expect(arrayRemoveSpy.getCall(2).args[0]).toEqual(2);
 
-    arrayInsertSpy.getCall(0).args[0].should.equal(0);
+    expect(arrayInsertSpy.getCall(0).args[0]).toEqual(0);
 
-    arrayModifySpy.getCall(0).args[0].should.equal(2);
+    expect(arrayModifySpy.getCall(0).args[0]).toEqual(2);
 
-    arrayRemoveSpy.resetHistory();
-    arrayInsertSpy.resetHistory();
-    arrayModifySpy.resetHistory();
+    arrayRemoveSpy.mockClear();
+    arrayInsertSpy.mockClear();
+    arrayModifySpy.mockClear();
   });
 
   it('registerOnProperty', function () {
@@ -801,29 +801,29 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     workspace.insert('node', PropertyFactory.create(NodeContainerTemplate.typeid));
-    dataBinder._dataBindingCreatedCounter.should.equal(1);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     primitiveChildrenDataBinding = dataBinder.resolve('/node', 'BINDING');
 
     workspace.get('node').insert('string', stringProperty);
-    insertSpy.callCount.should.equal(1);
+    expect(insertSpy).toHaveBeenCalledTimes(1);
 
     workspace.get(['node', 'string']).setValue('newValue');
-    modifySpy.callCount.should.equal(1);
+    expect(modifySpy).toHaveBeenCalledTimes(1);
 
     workspace.get('node').remove('string');
-    removeSpy.callCount.should.equal(1);
+    expect(removeSpy).toHaveBeenCalledTimes(1);
 
     workspace.get('node').insert('string', stringProperty);
-    insertSpy.callCount.should.equal(2);
-    changeSpy.callCount.should.equal(3); // insert twice, modify but no remove because of 'requireProperty'
+    expect(insertSpy).toHaveBeenCalledTimes(2);
+    expect(changeSpy).toHaveBeenCalledTimes(3); // insert twice, modify but no remove because of 'requireProperty'
 
     workspace.get(['node', 'string']).setValue('newValue2');
-    modifySpy.callCount.should.equal(2);
-    changeSpy.callCount.should.equal(4);
+    expect(modifySpy).toHaveBeenCalledTimes(2);
+    expect(changeSpy).toHaveBeenCalledTimes(4);
 
     workspace.get('node').remove('string');
-    removeSpy.callCount.should.equal(2);
-    changeSpy.callCount.should.equal(4); // not called because 'requireProperty' is true
+    expect(removeSpy).toHaveBeenCalledTimes(2);
+    expect(changeSpy).toHaveBeenCalledTimes(4); // not called because 'requireProperty' is true
 
     workspace.get('node').insert('string2', stringProperty);
 
@@ -831,22 +831,22 @@ describe('DataBinding.registerOnPath() should work for', function () {
     workspace.get('node').insert('string', PropertyFactory.create('Reference', undefined, '/node.string2'));
     //expect(false).to.be.true;
     // this should not have been changed to true
-    invalidProperty.should.equal(false);
+    expect(invalidProperty).toEqual(false);
     // this must have been changed to true
-    expectedInvalidProperty.should.equal(true);
+    expect(expectedInvalidProperty).toEqual(true);
   });
 
   it('when invoked from the utility functions', function () {
     var stringProperty = PropertyFactory.create('String');
     var stringArrayProperty = PropertyFactory.create('String', 'array');
-    var insertSpy = sinon.spy();
-    var modifySpy = sinon.spy();
+    var insertSpy = jest.fn();
+    var modifySpy = jest.fn();
     var removeSpy = sinon.spy(function (in_modificationContext) {
-      in_modificationContext.getAbsolutePath().should.equal('/node.string');
+      expect(in_modificationContext.getAbsolutePath()).toEqual('/node.string');
     });
-    var collectionInsertSpy = sinon.spy();
-    var collectionModifySpy = sinon.spy();
-    var collectionRemoveSpy = sinon.spy();
+    var collectionInsertSpy = jest.fn();
+    var collectionModifySpy = jest.fn();
+    var collectionRemoveSpy = jest.fn();
 
     PrimitiveChildrenDataBinding.registerOnPath('string', ['insert'], insertSpy);
     PrimitiveChildrenDataBinding.registerOnPath('string', ['modify'], modifySpy);
@@ -861,20 +861,26 @@ describe('DataBinding.registerOnPath() should work for', function () {
     var node = PropertyFactory.create(NodeContainerTemplate.typeid);
     workspace.insert('node', node);
 
-    node.insert('string', stringProperty); insertSpy.callCount.should.equal(1);
-    node.get('string').setValue('test'); modifySpy.callCount.should.equal(1);
-    node.remove('string'); removeSpy.callCount.should.equal(1);
+    node.insert('string', stringProperty);
+    expect(insertSpy).toHaveBeenCalledTimes(1);
+    node.get('string').setValue('test');
+    expect(modifySpy).toHaveBeenCalledTimes(1);
+    node.remove('string');
+    expect(removeSpy).toHaveBeenCalledTimes(1);
 
     node.insert('array', stringArrayProperty);
-    stringArrayProperty.insertRange(0, ['test', 'test2']); collectionInsertSpy.callCount.should.equal(2);
-    stringArrayProperty.set(0, 'test2'); collectionModifySpy.callCount.should.equal(1);
-    stringArrayProperty.remove(0); collectionRemoveSpy.callCount.should.equal(1);
+    stringArrayProperty.insertRange(0, ['test', 'test2']);
+    expect(collectionInsertSpy).toHaveBeenCalledTimes(2);
+    stringArrayProperty.set(0, 'test2');
+    expect(collectionModifySpy).toHaveBeenCalledTimes(1);
+    stringArrayProperty.remove(0);
+    expect(collectionRemoveSpy).toHaveBeenCalledTimes(1);
   });
 
   it('same databinding on two workspaces should not matter', function () {
     // In some tests, a databinding used in the first test was interfering with the second test.
     // We simulate that here
-    const insertSpy = sinon.spy();
+    const insertSpy = jest.fn();
 
     class myBinding extends DataBinding {
       constructor(params) { // eslint-disable-line no-useless-constructor
@@ -904,20 +910,20 @@ describe('DataBinding.registerOnPath() should work for', function () {
       return workspace2.initialize({ local: true }).then(() => {
         dataBinder2.attachTo(workspace2);
 
-        insertSpy.callCount.should.equal(0);
+        expect(insertSpy).toHaveBeenCalledTimes(0);
         workspace1.insert('p1', PropertyFactory.create(PrimitiveChildrenTemplate.typeid));
-        insertSpy.callCount.should.equal(1);
+        expect(insertSpy).toHaveBeenCalledTimes(1);
         workspace2.insert('p2', PropertyFactory.create(PrimitiveChildrenTemplate.typeid));
-        insertSpy.callCount.should.equal(2);
+        expect(insertSpy).toHaveBeenCalledTimes(2);
       });
     });
 
   });
 
   it('should handle intermediate binding classes that are not registered', function () {
-    var parentModifySpy = sinon.spy();
-    var derivedModifySpy = sinon.spy();
-    var derivedDerivedModifySpy = sinon.spy();
+    var parentModifySpy = jest.fn();
+    var derivedModifySpy = jest.fn();
+    var derivedDerivedModifySpy = jest.fn();
 
     unregisterAllOnPathListeners(ParentDataBinding);
     unregisterAllOnPathListeners(DerivedDataBinding);
@@ -932,59 +938,59 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.register('BINDING', InheritedInheritedChildTemplate.typeid, DerivedDerivedDataBinding);
     dataBinder.attachTo(workspace);
 
-    parentModifySpy.callCount.should.equal(0);
-    derivedModifySpy.callCount.should.equal(0);
-    derivedDerivedModifySpy.callCount.should.equal(0);
+    expect(parentModifySpy).toHaveBeenCalledTimes(0);
+    expect(derivedModifySpy).toHaveBeenCalledTimes(0);
+    expect(derivedDerivedModifySpy).toHaveBeenCalledTimes(0);
 
     // Test changing an instance of the parent class
     workspace.insert('myChildTemplate', PropertyFactory.create(ChildTemplate.typeid));
-    dataBinder._dataBindingCreatedCounter.should.equal(1);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
 
     workspace.get(['myChildTemplate', 'text']).setValue('newValue');
-    parentModifySpy.callCount.should.equal(1);
-    derivedModifySpy.callCount.should.equal(0);
-    derivedDerivedModifySpy.callCount.should.equal(0);
-    parentModifySpy.resetHistory();
-    derivedModifySpy.resetHistory();
-    derivedDerivedModifySpy.resetHistory();
+    expect(parentModifySpy).toHaveBeenCalledTimes(1);
+    expect(derivedModifySpy).toHaveBeenCalledTimes(0);
+    expect(derivedDerivedModifySpy).toHaveBeenCalledTimes(0);
+    parentModifySpy.mockClear();
+    derivedModifySpy.mockClear();
+    derivedDerivedModifySpy.mockClear();
 
     // Test changing an instance of the derived class
     workspace.insert('myInheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
-    dataBinder._dataBindingCreatedCounter.should.equal(1);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
 
     workspace.get(['myInheritedChildTemplate', 'text']).setValue('newValue');
-    parentModifySpy.callCount.should.equal(1);
-    derivedModifySpy.callCount.should.equal(0); // Was never registered, not called
-    derivedDerivedModifySpy.callCount.should.equal(0);
-    parentModifySpy.resetHistory();
-    derivedModifySpy.resetHistory();
-    derivedDerivedModifySpy.resetHistory();
+    expect(parentModifySpy).toHaveBeenCalledTimes(1);
+    expect(derivedModifySpy).toHaveBeenCalledTimes(0); // Was never registered, not called
+    expect(derivedDerivedModifySpy).toHaveBeenCalledTimes(0);
+    parentModifySpy.mockClear();
+    derivedModifySpy.mockClear();
+    derivedDerivedModifySpy.mockClear();
 
     // Test changing an instance of the derived derived class
     workspace.insert(
       'myInheritedInheritedChildTemplate', PropertyFactory.create(InheritedInheritedChildTemplate.typeid)
     );
-    dataBinder._dataBindingCreatedCounter.should.equal(1);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
 
     workspace.get(['myInheritedInheritedChildTemplate', 'text']).setValue('newValue');
-    parentModifySpy.callCount.should.equal(1);
-    derivedModifySpy.callCount.should.equal(0); // Was never registered, not called
-    derivedDerivedModifySpy.callCount.should.equal(1);
-    parentModifySpy.resetHistory();
-    derivedModifySpy.resetHistory();
-    derivedDerivedModifySpy.resetHistory();
+    expect(parentModifySpy).toHaveBeenCalledTimes(1);
+    expect(derivedModifySpy).toHaveBeenCalledTimes(0); // Was never registered, not called
+    expect(derivedDerivedModifySpy).toHaveBeenCalledTimes(1);
+    parentModifySpy.mockClear();
+    derivedModifySpy.mockClear();
+    derivedDerivedModifySpy.mockClear();
 
     // unregister the parent, and modify the doubly derived class
     unregisterAllOnPathListeners(ParentDataBinding);
     workspace.get(['myInheritedInheritedChildTemplate', 'text']).setValue('newValue2');
-    parentModifySpy.callCount.should.equal(0);  // Was unregistered, not called
-    derivedModifySpy.callCount.should.equal(0); // Was never registered, not called
-    derivedDerivedModifySpy.callCount.should.equal(1); // Still registered, called
-    parentModifySpy.resetHistory();
-    derivedModifySpy.resetHistory();
+    expect(parentModifySpy).toHaveBeenCalledTimes(0);  // Was unregistered, not called
+    expect(derivedModifySpy).toHaveBeenCalledTimes(0); // Was never registered, not called
+    expect(derivedDerivedModifySpy).toHaveBeenCalledTimes(1); // Still registered, called
+    parentModifySpy.mockClear();
+    derivedModifySpy.mockClear();
   });
 
   it('should not matter the order we register in, way 1', function () {
@@ -1000,17 +1006,17 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.register('BINDING', ChildTemplate.typeid, ParentDataBinding);
     dataBinder.register('BINDING', InheritedChildTemplate.typeid, DerivedDataBinding);
 
-    order.should.equal('');
+    expect(order).toEqual('');
     dataBinder.attachTo(workspace);
-    order.should.equal('');
+    expect(order).toEqual('');
 
     workspace.insert('InheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
 
-    parentInsertSpy.callCount.should.equal(1);
-    derivedInsertSpy.callCount.should.equal(1);
+    expect(parentInsertSpy).toHaveBeenCalledTimes(1);
+    expect(derivedInsertSpy).toHaveBeenCalledTimes(1);
 
     // The derived should be called before the parent
-    order.should.equal('dp');
+    expect(order).toEqual('dp');
   });
 
   it('should not matter the order we register in, way 2', function () {
@@ -1026,17 +1032,17 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.register('BINDING', ChildTemplate.typeid, ParentDataBinding);
     dataBinder.register('BINDING', InheritedChildTemplate.typeid, DerivedDataBinding);
 
-    order.should.equal('');
+    expect(order).toEqual('');
     dataBinder.attachTo(workspace);
-    order.should.equal('');
+    expect(order).toEqual('');
 
     workspace.insert('InheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
 
-    parentInsertSpy.callCount.should.equal(1);
-    derivedInsertSpy.callCount.should.equal(1);
+    expect(parentInsertSpy).toHaveBeenCalledTimes(1);
+    expect(derivedInsertSpy).toHaveBeenCalledTimes(1);
 
     // The derived should be called before the parent
-    order.should.equal('dp');
+    expect(order).toEqual('dp');
   });
 
   it('should not matter the order we register in, way 3', function () {
@@ -1052,17 +1058,17 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.register('BINDING', InheritedChildTemplate.typeid, DerivedDataBinding);
     dataBinder.register('BINDING', ChildTemplate.typeid, ParentDataBinding);
 
-    order.should.equal('');
+    expect(order).toEqual('');
     dataBinder.attachTo(workspace);
-    order.should.equal('');
+    expect(order).toEqual('');
 
     workspace.insert('InheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
 
-    parentInsertSpy.callCount.should.equal(1);
-    derivedInsertSpy.callCount.should.equal(1);
+    expect(parentInsertSpy).toHaveBeenCalledTimes(1);
+    expect(derivedInsertSpy).toHaveBeenCalledTimes(1);
 
     // The derived should be called before the parent
-    order.should.equal('dp');
+    expect(order).toEqual('dp');
   });
 
   it('should not matter the order we register in, way 4', function () {
@@ -1078,22 +1084,22 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.register('BINDING', InheritedChildTemplate.typeid, DerivedDataBinding);
     dataBinder.register('BINDING', ChildTemplate.typeid, ParentDataBinding);
 
-    order.should.equal('');
+    expect(order).toEqual('');
     dataBinder.attachTo(workspace);
-    order.should.equal('');
+    expect(order).toEqual('');
 
     workspace.insert('InheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
 
-    parentInsertSpy.callCount.should.equal(1);
-    derivedInsertSpy.callCount.should.equal(1);
+    expect(parentInsertSpy).toHaveBeenCalledTimes(1);
+    expect(derivedInsertSpy).toHaveBeenCalledTimes(1);
 
     // The derived should be called before the parent
-    order.should.equal('dp');
+    expect(order).toEqual('dp');
   });
 
   it('derived DataBindings with unrelated templates', function () {
-    var parentModifySpy = sinon.spy();
-    var derivedModifySpy = sinon.spy();
+    var parentModifySpy = jest.fn();
+    var derivedModifySpy = jest.fn();
 
     unregisterAllOnPathListeners(ParentDataBinding);
     unregisterAllOnPathListeners(DerivedDataBinding);
@@ -1105,83 +1111,83 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     workspace.insert('myParentTemplate', PropertyFactory.create(ParentTemplate.typeid));
-    dataBinder._dataBindingCreatedCounter.should.equal(1);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     const myParentDataBinding = dataBinder.resolve('/myParentTemplate', 'BINDING');
     should.exist(myParentDataBinding);
     myParentDataBinding.should.be.instanceOf(ParentDataBinding);
     workspace.insert('myChildTemplate', PropertyFactory.create(ChildTemplate.typeid));
-    dataBinder._dataBindingCreatedCounter.should.equal(1);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     const myDerivedDataBinding = dataBinder.resolve('/myChildTemplate', 'BINDING');
     should.exist(myDerivedDataBinding);
     myDerivedDataBinding.should.be.instanceOf(DerivedDataBinding);
 
-    parentModifySpy.callCount.should.equal(0);
-    derivedModifySpy.callCount.should.equal(0);
+    expect(parentModifySpy).toHaveBeenCalledTimes(0);
+    expect(derivedModifySpy).toHaveBeenCalledTimes(0);
 
     workspace.get(['myParentTemplate', 'text']).setValue('newValue');
-    parentModifySpy.callCount.should.equal(1);
-    derivedModifySpy.callCount.should.equal(0);
-    parentModifySpy.resetHistory();
-    derivedModifySpy.resetHistory();
-    myParentDataBinding.onModify.callCount.should.equal(1);
-    myDerivedDataBinding.onModify.callCount.should.equal(0);
-    myParentDataBinding.onModify.resetHistory();
-    myDerivedDataBinding.onModify.resetHistory();
+    expect(parentModifySpy).toHaveBeenCalledTimes(1);
+    expect(derivedModifySpy).toHaveBeenCalledTimes(0);
+    parentModifySpy.mockClear();
+    derivedModifySpy.mockClear();
+    myexpect(parentDataBinding.onModify).toHaveBeenCalledTimes(1);
+    expect(myDerivedDataBinding.onModify).toHaveBeenCalledTimes(0);
+    myParentDataBinding.onModify.mockClear();
+    myDerivedDataBinding.onModify.mockClear();
     workspace.get(['myChildTemplate', 'text']).setValue('newValue');
-    myParentDataBinding.onModify.callCount.should.equal(0);
-    myDerivedDataBinding.onModify.callCount.should.equal(1);
-    myParentDataBinding.onModify.resetHistory();
-    myDerivedDataBinding.onModify.resetHistory();
-    parentModifySpy.callCount.should.equal(1); // will still be called via child's callback list
-    derivedModifySpy.callCount.should.equal(1);
-    parentModifySpy.resetHistory();
-    derivedModifySpy.resetHistory();
+    myexpect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
+    expect(myDerivedDataBinding.onModify).toHaveBeenCalledTimes(1);
+    myParentDataBinding.onModify.mockClear();
+    myDerivedDataBinding.onModify.mockClear();
+    expect(parentModifySpy).toHaveBeenCalledTimes(1); // will still be called via child's callback list
+    expect(derivedModifySpy).toHaveBeenCalledTimes(1);
+    parentModifySpy.mockClear();
+    derivedModifySpy.mockClear();
 
     // unregister parent
     unregisterAllOnPathListeners(ParentDataBinding);
     workspace.get(['myChildTemplate', 'text']).setValue('newValue2');
-    myParentDataBinding.onModify.callCount.should.equal(0);
-    myDerivedDataBinding.onModify.callCount.should.equal(1);
-    myParentDataBinding.onModify.resetHistory();
-    myDerivedDataBinding.onModify.resetHistory();
-    parentModifySpy.callCount.should.equal(0);
-    derivedModifySpy.callCount.should.equal(1);
-    parentModifySpy.resetHistory();
-    derivedModifySpy.resetHistory();
+    myexpect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
+    expect(myDerivedDataBinding.onModify).toHaveBeenCalledTimes(1);
+    myParentDataBinding.onModify.mockClear();
+    myDerivedDataBinding.onModify.mockClear();
+    expect(parentModifySpy).toHaveBeenCalledTimes(0);
+    expect(derivedModifySpy).toHaveBeenCalledTimes(1);
+    parentModifySpy.mockClear();
+    derivedModifySpy.mockClear();
   });
 
   it('should not call us back for non-existing items', function () {
     dataBinder.attachTo(workspace);
-    const pathSpy = sinon.spy();
+    const pathSpy = jest.fn();
 
     ParentDataBinding.registerOnPath('node.aString', ['insert', 'modify', 'remove'], pathSpy);
     dataBinder.register('BINDING', 'NodeProperty', ParentDataBinding, { exactPath: '/' });
-    dataBinder._dataBindingCreatedCounter.should.equal(1);
-    pathSpy.callCount.should.equal(0);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
+    expect(pathSpy).toHaveBeenCalledTimes(0);
 
     const nodePset = PropertyFactory.create('NodeProperty', 'single');
-    pathSpy.callCount.should.equal(0);
+    expect(pathSpy).toHaveBeenCalledTimes(0);
     workspace.insert('node', nodePset);
 
     const stringPset = PropertyFactory.create('String', 'single');
     nodePset.insert('aString', stringPset);
-    pathSpy.callCount.should.equal(1);
+    expect(pathSpy).toHaveBeenCalledTimes(1);
 
     const stringProperty = workspace.get(['node', 'aString']);
     stringProperty.setValue('hello');
-    pathSpy.callCount.should.equal(2);
+    expect(pathSpy).toHaveBeenCalledTimes(2);
 
     nodePset.remove('aString');
-    pathSpy.callCount.should.equal(3);
+    expect(pathSpy).toHaveBeenCalledTimes(3);
   });
 
   it('derived DataBindings with unrelated templates and replacing parent callback', function () {
-    var parentModifySpy = sinon.spy();
-    var derivedModifySpy = sinon.spy();
-    var parentInsertSpy = sinon.spy();
-    var derivedInsertSpy = sinon.spy();
+    var parentModifySpy = jest.fn();
+    var derivedModifySpy = jest.fn();
+    var parentInsertSpy = jest.fn();
+    var derivedInsertSpy = jest.fn();
     var parentRemoveSpy = sinon.spy(function (in_modificationContext) {
     });
     var derivedRemoveSpy = sinon.spy(function (in_modificationContext) {
@@ -1201,67 +1207,67 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     workspace.insert('myParentTemplate', PropertyFactory.create(ParentTemplate.typeid));
-    dataBinder._dataBindingCreatedCounter.should.equal(1);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     const myParentDataBinding = dataBinder.resolve('/myParentTemplate', 'BINDING');
     should.exist(myParentDataBinding);
     myParentDataBinding.should.be.instanceOf(ParentDataBinding);
-    parentInsertSpy.callCount.should.equal(1);
-    derivedInsertSpy.callCount.should.equal(0);
-    parentInsertSpy.resetHistory();
-    derivedInsertSpy.resetHistory();
+    expect(parentInsertSpy).toHaveBeenCalledTimes(1);
+    expect(derivedInsertSpy).toHaveBeenCalledTimes(0);
+    parentInsertSpy.mockClear();
+    derivedInsertSpy.mockClear();
     workspace.insert('myNodeContainerTemplate', PropertyFactory.create(NodeContainerTemplate.typeid));
-    dataBinder._dataBindingCreatedCounter.should.equal(1);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     const myDerivedDataBinding = dataBinder.resolve('/myNodeContainerTemplate', 'BINDING');
     should.exist(myDerivedDataBinding);
     myDerivedDataBinding.should.be.instanceOf(DerivedDataBinding);
-    parentInsertSpy.callCount.should.equal(1);
-    derivedInsertSpy.callCount.should.equal(1);
-    parentInsertSpy.resetHistory();
-    derivedInsertSpy.resetHistory();
+    expect(parentInsertSpy).toHaveBeenCalledTimes(1);
+    expect(derivedInsertSpy).toHaveBeenCalledTimes(1);
+    parentInsertSpy.mockClear();
+    derivedInsertSpy.mockClear();
 
-    parentModifySpy.callCount.should.equal(0);
-    derivedModifySpy.callCount.should.equal(0);
+    expect(parentModifySpy).toHaveBeenCalledTimes(0);
+    expect(derivedModifySpy).toHaveBeenCalledTimes(0);
 
     workspace.get(['myParentTemplate', 'text']).setValue('newValue');
-    parentModifySpy.callCount.should.equal(1);
-    derivedModifySpy.callCount.should.equal(0);
-    parentModifySpy.resetHistory();
-    derivedModifySpy.resetHistory();
-    myParentDataBinding.onModify.callCount.should.equal(1);
-    myDerivedDataBinding.onModify.callCount.should.equal(0);
-    myParentDataBinding.onModify.resetHistory();
-    myDerivedDataBinding.onModify.resetHistory();
+    expect(parentModifySpy).toHaveBeenCalledTimes(1);
+    expect(derivedModifySpy).toHaveBeenCalledTimes(0);
+    parentModifySpy.mockClear();
+    derivedModifySpy.mockClear();
+    myexpect(parentDataBinding.onModify).toHaveBeenCalledTimes(1);
+    expect(myDerivedDataBinding.onModify).toHaveBeenCalledTimes(0);
+    myParentDataBinding.onModify.mockClear();
+    myDerivedDataBinding.onModify.mockClear();
     workspace.get(['myNodeContainerTemplate', 'text']).setValue('newValue');
-    myParentDataBinding.onModify.callCount.should.equal(0);
-    myDerivedDataBinding.onModify.callCount.should.equal(1);
-    myParentDataBinding.onModify.resetHistory();
-    myDerivedDataBinding.onModify.resetHistory();
-    parentModifySpy.callCount.should.equal(1);
-    derivedModifySpy.callCount.should.equal(1);
-    parentModifySpy.resetHistory();
-    derivedModifySpy.resetHistory();
+    myexpect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
+    expect(myDerivedDataBinding.onModify).toHaveBeenCalledTimes(1);
+    myParentDataBinding.onModify.mockClear();
+    myDerivedDataBinding.onModify.mockClear();
+    expect(parentModifySpy).toHaveBeenCalledTimes(1);
+    expect(derivedModifySpy).toHaveBeenCalledTimes(1);
+    parentModifySpy.mockClear();
+    derivedModifySpy.mockClear();
 
     // add extra stuff that can be removed (yay!):
     workspace.get('myParentTemplate').insert('subText', PropertyFactory.create('String'));
     workspace.get('myNodeContainerTemplate').insert('subText', PropertyFactory.create('String'));
     // remove stuff: first from the parent
     workspace.get('myParentTemplate').remove('subText');
-    parentRemoveSpy.callCount.should.equal(1);
-    derivedRemoveSpy.callCount.should.equal(0);
-    parentModifySpy.callCount.should.equal(0);
-    derivedModifySpy.callCount.should.equal(0);
-    parentRemoveSpy.resetHistory();
-    derivedRemoveSpy.resetHistory();
+    expect(parentRemoveSpy).toHaveBeenCalledTimes(1);
+    expect(derivedRemoveSpy).toHaveBeenCalledTimes(0);
+    expect(parentModifySpy).toHaveBeenCalledTimes(0);
+    expect(derivedModifySpy).toHaveBeenCalledTimes(0);
+    parentRemoveSpy.mockClear();
+    derivedRemoveSpy.mockClear();
     // then from the derived class
     workspace.get('myNodeContainerTemplate').remove('subText');
-    parentRemoveSpy.callCount.should.equal(1);
-    derivedRemoveSpy.callCount.should.equal(1);
-    parentModifySpy.callCount.should.equal(0);
-    derivedModifySpy.callCount.should.equal(0);
-    parentRemoveSpy.resetHistory();
-    derivedRemoveSpy.resetHistory();
+    expect(parentRemoveSpy).toHaveBeenCalledTimes(1);
+    expect(derivedRemoveSpy).toHaveBeenCalledTimes(1);
+    expect(parentModifySpy).toHaveBeenCalledTimes(0);
+    expect(derivedModifySpy).toHaveBeenCalledTimes(0);
+    parentRemoveSpy.mockClear();
+    derivedRemoveSpy.mockClear();
 
   });
 
@@ -1290,24 +1296,24 @@ describe('DataBinding.registerOnPath() should work for', function () {
     });
     ParentDataBinding.registerOnPath('single_ref.single_ref.text', ['modify'], doubleReferenceModifySpy);
     dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding);
-    dataBinder._dataBindingCreatedCounter.should.equal(2);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(2);
 
-    doubleReferenceModifySpy.callCount.should.equal(0);
+    expect(doubleReferenceModifySpy).toHaveBeenCalledTimes(0);
 
     childPset.get('text').setValue('newText2');
-    referenceParentPSet2.get(['single_ref', 'single_ref', 'text']).should.equal(childPset.get('text'));
-    doubleReferenceModifySpy.callCount.should.equal(1);
+    expect(referenceParentPSet2.get(['single_ref', 'single_ref', 'text'])).toEqual(childPset.get('text'));
+    expect(doubleReferenceModifySpy).toHaveBeenCalledTimes(1);
   });
   it('getAbsolutePath() should return the correct path', function () {
 
     var pathSpy = sinon.spy(function (modificationContext) {
       // WARNING: We have to do this test inline. After the event, the modification context is no
       // longer valid
-      modificationContext.getAbsolutePath().should.equal(modificationContext.getProperty().getAbsolutePath());
+      expect(modificationContext.getAbsolutePath()).toEqual(modificationContext.getProperty().getAbsolutePath());
     });
     var collectionSpy = sinon.spy(function (key, modificationContext) {
       //          console.log('key/index: ' + key + ' op: ' + modificationContext.getOperationType());
-      modificationContext.getAbsolutePath().should.equal(modificationContext.getProperty().getAbsolutePath());
+      expect(modificationContext.getAbsolutePath()).toEqual(modificationContext.getProperty().getAbsolutePath());
     });
     ChildDataBinding.registerOnPath('text', ['insert', 'modify'], pathSpy);
     ParentDataBinding.registerOnPath('myArray', ['collectionInsert', 'collectionModify'], collectionSpy);
@@ -1389,11 +1395,11 @@ describe('DataBinding.registerOnPath() should work for', function () {
     const order = PropertyFactory.create(orderEntrySchema.typeid);
     workspace.insert('order', order);
 
-    eventLog.length.should.equal(2);
+    expect(eventLog.length).toEqual(2);
     order.get('price').setValue(100);
-    eventLog.length.should.equal(3);
+    expect(eventLog.length).toEqual(3);
     order.get('quantity').setValue(100);
-    eventLog.length.should.equal(4);
+    expect(eventLog.length).toEqual(4);
   });
 
   it('getDataBinding() should work for relative path callbacks even in remove operations', function () {
@@ -1493,20 +1499,20 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     workspace.insert('parent', PropertyFactory.create('NodeProperty', 'single'));
-    dataBinder._dataBindingCreatedCounter.should.equal(1);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     workspace.get('parent').insert('child', PropertyFactory.create(ChildTemplate.typeid, undefined,
       { text: 'forty-two' }));
-    dataBinder._dataBindingCreatedCounter.should.equal(1);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     const childDataBinding = dataBinder.resolve('/parent.child', 'BINDING');
-    childSpy.callCount.should.equal(1);
-    childSpy.resetHistory();
+    expect(childSpy).toHaveBeenCalledTimes(1);
+    childSpy.mockClear();
     childDataBinding.getProperty().get('text').setValue('sixty-four');
-    childSpy.callCount.should.equal(1);
-    childSpy.resetHistory();
+    expect(childSpy).toHaveBeenCalledTimes(1);
+    childSpy.mockClear();
     workspace.get('parent').remove('child');
-    dataBinder._dataBindingRemovedCounter.should.equal(1);
+    expect(dataBinder._dataBindingRemovedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     workspace.get('parent').insert('childArray', PropertyFactory.create('NodeProperty', 'array'));
     var childArrayProperty = workspace.get(['parent', 'childArray']);
@@ -1519,92 +1525,92 @@ describe('DataBinding.registerOnPath() should work for', function () {
     var child0 = childArrayProperty.get(0);
     var child1 = childArrayProperty.get(1);
     child0.insert('grandChild', PropertyFactory.create('NodeProperty', 'single'));
-    dataBinder._dataBindingCreatedCounter.should.equal(0);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
     child1.insert('child', PropertyFactory.create(ChildTemplate.typeid, undefined,
       { text: 'forty-two' }));
-    dataBinder._dataBindingCreatedCounter.should.equal(1);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     // remove this first, so the path to our DataBinding Changes
     childArrayProperty.remove(0);
     childArrayProperty.remove(0);
-    dataBinder._dataBindingRemovedCounter.should.equal(1);
+    expect(dataBinder._dataBindingRemovedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
 
     // test for array collections
     childArrayProperty.get(1).insert('collectionContainer',
       PropertyFactory.create(ArrayContainerTemplate.typeid, 'single'));
-    dataBinder._dataBindingCreatedCounter.should.equal(1);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     var nestedArray = childArrayProperty.get(['1', 'collectionContainer', 'nested', 'subArray']);
     nestedArray.push(PropertyFactory.create(ChildTemplate.typeid, undefined, { text: 'one' }));
     nestedArray.push(PropertyFactory.create(ChildTemplate.typeid, undefined, { text: 'two' }));
     nestedArray.push(PropertyFactory.create(ChildTemplate.typeid, undefined, { text: 'three' }));
-    dataBinder._dataBindingCreatedCounter.should.equal(3);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(3);
     dataBinder._resetDebugCounters();
     createdDataBindings.push(dataBinder.resolve(nestedArray.get(0), 'BINDING'));
     createdDataBindings.push(dataBinder.resolve(nestedArray.get(1), 'BINDING'));
     createdDataBindings.push(dataBinder.resolve(nestedArray.get(2), 'BINDING'));
-    collectionInsertSpy.callCount.should.equal(3);
-    collectionInsertSpy.resetHistory();
+    expect(collectionInsertSpy).toHaveBeenCalledTimes(3);
+    collectionInsertSpy.mockClear();
     nestedArray.get([1, 'text']).setValue('twenty-two');
-    collectionModifySpy.callCount.should.equal(1);
-    collectionModifySpy.resetHistory();
+    expect(collectionModifySpy).toHaveBeenCalledTimes(1);
+    collectionModifySpy.mockClear();
     // grouped removes: remove one element in the array above this plus two elements from our nested array
     workspace.pushModifiedEventScope();
     childArrayProperty.remove(0);
     nestedArray.removeRange(0, 2);
     workspace.popModifiedEventScope();
-    collectionRemoveSpy.callCount.should.equal(2);
-    collectionRemoveSpy.resetHistory();
-    receivedDataBindings.has(createdDataBindings[2]).should.equal(false);
-    receivedDataBindings.size.should.equal(2);
-    dataBinder._dataBindingRemovedCounter.should.equal(2);
+    expect(collectionRemoveSpy).toHaveBeenCalledTimes(2);
+    collectionRemoveSpy.mockClear();
+    expect(receivedDataBindings.has(createdDataBindings[2])).toEqual(false);
+    expect(receivedDataBindings.size).toEqual(2);
+    expect(dataBinder._dataBindingRemovedCounter).toEqual(2);
     dataBinder._resetDebugCounters();
 
     // test for map collections
     childArrayProperty.get(2).insert('mapCollectionContainer',
       PropertyFactory.create(MapContainerTemplate.typeid, 'single'));
-    dataBinder._dataBindingCreatedCounter.should.equal(1);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     var nestedMap = childArrayProperty.get(['2', 'mapCollectionContainer', 'nested', 'subMap']);
     nestedMap.insert('one', PropertyFactory.create(ChildTemplate.typeid, undefined, { text: 'one' }));
     nestedMap.insert('two', PropertyFactory.create(ChildTemplate.typeid, undefined, { text: 'two' }));
     nestedMap.insert('three', PropertyFactory.create(ChildTemplate.typeid, undefined, { text: 'three' }));
-    dataBinder._dataBindingCreatedCounter.should.equal(3);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(3);
     dataBinder._resetDebugCounters();
     createdDataBindings.push(dataBinder.resolve(nestedMap.get('one'), 'BINDING'));
     createdDataBindings.push(dataBinder.resolve(nestedMap.get('two'), 'BINDING'));
     createdDataBindings.push(dataBinder.resolve(nestedMap.get('three'), 'BINDING'));
-    collectionInsertSpy.callCount.should.equal(3);
-    collectionInsertSpy.resetHistory();
+    expect(collectionInsertSpy).toHaveBeenCalledTimes(3);
+    collectionInsertSpy.mockClear();
     nestedMap.get(['one', 'text']).setValue('twenty-two');
-    mapCollectionModifySpy.callCount.should.equal(1);
-    mapCollectionModifySpy.resetHistory();
+    expect(mapCollectionModifySpy).toHaveBeenCalledTimes(1);
+    mapCollectionModifySpy.mockClear();
     // grouped removes: remove one element in the array above this plus two elements from our nested map
     workspace.pushModifiedEventScope();
     childArrayProperty.remove(1); // we remove index 1 so that our map moves, but our array (see above) stays!
     nestedMap.remove('one');
     nestedMap.remove('three');
     workspace.popModifiedEventScope();
-    collectionRemoveSpy.callCount.should.equal(2);
-    collectionRemoveSpy.resetHistory();
-    receivedDataBindings.has(createdDataBindings[4]).should.equal(false);
-    receivedDataBindings.size.should.equal(4);
-    dataBinder._dataBindingRemovedCounter.should.equal(2);
+    expect(collectionRemoveSpy).toHaveBeenCalledTimes(2);
+    collectionRemoveSpy.mockClear();
+    expect(receivedDataBindings.has(createdDataBindings[4])).toEqual(false);
+    expect(receivedDataBindings.size).toEqual(4);
+    expect(dataBinder._dataBindingRemovedCounter).toEqual(2);
     dataBinder._resetDebugCounters();
 
     // check error flags ->  have to do it this way because HFDM swallows exceptions in callbacks :(
-    childSpyError.should.equal(false);
-    collectionInsertSpyError.should.equal(false);
-    collectionModifySpyError.should.equal(false);
-    mapCollectionModifySpyError.should.equal(false);
-    collectionRemoveSpyError.should.equal(false);
+    expect(childSpyError).toEqual(false);
+    expect(collectionInsertSpyError).toEqual(false);
+    expect(collectionModifySpyError).toEqual(false);
+    expect(mapCollectionModifySpyError).toEqual(false);
+    expect(collectionRemoveSpyError).toEqual(false);
   });
 
   it('array of strings', function () {
-    const collectionInsert = sinon.spy();
-    const collectionModify = sinon.spy();
-    const collectionRemove = sinon.spy();
+    const collectionInsert = jest.fn();
+    const collectionModify = jest.fn();
+    const collectionRemove = jest.fn();
     PrimitiveChildrenDataBinding.registerOnPath('arrayOfStrings', ['collectionInsert'], collectionInsert);
     PrimitiveChildrenDataBinding.registerOnPath('arrayOfStrings', ['collectionModify'], collectionModify);
     PrimitiveChildrenDataBinding.registerOnPath('arrayOfStrings', ['collectionRemove'], collectionRemove);
@@ -1613,40 +1619,40 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
     workspace.insert('bob', PropertyFactory.create(PrimitiveChildrenTemplate.typeid));
     workspace.get(['bob', 'arrayOfStrings']).push('Hi there');
-    collectionInsert.callCount.should.equal(1);
-    collectionRemove.callCount.should.equal(0);
+    expect(collectionInsert).toHaveBeenCalledTimes(1);
+    expect(collectionRemove).toHaveBeenCalledTimes(0);
 
     workspace.get(['bob', 'arrayOfStrings']).pop();
-    collectionInsert.callCount.should.equal(1);
-    collectionModify.callCount.should.equal(0);
-    collectionRemove.callCount.should.equal(1);
+    expect(collectionInsert).toHaveBeenCalledTimes(1);
+    expect(collectionModify).toHaveBeenCalledTimes(0);
+    expect(collectionRemove).toHaveBeenCalledTimes(1);
 
-    collectionInsert.resetHistory();
-    collectionModify.resetHistory();
-    collectionRemove.resetHistory();
+    collectionInsert.mockClear();
+    collectionModify.mockClear();
+    collectionRemove.mockClear();
     workspace.get(['bob', 'arrayOfStrings']).setValues(['a', 'b']);
 
-    collectionInsert.callCount.should.equal(2);
-    collectionModify.callCount.should.equal(0);
-    collectionRemove.callCount.should.equal(0);
+    expect(collectionInsert).toHaveBeenCalledTimes(2);
+    expect(collectionModify).toHaveBeenCalledTimes(0);
+    expect(collectionRemove).toHaveBeenCalledTimes(0);
 
-    collectionInsert.resetHistory();
-    collectionModify.resetHistory();
-    collectionRemove.resetHistory();
+    collectionInsert.mockClear();
+    collectionModify.mockClear();
+    collectionRemove.mockClear();
     workspace.get(['bob', 'arrayOfStrings']).setValues(['c', 'd']);
 
-    collectionInsert.callCount.should.equal(0);
-    collectionModify.callCount.should.equal(2);
-    collectionRemove.callCount.should.equal(0);
+    expect(collectionInsert).toHaveBeenCalledTimes(0);
+    expect(collectionModify).toHaveBeenCalledTimes(2);
+    expect(collectionRemove).toHaveBeenCalledTimes(0);
 
-    collectionInsert.resetHistory();
-    collectionModify.resetHistory();
-    collectionRemove.resetHistory();
+    collectionInsert.mockClear();
+    collectionModify.mockClear();
+    collectionRemove.mockClear();
     workspace.get(['bob', 'arrayOfStrings']).setValues(['e', 'f', 'g']);
 
-    collectionInsert.callCount.should.equal(1);
-    collectionModify.callCount.should.equal(2);
-    collectionRemove.callCount.should.equal(0);
+    expect(collectionInsert).toHaveBeenCalledTimes(1);
+    expect(collectionModify).toHaveBeenCalledTimes(2);
+    expect(collectionRemove).toHaveBeenCalledTimes(0);
   });
 
   it('resolve() should work for DataBindings that replace DataBindings with the same path', function () {
@@ -1681,7 +1687,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     workspace.insert('childArray', PropertyFactory.create(ChildTemplate.typeid, 'array'));
-    dataBinder._dataBindingCreatedCounter.should.equal(1);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     var childArrayProperty = workspace.get('childArray');
     childArrayProperty.push(PropertyFactory.create(ChildTemplate.typeid, undefined,
@@ -1690,7 +1696,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
       { text: 'one' }));
     childArrayProperty.push(PropertyFactory.create(ChildTemplate.typeid, undefined,
       { text: 'two' }));
-    dataBinder._dataBindingCreatedCounter.should.equal(3);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(3);
     dataBinder._resetDebugCounters();
     for (var i = 0; i < 3; ++i) {
       dataBindings.push(dataBinder.resolve(childArrayProperty.get(i), 'BINDING'));
@@ -1700,21 +1706,21 @@ describe('DataBinding.registerOnPath() should work for', function () {
     childArrayProperty.insert(2, PropertyFactory.create(ChildTemplate.typeid, undefined,
       { text: 'twenty-two' }));
     workspace.popModifiedEventScope();
-    dataBinder._dataBindingCreatedCounter.should.equal(1);
-    dataBinder._dataBindingRemovedCounter.should.equal(1);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
+    expect(dataBinder._dataBindingRemovedCounter).toEqual(1);
     var newDataBinding = dataBinder.resolve(childArrayProperty.get(2), 'BINDING');
     var newResolvedDataBindings = dataBinder.resolve('/childArray[2]', 'BINDING');
-    newResolvedDataBindings.should.equal(newDataBinding);
-    newResolvedDataBindings.should.equal(resolvedDataBindings);
+    expect(newResolvedDataBindings).toEqual(newDataBinding);
+    expect(newResolvedDataBindings).toEqual(resolvedDataBindings);
     // have to do it this way because HFDM swallows exceptions in callbacks :(
-    error.should.equal(false);
+    expect(error).toEqual(false);
   });
 
   it('should be able to register on some path from an explicity nested schema and react to changes in the subtree',
     function () {
       dataBinder.attachTo(workspace);
 
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
       ParentDataBinding.registerOnPath('position', ['modify'], pathSpy);
       dataBinder.register('BINDING', point2DExplicitTemplate.typeid, ParentDataBinding);
 
@@ -1722,20 +1728,20 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
       workspace.get('point2D').get('position').get('x').value = 42;
       workspace.get('point2D').get('position').get('y').value = 42;
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
     });
 
   it('can tell if inserts/removes are simulated or real - attach/detach', function () {
     let simulated;
-    const called = sinon.spy();
+    const called = jest.fn();
 
     const checkSimulated = function (context) {
       called();
-      simulated.should.equal(context.isSimulated());
+      expect(simulated).toEqual(context.isSimulated());
     };
     const checkCollectionSimulated = function (stupidOrder, context) {
       called();
-      simulated.should.equal(context.isSimulated());
+      expect(simulated).toEqual(context.isSimulated());
     };
 
     const data1 = PropertyFactory.create(PrimitiveChildrenTemplate.typeid);
@@ -1753,44 +1759,44 @@ describe('DataBinding.registerOnPath() should work for', function () {
     );
 
     // retroactively adding bindings - we will get simulated callbacks for data1
-    called.callCount.should.equal(0);
+    expect(called).toHaveBeenCalledTimes(0);
     simulated = true;
     workspace.insert('data1', data1);
     dataBinder.attachTo(workspace);
-    called.callCount.should.equal(2);
+    expect(called).toHaveBeenCalledTimes(2);
 
     // bindings are attached - we will get real callbacks for data2
     simulated = false;
-    called.resetHistory();
+    called.mockClear();
     workspace.insert('data2', data2);
-    called.callCount.should.equal(2);
+    expect(called).toHaveBeenCalledTimes(2);
 
     // real callbacks for data2 being removed
     simulated = false;
-    called.resetHistory();
+    called.mockClear();
     workspace.remove(data2);
     // We won't get called back for collectionRemove (sort of LYNXDEV-5675) - so only one call
-    called.callCount.should.equal(1);
+    expect(called).toHaveBeenCalledTimes(1);
 
     // simulated callbacks for data1 being removed
     simulated = true;
-    called.resetHistory();
+    called.mockClear();
     dataBinder.detach();
     // We won't get called back for collectionRemove LYNXDEV-5675 - so only one call
-    called.callCount.should.equal(1);
+    expect(called).toHaveBeenCalledTimes(1);
   });
 
   it('can tell if inserts/removes are simulated or real - destroy handle', function () {
     let simulated;
-    const called = sinon.spy();
+    const called = jest.fn();
 
     const checkSimulated = function (context) {
       called();
-      simulated.should.equal(context.isSimulated());
+      expect(simulated).toEqual(context.isSimulated());
     };
     const checkCollectionSimulated = function (stupidOrder, context) {
       called();
-      simulated.should.equal(context.isSimulated());
+      expect(simulated).toEqual(context.isSimulated());
     };
 
     const data1 = PropertyFactory.create(PrimitiveChildrenTemplate.typeid);
@@ -1803,25 +1809,25 @@ describe('DataBinding.registerOnPath() should work for', function () {
     );
 
     // bindings are attached - we will get real callbacks for data1
-    called.callCount.should.equal(0);
+    expect(called).toHaveBeenCalledTimes(0);
     simulated = false;
     workspace.insert('data1', data1);
-    called.callCount.should.equal(2);
+    expect(called).toHaveBeenCalledTimes(2);
 
     // simulated callbacks for handles being destroyed
     // Unfortunately, we don't get any callbacks for these
-    called.resetHistory();
+    called.mockClear();
     simulated = true;
     handle1.destroy();
-    called.callCount.should.equal(0); // broken
+    expect(called).toHaveBeenCalledTimes(0); // broken
 
-    called.resetHistory();
+    called.mockClear();
     handle2.destroy();
-    called.callCount.should.equal(0); // broken
+    expect(called).toHaveBeenCalledTimes(0); // broken
   });
 
   it('should not be able to register on multiple paths for registerOnProperty etc.', function () {
-    const pathSpy = sinon.spy();
+    const pathSpy = jest.fn();
     const paths = ['position.x', 'position.y'];
     (function () { ParentDataBinding.registerOnProperty(paths, ['modify'], pathSpy); }).should.throw(Error);
     (function () { ParentDataBinding.registerOnValues(paths, ['modify'], pathSpy); }).should.throw(Error);
@@ -1830,7 +1836,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
   it('should be able to register on multiple paths and get called back once', function () {
     dataBinder.attachTo(workspace);
 
-    const pathSpy = sinon.spy();
+    const pathSpy = jest.fn();
     ParentDataBinding.registerOnPath(['position.x', 'position.y'], ['modify'], pathSpy);
     dataBinder.register('BINDING', point2DExplicitTemplate.typeid, ParentDataBinding);
 
@@ -1843,11 +1849,11 @@ describe('DataBinding.registerOnPath() should work for', function () {
     workspace.get('point2D').get('position').get('y').value = 42;
 
     // Haven't popped yet, shouldn't hear about it
-    pathSpy.callCount.should.equal(0);
+    expect(pathSpy).toHaveBeenCalledTimes(0);
 
     workspace.popModifiedEventScope();
 
-    pathSpy.callCount.should.equal(1);
+    expect(pathSpy).toHaveBeenCalledTimes(1);
 
     // Do another modify -- make sure that we haven't accidentally turned the callback off forever!
     workspace.pushModifiedEventScope();
@@ -1856,17 +1862,17 @@ describe('DataBinding.registerOnPath() should work for', function () {
     workspace.get('point2D').get('position').get('y').value = 43;
 
     // Haven't popped yet, shouldn't hear about it
-    pathSpy.callCount.should.equal(1);
+    expect(pathSpy).toHaveBeenCalledTimes(1);
 
     workspace.popModifiedEventScope();
 
-    pathSpy.callCount.should.equal(2);
+    expect(pathSpy).toHaveBeenCalledTimes(2);
   });
 
   it('should be able to unregister a multiple paths binding', function () {
     dataBinder.attachTo(workspace);
 
-    const pathSpy = sinon.spy();
+    const pathSpy = jest.fn();
     ParentDataBinding.registerOnPath(['position.x', 'position.y'], ['modify'], pathSpy);
     const handle = dataBinder.register('BINDING', point2DExplicitTemplate.typeid, ParentDataBinding);
 
@@ -1879,14 +1885,14 @@ describe('DataBinding.registerOnPath() should work for', function () {
     workspace.get('point2D').get('position').get('y').value = 42;
 
     // Haven't popped yet, shouldn't hear about it
-    pathSpy.callCount.should.equal(0);
+    expect(pathSpy).toHaveBeenCalledTimes(0);
 
     workspace.popModifiedEventScope();
 
-    pathSpy.callCount.should.equal(1);
+    expect(pathSpy).toHaveBeenCalledTimes(1);
 
     // Remove the binding
-    pathSpy.resetHistory();
+    pathSpy.mockClear();
     handle.destroy();
 
     // Do another modify; we shouldn't get called back since we have removed the binding
@@ -1898,7 +1904,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     workspace.popModifiedEventScope();
 
     // No binding anymore: shouldn't fire at all
-    pathSpy.callCount.should.equal(0);
+    expect(pathSpy).toHaveBeenCalledTimes(0);
   });
 
   it('should be able to register on multiple paths and independently hear from different callbacks', function () {
@@ -1908,7 +1914,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     // the modify callback from being called
     dataBinder.attachTo(workspace);
 
-    const pathSpy = sinon.spy();
+    const pathSpy = jest.fn();
     ParentDataBinding.registerOnPath(['child1.x', 'child1.y', 'child2.x', 'child2.y'], ['insert', 'modify'], pathSpy);
     dataBinder.register('BINDING', 'NodeProperty', ParentDataBinding);
 
@@ -1916,8 +1922,8 @@ describe('DataBinding.registerOnPath() should work for', function () {
     workspace.insert('child1', PropertyFactory.create(positionTemplate.typeid, 'single'));
 
     // Should have heard of the insert of child1, once
-    pathSpy.callCount.should.equal(1);
-    pathSpy.resetHistory();
+    expect(pathSpy).toHaveBeenCalledTimes(1);
+    pathSpy.mockClear();
 
     // Push a scope, insert child2 and also modify child1. This should cause the insert _and_ the modify callbacks
     // to be called.
@@ -1929,12 +1935,12 @@ describe('DataBinding.registerOnPath() should work for', function () {
     workspace.get('child1').get('y').value = 42;
 
     // Haven't popped yet, shouldn't hear about it
-    pathSpy.callCount.should.equal(0);
+    expect(pathSpy).toHaveBeenCalledTimes(0);
 
     workspace.popModifiedEventScope();
 
     // We should have heard one for the insert, and once for the modify
-    pathSpy.callCount.should.equal(2);
+    expect(pathSpy).toHaveBeenCalledTimes(2);
   });
 
   it('getRelativeTokenizedPath - relative path', function () {
@@ -1949,22 +1955,22 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
     // Create PSet for inherited child typeid
     var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single');
-    dataBinder._dataBindingCreatedCounter.should.equal(0);
+    expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
     dataBinder.attachTo(workspace);
 
     // primitiveChildPset should produce a PrimitiveChildrenDataBinding
     workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
 
-    worked.should.equal(false);
+    expect(worked).toEqual(false);
     primitiveChildPset.resolvePath('nested.aNumber').setValue(23);
-    worked.should.equal(true);
+    expect(worked).toEqual(true);
   });
 
   it('should be able to register on some path from an implicitly nested schema and react to changes in the subtree',
     function () {
       dataBinder.attachTo(workspace);
 
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
       ParentDataBinding.registerOnPath('position', ['modify'], pathSpy);
       dataBinder.register('BINDING', point2DImplicitTemplate.typeid, ParentDataBinding);
 
@@ -1974,14 +1980,14 @@ describe('DataBinding.registerOnPath() should work for', function () {
       workspace.get('point2D').get('position').get('y').value = 42;
 
       // We do the modifications outside of a modifiedEventScope, so we expect to hear about it twice
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
     });
 
   it('register on a structure modify and react to changes in the subtree LYNXDEV-5365',
     function () {
       dataBinder.attachTo(workspace);
 
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
       ParentDataBinding.registerOnPath('position', ['modify'], pathSpy);
       dataBinder.register('BINDING', point2DImplicitTemplate.typeid, ParentDataBinding);
 
@@ -1993,7 +1999,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
       workspace.popModifiedEventScope();
 
       // We do the modifications inside a modifiedEventScope, so we expect to only hear about it once
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
   it('register on a structure modify and react to changes in the subtree LYNXDEV-5365, differing types',
@@ -2017,7 +2023,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
       dataBinder.attachTo(workspace);
 
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
       ParentDataBinding.registerOnPath('position', ['modify'], pathSpy);
       dataBinder.register('BINDING', point2DWeirdTemplate.typeid, ParentDataBinding);
 
@@ -2029,7 +2035,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
       workspace.popModifiedEventScope();
 
       // We do the modifications inside a modifiedEventScope, so we expect to only hear about it once
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
   it('call onPostCreate/onModify before calling relative path callbacks, onRemove after (LYNXDEV-5746)', function () {
@@ -2042,30 +2048,30 @@ describe('DataBinding.registerOnPath() should work for', function () {
       }
 
       onPostCreate(params) {
-        this._insertMockObject.should.equal(false);
+        expect(this._insertMockObject).toEqual(false);
         this._insertMockObject = true;
       }
 
       onModify(params) {
-        this._modifyMockObject.should.equal(false);
+        expect(this._modifyMockObject).toEqual(false);
         this._modifyMockObject = true;
       }
 
       onRemove(params) {
-        this._removeMockObject.should.equal(true);
+        expect(this._removeMockObject).toEqual(true);
       }
     }
 
     dataBinder.attachTo(workspace);
     const pathInsertSpy = sinon.spy(function () {
-      this._insertMockObject.should.equal(true);
+      expect(this._insertMockObject).toEqual(true);
     });
     const pathModifySpy = sinon.spy(function () {
-      this._modifyMockObject.should.equal(true);
+      expect(this._modifyMockObject).toEqual(true);
     });
     const pathRemoveSpy = sinon.spy(function () {
       // this should be called *before* onRemove
-      this._removeMockObject.should.equal(false);
+      expect(this._removeMockObject).toEqual(false);
       this._removeMockObject = true;
     });
     myDerivedDataBinding.registerOnPath('text', ['insert'], pathInsertSpy);
@@ -2073,11 +2079,11 @@ describe('DataBinding.registerOnPath() should work for', function () {
     myDerivedDataBinding.registerOnPath('text', ['remove'], pathRemoveSpy);
     dataBinder.register('BINDING', ParentTemplate.typeid, myDerivedDataBinding);
     workspace.insert('parentProperty', PropertyFactory.create(ParentTemplate.typeid, 'single'));
-    pathInsertSpy.callCount.should.equal(1);
+    expect(pathInsertSpy).toHaveBeenCalledTimes(1);
     workspace.get(['parentProperty', 'text']).setValue('forty-two');
-    pathModifySpy.callCount.should.equal(1);
+    expect(pathModifySpy).toHaveBeenCalledTimes(1);
     workspace.remove('parentProperty');
-    pathRemoveSpy.callCount.should.equal(1);
+    expect(pathRemoveSpy).toHaveBeenCalledTimes(1);
   });
 
   it('relative path callback on nested reference (LYNXDEV-6013)', function () {
@@ -2106,11 +2112,11 @@ describe('DataBinding.registerOnPath() should work for', function () {
     workspace.insert('refContainer', PropertyFactory.create(referenceContainerTemplate.typeid, 'single'));
     workspace.get(['refContainer', 'container', 'ref'], RESOLVE_NO_LEAFS).setValue('/child');
     workspace.insert('child', PropertyFactory.create(ChildTemplate.typeid, 'single'));
-    insertRemoveSpy.callCount.should.equal(1); // insert
+    expect(insertRemoveSpy).toHaveBeenCalledTimes(1); // insert
     workspace.get(['child', 'text']).setValue('this is still 42');
-    modifySpy.callCount.should.equal(1); // modify
+    expect(modifySpy).toHaveBeenCalledTimes(1); // modify
     workspace.remove('child');
-    insertRemoveSpy.callCount.should.equal(2); // insert + remove
+    expect(insertRemoveSpy).toHaveBeenCalledTimes(2); // insert + remove
   });
 
   it('should pass correct args to callbacks when binding multiple paths in a single call (LYNXDEV-6095)', function () {
@@ -2123,19 +2129,19 @@ describe('DataBinding.registerOnPath() should work for', function () {
       in_context.should.be.instanceof(ModificationContext);
       // the wired in order / keys aren't very nice but it's simple and we control the order/keys (see below)
       if (!collectionCallbackCalled) {
-        in_position.should.equal(0);
+        expect(in_position).toEqual(0);
       } else {
-        in_position.should.equal('a');
+        expect(in_position).toEqual('a');
       }
       collectionCallbackCalled = true;
     });
     const singlePathSpy = sinon.spy(function (in_context) {
       in_context.should.be.instanceof(ModificationContext);
       if (!singleCallbackCalled) {
-        in_context.getOperationType().should.equal('insert'); // the first call is for the insert
+        expect(in_context.getOperationType()).toEqual('insert'); // the first call is for the insert
       } else {
-        in_context.getOperationType().should.equal('modify'); // the other calls are for the modifies
-        in_context.getAbsolutePath().should.equal(expectedPath);
+        expect(in_context.getOperationType()).toEqual('modify'); // the other calls are for the modifies
+        expect(in_context.getAbsolutePath()).toEqual(expectedPath);
       }
       singleCallbackCalled = true;
     });
@@ -2146,22 +2152,22 @@ describe('DataBinding.registerOnPath() should work for', function () {
     const handle = dataBinder.register('BINDING', PrimitiveChildrenTemplate.typeid, ParentDataBinding);
 
     workspace.insert('props', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
-    singlePathSpy.callCount.should.equal(1); // called once for the insert
+    expect(singlePathSpy).toHaveBeenCalledTimes(1); // called once for the insert
 
     workspace.get('props').get('arrayOfNumbers').push(42);
-    collectionPathSpy.callCount.should.equal(1);
+    expect(collectionPathSpy).toHaveBeenCalledTimes(1);
     workspace.get('props').get('mapOfNumbers').insert('a', 42);
-    collectionPathSpy.callCount.should.equal(2);
+    expect(collectionPathSpy).toHaveBeenCalledTimes(2);
     expectedPath = '/props.aString';
     workspace.get('props').get('aString').setValue('forty-two');
-    singlePathSpy.callCount.should.equal(2);
+    expect(singlePathSpy).toHaveBeenCalledTimes(2);
     expectedPath = '/props.aNumber';
     workspace.get('props').get('aNumber').setValue(42);
-    singlePathSpy.callCount.should.equal(3);
+    expect(singlePathSpy).toHaveBeenCalledTimes(3);
     // Remove the binding
-    collectionPathSpy.resetHistory();
-    singlePathSpy.resetHistory();
-    singlePathSpy.resetHistory();
+    collectionPathSpy.mockClear();
+    singlePathSpy.mockClear();
+    singlePathSpy.mockClear();
     handle.destroy();
   });
 
@@ -2259,7 +2265,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
     const binding = dataBinder.resolve('object', 'BINDING');
 
-    binding._object.name.should.equal('myObject');
+    expect(binding._object.name).toEqual('myObject');
     binding._object.position.should.deep.equal({ x: 1, y: 2, z: 3 });
     binding._object.scale.should.deep.equal({ x: 1, y: 1, z: 1 });
 
@@ -2267,7 +2273,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     myObject.get(['pos', 'x']).setValue(4);
     myObject.get(['scale', 'y']).setValue(12);
 
-    binding._object.name.should.equal('stillMyObject');
+    expect(binding._object.name).toEqual('stillMyObject');
     binding._object.position.should.deep.equal({ x: 4, y: 2, z: 3 });
     binding._object.scale.should.deep.equal({ x: 1, y: 12, z: 1 });
   });
@@ -2322,7 +2328,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
     const binding = dataBinder.resolve('object', 'BINDING');
 
-    binding._object.name.should.equal('myObject');
+    expect(binding._object.name).toEqual('myObject');
     binding._object.position.should.deep.equal({ x: 1, y: 2, z: 3 });
     binding._object.scale.should.deep.equal({ x: 1, y: 1, z: 1 });
 
@@ -2330,7 +2336,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     myObject.get(['pos', 'x']).setValue(4);
     myObject.get(['scale', 'y']).setValue(12);
 
-    binding._object.name.should.equal('stillMyObject');
+    expect(binding._object.name).toEqual('stillMyObject');
     binding._object.position.should.deep.equal({ x: 4, y: 2, z: 3 });
     binding._object.scale.should.deep.equal({ x: 1, y: 12, z: 1 });
   });

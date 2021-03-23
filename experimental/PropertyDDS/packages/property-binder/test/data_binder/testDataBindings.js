@@ -19,15 +19,15 @@ class ParentDataBinding extends DataBinding {
     var that = this;
 
     this.params = params;
-    this.onPreModify = sinon.spy();
-    this.onModify = sinon.spy();
-    this.onPreRemove = sinon.spy();
-    this.onRemove = sinon.spy(function(in_removalContext) {
+    this.onPreModify = jest.fn();
+    this.onModify = jest.fn();
+    this.onPreRemove = jest.fn();
+    this.onRemove = sinon.spy(function (in_removalContext) {
       // Make sure, we always have a symmetric number of preRemove calls
-      that.onPreRemove.callCount.should.equal(1);
+      expect(that.onPreRemove).toHaveBeenCalledTimes(1);
     });
 
-    this.onPostCreate = sinon.spy();
+    this.onPostCreate = jest.fn();
   }
 }
 ParentDataBinding.prototype.__debuggingName = 'ParentDataBinding';
@@ -61,15 +61,15 @@ class ChildDataBinding extends DataBinding {
 
     this.params = params;
 
-    this.onPreModify = sinon.spy();
-    this.onModify = sinon.spy();
-    this.onPreRemove = sinon.spy();
-    this.onRemove = sinon.spy(function(in_removalContext) {
+    this.onPreModify = jest.fn();
+    this.onModify = jest.fn();
+    this.onPreRemove = jest.fn();
+    this.onRemove = sinon.spy(function (in_removalContext) {
       // Make sure, we always have a symmetric number of preRemove calls
-      that.onPreRemove.callCount.should.equal(1);
+      expect(that.onPreRemove).toHaveBeenCalledTimes(1);
     });
 
-    this.onPostCreate = sinon.spy();
+    this.onPostCreate = jest.fn();
   }
 }
 ChildDataBinding.prototype.__debuggingName = 'ChildDataBinding';
@@ -87,15 +87,15 @@ class PrimitiveChildrenDataBinding extends DataBinding {
 
     this.params = params;
 
-    this.onPreModify = sinon.spy();
-    this.onModify = sinon.spy();
-    this.onPreRemove = sinon.spy();
-    this.onRemove = sinon.spy(function(in_removalContext) {
+    this.onPreModify = jest.fn();
+    this.onModify = jest.fn();
+    this.onPreRemove = jest.fn();
+    this.onRemove = sinon.spy(function (in_removalContext) {
       // Make sure, we always have a symmetric number of preRemove calls
-      that.onPreRemove.callCount.should.equal(1);
+      expect(that.onPreRemove).toHaveBeenCalledTimes(1);
     });
 
-    this.onPostCreate = sinon.spy();
+    this.onPostCreate = jest.fn();
   }
 }
 
@@ -114,15 +114,15 @@ class InheritedChildDataBinding extends DataBinding {
 
     this.params = params;
 
-    this.onPreModify = sinon.spy();
-    this.onModify = sinon.spy();
-    this.onPreRemove = sinon.spy();
-    this.onRemove = sinon.spy(function(in_removalContext) {
+    this.onPreModify = jest.fn();
+    this.onModify = jest.fn();
+    this.onPreRemove = jest.fn();
+    this.onRemove = sinon.spy(function (in_removalContext) {
       // Make sure, we always have a symmetric number of preRemove calls
-      that.onPreRemove.callCount.should.equal(1);
+      expect(that.onPreRemove).toHaveBeenCalledTimes(1);
     });
 
-    this.onPostCreate = sinon.spy();
+    this.onPostCreate = jest.fn();
   }
 }
 

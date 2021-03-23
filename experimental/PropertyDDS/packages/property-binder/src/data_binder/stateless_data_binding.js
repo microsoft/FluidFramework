@@ -7,9 +7,6 @@
  * by the client, but is called back for onPreModify, onModify etc. for all instances of a type.
  */
 
-/* eslint-disable-next-line spaced-comment */
-/// <reference types="@adsktypes/adsk__forge-hfdm" />
-
 import { DataBinding } from './data_binding';
 import { DataBinder } from './data_binder'; /* eslint-disable-line no-unused-vars */
 import { BaseProperty } from '@fluid-experimental/property-properties'; /* eslint-disable-line no-unused-vars */

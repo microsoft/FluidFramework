@@ -26,7 +26,7 @@ describe.skip('DataBinder', function () {
 
   catchConsoleErrors();
 
-  before(function () {
+  beforeAll(function () {
     registerTestTemplates();
     connectParams = {
       serverUrl: 'http://ecs-master-opt.ecs.ads.autodesk.com:3000'
@@ -100,27 +100,27 @@ describe.skip('DataBinder', function () {
         refWorkspace.insert('child', child);
         await refWorkspace.commit();
 
-        dataBinder._dataBindingCreatedCounter.should.equal(1);
+        expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
         dataBinder._resetDebugCounters();
 
         // Remove the repo reference from the embedding repository
         workspace.remove('reference');
 
-        dataBinder._dataBindingRemovedCounter.should.equal(1);
+        expect(dataBinder._dataBindingRemovedCounter).toEqual(1);
         dataBinder._resetDebugCounters();
 
         // Insert the repo reference back to the embedding repository
         workspace.insert('reference', repositoryReference);
         await new Promise((resolve, reject) =>
           workspace.on('onAllReferencesLoaded', () => resolve()));
-        dataBinder._dataBindingCreatedCounter.should.equal(1);
+        expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
         dataBinder._resetDebugCounters();
 
         // Remove the child from the embedded repository
         refWorkspace = repositoryReference.getReferencedWorkspace();
         refWorkspace.remove('child');
         await refWorkspace.commit();
-        dataBinder._dataBindingRemovedCounter.should.equal(1);
+        expect(dataBinder._dataBindingRemovedCounter).toEqual(1);
         dataBinder._resetDebugCounters();
       });
 
@@ -129,8 +129,8 @@ describe.skip('DataBinder', function () {
         var pathInsertSpy = sinon.spy(function (in_modificationContext) {
           console.log('path: ' + in_modificationContext.getAbsolutePath());
         });
-        var pathModifySpy = sinon.spy();
-        var pathRemoveSpy = sinon.spy();
+        var pathModifySpy = jest.fn();
+        var pathRemoveSpy = jest.fn();
         ParentDataBinding.registerOnPath('reference.child.text', ['referenceInsert'], pathInsertSpy);
         ParentDataBinding.registerOnPath('reference.child.text', ['referenceModify'], pathModifySpy);
         ParentDataBinding.registerOnPath('reference.child.text', ['referenceRemove'], pathRemoveSpy);
@@ -159,21 +159,21 @@ describe.skip('DataBinder', function () {
         refWorkspace.insert('child', child);
         await refWorkspace.commit();
 
-        pathInsertSpy.callCount.should.equal(1);
-        pathInsertSpy.resetHistory();
+        expect(pathInsertSpy).toHaveBeenCalledTimes(1);
+        pathInsertSpy.mockClear();
 
         // Modify a property of the child in the embedded repository
         refWorkspace.get(['child', 'text']).setValue('new text');
         await refWorkspace.commit();
 
-        pathModifySpy.callCount.should.equal(1);
-        pathModifySpy.resetHistory();
+        expect(pathModifySpy).toHaveBeenCalledTimes(1);
+        pathModifySpy.mockClear();
 
         // Remove the repo reference with the child in the embedded workspace from the embedding workspace
         workspace.get('parent').remove('reference');
 
-        pathRemoveSpy.callCount.should.equal(1);
-        pathRemoveSpy.resetHistory();
+        expect(pathRemoveSpy).toHaveBeenCalledTimes(1);
+        pathRemoveSpy.mockClear();
 
         // Insert the repo reference with the child in the embedded workspace back to the embedding workspace
         workspace.get('parent').insert('reference', repositoryReference);
@@ -181,16 +181,16 @@ describe.skip('DataBinder', function () {
           workspace.on('onAllReferencesLoaded', () =>
             resolve()));
 
-        pathInsertSpy.callCount.should.equal(1);
-        pathInsertSpy.resetHistory();
+        expect(pathInsertSpy).toHaveBeenCalledTimes(1);
+        pathInsertSpy.mockClear();
 
         // Remove the child from the embedded workspace when the repo reference is still in the embedding workspace
         refWorkspace = repositoryReference.getReferencedWorkspace();
         refWorkspace.remove('child');
         await refWorkspace.commit();
 
-        pathRemoveSpy.callCount.should.equal(1);
-        pathRemoveSpy.resetHistory();
+        expect(pathRemoveSpy).toHaveBeenCalledTimes(1);
+        pathRemoveSpy.mockClear();
       });
 
     it('should handle the relative path callbacks when the whole relative path is in the embedded repository',
@@ -198,8 +198,8 @@ describe.skip('DataBinder', function () {
         var pathInsertSpy = sinon.spy(function (in_modificationContext) {
           console.log('path: ' + in_modificationContext.getAbsolutePath());
         });
-        var pathModifySpy = sinon.spy();
-        var pathRemoveSpy = sinon.spy();
+        var pathModifySpy = jest.fn();
+        var pathRemoveSpy = jest.fn();
         ChildDataBinding.registerOnPath('text', ['insert'], pathInsertSpy);
         ChildDataBinding.registerOnPath('text', ['modify'], pathModifySpy);
         ChildDataBinding.registerOnPath('text', ['remove'], pathRemoveSpy);
@@ -226,21 +226,21 @@ describe.skip('DataBinder', function () {
         refWorkspace.insert('child', child);
         await refWorkspace.commit();
 
-        pathInsertSpy.callCount.should.equal(1);
-        pathInsertSpy.resetHistory();
+        expect(pathInsertSpy).toHaveBeenCalledTimes(1);
+        pathInsertSpy.mockClear();
 
         // Modify a property of the child in the embedded repository
         refWorkspace.get(['child', 'text']).setValue('new text');
         await refWorkspace.commit();
 
-        pathModifySpy.callCount.should.equal(1);
-        pathModifySpy.resetHistory();
+        expect(pathModifySpy).toHaveBeenCalledTimes(1);
+        pathModifySpy.mockClear();
 
         // Remove the repository reference from the embedding repository
         workspace.remove('reference');
 
-        pathRemoveSpy.callCount.should.equal(1);
-        pathRemoveSpy.resetHistory();
+        expect(pathRemoveSpy).toHaveBeenCalledTimes(1);
+        pathRemoveSpy.mockClear();
 
         // Insert the repository reference back to the embedding repository
         workspace.insert('reference', repositoryReference);
@@ -248,16 +248,16 @@ describe.skip('DataBinder', function () {
           workspace.on('onAllReferencesLoaded', () =>
             resolve()));
 
-        pathInsertSpy.callCount.should.equal(1);
-        pathInsertSpy.resetHistory();
+        expect(pathInsertSpy).toHaveBeenCalledTimes(1);
+        pathInsertSpy.mockClear();
 
         // Remove the child from the embedded workspace
         refWorkspace = repositoryReference.getReferencedWorkspace();
         refWorkspace.remove('child');
         await refWorkspace.commit();
 
-        pathRemoveSpy.callCount.should.equal(1);
-        pathRemoveSpy.resetHistory();
+        expect(pathRemoveSpy).toHaveBeenCalledTimes(1);
+        pathRemoveSpy.mockClear();
       });
   });
 });

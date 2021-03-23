@@ -18,21 +18,21 @@ describe('ES6 DataBinding', function () {
   var hfdm, workspace, dataBinder;
   var testProp, dataBinding;
 
-  var propertyInsertCallback = sinon.spy();
-  var propertyModifyCallback = sinon.spy();
-  var propertyRemoveCallback = sinon.spy();
-  var collectionInsertCallback = sinon.spy();
-  var collectionModifyCallback = sinon.spy();
-  var collectionRemoveCallback = sinon.spy();
-  const referenceInsertCallback = sinon.spy();
-  const referenceModifyCallback = sinon.spy();
-  const referenceRemoveCallback = sinon.spy();
-  const referencedModifyCallback = sinon.spy();
-  var insertCallback = sinon.spy();
-  var modifyCallback = sinon.spy();
-  var removeCallback = sinon.spy();
-  var onPathCallback = sinon.spy();
-  var onJsonCallback = sinon.spy();
+  var propertyInsertCallback = jest.fn();
+  var propertyModifyCallback = jest.fn();
+  var propertyRemoveCallback = jest.fn();
+  var collectionInsertCallback = jest.fn();
+  var collectionModifyCallback = jest.fn();
+  var collectionRemoveCallback = jest.fn();
+  const referenceInsertCallback = jest.fn();
+  const referenceModifyCallback = jest.fn();
+  const referenceRemoveCallback = jest.fn();
+  const referencedModifyCallback = jest.fn();
+  var insertCallback = jest.fn();
+  var modifyCallback = jest.fn();
+  var removeCallback = jest.fn();
+  var onPathCallback = jest.fn();
+  var onJsonCallback = jest.fn();
 
   var personTemplate = {
     properties: [
@@ -124,41 +124,41 @@ describe('ES6 DataBinding', function () {
 
   it('should call registerOnValues API', function () {
     testProp.get(['onJsonTest', 'name']).setValue('John Foo');
-    onJsonCallback.callCount.should.equal(1);
+    expect(onJsonCallback).toHaveBeenCalledTimes(1);
   });
 
   // #region single properties tests
 
   it('should call onPathCallback API on insert', function () {
-    onPathCallback.callCount.should.equal(1);
+    expect(onPathCallback).toHaveBeenCalledTimes(1);
   });
 
   it('should call registerOnInsert API', function () {
-    insertCallback.callCount.should.equal(1);
+    expect(insertCallback).toHaveBeenCalledTimes(1);
   });
 
   it('should call registerOnProperty API on insert', function () {
-    propertyInsertCallback.callCount.should.equal(1);
+    expect(propertyInsertCallback).toHaveBeenCalledTimes(1);
   });
 
   it('should call registerOnModify API on insert', function () {
     testProp.get(['customTest', 'name']).setValue('John Bar');
-    modifyCallback.callCount.should.equal(1);
+    expect(modifyCallback).toHaveBeenCalledTimes(1);
   });
 
   it('should call registerOnProperty API on modifications', function () {
     testProp.get(['onProperty', 'name']).setValue('Jack Foo');
-    propertyModifyCallback.callCount.should.equal(1);
+    expect(propertyModifyCallback).toHaveBeenCalledTimes(1);
   });
 
   it('should call registerOnRemove API', function () {
     testProp.remove('customTest');
-    removeCallback.callCount.should.equal(1);
+    expect(removeCallback).toHaveBeenCalledTimes(1);
   });
 
   it('should call registerOnProperty API on removals', function () {
     testProp.remove('onProperty');
-    propertyRemoveCallback.callCount.should.equal(1);
+    expect(propertyRemoveCallback).toHaveBeenCalledTimes(1);
   });
   // #endregion single properties tests
 
@@ -166,17 +166,17 @@ describe('ES6 DataBinding', function () {
 
   it('should call OnCollectionInsert when inserting on a collection', function () {
     testProp.get('customArrayTest').push(createPerson());
-    collectionInsertCallback.callCount.should.equal(2);
+    expect(collectionInsertCallback).toHaveBeenCalledTimes(2);
   });
 
   it('should call OnCollectionModify when modifying on a collection', function () {
     testProp.get(['customArrayTest', 0, 'name']).setValue('Jack Bar');
-    collectionModifyCallback.callCount.should.equal(1);
+    expect(collectionModifyCallback).toHaveBeenCalledTimes(1);
   });
 
   it('should call OnCollectionRemove when removing from a collection', function () {
     testProp.get('customArrayTest').pop();
-    collectionRemoveCallback.callCount.should.equal(1);
+    expect(collectionRemoveCallback).toHaveBeenCalledTimes(1);
   });
 
   // #endregion Collection tests
@@ -184,31 +184,31 @@ describe('ES6 DataBinding', function () {
   // #region References tests
   it('should call referenceInsert when inserting a reference', function () {
     testProp.insert('singleRef', PropertyFactory.create('Reference'));
-    referenceInsertCallback.callCount.should.equal(1);
+    expect(referenceInsertCallback).toHaveBeenCalledTimes(1);
   });
   it('should call referenceModify when modifying a reference', function () {
     testProp.get('singleRef', NEVER).setValue('/myChild');
-    referenceModifyCallback.callCount.should.equal(1);
+    expect(referenceModifyCallback).toHaveBeenCalledTimes(1);
   });
   it('should not call reference events when the referenced property is modified', function () {
     testProp.get('singleRef').get('name').value = 'newName';
     // From the relative path .text plus the referenced property itself
-    referencedModifyCallback.callCount.should.equal(2);
-    referenceInsertCallback.callCount.should.equal(0);
-    referenceModifyCallback.callCount.should.equal(0);
-    referenceRemoveCallback.callCount.should.equal(0);
+    expect(referencedModifyCallback).toHaveBeenCalledTimes(2);
+    expect(referenceInsertCallback).toHaveBeenCalledTimes(0);
+    expect(referenceModifyCallback).toHaveBeenCalledTimes(0);
+    expect(referenceRemoveCallback).toHaveBeenCalledTimes(0);
   });
   it('should call referenceRemove when removing a reference', function () {
     testProp.remove('singleRef');
-    referenceRemoveCallback.callCount.should.equal(1);
+    expect(referenceRemoveCallback).toHaveBeenCalledTimes(1);
   });
 
   // #endregion References tests
 
   afterEach(function () {
-    referenceInsertCallback.resetHistory();
-    referenceModifyCallback.resetHistory();
-    referenceRemoveCallback.resetHistory();
-    referencedModifyCallback.resetHistory();
+    referenceInsertCallback.mockClear();
+    referenceModifyCallback.mockClear();
+    referenceRemoveCallback.mockClear();
+    referencedModifyCallback.mockClear();
   });
 });

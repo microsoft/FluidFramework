@@ -52,9 +52,9 @@ describe('Stateless Binder', function () {
       this.modifiedNames = [];
 
       // we just need to create default spies for these functions
-      this.onPostCreate = sinon.spy();
-      this.onPreModify = sinon.spy();
-      this.onPreRemove = sinon.spy();
+      this.onPostCreate = jest.fn();
+      this.onPreModify = jest.fn();
+      this.onPreRemove = jest.fn();
       // we need to amend these functions with spies (this way we won't have to reset() them)
       this.onModify = sinon.spy(this, 'onModify');
       this.onRemove = sinon.spy(this, 'onRemove');
@@ -66,7 +66,7 @@ describe('Stateless Binder', function () {
     onModify(in_modificationContext) {
       this.modifiedNames.push(this.getProperty().get('name').getValue());
       // both our stateless binding and the modificationContext should point to the same Property
-      this.getProperty().should.equal(in_modificationContext.getProperty());
+      expect(this.getProperty()).toEqual(in_modificationContext.getProperty());
     }
 
     /**
@@ -88,9 +88,9 @@ describe('Stateless Binder', function () {
       this.modifiedNames = [];
 
       // we just need to create default spies for these functions
-      this.onPostCreate = sinon.spy();
-      this.onPreModify = sinon.spy();
-      this.onPreRemove = sinon.spy();
+      this.onPostCreate = jest.fn();
+      this.onPreModify = jest.fn();
+      this.onPreRemove = jest.fn();
       // we need to amend these functions with spies (this way we won't have to reset() them)
       this.onModify = sinon.spy(this, 'onModify');
       this.onRemove = sinon.spy(this, 'onRemove');
@@ -112,10 +112,10 @@ describe('Stateless Binder', function () {
 
   registerTestTemplates();
 
-  PropertyFactory.validate(AnimalSchema).isValid.should.equal(true);
-  PropertyFactory.validate(CatSchema).isValid.should.equal(true);
-  PropertyFactory.validate(DogSchema).isValid.should.equal(true);
-  PropertyFactory.validate(ChinchillaSchema).isValid.should.equal(true);
+  expect(PropertyFactory.validate(AnimalSchema).isValid).toEqual(true);
+  expect(PropertyFactory.validate(CatSchema).isValid).toEqual(true);
+  expect(PropertyFactory.validate(DogSchema).isValid).toEqual(true);
+  expect(PropertyFactory.validate(ChinchillaSchema).isValid).toEqual(true);
 
   let animalSingleton;
   let catSingleton;
@@ -188,10 +188,10 @@ describe('Stateless Binder', function () {
 
   // #region Create callback counts
   it('should get called back for onPostCreate', function () {
-    catSingleton.onPostCreate.callCount.should.equal(numCats);
-    dogSingleton.onPostCreate.callCount.should.equal(numDogs);
-    chinchillaSingleton.onPostCreate.callCount.should.equal(numChinchillas);
-    animalSingleton.onPostCreate.callCount.should.equal(numCats + numDogs + numChinchillas);
+    expect(catSingleton.onPostCreate).toHaveBeenCalledTimes(numCats);
+    expect(dogSingleton.onPostCreate).toHaveBeenCalledTimes(numDogs);
+    expect(chinchillaSingleton.onPostCreate).toHaveBeenCalledTimes(numChinchillas);
+    expect(animalSingleton.onPostCreate).toHaveBeenCalledTimes(numCats + numDogs + numChinchillas);
   });
   // #endregion Callback counts
 
@@ -202,13 +202,13 @@ describe('Stateless Binder', function () {
     workspace.get(['dogarray', 1, 'salivaPower']).setValue(1000);
     workspace.get(['animalmap', 'thechinchilla', 'furLength']).setValue(10);
 
-    catSingleton.onModify.callCount.should.equal(2);
+    expect(catSingleton.onModify).toHaveBeenCalledTimes(2);
     catSingleton.modifiedNames.should.deep.equal(['Mark', 'Harry']);
-    dogSingleton.onModify.callCount.should.equal(1);
+    expect(dogSingleton.onModify).toHaveBeenCalledTimes(1);
     dogSingleton.modifiedNames.should.deep.equal(['Karen']);
-    chinchillaSingleton.onModify.callCount.should.equal(1);
+    expect(chinchillaSingleton.onModify).toHaveBeenCalledTimes(1);
     chinchillaSingleton.modifiedNames.should.deep.equal(['Andres']);
-    animalSingleton.onModify.callCount.should.equal(4);
+    expect(animalSingleton.onModify).toHaveBeenCalledTimes(4);
     animalSingleton.modifiedNames.should.deep.equal(['Mark', 'Harry', 'Karen', 'Andres']);
   });
   // #endregion Modify callback counts
@@ -219,17 +219,17 @@ describe('Stateless Binder', function () {
     workspace.get(['dogarray']).remove(1);
     workspace.get(['animalmap']).remove('thechinchilla');
 
-    dogSingleton.onPreRemove.callCount.should.equal(1);
-    dogSingleton.onRemove.callCount.should.equal(1);
+    expect(dogSingleton.onPreRemove).toHaveBeenCalledTimes(1);
+    expect(dogSingleton.onRemove).toHaveBeenCalledTimes(1);
 
-    catSingleton.onPreRemove.callCount.should.equal(1);
-    catSingleton.onRemove.callCount.should.equal(1);
+    expect(catSingleton.onPreRemove).toHaveBeenCalledTimes(1);
+    expect(catSingleton.onRemove).toHaveBeenCalledTimes(1);
 
-    chinchillaSingleton.onPreRemove.callCount.should.equal(1);
-    chinchillaSingleton.onRemove.callCount.should.equal(1);
+    expect(chinchillaSingleton.onPreRemove).toHaveBeenCalledTimes(1);
+    expect(chinchillaSingleton.onRemove).toHaveBeenCalledTimes(1);
 
-    animalSingleton.onPreRemove.callCount.should.equal(3);
-    animalSingleton.onRemove.callCount.should.equal(3);
+    expect(animalSingleton.onPreRemove).toHaveBeenCalledTimes(3);
+    expect(animalSingleton.onRemove).toHaveBeenCalledTimes(3);
   });
   // #endregion Removal callback counts
 
@@ -240,10 +240,10 @@ describe('Stateless Binder', function () {
     dogHandle.destroy();
     chinchillaHandle.destroy();
 
-    dogSingleton.onPreRemove.callCount.should.equal(dogSingleton.onRemove.callCount);
-    catSingleton.onPreRemove.callCount.should.equal(catSingleton.onRemove.callCount);
-    chinchillaSingleton.onPreRemove.callCount.should.equal(chinchillaSingleton.onRemove.callCount);
-    animalSingleton.onPreRemove.callCount.should.equal(animalSingleton.onRemove.callCount);
+    expect(dogSingleton.onPreRemove).toHaveBeenCalledTimes(dogSingleton.onRemove.callCount);
+    expect(catSingleton.onPreRemove).toHaveBeenCalledTimes(catSingleton.onRemove.callCount);
+    expect(chinchillaSingleton.onPreRemove).toHaveBeenCalledTimes(chinchillaSingleton.onRemove.callCount);
+    expect(animalSingleton.onPreRemove).toHaveBeenCalledTimes(animalSingleton.onRemove.callCount);
   });
   // #endregion Unregister check
 
@@ -271,31 +271,31 @@ describe('Stateless Binder', function () {
     const chinchillaBeforeCount = chinchillaSingleton.onModify.callCount;
 
     workspace.get(['harrycat', 'attitude']).setValue(10000);
-    catSingleton.onModify.callCount.should.equal(catBeforeCount);
+    expect(catSingleton.onModify).toHaveBeenCalledTimes(catBeforeCount);
 
     workspace.get(['dogarray', 0, 'salivaPower']).setValue(10000);
-    dogSingleton.onModify.callCount.should.equal(dogBeforeCount);
+    expect(dogSingleton.onModify).toHaveBeenCalledTimes(dogBeforeCount);
 
     workspace.get(['chinchillamap', 'pedro', 'furLength']).setValue(10000);
-    chinchillaSingleton.onModify.callCount.should.equal(chinchillaBeforeCount);
+    expect(chinchillaSingleton.onModify).toHaveBeenCalledTimes(chinchillaBeforeCount);
 
-    animalSingleton.onModify.callCount.should.equal(animalBeforeCount);
+    expect(animalSingleton.onModify).toHaveBeenCalledTimes(animalBeforeCount);
   });
 
   it('should get the correct databinder instance', function () {
-    catSingleton.getDataBinder().should.equal(dataBinder);
-    dogSingleton.getDataBinder().should.equal(dataBinder);
-    animalSingleton.getDataBinder().should.equal(dataBinder);
+    expect(catSingleton.getDataBinder()).toEqual(dataBinder);
+    expect(dogSingleton.getDataBinder()).toEqual(dataBinder);
+    expect(animalSingleton.getDataBinder()).toEqual(dataBinder);
   });
 
   it('should get the correct databinding type', function () {
-    catSingleton.getDataBindingType().should.equal('DataBindingTest');
-    dogSingleton.getDataBindingType().should.equal('DataBindingTest');
-    animalSingleton.getDataBindingType().should.equal('DataBindingTestAnimal');
+    expect(catSingleton.getDataBindingType()).toEqual('DataBindingTest');
+    expect(dogSingleton.getDataBindingType()).toEqual('DataBindingTest');
+    expect(animalSingleton.getDataBindingType()).toEqual('DataBindingTestAnimal');
   });
 
   it('should get the correct userdata', function () {
-    catSingleton.getUserData().should.equal(catUserData);
+    expect(catSingleton.getUserData()).toEqual(catUserData);
     should.not.exist(dogSingleton.getUserData());
     should.not.exist(animalSingleton.getUserData());
   });
@@ -308,7 +308,7 @@ describe('Stateless Binder', function () {
     workspace.get(['markcat', 'attitude']).setValue(1);
     workspace.get(['harrycat', 'attitude']).setValue(2);
 
-    deprecatedCat.onModify.callCount.should.equal(2);
+    expect(deprecatedCat.onModify).toHaveBeenCalledTimes(2);
     deprecatedCat.modifiedNames.should.deep.equal(['Mark', 'Harry']);
 
     singletonHandle.destroy();
@@ -317,6 +317,6 @@ describe('Stateless Binder', function () {
     const catBeforeCount = deprecatedCat.onModify.callCount;
 
     workspace.get(['harrycat', 'attitude']).setValue(10000);
-    deprecatedCat.onModify.callCount.should.equal(catBeforeCount);
+    expect(deprecatedCat.onModify).toHaveBeenCalledTimes(catBeforeCount);
   });
 });

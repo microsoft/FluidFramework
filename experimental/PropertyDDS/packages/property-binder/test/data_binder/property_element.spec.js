@@ -61,25 +61,25 @@ describe('Property element', function () {
       workspace.get(['refParent', 'single_ref'], RESOLVE_NEVER).setValue('/child');
 
       const rootElem = new PropertyElement(workspace.getRoot());
-      rootElem.isValid().should.equal(true);
+      expect(rootElem.isValid()).toEqual(true);
 
       const refParentElem = rootElem.getChild('refParent');
-      refParentElem.getProperty().getId().should.equal('refParent');
+      expect(refParentElem.getProperty().getId()).toEqual('refParent');
 
       const directToRef = ['single_ref'];
-      refParentElem.getChild(directToRef, RESOLVE_NEVER).getProperty().getId().should.equal('single_ref');
-      refParentElem.getChild(directToRef, RESOLVE_NO_LEAFS).getProperty().getId().should.equal('single_ref');
-      refParentElem.getChild(directToRef, RESOLVE_ALWAYS).getProperty().getId().should.equal('child');
+      expect(refParentElem.getChild(directToRef, RESOLVE_NEVER).getProperty().getId()).toEqual('single_ref');
+      expect(refParentElem.getChild(directToRef, RESOLVE_NO_LEAFS).getProperty().getId()).toEqual('single_ref');
+      expect(refParentElem.getChild(directToRef, RESOLVE_ALWAYS).getProperty().getId()).toEqual('child');
 
       const pathToRef = ['refParent', 'single_ref'];
-      rootElem.getChild(pathToRef, RESOLVE_NEVER).getProperty().getId().should.equal('single_ref');
-      rootElem.getChild(pathToRef, RESOLVE_NO_LEAFS).getProperty().getId().should.equal('single_ref');
-      rootElem.getChild(pathToRef, RESOLVE_ALWAYS).getProperty().getId().should.equal('child');
+      expect(rootElem.getChild(pathToRef, RESOLVE_NEVER).getProperty().getId()).toEqual('single_ref');
+      expect(rootElem.getChild(pathToRef, RESOLVE_NO_LEAFS).getProperty().getId()).toEqual('single_ref');
+      expect(rootElem.getChild(pathToRef, RESOLVE_ALWAYS).getProperty().getId()).toEqual('child');
 
       const pathThroughRef = ['refParent', 'single_ref', 'aString'];
-      rootElem.getChild(pathThroughRef, RESOLVE_NEVER).isValid().should.equal(false);
-      rootElem.getChild(pathThroughRef, RESOLVE_NO_LEAFS).getProperty().getId().should.equal('aString');
-      rootElem.getChild(pathThroughRef, RESOLVE_ALWAYS).getProperty().getId().should.equal('aString');
+      expect(rootElem.getChild(pathThroughRef, RESOLVE_NEVER).isValid()).toEqual(false);
+      expect(rootElem.getChild(pathThroughRef, RESOLVE_NO_LEAFS).getProperty().getId()).toEqual('aString');
+      expect(rootElem.getChild(pathThroughRef, RESOLVE_ALWAYS).getProperty().getId()).toEqual('aString');
     });
 
   });
@@ -91,34 +91,34 @@ describe('Property element', function () {
     workspace.get(['refParent', 'map_ref']).insert('aKey', '/child');
 
     const rootElem = new PropertyElement(workspace.getRoot());
-    rootElem.isValid().should.equal(true);
+    expect(rootElem.isValid()).toEqual(true);
 
     const refParentElem = rootElem.getChild('refParent');
-    refParentElem.getProperty().getId().should.equal('refParent');
+    expect(refParentElem.getProperty().getId()).toEqual('refParent');
 
     const pathToArrayRef = ['array_ref', 0];
-    refParentElem.getChild(pathToArrayRef, RESOLVE_NEVER).getProperty().getId().should.equal('array_ref');
-    refParentElem.getChild(pathToArrayRef, RESOLVE_NEVER).getChildToken().should.equal(0);
-    refParentElem.getChild(pathToArrayRef, RESOLVE_NO_LEAFS).getProperty().getId().should.equal('array_ref');
-    refParentElem.getChild(pathToArrayRef, RESOLVE_NO_LEAFS).getChildToken().should.equal(0);
-    refParentElem.getChild(pathToArrayRef, RESOLVE_ALWAYS).getProperty().getId().should.equal('child');
+    expect(refParentElem.getChild(pathToArrayRef, RESOLVE_NEVER).getProperty().getId()).toEqual('array_ref');
+    expect(refParentElem.getChild(pathToArrayRef, RESOLVE_NEVER).getChildToken()).toEqual(0);
+    expect(refParentElem.getChild(pathToArrayRef, RESOLVE_NO_LEAFS).getProperty().getId()).toEqual('array_ref');
+    expect(refParentElem.getChild(pathToArrayRef, RESOLVE_NO_LEAFS).getChildToken()).toEqual(0);
+    expect(refParentElem.getChild(pathToArrayRef, RESOLVE_ALWAYS).getProperty().getId()).toEqual('child');
 
     const pathToMapRef = ['map_ref', 'aKey'];
-    refParentElem.getChild(pathToMapRef, RESOLVE_NEVER).getProperty().getId().should.equal('map_ref');
-    refParentElem.getChild(pathToMapRef, RESOLVE_NEVER).getChildToken().should.equal('aKey');
-    refParentElem.getChild(pathToMapRef, RESOLVE_NO_LEAFS).getProperty().getId().should.equal('map_ref');
-    refParentElem.getChild(pathToMapRef, RESOLVE_NO_LEAFS).getChildToken().should.equal('aKey');
-    refParentElem.getChild(pathToMapRef, RESOLVE_ALWAYS).getProperty().getId().should.equal('child');
+    expect(refParentElem.getChild(pathToMapRef, RESOLVE_NEVER).getProperty().getId()).toEqual('map_ref');
+    expect(refParentElem.getChild(pathToMapRef, RESOLVE_NEVER).getChildToken()).toEqual('aKey');
+    expect(refParentElem.getChild(pathToMapRef, RESOLVE_NO_LEAFS).getProperty().getId()).toEqual('map_ref');
+    expect(refParentElem.getChild(pathToMapRef, RESOLVE_NO_LEAFS).getChildToken()).toEqual('aKey');
+    expect(refParentElem.getChild(pathToMapRef, RESOLVE_ALWAYS).getProperty().getId()).toEqual('child');
 
     const pathThroughArrayRef = ['refParent', 'array_ref', 0, 'aString'];
-    rootElem.getChild(pathThroughArrayRef, RESOLVE_NEVER).isValid().should.equal(false);
-    rootElem.getChild(pathThroughArrayRef, RESOLVE_NO_LEAFS).getProperty().getId().should.equal('aString');
-    rootElem.getChild(pathThroughArrayRef, RESOLVE_ALWAYS).getProperty().getId().should.equal('aString');
+    expect(rootElem.getChild(pathThroughArrayRef, RESOLVE_NEVER).isValid()).toEqual(false);
+    expect(rootElem.getChild(pathThroughArrayRef, RESOLVE_NO_LEAFS).getProperty().getId()).toEqual('aString');
+    expect(rootElem.getChild(pathThroughArrayRef, RESOLVE_ALWAYS).getProperty().getId()).toEqual('aString');
 
     const pathThroughMapRef = ['refParent', 'map_ref', 'aKey', 'aString'];
-    rootElem.getChild(pathThroughMapRef, RESOLVE_NEVER).isValid().should.equal(false);
-    rootElem.getChild(pathThroughMapRef, RESOLVE_NO_LEAFS).getProperty().getId().should.equal('aString');
-    rootElem.getChild(pathThroughMapRef, RESOLVE_ALWAYS).getProperty().getId().should.equal('aString');
+    expect(rootElem.getChild(pathThroughMapRef, RESOLVE_NEVER).isValid()).toEqual(false);
+    expect(rootElem.getChild(pathThroughMapRef, RESOLVE_NO_LEAFS).getProperty().getId()).toEqual('aString');
+    expect(rootElem.getChild(pathThroughMapRef, RESOLVE_ALWAYS).getProperty().getId()).toEqual('aString');
   });
 
   it('parenting', function () {
@@ -132,31 +132,31 @@ describe('Property element', function () {
     workspace.get(['child', 'arrayOfNumbers']).push(42);
 
     const rootElem = new PropertyElement(workspace.getRoot());
-    rootElem.isValid().should.equal(true);
+    expect(rootElem.isValid()).toEqual(true);
 
     // Root has no parent
-    rootElem.getParent().isValid().should.equal(false);
+    expect(rootElem.getParent().isValid()).toEqual(false);
 
     const refParentElem = rootElem.getChild('refParent');
-    refParentElem.getParent().getProperty().should.equal(workspace.getRoot());
+    expect(refParentElem.getParent().getProperty()).toEqual(workspace.getRoot());
 
     const arrayEntryElem = refParentElem.getChild(['array_ref', 0], RESOLVE_NEVER);
-    arrayEntryElem.getChildToken().should.equal(0);
-    arrayEntryElem.getParent().getProperty().should.equal(workspace.get(['refParent', 'array_ref']));
+    expect(arrayEntryElem.getChildToken()).toEqual(0);
+    expect(arrayEntryElem.getParent().getProperty()).toEqual(workspace.get(['refParent', 'array_ref']));
     should.not.exist(arrayEntryElem.getParent().getChildToken());
 
     const mapEntryElem = refParentElem.getChild(['map_ref', 'aKey'], RESOLVE_NEVER);
-    mapEntryElem.getChildToken().should.equal('aKey');
-    mapEntryElem.getParent().getProperty().should.equal(workspace.get(['refParent', 'map_ref']));
+    expect(mapEntryElem.getChildToken()).toEqual('aKey');
+    expect(mapEntryElem.getParent().getProperty()).toEqual(workspace.get(['refParent', 'map_ref']));
     should.not.exist(mapEntryElem.getParent().getChildToken());
 
     const childElem = rootElem.getChild('child');
     const numberElem = childElem.getChild(['arrayOfNumbers', 0]);
-    numberElem.getChildToken().should.equal(0);
-    numberElem.getValue().should.equal(42);
+    expect(numberElem.getChildToken()).toEqual(0);
+    expect(numberElem.getValue()).toEqual(42);
 
     const parentElem = numberElem.getParent();
-    parentElem.getProperty().getId().should.equal('arrayOfNumbers');
+    expect(parentElem.getProperty().getId()).toEqual('arrayOfNumbers');
   });
 
   it('getValue', function () {
@@ -235,37 +235,37 @@ describe('Property element', function () {
     const myData = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single');
     const propElem = new PropertyElement(myData);
 
-    propElem.isPrimitiveCollection().should.equal(false);
-    propElem.getChild('nested').isPrimitiveCollection().should.equal(false);
-    propElem.getChild('arrayOfStrings').isPrimitiveCollection().should.equal(true);
-    propElem.getChild('mapOfNumbers').isPrimitiveCollection().should.equal(true);
-    propElem.getChild('mapOfStrings').isPrimitiveCollection().should.equal(true);
-    propElem.getChild('aString').isPrimitiveCollection().should.equal(false);
-    propElem.getChild('aNumber').isPrimitiveCollection().should.equal(false);
+    expect(propElem.isPrimitiveCollection()).toEqual(false);
+    expect(propElem.getChild('nested').isPrimitiveCollection()).toEqual(false);
+    expect(propElem.getChild('arrayOfStrings').isPrimitiveCollection()).toEqual(true);
+    expect(propElem.getChild('mapOfNumbers').isPrimitiveCollection()).toEqual(true);
+    expect(propElem.getChild('mapOfStrings').isPrimitiveCollection()).toEqual(true);
+    expect(propElem.getChild('aString').isPrimitiveCollection()).toEqual(false);
+    expect(propElem.getChild('aNumber').isPrimitiveCollection()).toEqual(false);
   });
 
   it('isPrimitiveCollection array of prop', function () {
     const myArrayData = PropertyFactory.create(ArrayContainerTemplate.typeid, 'single');
     const propElem = new PropertyElement(myArrayData);
-    propElem.isPrimitiveCollection().should.equal(false);
-    propElem.getChild('subArray').isPrimitiveCollection().should.equal(false);
-    propElem.getChild('unrepresentedSubArray').isPrimitiveCollection().should.equal(false);
+    expect(propElem.isPrimitiveCollection()).toEqual(false);
+    expect(propElem.getChild('subArray').isPrimitiveCollection()).toEqual(false);
+    expect(propElem.getChild('unrepresentedSubArray').isPrimitiveCollection()).toEqual(false);
   });
 
   it('isPrimitiveCollection set of prop', function () {
     const mySetData = PropertyFactory.create(SetContainerTemplate.typeid, 'single');
     const propElem = new PropertyElement(mySetData);
-    propElem.isPrimitiveCollection().should.equal(false);
-    propElem.getChild('subSet').isPrimitiveCollection().should.equal(false);
-    propElem.getChild('unrepresentedSubSet').isPrimitiveCollection().should.equal(false);
+    expect(propElem.isPrimitiveCollection()).toEqual(false);
+    expect(propElem.getChild('subSet').isPrimitiveCollection()).toEqual(false);
+    expect(propElem.getChild('unrepresentedSubSet').isPrimitiveCollection()).toEqual(false);
   });
 
   it('isPrimitiveCollection map of prop', function () {
     const myMapData = PropertyFactory.create(MapContainerTemplate.typeid, 'single');
     const propElem = new PropertyElement(myMapData);
-    propElem.isPrimitiveCollection().should.equal(false);
-    propElem.getChild('subMap').isPrimitiveCollection().should.equal(false);
-    propElem.getChild('unrepresentedSubMap').isPrimitiveCollection().should.equal(false);
+    expect(propElem.isPrimitiveCollection()).toEqual(false);
+    expect(propElem.getChild('subMap').isPrimitiveCollection()).toEqual(false);
+    expect(propElem.getChild('unrepresentedSubMap').isPrimitiveCollection()).toEqual(false);
   });
 
   it('crazy paths for child token', function () {
@@ -275,11 +275,11 @@ describe('Property element', function () {
     mymap.insert('"my.child.path"', 42);
     const propElem = new PropertyElement(mymap);
     propElem.becomeChild('"my.child.path"');
-    propElem.isValid().should.equal(true);
+    expect(propElem.isValid()).toEqual(true);
 
-    propElem.getValue().should.equal(42);
+    expect(propElem.getValue()).toEqual(42);
 
-    propElem.getAbsolutePath().should.equal('/themap["my.child.path"]');
+    expect(propElem.getAbsolutePath()).toEqual('/themap["my.child.path"]');
   });
 
   it('array of properties parenting', function () {
@@ -294,9 +294,9 @@ describe('Property element', function () {
 
     const rootElem = new PropertyElement(workspace.getRoot());
     const childElem = rootElem.getChild(['theArray', 'subArray', 1, 'text']);
-    childElem.getValue().should.equal('child1 text');
+    expect(childElem.getValue()).toEqual('child1 text');
 
-    childElem.getParent().getParent().getProperty().getId().should.equal('subArray');
+    expect(childElem.getParent().getParent().getProperty().getId()).toEqual('subArray');
     should.not.exist(childElem.getParent().getParent().getChildToken());
   });
 
@@ -312,12 +312,12 @@ describe('Property element', function () {
 
     const rootElem = new PropertyElement(workspace.getRoot());
     const childElem = rootElem.getChild(['theMap', 'subMap', 'child1', 'text']);
-    childElem.getValue().should.equal('child1 text');
+    expect(childElem.getValue()).toEqual('child1 text');
 
-    childElem.getParent().getProperty().getId().should.equal('child1');
+    expect(childElem.getParent().getProperty().getId()).toEqual('child1');
     should.not.exist(childElem.getParent().getChildToken());
 
-    childElem.getParent().getParent().getProperty().getId().should.equal('subMap');
+    expect(childElem.getParent().getParent().getProperty().getId()).toEqual('subMap');
     should.not.exist(childElem.getParent().getParent().getChildToken());
   });
 
@@ -336,8 +336,8 @@ describe('Property element', function () {
     text.setValue('theText');
 
     const rootElem = new PropertyElement(workspace.getRoot());
-    rootElem.getChild('ref3', RESOLVE_ALWAYS).getValue().should.equal('theText');
-    rootElem.getChild('ref3', RESOLVE_NEVER).getValue().should.equal('/ref2');
+    expect(rootElem.getChild('ref3', RESOLVE_ALWAYS).getValue()).toEqual('theText');
+    expect(rootElem.getChild('ref3', RESOLVE_NEVER).getValue()).toEqual('/ref2');
   });
 
   it('double references array', function () {
@@ -351,9 +351,9 @@ describe('Property element', function () {
     text.setValue('theText');
 
     const rootElem = new PropertyElement(workspace.getRoot());
-    rootElem.getChild(['refs', 2], RESOLVE_ALWAYS).getValue().should.equal('theText');
-    rootElem.getChild(['refs', 2], RESOLVE_NO_LEAFS).getValue().should.equal('/refs[1]');
-    rootElem.getChild(['refs', 2], RESOLVE_NEVER).getValue().should.equal('/refs[1]');
+    expect(rootElem.getChild(['refs', 2], RESOLVE_ALWAYS).getValue()).toEqual('theText');
+    expect(rootElem.getChild(['refs', 2], RESOLVE_NO_LEAFS).getValue()).toEqual('/refs[1]');
+    expect(rootElem.getChild(['refs', 2], RESOLVE_NEVER).getValue()).toEqual('/refs[1]');
   });
 
   it('tokenized path, toString, getContext', function () {
@@ -362,22 +362,22 @@ describe('Property element', function () {
     arrayData.push('hi');
 
     const rootElem = new PropertyElement(workspace.getRoot());
-    rootElem.getTokenizedPath().length.should.equal(0);
-    rootElem.getContext().should.equal('single');
+    expect(rootElem.getTokenizedPath().length).toEqual(0);
+    expect(rootElem.getContext()).toEqual('single');
     rootElem.becomeChild('theArray');
-    rootElem.getContext().should.equal('array');
-    rootElem.getTokenizedPath().length.should.equal(1);
-    rootElem.getTokenizedPath()[0].should.equal('theArray');
-    rootElem.toString().should.equal('</theArray>');
+    expect(rootElem.getContext()).toEqual('array');
+    expect(rootElem.getTokenizedPath().length).toEqual(1);
+    expect(rootElem.getTokenizedPath()[0]).toEqual('theArray');
+    expect(rootElem.toString()).toEqual('</theArray>');
 
     rootElem.becomeChild(0);
-    rootElem.getContext().should.equal('single');
-    rootElem.getTokenizedPath().length.should.equal(2);
-    rootElem.getTokenizedPath()[0].should.equal('theArray');
-    rootElem.getTokenizedPath()[1].should.equal('0');
-    rootElem.toString().should.equal('</theArray[0]>');
+    expect(rootElem.getContext()).toEqual('single');
+    expect(rootElem.getTokenizedPath().length).toEqual(2);
+    expect(rootElem.getTokenizedPath()[0]).toEqual('theArray');
+    expect(rootElem.getTokenizedPath()[1]).toEqual('0');
+    expect(rootElem.toString()).toEqual('</theArray[0]>');
 
-    (new PropertyElement()).toString().should.equal('<invalid>');
+    expect((new PropertyElement()).toString()).toEqual('<invalid>');
   });
 
   it('becoming the parent', function () {
@@ -387,18 +387,18 @@ describe('Property element', function () {
 
     const rootElem = new PropertyElement(workspace.getRoot());
     rootElem.becomeChild('theArray');
-    rootElem.getProperty().should.equal(workspace.getRoot().get('theArray'));
+    expect(rootElem.getProperty()).toEqual(workspace.getRoot().get('theArray'));
     rootElem.becomeChild(0);
-    rootElem.getProperty().should.equal(workspace.getRoot().get('theArray'));
-    rootElem.getChildToken().should.equal(0);
+    expect(rootElem.getProperty()).toEqual(workspace.getRoot().get('theArray'));
+    expect(rootElem.getChildToken()).toEqual(0);
     rootElem.becomeParent();
-    rootElem.getProperty().should.equal(workspace.getRoot().get('theArray'));
+    expect(rootElem.getProperty()).toEqual(workspace.getRoot().get('theArray'));
     should.not.exist(rootElem.getChildToken());
     rootElem.becomeParent();
-    rootElem.getProperty().should.equal(workspace.getRoot());
+    expect(rootElem.getProperty()).toEqual(workspace.getRoot());
     should.not.exist(rootElem.getChildToken());
     rootElem.becomeParent();
-    rootElem.isValid().should.equal(false);
+    expect(rootElem.isValid()).toEqual(false);
   });
 
   it('isPrimitiveCollection', function () {
@@ -407,20 +407,20 @@ describe('Property element', function () {
     types.forEach(theType => {
       contexts.forEach(context => {
         const prop = PropertyFactory.create(theType, context);
-        (new PropertyElement(prop)).isPrimitiveCollection().should.equal(context !== 'single');
+        expect((new PropertyElement(prop)).isPrimitiveCollection()).toEqual(context !== 'single');
       });
     });
 
     const nodeArray = PropertyFactory.create('NodeProperty', 'array');
     const propElem = new PropertyElement(nodeArray);
-    propElem.isPrimitiveCollection().should.equal(false);
+    expect(propElem.isPrimitiveCollection()).toEqual(false);
 
     const array = PropertyFactory.create('Float32', 'array');
     array.push(42);
     const element = new PropertyElement(array);
-    element.isPrimitiveCollection().should.equal(true);
+    expect(element.isPrimitiveCollection()).toEqual(true);
     element.becomeChild(0);
-    element.isPrimitiveCollection().should.equal(false);
+    expect(element.isPrimitiveCollection()).toEqual(false);
   });
 
   it('cloning', function () {
@@ -432,8 +432,8 @@ describe('Property element', function () {
     rootElem.becomeChild('theArray');
     rootElem.becomeChild(0);
     const clone = rootElem.clone();
-    clone.getProperty().should.equal(rootElem.getProperty());
-    clone.getChildToken().should.equal(rootElem.getChildToken());
+    expect(clone.getProperty()).toEqual(rootElem.getProperty());
+    expect(clone.getChildToken()).toEqual(rootElem.getChildToken());
   });
 
   it('a reference with *', function () {
@@ -454,7 +454,7 @@ describe('Property element', function () {
 
     // The value of the reference has a *: we are referring to the reference property and not the
     // _referenced_ property.
-    propElem.getValue().should.equal('/myData');
+    expect(propElem.getValue()).toEqual('/myData');
   });
 
   it('a reference with * in the middle', function () {
@@ -477,7 +477,7 @@ describe('Property element', function () {
     propElem.becomeChild('myReference2');
 
     // Because we didn't dereference myReference1, [1] fails
-    propElem.isValid().should.equal(false);
+    expect(propElem.isValid()).toEqual(false);
   });
 
   it('a reference without *', function () {
@@ -496,7 +496,7 @@ describe('Property element', function () {
     const propElem = new PropertyElement(workspace.getRoot());
     propElem.becomeChild('myReference2');
 
-    propElem.getValue().should.equal(42);
+    expect(propElem.getValue()).toEqual(42);
   });
 
   it('dereferencing chain', function () {
@@ -511,9 +511,9 @@ describe('Property element', function () {
     });
     workspace.insert('myReferences', myReferences);
     const propElem = new PropertyElement(myReferences.get('ref3', RESOLVE_NEVER));
-    propElem.isValid().should.equal(true);
+    expect(propElem.isValid()).toEqual(true);
     propElem.becomeDereference();
-    propElem.getProperty().should.equal(myData);
+    expect(propElem.getProperty()).toEqual(myData);
   });
 
   it('dereferencing chain, primitive array', function () {
@@ -526,9 +526,9 @@ describe('Property element', function () {
     });
     workspace.insert('myReferences', myReferences);
     const propElem = new PropertyElement(myReferences.get('array_ref'), 2);
-    propElem.isValid().should.equal(true);
+    expect(propElem.isValid()).toEqual(true);
     propElem.becomeDereference();
-    propElem.getProperty().should.equal(myData);
+    expect(propElem.getProperty()).toEqual(myData);
   });
 
   it('dereferencing chain, primitive array, with a *', function () {
@@ -542,10 +542,10 @@ describe('Property element', function () {
     });
     workspace.insert('myReferences', myReferences);
     const propElem = new PropertyElement(myReferences.get('array_ref'), 2);
-    propElem.isValid().should.equal(true);
+    expect(propElem.isValid()).toEqual(true);
     propElem.becomeDereference();
-    propElem.getProperty().should.equal(myReferences.get('array_ref'));
-    propElem.getChildToken().should.equal(0);
+    expect(propElem.getProperty()).toEqual(myReferences.get('array_ref'));
+    expect(propElem.getChildToken()).toEqual(0);
   });
 
   it('a reference array element with *', function () {
@@ -566,7 +566,7 @@ describe('Property element', function () {
 
     // The value of the reference has a *: we are referring to the reference property and not the
     // _referenced_ property.
-    propElem.getValue().should.equal('/myData');
+    expect(propElem.getValue()).toEqual('/myData');
   });
 
   it('a reference array element without *', function () {
@@ -585,7 +585,7 @@ describe('Property element', function () {
     const propElem = new PropertyElement(workspace.getRoot());
     propElem.becomeChild('myReference2');
 
-    propElem.getValue().should.equal(42);
+    expect(propElem.getValue()).toEqual(42);
   });
 
   it('a reference map element with *', function () {
@@ -606,7 +606,7 @@ describe('Property element', function () {
 
     // The value of the reference has a *: we are referring to the reference property and not the
     // _referenced_ property.
-    propElem.getValue().should.equal('/myData');
+    expect(propElem.getValue()).toEqual('/myData');
   });
 
   it('a reference map element without *', function () {
@@ -625,7 +625,7 @@ describe('Property element', function () {
     const propElem = new PropertyElement(workspace.getRoot());
     propElem.becomeChild('myReference2');
 
-    propElem.getValue().should.equal(42);
+    expect(propElem.getValue()).toEqual(42);
   });
 
   it('reference RESOLVE_NEVER/NO_LEAFS', function () {
@@ -642,14 +642,14 @@ describe('Property element', function () {
     myReference2.setValue('/myReference1[toto]');
 
     const propElem = new PropertyElement(workspace.getRoot());
-    propElem.getChild('myReference2', RESOLVE_NEVER).getProperty().should.equal(myReference2);
-    propElem.getChild(['myReference2', 'aNumber'], RESOLVE_NEVER).isValid().should.equal(false);
+    expect(propElem.getChild('myReference2', RESOLVE_NEVER).getProperty()).toEqual(myReference2);
+    expect(propElem.getChild(['myReference2', 'aNumber'], RESOLVE_NEVER).isValid()).toEqual(false);
 
-    propElem.getChild('myReference2', RESOLVE_ALWAYS).getProperty().should.equal(myData);
-    propElem.getChild(['myReference2', 'aNumber'], RESOLVE_ALWAYS).getValue().should.equal(42);
+    expect(propElem.getChild('myReference2', RESOLVE_ALWAYS).getProperty()).toEqual(myData);
+    expect(propElem.getChild(['myReference2', 'aNumber'], RESOLVE_ALWAYS).getValue()).toEqual(42);
 
-    propElem.getChild('myReference2', RESOLVE_NO_LEAFS).getProperty().should.equal(myReference2);
-    propElem.getChild(['myReference2', 'aNumber'], RESOLVE_NO_LEAFS).getValue().should.equal(42);
+    expect(propElem.getChild('myReference2', RESOLVE_NO_LEAFS).getProperty()).toEqual(myReference2);
+    expect(propElem.getChild(['myReference2', 'aNumber'], RESOLVE_NO_LEAFS).getValue()).toEqual(42);
   });
 
 });

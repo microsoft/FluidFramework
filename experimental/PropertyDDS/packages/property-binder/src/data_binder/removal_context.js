@@ -2,8 +2,6 @@
  * Copyright (c) Autodesk, Inc. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable-next-line spaced-comment */
-/// <reference types="@adsktypes/adsk__forge-hfdm" />
 
 /**
  * @fileoverview Context which describes a remove operation.

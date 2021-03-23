@@ -64,61 +64,60 @@ describe('DataBinder.registerOnPath()', function () {
   describe('should work for single', function () {
 
     it('non-existing path with primitives', function () {
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
       dataBinder.registerOnPath('node.aString', ['insert', 'modify', 'remove'], pathSpy);
-      pathSpy.callCount.should.equal(0);
-
+      expect(pathSpy).toHaveBeenCalledTimes(0);
       var nodePset = PropertyFactory.create('NodeProperty', 'single');
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
       workspace.insert('node', nodePset);
       var stringPset = PropertyFactory.create('String', 'single');
       nodePset.insert('aString', stringPset);
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
       var stringProperty = workspace.get(['node', 'aString']);
       stringProperty.setValue('hello');
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
       nodePset.remove('aString');
-      pathSpy.callCount.should.equal(3);
+      expect(pathSpy).toHaveBeenCalledTimes(3);
     });
 
     it('non-existing path with non-primitive template', function () {
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
       dataBinder.registerOnPath('myPrimitiveChildTemplate.aString', ['insert', 'modify', 'remove'], pathSpy);
 
       var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single');
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
       workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
       var stringProperty = workspace.get(['myPrimitiveChildTemplate', 'aString']);
       stringProperty.setValue('hello');
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
       workspace.remove('myPrimitiveChildTemplate');
-      pathSpy.callCount.should.equal(3);
+      expect(pathSpy).toHaveBeenCalledTimes(3);
     });
 
     it('non-existing path with non-primitive template and DataBinding', function () {
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
       dataBinder.registerOnPath('myPrimitiveChildTemplate.aString', ['insert', 'modify', 'remove'], pathSpy);
       dataBinder.register('BINDING', PrimitiveChildrenTemplate.typeid, PrimitiveChildrenDataBinding);
 
       var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single');
-      pathSpy.callCount.should.equal(0);
-      dataBinder._dataBindingCreatedCounter.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
 
       workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
       // Insert callback for the existing item
-      pathSpy.callCount.should.equal(1);
-      dataBinder._dataBindingCreatedCounter.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       const primitiveChildrenDataBinding = dataBinder.resolve('/myPrimitiveChildTemplate', 'BINDING');
       dataBinder._resetDebugCounters();
       var stringProperty = workspace.get(['myPrimitiveChildTemplate', 'aString']);
       stringProperty.setValue('hello');
-      pathSpy.callCount.should.equal(2);
-      primitiveChildrenDataBinding.onModify.callCount.should.equal(1);
-      primitiveChildrenDataBinding.onModify.resetHistory();
+      expect(pathSpy).toHaveBeenCalledTimes(2);
+      expect(primitiveChildrenDataBinding.onModify).toHaveBeenCalledTimes(1);
+      primitiveChildrenDataBinding.onModify.mockClear();
       workspace.remove('myPrimitiveChildTemplate');
-      pathSpy.callCount.should.equal(3);
-      dataBinder._dataBindingRemovedCounter.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(3);
+      expect(dataBinder._dataBindingRemovedCounter).toEqual(1);
     });
 
     it('already existing path with primitives', function () {
@@ -127,16 +126,16 @@ describe('DataBinder.registerOnPath()', function () {
       var stringPset = PropertyFactory.create('String', 'single');
       nodePset.insert('aString', stringPset);
 
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
       dataBinder.registerOnPath('node.aString', ['insert', 'modify', 'remove'], pathSpy);
       // Called back, since it already exists
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       var stringProperty = workspace.get(['node', 'aString']);
       stringProperty.setValue('hello');
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
       nodePset.remove('aString');
-      pathSpy.callCount.should.equal(3);
+      expect(pathSpy).toHaveBeenCalledTimes(3);
     });
 
     it('already existing path with primitives, twice', function () {
@@ -145,75 +144,75 @@ describe('DataBinder.registerOnPath()', function () {
       var stringPset = PropertyFactory.create('String', 'single');
       nodePset.insert('aString', stringPset);
 
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
       dataBinder.registerOnPath('node.aString', ['insert', 'modify', 'remove'], pathSpy);
       // Called back, since it already exists
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       dataBinder.registerOnPath('node.aString', ['insert', 'modify', 'remove'], pathSpy);
       // Called back once, since it already exists -- shouldn't accidentally fire the
       // previous callback installed again
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
 
-      pathSpy.resetHistory();
+      pathSpy.mockClear();
 
       var stringProperty = workspace.get(['node', 'aString']);
       stringProperty.setValue('hello');
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
       nodePset.remove('aString');
-      pathSpy.callCount.should.equal(4);
+      expect(pathSpy).toHaveBeenCalledTimes(4);
     });
 
     it('already existing path with non-primitive template', function () {
       var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single');
       workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
       dataBinder.registerOnPath('myPrimitiveChildTemplate.aString', ['insert', 'modify', 'remove'], pathSpy);
       // Called back, since it already exists
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
       var stringProperty = workspace.get(['myPrimitiveChildTemplate', 'aString']);
       stringProperty.setValue('hello');
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
       workspace.remove('myPrimitiveChildTemplate');
-      pathSpy.callCount.should.equal(3);
+      expect(pathSpy).toHaveBeenCalledTimes(3);
     });
 
     it('modify already existing path that gets removed and then readded', function () {
       var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single');
       workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
       dataBinder.registerOnPath('myPrimitiveChildTemplate.aString', ['modify'], pathSpy);
 
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
       var stringProperty = workspace.get(['myPrimitiveChildTemplate', 'aString']);
       stringProperty.setValue('hello');
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       workspace.remove('myPrimitiveChildTemplate');
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
       workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
 
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
       var stringProperty = workspace.get(['myPrimitiveChildTemplate', 'aString']);
       stringProperty.setValue('hello again');
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
     });
 
     it('insert on creation - string', function () {
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
 
       workspace.insert('node', PropertyFactory.create('NodeProperty', 'single'));
       const text = PropertyFactory.create('String', 'single');
       workspace.get('node').insert('text', text);
 
-      pathSpy.resetHistory();
+      pathSpy.mockClear();
       dataBinder.registerOnPath('node.text', ['insert', 'remove'], pathSpy);
 
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
       workspace.get('node').remove(text);
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
       workspace.get('node').insert('text', text);
-      pathSpy.callCount.should.equal(3);
+      expect(pathSpy).toHaveBeenCalledTimes(3);
     });
 
     it('Documentation example - registerOnPath', function () {
@@ -251,17 +250,17 @@ describe('DataBinder.registerOnPath()', function () {
     });
 
     it('insert on creation - valid reference', function () {
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
 
       workspace.insert('node', PropertyFactory.create('NodeProperty', 'single'));
       workspace.get('node').insert('text', PropertyFactory.create('String', 'single'));
       const refObject = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
       workspace.insert('myChild1', refObject);
 
-      pathSpy.resetHistory();
+      pathSpy.mockClear();
       workspace.get(['myChild1', 'single_ref'], RESOLVE_NO_LEAFS).setValue('/node');
       dataBinder.registerOnPath('myChild1.single_ref.text', ['insert'], pathSpy);
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
     it('getRelativeTokenizedPath - absolute path', function () {
@@ -276,9 +275,9 @@ describe('DataBinder.registerOnPath()', function () {
 
       dataBinder.attachTo(workspace);
 
-      worked.should.equal(false);
+      expect(worked).toEqual(false);
       workspace.get(['a', 'myString']).setValue('Bobo');
-      worked.should.equal(true);
+      expect(worked).toEqual(true);
     });
 
     it('modify already existing path with references', function () {
@@ -287,28 +286,28 @@ describe('DataBinder.registerOnPath()', function () {
       workspace.insert('myChild1', refObject);
       workspace.get(['myChild1', 'single_ref'], RESOLVE_NO_LEAFS).setValue('/text');
 
-      var pathSpy = sinon.spy();
-      var refSpy = sinon.spy();
+      var pathSpy = jest.fn();
+      var refSpy = jest.fn();
 
       // Although registering the same path, 'modify' will tell us about changes to the dereferenced
       // single_ref, while referenceModify will give us info about the reference itself.
       dataBinder.registerOnPath('myChild1.single_ref', ['modify'], pathSpy);
       dataBinder.registerOnPath('myChild1.single_ref', ['referenceModify'], refSpy);
 
-      refSpy.callCount.should.equal(0);
-      pathSpy.callCount.should.equal(0);
+      expect(refSpy).toHaveBeenCalledTimes(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
       workspace.get(['text']).setValue('hello');
-      refSpy.callCount.should.equal(0);
-      pathSpy.callCount.should.equal(1);
+      expect(refSpy).toHaveBeenCalledTimes(0);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should handle references to references - insert', function () {
-      const pathSpy = sinon.spy();
-      const removePathSpy = sinon.spy();
+      const pathSpy = jest.fn();
+      const removePathSpy = jest.fn();
 
       dataBinder.registerOnPath('myChild1.single_ref', ['insert'], pathSpy);
       dataBinder.registerOnPath('myChild1.single_ref', ['remove'], removePathSpy);
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
 
       // Set up a bunch of hops where the reference directly references another reference.
       // i.e. myChild1.single_ref resolves to /text, but only after resolving through single_ref,
@@ -322,51 +321,51 @@ describe('DataBinder.registerOnPath()', function () {
       const refObject = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
       workspace.insert('myChild1', refObject);
 
-      pathSpy.callCount.should.equal(0);
-      removePathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
+      removeexpect(pathSpy).toHaveBeenCalledTimes(0);
 
       workspace.get(['myChild1', 'single_ref'], RESOLVE_NO_LEAFS).setValue('/ref2');
-      pathSpy.callCount.should.equal(1);
-      removePathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
+      removeexpect(pathSpy).toHaveBeenCalledTimes(0);
 
       // Break the link by breaking ref2
       workspace.get('ref2', RESOLVE_NO_LEAFS).setValue('/garbage');
-      pathSpy.callCount.should.equal(1);
-      removePathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
+      removeexpect(pathSpy).toHaveBeenCalledTimes(1);
 
       // put it back
       workspace.get('ref2', RESOLVE_NO_LEAFS).setValue('/ref1');
-      pathSpy.callCount.should.equal(2);
-      removePathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
+      removeexpect(pathSpy).toHaveBeenCalledTimes(1);
 
       // Break again
       workspace.get('ref2', RESOLVE_NO_LEAFS).setValue('/garbage');
-      pathSpy.callCount.should.equal(2);
-      removePathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
+      removeexpect(pathSpy).toHaveBeenCalledTimes(2);
 
       // put it back again
       workspace.get('ref2', RESOLVE_NO_LEAFS).setValue('/ref1');
-      pathSpy.callCount.should.equal(3);
-      removePathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(3);
+      removeexpect(pathSpy).toHaveBeenCalledTimes(2);
 
       // Break deeper
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/garbage');
-      pathSpy.callCount.should.equal(3);
-      removePathSpy.callCount.should.equal(3);
+      expect(pathSpy).toHaveBeenCalledTimes(3);
+      removeexpect(pathSpy).toHaveBeenCalledTimes(3);
 
       // put it back again
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/text');
-      pathSpy.callCount.should.equal(4);
-      removePathSpy.callCount.should.equal(3);
+      expect(pathSpy).toHaveBeenCalledTimes(4);
+      removeexpect(pathSpy).toHaveBeenCalledTimes(3);
     });
 
     it('should handle references to references - insert, changing from valid to valid', function () {
-      const insertSpy = sinon.spy();
-      const removeSpy = sinon.spy();
+      const insertSpy = jest.fn();
+      const removeSpy = jest.fn();
 
       dataBinder.registerOnPath('myChild1.single_ref', ['insert'], insertSpy);
       dataBinder.registerOnPath('myChild1.single_ref', ['remove'], removeSpy);
-      insertSpy.callCount.should.equal(0);
+      expect(insertSpy).toHaveBeenCalledTimes(0);
 
       // Set up a bunch of hops where the reference directly references another reference.
       // i.e. myChild1.single_ref resolves to /text, but only after resolving through single_ref,
@@ -380,34 +379,34 @@ describe('DataBinder.registerOnPath()', function () {
 
       const refObject = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
       workspace.insert('myChild1', refObject);
-      insertSpy.callCount.should.equal(0);
-      removeSpy.callCount.should.equal(0);
+      expect(insertSpy).toHaveBeenCalledTimes(0);
+      expect(removeSpy).toHaveBeenCalledTimes(0);
 
       workspace.get(['myChild1', 'single_ref'], RESOLVE_NO_LEAFS).setValue('/ref2');
-      insertSpy.callCount.should.equal(1);
-      removeSpy.callCount.should.equal(0);
+      expect(insertSpy).toHaveBeenCalledTimes(1);
+      expect(removeSpy).toHaveBeenCalledTimes(0);
 
       // Change ref1 from one valid string to another
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/text2');
-      insertSpy.callCount.should.equal(2);
-      removeSpy.callCount.should.equal(1);
+      expect(insertSpy).toHaveBeenCalledTimes(2);
+      expect(removeSpy).toHaveBeenCalledTimes(1);
 
       // put it back again
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/text');
-      insertSpy.callCount.should.equal(3);
-      removeSpy.callCount.should.equal(2);
+      expect(insertSpy).toHaveBeenCalledTimes(3);
+      expect(removeSpy).toHaveBeenCalledTimes(2);
 
       // garbage
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/garbage');
-      insertSpy.callCount.should.equal(3);
-      removeSpy.callCount.should.equal(3);
+      expect(insertSpy).toHaveBeenCalledTimes(3);
+      expect(removeSpy).toHaveBeenCalledTimes(3);
     });
 
     it('insert callback on subpath through a reference, retroactive', function () {
       const textProperty = PropertyFactory.create('String');
 
       const pathSpy = sinon.spy(function (context) {
-        context.getProperty().should.equal(textProperty);
+        expect(context.getProperty()).toEqual(textProperty);
       });
 
       workspace.insert('node', PropertyFactory.create('NodeProperty'));
@@ -416,12 +415,12 @@ describe('DataBinder.registerOnPath()', function () {
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/node');
 
       dataBinder.registerOnPath('ref1.text', ['insert'], pathSpy);
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
     it('remove callback on subpath through a reference', function () {
-      const removeSpy = sinon.spy();
-      const insertSpy = sinon.spy();
+      const removeSpy = jest.fn();
+      const insertSpy = jest.fn();
       dataBinder.registerOnPath('ref.text', ['insert'], insertSpy);
       dataBinder.registerOnPath('ref.text', ['remove'], removeSpy);
 
@@ -433,44 +432,44 @@ describe('DataBinder.registerOnPath()', function () {
 
       workspace.insert('ref', PropertyFactory.create('Reference'));
 
-      insertSpy.callCount.should.equal(0);
-      removeSpy.callCount.should.equal(0);
+      expect(insertSpy).toHaveBeenCalledTimes(0);
+      expect(removeSpy).toHaveBeenCalledTimes(0);
 
       // Valid ref - insert
       workspace.get('ref', RESOLVE_NO_LEAFS).setValue('/node1');
-      insertSpy.callCount.should.equal(1);
-      removeSpy.callCount.should.equal(0);
+      expect(insertSpy).toHaveBeenCalledTimes(1);
+      expect(removeSpy).toHaveBeenCalledTimes(0);
 
       // Switch - remove the old one and insert the new one
       workspace.get('ref', RESOLVE_NO_LEAFS).setValue('/node2');
-      insertSpy.callCount.should.equal(2);
-      removeSpy.callCount.should.equal(1);
+      expect(insertSpy).toHaveBeenCalledTimes(2);
+      expect(removeSpy).toHaveBeenCalledTimes(1);
 
       // invalid - should remove
       workspace.get('ref', RESOLVE_NO_LEAFS).setValue('/garbage');
-      insertSpy.callCount.should.equal(2);
-      removeSpy.callCount.should.equal(2);
+      expect(insertSpy).toHaveBeenCalledTimes(2);
+      expect(removeSpy).toHaveBeenCalledTimes(2);
 
       // Valid one - should insert
       workspace.get('ref', RESOLVE_NO_LEAFS).setValue('/node2');
-      insertSpy.callCount.should.equal(3);
-      removeSpy.callCount.should.equal(2);
+      expect(insertSpy).toHaveBeenCalledTimes(3);
+      expect(removeSpy).toHaveBeenCalledTimes(2);
 
       // no change - no notifs
       workspace.get('ref', RESOLVE_NO_LEAFS).setValue('/node2');
-      insertSpy.callCount.should.equal(3);
-      removeSpy.callCount.should.equal(2);
+      expect(insertSpy).toHaveBeenCalledTimes(3);
+      expect(removeSpy).toHaveBeenCalledTimes(2);
 
       // invalid (empty case) - should remove
       workspace.get('ref', RESOLVE_NO_LEAFS).setValue('');
-      insertSpy.callCount.should.equal(3);
-      removeSpy.callCount.should.equal(3);
+      expect(insertSpy).toHaveBeenCalledTimes(3);
+      expect(removeSpy).toHaveBeenCalledTimes(3);
     });
 
     it('collectionInsert callback on subpath through a reference', function () {
       const dataProp = PropertyFactory.create(PrimitiveChildrenTemplate.typeid);
 
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
 
       dataBinder.registerOnPath('ref1.data.arrayOfNumbers', ['collectionInsert'], pathSpy);
 
@@ -479,23 +478,23 @@ describe('DataBinder.registerOnPath()', function () {
       workspace.insert('ref1', PropertyFactory.create('Reference'));
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/node');
 
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
 
       dataProp.get('arrayOfNumbers').push(5);
 
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/garbage');
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/node');
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
     });
 
     it('collectionInsert callback on subpath through a reference, retroactive', function () {
       const dataProp = PropertyFactory.create(PrimitiveChildrenTemplate.typeid);
 
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
 
       workspace.insert('node', PropertyFactory.create('NodeProperty'));
       workspace.get('node').insert('data', dataProp);
@@ -504,19 +503,19 @@ describe('DataBinder.registerOnPath()', function () {
       dataProp.get('arrayOfNumbers').push(5);
 
       dataBinder.registerOnPath('ref1.data.arrayOfNumbers', ['collectionInsert'], pathSpy);
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/garbage');
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/node');
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
     });
 
     it('referenceInsert callback on subpath through a reference, invalid target', function () {
       const theRefProp = PropertyFactory.create('Reference');
 
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
 
       dataBinder.registerOnPath('ref1.theRef', ['referenceInsert'], pathSpy);
 
@@ -525,19 +524,19 @@ describe('DataBinder.registerOnPath()', function () {
       workspace.insert('ref1', PropertyFactory.create('Reference'));
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/node');
 
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/garbage');
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/node');
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
     });
 
     it('referenceInsert callback on subpath through a reference, invalid target, retroactive', function () {
       const theRefProp = PropertyFactory.create('Reference');
 
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
 
       workspace.insert('node', PropertyFactory.create('NodeProperty'));
       workspace.get('node').insert('theRef', theRefProp);
@@ -545,18 +544,18 @@ describe('DataBinder.registerOnPath()', function () {
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/node');
 
       dataBinder.registerOnPath('ref1.theRef', ['referenceInsert'], pathSpy);
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/garbage');
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/node');
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
     });
     it('referenceInsert callback on subpath through a reference, valid target', function () {
       const theRefProp = PropertyFactory.create('Reference', 'single', '/');
 
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
 
       dataBinder.registerOnPath('ref1.theRef', ['referenceInsert'], pathSpy);
 
@@ -565,19 +564,19 @@ describe('DataBinder.registerOnPath()', function () {
       workspace.insert('ref1', PropertyFactory.create('Reference'));
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/node');
 
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/garbage');
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/node');
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
     });
 
     it('referenceInsert callback on subpath through a reference, valid target, retroactive', function () {
       const theRefProp = PropertyFactory.create('Reference', 'single', '/');
 
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
 
       workspace.insert('node', PropertyFactory.create('NodeProperty'));
       workspace.get('node').insert('theRef', theRefProp);
@@ -585,13 +584,13 @@ describe('DataBinder.registerOnPath()', function () {
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/node');
 
       dataBinder.registerOnPath('ref1.theRef', ['referenceInsert'], pathSpy);
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/garbage');
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/node');
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
     });
 
     it('insert callback on subpath through a reference', function () {
@@ -600,7 +599,7 @@ describe('DataBinder.registerOnPath()', function () {
       let expectedProperty = textProperty;
 
       const pathSpy = sinon.spy(function (context) {
-        context.getProperty().should.equal(expectedProperty);
+        expect(context.getProperty()).toEqual(expectedProperty);
       });
 
       dataBinder.registerOnPath('ref1.text', ['insert'], pathSpy);
@@ -616,20 +615,20 @@ describe('DataBinder.registerOnPath()', function () {
       expectedProperty = textProperty;
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/node');
 
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       // Change from one valid reference to another
       expectedProperty = textProperty2;
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/node2');
 
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
     });
 
     it('should handle references to references - 1', function () {
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
 
       dataBinder.registerOnPath('myChild1.single_ref', ['modify'], pathSpy);
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
 
       // Set up a bunch of hops where the reference directly references another reference.
       // i.e. myChild1.single_ref resolves to /text, but only after resolving through single_ref,
@@ -643,23 +642,23 @@ describe('DataBinder.registerOnPath()', function () {
       const refObject = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
       workspace.insert('myChild1', refObject);
 
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
       workspace.get(['myChild1', 'single_ref'], RESOLVE_NO_LEAFS).setValue('/ref2');
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
 
       // Break the link by breaking ref2
       workspace.get('ref2', RESOLVE_NO_LEAFS).setValue('/garbage');
       workspace.get('ref2', RESOLVE_NO_LEAFS).setValue('/ref1');
 
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
       workspace.get('text').setValue('hello again');
 
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should handle references to references - 2', function () {
-      const pathSpy = sinon.spy();
-      const refPathSpy = sinon.spy();
+      const pathSpy = jest.fn();
+      const refPathSpy = jest.fn();
 
       dataBinder.registerOnPath('myChild1.single_ref', ['modify'], pathSpy);
       dataBinder.registerOnPath('myChild1.single_ref', ['referenceModify'], refPathSpy);
@@ -678,45 +677,45 @@ describe('DataBinder.registerOnPath()', function () {
       const refObject = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
       workspace.insert('myChild1', refObject);
 
-      refPathSpy.callCount.should.equal(0);
-      pathSpy.callCount.should.equal(0);
+      refexpect(pathSpy).toHaveBeenCalledTimes(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
 
       // This should cause the referenceModify to fire, but not the normal modify
       workspace.get(['myChild1', 'single_ref'], RESOLVE_NO_LEAFS).setValue('/ref3');
 
-      refPathSpy.callCount.should.equal(1);
-      pathSpy.callCount.should.equal(0);
+      refexpect(pathSpy).toHaveBeenCalledTimes(1);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
 
       // This should cause the modify to fire, but not the referenceModify
       workspace.get('text').setValue('hello');
 
-      refPathSpy.callCount.should.equal(1);
-      refPathSpy.resetHistory();
+      refexpect(pathSpy).toHaveBeenCalledTimes(1);
+      refPathSpy.mockClear();
 
-      pathSpy.callCount.should.equal(1);
-      pathSpy.resetHistory();
+      expect(pathSpy).toHaveBeenCalledTimes(1);
+      pathSpy.mockClear();
 
       // Break the link by breaking ref2
       workspace.get('ref2', RESOLVE_NO_LEAFS).setValue('/garbage');
 
       // We are only bound to single_ref for referenceModify, so this shouldn't fire
-      refPathSpy.callCount.should.equal(0);
+      refexpect(pathSpy).toHaveBeenCalledTimes(0);
 
       // Modifying text shouldn't make it through now
       workspace.get('text').setValue('hello');
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
 
       // Fix the link
       workspace.get('ref2', RESOLVE_NO_LEAFS).setValue('/ref1');
 
       // Now it should work
       workspace.get('text').setValue('hello again');
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
     it('modify non-existing path with references', function () {
-      var pathSpy = sinon.spy();
-      var refSpy = sinon.spy();
+      var pathSpy = jest.fn();
+      var refSpy = jest.fn();
       dataBinder.registerOnPath('myChild1.single_ref', ['modify'], pathSpy);
       dataBinder.registerOnPath('myChild1.single_ref', ['referenceModify'], refSpy);
 
@@ -725,159 +724,159 @@ describe('DataBinder.registerOnPath()', function () {
       workspace.insert('myChild1', refObject);
       workspace.get(['myChild1', 'single_ref'], RESOLVE_NO_LEAFS).setValue('/text');
 
-      refSpy.callCount.should.equal(1);
-      pathSpy.callCount.should.equal(0);
+      expect(refSpy).toHaveBeenCalledTimes(1);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
       workspace.get(['text']).setValue('hello');
-      refSpy.callCount.should.equal(1);
-      pathSpy.callCount.should.equal(1);
+      expect(refSpy).toHaveBeenCalledTimes(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
     it('modify path with references that goes invalid and comes back', function () {
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
 
       workspace.insert('node', PropertyFactory.create('NodeProperty', 'single'));
       workspace.get('node').insert('text', PropertyFactory.create('String', 'single'));
       const refObject = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
       workspace.insert('myChild1', refObject);
 
-      pathSpy.resetHistory();
+      pathSpy.mockClear();
 
       // We set the reference and then register -- the next test does the opposite
       workspace.get(['myChild1', 'single_ref'], RESOLVE_NO_LEAFS).setValue('/node');
       dataBinder.registerOnPath('myChild1.single_ref.text', ['modify'], pathSpy);
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
 
       workspace.get(['node', 'text']).setValue('hello');
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
-      pathSpy.resetHistory();
+      pathSpy.mockClear();
       workspace.get(['myChild1', 'single_ref'], RESOLVE_NO_LEAFS).setValue('/garbage');
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
       workspace.get(['node', 'text']).setValue('hello2');
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
 
-      pathSpy.resetHistory();
+      pathSpy.mockClear();
       workspace.get(['myChild1', 'single_ref'], RESOLVE_NO_LEAFS).setValue('/node');
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
       workspace.get(['node', 'text']).setValue('hello3');
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
     it('modify path through a reference', function () {
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
 
       workspace.insert('node', PropertyFactory.create('NodeProperty', 'single'));
       workspace.get('node').insert('text', PropertyFactory.create('String', 'single'));
       const refObject = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
       workspace.insert('myChild1', refObject);
 
-      pathSpy.resetHistory();
+      pathSpy.mockClear();
 
       // We set the reference and then register -- the next test does the opposite
       workspace.get(['myChild1', 'single_ref'], RESOLVE_NO_LEAFS).setValue('/node');
       dataBinder.registerOnPath('myChild1.single_ref.text', ['modify'], pathSpy);
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
 
       workspace.get(['node', 'text']).setValue('hello');
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
     it('modify path through a reference - reverse order', function () {
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
 
       workspace.insert('node', PropertyFactory.create('NodeProperty', 'single'));
       workspace.get('node').insert('text', PropertyFactory.create('String', 'single'));
       const refObject = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
       workspace.insert('myChild1', refObject);
 
-      pathSpy.resetHistory();
+      pathSpy.mockClear();
 
       // We register and then set the reference -- the last test did the opposite
       dataBinder.registerOnPath('myChild1.single_ref.text', ['modify'], pathSpy);
       workspace.get(['myChild1', 'single_ref'], RESOLVE_NO_LEAFS).setValue('/node');
 
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
 
       workspace.get(['node', 'text']).setValue('hello');
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
     it('insert callback that gets removed and then readded', function () {
       var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single');
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
       dataBinder.registerOnPath('myPrimitiveChildTemplate.aString', ['insert'], pathSpy);
 
       workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       workspace.remove('myPrimitiveChildTemplate');
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
     });
 
     it('modify already existing path that gets removed and then readded', function () {
       var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single');
       workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
       dataBinder.registerOnPath('myPrimitiveChildTemplate.aString', ['modify'], pathSpy);
 
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
       var stringProperty = workspace.get(['myPrimitiveChildTemplate', 'aString']);
       stringProperty.setValue('hello');
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       workspace.remove('myPrimitiveChildTemplate');
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
       workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
 
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
       var stringProperty = workspace.get(['myPrimitiveChildTemplate', 'aString']);
       stringProperty.setValue('hello again');
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
     });
 
     it('insert callback that gets removed and then readded', function () {
       var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single');
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
       dataBinder.registerOnPath('myPrimitiveChildTemplate.aString', ['insert'], pathSpy);
 
       workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       workspace.remove('myPrimitiveChildTemplate');
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
     });
 
     it('already existing path with non-primitive template and DataBinding', function () {
       dataBinder.register('BINDING', PrimitiveChildrenTemplate.typeid, PrimitiveChildrenDataBinding);
       var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single');
       workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
       dataBinder.registerOnPath('myPrimitiveChildTemplate.aString', ['insert', 'modify', 'remove'], pathSpy);
-      dataBinder._dataBindingCreatedCounter.should.equal(1);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       const primitiveChildrenDataBinding = dataBinder.resolve('/myPrimitiveChildTemplate', 'BINDING');
       dataBinder._resetDebugCounters();
       // insert notification for the existing path
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
       var stringProperty = workspace.get(['myPrimitiveChildTemplate', 'aString']);
       stringProperty.setValue('hello');
-      pathSpy.callCount.should.equal(2);
-      primitiveChildrenDataBinding.onModify.callCount.should.equal(1);
-      primitiveChildrenDataBinding.onModify.resetHistory();
+      expect(pathSpy).toHaveBeenCalledTimes(2);
+      expect(primitiveChildrenDataBinding.onModify).toHaveBeenCalledTimes(1);
+      primitiveChildrenDataBinding.onModify.mockClear();
       workspace.remove('myPrimitiveChildTemplate');
-      pathSpy.callCount.should.equal(3);
-      dataBinder._dataBindingRemovedCounter.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(3);
+      expect(dataBinder._dataBindingRemovedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
     });
 
     it('non-existing path with (nested) arrays', function () {
-      var pathSpy = sinon.spy();
-      var pathSpy2 = sinon.spy();
+      var pathSpy = jest.fn();
+      var pathSpy2 = jest.fn();
       dataBinder.registerOnPath('child1.childArray[2]', ['insert', 'modify', 'remove'], pathSpy);
       dataBinder.registerOnPath('child1.childArray[1].nestedArray[2]', ['insert', 'modify', 'remove'], pathSpy2);
 
@@ -890,12 +889,12 @@ describe('DataBinder.registerOnPath()', function () {
       workspace.get(['child1', 'childArray']).push(PropertyFactory.create(ParentTemplate.typeid, 'single'));
       // add one more
       workspace.get(['child1', 'childArray']).push(PropertyFactory.create(ParentTemplate.typeid, 'single'));
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
       // this will cause the watched property path to become valid so pathSpy will be called after this
       workspace.get(['child1', 'childArray']).push(PropertyFactory.create(ParentTemplate.typeid, 'single'));
-      pathSpy.callCount.should.equal(1);
-      pathSpy.resetHistory();
-      pathSpy2.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
+      pathSpy.mockClear();
+      expect(pathSpy2).toHaveBeenCalledTimes(0);
       // add nested array
       var parentProp = workspace.get(['child1', 'childArray', '1']);
       parentProp.insert('nestedArray', PropertyFactory.create(ParentTemplate.typeid, 'array'));
@@ -905,11 +904,11 @@ describe('DataBinder.registerOnPath()', function () {
           text: String(i)
         });
       }));
-      pathSpy2.callCount.should.equal(1);
-      pathSpy2.resetHistory();
+      expect(pathSpy2).toHaveBeenCalledTimes(1);
+      pathSpy2.mockClear();
       // test: remove from array beyond the highest index
       nestedArray.remove(4);
-      pathSpy2.callCount.should.equal(0);
+      expect(pathSpy2).toHaveBeenCalledTimes(0);
       // test: insert into array beyond the highest index
       nestedArray.insert(4, PropertyFactory.create(ParentTemplate.typeid, undefined, {
         text: String('four a')
@@ -917,13 +916,13 @@ describe('DataBinder.registerOnPath()', function () {
       nestedArray.insert(4, PropertyFactory.create(ParentTemplate.typeid, undefined, {
         text: String('four b')
       }));
-      pathSpy2.callCount.should.equal(0);
+      expect(pathSpy2).toHaveBeenCalledTimes(0);
       nestedArray.get(2).get('text').setValue('fortytwo');
-      pathSpy2.callCount.should.equal(1);
+      expect(pathSpy2).toHaveBeenCalledTimes(1);
     });
 
     it('Referencing an existing array element', function () {
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
 
       workspace.insert('referenceToElement2', PropertyFactory.create('Reference', 'single'));
       workspace.get('referenceToElement2', RESOLVE_NO_LEAFS).setValue('/childArray[2]');
@@ -933,18 +932,18 @@ describe('DataBinder.registerOnPath()', function () {
       workspace.get(['childArray']).push(PropertyFactory.create(ParentTemplate.typeid, 'single'));
       workspace.get(['childArray']).push(PropertyFactory.create(ParentTemplate.typeid, 'single'));
       workspace.get(['childArray']).push(PropertyFactory.create(ParentTemplate.typeid, 'single'));
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
 
       dataBinder.registerOnPath('referenceToElement2.text', ['insert', 'modify', 'remove'], pathSpy);
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       workspace.get(['childArray', 2, 'text']).setValue('Hello');
 
-      pathSpy.callCount.should.equal(2); // the insert and the modify
+      expect(pathSpy).toHaveBeenCalledTimes(2); // the insert and the modify
     });
 
     it('Referencing a non-existing array element, then adding it', function () {
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
 
       workspace.insert('referenceToElement2', PropertyFactory.create('Reference', 'single'));
       workspace.get('referenceToElement2', RESOLVE_NO_LEAFS).setValue('/childArray[2]');
@@ -955,39 +954,39 @@ describe('DataBinder.registerOnPath()', function () {
       workspace.insert('childArray', PropertyFactory.create(ParentTemplate.typeid, 'array'));
       workspace.get(['childArray']).push(PropertyFactory.create(ParentTemplate.typeid, 'single'));
       workspace.get(['childArray']).push(PropertyFactory.create(ParentTemplate.typeid, 'single'));
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
 
       // It becomes valid now; insert should be fired
       workspace.get(['childArray']).push(PropertyFactory.create(ParentTemplate.typeid, 'single'));
-      pathSpy.callCount.should.equal(1); // the insert
+      expect(pathSpy).toHaveBeenCalledTimes(1); // the insert
 
       // Modify should be fired
       workspace.get(['childArray', 2, 'text']).setValue('Hello');
-      pathSpy.callCount.should.equal(2); // the insert and the modify
+      expect(pathSpy).toHaveBeenCalledTimes(2); // the insert and the modify
     });
 
     it('Registering on a reference to /', function () {
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
 
       workspace.insert('referenceToElement2', PropertyFactory.create('Reference', 'single'));
       workspace.get('referenceToElement2', RESOLVE_NO_LEAFS).setValue('/');
 
       dataBinder.registerOnPath('referenceToElement2', ['insert'], pathSpy);
 
-      pathSpy.callCount.should.equal(1); // the 'insert' of the root of the workspace!
+      expect(pathSpy).toHaveBeenCalledTimes(1); // the 'insert' of the root of the workspace!
     });
 
     it('Register on /', function () {
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
 
       dataBinder.registerOnPath('/', ['insert'], pathSpy);
 
-      pathSpy.callCount.should.equal(1); // the 'insert' of the root of the workspace!
+      expect(pathSpy).toHaveBeenCalledTimes(1); // the 'insert' of the root of the workspace!
     });
 
     it('Register on / collectionInsert', function () {
       var callback = (key, in_context) => {
-        in_context.getAbsolutePath().should.equal('/thing');
+        expect(in_context.getAbsolutePath()).toEqual('/thing');
       };
 
       dataBinder.registerOnPath('/', ['collectionInsert'], callback);
@@ -997,7 +996,7 @@ describe('DataBinder.registerOnPath()', function () {
     });
 
     it('Registering on a non-existing array element, then removing, then making it exist', function () {
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
 
       workspace.insert('referenceToElement2', PropertyFactory.create('Reference', 'single'));
       workspace.get('referenceToElement2', RESOLVE_NO_LEAFS).setValue('/childArray[2]');
@@ -1014,7 +1013,7 @@ describe('DataBinder.registerOnPath()', function () {
       workspace.get(['childArray']).remove(1);
       workspace.get(['childArray']).remove(0);
 
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
 
       // Now add enough that the referred path will be 'connected'
       workspace.get(['childArray']).push(PropertyFactory.create(ParentTemplate.typeid, 'single'));
@@ -1022,11 +1021,11 @@ describe('DataBinder.registerOnPath()', function () {
 
       workspace.get(['childArray']).push(PropertyFactory.create(ParentTemplate.typeid, 'single'));
 
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
     it('Registering on a non-existing array element, making it exist, removing, readding', function () {
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
 
       workspace.insert('referenceToElement2', PropertyFactory.create('Reference', 'single'));
       workspace.get('referenceToElement2', RESOLVE_NO_LEAFS).setValue('/childArray[2]');
@@ -1040,15 +1039,15 @@ describe('DataBinder.registerOnPath()', function () {
       workspace.get(['childArray']).push(PropertyFactory.create(ParentTemplate.typeid, 'single'));
       workspace.get(['childArray']).push(PropertyFactory.create(ParentTemplate.typeid, 'single'));
 
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
 
       // Now remove from the end -- killing that last item. The registration shouldn't disappear
       workspace.get(['childArray']).remove(2);
-      pathSpy.callCount.should.equal(2);
+      expect(pathSpy).toHaveBeenCalledTimes(2);
 
       // Add it back - does our callback still exist?
       workspace.get(['childArray']).push(PropertyFactory.create(ParentTemplate.typeid, 'single'));
-      pathSpy.callCount.should.equal(3);
+      expect(pathSpy).toHaveBeenCalledTimes(3);
     });
 
     it('already existing path with (nested) arrays', function () {
@@ -1066,28 +1065,28 @@ describe('DataBinder.registerOnPath()', function () {
           text: String(i)
         });
       }));
-      var pathSpy = sinon.spy();
-      var pathSpy2 = sinon.spy();
+      var pathSpy = jest.fn();
+      var pathSpy2 = jest.fn();
       dataBinder.registerOnPath('child1.childArray[2]', ['insert', 'modify', 'remove'], pathSpy);
       dataBinder.registerOnPath('child1.childArray[1].nestedArray[2]', ['insert', 'modify', 'remove'], pathSpy2);
       // insert notifications since the path already exists
-      pathSpy.callCount.should.equal(1);
-      pathSpy.resetHistory();
-      pathSpy2.callCount.should.equal(1);
-      pathSpy2.resetHistory();
+      expect(pathSpy).toHaveBeenCalledTimes(1);
+      pathSpy.mockClear();
+      expect(pathSpy2).toHaveBeenCalledTimes(1);
+      pathSpy2.mockClear();
       // modify properties
       var stringProp = workspace.get(['child1', 'childArray', '2', 'text']);
       stringProp.setValue('forty two');
-      pathSpy.callCount.should.equal(1);
-      pathSpy.resetHistory();
+      expect(pathSpy).toHaveBeenCalledTimes(1);
+      pathSpy.mockClear();
       var stringProp2 = workspace.get(['child1', 'childArray', '1', 'nestedArray', '2', 'text']);
       stringProp2.setValue('forty two');
-      pathSpy2.callCount.should.equal(1);
-      pathSpy2.resetHistory();
+      expect(pathSpy2).toHaveBeenCalledTimes(1);
+      pathSpy2.mockClear();
       // remove the property corresponding to PathSpy
       workspace.get(['child1', 'childArray']).remove(2);
-      pathSpy.callCount.should.equal(1);
-      pathSpy.resetHistory();
+      expect(pathSpy).toHaveBeenCalledTimes(1);
+      pathSpy.mockClear();
       // insert above the highest reference
       nestedArray.insert(4, PropertyFactory.create(ParentTemplate.typeid, undefined, {
         text: String('four a')
@@ -1115,8 +1114,8 @@ describe('DataBinder.registerOnPath()', function () {
           text: String(i)
         });
       }));
-      var pathSpy = sinon.spy();
-      var pathSpy2 = sinon.spy();
+      var pathSpy = jest.fn();
+      var pathSpy2 = jest.fn();
       dataBinder.registerOnPath('child1.childArray[5]', ['insert', 'modify', 'remove'], pathSpy);
       dataBinder.registerOnPath('child1.childArray[1].nestedArray[2]', ['insert', 'modify', 'remove'], pathSpy2);
 
@@ -1126,21 +1125,21 @@ describe('DataBinder.registerOnPath()', function () {
       workspace.get(['child1', 'childArray']).push(PropertyFactory.create(ParentTemplate.typeid, 'single'));
 
       // insert notification for pathSpy
-      pathSpy.callCount.should.equal(1);
-      pathSpy.resetHistory();
+      expect(pathSpy).toHaveBeenCalledTimes(1);
+      pathSpy.mockClear();
       // insert for pathSpy2
-      pathSpy2.callCount.should.equal(1);
-      pathSpy2.resetHistory();
+      expect(pathSpy2).toHaveBeenCalledTimes(1);
+      pathSpy2.mockClear();
 
       // modify properties
       var stringProp = workspace.get(['child1', 'childArray', '5', 'text']);
       stringProp.setValue('forty two');
-      pathSpy.callCount.should.equal(1);
-      pathSpy.resetHistory();
+      expect(pathSpy).toHaveBeenCalledTimes(1);
+      pathSpy.mockClear();
       var stringProp2 = workspace.get(['child1', 'childArray', '1', 'nestedArray', '2', 'text']);
       stringProp2.setValue('forty two');
-      pathSpy2.callCount.should.equal(1);
-      pathSpy2.resetHistory();
+      expect(pathSpy2).toHaveBeenCalledTimes(1);
+      pathSpy2.mockClear();
       // remove an element below the property that corresponds to pathSpy -> should throw
       // TODO: temporaily disabled because HFDM (at least 3.0.0-alpha-36) catches all exceptions
       // TODO so we don't have a chance of testing that here... :(
@@ -1154,14 +1153,14 @@ describe('DataBinder.registerOnPath()', function () {
 
         workspace.insert('point2D', PropertyFactory.create(point2DExplicitTemplate.typeid, 'single'));
 
-        const pathSpy = sinon.spy();
+        const pathSpy = jest.fn();
         dataBinder.registerOnPath('/point2D.position', ['modify'], pathSpy);
 
         workspace.get('point2D').get('position').get('x').value = 42;
         workspace.get('point2D').get('position').get('y').value = 42;
 
         // We do the modifications outside of a modifiedEventScope, so we expect to hear about it twice
-        pathSpy.callCount.should.equal(2);
+        expect(pathSpy).toHaveBeenCalledTimes(2);
       });
 
     it('register on a structure and react to changes in the subtree LYNXDEV-5365',
@@ -1170,7 +1169,7 @@ describe('DataBinder.registerOnPath()', function () {
 
         workspace.insert('point2D', PropertyFactory.create(point2DExplicitTemplate.typeid, 'single'));
 
-        const pathSpy = sinon.spy();
+        const pathSpy = jest.fn();
         dataBinder.registerOnPath('/point2D.position', ['modify'], pathSpy);
 
         workspace.pushModifiedEventScope();
@@ -1179,7 +1178,7 @@ describe('DataBinder.registerOnPath()', function () {
         workspace.popModifiedEventScope();
 
         // We do the modifications inside a modifiedEventScope, so we expect to only hear about it once
-        pathSpy.callCount.should.equal(1);
+        expect(pathSpy).toHaveBeenCalledTimes(1);
       });
 
     it('should be able to register on some path from an implicitly nested schema ' +
@@ -1188,28 +1187,28 @@ describe('DataBinder.registerOnPath()', function () {
 
         workspace.insert('point2D', PropertyFactory.create(point2DImplicitTemplate.typeid, 'single'));
 
-        const pathSpy = sinon.spy();
+        const pathSpy = jest.fn();
         dataBinder.registerOnPath('point2D.position', ['modify'], pathSpy);
 
         workspace.get('point2D').get('position').get('x').value = 42;
         workspace.get('point2D').get('position').get('y').value = 42;
-        pathSpy.callCount.should.equal(2);
+        expect(pathSpy).toHaveBeenCalledTimes(2);
       });
 
     it.skip('never existing path with remove callback (LYNXDEV-3563)', function () {
-      var pathSpy = sinon.spy();
+      var pathSpy = jest.fn();
       dataBinder.registerOnPath('a.b.c.d', ['insert', 'modify', 'remove'], pathSpy);
       workspace.insert('a', PropertyFactory.create('NodeProperty'));
       workspace.get('a').insert('b', PropertyFactory.create('NodeProperty'));
       workspace.get(['a', 'b']).insert('c', PropertyFactory.create('NodeProperty'));
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
 
       // When we remove 'c', the databinder gets a changeset saying 'c' has been removed.
       // The DataBinder isn't tracking anything internally that says whether 'd' was ever
       // instantiated, and the changeset doesn't include that information either. So the
       // Databinder naively assumes that 'd' was there, and fires an event for it.
       workspace.get(['a', 'b']).remove('c');
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
 
     });
 
@@ -1217,125 +1216,125 @@ describe('DataBinder.registerOnPath()', function () {
       var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single');
       workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
       var pathSpy = sinon.spy(function (in_modificationContext) {
-        in_modificationContext.getAbsolutePath().should.equal(primitiveChildPset.get('aString').getAbsolutePath());
+        expect(in_modificationContext.getAbsolutePath()).toEqual(primitiveChildPset.get('aString').getAbsolutePath());
       });
       dataBinder.registerOnPath('myPrimitiveChildTemplate.aString', ['modify'], pathSpy);
 
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
       var stringProperty = workspace.get(['myPrimitiveChildTemplate', 'aString']);
       stringProperty.setValue('hello');
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
     it('also works after unregister()', function () {
       const primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single');
       workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
       const pathSpy = sinon.spy(function (in_modificationContext) {
-        in_modificationContext.getAbsolutePath().should.equal(primitiveChildPset.get('aString').getAbsolutePath());
+        expect(in_modificationContext.getAbsolutePath()).toEqual(primitiveChildPset.get('aString').getAbsolutePath());
       });
       dataBinder.registerOnPath('myPrimitiveChildTemplate.aString', ['modify'], pathSpy);
-      pathSpy.callCount.should.equal(0);
+      expect(pathSpy).toHaveBeenCalledTimes(0);
       const stringProperty = workspace.get(['myPrimitiveChildTemplate', 'aString']);
       stringProperty.setValue('hello');
-      pathSpy.callCount.should.equal(1);
-      pathSpy.resetHistory();
+      expect(pathSpy).toHaveBeenCalledTimes(1);
+      pathSpy.mockClear();
       // define/activate bindings
       dataBinder.register('BINDING', PrimitiveChildrenTemplate.typeid, ParentDataBinding);
-      dataBinder._dataBindingCreatedCounter.should.equal(1);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
 
       // unregister bindings -> shouldn't unregister the internal binding
       dataBinder.unregisterDataBindings();
 
       // absolute path callback should still work
       stringProperty.setValue('hello again');
-      pathSpy.callCount.should.equal(1);
-      pathSpy.resetHistory();
+      expect(pathSpy).toHaveBeenCalledTimes(1);
+      pathSpy.mockClear();
     });
 
     it('also works after detach() / attachTo()', function () {
       const primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single');
       workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
       const pathModifySpy = sinon.spy(function (in_modificationContext) {
-        in_modificationContext.getAbsolutePath().should.equal(primitiveChildPset.get('aString').getAbsolutePath());
+        expect(in_modificationContext.getAbsolutePath()).toEqual(primitiveChildPset.get('aString').getAbsolutePath());
       });
       // we don't insert/remove the property ourselves after registering so all insert/remove events are simulated
       const pathRemoveSpy = sinon.spy(function (in_context) {
-        in_context.isSimulated().should.equal(true);
+        expect(in_context.isSimulated()).toEqual(true);
       });
       const pathInsertSpy = sinon.spy(function (in_context) {
-        in_context.isSimulated().should.equal(true);
+        expect(in_context.isSimulated()).toEqual(true);
       });
       dataBinder.registerOnPath('/myPrimitiveChildTemplate.aString', ['modify'], pathModifySpy);
       dataBinder.registerOnPath('/myPrimitiveChildTemplate.aString', ['remove'], pathRemoveSpy);
       dataBinder.registerOnPath('/myPrimitiveChildTemplate.aString', ['insert'], pathInsertSpy);
-      pathModifySpy.callCount.should.equal(0);
-      pathInsertSpy.callCount.should.equal(1); // DataBinder calls insert immediately when registering
-      pathRemoveSpy.callCount.should.equal(0);
-      pathInsertSpy.resetHistory();
+      expect(pathModifySpy).toHaveBeenCalledTimes(0);
+      expect(pathInsertSpy).toHaveBeenCalledTimes(1); // DataBinder calls insert immediately when registering
+      expect(pathRemoveSpy).toHaveBeenCalledTimes(0);
+      pathInsertSpy.mockClear();
       const stringProperty = workspace.get(['myPrimitiveChildTemplate', 'aString']);
       stringProperty.setValue('hello');
-      pathModifySpy.callCount.should.equal(1);
-      pathModifySpy.resetHistory();
+      expect(pathModifySpy).toHaveBeenCalledTimes(1);
+      pathModifySpy.mockClear();
       // detach workspace
       dataBinder.detach();
-      pathModifySpy.callCount.should.equal(0);
-      pathInsertSpy.callCount.should.equal(0);
-      pathRemoveSpy.callCount.should.equal(1);
-      pathRemoveSpy.resetHistory();
+      expect(pathModifySpy).toHaveBeenCalledTimes(0);
+      expect(pathInsertSpy).toHaveBeenCalledTimes(0);
+      expect(pathRemoveSpy).toHaveBeenCalledTimes(1);
+      pathRemoveSpy.mockClear();
 
       // absolute path callback should not fire now
       stringProperty.setValue('hello again');
-      pathModifySpy.callCount.should.equal(0);
+      expect(pathModifySpy).toHaveBeenCalledTimes(0);
       // reattach workspace
       dataBinder.attachTo(workspace);
-      pathModifySpy.callCount.should.equal(0);
-      pathInsertSpy.callCount.should.equal(1);
-      pathRemoveSpy.callCount.should.equal(0);
-      pathInsertSpy.resetHistory();
+      expect(pathModifySpy).toHaveBeenCalledTimes(0);
+      expect(pathInsertSpy).toHaveBeenCalledTimes(1);
+      expect(pathRemoveSpy).toHaveBeenCalledTimes(0);
+      pathInsertSpy.mockClear();
 
       // absolute path callback should fire again after reattaching
       stringProperty.setValue('hello yet again');
-      pathModifySpy.callCount.should.equal(1);
-      pathInsertSpy.callCount.should.equal(0);
-      pathRemoveSpy.callCount.should.equal(0);
-      pathModifySpy.resetHistory();
+      expect(pathModifySpy).toHaveBeenCalledTimes(1);
+      expect(pathInsertSpy).toHaveBeenCalledTimes(0);
+      expect(pathRemoveSpy).toHaveBeenCalledTimes(0);
+      pathModifySpy.mockClear();
     });
 
   });
 
   describe('should work for special cases with entities and absolute path registered', function () {
-    const callbackSpy = sinon.spy();
-    const absoluteCallbackSpy = sinon.spy();
+    const callbackSpy = jest.fn();
+    const absoluteCallbackSpy = jest.fn();
     let nodePset;
     beforeEach(function () {
       nodePset = PropertyFactory.create(NodeContainerTemplate.typeid, 'single');
-      callbackSpy.resetHistory();
-      absoluteCallbackSpy.resetHistory();
+      callbackSpy.mockClear();
+      absoluteCallbackSpy.mockClear();
     });
 
     it('for insertion', function () {
       ParentDataBinding.registerOnPath('child', ['insert'], callbackSpy);
       dataBinder.register('BINDING', 'NodeProperty', ParentDataBinding);
-      callbackSpy.callCount.should.equal(0);
+      expect(callbackSpy).toHaveBeenCalledTimes(0);
 
       dataBinder.registerOnPath('nodeProperty.child', ['insert'], absoluteCallbackSpy);
       workspace.insert('nodeProperty', nodePset);
-      callbackSpy.callCount.should.equal(0);
+      expect(callbackSpy).toHaveBeenCalledTimes(0);
       nodePset.insert('child', PropertyFactory.create(ParentTemplate.typeid));
 
-      callbackSpy.callCount.should.equal(1);
-      absoluteCallbackSpy.callCount.should.equal(1);
+      expect(callbackSpy).toHaveBeenCalledTimes(1);
+      expect(absoluteCallbackSpy).toHaveBeenCalledTimes(1);
     });
     it('for modifications', function () {
       workspace.insert('nodeProperty', nodePset);
       ParentDataBinding.registerOnPath('text', ['modify'], callbackSpy);
       dataBinder.register('BINDING', 'NodeProperty', ParentDataBinding);
-      dataBinder._dataBindingCreatedCounter.should.equal(3);
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(3);
 
       dataBinder.registerOnPath('nodeProperty.text', ['modify'], absoluteCallbackSpy);
       nodePset.get('text').value = 'newText';
-      callbackSpy.callCount.should.equal(1);
-      absoluteCallbackSpy.callCount.should.equal(1);
+      expect(callbackSpy).toHaveBeenCalledTimes(1);
+      expect(absoluteCallbackSpy).toHaveBeenCalledTimes(1);
     });
     it('for removals', function () {
       workspace.insert('nodeProperty', nodePset);
@@ -1345,8 +1344,8 @@ describe('DataBinder.registerOnPath()', function () {
 
       dataBinder.registerOnPath('nodeProperty.child', ['remove'], absoluteCallbackSpy);
       nodePset.remove('child');
-      callbackSpy.callCount.should.equal(1);
-      absoluteCallbackSpy.callCount.should.equal(1);
+      expect(callbackSpy).toHaveBeenCalledTimes(1);
+      expect(absoluteCallbackSpy).toHaveBeenCalledTimes(1);
     });
 
   });
@@ -1358,16 +1357,16 @@ describe('DataBinder.registerOnPath()', function () {
     });
 
     it('insertions', function () {
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
       dataBinder.registerOnPath('child1.childArray', ['insert'], pathSpy);
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
     it('removals', function () {
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
       dataBinder.registerOnPath('child1.childArray', ['remove'], pathSpy);
       workspace.get('child1').remove('childArray');
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -1378,26 +1377,26 @@ describe('DataBinder.registerOnPath()', function () {
     });
 
     it('insertions', function () {
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
       dataBinder.registerOnPath('child1.childArray', ['collectionInsert'], pathSpy);
       workspace.get(['child1', 'childArray']).push(PropertyFactory.create(ParentTemplate.typeid, 'single'));
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
     it('modifications', function () {
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
       dataBinder.registerOnPath('child1.childArray', ['collectionModify'], pathSpy);
       workspace.get(['child1', 'childArray']).push(PropertyFactory.create(ParentTemplate.typeid, 'single'));
       workspace.get(['child1', 'childArray', 0]).get('text').value = 'new value';
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
     it('removals', function () {
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
       dataBinder.registerOnPath('child1.childArray', ['collectionRemove'], pathSpy);
       workspace.get(['child1', 'childArray']).push(PropertyFactory.create(ParentTemplate.typeid, 'single'));
       workspace.get(['child1', 'childArray']).remove(0);
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -1408,26 +1407,26 @@ describe('DataBinder.registerOnPath()', function () {
     });
 
     it('insertions', function () {
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
       dataBinder.registerOnPath('child1.childArray', ['collectionInsert'], pathSpy);
       workspace.get(['child1', 'childArray']).set('test', PropertyFactory.create(ParentTemplate.typeid));
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
     it('modifications', function () {
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
       dataBinder.registerOnPath('child1.childArray', ['collectionModify'], pathSpy);
       workspace.get(['child1', 'childArray']).set('test', PropertyFactory.create(ParentTemplate.typeid));
       workspace.get(['child1', 'childArray', 'test']).get('text').value = 'new value';
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
     it('removals', function () {
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
       dataBinder.registerOnPath('child1.childArray', ['collectionRemove'], pathSpy);
       workspace.get(['child1', 'childArray']).set('test', PropertyFactory.create(ParentTemplate.typeid));
       workspace.get(['child1', 'childArray']).remove('test');
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -1438,28 +1437,28 @@ describe('DataBinder.registerOnPath()', function () {
     });
 
     it('insertions', function () {
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
       dataBinder.registerOnPath('child1.childArray', ['collectionInsert'], pathSpy);
       workspace.get(['child1', 'childArray']).insert(PropertyFactory.create(ParentTemplate.typeid));
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
     it('modifications', function () {
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
       dataBinder.registerOnPath('child1.childArray', ['collectionModify'], pathSpy);
       const namedProp = PropertyFactory.create(ParentTemplate.typeid);
       workspace.get(['child1', 'childArray']).insert(namedProp);
       namedProp.get('text').value = 'new value';
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
     it('removals', function () {
-      const pathSpy = sinon.spy();
+      const pathSpy = jest.fn();
       dataBinder.registerOnPath('child1.childArray', ['collectionRemove'], pathSpy);
       const namedProp = PropertyFactory.create(ParentTemplate.typeid);
       workspace.get(['child1', 'childArray']).insert(namedProp);
       workspace.get(['child1', 'childArray']).remove(namedProp.getId());
-      pathSpy.callCount.should.equal(1);
+      expect(pathSpy).toHaveBeenCalledTimes(1);
     });
   });
 });

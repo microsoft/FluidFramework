@@ -172,7 +172,7 @@ describe('forEachProperty', () => {
       propertyCounter++;
       return true;
     });
-    propertyCounter.should.equal(10); // root + enums + 8 properties inside 'enums' (5 + 3 extra for the map entries)
+    expect(propertyCounter).toEqual(10); // root + enums + 8 properties inside 'enums' (5 + 3 extra for the map entries)
   });
 
   it('should always pass a Property, case 4 (ReferenceArray/Map)', function () {
@@ -208,15 +208,15 @@ describe('forEachProperty', () => {
 
 describe('visitTypeHierarchy', () => {
   let workspace;
-  const callbackSpy = sinon.spy();
-  before(async () => {
+  const callbackSpy = jest.fn();
+  beforeAll(async () => {
     const hfdm = new HFDM();
     workspace = hfdm.createWorkspace();
     await workspace.initialize({ local: true });
   });
 
   beforeEach(() => {
-    callbackSpy.resetHistory();
+    callbackSpy.mockClear();
   });
 
   it('should get schemas', () => {
@@ -234,7 +234,7 @@ describe('visitTypeHierarchy', () => {
     expect(callbackSpy.callCount).to.equal(3);
 
     // without workspace
-    callbackSpy.resetHistory();
+    callbackSpy.mockClear();
     visitTypeHierarchy(
       PrimitiveChildrenTemplate.typeid,
       typeid => { callbackSpy(typeid); return true; }

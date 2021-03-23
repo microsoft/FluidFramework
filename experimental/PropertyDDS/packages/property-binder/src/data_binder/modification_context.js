@@ -5,8 +5,6 @@
 /**
  * @fileoverview Provides the contextual information for the onModify callbacks.
  */
-/* eslint-disable-next-line spaced-comment */
-/// <reference types="@adsktypes/adsk__forge-hfdm" />
 
 import { DataBinding } from './data_binding'; /* eslint-disable-line no-unused-vars */
 import { BaseProperty } from '@fluid-experimental/property-properties'; /* eslint-disable-line no-unused-vars */
