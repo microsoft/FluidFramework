@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IAgentScheduler } from "@fluidframework/agent-scheduler";
 import { IContainer } from "@fluidframework/container-definitions";
-import { taskSchedulerId } from "@fluidframework/container-runtime";
+import { agentSchedulerId } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, timeoutPromise, defaultTimeoutDurationMs } from "@fluidframework/test-utils";
 import { describeFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";
@@ -26,7 +26,7 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
             const container = await provider.makeTestContainer();
             // Back-compat: querying for IAgentScheduler since this request would return an ITaskManager prior to 0.36.
             // Remove the query in 0.38 when back compat is no longer a concern.
-            scheduler = await requestFluidObject<IAgentScheduler>(container, taskSchedulerId)
+            scheduler = await requestFluidObject<IAgentScheduler>(container, agentSchedulerId)
                 .then((agentScheduler) => agentScheduler.IAgentScheduler);
 
             const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
@@ -108,7 +108,7 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
             container1 = await provider.makeTestContainer();
             // Back-compat: querying for IAgentScheduler since this request would return an ITaskManager prior to 0.36.
             // Remove the query in 0.38 when back compat is no longer a concern.
-            scheduler1 = await requestFluidObject<IAgentScheduler>(container1, taskSchedulerId)
+            scheduler1 = await requestFluidObject<IAgentScheduler>(container1, agentSchedulerId)
                 .then((agentScheduler) => agentScheduler.IAgentScheduler);
             const dataObject1 = await requestFluidObject<ITestDataObject>(container1, "default");
 
@@ -125,7 +125,7 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
             container2 = await provider.loadTestContainer();
             // Back-compat: querying for IAgentScheduler since this request would return an ITaskManager prior to 0.36.
             // Remove the query in 0.38 when back compat is no longer a concern.
-            scheduler2 = await requestFluidObject<IAgentScheduler>(container2, taskSchedulerId)
+            scheduler2 = await requestFluidObject<IAgentScheduler>(container2, agentSchedulerId)
                 .then((agentScheduler) => agentScheduler.IAgentScheduler);
             const dataObject2 = await requestFluidObject<ITestDataObject>(container2, "default");
 
