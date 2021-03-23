@@ -13,6 +13,7 @@ import {
 import { IFluidCodeDetails, IProvideFluidCodeDetailsComparer } from "@fluidframework/core-interfaces";
 import { IProvideFluidDataStoreFactory, IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 
 export type SupportedExportInterfaces = Partial<
     IProvideRuntimeFactory &
@@ -30,7 +31,10 @@ export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
 export class LocalCodeLoader implements ICodeLoader {
     private readonly fluidPackageCache = new Map<string, IFluidModule>();
 
-    constructor(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>) {
+    constructor(
+        packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
+        runtimeOptions?: IContainerRuntimeOptions,
+    ) {
         for (const entry of packageEntries) {
             // Store the entry point against a unique id in the fluidPackageCache.
             // For code details containing a package name, use the package name as the id.
@@ -58,7 +62,11 @@ export class LocalCodeLoader implements ICodeLoader {
                             IRuntimeFactory:
                                 new ContainerRuntimeFactoryWithDefaultDataStore(
                                     defaultFactory,
-                                    [[defaultFactory.type, Promise.resolve(defaultFactory)]]),
+                                    [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+                                    undefined,
+                                    undefined,
+                                    runtimeOptions,
+                                ),
                         },
                     };
                 }
