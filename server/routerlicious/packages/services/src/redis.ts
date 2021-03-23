@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as util from "util";
 import { ICache } from "@fluidframework/server-services-core";
-import { RedisClient } from "redis";
-
+import { Redis } from "ioredis";
 /**
  * Redis based cache client
  */
@@ -14,9 +12,9 @@ export class RedisCache implements ICache {
     private readonly getAsync: any;
     private readonly setAsync: any;
 
-    constructor(client: RedisClient, private readonly prefix = "page") {
-        this.getAsync = util.promisify(client.get.bind(client));
-        this.setAsync = util.promisify(client.set.bind(client));
+    constructor(client: Redis, private readonly prefix = "page") {
+        this.getAsync = client.get.bind(client);
+        this.setAsync = client.set.bind(client);
     }
 
     public async get(key: string): Promise<string> {
