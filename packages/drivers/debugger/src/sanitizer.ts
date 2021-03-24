@@ -30,10 +30,12 @@ import {
     joinDataSchema,
     opContentsMapSchema,
     opContentsSchema,
+    opContentsMatrixOpSchema,
     opContentsMergeTreeDeltaOpSchema,
     opContentsMergeTreeGroupOpSchema,
     opContentsRegisterCollectionSchema,
-    proposeContentsSchema,
+    opContentsSignalOpSchema,
+    proposeCodeSchema,
 } from "./messageSchema";
 
 enum TextType {
@@ -91,20 +93,28 @@ class ChunkedOpProcessor {
     addMessage(message: any): void {
         this.messages.push(message);
 
-        let parsed;
-        try {
-            parsed = JSON.parse(message.contents);
-            if (message.type === "op") {
-                // nested within a regular op
-                // need to go deeper to get the desired contents
-                parsed = parsed.contents;
+        // Handle case where contents is stringified json
+        let contents;
+        if (typeof message.contents === "string") {
+            try {
+                contents = JSON.parse(message.contents);
             }
-        } catch (e) {
-            this.debugMsg(e);
-            this.debugMsg(message.contents);
+            catch (e) {
+                this.debugMsg(e);
+                this.debugMsg(message.contents);
+            }
+        } else {
+            contents = message.contents;
         }
-        this.validateSchemaFn(parsed, chunkedOpContentsSchema);
-        this.parsedMessageContents.push(parsed);
+
+        if (message.type === "op") {
+            // nested within a regular op
+            // need to go deeper to get the desired contents
+            contents = contents.contents;
+        }
+
+        this.validateSchemaFn(contents, chunkedOpContentsSchema);
+        this.parsedMessageContents.push(contents);
     }
 
     hasAllMessages(): boolean {
@@ -212,6 +222,11 @@ export class Sanitizer {
      * For a full scrub, warn and continue (scrubber should fully sanitize unexpected
      * fields for ops), otherwise throw an error because we cannot be sure user
      * information is being sufficiently sanitized.
+     *
+     * If you're hitting this with an "Unmatched format" error, there's likely a message
+     * format missing from messageSchema.ts that should be added and explicitly handled
+     * in this class' logic.  Ideally this class is explicitly aware of all expected
+     * message schema to ensure user content does not accidentally slip through.
      */
     objectMatchesSchema = (object: any, schema: any): boolean => {
         const result =  schema === false ? falseResult : this.validator.validate(object, schema);
@@ -396,30 +411,37 @@ export class Sanitizer {
         }
     }
 
-    fixPropose(message: any) {
-        if (!this.objectMatchesSchema(message.contents, proposeContentsSchema)) {
-            message.contents = this.replaceAny(message.contents);
+    /**
+     * Fix the content of a propose in place
+     * @param contents - contents object to fix
+     */
+    fixProposeContents(contents: any) {
+        if (!this.objectMatchesSchema(contents, proposeCodeSchema)) {
+            this.replaceAny(contents);
         } else {
-            if (typeof message.contents === "string") {
-                try {
-                    const data = JSON.parse(message.contents);
-                    if (this.fullScrub) {
-                        const pkg = data.value?.package;
-                        if (pkg?.name) {
-                            pkg.name = this.replaceText(pkg.name, TextType.FluidObject);
-                        }
-                        if (Array.isArray(pkg?.fluid?.browser?.umd?.files)) {
-                            pkg.fluid.browser.umd.files = this.replaceArray(pkg.fluid.browser.umd.files);
-                        }
-                    }
-                } catch (e) {
-                    this.debugMsg(e);
-                }
-            } else {
-                if (this.fullScrub) {
-                    message.contents.value = this.replaceText(message.contents.value, TextType.FluidObject);
+            if (this.fullScrub) {
+                const pkg = contents.value.package;
+                pkg.name = this.replaceText(pkg.name, TextType.FluidObject);
+                if (Array.isArray(pkg.fluid?.browser?.umd?.files)) {
+                    pkg.fluid.browser.umd.files = this.replaceArray(pkg.fluid.browser.umd.files);
                 }
             }
+        }
+    }
+
+    fixPropose(message: any) {
+        // Handle case where contents is stringified json
+        if (typeof message.contents === "string") {
+            try {
+                const data = JSON.parse(message.contents);
+                this.fixProposeContents(data);
+                message.contents = JSON.stringify(data);
+            } catch (e) {
+                this.debugMsg(e);
+                return;
+            }
+        } else {
+            this.fixProposeContents(message.contents);
         }
     }
 
@@ -559,8 +581,18 @@ export class Sanitizer {
                 if (innerContent.contents.value !== undefined) {
                     innerContent.contents.value.value = this.replaceAny(innerContent.contents.value.value);
                 }
+            } else if (this.validator.validate(innerContent, opContentsMatrixOpSchema).valid) {
+                // matrix op
+                if (this.fullScrub) {
+                    innerContent.contents.value = this.replaceAny(innerContent.contents.value);
+                }
+            } else if (this.validator.validate(innerContent, opContentsSignalOpSchema).valid) {
+                // signal op
             } else {
                 // message contents don't match any known op format
+                if (this.fullScrub) {
+                    innerContent.contents.value = this.replaceAny(innerContent.contents.value);
+                }
                 this.objectMatchesSchema(contents, false);
             }
         }
