@@ -80,10 +80,9 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
 
     // This is true when this client submitted any ops.
     public clientSentOps(connectionMode: ConnectionMode) {
-        if (this._connectionState === ConnectionState.Connected) {
-            this._clientSentOps = true;
-            this.clientConnectionMode = connectionMode;
-        }
+        assert(this._connectionState === ConnectionState.Connected, "Ops could only be sent when connected");
+        this._clientSentOps = true;
+        this.clientConnectionMode = connectionMode;
     }
 
     public receivedAddMemberEvent(clientId: string) {
