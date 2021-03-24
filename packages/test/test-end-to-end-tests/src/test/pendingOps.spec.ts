@@ -108,7 +108,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         assert.strictEqual(await map2.wait(testKey), testValue);
     });
 
-    it.skip("doesn't resend successful op", async function() {
     it("doesn't resend successful op", async function() {
         const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
             map.set(testKey, "something unimportant");
