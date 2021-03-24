@@ -213,7 +213,7 @@ export class EpochTracker {
                 // This will only throw if it is an epoch error.
                 this.checkForEpochErrorCore(epochFromResponse, error.errorMessage);
             } catch (epochError) {
-                assert(epochError instanceof LoggingError);
+                assert(epochError instanceof LoggingError, "type guard");
                 epochError.addTelemetryProperties({
                     fromCache,
                     clientEpoch: this.fluidEpoch,
