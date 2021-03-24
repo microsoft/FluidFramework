@@ -14,7 +14,7 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     HostStoragePolicyInternal,
     IBlob,
-    ISnapshotRequest,
+    IOdspSummaryPayload,
     ISnapshotResponse,
     ISnapshotTree,
     ISnapshotTreeBaseEntry,
@@ -31,15 +31,17 @@ import { TokenFetchOptions } from "./tokenFetch";
 
 // Gate that when flipped, instructs to mark unreferenced nodes as such in the summary sent to SPO.
 function gatesMarkUnreferencedNodes() {
-    // Leave override for testing purposes
-    if (typeof localStorage === "object" && localStorage !== null) {
-        if  (localStorage.FluidMarkUnreferencedNodes === "1") {
-            return true;
+    try {
+        // Leave override for testing purposes
+        if (typeof localStorage === "object" && localStorage !== null) {
+            if  (localStorage.FluidMarkUnreferencedNodes === "1") {
+                return true;
+            }
+            if  (localStorage.FluidMarkUnreferencedNodes === "0") {
+                return false;
+            }
         }
-        if  (localStorage.FluidMarkUnreferencedNodes === "0") {
-            return false;
-        }
-    }
+    } catch (e) {}
 
     // We are starting disabled. This will be enabled once Apps (Bohemia) have finished GC work.
     // See - https://github.com/microsoft/FluidFramework/issues/5127
@@ -129,7 +131,7 @@ export class OdspSummaryUploadManager {
                 hash = await hashFile(
                     blobValue instanceof ArrayBuffer ?
                         IsoBuffer.from(blobValue) :
-                            IsoBuffer.from(blobValue.content, blobValue.encoding ?? "utf-8"),
+                        IsoBuffer.from(blobValue.content, blobValue.encoding ?? "utf-8"),
                 );
                 this.blobTreeDedupCaches.blobShaToPath.set(hash, fullBlobPath);
             }
@@ -229,7 +231,7 @@ export class OdspSummaryUploadManager {
         if (!this.hostPolicy.blobDeduping) {
             assert(reusedBlobs === 0, "No blobs should be deduped");
         }
-        const snapshot: ISnapshotRequest = {
+        const snapshot: IOdspSummaryPayload = {
             entries: snapshotTree.entries!,
             message: "app",
             sequenceNumber: referenceSequenceNumber,

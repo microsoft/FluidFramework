@@ -89,6 +89,7 @@ export class MockDeltaManager extends EventEmitter
     public minimumSequenceNumber = 0;
 
     public lastSequenceNumber = 0;
+    public lastMessage: ISequencedDocumentMessage | undefined;
 
     readonly lastKnownSeqNumber = 0;
 

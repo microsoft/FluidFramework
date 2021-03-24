@@ -41,7 +41,6 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
         return this.cachedRead(blobId);
     }
-
     public stopPrefetch() {
         this.prefetchEnabled = false;
         this.prefetchCache.clear();
@@ -50,7 +49,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     private cachedRead(blobId: string): Promise<ArrayBufferLike> {
         if (this.prefetchEnabled) {
-            const prefetchedBlobP: Promise<ArrayBufferLike> | undefined = this.prefetchCache.get(blobId);
+            const prefetchedBlobP = this.prefetchCache.get(blobId);
             if (prefetchedBlobP !== undefined) {
                 return prefetchedBlobP;
             }

@@ -19,6 +19,7 @@ import {
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 } from '@fluidframework/test-utils';
+import { createFluidTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
 import { Loader } from '@fluidframework/container-loader';
@@ -153,7 +154,7 @@ export interface ITestContainerConfig {
 /** Objects returned by setUpLocalServerTestSharedTree */
 export interface LocalServerSharedTreeTestingComponents {
 	/** The LocalTestObjectProvider created if one was not set in the options. */
-	localTestObjectProvider: TestObjectProvider<ITestContainerConfig>;
+	localTestObjectProvider: TestObjectProvider;
 	/** The SharedTree created and set up. */
 	tree: SharedTree;
 }
@@ -169,7 +170,7 @@ export interface LocalServerSharedTreeTestingOptions {
 	/** Node to initialize the SharedTree with. */
 	initialTree?: ChangeNode;
 	/** If set, uses the provider to create the container and create the SharedTree. */
-	localTestObjectProvider?: TestObjectProvider<ITestContainerConfig>;
+	localTestObjectProvider?: TestObjectProvider;
 	/**
 	 * If not set, full history will be preserved.
 	 */
@@ -196,14 +197,14 @@ export async function setUpLocalServerTestSharedTree(
 			initialSummarizerDelayMs: 0,
 		});
 
-	let provider: TestObjectProvider<ITestContainerConfig>;
+	let provider: TestObjectProvider;
 	let container: IContainer;
 
 	if (localTestObjectProvider !== undefined) {
 		provider = localTestObjectProvider;
 		container = await provider.loadTestContainer();
 	} else {
-		provider = new TestObjectProvider(Loader, getFluidTestDriver(), runtimeFactory);
+		provider = new TestObjectProvider(Loader, await createFluidTestDriver(), runtimeFactory);
 		container = await provider.makeTestContainer();
 	}
 

@@ -26,14 +26,13 @@ import {
     LoaderCachingPolicy,
     IDocumentDeltaConnectionEvents,
 } from "@fluidframework/driver-definitions";
-import { isSystemType, isSystemMessage } from "@fluidframework/protocol-base";
+import { isSystemMessage } from "@fluidframework/protocol-base";
 import {
     ConnectionMode,
     IClient,
     IClientConfiguration,
     IClientDetails,
     IDocumentMessage,
-    IDocumentSystemMessage,
     INack,
     INackContent,
     ISequencedDocumentMessage,
@@ -187,6 +186,7 @@ export class DeltaManager
     private lastQueuedSequenceNumber: number = 0;
     private lastObservedSeqNumber: number = 0;
     private lastProcessedSequenceNumber: number = 0;
+    private lastProcessedMessage: ISequencedDocumentMessage | undefined;
     private baseTerm: number = 0;
 
     private previouslyProcessedMessage: ISequencedDocumentMessage | undefined;
@@ -253,6 +253,10 @@ export class DeltaManager
 
     public get lastSequenceNumber(): number {
         return this.lastProcessedSequenceNumber;
+    }
+
+    public get lastMessage() {
+        return this.lastProcessedMessage;
     }
 
     public get lastKnownSeqNumber() {
@@ -449,7 +453,7 @@ export class DeltaManager
             });
 
         this._inbound.on("error", (error) => {
-            this.close(CreateProcessingError(error, {}));
+            this.close(CreateProcessingError(error, this.lastMessage));
         });
 
         // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
@@ -763,18 +767,17 @@ export class DeltaManager
             type,
         };
 
-        const outbound = this.createOutboundMessage(type, message);
         this.emit("submitOp", message);
 
         if (!batch) {
             this.flush();
-            this.messageBuffer.push(outbound);
+            this.messageBuffer.push(message);
             this.flush();
         } else {
-            this.messageBuffer.push(outbound);
+            this.messageBuffer.push(message);
         }
 
-        return outbound.clientSequenceNumber;
+        return message.clientSequenceNumber;
     }
 
     public submitSignal(content: any) {
@@ -808,7 +811,7 @@ export class DeltaManager
             from + 1, // from is exclusive, but ParallelRequests uses inclusive left
             to, // exclusive right
             MaxBatchDeltas,
-            ChildLogger.create(this.logger, undefined, { reason: telemetryEventSuffix }),
+            ChildLogger.create(this.logger, undefined, { all: {reason: telemetryEventSuffix } }),
             this.closeAbortController.signal,
         );
 
@@ -864,24 +867,6 @@ export class DeltaManager
         this.emit("closed", error);
 
         this.removeAllListeners();
-    }
-
-    // Specific system level message attributes are need to be looked at by the server.
-    // Hence they are separated and promoted as top level attributes.
-    private createOutboundMessage(
-        type: MessageType,
-        coreMessage: IDocumentMessage): IDocumentMessage {
-        if (isSystemType(type)) {
-            const data = coreMessage.contents as string;
-            coreMessage.contents = null;
-            const outboundMessage: IDocumentSystemMessage = {
-                ...coreMessage,
-                data,
-            };
-            return outboundMessage;
-        } else {
-            return coreMessage;
-        }
     }
 
     public refreshDelayInfo(id: string) {
@@ -1259,6 +1244,7 @@ export class DeltaManager
 
     private processInboundMessage(message: ISequencedDocumentMessage): void {
         const startTime = Date.now();
+        this.lastProcessedMessage = message;
 
         // All non-system messages are coming from some client, and should have clientId
         // System messages may have no clientId (but some do, like propose, noop, summarize)

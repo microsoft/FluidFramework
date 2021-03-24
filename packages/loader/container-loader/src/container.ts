@@ -32,7 +32,11 @@ import {
     ReadOnlyInfo,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
+import {
+    CreateContainerError,
+    DataCorruptionError,
+    extractSafePropertiesFromMessage,
+ } from "@fluidframework/container-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -96,16 +100,13 @@ import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
 import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
+import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 
 const detachedContainerRefSeqNumber = 0;
 
-const connectEventName = "connect";
+export const connectEventName = "connect";
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
-
-interface ILocalSequencedClient extends ISequencedClient {
-    shouldHaveLeft?: boolean;
-}
 
 export interface IContainerLoadOptions {
     /**
@@ -217,13 +218,14 @@ export async function waitContainerToCatchUp(container: Container) {
 }
 
 export class CollabWindowTracker {
-    private updateSequenceNumberTimer: ReturnType<typeof setTimeout> | undefined;
-
-    private static readonly NoopFrequency = 2000;
+    private opsCountSinceNoop = 0;
+    private lastNoopTime: number  | undefined;
 
     constructor(
         private readonly submit: (type: MessageType, contents: any) => void,
         private readonly activeConnection: () => boolean,
+        private readonly NoopTimeFrequency: number = 2000,
+        private readonly NoopCountFrequency: number = 300,
     ) {}
     /**
      * Schedules as ack to the server to update the reference sequence number
@@ -244,31 +246,38 @@ export class CollabWindowTracker {
             return;
         }
 
-        // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
-        // update, which updates the MSN, then ack the update, etc...).
-        if (message.type === MessageType.NoOp) {
+        // Filter out system messages.
+        if (isSystemMessage(message)) {
             return;
         }
 
-        // We will queue a message to update our reference sequence number upon receiving a server
+        // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
+        // update, which updates the MSN, then ack the update, etc...). Also, don't
+        // count system messages in ops count.
+        assert(message.type !== MessageType.NoOp, "Don't acknowledge no-ops");
+
+        if (this.lastNoopTime === undefined) {
+            this.lastNoopTime = Date.now();
+        }
+
+        this.opsCountSinceNoop++;
+
+        // If the ops count since last op is greater than NoopCountFrequency and time since last noop is
+        // greater than NoopTimeFrequency, then send a Noop.
+        // We will send a message(Noop) to update our reference sequence number upon receiving a server
         // operation. This allows the server to know our true reference sequence number and be able to
         // correctly update the minimum sequence number (MSN).
-        if (this.updateSequenceNumberTimer === undefined) {
-            // Clear an update in 2 s
-            this.updateSequenceNumberTimer = setTimeout(() => {
-                this.updateSequenceNumberTimer = undefined;
-                if (this.activeConnection()) {
-                    this.submit(MessageType.NoOp, null);
-                }
-            }, CollabWindowTracker.NoopFrequency);
+        if (this.opsCountSinceNoop >= this.NoopCountFrequency
+            && Date.now() - this.lastNoopTime >= this.NoopTimeFrequency
+        ) {
+            this.stopSequenceNumberUpdate();
+            this.submit(MessageType.NoOp, null);
         }
     }
 
     public stopSequenceNumberUpdate(): void {
-        if (this.updateSequenceNumberTimer !== undefined) {
-            clearTimeout(this.updateSequenceNumberTimer);
-        }
-        this.updateSequenceNumberTimer = undefined;
+        this.opsCountSinceNoop = 0;
+        this.lastNoopTime = undefined;
     }
 }
 
@@ -362,7 +371,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private readonly logger: ITelemetryLogger;
 
-    private pendingClientId: string | undefined;
     private loaded = false;
     private _attachState = AttachState.Detached;
 
@@ -375,14 +383,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._storageService;
     }
 
-    private _clientId: string | undefined;
     private _id: string | undefined;
     private containerUrl: string | undefined;
     private readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager;
     private _existing: boolean | undefined;
     private service: IDocumentService | undefined;
-    private _connectionState = ConnectionState.Disconnected;
     private readonly _audience: Audience;
 
     private _context: ContainerContext | undefined;
@@ -412,12 +418,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _dirtyContainer = false;
 
     private lastVisible: number | undefined;
+    private readonly connectionStateHandler: ConnectionStateHandler;
 
     private _closed = false;
 
     private readonly collabWindowTracker = new CollabWindowTracker(
         (type, contents) => this._deltaManager.submit(type, contents),
         () => this.activeConnection(),
+        this.loader.services.options?.noopTimeFrequency,
+        this.loader.services.options?.noopCountFrequency,
     );
 
     public get IFluidRouter(): IFluidRouter { return this; }
@@ -473,11 +482,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public get connectionState(): ConnectionState {
-        return this._connectionState;
+        return this.connectionStateHandler.connectionState;
     }
 
     public get connected(): boolean {
-        return this.connectionState === ConnectionState.Connected;
+        return this.connectionStateHandler.connected;
     }
 
     /**
@@ -493,7 +502,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Set once this.connected is true, otherwise undefined
      */
     public get clientId(): string | undefined {
-        return this._clientId;
+        return this.connectionStateHandler.clientId;
     }
 
     /**
@@ -574,18 +583,47 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             loader.services.subLogger,
             undefined,
             {
-                clientType, // Differentiating summarizer container from main container
-                loaderVersion: pkgVersion,
-                containerId: uuid(),
-            },
-            {
-                docId: () => this.id,
-                containerAttachState: () => this._attachState,
-                containerLoaded: () => this.loaded,
+                all: {
+                    clientType, // Differentiating summarizer container from main container
+                    loaderVersion: pkgVersion,
+                    containerId: uuid(),
+                    docId: () => this.id,
+                    containerAttachState: () => this._attachState,
+                    containerLoaded: () => this.loaded,
+                },
+                // we need to be judicious with our logging here to avoid generting too much data
+                // all data logged here should be broadly applicable, and not specific to a
+                // specific error or class of errors
+                error: {
+                    // load information to associate errors with the specific load point
+                    dmInitialSeqNumber: () => this._deltaManager?.initialSequenceNumber,
+                    dmLastKnownSeqNumber: () => this._deltaManager?.lastKnownSeqNumber,
+                    containerLoadedFromVersionId: () => this.loadedFromVersion?.id,
+                    containerLoadedFromVersionDate: () => this.loadedFromVersion?.date,
+                    // message information to associate errors with the specific execution state
+                    dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
+                    dmLastMsqSeqTimestamp: () => this.deltaManager?.lastMessage?.timestamp,
+                    dmLastMsqSeqClientId: () => this.deltaManager?.lastMessage?.clientId,
+                },
             });
 
         // Prefix all events in this file with container-loader
         this.logger = ChildLogger.create(this.subLogger, "Container");
+
+        this.connectionStateHandler = new ConnectionStateHandler(
+            {
+                protocolHandler: () => this._protocolHandler,
+                logConnectionStateChangeTelemetry: (value, oldState, reason) =>
+                    this.logConnectionStateChangeTelemetry(value, oldState, reason),
+                propagateConnectionState: () => this.propagateConnectionState(),
+                isContainerLoaded: () => this.loaded,
+            },
+            this.logger,
+        );
+
+        this.connectionStateHandler.on(connectEventName, (opsBehind?: number) => {
+            this.emit(connectEventName, opsBehind);
+        });
 
         this._deltaManager = this.createDeltaManager();
 
@@ -631,7 +669,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         }
                         break;
                     case connectEventName:
-                        if (this._connectionState !== ConnectionState.Disconnected) {
+                        if (this.connectionState !== ConnectionState.Disconnected) {
                             listener(event);
                         }
                         break;
@@ -693,8 +731,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // a new clientId and a future container using stale pending state without the new clientId would resubmit them
         this._deltaManager.close();
 
-        assert(this.attachState === AttachState.Attached);
-        assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid");
+        assert(this.attachState === AttachState.Attached, "Container should be attached before close");
+        assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
+            "resolved url should be valid Fluid url");
         const pendingState: IPendingLocalState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
@@ -736,9 +775,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // Get the document state post attach - possibly can just call attach but we need to change the
                 // semantics around what the attach means as far as async code goes.
                 const appSummary: ISummaryTree = this.context.createSummary();
-                if (this.protocolHandler === undefined) {
-                    throw new Error("Protocol Handler is undefined");
-                }
                 const protocolSummary = this.captureProtocolSummary();
                 this.cachedAttachSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
@@ -841,7 +877,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // If container state is not attached and resumed, then don't connect to delta stream. Also don't set the
         // manual reconnection flag to true as we haven't made the initial connection yet.
         if (reconnect && this._attachState === AttachState.Attached && this.resumedOpProcessingAfterLoad) {
-            if (this._connectionState === ConnectionState.Disconnected) {
+            if (this.connectionState === ConnectionState.Disconnected) {
                 // Only track this as a manual reconnection if we are truly the ones kicking it off.
                 this.manualReconnectInProgress = true;
             }
@@ -1379,10 +1415,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Track membership changes and update connection state accordingly
         protocol.quorum.on("addMember", (clientId, details) => {
-            // This is the only one that requires the pending client ID
-            if (clientId === this.pendingClientId) {
-                this.setConnectionState(ConnectionState.Connected);
-            }
+            this.connectionStateHandler.receivedAddMemberEvent(clientId, this.protocolHandler.quorum);
         });
 
         protocol.quorum.on("addProposal",(proposal: IPendingProposal) => {
@@ -1500,31 +1533,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         );
 
         deltaManager.on(connectEventName, (details: IConnectionDetails, opsBehind?: number) => {
-            const oldState = this._connectionState;
-            this._connectionState = ConnectionState.Connecting;
-
-            // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
-            // (have received the join message for the client ID)
-            // This is especially important in the reconnect case. It's possible there could be outstanding
-            // ops sent by this client, so we should keep the old client id until we see our own client's
-            // join message. after we see the join message for out new connection with our new client id,
-            // we know there can no longer be outstanding ops that we sent with the previous client id.
-            this.pendingClientId = details.clientId;
-
-            this.emit(connectEventName, opsBehind);
-
-            // Report telemetry after we set client id!
-            this.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
-
-            // Check if we already processed our own join op through delta storage!
-            // we are fetching ops from storage in parallel to connecting to ordering service
-            // Given async processes, it's possible that we have already processed our own join message before
-            // connection was fully established.
-            // Note that we might be still initializing quorum - connection is established proactively on load!
-            if ((this._protocolHandler !== undefined && this._protocolHandler.quorum.has(details.clientId))
-                    || deltaManager.connectionMode === "read") {
-                this.setConnectionState(ConnectionState.Connected);
-            }
+            this.connectionStateHandler.receivedConnectEvent(
+                this,
+                this._deltaManager.connectionMode,
+                details,
+                opsBehind,
+            );
 
             // Back-compat for new client and old server.
             this._audience.clear();
@@ -1536,7 +1550,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         deltaManager.on("disconnect", (reason: string) => {
             this.manualReconnectInProgress = false;
-            this.setConnectionState(ConnectionState.Disconnected, reason);
+            this.connectionStateHandler.receivedDisconnectEvent(reason);
         });
 
         deltaManager.on("throttled", (warning: IThrottlingWarning) => {
@@ -1574,7 +1588,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private logConnectionStateChangeTelemetry(
         value: ConnectionState,
         oldState: ConnectionState,
-        reason?: string) {
+        reason?: string,
+    ) {
         // Log actual event
         const time = performance.now();
         this.connectionTransitionTimes[value] = time;
@@ -1619,7 +1634,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             reason,
             connectionInitiationReason,
             socketDocumentId: this._deltaManager.socketDocumentId,
-            pendingClientId: this.pendingClientId,
+            pendingClientId: this.connectionStateHandler.pendingClientId,
             clientId: this.clientId,
             connectionMode,
             autoReconnect,
@@ -1636,57 +1651,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    private setConnectionState(value: ConnectionState.Disconnected, reason: string);
-    private setConnectionState(value: ConnectionState.Connecting | ConnectionState.Connected);
-    private setConnectionState(
-        value: ConnectionState,
-        reason?: string) {
-        assert(value !== ConnectionState.Connecting, "Trying to set connection state while container is connecting!");
-        if (this.connectionState === value) {
-            // Already in the desired state - exit early
-            this.logger.sendErrorEvent({ eventName: "setConnectionStateSame", value });
-            return;
-        }
-
-        const oldState = this._connectionState;
-        this._connectionState = value;
-
-        if (value === ConnectionState.Connected) {
-            // Mark our old client should have left in the quorum if it's still there
-            if (this._clientId !== undefined) {
-                const client: ILocalSequencedClient | undefined =
-                    this._protocolHandler?.quorum.getMember(this._clientId);
-                if (client !== undefined) {
-                    client.shouldHaveLeft = true;
-                }
-            }
-            this._clientId = this.pendingClientId;
-        } else if (value === ConnectionState.Disconnected) {
-            // Important as we process our own joinSession message through delta request
-            this.pendingClientId = undefined;
-        }
-
-        if (this.loaded) {
-            this.propagateConnectionState();
-        }
-
-        // Report telemetry after we set client id!
-        this.logConnectionStateChangeTelemetry(value, oldState, reason);
-    }
-
     private propagateConnectionState() {
         const logOpsOnReconnect: boolean =
-            this._connectionState === ConnectionState.Connected &&
+            this.connectionState === ConnectionState.Connected &&
             !this.firstConnection &&
             this._deltaManager.connectionMode === "write";
         if (logOpsOnReconnect) {
             this.messageCountAfterDisconnection = 0;
         }
 
-        const state = this._connectionState === ConnectionState.Connected;
+        const state = this.connectionState === ConnectionState.Connected;
         if (!this.context.disposed) {
             this.context.setConnectionState(state, this.clientId);
         }
+        assert(this.protocolHandler !== undefined, "Protocol handler should be set here");
         this.protocolHandler.quorum.setConnectionState(state, this.clientId);
         raiseConnectedEvent(this.logger, this, state, this.clientId);
 
@@ -1736,19 +1714,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             if (errorMsg !== undefined) {
                 const error = new DataCorruptionError(
                     errorMsg,
-                    {
-                        clientId: this._clientId,
-                        messageClientId: message.clientId,
-                        sequenceNumber: message.sequenceNumber,
-                        clientSequenceNumber: message.clientSequenceNumber,
-                        messageTimestamp: message.timestamp,
-                    },
-                );
+                    extractSafePropertiesFromMessage(message));
                 this.close(CreateContainerError(error));
             }
         }
 
-        const local = this._clientId === message.clientId;
+        const local = this.clientId === message.clientId;
 
         // Forward non system messages to the loaded runtime for processing
         if (!isSystemMessage(message)) {
@@ -1780,7 +1751,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this._audience.removeMember(leftClientId);
             }
         } else {
-            const local = this._clientId === message.clientId;
+            const local = this.clientId === message.clientId;
             this.context.processSignal(message, local);
         }
     }

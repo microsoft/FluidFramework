@@ -48,13 +48,12 @@ export class PartitionManager extends EventEmitter {
             this.rebalanced(partitions);
         });
 
-        // On any Kafka errors immediately stop processing
-        this.consumer.on("error", (error) => {
+        this.consumer.on("error", (error, errorData: IContextErrorData) => {
             if (this.stopped) {
                 return;
             }
 
-            this.emit("error", error);
+            this.emit("error", error, errorData);
         });
     }
 

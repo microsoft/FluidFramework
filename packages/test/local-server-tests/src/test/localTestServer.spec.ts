@@ -4,20 +4,43 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { LocalResolver } from "@fluidframework/local-driver";
+import { LocalResolver, LocalDocumentServiceFactory} from "@fluidframework/local-driver";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createAndAttachContainer,
-    createLocalLoader,
+    createLoader,
     OpProcessingController,
     ITestFluidObject,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
+
+/**
+ * Creates a loader with the given package entries and a delta connection server.
+ * @param packageEntries - A list of code details to Fluid entry points.
+ * @param deltaConnectionServer - The delta connection server to use as the server.
+ */
+function createLocalLoader(
+    packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
+    deltaConnectionServer: ILocalDeltaConnectionServer,
+    urlResolver: IUrlResolver,
+    options?: ILoaderOptions,
+): IHostLoader {
+    const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+
+    return createLoader(
+        packageEntries,
+        documentServiceFactory,
+        urlResolver,
+        undefined,
+        options,
+    );
+}
 
 describe("LocalTestServer", () => {
     const documentId = "localServerTest";

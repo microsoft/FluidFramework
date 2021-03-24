@@ -200,7 +200,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     ) {
         super();
 
-        this.logger = ChildLogger.create(dataStoreContext.containerRuntime.logger, undefined, { dataStoreId: uuid() });
+        this.logger = ChildLogger.create(
+            dataStoreContext.containerRuntime.logger, undefined, {all:{ dataStoreId: uuid() }});
         this.documentId = dataStoreContext.documentId;
         this.id = dataStoreContext.id;
         this.existing = dataStoreContext.existing;
@@ -565,15 +566,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.emit("op", message);
         } catch (error) {
             // eslint-disable-next-line @typescript-eslint/no-throw-literal
-            throw CreateProcessingError(error, {
-                clientId: this.clientId,
-                messageClientId: message.clientId,
-                sequenceNumber: message.sequenceNumber,
-                clientSequenceNumber: message.clientSequenceNumber,
-                referenceSequenceNumber: message.referenceSequenceNumber,
-                minimumSequenceNumber: message.minimumSequenceNumber,
-                messageTimestamp: message.timestamp,
-            });
+            throw CreateProcessingError(error, message);
         }
     }
 

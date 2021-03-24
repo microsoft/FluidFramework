@@ -4,13 +4,12 @@
 
 
 {{ define "main" }}
-
 <div class="container body-content docs">
     <div class="row">
         <div class="col-md-2 docs-navbar-container"> {{ partial "apiNav.html" .}} </div>
         <div role="main" id="main-content" class="col-sm-9 col-md-8 body">
             <div>
-                <h1>{{ .Title  }}</h1>
+                <h1>{{ .Title }}</h1>
                 {{ $section := .CurrentSection }}
                 {{ $packagePages := where $section.RegularPages "Params.kind" "Package" }}
                 {{ range $grouping, $names :=  $.Site.Data.packages }}
@@ -30,7 +29,7 @@
 
                         {{ range where $packagePages "Params.package" . }}
                         <tr>
-                            <td><a href="{{ .Permalink | safeURL }}" title="{{ .Title }}">{{ .Title }}</a></td>
+                            <td><a href="{{ .RelPermalink | safeURL }}" title="{{ .Title }}">{{ .Title }}</a></td>
                             <td>{{ truncate 170 (.Params.Summary | markdownify) }}</td>
                         </tr>
                         {{ end }}

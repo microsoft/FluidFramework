@@ -93,8 +93,8 @@ export class IsoBuffer extends Uint8Array {
         // Capture any typed arrays, including Uint8Array (and thus - IsoBuffer!)
         } else if (value !== null && typeof value === "object" && isArrayBuffer(value.buffer)) {
             // Support currently for full array, no view ports! (though it can be added in future)
-            assert(value.byteOffset === 0);
-            assert(value.byteLength === value.buffer.byteLength);
+            assert(value.byteOffset === 0, "nonzero isobuffer byte offset");
+            assert(value.byteLength === value.buffer.byteLength, "unexpected isobuffer byte length");
             return IsoBuffer.fromArrayBuffer(value.buffer, encodingOrOffset as number | undefined, length);
         } else if (isArrayBuffer(value)) {
             return IsoBuffer.fromArrayBuffer(value, encodingOrOffset as number | undefined, length);
