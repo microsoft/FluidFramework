@@ -158,7 +158,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
         let messages = await this.fetchOpsFromDeltaStorage(documentDeltaStorageService);
 
         if (anonymize) {
-            const sanitizer = new Sanitizer(messages, false /* fullScrub */, false /* noBail */);
+            const sanitizer = new Sanitizer(messages, false /* fullScrub */, true /* noBail */);
             messages = sanitizer.sanitize();
         }
 
