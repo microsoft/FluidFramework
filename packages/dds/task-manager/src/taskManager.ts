@@ -136,9 +136,15 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      */
     private readonly taskQueues: Map<string, string[]> = new Map();
 
+    // opWatcher emits for every op on this data store.  This is just a repackaging of processCore into events.
     private readonly opWatcher: EventEmitter = new EventEmitter();
+    // queueWatcher emits an event whenever the consensus state of the task queues changes
+    // TODO currently could event even if the queue doesn't actually change
     private readonly queueWatcher: EventEmitter = new EventEmitter();
+    // abandonWatcher emits an event whenever the local client calls abandon() on a task.
     private readonly abandonWatcher: EventEmitter = new EventEmitter();
+    // disconnectWatcher emits an event whenever we get disconnected.
+    private readonly disconnectWatcher: EventEmitter = new EventEmitter();
 
     private messageId: number = -1;
     /**
@@ -191,8 +197,8 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         });
 
         this.queueWatcher.on("queueChange", (taskId: string, oldLockHolder: string, newLockHolder: string) => {
+            // Exit early if we are still catching up on reconnect -- we can't be the leader yet anyway.
             if (this.runtime.clientId === undefined) {
-                // TODO handle disconnected case
                 return;
             }
 
@@ -201,6 +207,23 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             } else if (oldLockHolder === this.runtime.clientId && newLockHolder !== this.runtime.clientId) {
                 this.emit("lost", taskId);
             }
+        });
+
+        this.disconnectWatcher.on("disconnect", () => {
+            assert(this.runtime.clientId !== undefined, "Missing client id on disconnect");
+
+            // We don't modify the taskQueues on disconnect (they still reflect the latest known consensus state).
+            // After reconnect these will get cleaned up by observing the clientLeaves.
+            // However we do need to recognize that we lost the lock if we had it.  Calls to .queued() and
+            // .haveTaskLock() are also connection-state-aware to be consistent.
+            for (const [taskId, clientQueue] of this.taskQueues.entries()) {
+                if (clientQueue[0] === this.runtime.clientId) {
+                    this.emit("lost", taskId);
+                }
+            }
+
+            // All of our outstanding ops will be for the old clientId even if they get ack'd
+            this.latestPendingOps.clear();
         });
     }
 
@@ -241,6 +264,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             return;
         }
 
+        if (!this.connected) {
+            throw new Error(`Attempted to lock in disconnected state: ${taskId}`);
+        }
+
         // This promise works even if we already have an outstanding volunteer op.
         const lockAcquireP = new Promise<void>((res, rej) => {
             const checkIfAcquiredLock = (eventTaskId: string) => {
@@ -254,6 +281,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 if (this.haveTaskLock(taskId) && !this.latestPendingOps.has(taskId)) {
                     this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                     this.abandonWatcher.off("abandon", checkIfAbandoned);
+                    this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
                     res();
                 }
             };
@@ -265,11 +293,20 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
                 this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                 this.abandonWatcher.off("abandon", checkIfAbandoned);
+                this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
                 rej(new Error(`Abandoned before acquiring lock: ${taskId}`));
+            };
+
+            const rejectOnDisconnect = () => {
+                this.queueWatcher.off("queueChange", checkIfAcquiredLock);
+                this.abandonWatcher.off("abandon", checkIfAbandoned);
+                this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
+                rej(new Error(`Disconnected before acquiring lock: ${taskId}`));
             };
 
             this.queueWatcher.on("queueChange", checkIfAcquiredLock);
             this.abandonWatcher.on("abandon", checkIfAbandoned);
+            this.disconnectWatcher.on("disconnect", rejectOnDisconnect);
         });
 
         if (!this.queued(taskId)) {
@@ -280,6 +317,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     public abandon(taskId: string) {
+        if (!this.connected) {
+            throw new Error(`Attempted to abandon in disconnected state: ${taskId}`);
+        }
+
         // Nothing to do if we're not at least trying to get the lock.
         if (!this.queued(taskId)) {
             return;
@@ -294,6 +335,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     public haveTaskLock(taskId: string) {
+        if (!this.connected) {
+            return false;
+        }
+
         const currentAssignee = this.taskQueues.get(taskId)?.[0];
         return currentAssignee !== undefined
             && currentAssignee === this.runtime.clientId
@@ -301,8 +346,13 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     public queued(taskId: string) {
+        if (!this.connected) {
+            return false;
+        }
+
         assert(this.runtime.clientId !== undefined,
             0x07f /* "clientId undefined" */); // TODO, handle disconnected/detached case
+
         const clientQueue = this.taskQueues.get(taskId);
         // If we have no queue for the taskId, then no one has signed up for it.
         return (
@@ -356,8 +406,12 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     protected registerCore() { }
 
     protected onDisconnect() {
-        // TODO knock ourselves out of the queues here, and wipe our pending ops probably
+        this.disconnectWatcher.emit("disconnect");
     }
+
+    // Override resubmit core to avoid resubmission on reconnect.  On disconnect we accept our removal from the
+    // queues, and leave it up to the user to decide whether they want to attempt to re-enter a queue on reconnect.
+    protected reSubmitCore() { }
 
     /**
      * Process a task manager operation
@@ -388,20 +442,22 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     private addClientToQueue(taskId: string, clientId: string) {
-        // Create the queue if it doesn't exist, and push the client on the back.
-        let clientQueue = this.taskQueues.get(taskId);
-        if (clientQueue === undefined) {
-            clientQueue = [];
-            this.taskQueues.set(taskId, clientQueue);
+        if(this.runtime.getQuorum().getMembers().has(clientId)) {
+            // Create the queue if it doesn't exist, and push the client on the back.
+            let clientQueue = this.taskQueues.get(taskId);
+            if (clientQueue === undefined) {
+                clientQueue = [];
+                this.taskQueues.set(taskId, clientQueue);
+            }
+
+            const oldLockHolder = clientQueue[0];
+            clientQueue.push(clientId);
+            const newLockHolder = clientQueue[0];
+            this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
+
+            // TODO remove, just for debugging
+            this.emit("changed");
         }
-
-        const oldLockHolder = clientQueue[0];
-        clientQueue.push(clientId);
-        const newLockHolder = clientQueue[0];
-        this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
-
-        // TODO remove, just for debugging
-        this.emit("changed");
     }
 
     private removeClientFromQueue(taskId: string, clientId: string) {

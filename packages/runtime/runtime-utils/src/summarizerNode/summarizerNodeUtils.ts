@@ -10,6 +10,8 @@ import {
     IDocumentAttributes,
     ISequencedDocumentMessage,
     SummaryType,
+    ISummaryTree,
+    SummaryObject,
 } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "../summaryUtils";
@@ -289,9 +291,9 @@ export interface ICreateChildDetails {
     changeSequenceNumber: number;
 }
 
-export interface ISubtreeInfo {
+export interface ISubtreeInfo<T extends ISnapshotTree | SummaryObject> {
     /** Tree to use to find children subtrees */
-    childrenTree: ISnapshotTree,
+    childrenTree: T,
     /** Additional path part where children are isolated */
     childrenPathPart: string | undefined,
 }
@@ -301,7 +303,7 @@ export interface ISubtreeInfo {
  * would be located if exists.
  * @param baseSummary - summary to check
  */
-export function parseSummaryForSubtrees(baseSummary: ISnapshotTree): ISubtreeInfo {
+export function parseSummaryForSubtrees(baseSummary: ISnapshotTree): ISubtreeInfo<ISnapshotTree> {
     // New versions of snapshots have child nodes isolated in .channels subtree
     const channelsSubtree = baseSummary.trees[channelsTreeName];
     if (channelsSubtree !== undefined) {
@@ -312,6 +314,26 @@ export function parseSummaryForSubtrees(baseSummary: ISnapshotTree): ISubtreeInf
     }
     return {
         childrenTree: baseSummary,
+        childrenPathPart: undefined,
+    };
+}
+
+/**
+ * Checks if the summary contains .channels subtree where the children subtrees
+ * would be located if exists.
+ * @param baseSummary - summary to check
+ */
+export function parseSummaryTreeForSubtrees(summary: ISummaryTree): ISubtreeInfo<SummaryObject> {
+    // New versions of snapshots have child nodes isolated in .channels subtree
+    const channelsSubtree = summary.tree[channelsTreeName];
+    if (channelsSubtree !== undefined) {
+        return {
+            childrenTree: channelsSubtree,
+            childrenPathPart: channelsTreeName,
+        };
+    }
+    return {
+        childrenTree: summary,
         childrenPathPart: undefined,
     };
 }
