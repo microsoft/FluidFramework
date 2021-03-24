@@ -22,6 +22,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -56,11 +57,11 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
         idleTime: IdleDetectionTime,
         maxTime: IdleDetectionTime * 12,
     };
-    const runtimeOptions = {
+    const runtimeOptions: IContainerRuntimeOptions = {
         generateSummaries: true,
-        enableWorker: false,
         initialSummarizerDelayMs: 10,
         summaryConfigOverrides,
+        documentEnableGC: true,
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         factory,

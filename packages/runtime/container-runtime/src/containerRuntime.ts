@@ -562,7 +562,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             chunks,
             {
                 ...runtimeOptions,
-                ...{ documentEnableGC },
+                ...{ documentEnableGC: documentEnableGC ?? runtimeOptions?.documentEnableGC },
             },
             containerScope,
             logger,
