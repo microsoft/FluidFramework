@@ -34,7 +34,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 
     /**
      * Add a loader to start to track any container created from them
-     * @param loader loader to start tracking any container created.
+     * @param loader - loader to start tracking any container created.
      */
     public add<LoaderType extends IHostLoader>(loader: LoaderType) {
         // TODO: Expose Loader API to able to intercept container creation
@@ -57,7 +57,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
     /**
      * Utility function to add container to be tracked.
      *
-     * @param container container to add
+     * @param container - container to add
      */
     private addContainer(container: IContainer) {
         // ignore summarizer
@@ -83,8 +83,8 @@ export class LoaderContainerTracker implements IOpProcessingController {
      * Keep track of the trailing NoOp that was sent so we can discount them in the clientSequenceNumber tracking.
      * The server might coalesce them with other ops, or a single NoOp, or delay it if it don't think it is necessary.
      *
-     * @param container the container to track
-     * @param record the record to update the trailing op information
+     * @param container - the container to track
+     * @param record - the record to update the trailing op information
      */
     private trackTrailingNoOps(container: IContainer, record: ContainerRecord) {
         container.deltaManager.outbound.on("op", (messages) => {
@@ -146,7 +146,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
      * - No isDirty (non-readonly) containers
      * - No extra clientId in quorum of any container that is not tracked and still opened.
      *      - i.e. no pending Join/Leave message.
-     * - No unresolved proposal (minSeqNum >= lastProposalSeqNum)
+     * - No unresolved proposal (minSeqNum \>= lastProposalSeqNum)
      * - lastSequenceNumber of all container is the same
      * - clientSequenceNumberObserved is the same as clientSequenceNumber sent
      *      - this overlaps with !isDirty, but include task scheduler ops.
@@ -204,10 +204,10 @@ export class LoaderContainerTracker implements IOpProcessingController {
     }
 
     /**
-     * Utilities to calculate the set of clientId per container in quorum that is NOT associated with
+     * Utility to calculate the set of clientId per container in quorum that is NOT associated with
      * any container we tracked, indicating there is a pending join or leave op that we need to wait.
      *
-     * @param containersToApply the set of containers to check
+     * @param containersToApply - the set of containers to check
      */
     private getPendingClients(containersToApply: IContainer[]) {
         // All the clientId we track should be a superset of the quorum, otherwise, we are missing
@@ -235,10 +235,10 @@ export class LoaderContainerTracker implements IOpProcessingController {
     }
 
     /**
-     * Utilities to check sequence number based synchronization.
+     * Utility to check synchronization based on sequence number
      * See ensureSynchronized for more detail
      *
-     * @param containersToApply the set of containers to check
+     * @param containersToApply - the set of containers to check
      */
     private isSequenceNumberSynchronized(containersToApply: IContainer[]) {
         // clientSequenceNumber check detects ops in flight, both on the wire and in the outbound queue
@@ -277,12 +277,12 @@ export class LoaderContainerTracker implements IOpProcessingController {
     }
 
     /**
-     * Utilities to wait for any clientId in quorum that is NOT associated with any container we
+     * Utility to wait for any clientId in quorum that is NOT associated with any container we
      * tracked, indicating there is a pending join or leave op that we need to wait.
      *
      * Note that this function doesn't account for container that got added after we started waiting
      *
-     * @param containersToApply the set of containers to wait for any inbound ops for
+     * @param containersToApply - the set of containers to wait for any inbound ops for
      */
     private async waitForPendingClients(pendingClients: [IContainer, Set<string>][]) {
         const unconnectedClients =
@@ -314,8 +314,8 @@ export class LoaderContainerTracker implements IOpProcessingController {
     }
 
     /**
-     * Utilities to wait for any inbound ops from a set of containers
-     * @param containersToApply the set of containers to wait for any inbound ops for
+     * Utility to wait for any inbound ops from a set of containers
+     * @param containersToApply - the set of containers to wait for any inbound ops for
      */
     private async waitForAnyInboundOps(containersToApply: IContainer[]) {
         return new Promise<void>((res) => {
@@ -426,11 +426,11 @@ export class LoaderContainerTracker implements IOpProcessingController {
     }
 
     /**
-     * Utilities to set up listener to track the outbound ops until it round trip back
+     * Utility to set up listener to track the outbound ops until it round trip back
      * Returns a function to remove the handler after it is done.
      *
-     * @param container the container to setup
-     * @param inflightTracker a map to track the clientSequenceNumber per container it expect to get ops back
+     * @param container - the container to setup
+     * @param inflightTracker - a map to track the clientSequenceNumber per container it expect to get ops back
      */
     private setupInOutTracker(container: IContainer, inflightTracker: Map<IContainer, number>) {
         const outHandler = (messages: IDocumentMessage[]) => {
@@ -513,7 +513,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 
     /**
      * Filter out the opened containers based on param.
-     * @param containers The container to filter to.  If the array is empty, it means don't filter and return
+     * @param containers - The container to filter to.  If the array is empty, it means don't filter and return
      * all open containers.
      */
     private getContainers(containers: IContainer[]) {
