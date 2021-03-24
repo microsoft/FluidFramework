@@ -27,9 +27,9 @@ export const joinDataSchema = {
                         id: { type: "string" },
                         name: { type: "string" },
                         email: { type: "string" },
+                        oid: { type: "string" },
                     },
                     required: [ "id", "name", "email" ],
-                    additionalProperties: false,
                 },
             },
             required: [ "user" ],
@@ -40,17 +40,7 @@ export const joinDataSchema = {
     additionalProperties: false,
 };
 
-export const proposeContentsSchema = {
-    type: [ "string", "object" ],
-    properties: {
-        key: { type: "string" },
-        value: { type: "string" },
-    },
-    required: [ "key" ],
-    additionalProperties: false,
-};
-
-// The parsed json of a propose message's contents value
+// The parsed json of a propose code message's contents value
 export const proposeCodeSchema = {
     type: "object",
     properties: {
@@ -343,8 +333,9 @@ const mergeTreeDeltaOpSchema = {
         {
             properties: {
                 type: { enum: [ 0 /* MergeTreeDeltaType.INSERT */ ] },
-                seg: { type: [ "string", "object" ] },
+                seg: { type: [ "string", "object", "array" ] },
                 pos1: { type: "number" },
+                target: { type: "string" },
             },
             required: [ "pos1" ],
             additionalProperties: false,
@@ -355,6 +346,7 @@ const mergeTreeDeltaOpSchema = {
                 register: { type: "string" },
                 pos1: { type: "number" },
                 pos2: { type: "number" },
+                target: { type: "string" },
             },
             required: [ "pos1" ],
             additionalProperties: false,
@@ -379,6 +371,7 @@ const mergeTreeDeltaOpSchema = {
                 register: { type: "string" },
                 relativePos1: { $ref: "#/definitions/relativePos" },
                 relativePos2: { $ref: "#/definitions/relativePos" },
+                target: { type: "string" },
             },
             required: [ "props" ],
             additionalProperties: false,
@@ -429,6 +422,64 @@ export const opContentsMergeTreeGroupOpSchema = {
     properties: {
         address: { type: "string" },
         contents: { $ref: "#/definitions/groupOp" },
+    },
+    required: [ "address", "contents" ],
+    additionalProperties: false,
+};
+
+// from dds/matrix's ops.ts
+export const opContentsMatrixOpSchema = {
+    type: "object",
+    properties: {
+        address: { type: "string" },
+        contents: {
+            properties: {
+                type: {
+                    type: "number",
+                    minimum: 0 /* MatrixOp.SpliceCols */,
+                    maximum: 2 /* MatrixOp.Set */,
+                },
+            },
+            required: [ "type" ],
+            oneOf: [
+                {
+                    properties: {
+                        type: { enum: [ 0, 1 /* MatrixOp.SpliceCols, MatrixOp.SpliceRows */ ] },
+                        start: { type: "number" },
+                        count: { type: "number" },
+                    },
+                    required: [ "start", "count" ],
+                    additionalProperties: false,
+                },
+                {
+                    properties: {
+                        type: { enum: [ 2 /* MatrixOp.Set */ ] },
+                        row: { type: "number" },
+                        col: { type: "number" },
+                        value: { },
+                    },
+                    required: [ "row", "col", "value" ],
+                    additionalProperties: false,
+                },
+            // There's something weird with the typings/settings here where this doesn't get
+            // recognized as a valid Schema array if more than 1 item has "properties" defined
+            ] as Schema[],
+        },
+    },
+    required: [ "address", "contents" ],
+    additionalProperties: false,
+};
+
+export const opContentsSignalOpSchema = {
+    type: "object",
+    properties: {
+        address: { type: "string" },
+        contents: {
+            properties: {
+                type: { enum: [ "signal"] },
+            },
+            required: [ "type" ],
+        },
     },
     required: [ "address", "contents" ],
     additionalProperties: false,
