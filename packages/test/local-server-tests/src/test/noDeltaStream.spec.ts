@@ -82,6 +82,10 @@ describe("No Delta Stream", () => {
         await loaderContainerTracker.ensureSynchronized();
     });
 
+    afterEach(() => {
+        loaderContainerTracker.reset();
+    });
+
     it("Validate Properties on Loaded Container With No Delta Stream", async () => {
         // Load the Container that was created by the first client.
         const container = await loadContainer(true) as Container;

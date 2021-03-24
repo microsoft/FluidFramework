@@ -152,6 +152,10 @@ describe("Document Dirty", () => {
         registerDirtyContainerHandler();
     });
 
+    afterEach(() => {
+        loaderContainerTracker.reset();
+    });
+
     function checkDirtyState(
         when: string,
         expectedDirty: boolean,

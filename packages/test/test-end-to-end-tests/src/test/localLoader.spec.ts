@@ -99,7 +99,11 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
         config: {},
     };
 
-    let loaderContainerTracker: LoaderContainerTracker;
+    const loaderContainerTracker = new LoaderContainerTracker();
+
+    afterEach(() => {
+        loaderContainerTracker.reset();
+    });
 
     async function createContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
         const loader = createLoader(
@@ -108,9 +112,7 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
             provider.urlResolver,
             ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
         );
-        if (loaderContainerTracker) {
-            loaderContainerTracker.add(loader);
-        }
+        loaderContainerTracker.add(loader);
         return createAndAttachContainer(
             codeDetails, loader, provider.driver.createCreateNewRequest(documentId));
     }
@@ -122,9 +124,7 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
             provider.urlResolver,
             ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
         );
-        if (loaderContainerTracker) {
-            loaderContainerTracker.add(loader);
-        }
+        loaderContainerTracker.add(loader);
         return loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
     }
 
@@ -144,10 +144,6 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
     });
 
     describe("2 dataObjects", () => {
-        beforeEach(async () => {
-            loaderContainerTracker = new LoaderContainerTracker();
-        });
-
         it("early open / late close", async () => {
             const documentId = createDocumentId();
 
@@ -225,7 +221,6 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
             let text2: SharedString;
 
             beforeEach(async () => {
-                loaderContainerTracker = new LoaderContainerTracker();
                 const documentId = createDocumentId();
                 const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
 

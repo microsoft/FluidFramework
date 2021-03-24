@@ -91,6 +91,10 @@ describe("LocalTestServer", () => {
         sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
     });
 
+    afterEach(() => {
+        loaderContainerTracker.reset();
+    });
+
     describe("Document.existing", () => {
         it("Validate document is new for user1 1 and exists for client 2", () => {
             assert.equal(dataObject1.runtime.existing, false, "Document already exists");

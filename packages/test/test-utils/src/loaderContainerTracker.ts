@@ -143,7 +143,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 
     /**
      * Make sure all the tracked containers are synchronized.
-     * - No isDirty containers
+     * - No isDirty (non-readonly) containers
      * - No extra clientId in quorum of any container that is not tracked and still opened.
      *      - i.e. no pending Join/Leave message.
      * - No unresolved proposal (minSeqNum >= lastProposalSeqNum)
@@ -161,7 +161,9 @@ export class LoaderContainerTracker implements IOpProcessingController {
             const containersToApply = this.getContainers(containers);
             if (containersToApply.length === 0) { break; }
 
-            const dirtyContainers = containersToApply.filter((c) => c.isDirty);
+            // Ignore readonly dirty containers, because it can't sent up and nothing can be done about it being dirty
+            const dirtyContainers =
+                containersToApply.filter((c) => c.deltaManager.readOnlyInfo.readonly !== true && c.isDirty);
             if (dirtyContainers.length === 0) {
                 // Wait for all the leave messages
                 const pendingClients = this.getPendingClients(containersToApply);
@@ -182,7 +184,8 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 }
             } else {
                 // Wait for all the containers to be saved
-                debugWait("Waiting container to be saved");
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                debugWait(`Waiting container to be saved ${dirtyContainers.map((c) => this.containers.get(c)!.index)}`);
                 waitingSequenceNumberSynchronized = false;
                 await Promise.all(dirtyContainers.map(async (c) => new Promise((res) => c.once("saved", res))));
             }
@@ -238,9 +241,19 @@ export class LoaderContainerTracker implements IOpProcessingController {
      * @param containersToApply the set of containers to check
      */
     private isSequenceNumberSynchronized(containersToApply: IContainer[]) {
-        // TODO: Currently isDirty flag ignores ops for task scheduler.
-        // So we need to look into the deltamanager to use clientSequenceNumber.
+        // clientSequenceNumber check detects ops in flight, both on the wire and in the outbound queue
+        // We need both client sequence number and isDirty check because:
+        // - Currently isDirty flag ignores ops for task scheduler, so we need the client sequence number check
+        // - But isDirty flags include ops during forceReadonly and disconnected, because we don't submit
+        //   the ops in the first place, clientSequenceNumber is not assigned
+
         const isClientSequenceNumberSynchronized = containersToApply.every((container) => {
+            if (container.deltaManager.readOnlyInfo.readonly === true) {
+                // Ignore readonly container. the clientSeqNum and clientSeqNumObserved might be out of sync
+                // because we transition to readonly when outbound is not empty or the in transit op got lost
+                return true;
+            }
+            // Note that in read only mode, the op won't be submitted
             const deltaManager = (container.deltaManager as any);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const { trailingNoOps } = this.containers.get(container)!;
@@ -449,7 +462,11 @@ export class LoaderContainerTracker implements IOpProcessingController {
      */
     private setupTrace(container: IContainer, index: number) {
         if (debugOp.enabled) {
-            const getContentsString = (msgContents: any) => {
+            const getContentsString = (type: string, msgContents: any) => {
+                if (type !== MessageType.Operation) {
+                    if (typeof msgContents === "string") { return msgContents; }
+                    return JSON.stringify(msgContents);
+                }
                 let address = "";
                 let contents = JSON.parse(msgContents);
                 // eslint-disable-next-line no-null/no-null
@@ -465,7 +482,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
                     }
                 }
                 if (address) {
-                    return `addr=${address} contents=${JSON.stringify(contents)}`;
+                    return `${address} ${JSON.stringify(contents)}`;
                 }
                 return JSON.stringify(contents);
             };
@@ -474,7 +491,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 for (const msg of messages) {
                     debugOp(`${index}: OUT:          `
                         + `cli: ${msg.clientSequenceNumber.toString().padStart(3)} `
-                        + `         ${msg.type} ${getContentsString(msg.contents)}`);
+                        + `         ${msg.type} ${getContentsString(msg.type, msg.contents)}`);
                 }
             });
             container.deltaManager.inbound.on("push", (msg) => {
@@ -482,7 +499,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
                     `cli: ${msg.clientSequenceNumber.toString().padStart(3)}` : "        ";
                 debugOp(`${index}: IN : seq: ${msg.sequenceNumber.toString().padStart(3)} `
                     + `${clientSeq} min: ${msg.minimumSequenceNumber.toString().padStart(3)} `
-                    + `${msg.type} ${getContentsString(msg.contents)}`);
+                    + `${msg.type} ${getContentsString(msg.type, msg.contents)}`);
             });
 
             container.deltaManager.on("connect", (details) => {

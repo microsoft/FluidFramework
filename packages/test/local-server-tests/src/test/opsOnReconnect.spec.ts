@@ -156,6 +156,10 @@ describe("Ops on Reconnect", () => {
         await loaderContainerTracker.ensureSynchronized();
     });
 
+    afterEach(() => {
+        loaderContainerTracker.reset();
+    });
+
     describe("Ops on Container reconnect", () => {
         it("can resend ops on reconnection that were sent in disconnected state", async () => {
             // Create a second container and set up a listener to store the received map / directory values.
