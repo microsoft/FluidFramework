@@ -85,6 +85,9 @@ export function create(
         host: redisConfig.host,
         port: redisConfig.port,
         password: redisConfig.pass,
+        connectTimeout: 20000,
+        maxRetriesPerRequest: 3,
+        reconnectOnError: (err) => err.message.includes("ETIMEDOUT"),
     };
     if (redisConfig.tls) {
         options.tls = {
