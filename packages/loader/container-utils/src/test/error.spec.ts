@@ -27,7 +27,7 @@ describe("Errors", () => {
     describe("DataProcessingError coercion", () => {
         it("Should preserve the stack", () => {
             const originalError = new Error();
-            const testError = CreateProcessingError(originalError);
+            const testError = CreateProcessingError(originalError, undefined);
 
             assert((testError as any).stack === originalError.stack);
         });
@@ -36,7 +36,7 @@ describe("Errors", () => {
                 errorType: "Demoted error type",
                 otherProperty: "Considered PII-free property",
             });
-            const coercedError = CreateProcessingError(originalError);
+            const coercedError = CreateProcessingError(originalError, undefined);
 
             assert(coercedError as any === originalError);
         });
@@ -53,7 +53,7 @@ describe("Errors", () => {
                 [],
             ];
             const coercedErrors = originalMalformations.map((value) =>
-                CreateProcessingError(value),
+                CreateProcessingError(value, undefined),
             );
 
             assert(
@@ -89,7 +89,7 @@ describe("Errors", () => {
 
         it("Should be coercible from a string message", () => {
             const originalMessage = "Example of some thrown string";
-            const coercedError = CreateProcessingError(originalMessage);
+            const coercedError = CreateProcessingError(originalMessage, undefined);
 
             assert(coercedError.message === originalMessage);
         });
@@ -99,7 +99,7 @@ describe("Errors", () => {
                 message: "Inherited error message",
                 otherProperty: "Presumed PII-full property",
             };
-            const coercedError = CreateProcessingError(originalProps);
+            const coercedError = CreateProcessingError(originalProps, undefined);
 
             assert(coercedError.message === originalProps.message);
             assert(

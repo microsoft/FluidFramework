@@ -11,6 +11,7 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ITokenProvider } from "./tokens";
 import { DocumentStorageService } from "./documentStorageService";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
@@ -74,10 +75,24 @@ export class DeltaStorageService implements IDeltaStorageService {
         to: number): Promise<IDeltasFetchResult> {
         const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
             tenantId, id, this.tokenProvider, this.logger);
-        const ops = await ordererRestWrapper.get<ISequencedDocumentMessage[]>(this.url, { from, to });
+        const ops = await PerformanceEvent.timedExecAsync(
+            this.logger,
+            {
+                eventName: "getDeltas",
+                from,
+                to,
+            },
+            async (event) => {
+                const response = await ordererRestWrapper.get<ISequencedDocumentMessage[]>(this.url, { from, to });
+                event.end({
+                    count: response.length,
+                });
+                return response;
+            },
+        );
 
         // It is assumed that server always returns all the ops that it has in the range that was requested.
         // This may change in the future, if so, we need to adjust and receive "end" value from server in such case.
-        return {messages: ops, partialResult: false };
+        return { messages: ops, partialResult: false };
     }
 }

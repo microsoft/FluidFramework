@@ -12,18 +12,21 @@ import {
 } from "@fluidframework/aqueduct";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { IFluidCodeDetails, IRequest,
-    IResponse } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
     createAndAttachContainer,
     createDocumentId,
     createLoader,
+    ITestObjectProvider,
     OpProcessingController,
 } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 class TestSharedDataObject1 extends DataObject {
+    public inspectRequest: boolean = false;
+
     public get _root() {
         return this.root;
     }
@@ -41,10 +44,11 @@ class TestSharedDataObject1 extends DataObject {
     public async request(request: IRequest): Promise<IResponse> {
         const url = request.url;
         const parsed = parse(url, true);
-        // eslint-disable-next-line no-null/no-null
-        if (parsed.search !== null) {
+        if (this.inspectRequest) {
             // returning query params instead of the data object for testing purposes
-            return { mimeType: "text/plain", status: 200, value : `${parsed.search}` };
+            return { mimeType: "text/plain", status: 200, value: `${parsed.search}` };
+        } else if (parsed?.pathname === "/") {
+            return { value: this, status: 200, mimeType: "fluid/object" };
         } else {
             return super.request(request);
         }
@@ -67,6 +71,16 @@ class TestSharedDataObject2 extends DataObject {
     public get _id() {
         return this.id;
     }
+
+    public async request(request: IRequest): Promise<IResponse> {
+        const url = request.url;
+        const parsed = parse(url, true);
+        if (parsed?.pathname === "/") {
+            return { value: this, status: 200, mimeType: "fluid/object" };
+        } else {
+            return super.request(request);
+        }
+    }
 }
 
 const testSharedDataObjectFactory1 = new DataObjectFactory(
@@ -81,12 +95,9 @@ const testSharedDataObjectFactory2 = new DataObjectFactory(
     [],
     []);
 
-describe("Loader.request", () => {
-    let driver: ITestDriver;
-    before(()=>{
-        driver = getFluidTestDriver() as unknown as ITestDriver;
-    });
-
+// REVIEW: enable compat testing?
+describeNoCompat("Loader.request", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
     const codeDetails: IFluidCodeDetails = {
         package: "loaderRequestTestPackage",
         config: {},
@@ -108,14 +119,16 @@ describe("Loader.request", () => {
             );
         loader = createLoader(
             [[codeDetails, runtimeFactory]],
-            driver.createDocumentServiceFactory(),
-            driver.createUrlResolver(),
+            provider.documentServiceFactory,
+            provider.urlResolver,
+            ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
         );
         return createAndAttachContainer(
-            codeDetails, loader, driver.createCreateNewRequest(documentId));
+            codeDetails, loader, provider.driver.createCreateNewRequest(documentId));
     }
     let container: IContainer;
     beforeEach(async () => {
+        provider = getTestObjectProvider();
         const documentId = createDocumentId();
         container = await createContainer(documentId);
         dataStore1 = await requestFluidObject(container, "default");
@@ -125,16 +138,16 @@ describe("Loader.request", () => {
         // this binds dataStore2 to dataStore1
         dataStore1._root.set("key", dataStore2.handle);
 
-        opProcessingController = new OpProcessingController();
+        opProcessingController = provider.opProcessingController;
         opProcessingController.addDeltaManagers(container.deltaManager);
     });
 
     it("can create the data objects with correct types", async () => {
         const testUrl1 = await container.getAbsoluteUrl(dataStore1.handle.absolutePath);
-        assert(testUrl1,"dataStore1 url is undefined");
+        assert(testUrl1, "dataStore1 url is undefined");
         const testDataStore1 = await requestFluidObject(loader, testUrl1);
         const testUrl2 = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
-        assert(testUrl2,"dataStore2 url is undefined");
+        assert(testUrl2, "dataStore2 url is undefined");
         const testDataStore2 = await requestFluidObject(loader, testUrl2);
 
         assert(testDataStore1 instanceof TestSharedDataObject1, "requestFromLoader returns the wrong type for default");
@@ -194,12 +207,9 @@ describe("Loader.request", () => {
         (container2 as Container).resume();
 
         // Flush all the ops
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
 
-        const newDataStore2 = await requestFluidObject(container2, {
-            url: newDataStore.id,
-            headers: { wait: false },   // data store load default wait to true currently
-        });
+        const newDataStore2 = await requestFluidObject(container2, { url: newDataStore.id });
         assert(newDataStore2 instanceof TestSharedDataObject2, "requestFromLoader returns the wrong type for object2");
     });
 
@@ -221,7 +231,7 @@ describe("Loader.request", () => {
         (container1 as Container).resume();
 
         // Flush all the ops
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
 
         const sameDataStore1 = await requestFluidObject(container1, {
             url: newDataStore.id,
@@ -234,13 +244,16 @@ describe("Loader.request", () => {
         assert.strictEqual(sameDataStore1, sameDataStore2,
             "same containers do not return same data store for same request");
     });
+
     it("can handle url with query params", async () => {
+        dataStore1.inspectRequest = true;
         const url = await container.getAbsoluteUrl("");
         assert(url, "url is undefined");
+        const testUrl = `${url}${url.includes("?") ? "&query1=1&query2=2" : "?query1=1&query2=2"}`;
 
-        const query = `?query1=1&query2=2`;
-        const testUrl = `${url}${query}`;
         const response = await loader.request({ url: testUrl });
-        assert.strictEqual(response.value, query, "request did not pass the right query to the data store");
+        const searchParams = new URLSearchParams(response.value);
+        assert.strictEqual(searchParams.get("query1"), "1", "request did not pass the right query to the data store");
+        assert.strictEqual(searchParams.get("query2"), "2", "request did not pass the right query to the data store");
     });
 });

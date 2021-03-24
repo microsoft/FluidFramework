@@ -45,11 +45,7 @@ export class Clicker extends DataObject implements IFluidHTMLView {
         const taskManagerHandle = this.root.get<IFluidHandle<TaskManager>>(taskManagerKey);
         this._taskManager = await taskManagerHandle?.get();
 
-        if (this.runtime.connected) {
-            this.setupAgent();
-        } else {
-            this.runtime.once("connected", () => { this.setupAgent(); });
-        }
+        this.setupAgent();
     }
 
     // #region IFluidHTMLView
@@ -73,8 +69,20 @@ export class Clicker extends DataObject implements IFluidHTMLView {
             .then(async () => {
                 console.log(`Picked`);
                 const clickerAgent = new ClickerAgent(this.counter);
+                // Attempt to reacquire the task if we lose it
+                this.taskManager.once("lost", () => {
+                    clickerAgent.stop();
+                    this.setupAgent();
+                });
                 await clickerAgent.run();
-            }).catch((err) => { console.error(err); });
+            }).catch(() => {
+                // We're not going to abandon our attempt, so if the promise rejects it probably means we got
+                // disconnected.  So we'll try again once we reconnect.  If it was for some other reason, we'll
+                // give up.
+                if (!this.runtime.connected) {
+                    this.runtime.once("connected", () => { this.setupAgent(); });
+                }
+            });
     }
 
     private get counter() {

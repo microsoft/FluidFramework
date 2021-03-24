@@ -41,6 +41,8 @@ export interface IContextSummarizeResult extends ISummarizeResult {
 
 export interface ISummarizeInternalResult extends IContextSummarizeResult {
     id: string;
+    /** Additional path parts between this node's ID and its children's IDs. */
+    pathPartsForChildren?: string[];
 }
 
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
@@ -103,9 +105,19 @@ export interface ISummarizerNode {
      */
     summarize(fullTree: boolean): Promise<ISummarizeResult>;
     /**
-     * Checks if the base snapshot was created as a failure summary. If it has
-     * the base summary handle + outstanding ops blob, then this will return the
-     * innermost base summary, and update the state by tracking the outstanding ops.
+     * Checks if there are any additional path parts for children that need to
+     * be loaded from the base summary. Additional path parts represent parts
+     * of the path between this SummarizerNode and any child SummarizerNodes
+     * that it might have. For example: if datastore "a" contains dds "b", but the
+     * path is "/a/.channels/b", then the additional path part is ".channels".
+     * @param snapshot - the base summary to parse
+     */
+    loadBaseSummaryWithoutDifferential(snapshot: ISnapshotTree): void;
+    /**
+     * Does all the work of loadBaseSummaryWithoutDifferential. Additionally if
+     * the base summary is a differential summary containing handle + outstanding ops blob,
+     * then this will return the innermost base summary, and update the state by
+     * tracking the outstanding ops.
      * @param snapshot - the base summary to parse
      * @param readAndParseBlob - function to read and parse blobs from storage
      * @returns the base summary to be used

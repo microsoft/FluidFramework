@@ -16,13 +16,15 @@ import {
     createDocumentId,
     createLoader as createLoaderUtil,
     ITestFluidObject,
+    ITestObjectProvider,
     OpProcessingController,
     SupportedExportInterfaces,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 interface ICodeProposalTestPackage extends IFluidPackage{
     version: number,
@@ -36,12 +38,8 @@ function isCodeProposalTestPackage(pkg: unknown): pkg is ICodeProposalTestPackag
     && isFluidPackage(maybe);
 }
 
-describe("CodeProposal.EndToEnd", () => {
-    let driver: ITestDriver;
-    before(()=>{
-        driver = getFluidTestDriver() as unknown as ITestDriver;
-    });
-
+// REVIEW: enable compat testing?
+describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
     const packageV1: ICodeProposalTestPackage = {
         name: "test",
         version: 1,
@@ -87,23 +85,26 @@ describe("CodeProposal.EndToEnd", () => {
                 [{ package: packageV2 },fluidExport],
                 [{ package: packageV1dot5 }, fluidExport],
             ],
-            driver.createDocumentServiceFactory(),
-            driver.createUrlResolver(),
+            provider.documentServiceFactory,
+            provider.urlResolver,
+            ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
             { hotSwapContext });
     }
 
     async function createContainer(code: IFluidCodeDetails, documentId: string): Promise<IContainer> {
         const loader = createLoader();
-        return createAndAttachContainer(code, loader, driver.createCreateNewRequest(documentId));
+        return createAndAttachContainer(code, loader, provider.driver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(documentId: string): Promise<IContainer> {
         const loader = createLoader();
-        return loader.resolve({ url: await driver.createContainerUrl(documentId) });
+        return loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
     }
 
+    let provider: ITestObjectProvider;
     let containers: IContainer[];
     beforeEach(async () => {
+        provider = getTestObjectProvider();
         containers = [];
         const documentId = createDocumentId();
         const codeDetails: IFluidCodeDetails = { package: packageV1 };
@@ -111,10 +112,10 @@ describe("CodeProposal.EndToEnd", () => {
         // Create a Container for the first client.
         containers.push(await createContainer(codeDetails, documentId));
 
-        opProcessingController = new OpProcessingController();
+        opProcessingController = provider.opProcessingController;
         opProcessingController.addDeltaManagers(containers[0].deltaManager);
 
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
 
         // Load the Container that was created by the first client.
         containers.push(await loadContainer(documentId));
@@ -154,10 +155,10 @@ describe("CodeProposal.EndToEnd", () => {
 
         const res = await Promise.all([
             containers[0].proposeCodeDetails(proposal),
-            opProcessingController.process(),
+            provider.ensureSynchronized(),
         ]);
         assert.strictEqual(res[0], true, "Code proposal should be accepted");
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
 
         for (let i = 0; i < containers.length; i++) {
             assert.strictEqual(containers[i].closed, true, `containers[${i}] should be closed`);
@@ -186,7 +187,7 @@ describe("CodeProposal.EndToEnd", () => {
 
         const res = await Promise.all([
             containers[0].proposeCodeDetails(proposal),
-            opProcessingController.process(),
+            provider.ensureSynchronized(),
         ]);
 
         assert.strictEqual(res[0], false, "Code proposal should be rejected");
@@ -213,7 +214,7 @@ describe("CodeProposal.EndToEnd", () => {
         const proposal: IFluidCodeDetails = { package: packageV1dot5 };
         const res = await Promise.all([
             containers[0].proposeCodeDetails(proposal),
-            opProcessingController.process(),
+            provider.ensureSynchronized(),
         ]);
 
         assert.strictEqual(res[0], true, "Code proposal should be accepted");
@@ -251,11 +252,11 @@ describe("CodeProposal.EndToEnd", () => {
 
             const res = await Promise.all([
                 containers[0].proposeCodeDetails(proposal),
-                opProcessingController.process(),
+                provider.ensureSynchronized(),
             ]);
 
             assert.strictEqual(res[0], true, "Code proposal should be accepted");
-            await opProcessingController.process();
+            await provider.ensureSynchronized();
 
             for (let i = 0; i < containers.length; i++) {
                 assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
@@ -288,7 +289,7 @@ describe("CodeProposal.EndToEnd", () => {
 
             const res = await Promise.all([
                 containers[0].proposeCodeDetails(proposal),
-                opProcessingController.process(),
+                provider.ensureSynchronized(),
             ]);
 
             assert.strictEqual(res[0], false, "Code proposal should be rejected");
@@ -322,12 +323,12 @@ describe("CodeProposal.EndToEnd", () => {
 
             const res = await Promise.all([
                 containers[0].proposeCodeDetails(proposal),
-                opProcessingController.process(),
+                provider.ensureSynchronized(),
             ]);
 
             assert.strictEqual(res[0], true, "Code proposal should be accepted");
             assert.strictEqual(containers[0].closed, false, "containers[0] should not be closed");
-            await opProcessingController.process();
+            await provider.ensureSynchronized();
 
             assert.deepStrictEqual(
                 containers[0].codeDetails,
@@ -350,7 +351,7 @@ describe("CodeProposal.EndToEnd", () => {
             const proposal: IFluidCodeDetails = { package: packageV1dot5 };
             const res = await Promise.all([
                 containers[0].proposeCodeDetails(proposal),
-                opProcessingController.process(),
+                provider.ensureSynchronized(),
             ]);
 
             assert.strictEqual(res[0], true, "Code proposal should be accepted");
@@ -383,7 +384,7 @@ describe("CodeProposal.EndToEnd", () => {
             waiters.push(... keys.map(async (k)=>map.wait(k)));
         }
 
-        await Promise.all([opProcessingController.process(), ...waiters]);
+        await Promise.all([provider.ensureSynchronized(), ...waiters]);
 
         for (const map of maps) {
             for (const key of keys) {

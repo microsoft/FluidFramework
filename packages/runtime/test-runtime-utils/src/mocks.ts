@@ -120,8 +120,10 @@ export class MockContainerRuntime {
         this.deltaManager = new MockDeltaManager();
         // Set FluidDataStoreRuntime's deltaManager to ours so that they are in sync.
         this.dataStoreRuntime.deltaManager = this.deltaManager;
+        this.dataStoreRuntime.quorum = factory.quorum;
         // FluidDataStoreRuntime already creates a clientId, reuse that so they are in sync.
         this.clientId = this.dataStoreRuntime.clientId;
+        factory.quorum.addMember(this.clientId, {});
     }
 
     public createDeltaConnection(): MockDeltaConnection {
@@ -154,6 +156,7 @@ export class MockContainerRuntime {
 
     public process(message: ISequencedDocumentMessage) {
         this.deltaManager.lastSequenceNumber = message.sequenceNumber;
+        this.deltaManager.lastMessage = message;
         this.deltaManager.minimumSequenceNumber = message.minimumSequenceNumber;
         const [local, localOpMetadata] = this.processInternal(message);
         this.deltaConnections.forEach((dc) => {
@@ -193,6 +196,7 @@ export class MockContainerRuntime {
 export class MockContainerRuntimeFactory {
     public sequenceNumber = 0;
     public minSeq = new Map<string, number>();
+    public readonly quorum = new MockQuorum();
     protected messages: ISequencedDocumentMessage[] = [];
     protected readonly runtimes: MockContainerRuntime[] = [];
 
@@ -387,7 +391,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public deltaManager = new MockDeltaManager();
     public readonly loader: ILoader;
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockFluidDataStoreRuntime");
-    public readonly quorum = new MockQuorum();
+    public quorum = new MockQuorum();
 
     public get absolutePath() {
         return `/${this.id}`;

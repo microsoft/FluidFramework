@@ -194,7 +194,7 @@ export function createOdspNetworkError(
             props.serverEpoch = response.headers.get("x-fluid-epoch") ?? undefined;
         }
     }
-    error.addProperties(props);
+    error.addTelemetryProperties(props);
     return error;
 }
 
