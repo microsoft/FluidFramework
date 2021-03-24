@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/aqueduct";
 import { assert, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { SummaryType } from "@fluidframework/protocol-definitions";
@@ -46,8 +46,8 @@ describeNoCompat("GC in summary", (getTestObjectProvider) => {
         TestDataObject,
         [],
         []);
-    const runtimeOptions = {
-        generateSummaries: false,
+    const runtimeOptions: IContainerRuntimeOptions = {
+        summaryOptions: { generateSummaries: false },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         dataObjectFactory,

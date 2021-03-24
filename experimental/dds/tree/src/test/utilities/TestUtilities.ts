@@ -194,7 +194,7 @@ export async function setUpLocalServerTestSharedTree(
 	const registry: ChannelFactoryRegistry = [[treeId, SharedTree.getFactory()]];
 	const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
 		new TestContainerRuntimeFactory(TestDataObject.type, new TestFluidObjectFactory(registry), {
-			initialSummarizerDelayMs: 0,
+			summaryOptions: { initialSummarizerDelayMs: 0 },
 		});
 
 	let provider: TestObjectProvider;

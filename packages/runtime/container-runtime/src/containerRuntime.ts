@@ -211,10 +211,27 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
     maxAckWaitTime: 120000,
 };
 
-/**
- * Options for container runtime.
- */
-export interface IContainerRuntimeOptions {
+export interface IGCRuntimeOptions {
+    /* Flag that will disable garbage collection if set to true. */
+    disableGC?: boolean;
+
+    /**
+     * Flag representing the summary's preference for enabling garbage collection.
+     * This is stored in the summary and unchangeable (for now). So this runtime option
+     * only takes affect on new containers.
+     * Currently if this is set to false, it will take priority and any container will
+     * never run GC.
+     */
+    summaryEnableGC?: boolean;
+
+    /**
+     * Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether the node
+     * changed or not.
+     */
+    runFullGC?: boolean;
+}
+
+export interface ISummaryRuntimeOptions {
     /**
      * Flag that will generate summaries if connected to a service that supports them.
      * This defaults to true and must be explicitly set to false to disable.
@@ -224,23 +241,6 @@ export interface IContainerRuntimeOptions {
     /* Delay before first attempt to spawn summarizing container. */
     initialSummarizerDelayMs?: number;
 
-    /* Flag that will disable garbage collection if set to true. */
-    disableGC?: boolean;
-
-    /**
-     * Flag representing the document's preference for enabling garbage collection.
-     * This is stored in the summary and unchangeable (for now).
-     * Currently if this is set to false, it will take priority and the document will
-     * never run GC.
-     */
-    documentEnableGC?: boolean;
-
-    /**
-     * Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether the node
-     * changed or not.
-     */
-    runFullGC?: boolean;
-
     /** Override summary configurations set by the server. */
     summaryConfigOverrides?: Partial<ISummaryConfiguration>;
 
@@ -248,6 +248,14 @@ export interface IContainerRuntimeOptions {
     // and the root node when generating a summary if set to true.
     // Defaults to TRUE (disabled) for now.
     disableIsolatedChannels?: boolean;
+}
+
+/**
+ * Options for container runtime.
+ */
+export interface IContainerRuntimeOptions {
+    summaryOptions?: ISummaryRuntimeOptions;
+    gcOptions?: IGCRuntimeOptions;
 }
 
 interface IRuntimeMessageMetadata {
@@ -549,21 +557,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
         const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
 
-        // enableGC in metadata is introduced with v1 in the metadata blob. Force to false before that.
-        // This will override the value in runtimeOptions if it is set (true/false). So setting it in
-        // runtimeOptions will only specify what to do if it has never been set before.
-        // Note that even leaving it undefined will force it to false if no metadata blob is written.
-        const documentEnableGC = context.baseSnapshot ? gcEnabled(metadata) : undefined;
+        const defaultRuntimeOptions: Required<IContainerRuntimeOptions> = {
+            summaryOptions: { generateSummaries: true },
+            gcOptions: {},
+        };
 
         const runtime = new ContainerRuntime(
             context,
             registry,
             metadata,
             chunks,
-            {
-                ...runtimeOptions,
-                ...{ documentEnableGC: documentEnableGC ?? runtimeOptions?.documentEnableGC },
-            },
+            { ...defaultRuntimeOptions, ...runtimeOptions },
             containerScope,
             logger,
             requestHandler,
@@ -651,14 +655,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.attachState;
     }
 
-    /**
-     * Returns true if generating summaries with isolated channels is
-     * explicitly disabled. This only affects how summaries are written.
-     */
-    public get disableIsolatedChannels(): boolean {
-        return !!this.runtimeOptions.disableIsolatedChannels;
-    }
-
     public nextSummarizerP?: Promise<Summarizer>;
     public nextSummarizerD?: Deferred<Summarizer>;
 
@@ -702,7 +698,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return  {
             ... DefaultSummaryConfiguration,
             ... this.context?.serviceConfiguration?.summary,
-            ... this.runtimeOptions.summaryConfigOverrides,
+            ... this.runtimeOptions.summaryOptions?.summaryConfigOverrides,
          };
     }
 
@@ -721,16 +717,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly chunkMap: Map<string, string[]>;
 
     private readonly dataStores: DataStores;
-    private readonly runtimeOptions: Readonly<IContainerRuntimeOptions>;
+
+    // This is the source of truth for writing in the summary metadata blob.
+    private readonly summaryEnableGC: boolean | undefined;
+    // This is the source of truth for whether GC is enabled or not.
+    private readonly shouldRunGC: boolean;
+    /**
+     * True if generating summaries with isolated channels is
+     * explicitly disabled. This only affects how summaries are written,
+     * and is the single source of truth for this container.
+     */
+    public readonly disableIsolatedChannels: boolean;
 
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
         metadata: IContainerRuntimeMetadata | undefined,
         chunks: [string, string[]][],
-        runtimeOptions: IContainerRuntimeOptions = {
-            generateSummaries: true,
-        },
+        private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
         private readonly containerScope: IFluidObject,
         public readonly logger: ITelemetryLogger,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
@@ -738,10 +742,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ) {
         super();
 
-        this.runtimeOptions = {
-            ...{ disableIsolatedChannels: true },
-            ...runtimeOptions,
-        };
+        // enableGC in metadata is introduced with v1 in the metadata blob. Force to false before that.
+        // This will override the value in runtimeOptions if it is set (true/false). So setting it in
+        // runtimeOptions will only specify what to do if it has never been set before.
+        // Note that even leaving it undefined will force it to false if no metadata blob is written.
+        const prevSummaryEnableGC = context.baseSnapshot ? gcEnabled(metadata) : undefined;
+        this.summaryEnableGC = prevSummaryEnableGC ?? this.runtimeOptions.gcOptions.summaryEnableGC;
+
+        // Can override with localStorage flag.
+        this.shouldRunGC = localStorageEnableGC() ?? (
+            // Must not be disabled permanently in summary.
+            (this.summaryEnableGC ?? true)
+            // Must not be disabled by runtime option.
+            && !this.runtimeOptions.gcOptions.disableGC
+        );
+
+        // Default to true (disabled) until a few versions have passed.
+        this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? true;
 
         this._connected = this.context.connected;
         this.chunkMap = new Map<string, string[]>(chunks);
@@ -773,7 +790,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // We also are not decoding the base summaries at the root.
                 throwOnFailure: true,
                 // If GC is disabled, let the summarizer node know so that it does not track GC state.
-                gcDisabled: this.runtimeOptions.disableGC,
+                gcDisabled: !this.shouldRunGC,
             },
         );
 
@@ -854,12 +871,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
             context,
-            this.runtimeOptions.generateSummaries !== false,
+            this.runtimeOptions.summaryOptions.generateSummaries !== false,
             this.logger,
             (summarizer) => { this.nextSummarizerP = summarizer; },
             this.previousState.nextSummarizerP,
             !!this.previousState.reload,
-            this.runtimeOptions.initialSummarizerDelayMs);
+            this.runtimeOptions.summaryOptions.initialSummarizerDelayMs);
 
         if (this.connected) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -1011,14 +1028,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private get shouldWriteMetadata(): boolean {
         // We need the metadata blob if either isolated channels are enabled
         // or GC is enabled at the document level.
-        return !this.disableIsolatedChannels || !!this.runtimeOptions.documentEnableGC;
+        return !this.disableIsolatedChannels || !!this.summaryEnableGC;
     }
 
     private formMetadata(): IContainerRuntimeMetadata {
         return {
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
-            enableGC: this.runtimeOptions.documentEnableGC, // retain preference, this is unchangeable for now
+            enableGC: this.summaryEnableGC, // retain preference, this is unchangeable for now
         };
     }
 
@@ -1508,7 +1525,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const gcStats: { totalGCNodes?: number; deletedGCNodes?: number } = {};
             try {
                 // Get the container's GC data and run GC on the reference graph in it.
-                const gcData = await this.dataStores.getGCData(this.runtimeOptions.runFullGC === true);
+                const gcData = await this.dataStores.getGCData(this.runtimeOptions.gcOptions.runFullGC === true);
                 const { referencedNodeIds, deletedNodeIds } = runGarbageCollection(
                     gcData.gcNodes, [ "/" ],
                     this.logger,
@@ -1577,16 +1594,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return summarizeResult as IChannelSummarizeResult;
     }
 
-    private shouldRunGC(): boolean {
-        // Can override with localStorage flag.
-        return localStorageEnableGC() ?? (
-            // Must not be disabled permanently in document summary.
-            (this.runtimeOptions.documentEnableGC ?? true)
-            // Must not be disabled by runtime option.
-            && !this.runtimeOptions.disableGC
-        );
-    }
-
     /** Implementation of ISummarizerInternalsProvider.generateSummary */
     public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData | undefined> {
         const { fullTree, refreshLatestAck, summaryLogger } = options;
@@ -1611,9 +1618,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             const trace = Trace.start();
-            const runGC = this.shouldRunGC();
             const summarizeResult = await this.summarize({
-                runGC,
+                runGC: this.shouldRunGC,
                 fullTree,
                 trackState: true,
                 summaryLogger,

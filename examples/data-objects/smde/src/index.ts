@@ -34,8 +34,7 @@ class SmdeContainerFactory implements IRuntimeFactory {
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
                 innerRequestHandler,
-            ),
-            { generateSummaries: true });
+            ));
 
         // Flush mode to manual to batch operations within a turn
         runtime.setFlushMode(FlushMode.Manual);

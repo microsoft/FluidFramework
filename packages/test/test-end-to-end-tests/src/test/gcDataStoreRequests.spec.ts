@@ -58,10 +58,14 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
         maxTime: IdleDetectionTime * 12,
     };
     const runtimeOptions: IContainerRuntimeOptions = {
-        generateSummaries: true,
-        initialSummarizerDelayMs: 10,
-        summaryConfigOverrides,
-        documentEnableGC: true,
+        summaryOptions: {
+            generateSummaries: true,
+            initialSummarizerDelayMs: 10,
+            summaryConfigOverrides,
+        },
+        gcOptions: {
+            summaryEnableGC: true,
+        },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         factory,

@@ -471,8 +471,7 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
                 innerRequestHandler,
-            ),
-            { generateSummaries: true });
+            ));
 
         // On first boot create the base component
         if (!runtime.existing) {

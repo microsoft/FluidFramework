@@ -15,7 +15,12 @@ import { ITestObjectProvider, ITestContainerConfig } from "@fluidframework/test-
 import { describeFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 
 const testContainerConfig: ITestContainerConfig = {
-    runtimeOptions: { initialSummarizerDelayMs: 20, summaryConfigOverrides: { maxOps: 1 } },
+    runtimeOptions: {
+        summaryOptions: {
+            initialSummarizerDelayMs: 20,
+            summaryConfigOverrides: { maxOps: 1 },
+        },
+    },
     registry: [["sharedString", SharedString.getFactory()]],
 };
 

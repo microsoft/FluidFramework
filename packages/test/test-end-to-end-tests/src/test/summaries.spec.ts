@@ -6,7 +6,7 @@
 import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { assert, bufferToString, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { ContainerRuntime, ISummaryRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -35,7 +35,7 @@ class TestDataObject extends DataObject {
 
 async function createContainer(
     provider: ITestObjectProvider,
-    runtimeOptions: Omit<IContainerRuntimeOptions, "generateSummaries">,
+    summaryOpt: Omit<ISummaryRuntimeOptions, "generateSummaries">,
 ): Promise<IContainer> {
     const documentId = createDocumentId();
     const codeDetails: IFluidCodeDetails = {
@@ -49,10 +49,9 @@ async function createContainer(
         SharedObjectSequence.getFactory(),
     ], []);
 
-    const thisRuntimeOptions: IContainerRuntimeOptions = {
-        ...{ generateSummaries: false },
-        ...runtimeOptions,
-    };
+    // Force generateSummaries to false.
+    const summaryOptions: ISummaryRuntimeOptions = { ...summaryOpt };
+    summaryOptions.generateSummaries = false;
 
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         factory,
@@ -62,7 +61,7 @@ async function createContainer(
         ],
         undefined,
         undefined,
-        thisRuntimeOptions,
+        { summaryOptions },
     );
 
     const loader = createLoader(
