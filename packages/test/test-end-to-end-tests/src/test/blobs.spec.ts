@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IsoBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer, bufferToString } from "@fluidframework/common-utils";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -35,7 +35,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         }));
 
         const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
-        const blob = await dataStore._runtime.uploadBlob(IsoBuffer.from("some random text"));
+        const blob = await dataStore._runtime.uploadBlob(stringToBuffer("some random text", "utf-8"));
 
         dataStore._root.set("my blob", blob);
 
@@ -49,7 +49,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 
         const dataStore1 = await requestFluidObject<ITestDataObject>(container1, "default");
 
-        const blob = await dataStore1._runtime.uploadBlob(IsoBuffer.from(testString, "utf-8"));
+        const blob = await dataStore1._runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
         dataStore1._root.set(testKey, blob);
 
         const container2 = await provider.loadTestContainer(testContainerConfig);
@@ -57,13 +57,13 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 
         const blobHandle = await dataStore2._root.wait<IFluidHandle<ArrayBufferLike>>(testKey);
         assert(blobHandle);
-        assert.strictEqual(IsoBuffer.from(await blobHandle.get()).toString("utf-8"), testString);
+        assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), testString);
     });
 
     it("loads from snapshot", async function() {
         const container1 = await provider.makeTestContainer(testContainerConfig);
         const dataStore = await requestFluidObject<ITestDataObject>(container1, "default");
-        const blob = await dataStore._runtime.uploadBlob(IsoBuffer.from("some random text"));
+        const blob = await dataStore._runtime.uploadBlob(stringToBuffer("some random text", "utf-8"));
 
         // attach blob, wait for blob attach op, then take BlobManager snapshot
         dataStore._root.set("my blob", blob);
@@ -107,7 +107,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
             const sharedString = SharedString.create(dataStore._runtime, uuid());
             dataStore._root.set("sharedString", sharedString.handle);
 
-            const blob = await dataStore._runtime.uploadBlob(IsoBuffer.from(testString));
+            const blob = await dataStore._runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
 
             sharedString.insertMarker(0, ReferenceType.Simple, { blob });
 
@@ -137,7 +137,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 
             const props = sharedString2.getPropertiesAtPosition(0);
 
-            assert.strictEqual(IsoBuffer.from(await props.blob.get()).toString("utf-8"), testString);
+            assert.strictEqual(bufferToString(await props.blob.get(), "utf-8"), testString);
         }
     });
 });

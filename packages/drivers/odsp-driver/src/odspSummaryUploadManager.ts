@@ -14,7 +14,7 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     HostStoragePolicyInternal,
     IBlob,
-    ISnapshotRequest,
+    IOdspSummaryPayload,
     ISnapshotResponse,
     ISnapshotTree,
     ISnapshotTreeBaseEntry,
@@ -131,7 +131,7 @@ export class OdspSummaryUploadManager {
                 hash = await hashFile(
                     blobValue instanceof ArrayBuffer ?
                         IsoBuffer.from(blobValue) :
-                            IsoBuffer.from(blobValue.content, blobValue.encoding ?? "utf-8"),
+                        IsoBuffer.from(blobValue.content, blobValue.encoding ?? "utf-8"),
                 );
                 this.blobTreeDedupCaches.blobShaToPath.set(hash, fullBlobPath);
             }
@@ -231,7 +231,7 @@ export class OdspSummaryUploadManager {
         if (!this.hostPolicy.blobDeduping) {
             assert(reusedBlobs === 0, 0x0aa /* "No blobs should be deduped" */);
         }
-        const snapshot: ISnapshotRequest = {
+        const snapshot: IOdspSummaryPayload = {
             entries: snapshotTree.entries!,
             message: "app",
             sequenceNumber: referenceSequenceNumber,
