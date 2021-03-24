@@ -50,7 +50,6 @@ export function getAttributesFormatVersion(attributes: ReadFluidDataStoreAttribu
         /**
          * Version 2+: Introduces .channels trees for isolation of
          * channel trees from data store objects.
-         * Also introduces enableGC option stored in the summary.
          */
         return attributes.summaryFormatVersion;
     } else if (attributes.snapshotFormatVersion === "0.1") {
@@ -85,6 +84,7 @@ export function getMetadataFormatVersion(metadata: IContainerRuntimeMetadata | u
     /**
      * Version 1+: Introduces .metadata blob and .channels trees for isolation of
      * data store trees from container-level objects.
+     * Also introduces enableGC option stored in the summary.
      *
      * Version 0: metadata blob missing; format version is missing from summary.
      * This indicates it is an older version.

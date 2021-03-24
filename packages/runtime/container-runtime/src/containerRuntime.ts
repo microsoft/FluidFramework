@@ -254,6 +254,21 @@ interface IRuntimeMessageMetadata {
     batch?: boolean;
 }
 
+function localStorageEnableGC(): boolean | undefined {
+    try {
+        if (typeof localStorage === "object" && localStorage !== null) {
+            if  (localStorage.FluidEnableGC === "1") {
+                return true;
+            }
+            if  (localStorage.FluidEnableGC === "0") {
+                return false;
+            }
+        }
+    } catch (e) {}
+
+    return undefined;
+}
+
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     switch (message.type) {
         case ContainerMessageType.FluidDataStoreOp:
@@ -535,7 +550,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
 
         // enableGC in metadata is introduced with v1 in the metadata blob. Force to false before that.
-        const documentEnableGC = gcEnabled(metadata);
+        // This will override the value in runtimeOptions if it is set (true/false). So setting it in
+        // runtimeOptions will only specify what to do if it has never been set before.
+        // Note that even leaving it undefined will force it to false if no metadata blob is written.
+        const documentEnableGC = context.baseSnapshot ? gcEnabled(metadata) : undefined;
 
         const runtime = new ContainerRuntime(
             context,
@@ -1559,6 +1577,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return summarizeResult as IChannelSummarizeResult;
     }
 
+    private shouldRunGC(): boolean {
+        // Can override with localStorage flag.
+        return localStorageEnableGC() ?? (
+            // Must not be disabled permanently in document summary.
+            (this.runtimeOptions.documentEnableGC ?? true)
+            // Must not be disabled by runtime option.
+            && !this.runtimeOptions.disableGC
+        );
+    }
+
     /** Implementation of ISummarizerInternalsProvider.generateSummary */
     public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData | undefined> {
         const { fullTree, refreshLatestAck, summaryLogger } = options;
@@ -1583,7 +1611,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             const trace = Trace.start();
-            const runGC = (this.runtimeOptions.documentEnableGC ?? true) && !this.runtimeOptions.disableGC;
+            const runGC = this.shouldRunGC();
             const summarizeResult = await this.summarize({
                 runGC,
                 fullTree,
