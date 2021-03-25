@@ -87,7 +87,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     }
 
     public resume(): void {
-        assert(this.pauseCount > 0, "Nonzero pause-count on resume()");
+        assert(this.pauseCount > 0, 0x0f4 /* "Nonzero pause-count on resume()" */);
         this.pauseCount--;
         if (!this.paused) {
             this.ensureProcessing();

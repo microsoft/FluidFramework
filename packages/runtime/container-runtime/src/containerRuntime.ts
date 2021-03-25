@@ -262,11 +262,11 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
         } else {
             // new format
             const innerContents = message.contents as ContainerRuntimeMessage;
-            assert(innerContents.type !== undefined, "Undefined inner contents type!");
+            assert(innerContents.type !== undefined, 0x121 /* "Undefined inner contents type!" */);
             message.type = innerContents.type;
             message.contents = innerContents.contents;
         }
-        assert(isRuntimeMessage(message), "Message to unpack is not proper runtime message");
+        assert(isRuntimeMessage(message), 0x122 /* "Message to unpack is not proper runtime message" */);
     } else {
         // Legacy format, but it's already "unpacked",
         // i.e. message.type is actually ContainerMessageType.
@@ -765,7 +765,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
             () => {
-                assert(this.attachState !== AttachState.Detached, "Blobs NYI in detached container mode");
+                assert(this.attachState !== AttachState.Detached, 0x123 /* "Blobs NYI in detached container mode" */);
                 return this.storage;
             },
             (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
@@ -832,7 +832,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.deltaManager.on("readonly", (readonly: boolean) => {
             // we accumulate ops while being in read-only state.
             // once user gets write permissions and we have active connection, flush all pending ops.
-            assert(readonly === this.deltaManager.readonly, "inconsistent readonly property/event state");
+            assert(readonly === this.deltaManager.readonly, 0x124 /* "inconsistent readonly property/event state" */);
 
             // We need to be very careful with when we (re)send pending ops, to ensure that we only send ops
             // when we either never send an op, or attempted to send it but we know for sure it was not
@@ -846,7 +846,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // can rely on same safety mechanism and resend ops only when we establish new connection.
             // This is applicable for read-only permissions (event is raised before connection is properly registered),
             // but it's an extra requirement for Container.forceReadonly() API
-            assert(!readonly || !this.connected, "Unsafe to transition to read-only state!");
+            assert(!readonly || !this.connected, 0x125 /* "Unsafe to transition to read-only state!" */);
 
             this.replayPendingStates();
         });
@@ -961,7 +961,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 const subRequest = requestParser.createSubRequest(1);
                 // We always expect createSubRequest to include a leading slash, but asserting here to protect against
                 // unintentionally modifying the url if that changes.
-                assert(subRequest.url.startsWith("/"), "Expected createSubRequest url to include a leading slash");
+                assert(subRequest.url.startsWith("/"),
+                    0x126 /* "Expected createSubRequest url to include a leading slash" */);
                 return dataStore.IFluidRouter.request(subRequest);
             }
 
@@ -1071,7 +1072,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const oldState = this.dirtyContainer;
         this.dirtyContainer = false;
 
-        assert(this.emitDirtyDocumentEvent, "dirty document event not set on replay");
+        assert(this.emitDirtyDocumentEvent, 0x127 /* "dirty document event not set on replay" */);
         this.emitDirtyDocumentEvent = false;
         let newState: boolean;
 
@@ -1098,7 +1099,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * so we listen directly from DeltaManager instead.
      */
     private readonly onOp = (op: ISequencedDocumentMessage) => {
-        assert(!this.paused, "Container should not already be paused before applying stashed ops");
+        assert(!this.paused, 0x128 /* "Container should not already be paused before applying stashed ops" */);
         this.paused = true;
         this.scheduleManager.setPaused(true);
         const stashP = this.pendingStateManager.applyStashedOpsAt(op.sequenceNumber);
@@ -1143,7 +1144,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         raiseConnectedEvent(this._logger, this, connected, clientId);
 
         if (connected) {
-            assert(!!clientId, "Missing clientId");
+            assert(!!clientId, 0x129 /* "Missing clientId" */);
             this.summaryManager.setConnected(clientId);
         } else {
             this.summaryManager.setDisconnected();
@@ -1196,7 +1197,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.dataStores.processFluidDataStoreOp(message, local || localAck, localOpMetadata);
                     break;
                 case ContainerMessageType.BlobAttach:
-                    assert(message?.metadata?.blobId, "Missing blob id on metadata");
+                    assert(message?.metadata?.blobId, 0x12a /* "Missing blob id on metadata" */);
                     this.blobManager.addBlobId(message.metadata.blobId);
                     break;
                 default:
@@ -1230,7 +1231,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
         const context = await this.dataStores.getDataStore(id, wait);
-        assert(await context.isRoot(), "did not get root data store");
+        assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
         return context.realize();
     }
 
@@ -1390,7 +1391,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public isMessageDirtyable(message: ISequencedDocumentMessage) {
         assert(
             isRuntimeMessage(message) === true,
-            "Message passed for dirtyable check should be a container runtime message",
+            0x12c /* "Message passed for dirtyable check should be a container runtime message" */,
         );
         return this.isContainerMessageDirtyable(message.type as ContainerMessageType, message.contents);
     }
@@ -1429,9 +1430,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
         if (attachState === AttachState.Attaching) {
             assert(this.attachState === AttachState.Attaching,
-                "Container Context should already be in attaching state");
+                0x12d /* "Container Context should already be in attaching state" */);
         } else {
-            assert(this.attachState === AttachState.Attached, "Container Context should already be in attached state");
+            assert(this.attachState === AttachState.Attached,
+                0x12e /* "Container Context should already be in attached state" */);
         }
         this.dataStores.setAttachState(attachState);
     }
@@ -1525,7 +1527,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
         assert(summarizeResult.summary.type === SummaryType.Tree,
-            "Container Runtime's summarize should always return a tree");
+            0x12f /* "Container Runtime's summarize should always return a tree" */);
 
         return summarizeResult as IChannelSummarizeResult;
     }
@@ -1574,7 +1576,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const lastSequenceNumber = this.deltaManager.lastSequenceNumber;
             assert(
                 lastSequenceNumber === summaryRefSeqNum,
-                `lastSequenceNumber changed while paused. ${lastSequenceNumber} !== ${summaryRefSeqNum}`,
+                0x130 /* `lastSequenceNumber changed while paused. ${lastSequenceNumber} !== ${summaryRefSeqNum}` */,
             );
 
             const handle = await this.storage.uploadSummaryWithContext(
@@ -1664,7 +1666,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.chunkMap.set(clientId, map);
         }
         assert(chunkedContent.chunkId === map.length + 1,
-            "Mismatch between new chunkId and expected chunkMap"); // 1-based indexing
+            0x131 /* "Mismatch between new chunkId and expected chunkMap" */); // 1-based indexing
         map.push(chunkedContent.contents);
     }
 
@@ -1719,7 +1721,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.closeFn(CreateContainerError("op submitted while processing pending initial state"));
         }
         // There should be no ops in detached container state!
-        assert(this.attachState !== AttachState.Detached, "sending ops in detached container");
+        assert(this.attachState !== AttachState.Detached, 0x132 /* "sending ops in detached container" */);
 
         let clientSequenceNumber: number = -1;
         let opMetadataInternal = opMetadata;
@@ -1799,7 +1801,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         type: MessageType,
         contents: any) {
         this.verifyNotClosed();
-        assert(this.connected, "Container disconnected when trying to submit system message");
+        assert(this.connected, 0x133 /* "Container disconnected when trying to submit system message" */);
 
         // System message should not be sent in the middle of the batch.
         // That said, we can preserve existing behavior by not flushing existing buffer.
@@ -1877,13 +1879,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // Each client expresses interest to be a leader.
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 scheduler.pick(LeaderTaskId, async () => {
-                    assert(!this._leader, "Client is already leader");
+                    assert(!this._leader, 0x134 /* "Client is already leader" */);
                     this.updateLeader(true);
                 });
 
                 scheduler.on("lost", (key) => {
                     if (key === LeaderTaskId) {
-                        assert(this._leader, "Got leader key but client is not leader");
+                        assert(this._leader, 0x135 /* "Got leader key but client is not leader" */);
                         this._leader = false;
                         this.updateLeader(false);
                     }
@@ -1919,7 +1921,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._leader = leadership;
         if (this.leader) {
             assert(this.clientId === undefined || this.connected && this.deltaManager && this.deltaManager.active,
-                "Leader must either have undefined clientId or be connected with active delta manager!");
+                0x136 /* "Leader must either have undefined clientId or be connected with active delta manager!" */);
             this.emit("leader");
         } else {
             this.emit("notleader");
@@ -1971,13 +1973,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private async getVersionFromStorage(versionId: string): Promise<IVersion> {
         const versions = await this.storage.getVersions(versionId, 1);
-        assert(!!versions && !!versions[0], "Failed to get version from storage");
+        assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
         return versions[0];
     }
 
     private async getSnapshotFromStorage(version: IVersion): Promise<ISnapshotTree> {
         const snapshot = await this.storage.getSnapshotTree(version);
-        assert(!!snapshot, "Failed to get snapshot from storage");
+        assert(!!snapshot, 0x138 /* "Failed to get snapshot from storage" */);
         return snapshot;
     }
 

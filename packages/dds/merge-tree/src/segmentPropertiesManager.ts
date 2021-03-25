@@ -25,7 +25,8 @@ export class SegmentPropertiesManager {
         }
         for (const key of Object.keys(annotateOp.props)) {
             if (this.pendingKeyUpdateCount?.[key] !== undefined) {
-                assert(this.pendingKeyUpdateCount[key] > 0, "Trying to update more annotate props than do exist!");
+                assert(this.pendingKeyUpdateCount[key] > 0,
+                    0x05c /* "Trying to update more annotate props than do exist!" */);
                 this.pendingKeyUpdateCount[key]--;
                 if (this.pendingKeyUpdateCount?.[key] === 0) {
                     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete

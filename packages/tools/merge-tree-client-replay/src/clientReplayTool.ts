@@ -249,10 +249,12 @@ export class ClientReplayTool {
                 for (const mergeTree of client[1]) {
                     assert(
                         mergeTree[1].getLength() === readonlyClient.get(mergeTree[0]).getLength(),
-                        "Mismatch between client mergeTree length and corresponding readonly mergeTree length");
+                        // eslint-disable-next-line max-len
+                        0x1c2 /* "Mismatch between client mergeTree length and corresponding readonly mergeTree length" */);
                     assert(
                         mergeTree[1].getText() === readonlyClient.get(mergeTree[0]).getText(),
-                        "Mismatch between client mergeTree length and corresponding readonly mergeTree text");
+                        // eslint-disable-next-line max-len
+                        0x1c3 /* "Mismatch between client mergeTree length and corresponding readonly mergeTree text" */);
                 }
             }
         }

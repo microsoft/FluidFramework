@@ -48,7 +48,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
-        assert(!!resolvedUrl.endpoints.ordererUrl, "Missing orderer URL!");
+        assert(!!resolvedUrl.endpoints.ordererUrl, 0x0b2 /* "Missing orderer URL!" */);
         const parsedUrl = parse(resolvedUrl.url);
         if (!parsedUrl.pathname) {
             throw new Error("Parsed url should contain tenant and doc Id!!");

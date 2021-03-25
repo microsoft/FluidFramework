@@ -317,7 +317,7 @@ export class ReplayDocumentDeltaConnection
             if (messages.length === 0) {
                 // No more ops. But, they can show up later, either because document was just created,
                 // or because another client keeps submitting new ops.
-                assert(!partialResult, "No more ops, but nonzero partial results!");
+                assert(!partialResult, 0x0af /* "No more ops, but nonzero partial results!" */);
                 if (controller.isDoneFetch(currentOp, undefined)) {
                     break;
                 }

@@ -185,7 +185,7 @@ export async function waitContainerToCatchUp(container: Container) {
 
         const waitForOps = () => {
             assert(container.connectionState !== ConnectionState.Disconnected,
-                "Container disconnected while waiting for ops!");
+                0x0cd /* "Container disconnected while waiting for ops!" */);
             const hasCheckpointSequenceNumber = deltaManager.hasCheckpointSequenceNumber;
 
             const connectionOpSeqNumber = deltaManager.lastKnownSeqNumber;
@@ -254,7 +254,7 @@ export class CollabWindowTracker {
         // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
         // update, which updates the MSN, then ack the update, etc...). Also, don't
         // count system messages in ops count.
-        assert(message.type !== MessageType.NoOp, "Don't acknowledge no-ops");
+        assert(message.type !== MessageType.NoOp, 0x0ce /* "Don't acknowledge no-ops" */);
 
         if (this.lastNoopTime === undefined) {
             this.lastNoopTime = Date.now();
@@ -701,7 +701,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
 
-        assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
+        assert(this.connectionState === ConnectionState.Disconnected, 0x0cf /* "disconnect event was not raised!" */);
 
         if (error !== undefined) {
             // Log current sequence number - useful if we have access to a file to understand better
@@ -716,7 +716,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 error,
             );
         } else {
-            assert(this.loaded, "Container in non-loaded state before close!");
+            assert(this.loaded, 0x0d0 /* "Container in non-loaded state before close!" */);
             this.logger.sendTelemetryEvent({ eventName: "ContainerClose" });
         }
 
@@ -731,9 +731,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // a new clientId and a future container using stale pending state without the new clientId would resubmit them
         this._deltaManager.close();
 
-        assert(this.attachState === AttachState.Attached, "Container should be attached before close");
+        assert(this.attachState === AttachState.Attached, 0x0d1 /* "Container should be attached before close" */);
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
-            "resolved url should be valid Fluid url");
+            0x0d2 /* "resolved url should be valid Fluid url" */);
         const pendingState: IPendingLocalState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
@@ -749,7 +749,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public serialize(): string {
-        assert(this.attachState === AttachState.Detached, "Should only be called in detached container");
+        assert(this.attachState === AttachState.Detached, 0x0d3 /* "Should only be called in detached container" */);
 
         const appSummary: ISummaryTree = this.context.createSummary();
         const protocolSummary = this.captureProtocolSummary();
@@ -758,8 +758,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async attach(request: IRequest): Promise<void> {
-        assert(this.loaded, "not loaded");
-        assert(!this.closed, "closed");
+        assert(this.loaded, 0x0d4 /* "not loaded" */);
+        assert(!this.closed, 0x0d5 /* "closed" */);
 
         // If container is already attached or attach is in progress, return.
         if (this._attachState === AttachState.Attached || this.attachInProgress) {
@@ -768,7 +768,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.attachInProgress = true;
         try {
-            assert(this.deltaManager.inbound.length === 0, "Inbound queue should be empty when attaching");
+            assert(this.deltaManager.inbound.length === 0, 0x0d6 /* "Inbound queue should be empty when attaching" */);
             // Only take a summary if the container is in detached state, otherwise we could have local changes.
             // In failed attach call, we would already have a summary cached.
             if (this._attachState === AttachState.Detached) {
@@ -786,7 +786,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this.emit("attaching");
             }
             assert(!!this.cachedAttachSummary,
-                "Summary should be there either by this attach call or previous attach call!!");
+                0x0d7 /* "Summary should be there either by this attach call or previous attach call!!" */);
 
             const createNewResolvedUrl = await this.urlResolver.resolve(request);
             ensureFluidResolvedUrl(createNewResolvedUrl);
@@ -806,7 +806,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 "",
                 this._context?.codeDetails,
             );
-            assert(url !== undefined, "Container url undefined");
+            assert(url !== undefined, 0x0d8 /* "Container url undefined" */);
             this.containerUrl = url;
             const parsedUrl = parseUrl(resolvedUrl.url);
             if (parsedUrl === undefined) {
@@ -900,7 +900,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     protected resumeInternal(args: IConnectionArgs) {
-        assert(!this.closed, "Attempting to setAutoReconnect() a closed DeltaManager");
+        assert(!this.closed, 0x0d9 /* "Attempting to setAutoReconnect() a closed DeltaManager" */);
 
         // Resume processing ops
         if (!this.resumedOpProcessingAfterLoad) {
@@ -1045,7 +1045,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._storageService =
                 new BlobCacheStorageService(this.storageService, blobs);
             // ensure we did not lose that policy in the process of wrapping
-            assert(blobSize === this._storageService.policies?.minBlobSize, "blob size policy");
+            assert(blobSize === this._storageService.policies?.minBlobSize, 0x0da /* "blob size policy" */);
         }
         const attributes: IDocumentAttributes = {
             branch: this.id,
@@ -1304,7 +1304,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async rehydrateDetachedFromSnapshot(snapshotTree: ISnapshotTree) {
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
-        assert(attributes.sequenceNumber === 0, "Seq number in detached container should be 0!!");
+        assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
         this.attachDeltaManagerOpHandler(attributes);
 
         // We know this is create detached flow with snapshot.
@@ -1664,7 +1664,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (!this.context.disposed) {
             this.context.setConnectionState(state, this.clientId);
         }
-        assert(this.protocolHandler !== undefined, "Protocol handler should be set here");
+        assert(this.protocolHandler !== undefined, 0x0dc /* "Protocol handler should be set here" */);
         this.protocolHandler.quorum.setConnectionState(state, this.clientId);
         raiseConnectedEvent(this.logger, this, state, this.clientId);
 
@@ -1789,7 +1789,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         previousRuntimeState: IRuntimeState = {},
         pendingLocalState?: unknown,
     ) {
-        assert(this._context?.disposed !== false, "Existing context not disposed");
+        assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
         // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
         if (this._dirtyContainer) {
             this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer"});
