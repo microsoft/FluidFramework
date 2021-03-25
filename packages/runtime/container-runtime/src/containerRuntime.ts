@@ -489,6 +489,29 @@ class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
     }
 }
 
+/** This is a temporary helper function for parsing runtimeOptions in the old format. */
+function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions): IContainerRuntimeOptions | undefined {
+    if (runtimeOptions === undefined) {
+        return runtimeOptions;
+    }
+
+    type OldContainerRuntimeOptions = Omit<IGCRuntimeOptions, "summaryEnableGC"> & ISummaryRuntimeOptions;
+    const oldRuntimeOptions = runtimeOptions as OldContainerRuntimeOptions;
+
+    const summaryOptions: ISummaryRuntimeOptions = runtimeOptions.summaryOptions ?? {
+        generateSummaries: oldRuntimeOptions.generateSummaries,
+        initialSummarizerDelayMs: oldRuntimeOptions.initialSummarizerDelayMs,
+        summaryConfigOverrides: oldRuntimeOptions.summaryConfigOverrides,
+        disableIsolatedChannels: oldRuntimeOptions.disableIsolatedChannels,
+    };
+    const gcOptions: IGCRuntimeOptions = runtimeOptions.gcOptions ?? {
+        disableGC: oldRuntimeOptions.disableGC,
+        runFullGC: oldRuntimeOptions.runFullGC,
+    };
+
+    return { summaryOptions, gcOptions };
+}
+
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
@@ -557,6 +580,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
         const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
 
+        const backCompatRuntimeOptions = getBackCompatRuntimeOptions(runtimeOptions);
         const defaultRuntimeOptions: Required<IContainerRuntimeOptions> = {
             summaryOptions: { generateSummaries: true },
             gcOptions: {},
@@ -567,7 +591,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             registry,
             metadata,
             chunks,
-            { ...defaultRuntimeOptions, ...runtimeOptions },
+            { ...defaultRuntimeOptions, ...backCompatRuntimeOptions },
             containerScope,
             logger,
             requestHandler,
