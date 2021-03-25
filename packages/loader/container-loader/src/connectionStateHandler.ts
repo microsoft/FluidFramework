@@ -80,7 +80,8 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
 
     // This is true when this client submitted any ops.
     public clientSentOps(connectionMode: ConnectionMode) {
-        assert(this._connectionState === ConnectionState.Connected, "Ops could only be sent when connected");
+        assert(this._connectionState === ConnectionState.Connected,
+            0x1d7 /* "Ops could only be sent when connected" */);
         this._clientSentOps = true;
         this.clientConnectionMode = connectionMode;
     }
@@ -185,7 +186,8 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         const oldState = this._connectionState;
         this._connectionState = value;
         if (value === ConnectionState.Connected) {
-            assert(oldState === ConnectionState.Connecting, "Should only transition from Connecting state");
+            assert(oldState === ConnectionState.Connecting,
+                0x1d8 /* "Should only transition from Connecting state" */);
             // Mark our old client should have left in the quorum if it's still there
             if (this._clientId !== undefined) {
                 const client: ILocalSequencedClient | undefined =
