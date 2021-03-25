@@ -48,6 +48,7 @@
     "@fluid-example/progress-bars": "^0.38.0",
     "@fluid-example/video-players": "^0.38.0",
     "@fluid-internal/client-api": "^0.38.0",
+    "@fluidframework/agent-scheduler": "^0.38.0",
     "@fluidframework/aqueduct": "^0.38.0",
     "@fluidframework/cell": "^0.38.0",
     "@fluidframework/common-utils": "^0.29.0-0",

@@ -15,13 +15,13 @@ import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
-    IAgentScheduler,
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import debug from "debug";
 import { v4 as uuid } from "uuid";
+import { IAgentScheduler } from "./agent";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;
@@ -29,20 +29,20 @@ const UnattachedClientId = `${uuid()}_unattached`;
 class AgentScheduler extends EventEmitter implements IAgentScheduler {
     public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         let root: ISharedMap;
-        let scheduler: ConsensusRegisterCollection<string | null>;
+        let consensusRegisterCollection: ConsensusRegisterCollection<string | null>;
         if (!runtime.existing) {
             root = SharedMap.create(runtime, "root");
             root.bindToContext();
-            scheduler = ConsensusRegisterCollection.create(runtime);
-            scheduler.bindToContext();
-            root.set("scheduler", scheduler.handle);
+            consensusRegisterCollection = ConsensusRegisterCollection.create(runtime);
+            consensusRegisterCollection.bindToContext();
+            root.set("scheduler", consensusRegisterCollection.handle);
         } else {
             root = await runtime.getChannel("root") as ISharedMap;
             const handle = await root.wait<IFluidHandle<ConsensusRegisterCollection<string | null>>>("scheduler");
             assert(handle !== undefined, 0x116 /* "Missing handle on scheduler load" */);
-            scheduler = await handle.get();
+            consensusRegisterCollection = await handle.get();
         }
-        const agentScheduler = new AgentScheduler(runtime, context, scheduler);
+        const agentScheduler = new AgentScheduler(runtime, context, consensusRegisterCollection);
         agentScheduler.initialize();
 
         return agentScheduler;
@@ -77,14 +77,14 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly context: IFluidDataStoreContext,
-        private readonly scheduler: ConsensusRegisterCollection<string | null>) {
+        private readonly consensusRegisterCollection: ConsensusRegisterCollection<string | null>) {
         super();
     }
 
     public async register(...taskUrls: string[]): Promise<void> {
         for (const taskUrl of taskUrls) {
             if (this.registeredTasks.has(taskUrl)) {
-                return Promise.reject(new Error(`${taskUrl} is already registered`));
+                throw new Error(`${taskUrl} is already registered`);
             }
         }
         const unregisteredTasks: string[] = [];
@@ -101,7 +101,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
 
     public async pick(taskId: string, worker: () => Promise<void>): Promise<void> {
         if (this.locallyRunnableTasks.has(taskId)) {
-            return Promise.reject(new Error(`${taskId} is already attempted`));
+            throw new Error(`${taskId} is already attempted`);
         }
         this.locallyRunnableTasks.set(taskId, worker);
 
@@ -127,13 +127,13 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         const active = this.isActive();
         for (const taskUrl of taskUrls) {
             if (!this.locallyRunnableTasks.has(taskUrl)) {
-                return Promise.reject(new Error(`${taskUrl} was never registered`));
+                throw new Error(`${taskUrl} was never registered`);
             }
             // Note - the assumption is - we are connected.
             // If not - all tasks should have been dropped already on disconnect / attachment
             assert(active, 0x119 /* "This agent became inactive while releasing" */);
             if (this.getTaskClientId(taskUrl) !== this.clientId) {
-                return Promise.reject(new Error(`${taskUrl} was never picked`));
+                throw new Error(`${taskUrl} was never picked`);
             }
         }
         return this.releaseCore([...taskUrls]);
@@ -192,11 +192,11 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
     }
 
     private getTaskClientId(url: string): string | null | undefined {
-        return this.scheduler.read(url);
+        return this.consensusRegisterCollection.read(url);
     }
 
     private async writeCore(key: string, clientId: string | null): Promise<void> {
-        await this.scheduler.write(key, clientId);
+        await this.consensusRegisterCollection.write(key, clientId);
     }
 
     private initialize() {
@@ -210,7 +210,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
             // Cleanup only if connected. If not, cleanup will happen in initializeCore() that runs on connection.
             if (this.isActive()) {
                 const leftTasks: string[] = [];
-                for (const taskUrl of this.scheduler.keys()) {
+                for (const taskUrl of this.consensusRegisterCollection.keys()) {
                     if (this.getTaskClientId(taskUrl) === clientId) {
                         leftTasks.push(taskUrl);
                     }
@@ -222,7 +222,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         // Listeners for new/released tasks. All clients will try to grab at the same time.
         // May be we want a randomized timer (Something like raft) to reduce chattiness?
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        this.scheduler.on("atomicChanged", async (key: string, currentClient: string | null) => {
+        this.consensusRegisterCollection.on("atomicChanged", async (key: string, currentClient: string | null) => {
             // Check if this client was chosen.
             if (this.isActive() && currentClient === this.clientId) {
                 this.onNewTaskAssigned(key);
@@ -326,7 +326,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
             }
         }
 
-        for (const taskUrl of this.scheduler.keys()) {
+        for (const taskUrl of this.consensusRegisterCollection.keys()) {
             const currentClient = this.getTaskClientId(taskUrl);
             if (currentClient && this.runtime.getQuorum().getMember(currentClient) === undefined) {
                 clearCandidates.push(taskUrl);

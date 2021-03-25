@@ -4,7 +4,11 @@
  */
 
 import { EventEmitter } from "events";
-import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
+import {
+    AgentSchedulerFactory,
+    IProvideAgentScheduler,
+    IAgentScheduler,
+} from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
@@ -90,8 +94,6 @@ import {
     ISummaryStats,
     ISummaryTreeWithStats,
     ISummarizeInternalResult,
-    IProvideAgentScheduler,
-    IAgentScheduler,
     IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
@@ -441,7 +443,7 @@ export class ScheduleManager {
     }
 }
 
-export const taskSchedulerId = "_scheduler";
+export const agentSchedulerId = "_scheduler";
 
 // Wraps the provided list of packages and augments with some system level services.
 class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
@@ -535,7 +537,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Create all internal data stores if not already existing on storage or loaded a detached
         // container from snapshot(ex. draft mode).
         if (!context.existing) {
-            await runtime.createRootDataStore(AgentSchedulerFactory.type, taskSchedulerId);
+            await runtime.createRootDataStore(AgentSchedulerFactory.type, agentSchedulerId);
         }
 
         runtime.subscribeToLeadership();
@@ -1399,12 +1401,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private isContainerMessageDirtyable(type: ContainerMessageType, contents: any) {
         if (type === ContainerMessageType.Attach) {
             const attachMessage = contents as InboundAttachMessage;
-            if (attachMessage.id === taskSchedulerId) {
+            if (attachMessage.id === agentSchedulerId) {
                 return false;
             }
         } else if (type === ContainerMessageType.FluidDataStoreOp) {
             const envelope = contents as IEnvelope;
-            if (envelope.address === taskSchedulerId) {
+            if (envelope.address === agentSchedulerId) {
                 return false;
             }
         }
@@ -1912,7 +1914,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private async getScheduler(): Promise<IAgentScheduler> {
         return requestFluidObject<IAgentScheduler>(
-            await this.getDataStore(taskSchedulerId, true),
+            await this.getDataStore(agentSchedulerId, true),
             "",
         );
     }
