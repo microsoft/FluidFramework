@@ -550,10 +550,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         // if loading isn't complete, we need to cache all
         // incoming ops to be applied after loading is complete
         if (this.deferIncomingOps) {
-            assert(!local, "Unexpected local op when loading not finished");
+            assert(!local, 0x072 /* "Unexpected local op when loading not finished" */);
             this.loadedDeferredIncomingOps.push(message);
         } else {
-            assert(message.type === MessageType.Operation, "Sequence message not operation");
+            assert(message.type === MessageType.Operation, 0x073 /* "Sequence message not operation" */);
 
             const handled = this.intervalMapKernel.tryProcessMessage(message.contents, local, message, localOpMetadata);
 
@@ -588,7 +588,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
     private snapshotMergeTree(serializer: IFluidSerializer): ITree {
         // Are we fully loaded? If not, things will go south
-        assert(this.loadedDeferred.isCompleted, "Snapshot called when not fully loaded");
+        assert(this.loadedDeferred.isCompleted, 0x074 /* "Snapshot called when not fully loaded" */);
         const minSeq = this.runtime.deltaManager.minimumSequenceNumber;
 
         this.processMinSequenceNumberChanged(minSeq);

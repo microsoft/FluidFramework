@@ -165,10 +165,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.opWatcher.on("volunteer", (taskId: string, clientId: string, local: boolean, messageId: number) => {
             if (local) {
                 const pendingOp = this.latestPendingOps.get(taskId);
-                assert(pendingOp !== undefined, "Unexpected op");
+                assert(pendingOp !== undefined, 0x07b /* "Unexpected op" */);
                 // Need to check the id, since it's possible to volunteer and abandon multiple times before the acks
                 if (messageId === pendingOp.messageId) {
-                    assert(pendingOp.type === "volunteer", "Unexpected op type");
+                    assert(pendingOp.type === "volunteer", 0x07c /* "Unexpected op type" */);
                     // Delete the pending, because we no longer have an outstanding op
                     this.latestPendingOps.delete(taskId);
                 }
@@ -180,10 +180,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.opWatcher.on("abandon", (taskId: string, clientId: string, local: boolean, messageId: number) => {
             if (local) {
                 const pendingOp = this.latestPendingOps.get(taskId);
-                assert(pendingOp !== undefined, "Unexpected op");
+                assert(pendingOp !== undefined, 0x07d /* "Unexpected op" */);
                 // Need to check the id, since it's possible to abandon and volunteer multiple times before the acks
                 if (messageId === pendingOp.messageId) {
-                    assert(pendingOp.type === "abandon", "Unexpected op type");
+                    assert(pendingOp.type === "abandon", 0x07e /* "Unexpected op type" */);
                     // Delete the pending, because we no longer have an outstanding op
                     this.latestPendingOps.delete(taskId);
                 }
@@ -210,7 +210,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         });
 
         this.disconnectWatcher.on("disconnect", () => {
-            assert(this.runtime.clientId !== undefined, "Missing client id on disconnect");
+            assert(this.runtime.clientId !== undefined, 0x1d3 /* "Missing client id on disconnect" */);
 
             // We don't modify the taskQueues on disconnect (they still reflect the latest known consensus state).
             // After reconnect these will get cleaned up by observing the clientLeaves.
@@ -350,7 +350,9 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             return false;
         }
 
-        assert(this.runtime.clientId !== undefined, "clientId undefined"); // TODO, handle disconnected/detached case
+        assert(this.runtime.clientId !== undefined,
+            0x07f /* "clientId undefined" */); // TODO, handle disconnected/detached case
+
         const clientQueue = this.taskQueues.get(taskId);
         // If we have no queue for the taskId, then no one has signed up for it.
         return (

@@ -87,7 +87,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
 
     public static async getDataObject(runtime: IFluidDataStoreRuntime) {
         const obj = (runtime as any)._dataObject as PureDataObject;
-        assert(obj !== undefined, "Runtime has no DataObject!");
+        assert(obj !== undefined, 0x0bc /* "Runtime has no DataObject!" */);
         await obj.finishInitialization();
         return obj;
     }
@@ -99,7 +99,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
         this.providers = props.providers;
         this.initProps = props.initProps;
 
-        assert((this.runtime as any)._dataObject === undefined, "Object runtime already has DataObject!");
+        assert((this.runtime as any)._dataObject === undefined, 0x0bd /* "Object runtime already has DataObject!" */);
         (this.runtime as any)._dataObject = this;
 
         // Create a FluidObjectHandle with empty string as `path`. This is because reaching this PureDataObject is the
@@ -157,7 +157,8 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
     public async initializeInternal(): Promise<void> {
         await this.preInitialize();
         if (this.runtime.existing) {
-            assert(this.initProps === undefined, "Trying to initialize from existing while initProps is set!");
+            assert(this.initProps === undefined,
+                0x0be /* "Trying to initialize from existing while initProps is set!" */);
             await this.initializingFromExisting();
         } else {
             await this.initializingFirstTime(this.context.createProps as S ?? this.initProps);

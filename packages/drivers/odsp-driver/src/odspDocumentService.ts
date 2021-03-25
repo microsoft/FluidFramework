@@ -383,7 +383,7 @@ export class OdspDocumentService implements IDocumentService {
         };
 
         const connectWithAfd = async () => {
-            assert(afdUrl !== undefined, "Tried to connect with AFD but no AFD url provided");
+            assert(afdUrl !== undefined, 0x0a3 /* "Tried to connect with AFD but no AFD url provided" */);
 
             const startTime = performance.now();
             try {

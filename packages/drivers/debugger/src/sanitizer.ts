@@ -145,7 +145,7 @@ class ChunkedOpProcessor {
         try {
             stringified = JSON.stringify(contents);
             assert(stringified.length <= this.concatenatedLength,
-                "Stringified length of chunk contents > total starting length");
+                0x089 /* "Stringified length of chunk contents > total starting length" */);
         } catch (e) {
             this.debugMsg(e);
             throw e;
@@ -182,7 +182,7 @@ class ChunkedOpProcessor {
     }
 
     reset(): void {
-        assert(this.writtenBack, "resetting ChunkedOpProcessor that never wrote back its contents");
+        assert(this.writtenBack, 0x08a /* "resetting ChunkedOpProcessor that never wrote back its contents" */);
         this.messages = new Array<any>();
         this.parsedMessageContents = new Array<any>();
         this.writtenBack = false;
@@ -448,7 +448,7 @@ export class Sanitizer {
      * @param contents - contents object to fix
      */
     fixAttachContents(contents: any): any {
-        assert(typeof contents === "object", "Unexpected type on contents for fix of an attach!");
+        assert(typeof contents === "object", 0x08b /* "Unexpected type on contents for fix of an attach!" */);
         if (!this.objectMatchesSchema(contents, attachContentsSchema)) {
             this.replaceObject(contents);
         } else {
@@ -512,7 +512,7 @@ export class Sanitizer {
             }
 
             const innerContent = contents.contents.content;
-            assert(innerContent !== undefined, "innerContent for fixing op contents is undefined!");
+            assert(innerContent !== undefined, 0x08c /* "innerContent for fixing op contents is undefined!" */);
             if (contents.contents.type === "attach") {
                 // attach op
                 // handle case where inner content is stringified json
@@ -675,7 +675,7 @@ export class Sanitizer {
             });
 
             // make sure we don't miss an incomplete chunked op at the end
-            assert(!this.chunkProcessor.isPendingProcessing(), "After sanitize, pending incomplete ops!");
+            assert(!this.chunkProcessor.isPendingProcessing(), 0x08d /* "After sanitize, pending incomplete ops!" */);
         } catch (error) {
             this.debugMsg(`Error while processing sequenceNumber ${seq}`);
             throw error;

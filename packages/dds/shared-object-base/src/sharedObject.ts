@@ -89,7 +89,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
          * This is fine for now. However, if we implement delay loading in DDss, they may load and de-serialize content
          * in summarize. When that happens, they may incorrectly hit this assert and we will have to change this.
          */
-        assert(!this._isSummarizing, "SummarySerializer should be used for serializing data during summary.");
+        assert(!this._isSummarizing,
+            0x075 /* "SummarySerializer should be used for serializing data during summary." */);
         return this._serializer;
     }
 
@@ -210,7 +211,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created below)
         // to serialize handles in this object's data. The routes of these serialized handles are outbound routes
         // to other Fluid objects.
-        assert(!this._isSummarizing, "Possible re-entrancy! Summary should not already be in progress.");
+        assert(!this._isSummarizing, 0x076 /* "Possible re-entrancy! Summary should not already be in progress." */);
         this._isSummarizing = true;
 
         let summaryTree: ISummaryTreeWithStats;
@@ -226,7 +227,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
                 gcNodes: { "/": serializer.getSerializedRoutes() },
             };
 
-            assert(this._isSummarizing, "Possible re-entrancy! Summary should have been in progress.");
+            assert(this._isSummarizing, 0x077 /* "Possible re-entrancy! Summary should have been in progress." */);
         } finally {
             this._isSummarizing = false;
         }
@@ -248,7 +249,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created below)
         // to serialize handles in this object's data. The routes of these serialized handles are outbound routes
         // to other Fluid objects.
-        assert(!this._isSummarizing, "Possible re-entrancy! Summary should not already be in progress.");
+        assert(!this._isSummarizing, 0x078 /* "Possible re-entrancy! Summary should not already be in progress." */);
         this._isSummarizing = true;
 
         let gcData: IGarbageCollectionData;
@@ -262,7 +263,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
                 gcNodes: { "/": serializer.getSerializedRoutes() },
             };
 
-            assert(this._isSummarizing, "Possible re-entrancy! Summary should have been in progress.");
+            assert(this._isSummarizing, 0x079 /* "Possible re-entrancy! Summary should have been in progress." */);
         } finally {
             this._isSummarizing = false;
         }
@@ -409,7 +410,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
     private attachDeltaHandler() {
         // Services should already be there in case we are attaching delta handler.
-        assert(this.services !== undefined, "Services should be there to attach delta handler");
+        assert(this.services !== undefined, 0x07a /* "Services should be there to attach delta handler" */);
         this._isBoundToContext = true;
         // Allows objects to do any custom processing if it is attached.
         this.didAttach();
