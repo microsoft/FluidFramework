@@ -384,7 +384,7 @@ describe("ConnectionStateHandler Tests", () => {
             "Client 3 should move to connected state");
     });
 
-    it("Client 3 should not wait for client 2(which got disconnected without sending any ops) to leave" +
+    it("Client 3 should not wait for client 2(which got disconnected without sending any ops) to leave " +
         "when client 2 already waited on client 1", async () =>
     {
         client.mode = "write";
