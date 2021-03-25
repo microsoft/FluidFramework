@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { IsoBuffer } from "@fluidframework/common-utils";
-import { ContainerMessageType } from "@fluidframework/container-runtime";
+import { ContainerMessageType, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
@@ -14,13 +14,29 @@ import { ReferenceType } from "@fluidframework/merge-tree";
 import { ITestObjectProvider, ITestContainerConfig } from "@fluidframework/test-utils";
 import { describeFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 
+/** Temporary function to make backwards compatible runtime options. */
+function flattenRuntimeOptions(
+    runtimeOptions?: IContainerRuntimeOptions,
+): IContainerRuntimeOptions | undefined {
+    if (runtimeOptions === undefined) {
+        return runtimeOptions;
+    }
+
+    // Promote all summaryOptions and gcOptions to top-layer.
+    return {
+        ...runtimeOptions.summaryOptions,
+        ...runtimeOptions.gcOptions,
+        ...runtimeOptions,
+    };
+}
+
 const testContainerConfig: ITestContainerConfig = {
-    runtimeOptions: {
+    runtimeOptions: flattenRuntimeOptions({
         summaryOptions: {
             initialSummarizerDelayMs: 20,
             summaryConfigOverrides: { maxOps: 1 },
         },
-    },
+    }),
     registry: [["sharedString", SharedString.getFactory()]],
 };
 
