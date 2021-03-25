@@ -21,7 +21,7 @@ export interface IRunConfig {
 }
 
 export interface ILoadTest {
-    run(config: IRunConfig, reset: boolean): Promise<void>;
+    run(config: IRunConfig, reset: boolean): Promise<boolean>;
 }
 const wait = async (timeMs: number) => new Promise((resolve) => setTimeout(resolve, timeMs));
 
@@ -87,104 +87,146 @@ class LoadTestDataStoreModel {
             throw new Error("taskmanger not available");
         }
 
-        if(reset) {
-            await LoadTestDataStoreModel.waitForCatchup(runtime);
-            runDir.set(startTimeKey,Date.now());
-            runDir.delete(taskTimeKey);
-            counter.increment(-1 * counter.value);
-        }
-
-        return new LoadTestDataStoreModel(
+        const dataModel =  new LoadTestDataStoreModel(
+            root,
             config,
             runtime,
             taskmanager,
             runDir,
             counter,
         );
+
+        if(reset) {
+            await LoadTestDataStoreModel.waitForCatchup(runtime);
+            runDir.set(startTimeKey,Date.now());
+            runDir.delete(taskTimeKey);
+            counter.increment(-1 * counter.value);
+            const partnerCounter = await dataModel.getPartnerCounter();
+            if(partnerCounter !== undefined && partnerCounter.value > 0) {
+                partnerCounter.increment(-1 * partnerCounter.value);
+            }
+        }
+        return dataModel;
     }
 
     private readonly taskId: string;
+    private readonly partnerId: number;
     private taskStartTime: number =0;
 
     private constructor(
+        private readonly root: ISharedDirectory,
         private readonly config: IRunConfig,
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly taskManager: ITaskManager,
         private readonly dir: IDirectory,
         public readonly counter: ISharedCounter,
     ) {
+        const halfClients = Math.floor(this.config.testConfig.numClients / 2);
         // The runners are paired up and each pair shares a single taskId
-        this.taskId = `op_sender${Math.floor(config.runId / 2)}`;
+        this.taskId = `op_sender${config.runId % halfClients}`;
+        this.partnerId = this.config.runId < halfClients
+            ? this.config.runId + halfClients
+            : this.config.runId % halfClients;
+        const changed = (taskId)=>{
+            if(taskId === this.taskId && this.taskStartTime !== 0) {
+                this.dir.set(taskTimeKey, this.totalTaskTime);
+                this.taskStartTime = 0;
+            }
+        };
+        this.taskManager.on("lost", changed);
+        this.taskManager.on("assigned", changed);
     }
 
     public get startTime(): number {
-        return this.dir.get<number>(startTimeKey) ?? 0;
+        return this.dir.get<number>(startTimeKey) ?? Date.now();
     }
     public get totalTaskTime(): number {
         return (this.dir.get<number>(taskTimeKey) ?? 0) + this.currentTaskTime;
     }
     public get currentTaskTime(): number {
-        return this.haveTaskLock() ? Date.now() - this.taskStartTime : 0;
+        return Date.now() - (this.haveTaskLock() ?  this.taskStartTime : this.startTime);
+    }
+
+    public async getPartnerCounter() {
+        if(this.runtime.disposed) {
+            return undefined;
+        }
+        const dir = this.root.getSubDirectory(this.partnerId.toString());
+        if(dir === undefined) {
+            return undefined;
+        }
+        const handle = dir.get<IFluidHandle<ISharedCounter>>(counterKey);
+        if(handle === undefined) {
+            return undefined;
+        }
+        return handle.get();
     }
 
     public haveTaskLock() {
-        try{
-            return this.taskManager.haveTaskLock(this.taskId);
-        }catch{
-            // remove try catch after taskManager fixes
+        if(this.runtime.disposed) {
             return false;
         }
+        return this.taskManager.haveTaskLock(this.taskId);
     }
 
     public abandonTask() {
         if(this.haveTaskLock()) {
-            try{
-                this.taskManager.abandon(this.taskId);
-            }catch{
-                // remove try catch after taskManager fixes
-            }
+            this.taskManager.abandon(this.taskId);
         }
     }
 
     public async lockTask() {
+        if(this.runtime.disposed) {
+            return;
+        }
         if(!this.haveTaskLock()) {
-            if(!this.runtime.connected) {
-                await new Promise((res,rej)=>{
-                    this.runtime.once("connected",res);
-                    this.runtime.once("dispose", rej);
-                });
-            }
             try{
+                if(!this.runtime.connected) {
+                    await new Promise<void>((res,rej)=>{
+                        const resAndClear = ()=>{
+                            res();
+                            this.runtime.off("connected", resAndClear);
+                            this.runtime.off("disconnected", rejAndClear);
+                            this.runtime.off("dispose", rejAndClear);
+                        };
+                        const rejAndClear = ()=>{
+                            rej(new Error("failed to connect"));
+                            resAndClear();
+                        };
+                        this.runtime.once("connected",resAndClear);
+                        this.runtime.once("dispose",rejAndClear);
+                        this.runtime.once("disconnected",rejAndClear);
+                    });
+                }
                 await this.taskManager.lockTask(this.taskId);
                 this.taskStartTime = Date.now();
-                this.taskManager.once("lost",(taskId)=>{
-                    if(taskId === this.taskId) {
-                        this.dir.set(taskTimeKey, Date.now() - this.taskStartTime);
-                        this.taskStartTime = 0;
-                    }
-                });
-            }catch{
-                // remove try catch after taskManager fixes
+            }catch(e) {
+                if(this.runtime.disposed || !this.runtime.connected) {
+                    return;
+                }
+                throw e;
             }
         }
     }
 
-    public printStatus(alwaysPrint: boolean = false) {
-        if(alwaysPrint || this.haveTaskLock()) {
-            const now = Date.now();
-            const totalMin = (now - this.startTime) / 60000;
-            const taskMin = this.totalTaskTime / 60000;
-            const opCount  = this.runtime.deltaManager.lastKnownSeqNumber;
-            const opRate = Math.floor(this.runtime.deltaManager.lastKnownSeqNumber / totalMin);
-            const sendRate = Math.floor(this.counter.value / taskMin);
-            console.log(
-                `${this.config.runId.toString().padStart(3)}>` +
-                ` seen: ${opCount.toString().padStart(8)} (${opRate.toString().padStart(4)}/min),` +
-                ` sent: ${this.counter.value.toString().padStart(8)} (${sendRate.toString().padStart(2)}/min),` +
-                ` run time: ${taskMin.toFixed(2).toString().padStart(5)} min`,
-                ` total time: ${totalMin.toFixed(2).toString().padStart(5)} min`,
-            );
-        }
+    public printStatus() {
+        const now = Date.now();
+        const totalMin = (now - this.startTime) / 60000;
+        const taskMin = this.totalTaskTime / 60000;
+        const opCount  = this.runtime.deltaManager.lastKnownSeqNumber;
+        const opRate = Math.floor(this.runtime.deltaManager.lastKnownSeqNumber / totalMin);
+        const sendRate = Math.floor(this.counter.value / taskMin);
+        const disposed = this.runtime.disposed;
+        console.log(
+            `${this.config.runId.toString().padStart(3)}>` +
+            ` seen: ${opCount.toString().padStart(8)} (${opRate.toString().padStart(4)}/min),` +
+            ` sent: ${this.counter.value.toString().padStart(8)} (${sendRate.toString().padStart(2)}/min),` +
+            ` run time: ${taskMin.toFixed(2).toString().padStart(5)} min`,
+            ` total time: ${totalMin.toFixed(2).toString().padStart(5)} min`,
+            `hasTask: ${this.haveTaskLock()}`,
+            !disposed ? `audience: ${this.runtime.getAudience().getMembers().size}` : "",
+            !disposed ? `quorum: ${this.runtime.getQuorum().getMembers().size}` : "",
+        );
     }
 }
 
@@ -198,8 +240,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
     }
 
     public async run(config: IRunConfig, reset: boolean) {
-        console.log(`${config.runId.toString().padStart(3)}> begin`);
-
         const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
             config, reset, this.root, this.runtime);
 
@@ -209,9 +249,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         // and listen cycles
 
         const cycleMs = config.testConfig.readWriteCycleMs;
-
-        console.log(`${config.runId.toString().padStart(3)}> started`);
-
         let t: NodeJS.Timeout;
         const printProgress = () => {
             dataModel.printStatus();
@@ -222,26 +259,35 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
         const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
         const opsGapMs = cycleMs / opsPerCycle;
-        while (dataModel.counter.value < clientSendCount && !this.disposed) {
-            if(dataModel.haveTaskLock()) {
-                dataModel.counter.increment(1);
-                if (dataModel.counter.value % opsPerCycle === 0) {
-                    dataModel.abandonTask();
-                    await wait(cycleMs);
-                }else{
-                    // Random jitter of +- 50% of opWaitMs
-                    await wait(opsGapMs + opsGapMs * (Math.random() - 0.5));
+        try{
+            while (dataModel.counter.value < clientSendCount && !this.disposed) {
+                // this enables a quick ramp down. due to restart, some clients can lag
+                // leading to a slow ramp down. so if there are less than half the clients
+                // and it's partner is done, return true to complete the runner.
+                if(this.runtime.getAudience().getMembers().size < config.testConfig.numClients / 2
+                    && ((await dataModel.getPartnerCounter())?.value ?? 0) >= clientSendCount) {
+                    return true;
                 }
-            }else{
-                await dataModel.lockTask();
+
+                if(dataModel.haveTaskLock()) {
+                    dataModel.counter.increment(1);
+                    if (dataModel.counter.value % opsPerCycle === 0) {
+                        dataModel.abandonTask();
+                        // give our partner a half cycle to get the task
+                        await wait(cycleMs / 2);
+                    }else{
+                        // Random jitter of +- 50% of opWaitMs
+                        await wait(opsGapMs + opsGapMs * (Math.random() - 0.5));
+                    }
+                }else{
+                    await dataModel.lockTask();
+                }
             }
+            return !this.runtime.disposed;
+        }finally{
+            clearTimeout(t);
+            dataModel.printStatus();
         }
-        dataModel.abandonTask();
-
-        clearTimeout(t);
-
-        dataModel.printStatus(true);
-        console.log(`${config.runId.toString().padStart(3)}> finished`);
     }
 }
 
