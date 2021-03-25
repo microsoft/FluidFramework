@@ -210,7 +210,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         });
 
         this.disconnectWatcher.on("disconnect", () => {
-            assert(this.runtime.clientId !== undefined, "Missing client id on disconnect");
+            assert(this.runtime.clientId !== undefined, 0x1d3 /* "Missing client id on disconnect" */);
 
             // We don't modify the taskQueues on disconnect (they still reflect the latest known consensus state).
             // After reconnect these will get cleaned up by observing the clientLeaves.

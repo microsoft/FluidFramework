@@ -119,7 +119,8 @@ export class DataStores implements IDisposable {
                 // However the feature of loading a detached container from snapshot, is added when the
                 // snapshotFormatVersion is at least "0.1" (1), so we don't expect it to be anything else.
                 const formatVersion = getAttributesFormatVersion(attributes);
-                assert(formatVersion > 0, `Invalid snapshot format version ${attributes.snapshotFormatVersion}`);
+                assert(formatVersion > 0,
+                    0x1d5 /* `Invalid snapshot format version ${attributes.snapshotFormatVersion}` */);
                 const pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
 
                 dataStoreContext = new LocalFluidDataStoreContext(

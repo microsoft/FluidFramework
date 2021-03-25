@@ -545,7 +545,7 @@ export class SummarizerNode implements IRootSummarizerNode {
                         const { childrenTree } = parseSummaryTreeForSubtrees(parentInitialSummary.summary.summary);
                         assert(
                             childrenTree.type === SummaryType.Tree,
-                            "Parent summary object is not a tree",
+                            0x1d6 /* "Parent summary object is not a tree" */,
                         );
                         childSummary = childrenTree.tree[id];
                     }
