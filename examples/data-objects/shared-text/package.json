@@ -51,7 +51,7 @@
     "@fluidframework/agent-scheduler": "^0.38.0",
     "@fluidframework/aqueduct": "^0.38.0",
     "@fluidframework/cell": "^0.38.0",
-    "@fluidframework/common-utils": "^0.29.0-0",
+    "@fluidframework/common-utils": "^0.30.0-0",
     "@fluidframework/container-definitions": "^0.38.0",
     "@fluidframework/container-runtime": "^0.38.0",
     "@fluidframework/core-interfaces": "^0.38.0",
