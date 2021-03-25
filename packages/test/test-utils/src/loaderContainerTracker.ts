@@ -37,7 +37,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
      * @param loader - loader to start tracking any container created.
      */
     public add<LoaderType extends IHostLoader>(loader: LoaderType) {
-        // TODO: Expose Loader API to able to intercept container creation
+        // TODO: Expose Loader API to able to intercept container creation (See issue #5114)
         const patch = <T, C extends IContainer>(fn: (...args) => Promise<C>) => {
             const boundFn = fn.bind(loader);
             return async (...args: T[]) => {
@@ -121,9 +121,9 @@ export class LoaderContainerTracker implements IOpProcessingController {
     }
 
     private trackLastProposal(container: IContainer) {
-        container.deltaManager.inbound.on("op", (message) => {
-            if (message.type === MessageType.Propose && message.sequenceNumber > this.lastProposalSeqNum) {
-                this.lastProposalSeqNum = message.sequenceNumber;
+        container.getQuorum().on("addProposal", (proposal) => {
+            if (proposal.sequenceNumber > this.lastProposalSeqNum) {
+                this.lastProposalSeqNum = proposal.sequenceNumber;
             }
         });
     }
