@@ -85,15 +85,45 @@ export function create(
         host: redisConfig.host,
         port: redisConfig.port,
         password: redisConfig.pass,
+        connectTimeout: 20000,
+        maxRetriesPerRequest: 3,
+        reconnectOnError: (err) => err.message.includes("ETIMEDOUT"),
+        showFriendlyErrorStack: true,
     };
     if (redisConfig.tls) {
         options.tls = {
             servername: redisConfig.host,
+            checkServerIdentity: () => undefined,
         };
     }
 
     const pub = new Redis(_.clone(options));
     const sub = new Redis(_.clone(options));
+    // TEST BLOCK
+    pub.on("error", (err) => {
+        console.log("PUB REDIS CLIENT ERROR:", err);
+    });
+
+    pub.on("reconnecting", () => {
+        console.log("PUB REDIS CLIENT RECONNECTING");
+    });
+
+    pub.on("connect", () => {
+        console.log("PUB REDIS CLIENT CONNECTED");
+    });
+
+    sub.on("error", (err) => {
+        console.log("SUB REDIS CLIENT ERROR:", err);
+    });
+
+    sub.on("reconnecting", () => {
+        console.log("sUB REDIS CLIENT RECONNECTING");
+    });
+
+    sub.on("connect", () => {
+        console.log("sUB REDIS CLIENT CONNECTED");
+    });
+    // END TEST BLOCK
 
     // Create and register a socket.io connection on the server
     const io = socketIo();

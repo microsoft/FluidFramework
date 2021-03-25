@@ -135,13 +135,31 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             connectTimeout: 20000,
             maxRetriesPerRequest: 3,
             reconnectOnError: (err) => err.message.includes("ETIMEDOUT"),
+            showFriendlyErrorStack: true,
         };
         if (redisConfig2.tls) {
             redisOptions2.tls = {
                 servername: redisConfig2.host,
+                checkServerIdentity: () => undefined,
             };
         }
         const redisClient = new Redis(redisOptions2);
+
+        // TEST BLOCK
+        redisClient.on("error", (err) => {
+            console.log("REDIS CLIENT ERROR:", err);
+        });
+
+        redisClient.on("reconnecting", () => {
+            console.log("REDIS CLIENT RECONNECTING");
+        });
+
+        redisClient.on("connect", () => {
+            console.log("REDIS CLIENT CONNECTED");
+        });
+
+        // END TEST BLOCK
+
         const clientManager = new services.ClientManager(redisClient);
 
         // Database connection
@@ -187,13 +205,30 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             connectTimeout: 20000,
             maxRetriesPerRequest: 3,
             reconnectOnError: (err) => err.message.includes("ETIMEDOUT"),
+            showFriendlyErrorStack: true,
         };
         if (redisConfigForThrottling.tls) {
             redisOptionsForThrottling.tls = {
                 servername: redisConfigForThrottling.host,
+                checkServerIdentity: () => undefined,
             };
         }
         const redisClientForThrottling = new Redis(redisOptionsForThrottling);
+
+        // TEST BLOCK
+        redisClientForThrottling.on("error", (err) => {
+            console.log("REDIS THROTTLE CLIENT ERROR:", err);
+        });
+
+        redisClientForThrottling.on("reconnecting", () => {
+            console.log("REDIS THROTTLE CLIENT RECONNECTING");
+        });
+
+        redisClientForThrottling.on("connect", () => {
+            console.log("REDIS THROTTLE CLIENT CONNECTED");
+        });
+
+        // END TEST BLOCK
 
         // Rest API Throttler
         const throttleMaxRequestsPerMs =

@@ -66,10 +66,12 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         connectTimeout: 20000,
         maxRetriesPerRequest: 3,
         reconnectOnError: (err) => err.message.includes("ETIMEDOUT"),
+        showFriendlyErrorStack: true,
     };
     if (redisConfig.tls) {
         redisOptions.tls = {
             servername: redisConfig.host,
+            checkServerIdentity: () => undefined,
         };
     }
     const publisher = new services.SocketIoRedisPublisher(redisOptions);

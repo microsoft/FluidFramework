@@ -25,6 +25,20 @@ export class SocketIoRedisPublisher implements core.IPublisher {
 
     constructor(options: Redis.RedisOptions) {
         this.redisClient = new Redis(options);
+        // TEST BLOCK
+        this.redisClient.on("error", (err) => {
+            console.log("DELI REDIS CLIENT ERROR:", err);
+        });
+
+        this.redisClient.on("reconnecting", () => {
+            console.log("DELI REDIS CLIENT RECONNECTING");
+        });
+
+        this.redisClient.on("connect", () => {
+            console.log("DELI REDIS CLIENT CONNECTED");
+        });
+
+        // END TEST BLOCK
         this.io = socketIoEmitter(this.redisClient);
 
         this.redisClient.on("error", (error) => {
