@@ -73,7 +73,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             this.handler.maxClientLeaveWaitTime ?? 90000,
             () => {
                 this.leaveReceivedResult = false;
-                this.applyForConnectedState();
+                this.applyForConnectedState("timeout");
             },
         );
     }
@@ -96,11 +96,11 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
                     hadOutstandingOps: this.handler.shouldClientJoinWrite(),
                 });
             }
-            this.applyForConnectedState();
+            this.applyForConnectedState("addMemberEvent");
         }
     }
 
-    private applyForConnectedState() {
+    private applyForConnectedState(source: "removeMemberEvent" | "addMemberEvent" | "timeout") {
         const protocolHandler = this.handler.protocolHandler();
         // Move to connected state only if we are in Connecting state, we have seen our join op
         // and there is no timer running which means we are not waiting for previous client to leave
@@ -110,8 +110,19 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             && protocolHandler !== undefined && protocolHandler.quorum.getMember(this.pendingClientId) !== undefined
             && !this.prevClientLeftTimer.hasTimer
         ) {
-            this.waitEvent?.end({ leaveReceived: this.leaveReceivedResult });
+            this.waitEvent?.end({ leaveReceived: this.leaveReceivedResult, source });
             this.setConnectionState(ConnectionState.Connected);
+        } else {
+            // Adding this event temporarily so that we can get help debugging if something goes wrong.
+            this.logger.sendTelemetryEvent({
+                eventName: "connectedStateRejected",
+                source,
+                pendingClientId: this.pendingClientId,
+                clientId: this.clientId,
+                hasTimer: this.prevClientLeftTimer.hasTimer,
+                inQuorum: protocolHandler !== undefined && this.pendingClientId !== undefined
+                    && protocolHandler.quorum.getMember(this.pendingClientId) !== undefined,
+            });
         }
     }
 
@@ -120,7 +131,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         if (this.clientId === clientId) {
             this.prevClientLeftTimer.clear();
             this.leaveReceivedResult = true;
-            this.applyForConnectedState();
+            this.applyForConnectedState("removeMemberEvent");
         }
     }
 
@@ -205,6 +216,15 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             ) {
                 this.leaveReceivedResult = undefined;
                 this.prevClientLeftTimer.restart();
+            } else {
+                // Adding this event temporarily so that we can get help debugging if something goes wrong.
+                this.logger.sendTelemetryEvent({
+                    eventName: "noWaitOnDisconnected",
+                    clientConnectionMode: this.clientConnectionMode,
+                    hasTimer: this.prevClientLeftTimer.hasTimer,
+                    clientSentOps: this._clientSentOps,
+                    shouldClientJoinWrite: this.handler.shouldClientJoinWrite(),
+                });
             }
         }
 
