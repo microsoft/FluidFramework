@@ -96,10 +96,15 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
 
     public async readBlob(sha: string): Promise<ArrayBufferLike> {
         if (this.versionName !== undefined) {
-            const fileName = `${this.path}/${this.versionName}/decoded/${sha}`;
+            let fileName = `${this.path}/${this.versionName}/decoded/${sha}`;
             if (fs.existsSync(fileName)) {
-                const data = fs.readFileSync(fileName);
-                return data;
+                return fs.readFileSync(fileName);
+            }
+
+            // In some cases, the blob will exist with a json ext
+            fileName = `${fileName}.json`;
+            if (fs.existsSync(fileName)) {
+                return fs.readFileSync(fileName);
             }
         }
         throw new Error(`Can't find blob ${sha}`);
