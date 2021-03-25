@@ -117,7 +117,11 @@ class ContainerContent {
 class Logger implements ITelemetryBaseLogger {
     public constructor(
         private readonly containerDescription: string,
-        private readonly errorHandler: (event: ITelemetryBaseEvent) => boolean) {
+        private readonly errorHandler: (event: ITelemetryBaseEvent) => boolean,
+        // We want to throw instead of printing an error to fail tests, but there
+        // are legit events that we wouldn't want to throw when running as a CLI
+        // e.g. the SUmmaryAckWithoutOp event
+        private readonly throwOnEvents: boolean) {
     }
 
     // ITelemetryBaseLogger implementation
@@ -129,8 +133,11 @@ class Logger implements ITelemetryBaseLogger {
             const error = new Error(`An error has been logged from ${this.containerDescription}!\n
                         ${JSON.stringify(event)}`);
             error.stack = stack;
-            // throw instead of printing an error to fail tests
-            throw error;
+            if (this.throwOnEvents) {
+                throw error;
+            } else {
+                console.log(error);
+            }
         }
     }
 }
@@ -150,7 +157,8 @@ class Document {
     public constructor(
         protected readonly args: ReplayArgs,
         public readonly storage: ISnapshotWriterStorage,
-        public readonly containerDescription: string) {
+        public readonly containerDescription: string,
+        private readonly throwOnEvents: boolean) {
     }
 
     public get currentOp() {
@@ -186,7 +194,7 @@ class Document {
             deltaStorageService,
             deltaConnection);
 
-        this.docLogger = ChildLogger.create(new Logger(this.containerDescription, errorHandler));
+        this.docLogger = ChildLogger.create(new Logger(this.containerDescription, errorHandler, this.throwOnEvents));
         this.container = await loadContainer(
             documentServiceFactory,
             FileStorageDocumentName,
@@ -269,7 +277,10 @@ export class ReplayTool {
     private deltaStorageService: FileDeltaStorageService;
     private readonly errors: string[] = [];
 
-    public constructor(private readonly args: ReplayArgs) { }
+    public constructor(
+        private readonly args: ReplayArgs,
+        private readonly throwOnEvents: boolean = true,
+    ) { }
 
     public async Go(): Promise<string[]> {
         this.args.checkArgs();
@@ -390,7 +401,7 @@ export class ReplayTool {
 
         this.storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.fromVersion);
         let description = this.args.fromVersion ? this.args.fromVersion : "main container";
-        this.mainDocument = new Document(this.args, this.storage, description);
+        this.mainDocument = new Document(this.args, this.storage, description, this.throwOnEvents);
         await this.loadDoc(this.mainDocument);
         this.documents.push(this.mainDocument);
         if (this.args.from < this.mainDocument.fromOp) {
@@ -430,7 +441,7 @@ export class ReplayTool {
                     }
                 }
 
-                const doc = new Document(this.args, storage, node.name);
+                const doc = new Document(this.args, storage, node.name, this.throwOnEvents);
                 try {
                     await this.loadDoc(doc);
                     doc.appendToFileName(`_storage_${node.name}`);
@@ -454,7 +465,7 @@ export class ReplayTool {
         if (this.args.snapFreq !== undefined || this.args.validateStorageSnapshots) {
             const storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.fromVersion);
             description = this.args.fromVersion ? this.args.fromVersion : "secondary container";
-            this.documentNeverSnapshot = new Document(this.args, storage, description);
+            this.documentNeverSnapshot = new Document(this.args, storage, description, this.throwOnEvents);
             await this.loadDoc(
                 this.documentNeverSnapshot);
             this.documentNeverSnapshot.appendToFileName("_noSnapshots");
@@ -479,7 +490,7 @@ export class ReplayTool {
                 }
 
                 const storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, node.name);
-                const doc = new Document(this.args, storage, node.name);
+                const doc = new Document(this.args, storage, node.name, this.throwOnEvents);
                 try {
                     await this.loadDoc(doc);
                     doc.appendToFileName(`_storage_${node.name}`);
@@ -587,7 +598,7 @@ export class ReplayTool {
         ) {
             const storageClass = FileSnapshotWriterClassFactory(FileSnapshotReader);
             const storage = new storageClass(content.snapshot);
-            const document3 = new Document(this.args, storage, `Saved & loaded at seq# ${op}`);
+            const document3 = new Document(this.args, storage, `Saved & loaded at seq# ${op}`, this.throwOnEvents);
             await this.loadDoc(document3);
             this.documentsWindow.push(document3);
         }
@@ -640,7 +651,7 @@ export class ReplayTool {
         // Load it back to prove it's correct
         const storageClass = FileSnapshotWriterClassFactory(FileSnapshotReader);
         const storage = new storageClass(content.snapshot);
-        this.documentPriorWindow = new Document(this.args, storage, `Saved & loaded at seq# ${op}`);
+        this.documentPriorWindow = new Document(this.args, storage, `Saved & loaded at seq# ${op}`, this.throwOnEvents);
         await this.loadDoc(this.documentPriorWindow);
         await this.saveAndVerify(this.documentPriorWindow, dir, content, final);
     }
