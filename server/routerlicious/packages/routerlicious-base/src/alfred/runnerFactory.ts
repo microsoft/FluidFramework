@@ -134,8 +134,8 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             password: redisConfig2.pass,
             connectTimeout: 20000,
             maxRetriesPerRequest: 3,
-            reconnectOnError: (err) => err.message.includes("ETIMEDOUT"),
             showFriendlyErrorStack: true,
+            reconnectOnError: (err) => err.message.includes("ETIMEDOUT"),
         };
         if (redisConfig2.tls) {
             redisOptions2.tls = {
