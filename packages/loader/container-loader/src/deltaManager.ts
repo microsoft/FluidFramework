@@ -354,6 +354,10 @@ export class DeltaManager
         return this._reconnectMode;
     }
 
+    public shouldJoinWrite(): boolean {
+        return this.clientSequenceNumber !== this.clientSequenceNumberObserved;
+    }
+
     public async connectToStorage(): Promise<IDocumentStorageService> {
         if (this.storageService !== undefined) {
             return this.storageService;
@@ -585,7 +589,7 @@ export class DeltaManager
         // firing of "connected" event from Container and switch of current clientId (as tracked
         // by all DDSes). This will make it impossible to figure out if ops actually made it through,
         // so DDSes will immediately resubmit all pending ops, and some of them will be duplicates, corrupting document
-        if (this.clientSequenceNumberObserved !== this.clientSequenceNumber) {
+        if (this.shouldJoinWrite()) {
             requestedMode = "write";
         }
 
