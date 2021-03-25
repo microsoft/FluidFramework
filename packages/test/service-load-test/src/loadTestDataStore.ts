@@ -124,9 +124,7 @@ class LoadTestDataStoreModel {
         const halfClients = Math.floor(this.config.testConfig.numClients / 2);
         // The runners are paired up and each pair shares a single taskId
         this.taskId = `op_sender${config.runId % halfClients}`;
-        this.partnerId = this.config.runId < halfClients
-            ? this.config.runId + halfClients
-            : this.config.runId % halfClients;
+        this.partnerId = (this.config.runId + halfClients) % this.config.testConfig.numClients;
         const changed = (taskId)=>{
             if(taskId === this.taskId && this.taskStartTime !== 0) {
                 this.dir.set(taskTimeKey, this.totalTaskTime);
