@@ -5,9 +5,7 @@
 
 import { strict as assert } from "assert";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import {
-    ITestObjectProvider,
-} from "@fluidframework/test-utils";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { TableDocument } from "../document";
 import { TableSlice } from "../slice";

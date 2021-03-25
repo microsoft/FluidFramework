@@ -609,13 +609,15 @@ export class LoggingError extends Error implements ILoggingError {
         props?: ITaggableTelemetryProperties,
     ) {
         super(message);
-        this.addTelemetryProperties(props);
+        if (props) {
+            this.addTelemetryProperties(props);
+        }
     }
 
     /**
      * Add additional properties to be logged
      */
-    public addTelemetryProperties(props?: ITaggableTelemetryProperties) {
+    public addTelemetryProperties(props: ITaggableTelemetryProperties) {
         Object.assign(this, props);
     }
 

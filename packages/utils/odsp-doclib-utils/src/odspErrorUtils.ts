@@ -5,7 +5,7 @@
 
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { DriverError, DriverErrorType } from "@fluidframework/driver-definitions";
-import { TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { LoggingError, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     AuthorizationError,
     createGenericNetworkError,
@@ -124,7 +124,7 @@ export function createOdspNetworkError(
     response?: Response,
     responseText?: string,
 ): OdspError {
-    let error: OdspError;
+    let error: OdspError & LoggingError;
     switch (statusCode) {
         case 400:
             error = new GenericNetworkError(errorMessage, false, statusCode);
@@ -183,19 +183,18 @@ export function createOdspNetworkError(
 
     error.online = OnlineStatus[isOnline()];
 
-    const errorAsAny = error as any;
-
-    errorAsAny.response = responseText;
+    const props: ITelemetryProperties = { response: responseText };
     if (response) {
-        errorAsAny.responseType = response.type;
+        props.responseType = response.type;
         if (response.headers) {
             const headers = getSPOAndGraphRequestIdsFromResponse(response.headers);
             for (const key of Object.keys(headers))  {
-                errorAsAny[key] = headers[key];
+                props[key] = headers[key];
             }
-            errorAsAny.serverEpoch = response.headers.get("x-fluid-epoch");
+            props.serverEpoch = response.headers.get("x-fluid-epoch") ?? undefined;
         }
     }
+    error.addTelemetryProperties(props);
     return error;
 }
 

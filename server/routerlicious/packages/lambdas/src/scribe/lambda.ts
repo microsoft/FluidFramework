@@ -236,7 +236,7 @@ export class ScribeLambda extends SequencedLambda {
                             }
                         } catch (ex) {
                             this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
-                            // If this flag is set, we should ignore any storage speciic error and move forward
+                            // If this flag is set, we should ignore any storage specific error and move forward
                             // to process the next message.
                             if (this.serviceConfiguration.scribe.ignoreStorageException) {
                                 await this.sendSummaryNack(
