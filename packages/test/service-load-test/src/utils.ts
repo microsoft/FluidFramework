@@ -11,7 +11,7 @@ import { ITestDriver, TestDriverTypes, ITelemetryBufferedLogger } from "@fluidfr
 import { createFluidTestDriver } from "@fluidframework/test-drivers";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { fluidExport, ILoadTest } from "./loadTestDataStore";
@@ -19,12 +19,14 @@ import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
-class FileLogger implements ITelemetryBufferedLogger {
+class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     private error: boolean = false;
     private readonly schema = new Map<string, number>();
     private  logs: ITelemetryBaseEvent[] = [];
 
-    public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {}
+    public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
+        super();
+    }
 
     async flush(runInfo?: {url: string,  runId?: number}): Promise<void> {
         const baseFlushP =  this.baseLogger?.flush();

@@ -5,14 +5,12 @@
 
 import commander from "commander";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { TelemetryLogger } from "@fluidframework/telemetry-utils";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { ILoadTestConfig } from "./testConfigFile";
 import { IRunConfig } from "./loadTestDataStore";
 import { createTestDriver, getProfile, load, loggerP, safeExit } from "./utils";
 
-function logStatus(runId: number, message: string) {
+function printStatus(runId: number, message: string) {
     console.log(`${runId.toString().padStart(3)}> ${message}`);
 }
 
@@ -70,16 +68,12 @@ async function runnerProcess(
             const {container, test} = await load(testDriver, url, runId);
             scheduleContainerClose(container, runConfig);
             try{
-                logStatus(runId, `running`);
+                printStatus(runId, `running`);
                 done = await test.run(runConfig, reset);
-                logStatus(runId, done ?  `finished` : "closed");
+                printStatus(runId, done ?  `finished` : "closed");
             }catch(error) {
-                const event: ITelemetryBaseEvent = {
-                    eventName:"RunnerFailed",
-                    category: "error",
-                };
-                TelemetryLogger.prepareErrorObject(event, error,false);
-                (await loggerP).send(event);
+                await loggerP.then(
+                    async (l)=>l.sendErrorEvent({eventName: "RunnerFailed", runId: runConfig.runId}, error));
                 throw error;
             }
             finally{
@@ -92,7 +86,7 @@ async function runnerProcess(
         }
         return 0;
     } catch (e) {
-        logStatus(runId, `error: loading test`);
+        printStatus(runId, `error: loading test`);
         console.error(e);
         return -1;
     }
@@ -122,11 +116,12 @@ function scheduleContainerClose(container: Container, runConfig: IRunConfig) {
                     .map((m)=>m[0])
                     .indexOf(clientId);
 
-                // bucket the clients, with bias towards the summarizer aka index 0
+                // only the oldest quarter of active clients are scheduled to leave this time.
+                // this will bias toward the summarizer client which is always quorum index 0.
                 if(quorumIndex >= 0 && quorumIndex <= runConfig.testConfig.numClients / 4) {
                     quorum.off("removeMember",scheduleLeave);
                     const leaveTime = runConfig.testConfig.readWriteCycleMs * 5 * Math.random();
-                    logStatus(runConfig.runId, `closing in ${leaveTime / 60000} min`);
+                    printStatus(runConfig.runId, `closing in ${leaveTime / 60000} min`);
                     setTimeout(
                         ()=>{
                             if(!container.closed) {
@@ -139,8 +134,8 @@ function scheduleContainerClose(container: Container, runConfig: IRunConfig) {
         };
         quorum.on("removeMember", scheduleLeave);
         scheduleLeave();
-    }).catch((e)=>{
-        logStatus(runConfig.runId, `Failed to schedule close: ${e}`);
+    }).catch(async (e)=>{
+        await loggerP.then(async (l)=>l.sendErrorEvent({eventName: "ScheduleLeaveFailed", runId: runConfig.runId}, e));
     });
 }
 
