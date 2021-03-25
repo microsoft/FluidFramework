@@ -14,7 +14,6 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import {
     createAndAttachContainer,
-    OpProcessingController,
     ITestFluidObject,
     TestFluidObjectFactory,
     createLoader,
@@ -100,7 +99,11 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
         config: {},
     };
 
-    let loaderContainerTracker: LoaderContainerTracker;
+    const loaderContainerTracker = new LoaderContainerTracker();
+
+    afterEach(() => {
+        loaderContainerTracker.reset();
+    });
 
     async function createContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
         const loader = createLoader(
@@ -109,9 +112,7 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
             provider.urlResolver,
             ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
         );
-        if (loaderContainerTracker) {
-            loaderContainerTracker.add(loader);
-        }
+        loaderContainerTracker.add(loader);
         return createAndAttachContainer(
             codeDetails, loader, provider.driver.createCreateNewRequest(documentId));
     }
@@ -123,9 +124,7 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
             provider.urlResolver,
             ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
         );
-        if (loaderContainerTracker) {
-            loaderContainerTracker.add(loader);
-        }
+        loaderContainerTracker.add(loader);
         return loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
     }
 
@@ -145,10 +144,6 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
     });
 
     describe("2 dataObjects", () => {
-        beforeEach(async () => {
-            loaderContainerTracker = new LoaderContainerTracker();
-        });
-
         it("early open / late close", async () => {
             const documentId = createDocumentId();
 
@@ -226,7 +221,6 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
             let text2: SharedString;
 
             beforeEach(async () => {
-                loaderContainerTracker = new LoaderContainerTracker();
                 const documentId = createDocumentId();
                 const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
 
@@ -257,7 +251,6 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
             let container2: IContainer;
             let dataObject1: TestDataObject;
             let dataObject2: TestDataObject;
-            let opProcessingController: OpProcessingController;
 
             beforeEach(async () => {
                 const documentId = createDocumentId();
@@ -273,23 +266,19 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
                 if (provider.driver.type !== "local") {
                     this.skip();
                 }
-                opProcessingController = provider.opProcessingController;
-                opProcessingController.addDeltaManagers(
-                    container1.deltaManager,
-                    container2.deltaManager);
 
-                await opProcessingController.pauseProcessing();
+                await loaderContainerTracker.pauseProcessing();
 
                 dataObject1.increment();
-                assert.equal(dataObject1.value, 1, "Expected user1 to see the local increment");
+                assert.equal(dataObject1.value, 1, "Expected user 1 to see the local increment");
                 assert.equal(dataObject2.value, 0,
                     "Expected user 2 NOT to see the increment due to pauseProcessing call");
 
-                await opProcessingController.process(container1.deltaManager);
+                await loaderContainerTracker.ensureSynchronized(container1);
                 assert.equal(dataObject2.value, 0,
                     "Expected user 2 NOT to see the increment due to no processIncoming call yet");
 
-                await opProcessingController.processIncoming(container2.deltaManager);
+                await loaderContainerTracker.processIncoming(container2);
                 assert.equal(dataObject2.value, 1, "Expected user 2 to see the increment now");
 
                 dataObject2.increment();
@@ -297,11 +286,11 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
                 assert.equal(dataObject1.value, 1,
                     "Expected user 1 NOT to see the increment due to pauseProcessing call");
 
-                await opProcessingController.processOutgoing(container2.deltaManager);
+                await loaderContainerTracker.processOutgoing(container2);
                 assert.equal(dataObject1.value, 1,
                     "Expected user 1 NOT to see the increment due to no processIncoming call yet");
 
-                await opProcessingController.processIncoming(container1.deltaManager);
+                await loaderContainerTracker.processIncoming(container1);
                 assert.equal(dataObject1.value, 2, "Expected user 1 to see the increment now");
             });
         });

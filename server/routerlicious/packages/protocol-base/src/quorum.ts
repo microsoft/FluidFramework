@@ -369,7 +369,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     public setConnectionState(connected: boolean, clientId?: string) {
         if (!connected) {
             this.localProposals.forEach((deferral) => {
-                deferral.reject("Client got disconnected");
+                deferral.reject(new Error("Client got disconnected"));
             });
             this.localProposals.clear();
         }

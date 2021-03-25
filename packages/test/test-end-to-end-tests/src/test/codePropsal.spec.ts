@@ -14,19 +14,16 @@ import {
 import {
     createAndAttachContainer,
     createDocumentId,
-    createLoader as createLoaderUtil,
     ITestFluidObject,
     ITestObjectProvider,
-    OpProcessingController,
     SupportedExportInterfaces,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 
-interface ICodeProposalTestPackage extends IFluidPackage{
+interface ICodeProposalTestPackage extends IFluidPackage {
     version: number,
     schema: number,
 }
@@ -34,8 +31,8 @@ interface ICodeProposalTestPackage extends IFluidPackage{
 function isCodeProposalTestPackage(pkg: unknown): pkg is ICodeProposalTestPackage {
     const maybe = pkg as Partial<ICodeProposalTestPackage> | undefined;
     return typeof maybe?.version === "number"
-    && typeof maybe?.schema === "number"
-    && isFluidPackage(maybe);
+        && typeof maybe?.schema === "number"
+        && isFluidPackage(maybe);
 }
 
 // REVIEW: enable compat testing?
@@ -47,7 +44,7 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
         fluid: {},
     };
     const packageV1dot5: ICodeProposalTestPackage = {
-        ... packageV1,
+        ...packageV1,
         version: 1.5,
     };
     const packageV2: ICodeProposalTestPackage = {
@@ -56,19 +53,17 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
         schema: 2,
         fluid: {},
     };
-
-    let opProcessingController: OpProcessingController;
     let hotSwapContext = false;
 
     function createLoader() {
         const codeDetailsComparer: IFluidCodeDetailsComparer = {
-            get IFluidCodeDetailsComparer() {return this;},
-            compare: async (a, b)=>
+            get IFluidCodeDetailsComparer() { return this; },
+            compare: async (a, b) =>
                 isCodeProposalTestPackage(a.package)
-                && isCodeProposalTestPackage(b.package)
+                    && isCodeProposalTestPackage(b.package)
                     ? a.package.version - b.package.version
                     : undefined,
-            satisfies: async (a,b)=>
+            satisfies: async (a, b) =>
                 isCodeProposalTestPackage(a.package)
                 && isCodeProposalTestPackage(b.package)
                 && a.package.schema === b.package.schema,
@@ -79,26 +74,24 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
             IFluidCodeDetailsComparer: codeDetailsComparer,
 
         };
-        return createLoaderUtil(
+        return provider.createLoader(
             [
                 [{ package: packageV1 }, fluidExport],
-                [{ package: packageV2 },fluidExport],
+                [{ package: packageV2 }, fluidExport],
                 [{ package: packageV1dot5 }, fluidExport],
             ],
-            provider.documentServiceFactory,
-            provider.urlResolver,
-            ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
-            { hotSwapContext });
+            { hotSwapContext },
+        );
     }
 
-    async function createContainer(code: IFluidCodeDetails, documentId: string): Promise<IContainer> {
+    async function createContainer(code: IFluidCodeDetails): Promise<IContainer> {
         const loader = createLoader();
-        return createAndAttachContainer(code, loader, provider.driver.createCreateNewRequest(documentId));
+        return createAndAttachContainer(code, loader, provider.driver.createCreateNewRequest(provider.documentId));
     }
 
-    async function loadContainer(documentId: string): Promise<IContainer> {
+    async function loadContainer(): Promise<IContainer> {
         const loader = createLoader();
-        return loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
+        return loader.resolve({ url: await provider.driver.createContainerUrl(provider.documentId) });
     }
 
     let provider: ITestObjectProvider;
@@ -106,20 +99,14 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
     beforeEach(async () => {
         provider = getTestObjectProvider();
         containers = [];
-        const documentId = createDocumentId();
         const codeDetails: IFluidCodeDetails = { package: packageV1 };
 
         // Create a Container for the first client.
-        containers.push(await createContainer(codeDetails, documentId));
-
-        opProcessingController = provider.opProcessingController;
-        opProcessingController.addDeltaManagers(containers[0].deltaManager);
-
+        containers.push(await createContainer(codeDetails));
         await provider.ensureSynchronized();
 
         // Load the Container that was created by the first client.
-        containers.push(await loadContainer(documentId));
-        opProcessingController.addDeltaManagers(containers[1].deltaManager);
+        containers.push(await loadContainer());
 
         assert.deepStrictEqual(
             containers[0].codeDetails,
@@ -137,7 +124,7 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
     it("Code Proposal", async () => {
         const proposal: IFluidCodeDetails = { package: packageV2 };
         for (let i = 0; i < containers.length; i++) {
-            containers[i].once("contextDisposed",(c)=>{
+            containers[i].once("contextDisposed", (c) => {
                 assert.deepStrictEqual(
                     c,
                     proposal,
@@ -148,7 +135,7 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
                     `containers[${i}] should not be closed yet`);
             });
 
-            containers[i].once("contextChanged",()=>{
+            containers[i].once("contextChanged", () => {
                 throw Error(`context should not change for containers[${i}]`);
             });
         }
@@ -167,23 +154,23 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 
     it("Code Proposal Rejection", async () => {
         for (let i = 0; i < containers.length; i++) {
-            containers[i].once("contextDisposed",()=>{
+            containers[i].once("contextDisposed", () => {
                 throw Error(`context should not dispose for containers[${i}]`);
             });
 
-            containers[i].once("contextChanged",()=>{
+            containers[i].once("contextChanged", () => {
                 throw Error(`context should not change for containers[${i}]`);
             });
         }
 
         const proposal: IFluidCodeDetails = { package: packageV2 };
-        containers[1].on("codeDetailsProposed",(c, p)=>{
-                assert.deepStrictEqual(
-                    c,
-                    proposal,
-                    "codeDetails2 should have been proposed");
-                p.reject();
-            });
+        containers[1].on("codeDetailsProposed", (c, p) => {
+            assert.deepStrictEqual(
+                c,
+                proposal,
+                "codeDetails2 should have been proposed");
+            p.reject();
+        });
 
         const res = await Promise.all([
             containers[0].proposeCodeDetails(proposal),
@@ -203,11 +190,11 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 
     it("Code Proposal With Compatible Existing", async () => {
         for (let i = 0; i < containers.length; i++) {
-            containers[i].once("contextDisposed",()=>{
+            containers[i].once("contextDisposed", () => {
                 throw Error(`context should not dispose for containers[${i}]`);
             });
 
-            containers[i].once("contextChanged",()=>{
+            containers[i].once("contextChanged", () => {
                 throw Error(`context should not change for containers[${i}]`);
             });
         }
@@ -235,14 +222,14 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
         it("Code Proposal", async () => {
             const proposal: IFluidCodeDetails = { package: packageV2 };
             for (let i = 0; i < containers.length; i++) {
-                containers[i].once("contextDisposed",(c)=>{
+                containers[i].once("contextDisposed", (c) => {
                     assert.deepStrictEqual(
                         c,
                         proposal,
                         `containers[${i}] context should dispose`);
                 });
 
-                containers[i].once("contextChanged",(c)=>{
+                containers[i].once("contextChanged", (c) => {
                     assert.deepStrictEqual(
                         c,
                         proposal,
@@ -269,23 +256,23 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 
         it("Code Proposal Rejection", async () => {
             for (let i = 0; i < containers.length; i++) {
-                containers[i].once("contextDisposed",(c)=>{
+                containers[i].once("contextDisposed", (c) => {
                     assert.fail(`context should not dispose for containers[${i}]`);
                 });
 
-                containers[i].once("contextChanged",(c)=>{
+                containers[i].once("contextChanged", (c) => {
                     assert.fail(`context should not change for containers[${i}]`);
                 });
             }
 
             const proposal: IFluidCodeDetails = { package: packageV2 };
-            containers[1].on("codeDetailsProposed",(c, p)=>{
-                    assert.deepStrictEqual(
-                        c,
-                        proposal,
-                        "codeDetails2 should have been proposed");
-                    p.reject();
-                });
+            containers[1].on("codeDetailsProposed", (c, p) => {
+                assert.deepStrictEqual(
+                    c,
+                    proposal,
+                    "codeDetails2 should have been proposed");
+                p.reject();
+            });
 
             const res = await Promise.all([
                 containers[0].proposeCodeDetails(proposal),
@@ -306,7 +293,7 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
         it("Close Container on Context Dispose", async () => {
             const proposal: IFluidCodeDetails = { package: packageV2 };
             for (let i = 0; i < containers.length; i++) {
-                containers[i].once("contextDisposed",(c)=>{
+                containers[i].once("contextDisposed", (c) => {
                     assert.deepStrictEqual(
                         c,
                         proposal,
@@ -314,9 +301,9 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
                 });
             }
 
-            containers[1].once("contextDisposed",()=>{
+            containers[1].once("contextDisposed", () => {
                 containers[1].close();
-                containers[1].once("contextChanged",()=>{
+                containers[1].once("contextChanged", () => {
                     assert.fail("containers[1]: contextChanged should not fire");
                 });
             });
@@ -340,11 +327,11 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 
         it("Code Proposal With Compatible Existing", async () => {
             for (let i = 0; i < containers.length; i++) {
-                containers[i].once("contextDisposed",(c)=>{
+                containers[i].once("contextDisposed", (c) => {
                     assert.fail(`context should not dispose for containers[${i}]`);
                 });
 
-                containers[i].once("contextChanged",(c)=>{
+                containers[i].once("contextChanged", (c) => {
                     assert.fail(`context should not change for containers[${i}]`);
                 });
             }
@@ -381,7 +368,7 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
         }
         const waiters: Promise<void>[] = [];
         for (const map of maps) {
-            waiters.push(... keys.map(async (k)=>map.wait(k)));
+            waiters.push(...keys.map(async (k) => map.wait(k)));
         }
 
         await Promise.all([provider.ensureSynchronized(), ...waiters]);
