@@ -12,6 +12,6 @@
  */
  export function assert(condition: boolean, message: string | number): asserts condition {
      if (!condition) {
-         throw new Error(typeof message === "number" ? message.toString(16) : message);
+         throw new Error(typeof message === "number" ? `0x${message.toString(16).padStart(3,"0")}` : message);
      }
  }
