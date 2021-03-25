@@ -743,7 +743,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly dataStores: DataStores;
 
     // This is the source of truth for writing in the summary metadata blob.
-    private readonly summaryEnableGC: boolean | undefined;
+    private readonly summaryEnableGC: boolean;
     // This is the source of truth for whether GC is enabled or not.
     private readonly shouldRunGC: boolean;
     /**
@@ -766,17 +766,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ) {
         super();
 
-        // enableGC in metadata is introduced with v1 in the metadata blob. Force to false before that.
-        // This will override the value in runtimeOptions if it is set (true/false). So setting it in
-        // runtimeOptions will only specify what to do if it has never been set before.
-        // Note that even leaving it undefined will force it to false if no metadata blob is written.
+        /* enableGC in metadata is introduced with v1 in the metadata blob. Force to false before that.
+         This will override the value in runtimeOptions if it is set (true/false). So setting it in
+         runtimeOptions will only specify what to do if it has never been set before.
+         Note that even leaving it undefined will force it to false if no metadata blob is written. */
         const prevSummaryEnableGC = context.baseSnapshot ? gcEnabled(metadata) : undefined;
-        this.summaryEnableGC = prevSummaryEnableGC ?? this.runtimeOptions.gcOptions.summaryEnableGC;
+        // Default to false for now.
+        this.summaryEnableGC = prevSummaryEnableGC ?? this.runtimeOptions.gcOptions.summaryEnableGC ?? false;
 
         // Can override with localStorage flag.
         this.shouldRunGC = localStorageEnableGC() ?? (
             // Must not be disabled permanently in summary.
-            (this.summaryEnableGC ?? true)
+            this.summaryEnableGC
             // Must not be disabled by runtime option.
             && !this.runtimeOptions.gcOptions.disableGC
         );
@@ -1052,7 +1053,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private get shouldWriteMetadata(): boolean {
         // We need the metadata blob if either isolated channels are enabled
         // or GC is enabled at the document level.
-        return !this.disableIsolatedChannels || !!this.summaryEnableGC;
+        return !this.disableIsolatedChannels || this.summaryEnableGC;
     }
 
     private formMetadata(): IContainerRuntimeMetadata {
