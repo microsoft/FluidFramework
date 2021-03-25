@@ -2,6 +2,7 @@
 - [OpProcessingController marked for deprecation](#opprocessingcontroller-marked-for-deprecation)
 - [Loader in data stores deprecated](#Loader-in-data-stores-deprecated)
 - [TelemetryLogger Properties Format](#TelemetryLogger-Properties-Format)
+- [AgentScheduler moves and renames](#AgentScheduler-moves-and-renames)
 
 ### OpProcessingController marked for deprecation
 `OpProcessingController` is marked for deprecation and we be removed in 0.38.
@@ -28,6 +29,9 @@ The previous format was just a property bag:
     `ChildLogger.create(logger, undefined, { someProperty: uuid() });`
 Whereas now it has nested property bags for error categories including `all` and `error`:
     `ChildLogger.create(logger, undefined, {all:{ someProperty: uuid() }});`
+
+### AgentScheduler moves and renames
+`IAgentScheduler` and `IProvideAgentScheduler` have been moved to the `@fluidframework/agent-scheduler` package, and `taskSchedulerId` has been renamed to `agentSchedulerId`.
 
 ## 0.36 Breaking changes
 - [Some `ILoader` APIs moved to `IHostLoader`](#Some-ILoader-APIs-moved-to-IHostLoader)
