@@ -138,11 +138,11 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
         this.internal.close();
     }
 
-    public injectNack(docId: string) {
+    public injectNack(docId: string, canRetry: boolean | undefined) {
         assert(!this.closed, "cannot inject nack into closed delta connection");
         const nack: Partial<INack> = {
             content:{
-                code: 500,
+                code:canRetry === true ? 500 : 403,
                 message: "FaultInjectionNack",
                 type: NackErrorType.BadRequestError,
             },
@@ -156,7 +156,7 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
         assert(this.listenerCount("error") > 0,"emitting error with no listeners will crash the process");
         this.emit(
             "error",
-            new FaultInjectionError(`FaultInjection${canRetry === true ? "Retriable" : "Fatal"}Error`, true));
+            new FaultInjectionError("FaultInjectionError", canRetry));
     }
     public injectDisconnect() {
         assert(!this.closed, "cannot inject disconnect into closed delta connection");

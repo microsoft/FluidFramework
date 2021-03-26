@@ -90,7 +90,7 @@ export async function initialize(testDriver: ITestDriver) {
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
         codeLoader,
-        logger: await loggerP,
+        logger: ChildLogger.create(await loggerP, undefined, {all: { driverType: testDriver.type }}),
     });
 
     const container = await loader.createDetachedContainer(codeDetails);
@@ -115,7 +115,7 @@ export async function load(testDriver: ITestDriver, url: string, runId: number) 
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory,
         codeLoader,
-        logger: ChildLogger.create(await loggerP, undefined, {all: { runId }}),
+        logger: ChildLogger.create(await loggerP, undefined, {all: { runId, driverType: testDriver.type }}),
     });
 
     const container = await loader.resolve({ url });

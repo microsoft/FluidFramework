@@ -106,11 +106,11 @@ function scheduleFaultInjection(
                 const deltaConn =
                     ds.documentServices.get(container.resolvedUrl)?.documentDeltaConnection;
                 if(deltaConn !== undefined) {
+                    // 1 in numClients chance of non-retritable error to not overly conflict with container close
+                    const canRetry = Math.floor(Math.random() * runConfig.testConfig.numClients) === 0 ? false : true;
                     switch(Math.floor(Math.random() * 5)) {
                         // dispreferr errors
                         case 0: {
-                            // 1 in 10 chance of non-retritable error
-                            const canRetry = Math.floor(Math.random() * 10) === 0 ? false : true;
                             deltaConn.injectError(canRetry);
                             printStatus(runConfig.runId, `error injected canRetry:${canRetry}`);
                             break;
@@ -124,8 +124,8 @@ function scheduleFaultInjection(
                         case 3:
                         case 4:
                         default: {
-                            deltaConn.injectNack(container.id);
-                            printStatus(runConfig.runId, "nack injected");
+                            deltaConn.injectNack(container.id, canRetry);
+                            printStatus(runConfig.runId, `nack injected canRetry:${canRetry}`);
                             break;
                         }
                     }
