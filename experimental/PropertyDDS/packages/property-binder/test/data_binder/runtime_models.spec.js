@@ -5,13 +5,11 @@
 /* globals should, expect, sinon */
 /* eslint-disable require-jsdoc */
 
-import {
-  registerTestTemplates
-} from './testTemplates';
-import { DataBinder } from '../../src/data_binder/data_binder';
+import { registerTestTemplates } from './testTemplates';
 import { DataBinding } from '../../src/data_binder/data_binding';
-
+import { SharedPropertyTree as MockWorkspace } from './shared_property_tree';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
+import { DataBinder } from '../../src';
 
 class AnimalRepresentation {
 }
@@ -26,18 +24,15 @@ const dogGenerator = function (in_property, bindingType, userData) {
 };
 
 describe('DataBinder runtime representations', function () {
-  let hfdm, myDataBinder, workspace;
+  let myDataBinder, workspace;
 
   beforeAll(function () {
     registerTestTemplates();
   });
 
   beforeEach(function () {
-    hfdm = new HFDM();
-    workspace = hfdm.createWorkspace();
-    return workspace.initialize({ local: true }).then(function () {
-      myDataBinder = new DataBinder();
-    });
+    myDataBinder = new DataBinder();
+    workspace = new MockWorkspace();
   });
 
   afterEach(function () {
@@ -57,8 +52,8 @@ describe('DataBinder runtime representations', function () {
 
       // Request the runtime representation associated with the property
       const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
-      should.exist(fido);
-      fido.should.be.instanceOf(DogRepresentation);
+      expect(fido).toBeDefined();
+      expect(fido).toBeInstanceOf(DogRepresentation);
     });
 
     it('should handle register, attach, insert', function () {
@@ -68,8 +63,8 @@ describe('DataBinder runtime representations', function () {
 
       // Request the runtime representation associated with the property
       const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
-      should.exist(fido);
-      fido.should.be.instanceOf(DogRepresentation);
+      expect(fido).toBeDefined();
+      expect(fido).toBeInstanceOf(DogRepresentation);
     });
 
     it('should handle register, insert, attach', function () {
@@ -79,8 +74,8 @@ describe('DataBinder runtime representations', function () {
 
       // Request the runtime representation associated with the property
       const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
-      should.exist(fido);
-      fido.should.be.instanceOf(DogRepresentation);
+      expect(fido).toBeDefined();
+      expect(fido).toBeInstanceOf(DogRepresentation);
     });
 
     it('should handle attach, register, insert', function () {
@@ -90,8 +85,8 @@ describe('DataBinder runtime representations', function () {
 
       // Request the runtime representation associated with the property
       const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
-      should.exist(fido);
-      fido.should.be.instanceOf(DogRepresentation);
+      expect(fido).toBeDefined();
+      expect(fido).toBeInstanceOf(DogRepresentation);
     });
 
     it('should handle attach, insert, register', function () {
@@ -101,8 +96,8 @@ describe('DataBinder runtime representations', function () {
 
       // Request the runtime representation associated with the property
       const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
-      should.exist(fido);
-      fido.should.be.instanceOf(DogRepresentation);
+      expect(fido).toBeDefined();
+      expect(fido).toBeInstanceOf(DogRepresentation);
     });
 
     it('should handle insert, register, attach', function () {
@@ -112,8 +107,8 @@ describe('DataBinder runtime representations', function () {
 
       // Request the runtime representation associated with the property
       const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
-      should.exist(fido);
-      fido.should.be.instanceOf(DogRepresentation);
+      expect(fido).toBeDefined();
+      expect(fido).toBeInstanceOf(DogRepresentation);
     });
 
     it('should handle insert, attach, register', function () {
@@ -123,8 +118,8 @@ describe('DataBinder runtime representations', function () {
 
       // Request the runtime representation associated with the property
       const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
-      should.exist(fido);
-      fido.should.be.instanceOf(DogRepresentation);
+      expect(fido).toBeDefined();
+      expect(fido).toBeInstanceOf(DogRepresentation);
     });
 
     it('should destroy the runtime representations when detaching', function () {
@@ -148,8 +143,8 @@ describe('DataBinder runtime representations', function () {
       // Request the representations associated with the property
       const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
       expect(makerCalled).toEqual(true);
-      should.exist(fido);
-      fido.should.be.instanceOf(DogRepresentation);
+      expect(fido).toBeDefined();
+      expect(fido).toBeInstanceOf(DogRepresentation);
 
       // Detach -- this should destroy the representations
       myDataBinder.detach(false);
@@ -170,8 +165,8 @@ describe('DataBinder runtime representations', function () {
       // dna of Fido, or the dna and all of the experiences he lived through? For the purposes of this test, the
       // new fido is a different fido.
       expect(makerCalled).toEqual(true);
-      should.exist(fido2);
-      fido.should.not.equal(fido2);
+      expect(fido2).toBeDefined();
+      expect(fido).not.toEqual(fido2);
     });
 
     it('should be possible to get a runtime representation from the databinding', function () {
@@ -198,8 +193,8 @@ describe('DataBinder runtime representations', function () {
       workspace.insert('Fido', fido);
 
       // The constructor of the databinding tried getting the runtime representation
-      should.exist(representationFound);
-      representationFound.should.be.instanceOf(DogRepresentation);
+      expect(representationFound).toBeDefined();
+      expect(representationFound).toBeInstanceOf(DogRepresentation);
       expect(representationFound).toEqual(myDataBinder.getRepresentation(fido, 'PETSTORE'));
     });
 
@@ -220,12 +215,12 @@ describe('DataBinder runtime representations', function () {
       workspace.insert('Fido', fido);
 
       const model1 = myDataBinder.getRepresentation(fido, 'PETSTORE');
-      should.exist(model1);
-      model1.should.be.instanceOf(Representation1);
+      expect(model1).toBeDefined();
+      expect(model1).toBeInstanceOf(Representation1);
 
       const model2 = myDataBinder.getRepresentation(fido, 'KENNEL');
-      should.exist(model2);
-      model2.should.be.instanceOf(Representation2);
+      expect(model2).toBeDefined();
+      expect(model2).toBeInstanceOf(Representation2);
     });
 
     it('should be possible to define hierarchical runtime representations', function () {
@@ -245,21 +240,21 @@ describe('DataBinder runtime representations', function () {
       workspace.insert('Hector', hector);
 
       const fidoRuntime = myDataBinder.getRepresentation(fido, 'PETSTORE');
-      should.exist(fidoRuntime);
-      fidoRuntime.should.be.instanceOf(DogRepresentation);
+      expect(fidoRuntime).toBeDefined();
+      expect(fidoRuntime).toBeInstanceOf(DogRepresentation);
 
       const whiskersRuntime = myDataBinder.getRepresentation(whiskers, 'PETSTORE');
-      should.exist(whiskersRuntime);
-      whiskersRuntime.should.be.instanceOf(CatRepresentation);
+      expect(whiskersRuntime).toBeDefined();
+      expect(whiskersRuntime).toBeInstanceOf(CatRepresentation);
 
       // Chinchillas don't have a specialization, so we should get the animal runtime representation
       const hectorRuntime = myDataBinder.getRepresentation(hector, 'PETSTORE');
-      should.exist(hectorRuntime);
-      hectorRuntime.should.be.instanceOf(AnimalRepresentation);
+      expect(hectorRuntime).toBeDefined();
+      expect(hectorRuntime).toBeInstanceOf(AnimalRepresentation);
     });
 
     it('should not be possible to call getRepresentation without a workspace', function () {
-      (function () { myDataBinder.getRepresentation(workspace.getRoot(), 'PETSTORE'); }).should.throw(Error);
+      expect((function () { myDataBinder.getRepresentation(workspace.getRoot(), 'PETSTORE'); })).toThrow();
     });
 
     it('should be possible to call getRepresentation in any order', function () {
@@ -286,18 +281,18 @@ describe('DataBinder runtime representations', function () {
       // The dog depends on the cat. First, try getting the dog representation then the cat representation.
       const dogRepresentation1 = myDataBinder.getRepresentation(fido, 'PETSTORE');
       const catRepresentation1 = myDataBinder.getRepresentation(whiskers, 'PETSTORE');
-      should.exist(dogRepresentation1);
-      should.exist(catRepresentation1);
-      dogRepresentation1.should.be.instanceOf(DogRepresentation);
-      catRepresentation1.should.be.instanceOf(CatRepresentation);
+      expect(dogRepresentation1).toBeDefined();
+      expect(catRepresentation1).toBeDefined();
+      expect(dogRepresentation1).toBeInstanceOf(DogRepresentation);
+      expect(catRepresentation1).toBeInstanceOf(CatRepresentation);
 
       // Now get the cat first
       const catRepresentation2 = myDataBinder.getRepresentation(whiskers, 'KENNEL');
       const dogRepresentation2 = myDataBinder.getRepresentation(fido, 'KENNEL');
-      should.exist(dogRepresentation2);
-      should.exist(catRepresentation2);
-      dogRepresentation2.should.be.instanceOf(DogRepresentation);
-      catRepresentation2.should.be.instanceOf(CatRepresentation);
+      expect(dogRepresentation2).toBeDefined();
+      expect(catRepresentation2).toBeDefined();
+      expect(dogRepresentation2).toBeInstanceOf(DogRepresentation);
+      expect(catRepresentation2).toBeInstanceOf(CatRepresentation);
     });
 
     it('should throw for a cycle in getRepresentation generators', function () {
@@ -327,8 +322,8 @@ describe('DataBinder runtime representations', function () {
       myDataBinder.defineRepresentation('PETSTORE', 'Test:Cat-1.0.0', dependentCatGenerator);
 
       // neither of these can really work
-      (function () { myDataBinder.getRepresentation(fido, 'PETSTORE'); }).should.throw(Error);
-      (function () { myDataBinder.getRepresentation(whiskers, 'PETSTORE'); }).should.throw(Error);
+      expect((function () { myDataBinder.getRepresentation(fido, 'PETSTORE'); })).toThrow();
+      expect((function () { myDataBinder.getRepresentation(whiskers, 'PETSTORE'); })).toThrow();
     });
 
     it('should be able to break cycles with an initializer', function () {
@@ -369,7 +364,7 @@ describe('DataBinder runtime representations', function () {
       const whiskersRepresentation = myDataBinder.getRepresentation(whiskers, 'PETSTORE');
 
       // Fido should have found whiskers
-      should.exist(fidoRepresentation._catModel);
+      expect(fidoRepresentation._catModel).toBeDefined();
       expect(fidoRepresentation._catModel).toEqual(whiskersRepresentation);
     });
 
@@ -381,7 +376,7 @@ describe('DataBinder runtime representations', function () {
 
       // Request the runtime representation associated with the property - but there is none
       const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
-      should.not.exist(fido);
+      expect(fido).toBeUndefined();
     });
 
     it('should be possible to unregister runtime representations', function () {
@@ -402,8 +397,8 @@ describe('DataBinder runtime representations', function () {
 
       // Request the runtime representation associated with the property
       const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
-      should.exist(fido);
-      fido.should.be.instanceOf(DogRepresentation);
+      expect(fido).toBeDefined();
+      expect(fido).toBeInstanceOf(DogRepresentation);
 
       // unregister
       handle.destroy();
@@ -411,7 +406,7 @@ describe('DataBinder runtime representations', function () {
 
       // Should not get a runtime representation for it anymore
       const notFido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
-      should.not.exist(notFido);
+      expect(notFido).toBeUndefined();
     });
 
     it('should be destroyed when the property is removed', function () {
@@ -432,15 +427,15 @@ describe('DataBinder runtime representations', function () {
 
       // Request the runtime representation associated with the property
       const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
-      should.exist(fido);
-      fido.should.be.instanceOf(DogRepresentation);
+      expect(fido).toBeDefined();
+      expect(fido).toBeInstanceOf(DogRepresentation);
 
       workspace.remove('Fido', PropertyFactory.create('Test:Dog-1.0.0', 'single'));
 
       expect(destroyerCalled).toEqual(true);
 
       // The property exists but is not in the workspace, no runtime representation
-      (function () { myDataBinder.getRepresentation(fido, 'PETSTORE'); }).should.throw(Error);
+      expect((function () { myDataBinder.getRepresentation(fido, 'PETSTORE'); })).toThrow();
     });
 
     it('should receive userdata in the generator and the destroyer', function () {
@@ -471,8 +466,8 @@ describe('DataBinder runtime representations', function () {
 
       // Request the runtime representations associated with the property
       const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
-      should.exist(fido);
-      fido.should.be.instanceOf(DogRepresentation);
+      expect(fido).toBeDefined();
+      expect(fido).toBeInstanceOf(DogRepresentation);
 
       expect(generatorGotUserData).toEqual(true);
       expect(destroyerGotAllData).toEqual(false);
@@ -499,17 +494,17 @@ describe('DataBinder runtime representations', function () {
       workspace.insert('Whiskers', whiskers);
 
       const model1 = myDataBinder.getRepresentation(fido, 'PETSTORE');
-      should.exist(model1);
-      model1.should.be.instanceOf(DogRepresentation);
+      expect(model1).toBeDefined();
+      expect(model1).toBeInstanceOf(DogRepresentation);
 
       const model2 = myDataBinder.getRepresentation(whiskers, 'PETSTORE');
-      should.exist(model2);
-      model2.should.be.instanceOf(CatRepresentation);
+      expect(model2).toBeDefined();
+      expect(model2).toBeInstanceOf(CatRepresentation);
 
       myDataBinder.undefineAllRepresentations('PETSTORE');
 
-      should.not.exist(myDataBinder.getRepresentation(fido, 'PETSTORE'));
-      should.not.exist(myDataBinder.getRepresentation(whiskers, 'PETSTORE'));
+      expect(myDataBinder.getRepresentation(fido, 'PETSTORE')).toBeUndefined();
+      expect(myDataBinder.getRepresentation(whiskers, 'PETSTORE')).toBeUndefined();
     });
 
     it('should work in arrays', function () {
@@ -536,18 +531,18 @@ describe('DataBinder runtime representations', function () {
       dogArray.push(PropertyFactory.create('Test:Dog-1.0.0', 'single'));
 
       const model1 = myDataBinder.getRepresentation(dogArray.get(0), 'PETSTORE');
-      should.exist(model1);
-      model1.should.be.instanceOf(DogRepresentation);
+      expect(model1).toBeDefined();
+      expect(model1).toBeInstanceOf(DogRepresentation);
 
       const model2 = myDataBinder.getRepresentation(dogArray.get(3), 'PETSTORE');
-      should.exist(model2);
-      model2.should.be.instanceOf(DogRepresentation);
+      expect(model2).toBeDefined();
+      expect(model2).toBeInstanceOf(DogRepresentation);
 
       expect(destroyedCalled).toEqual(false);
       handle.destroy();
       expect(destroyedCalled).toEqual(true);
 
-      should.not.exist(myDataBinder.getRepresentation(dogArray.get(0), 'PETSTORE'));
+      expect(myDataBinder.getRepresentation(dogArray.get(0), 'PETSTORE')).toBeUndefined();
     });
 
     it('should work for arrays', function () {
@@ -574,17 +569,17 @@ describe('DataBinder runtime representations', function () {
       dogArray.push(PropertyFactory.create('Test:Dog-1.0.0', 'single'));
 
       const model1 = myDataBinder.getRepresentation(dogArray, 'PETSTORE');
-      should.exist(model1);
-      model1.should.be.instanceOf(DogRepresentation);
+      expect(model1).toBeDefined();
+      expect(model1).toBeInstanceOf(DogRepresentation);
 
       const model2 = myDataBinder.getRepresentation(dogArray.get(0), 'PETSTORE');
-      should.not.exist(model2);
+      expect(model2).toBeUndefined();
 
       expect(destroyedCalled).toEqual(false);
       handle.destroy();
       expect(destroyedCalled).toEqual(true);
 
-      should.not.exist(myDataBinder.getRepresentation(dogArray, 'PETSTORE'));
+      expect(myDataBinder.getRepresentation(dogArray, 'PETSTORE')).toBeUndefined();
     });
 
     it('should work in maps', function () {
@@ -609,18 +604,18 @@ describe('DataBinder runtime representations', function () {
       dogMap.insert('brutus', PropertyFactory.create('Test:Dog-1.0.0', 'single'));
 
       const model1 = myDataBinder.getRepresentation(dogMap.get('fido'), 'PETSTORE');
-      should.exist(model1);
-      model1.should.be.instanceOf(DogRepresentation);
+      expect(model1).toBeDefined();
+      expect(model1).toBeInstanceOf(DogRepresentation);
 
       const model2 = myDataBinder.getRepresentation(dogMap.get('brutus'), 'PETSTORE');
-      should.exist(model2);
-      model2.should.be.instanceOf(DogRepresentation);
+      expect(model2).toBeDefined();
+      expect(model2).toBeInstanceOf(DogRepresentation);
 
       expect(destroyedCalled).toEqual(false);
       handle.destroy();
       expect(destroyedCalled).toEqual(true);
 
-      should.not.exist(myDataBinder.getRepresentation(dogMap.get('fido'), 'PETSTORE'));
+      expect(myDataBinder.getRepresentation(dogMap.get('fido'), 'PETSTORE')).toBeUndefined();
     });
   });
 
@@ -647,17 +642,17 @@ describe('DataBinder runtime representations', function () {
       dogMap.insert('brutus', PropertyFactory.create('Test:Dog-1.0.0', 'single'));
 
       const model1 = myDataBinder.getRepresentation(dogMap, 'PETSTORE');
-      should.exist(model1);
-      model1.should.be.instanceOf(DogRepresentation);
+      expect(model1).toBeDefined();
+      expect(model1).toBeInstanceOf(DogRepresentation);
 
       const model2 = myDataBinder.getRepresentation(dogMap.get('fido'), 'PETSTORE');
-      should.not.exist(model2);
+      expect(model2).toBeUndefined();
 
       expect(destroyedCalled).toEqual(false);
       handle.destroy();
       expect(destroyedCalled).toEqual(true);
 
-      should.not.exist(myDataBinder.getRepresentation(dogMap, 'PETSTORE'));
+      expect(myDataBinder.getRepresentation(dogMap, 'PETSTORE')).toBeUndefined();
     });
 
     it('should be possible to associate a runtime representation and get it', function () {
@@ -674,12 +669,12 @@ describe('DataBinder runtime representations', function () {
 
       // Should get it back when we ask for it
       const fetchFido = myDataBinder.getRepresentation(fido, 'PETSTORE');
-      should.exist(fetchFido);
+      expect(fetchFido).toBeDefined();
       expect(fetchFido).toEqual(fidoRepresentation);
 
       // Should still be able to get other representations
       const snuggumsRepresentation = myDataBinder.getRepresentation(mrSnuggums, 'PETSTORE');
-      snuggumsRepresentation.should.be.instanceOf(AnimalRepresentation);
+      expect(snuggumsRepresentation).toBeInstanceOf(AnimalRepresentation);
     });
 
     it('should still call the destructor on a rep supplied through associateRepresentation', function () {
@@ -706,7 +701,7 @@ describe('DataBinder runtime representations', function () {
 
       // Get the other representation (i.e., construct from the defineRepresentation definition)
       snuggumsRepresentation = myDataBinder.getRepresentation(mrSnuggums, 'PETSTORE');
-      snuggumsRepresentation.should.be.instanceOf(AnimalRepresentation);
+      expect(snuggumsRepresentation).toBeInstanceOf(AnimalRepresentation);
 
       // Remove the fido property -- should call the destroyer callback to destroy the associated representation
       // Note, the destroyer associated with the base class, Test:Animal-1.0.0, will be called here.
@@ -727,14 +722,12 @@ describe('DataBinder runtime representations', function () {
       const fidoRepresentation = new DogRepresentation();
 
       // Not attached to a workspace; should fail
-      (function () { myDataBinder.associateRepresentation(fido, 'PETSTORE', fidoRepresentation); })
-        .should.throw(Error);
+      expect(function () { myDataBinder.associateRepresentation(fido, 'PETSTORE', fidoRepresentation); }).toThrow();
 
       myDataBinder.attachTo(workspace);
 
       // Attached to a workspace, but fido isn't in the workspace
-      (function () { myDataBinder.associateRepresentation(fido, 'PETSTORE', fidoRepresentation); })
-        .should.throw(Error);
+      expect(function () { myDataBinder.associateRepresentation(fido, 'PETSTORE', fidoRepresentation); }).toThrow();
 
       workspace.insert('Fido', fido);
 
@@ -756,8 +749,7 @@ describe('DataBinder runtime representations', function () {
       const fidoRepresentation = new DogRepresentation();
 
       // already exists
-      (function () { myDataBinder.associateRepresentation(fido, 'PETSTORE', fidoRepresentation); })
-        .should.throw(Error);
+      expect(function () { myDataBinder.associateRepresentation(fido, 'PETSTORE', fidoRepresentation); }).toThrow();
     });
 
     it('should throw when trying to get representation associated with a non-existing property', function () {
@@ -773,7 +765,7 @@ describe('DataBinder runtime representations', function () {
 
         onRemove(in_removalContext) {
           // we don't have the associated Property anymore -> should throw
-          (function () { this.getRepresentation(); }).should.throw(Error);
+          expect((function () { this.getRepresentation(); })).toThrow();
           representationFound = undefined;
         }
       }
@@ -790,28 +782,28 @@ describe('DataBinder runtime representations', function () {
       workspace.insert('Fido', fido);
 
       // The constructor of the databinding tried getting the runtime representation
-      should.exist(representationFound);
-      representationFound.should.be.instanceOf(DogRepresentation);
+      expect(representationFound).toBeDefined();
+      expect(representationFound).toBeInstanceOf(DogRepresentation);
       expect(representationFound).toEqual(myDataBinder.getRepresentation(fido, 'PETSTORE'));
 
       // Remove the dog
       workspace.remove('Fido');
-      should.not.exist(representationFound); // removed explicitly in onRemove()
-      (function () { myDataBinder.getRepresentation(workspace.get('fido')); }).should.throw(Error);
+      expect(representationFound).toBeUndefined(); // removed explicitly in onRemove()
+      expect((function () { myDataBinder.getRepresentation(workspace.get('fido')); })).toThrow();
     });
 
     it('should supply the empty context for classic function callbacks', function () {
-      const myDogGenerator = sinon.spy(function () {
-        should.not.exist(this);
+      const myDogGenerator = jest.fn(function () {
+        expect(this).toBeUndefined();
         return new DogRepresentation();
       });
 
-      const dogInitializer = sinon.spy(function () {
-        should.not.exist(this);
+      const dogInitializer = jest.fn(function () {
+        expect(this).toBeUndefined();
       });
 
-      const dogDestroyer = sinon.spy(function () {
-        should.not.exist(this);
+      const dogDestroyer = jest.fn(function () {
+        expect(this).toBeUndefined();
       });
 
       // Define a runtime representation for dogs with all possible callbacks
@@ -825,7 +817,7 @@ describe('DataBinder runtime representations', function () {
       workspace.insert('Fido', fido);
       // Get the representation, which makes it exist
       const fidoRepresentation = myDataBinder.getRepresentation(fido, 'PETSTORE');
-      fidoRepresentation.should.be.instanceOf(DogRepresentation);
+      expect(fidoRepresentation).toBeInstanceOf(DogRepresentation);
       // Destroy it
       handle.destroy();
       // Check if all callbacks have been called
@@ -866,7 +858,7 @@ describe('DataBinder runtime representations', function () {
       workspace.insert('Fido', fido);
       // Get the representation, which makes it exist
       const fidoRepresentation = myDataBinder.getRepresentation(fido, 'PETSTORE');
-      fidoRepresentation.should.be.instanceOf(DogRepresentation);
+      expect(fidoRepresentation).toBeInstanceOf(DogRepresentation);
       // Destroy it
       handle.destroy();
       // Check if all callbacks have been called
@@ -906,8 +898,8 @@ describe('DataBinder runtime representations', function () {
         { stateless: in_catIsStateless });
 
       // neither of these can really work
-      (function () { myDataBinder.getRepresentation(fido, 'PETSTORE'); }).should.throw(Error);
-      (function () { myDataBinder.getRepresentation(whiskers, 'PETSTORE'); }).should.throw(Error);
+      expect((function () { myDataBinder.getRepresentation(fido, 'PETSTORE'); })).toThrow();
+      expect((function () { myDataBinder.getRepresentation(whiskers, 'PETSTORE'); })).toThrow();
     };
 
     const testCycleBreak = function (in_dogIsStateless, in_catIsStateless) {
@@ -957,11 +949,11 @@ describe('DataBinder runtime representations', function () {
       const whiskersRepresentation = myDataBinder.getRepresentation(whiskers, 'PETSTORE');
 
       // Fido should have found whiskers
-      should.exist(fidoRepresentation._catModel);
-      fidoRepresentation._catModel.should.be.instanceOf(CatRepresentation);
+      expect(fidoRepresentation._catModel).toBeDefined();
+      expect(fidoRepresentation._catModel).toBeInstanceOf(CatRepresentation);
       // If cats are stateless -> the representation will be created on demand hence not whiskers
       if (in_catIsStateless) {
-        fidoRepresentation._catModel.should.not.equal(whiskersRepresentation);
+        expect(fidoRepresentation._catModel).not.toEqual(whiskersRepresentation);
       } else {
         expect(fidoRepresentation._catModel).toEqual(whiskersRepresentation);
       }
@@ -971,9 +963,9 @@ describe('DataBinder runtime representations', function () {
       expect(dogModel).toEqual(fidoRepresentation);
       // these should work and give different representations as well
       const hectorRepresentation = myDataBinder.getRepresentation(hector, 'PETSTORE');
-      hectorRepresentation.should.not.equal(fidoRepresentation);
+      expect(hectorRepresentation).not.toEqual(fidoRepresentation);
       const tigerRepresentation = myDataBinder.getRepresentation(tiger, 'PETSTORE');
-      tigerRepresentation.should.not.equal(whiskersRepresentation);
+      expect(tigerRepresentation).not.toEqual(whiskersRepresentation);
 
     };
     const testStatelessHierarcy = function (in_animalIsStateless, in_dogIsStateless, in_catIsStateless) {
@@ -998,17 +990,17 @@ describe('DataBinder runtime representations', function () {
       workspace.insert('Hector', hector);
 
       const fidoRuntime = myDataBinder.getRepresentation(fido, 'PETSTORE');
-      should.exist(fidoRuntime);
-      fidoRuntime.should.be.instanceOf(DogRepresentation);
+      expect(fidoRuntime).toBeDefined();
+      expect(fidoRuntime).toBeInstanceOf(DogRepresentation);
 
       const whiskersRuntime = myDataBinder.getRepresentation(whiskers, 'PETSTORE');
-      should.exist(whiskersRuntime);
-      whiskersRuntime.should.be.instanceOf(CatRepresentation);
+      expect(whiskersRuntime).toBeDefined();
+      expect(whiskersRuntime).toBeInstanceOf(CatRepresentation);
 
       // Chinchillas don't have a specialization, so we should get the animal runtime representation
       const hectorRuntime = myDataBinder.getRepresentation(hector, 'PETSTORE');
-      should.exist(hectorRuntime);
-      hectorRuntime.should.be.instanceOf(AnimalRepresentation);
+      expect(hectorRuntime).toBeDefined();
+      expect(hectorRuntime).toBeInstanceOf(AnimalRepresentation);
     };
 
     it('should not be possible to associate a stateless runtime representation', function () {
@@ -1020,8 +1012,7 @@ describe('DataBinder runtime representations', function () {
       myDataBinder.attachTo(workspace);
       workspace.insert('Fido', fido);
       // Dogrepresentation is stateless, can't associate
-      (function () { myDataBinder.associateRepresentation(fido, 'PETSTORE', fidoRepresentation); })
-        .should.throw(Error);
+      expect(function () { myDataBinder.associateRepresentation(fido, 'PETSTORE', fidoRepresentation); }).toThrow();
     });
 
     it('should be possible to define a stateless runtime representation and get it back everywhere', function () {
@@ -1040,15 +1031,15 @@ describe('DataBinder runtime representations', function () {
       // Also get the representation for the second dog
       const hectorRepresentation = myDataBinder.getRepresentation(hector, 'PETSTORE');
       // Dog representations are stateless and created on the fly -> should be different
-      fidoRepresentation.should.not.equal(hectorRepresentation);
+      expect(fidoRepresentation).not.toEqual(hectorRepresentation);
       // insert yet another dog
       const molly = PropertyFactory.create('Test:Dog-1.0.0', 'single');
       workspace.insert('Molly', molly);
       // Also get the representation for this dog
       const mollyRepresentation = myDataBinder.getRepresentation(molly, 'PETSTORE');
       // Dog representations are stateless and created on the fly -> should again be different
-      fidoRepresentation.should.not.equal(mollyRepresentation);
-      hectorRepresentation.should.not.equal(mollyRepresentation);
+      expect(fidoRepresentation).not.toEqual(mollyRepresentation);
+      expect(hectorRepresentation).not.toEqual(mollyRepresentation);
     });
 
     it('should not be possible to redefine a stateless runtime representation', function () {
@@ -1056,20 +1047,20 @@ describe('DataBinder runtime representations', function () {
       myDataBinder.defineRepresentation('PETSTORE', 'Test:Dog-1.0.0', () => new DogRepresentation(),
         { stateless: true });
       // Try to redefine, should throw
-      (function () {
+      expect(function () {
         myDataBinder.defineRepresentation('PETSTORE', 'Test:Dog-1.0.0', () => new DogRepresentation(),
           { stateless: true });
-      }).should.throw(Error);
+      }).toThrow()
     });
 
     it('should not be possible to redefine a non-stateless representation with a stateless rep', function () {
       // Define a stateless runtime representation for dogs
       myDataBinder.defineRepresentation('PETSTORE', 'Test:Dog-1.0.0', () => new DogRepresentation());
       // Try to redefine, should throw
-      (function () {
+      expect(function () {
         myDataBinder.defineRepresentation('PETSTORE', 'Test:Dog-1.0.0', () => new DogRepresentation(),
           { stateless: true });
-      }).should.throw(Error);
+      }).toThrow();
     });
 
     it('should be able to break cycles with an initializer between stateless & stateful reps (part 1)', function () {
@@ -1104,15 +1095,15 @@ describe('DataBinder runtime representations', function () {
 
       // Request the runtime representation associated with the property
       const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
-      should.exist(fido);
-      fido.should.be.instanceOf(DogRepresentation);
+      expect(fido).toBeDefined();
+      expect(fido).toBeInstanceOf(DogRepresentation);
 
       // unregister
       handle.destroy();
 
       // Should not get a runtime representation for it anymore
       const notFido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
-      should.not.exist(notFido);
+      expect(notFido).toBeUndefined();
     });
 
     it('should not destroy a stateless representation when the property is removed', function () {
@@ -1128,24 +1119,24 @@ describe('DataBinder runtime representations', function () {
 
       // Request the runtime representation associated with the property
       const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
-      should.exist(fido);
-      fido.should.be.instanceOf(DogRepresentation);
+      expect(fido).toBeDefined();
+      expect(fido).toBeInstanceOf(DogRepresentation);
 
       workspace.remove('Fido', PropertyFactory.create('Test:Dog-1.0.0', 'single'));
 
       // The property exists but is not in the workspace, no runtime representation
-      (function () { myDataBinder.getRepresentation(fido, 'PETSTORE'); }).should.throw(Error);
+      expect((function () { myDataBinder.getRepresentation(fido, 'PETSTORE'); })).toThrow();
       // Another property should still give us the runtime representation
       workspace.insert('Hector', PropertyFactory.create('Test:Dog-1.0.0', 'single'));
       const hector = myDataBinder.getRepresentation(workspace.get('Hector'), 'PETSTORE');
-      should.exist(hector);
-      hector.should.be.instanceOf(DogRepresentation);
+      expect(hector).toBeDefined();
+      expect(hector).toBeInstanceOf(DogRepresentation);
     });
 
     it('generator/initializer for a stateless representation should only be called for each prop', function () {
       // Register a property and an initializer
       const dogInitializer = jest.fn();
-      const dogSpyGenerator = sinon.spy(function () {
+      const dogSpyGenerator = jest.fn(function () {
         return new DogRepresentation();
       });
       myDataBinder.defineRepresentation('PETSTORE', 'Test:Dog-1.0.0', dogSpyGenerator, {
@@ -1160,8 +1151,8 @@ describe('DataBinder runtime representations', function () {
 
       // Request the runtime representation associated with the property
       const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
-      should.exist(fido);
-      fido.should.be.instanceOf(DogRepresentation);
+      expect(fido).toBeDefined();
+      expect(fido).toBeInstanceOf(DogRepresentation);
       // Both generator & initializer should have been called
       expect(dogInitializer).toHaveBeenCalledTimes(1);
       expect(dogSpyGenerator).toHaveBeenCalledTimes(1);
@@ -1169,9 +1160,9 @@ describe('DataBinder runtime representations', function () {
       // Insert another dog
       workspace.insert('Hector', PropertyFactory.create('Test:Dog-1.0.0', 'single'));
       const hector = myDataBinder.getRepresentation(workspace.get('Hector'), 'PETSTORE');
-      should.exist(hector);
-      hector.should.be.instanceOf(DogRepresentation);
-      hector.should.not.equal(fido);
+      expect(hector).toBeDefined();
+      expect(hector).toBeInstanceOf(DogRepresentation);
+      expect(hector).not.toEqual(fido);
       // generator & initializer should have been called again
       expect(dogInitializer).toHaveBeenCalledTimes(2);
       expect(dogSpyGenerator).toHaveBeenCalledTimes(2);
@@ -1200,7 +1191,7 @@ describe('DataBinder runtime representations', function () {
     it('should destroy the stateless runtime representations when detaching', function () {
       myDataBinder.attachTo(workspace);
 
-      const maker = sinon.spy(function () {
+      const maker = jest.fn(function () {
         return new DogRepresentation();
       });
       myDataBinder.defineRepresentation('PETSTORE', 'Test:Dog-1.0.0', maker, {
@@ -1211,8 +1202,8 @@ describe('DataBinder runtime representations', function () {
       // Request the representations associated with the property
       const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
       expect(maker).toHaveBeenCalledTimes(1);
-      should.exist(fido);
-      fido.should.be.instanceOf(DogRepresentation);
+      expect(fido).toBeDefined();
+      expect(fido).toBeInstanceOf(DogRepresentation);
 
       // Detach -- this should destroy the representations
       myDataBinder.detach(false);
@@ -1231,14 +1222,14 @@ describe('DataBinder runtime representations', function () {
       // dna of Fido, or the dna and all of the experiences he lived through? For the purposes of this test, the
       // new fido is a different fido.
       expect(maker).toHaveBeenCalledTimes(1);
-      should.exist(fido2);
-      fido.should.not.equal(fido2);
+      expect(fido2).toBeDefined();
+      expect(fido).not.toEqual(fido2);
     });
 
     it('should be able to redefine stateless runtime representations after detach(true)/reattach', function () {
       myDataBinder.attachTo(workspace);
 
-      const maker = sinon.spy(function () {
+      const maker = jest.fn(function () {
         return new DogRepresentation();
       });
       myDataBinder.defineRepresentation('PETSTORE', 'Test:Dog-1.0.0', maker, {
@@ -1249,8 +1240,8 @@ describe('DataBinder runtime representations', function () {
       // Request the representations associated with the property
       const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
       expect(maker).toHaveBeenCalledTimes(1);
-      should.exist(fido);
-      fido.should.be.instanceOf(DogRepresentation);
+      expect(fido).toBeDefined();
+      expect(fido).toBeInstanceOf(DogRepresentation);
 
       // Detach -- this should destroy both the representations & the definitions
       myDataBinder.detach();
@@ -1261,7 +1252,7 @@ describe('DataBinder runtime representations', function () {
       expect(maker).toHaveBeenCalledTimes(0);
       // After reattaching, getting the representation without redefining it should throw since we've destroyed
       // the definition too
-      (function () { myDataBinder.getRepresentation(fido, 'PETSTORE'); }).should.throw(Error);
+      expect((function () { myDataBinder.getRepresentation(fido, 'PETSTORE'); })).toThrow();
       // now let's redefine it
       myDataBinder.defineRepresentation('PETSTORE', 'Test:Dog-1.0.0', maker, {
         stateless: true
@@ -1269,9 +1260,9 @@ describe('DataBinder runtime representations', function () {
       // now it should work
       const fido2 = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
       expect(maker).toHaveBeenCalledTimes(1);
-      should.exist(fido2);
+      expect(fido2).toBeDefined();
       // ... and obviously it's a new representation (with a new definition)
-      fido.should.not.equal(fido2);
+      expect(fido).not.toEqual(fido2);
     });
 
     it('should be possible unregister & redefine stateless representations', function () {
@@ -1287,25 +1278,25 @@ describe('DataBinder runtime representations', function () {
 
       // Request the runtime representation associated with the property
       const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
-      should.exist(fido);
-      fido.should.be.instanceOf(DogRepresentation);
+      expect(fido).toBeDefined();
+      expect(fido).toBeInstanceOf(DogRepresentation);
 
       // unregister
       handle.destroy();
 
       // Should not get a runtime representation for it anymore
       const notFido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
-      should.not.exist(notFido);
+      expect(notFido).toBeUndefined();
 
       // Register a new stateless representation for the same binding type & typeID
       myDataBinder.defineRepresentation('PETSTORE', 'Test:Dog-1.0.0', () => new DogRepresentation(), {
         stateless: true
       });
       const newFido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
-      should.exist(newFido);
+      expect(newFido).toBeDefined();
       // note that after we undefine & redefine it will be a *different* stateless representation
-      newFido.should.be.instanceOf(DogRepresentation);
-      newFido.should.not.equal(fido);
+      expect(newFido).toBeInstanceOf(DogRepresentation);
+      expect(newFido).not.toEqual(fido);
     });
   });
 });

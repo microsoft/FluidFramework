@@ -5,13 +5,12 @@
 /* globals expect */
 import { DataBinder } from '../../src/data_binder/data_binder';
 
-import {
-  catchConsoleErrors
-} from './catch_console_errors';
+import { catchConsoleErrors } from './catch_console_errors';
 
 import { DataBinding } from '../../src/data_binder/data_binding';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
 import { ActivationQueryCacheHelper } from '../../src/internal/activation_query_cache_helper';
+import { SharedPropertyTree as MockWorkspace } from './shared_property_tree'
 
 /**
  * Dummy class to instantiate
@@ -51,13 +50,9 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
   });
 
   beforeEach(function () {
-    const hfdm = new HFDM();
-    workspace = hfdm.createWorkspace();
-    return workspace.initialize({ local: true }).then(function () {
-      dataBinder = new DataBinder();
-      // Bind to the workspace
-      dataBinder.attachTo(workspace);
-    });
+    dataBinder = new DataBinder();
+    workspace = new MockWorkspace();
+    dataBinder.attachTo(workspace);
   });
 
   afterEach(function () {

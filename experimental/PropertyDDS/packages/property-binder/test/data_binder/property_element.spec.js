@@ -19,6 +19,7 @@ import * as _ from 'underscore';
 import { PropertyElement } from '../../src/internal/property_element';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
 import { RESOLVE_NEVER, RESOLVE_NO_LEAFS, RESOLVE_ALWAYS } from '../../src/internal/constants';
+import { SharedPropertyTree as MockWorkspace } from './shared_property_tree';
 
 describe('Property element', function () {
 
@@ -36,10 +37,7 @@ describe('Property element', function () {
   });
 
   beforeEach(function () {
-    const hfdm = new HFDM();
-    workspace = hfdm.createWorkspace();
-    return workspace.initialize({ local: true }).then(function () {
-    });
+    workspace = new MockWorkspace();
   });
 
   describe('hierarchy walking', function () {
@@ -143,12 +141,12 @@ describe('Property element', function () {
     const arrayEntryElem = refParentElem.getChild(['array_ref', 0], RESOLVE_NEVER);
     expect(arrayEntryElem.getChildToken()).toEqual(0);
     expect(arrayEntryElem.getParent().getProperty()).toEqual(workspace.get(['refParent', 'array_ref']));
-    should.not.exist(arrayEntryElem.getParent().getChildToken());
+    expect(arrayEntryElem.getParent().getChildToken()).toBeUndefined();
 
     const mapEntryElem = refParentElem.getChild(['map_ref', 'aKey'], RESOLVE_NEVER);
     expect(mapEntryElem.getChildToken()).toEqual('aKey');
     expect(mapEntryElem.getParent().getProperty()).toEqual(workspace.get(['refParent', 'map_ref']));
-    should.not.exist(mapEntryElem.getParent().getChildToken());
+    expect(mapEntryElem.getParent().getChildToken()).toBeUndefined();
 
     const childElem = rootElem.getChild('child');
     const numberElem = childElem.getChild(['arrayOfNumbers', 0]);
@@ -297,7 +295,7 @@ describe('Property element', function () {
     expect(childElem.getValue()).toEqual('child1 text');
 
     expect(childElem.getParent().getParent().getProperty().getId()).toEqual('subArray');
-    should.not.exist(childElem.getParent().getParent().getChildToken());
+    expect(childElem.getParent().getParent().getChildToken()).toBeUndefined();
   });
 
   it('map of properties parenting', function () {
@@ -315,10 +313,10 @@ describe('Property element', function () {
     expect(childElem.getValue()).toEqual('child1 text');
 
     expect(childElem.getParent().getProperty().getId()).toEqual('child1');
-    should.not.exist(childElem.getParent().getChildToken());
+    expect(childElem.getParent().getChildToken()).toBeUndefined();
 
     expect(childElem.getParent().getParent().getProperty().getId()).toEqual('subMap');
-    should.not.exist(childElem.getParent().getParent().getChildToken());
+    expect(childElem.getParent().getParent().getChildToken()).toBeUndefined();
   });
 
   it('double references', function () {
@@ -393,10 +391,10 @@ describe('Property element', function () {
     expect(rootElem.getChildToken()).toEqual(0);
     rootElem.becomeParent();
     expect(rootElem.getProperty()).toEqual(workspace.getRoot().get('theArray'));
-    should.not.exist(rootElem.getChildToken());
+    expect(rootElem.getChildToken()).toBeUndefined();
     rootElem.becomeParent();
     expect(rootElem.getProperty()).toEqual(workspace.getRoot());
-    should.not.exist(rootElem.getChildToken());
+    expect(rootElem.getChildToken()).toBeUndefined();
     rootElem.becomeParent();
     expect(rootElem.isValid()).toEqual(false);
   });

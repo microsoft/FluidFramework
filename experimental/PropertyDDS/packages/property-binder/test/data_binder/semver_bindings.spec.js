@@ -6,7 +6,7 @@
 /* eslint-disable require-jsdoc */
 /* globals expect */
 import { DataBinder } from '../../src/data_binder/data_binder';
-
+import { SharedPropertyTree as MockWorkspace } from './shared_property_tree';
 import {
   catchConsoleErrors
 } from './catch_console_errors';
@@ -57,13 +57,11 @@ describe('DataBinder databinding semversioning', function () {
   catchConsoleErrors();
 
   beforeEach(function () {
-    const hfdm = new HFDM();
-    workspace = hfdm.createWorkspace();
-    return workspace.initialize({ local: true }).then(function () {
-      dataBinder = new DataBinder();
-      // Bind to the workspace
-      dataBinder.attachTo(workspace);
-    });
+
+    workspace = new MockWorkspace();
+    dataBinder = new DataBinder();
+    // Bind to the workspace
+    dataBinder.attachTo(workspace);
   });
 
   afterEach(function () {
@@ -135,30 +133,30 @@ describe('DataBinder databinding semversioning', function () {
       dataBinder.activateDataBinding('bindingtype', 'test1:mytype-4.0.0');
 
       // Nothing defined for 0_0_9
-      expect(dataBinder.resolve('/test1:mytype-0_0_9', 'bindingtype')).to.not.exist;
+      expect(dataBinder.resolve('/test1:mytype-0_0_9', 'bindingtype')).toBeUndefined();
 
       // We defined 1_0_0
-      expect(dataBinder.resolve('/test1:mytype-1_0_0', 'bindingtype')).to.be.instanceOf(D100);
+      expect(dataBinder.resolve('/test1:mytype-1_0_0', 'bindingtype')).toBeInstanceOf(D100);
       // 1_0_1 defaults to 1_0_0
-      expect(dataBinder.resolve('/test1:mytype-1_0_1', 'bindingtype')).to.be.instanceOf(D100);
+      expect(dataBinder.resolve('/test1:mytype-1_0_1', 'bindingtype')).toBeInstanceOf(D100);
       // We provided something for 1_0_2
-      expect(dataBinder.resolve('/test1:mytype-1_0_2', 'bindingtype')).to.be.instanceOf(D102);
+      expect(dataBinder.resolve('/test1:mytype-1_0_2', 'bindingtype')).toBeInstanceOf(D102);
       // Nothing for 1_0_3, patch upgradetype applies so we get 1_0_2
-      expect(dataBinder.resolve('/test1:mytype-1_0_3', 'bindingtype')).to.be.instanceOf(D102);
+      expect(dataBinder.resolve('/test1:mytype-1_0_3', 'bindingtype')).toBeInstanceOf(D102);
       // The setting on 1_0_2 was 'patch', so 1_1_0 gets the previous minor update for d100
-      expect(dataBinder.resolve('/test1:mytype-1_1_0', 'bindingtype')).to.be.instanceOf(D100);
+      expect(dataBinder.resolve('/test1:mytype-1_1_0', 'bindingtype')).toBeInstanceOf(D100);
       // New definition for 1_2_0
-      expect(dataBinder.resolve('/test1:mytype-1_2_0', 'bindingtype')).to.be.instanceOf(D120);
+      expect(dataBinder.resolve('/test1:mytype-1_2_0', 'bindingtype')).toBeInstanceOf(D120);
       // 1_3_0 gets 1_2_0 because there's nothing changed
-      expect(dataBinder.resolve('/test1:mytype-1_3_0', 'bindingtype')).to.be.instanceOf(D120);
+      expect(dataBinder.resolve('/test1:mytype-1_3_0', 'bindingtype')).toBeInstanceOf(D120);
       // New Major version for 2_0_0! Exciting.
-      expect(dataBinder.resolve('/test1:mytype-2_0_0', 'bindingtype')).to.be.instanceOf(D200);
+      expect(dataBinder.resolve('/test1:mytype-2_0_0', 'bindingtype')).toBeInstanceOf(D200);
       // Majors affect patches, get d200
-      expect(dataBinder.resolve('/test1:mytype-2_0_1', 'bindingtype')).to.be.instanceOf(D200);
+      expect(dataBinder.resolve('/test1:mytype-2_0_1', 'bindingtype')).toBeInstanceOf(D200);
       // Majors affect everything, actually
-      expect(dataBinder.resolve('/test1:mytype-3_0_0', 'bindingtype')).to.be.instanceOf(D200);
+      expect(dataBinder.resolve('/test1:mytype-3_0_0', 'bindingtype')).toBeInstanceOf(D200);
       // Until the next major, that is.
-      expect(dataBinder.resolve('/test1:mytype-4_0_0', 'bindingtype')).to.be.instanceOf(D400);
+      expect(dataBinder.resolve('/test1:mytype-4_0_0', 'bindingtype')).toBeInstanceOf(D400);
     });
 
     it('should not create a binding for a version that is not activated', function () {
@@ -169,7 +167,7 @@ describe('DataBinder databinding semversioning', function () {
       });
       dataBinder.activateDataBinding('bindingtype', 'test1:mytype-1.0.0');
 
-      expect(dataBinder.resolve('/myprop', 'bindingtype')).to.not.exist;
+      expect(dataBinder.resolve('/myprop', 'bindingtype')).toBeUndefined();
     });
 
     it('should not create a binding for a version that is not defined but activated', function () {
@@ -180,7 +178,7 @@ describe('DataBinder databinding semversioning', function () {
       });
       dataBinder.activateDataBinding('bindingtype', 'test1:mytype-2.0.0');
 
-      expect(dataBinder.resolve('/myprop', 'bindingtype')).to.not.exist;
+      expect(dataBinder.resolve('/myprop', 'bindingtype')).toBeUndefined();
     });
 
     it('versioning, inheritance, patch', function () {
@@ -193,7 +191,7 @@ describe('DataBinder databinding semversioning', function () {
       });
       dataBinder.activateDataBinding('bindingtype', 'test1:mytype-1.0.0');
 
-      expect(dataBinder.resolve('/myprop', 'bindingtype')).to.be.instanceOf(D100);
+      expect(dataBinder.resolve('/myprop', 'bindingtype')).toBeInstanceOf(D100);
     });
 
     it('versioning, inheritance, minor', function () {
@@ -206,7 +204,7 @@ describe('DataBinder databinding semversioning', function () {
       });
       dataBinder.activateDataBinding('bindingtype', 'test1:mytype-1.0.0');
 
-      expect(dataBinder.resolve('/myprop', 'bindingtype')).to.be.instanceOf(D100);
+      expect(dataBinder.resolve('/myprop', 'bindingtype')).toBeInstanceOf(D100);
     });
 
     it('versioning, base type', function () {
@@ -217,7 +215,7 @@ describe('DataBinder databinding semversioning', function () {
       dataBinder.defineDataBinding('bindingtype', 'RelationshipProperty', D100);
       dataBinder.activateDataBinding('bindingtype', 'RelationshipProperty');
 
-      expect(dataBinder.resolve('/myprop', 'bindingtype')).to.be.instanceOf(D100);
+      expect(dataBinder.resolve('/myprop', 'bindingtype')).toBeInstanceOf(D100);
     });
 
   });

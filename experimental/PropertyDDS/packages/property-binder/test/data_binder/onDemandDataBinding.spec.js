@@ -27,11 +27,11 @@ import {
   InheritedChildDataBinding
 } from './testDataBindings';
 import { catchConsoleErrors } from './catch_console_errors';
-
+import { SharedPropertyTree as MockWorkspace } from './shared_property_tree';
 import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-properties';
 
 describe('on demand DataBindings', function () {
-  var dataBinder, hfdm, workspace;
+  var dataBinder, workspace;
 
   catchConsoleErrors();
 
@@ -41,12 +41,8 @@ describe('on demand DataBindings', function () {
 
   beforeEach(function () {
     dataBinder = new DataBinder();
-
-    hfdm = new HFDM();
-    workspace = hfdm.createWorkspace();
-    return workspace.initialize({ local: true }).then(function () {
-      dataBinder.attachTo(workspace);
-    });
+    workspace = new MockWorkspace();
+    dataBinder.attachTo(workspace);
   });
 
   afterEach(function () {
@@ -84,7 +80,7 @@ describe('on demand DataBindings', function () {
     // this should trigger our ctor and onPostCreate
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     const parentDataBinding = dataBinder.resolve('/child1.myFloat2', 'BINDING');
-    parentDataBinding.should.be.instanceOf(ParentDataBinding);
+    expect(parentDataBinding).toBeInstanceOf(ParentDataBinding);
     expect(parentDataBinding.onPostCreate).toHaveBeenCalledTimes(1);
     expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
     dataBinder._resetDebugCounters();
@@ -122,7 +118,7 @@ describe('on demand DataBindings', function () {
     // this should trigger our ctor and onPostCreate
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     const parentDataBinding = dataBinder.resolve('/parent.reference', 'BINDING');
-    parentDataBinding.should.be.instanceOf(ParentDataBinding);
+    expect(parentDataBinding).toBeInstanceOf(ParentDataBinding);
     expect(parentDataBinding.onPostCreate).toHaveBeenCalledTimes(1);
     expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
 
@@ -159,9 +155,9 @@ describe('on demand DataBindings', function () {
     workspace.get('child3').insert('myChild9', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
     workspace.get(['child1', 'myChild2', 'aString']).setValue('sixty-four');
 
-    var stringInsertSpy = sinon.spy(function (in_modificationContext) {
-      this.should.be.instanceOf(ParentDataBinding);
-      this.getProperty().should.be.equal(in_modificationContext.getProperty().getParent());
+    var stringInsertSpy = jest.fn(function (in_modificationContext) {
+      expect(this).toBeInstanceOf(ParentDataBinding);
+      expect(this.getProperty()).toEqual(in_modificationContext.getProperty().getParent());
     });
     var stringModifySpy = jest.fn();
     var numberInsertSpy = jest.fn();
@@ -183,7 +179,7 @@ describe('on demand DataBindings', function () {
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     const parentDataBinding = dataBinder.resolve('/child1.myChild2', 'BINDING');
-    parentDataBinding.should.be.instanceOf(ParentDataBinding);
+    expect(parentDataBinding).toBeInstanceOf(ParentDataBinding);
     expect(parentDataBinding.onPostCreate).toHaveBeenCalledTimes(1);
     expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
 
@@ -271,7 +267,7 @@ describe('on demand DataBindings', function () {
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     const parentDataBinding = dataBinder.resolve('/node1.myChild2', 'BINDING');
-    parentDataBinding.should.be.instanceOf(ParentDataBinding);
+    expect(parentDataBinding).toBeInstanceOf(ParentDataBinding);
     expect(parentDataBinding.onPostCreate).toHaveBeenCalledTimes(1);
     expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
 
@@ -288,10 +284,10 @@ describe('on demand DataBindings', function () {
     workspace.get(['node1', 'myChild2', 'single_ref', 'text']).setValue('fortytwo');
     // these don't get called for references
     ////        expect(parentDataBinding.onModify).toHaveBeenCalledTimes(1);
-    expect(    ////        parentDataBinding.onPreModify).toHaveBeenCalledTimes(1);
-      ////        parentDataBinding.onModify.mockClear();
-      ////        parentDataBinding.onPreModify.mockClear();
-      expect(parentDataBinding.onPreRemove).toHaveBeenCalledTimes(0);
+    ////        expect(parentDataBinding.onPreModify).toHaveBeenCalledTimes(1);
+    ////        parentDataBinding.onModify.mockClear();
+    ////        parentDataBinding.onPreModify.mockClear();
+    expect(parentDataBinding.onPreRemove).toHaveBeenCalledTimes(0);
     expect(parentDataBinding.onRemove).toHaveBeenCalledTimes(0);
 
     // Triggered for node1.myChild2.singleRef.text
@@ -308,7 +304,7 @@ describe('on demand DataBindings', function () {
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     const parentDataBinding2 = dataBinder.resolve('/node1.myChild3', 'BINDING2');
-    parentDataBinding2.should.be.instanceOf(ParentDataBinding);
+    expect(parentDataBinding2).toBeInstanceOf(ParentDataBinding);
     expect(parentDataBinding2.onPostCreate).toHaveBeenCalledTimes(1);
     expect(parentDataBinding2.onModify).toHaveBeenCalledTimes(0);
 
@@ -392,7 +388,7 @@ describe('on demand DataBindings', function () {
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     const parentDataBinding = dataBinder.resolve('/child1.myFloat2', 'BINDING2');
-    parentDataBinding.should.be.instanceOf(ParentDataBinding);
+    expect(parentDataBinding).toBeInstanceOf(ParentDataBinding);
     expect(parentDataBinding.onPostCreate).toHaveBeenCalledTimes(1);
     expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
 
@@ -434,7 +430,7 @@ describe('on demand DataBindings', function () {
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     const parentDataBinding = dataBinder.resolve('/child1.myFloat2', 'BINDING');
-    parentDataBinding.should.be.instanceOf(ParentDataBinding);
+    expect(parentDataBinding).toBeInstanceOf(ParentDataBinding);
     expect(parentDataBinding.onPostCreate).toHaveBeenCalledTimes(1);
     expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
 
@@ -442,7 +438,7 @@ describe('on demand DataBindings', function () {
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     let childDataBinding = dataBinder.resolve('/', 'BINDING');
-    childDataBinding.should.be.instanceOf(ChildDataBinding);
+    expect(childDataBinding).toBeInstanceOf(ChildDataBinding);
 
     // this should trigger all removal-related callbacks
     regKey.destroy();
@@ -470,7 +466,7 @@ describe('on demand DataBindings', function () {
     dataBinder.register('BINDING', 'NodeProperty', ChildDataBinding, { exactPath: '/' });
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     childDataBinding = dataBinder.resolve('/', 'BINDING');
-    childDataBinding.should.be.instanceOf(ChildDataBinding);
+    expect(childDataBinding).toBeInstanceOf(ChildDataBinding);
     // this should trigger
     workspace.insert('child4', PropertyFactory.create('Float64', 'single'));
     expect(childDataBinding.onModify).toHaveBeenCalledTimes(1);
@@ -507,7 +503,7 @@ describe('on demand DataBindings', function () {
     dataBinder._resetDebugCounters();
 
     const parentDataBinding = dataBinder.resolve('/child1.myChild2', 'BINDING');
-    parentDataBinding.should.be.instanceOf(ParentDataBinding);
+    expect(parentDataBinding).toBeInstanceOf(ParentDataBinding);
     expect(parentDataBinding.onPostCreate).toHaveBeenCalledTimes(1);
     expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
 
@@ -639,7 +635,7 @@ describe('on demand DataBindings', function () {
     var insertSpiesError = false;
     var expectedArrayIndices = [0, 1, 2];
     var expectedMapKeys = ['a', 'b'];
-    var arrayInsertSpy = sinon.spy(function (in_index, in_modificationContext) {
+    var arrayInsertSpy = jest.fn(function (in_index, in_modificationContext) {
       if (in_modificationContext.getOperationType() !== 'insert') {
         console.warn('Failure in arrayInsertSpy');
         insertSpiesError = true;
@@ -651,10 +647,10 @@ describe('on demand DataBindings', function () {
         insertSpiesError = true;
         return;
       }
-      this.should.be.instanceOf(ParentDataBinding);
+      expect(this).toBeInstanceOf(ParentDataBinding);
       expectedArrayIndices.splice(index, 1);
     });
-    var mapInsertSpy = sinon.spy(function (in_key, in_modificationContext) {
+    var mapInsertSpy = jest.fn(function (in_key, in_modificationContext) {
       // console.log('key: ' + in_key);
       // console.log('path: ' + in_modificationContext.getAbsolutePath());
       if (in_modificationContext.getOperationType() !== 'insert') {
@@ -839,14 +835,14 @@ describe('on demand DataBindings', function () {
   it('should not be able to unregister twice', function () {
     const handle = dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding);
     handle.destroy();
-    (function () { handle.destroy(); }).should.throw(Error);
+    expect((function () { handle.destroy(); })).toThrow();
   });
 
   it('should not be able to unregister twice even if we reregistered the same thing', function () {
     const handle = dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding);
     handle.destroy();
     const otherHandle = dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding);
-    (function () { handle.destroy(); }).should.throw(Error);
+    expect((function () { handle.destroy(); })).toThrow();
     otherHandle.destroy();
   });
 
@@ -1038,7 +1034,7 @@ describe('on demand DataBindings', function () {
         super(params);
         lastCreatedDataBindingCtor = 'DataBindingA ctor';
 
-        this.onPostCreate = sinon.spy(function () {
+        this.onPostCreate = jest.fn(function () {
           lastCalledOnPostCreate = 'DataBindingA onPostCreate';
         });
       }
@@ -1056,7 +1052,7 @@ describe('on demand DataBindings', function () {
         super(params);
         lastCreatedDataBindingCtor = 'DataBindingB ctor';
 
-        this.onPostCreate = sinon.spy(function () {
+        this.onPostCreate = jest.fn(function () {
           lastCalledOnPostCreate = 'DataBindingB onPostCreate';
         });
       }
@@ -1150,8 +1146,8 @@ describe('on demand DataBindings', function () {
       { includePrefix: 'nodeA', excludePrefix: 'nodeA.nodeB.nodeF' });
     expect(dataBinder._dataBindingCreatedCounter).toEqual(3);
     dataBinder._resetDebugCounters();
-    expect(dataBinder.resolve('nodeX.nodeY', 'BINDING')).to.equal(undefined);
-    expect(dataBinder.resolve('nodeA.nodeB.nodeF', 'BINDING')).to.equal(undefined);
+    expect(dataBinder.resolve('nodeX.nodeY', 'BINDING')).toEqual(undefined);
+    expect(dataBinder.resolve('nodeA.nodeB.nodeF', 'BINDING')).toEqual(undefined);
     handleA.destroy();
 
     // should register DataBindings on a collections via exactPath option

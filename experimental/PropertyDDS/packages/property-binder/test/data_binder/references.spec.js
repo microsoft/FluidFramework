@@ -17,10 +17,9 @@ import {
 import { ModificationContext } from '../../src/data_binder/modification_context';
 import {
   registerTestTemplates, ParentTemplate, ChildTemplate,
-  PrimitiveChildrenTemplate, ArrayContainerTemplate, SetContainerTemplate,
-  MapContainerTemplate, NodeContainerTemplate, UnrepresentedTemplate,
-  InheritedChildTemplate, InheritedChildrenTemplate, MultipleInheritedTemplate,
-  DoubleReferenceParentTemplate, ReferenceParentTemplate, EscapingTestTemplate
+  PrimitiveChildrenTemplate, ArrayContainerTemplate,
+  MapContainerTemplate, NodeContainerTemplate,
+  DoubleReferenceParentTemplate, ReferenceParentTemplate
 } from './testTemplates';
 import {
   ParentDataBinding,
@@ -29,11 +28,11 @@ import {
   PrimitiveChildrenDataBinding,
   InheritedChildDataBinding
 } from './testDataBindings';
-import { catchConsoleErrors, hadConsoleError, clearConsoleError } from './catch_console_errors';
+import { catchConsoleErrors } from './catch_console_errors';
 import { unregisterAllOnPathListeners } from '../../src/data_binder/internal_utils';
-import { RESOLVE_NO_LEAFS, RESOLVE_ALWAYS, RESOLVE_NEVER } from '../../src/internal/constants';
-
-import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-properties';
+import { RESOLVE_NO_LEAFS, RESOLVE_NEVER } from '../../src/internal/constants';
+import { SharedPropertyTree as MockWorkspace } from './shared_property_tree';
+import { PropertyFactory } from '@fluid-experimental/property-properties';
 
 describe('DataBinder', function () {
 
@@ -46,10 +45,7 @@ describe('DataBinder', function () {
   });
 
   beforeEach(function () {
-    hfdm = new HFDM();
-    workspace = hfdm.createWorkspace();
-    return workspace.initialize({ local: true }).then(function () {
-    });
+    workspace = new MockWorkspace();
   });
 
   afterEach(function () {
@@ -74,10 +70,7 @@ describe('DataBinder', function () {
 
       // Bind to the workspace
       dataBinder.attachTo(workspace);
-      otherWorkspace = hfdm.createWorkspace();
-      return otherWorkspace.initialize({ local: true }).then(function () {
-      });
-
+      otherWorkspace = new MockWorkspace();
     });
 
     afterEach(function () {
@@ -715,7 +708,7 @@ describe('DataBinder', function () {
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const childDataBinding = dataBinder.resolve('/myChild1', 'BINDING');
-      childDataBinding.should.be.instanceOf(ChildDataBinding);
+      expect(childDataBinding).toBeInstanceOf(ChildDataBinding);
       expect(childDataBinding.onModify).toHaveBeenCalledTimes(0);
       childDataBinding.onModify.mockClear();
 
@@ -727,7 +720,7 @@ describe('DataBinder', function () {
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve('/myParent.myReferenceParent', 'BINDING');
-      parentDataBinding.should.be.instanceOf(ParentDataBinding);
+      expect(parentDataBinding).toBeInstanceOf(ParentDataBinding);
       expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
       parentDataBinding.onModify.mockClear();
 
@@ -893,7 +886,7 @@ describe('DataBinder', function () {
     it('should be able to bind to the reference itself', function () {
       var referenceParentPSet = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
 
-      var refInsertSpy = sinon.spy(function (in_context) {
+      var refInsertSpy = jest.fn(function (in_context) {
         expect(in_context.getProperty()).toEqual(referenceParentPSet.get('single_prim_ref', RESOLVE_NEVER));
       });
       var refModifySpy = jest.fn();
@@ -941,7 +934,7 @@ describe('DataBinder', function () {
       referenceParentPSet.get('single_prim_ref', RESOLVE_NEVER).setValue('/string');
       workspace.insert('myReferenceParent', referenceParentPSet);
 
-      var refInsertSpy = sinon.spy(function (in_context) {
+      var refInsertSpy = jest.fn(function (in_context) {
         expect(in_context.getProperty()).toEqual(referenceParentPSet.get('single_prim_ref', RESOLVE_NEVER));
       });
       var refModifySpy = jest.fn();
@@ -976,7 +969,7 @@ describe('DataBinder', function () {
 
       var refInsertSpy = jest.fn();
       var refModifySpy = jest.fn();
-      var refRemoveSpy = sinon.spy(function (in_modificationContext) {
+      var refRemoveSpy = jest.fn(function (in_modificationContext) {
         if (in_modificationContext instanceof ModificationContext) {
           expect(in_modificationContext.getAbsolutePath()).toEqual('/myReferenceParent.dynamic_ref');
         }
@@ -1139,7 +1132,7 @@ describe('DataBinder', function () {
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve('/myReferenceParent', 'BINDING');
-      parentDataBinding.should.be.instanceOf(ParentDataBinding);
+      expect(parentDataBinding).toBeInstanceOf(ParentDataBinding);
       expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
       parentDataBinding.onModify.mockClear();
 
@@ -1190,21 +1183,21 @@ describe('DataBinder', function () {
     });
 
     it('should provide access to the DataBinding and Property', function () {
-      var referenceChangedSpy = sinon.spy(function (in_referenceChangedContext) {
+      var referenceChangedSpy = jest.fn(function (in_referenceChangedContext) {
         var prop = in_referenceChangedContext.getProperty();
         if (prop) {
           expect(PropertyFactory.instanceOf(prop, 'String', 'single')).to.be.true;
         }
       });
-      var nodeParentRefChangedSpy = sinon.spy(function (in_referenceChangedContext) {
+      var nodeParentRefChangedSpy = jest.fn(function (in_referenceChangedContext) {
         let dataBinding = in_referenceChangedContext.getDataBinding('ChildDataBinding1');
         // We can't assume access to other databindings when the system is being torn down
         if (dataBinding) {
-          dataBinding.should.be.instanceOf(ChildDataBinding);
+          expect(dataBinding).toBeInstanceOf(ChildDataBinding);
         }
         dataBinding = in_referenceChangedContext.getDataBinding('ChildDataBinding2');
         if (dataBinding) {
-          dataBinding.should.be.instanceOf(ChildDataBinding);
+          expect(dataBinding).toBeInstanceOf(ChildDataBinding);
         }
       });
 
@@ -1264,11 +1257,11 @@ describe('DataBinder', function () {
       var childPset1 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       var childPset2 = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
-      var referenceInsertSpy = sinon.spy(function (in_modificationContext) {
+      var referenceInsertSpy = jest.fn(function (in_modificationContext) {
         var prop = in_modificationContext.getProperty();
         expect(PropertyFactory.instanceOf(prop, 'String', 'single')).to.be.true;
       });
-      var referenceModifySpy = sinon.spy(function (in_modificationContext) {
+      var referenceModifySpy = jest.fn(function (in_modificationContext) {
         var prop = in_modificationContext.getProperty();
         expect(PropertyFactory.instanceOf(prop, 'String', 'single')).to.be.true;
       });
@@ -1277,11 +1270,11 @@ describe('DataBinder', function () {
       ParentDataBinding.registerOnPath('single_ref.text', ['modify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref.text', ['remove'], referenceRemoveSpy);
 
-      var doubleReferenceInsertSpy = sinon.spy(function (in_modificationContext) {
+      var doubleReferenceInsertSpy = jest.fn(function (in_modificationContext) {
         var prop = in_modificationContext.getProperty();
         expect(PropertyFactory.instanceOf(prop, 'String', 'single')).to.be.true;
       });
-      var doubleReferenceModifySpy = sinon.spy(function (in_modificationContext) {
+      var doubleReferenceModifySpy = jest.fn(function (in_modificationContext) {
         var prop = in_modificationContext.getProperty();
         expect(PropertyFactory.instanceOf(prop, 'String', 'single')).to.be.true;
       });
@@ -1307,9 +1300,9 @@ describe('DataBinder', function () {
       var runTests = function (in_increment, in_refChangedCount) {
         expect(doubleReferenceRefChangedSpy).toHaveBeenCalledTimes(in_refChangedCount);
         // We should have a property if 'to' is defined
-        expect(!!doubleReferenceRefChangedSpy.getCall(0).args[0].getProperty()).to.equal(!!to);
+        expect(!!doubleReferenceRefChangedSpy.mock.calls[0][0].getProperty()).toEqual(!!to);
         if (to) {
-          expect(doubleReferenceRefChangedSpy.getCall(0).args[0].getProperty().getAbsolutePath()).to.equal(to);
+          expect(doubleReferenceRefChangedSpy.mock.calls[0][0].getProperty().getAbsolutePath()).toEqual(to);
         }
         doubleReferenceRefChangedSpy.mockClear();
 
@@ -1440,7 +1433,7 @@ describe('DataBinder', function () {
 
       let expected = undefined;
       let failed = false;
-      const checkBinding = sinon.spy(modificationContext => {
+      const checkBinding = jest.fn(modificationContext => {
         if (!(modificationContext.getDataBinding() instanceof ChildDataBinding)) {
           failed = true;
         }
@@ -1520,7 +1513,7 @@ describe('DataBinder', function () {
       stringArray.push('sea');
 
       let failed = false;
-      const checkBinding = sinon.spy((index, modificationContext) => {
+      const checkBinding = jest.fn((index, modificationContext) => {
         const element = modificationContext._getPropertyElement();
         failed = failed || element.getChildToken() !== index;
         failed = failed || element.getProperty() !== stringArray;
@@ -2081,7 +2074,7 @@ describe('DataBinder', function () {
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve('/myReferenceParent', 'BINDING');
-      parentDataBinding.should.be.instanceOf(ParentDataBinding);
+      expect(parentDataBinding).toBeInstanceOf(ParentDataBinding);
       expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
       parentDataBinding.onModify.mockClear();
       workspace.insert('myChild1', arrayPset1);
@@ -2149,7 +2142,7 @@ describe('DataBinder', function () {
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve('/myReferenceParent', 'BINDING');
-      parentDataBinding.should.be.instanceOf(ParentDataBinding);
+      expect(parentDataBinding).toBeInstanceOf(ParentDataBinding);
       expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
       parentDataBinding.onModify.mockClear();
       workspace.insert('myChild1', arrayPset1);
@@ -2217,7 +2210,7 @@ describe('DataBinder', function () {
       workspace.insert('myReferenceParent', referenceParentPSet);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       const parentDataBinding = dataBinder.resolve(referenceParentPSet, 'BINDING');
-      parentDataBinding.should.be.instanceOf(ParentDataBinding);
+      expect(parentDataBinding).toBeInstanceOf(ParentDataBinding);
       expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
       parentDataBinding.onModify.mockClear();
       workspace.insert('myChild1', mapPset1);
@@ -2335,11 +2328,11 @@ describe('DataBinder', function () {
       expect(dataBinder._dataBindingCreatedCounter).toEqual(2);
       dataBinder._resetDebugCounters();
       const parentDataBinding1 = dataBinder.resolve('/myReferenceParent1', 'BINDING');
-      parentDataBinding1.should.be.instanceOf(ParentDataBinding);
+      expect(parentDataBinding1).toBeInstanceOf(ParentDataBinding);
       expect(parentDataBinding1.onModify).toHaveBeenCalledTimes(1);
       parentDataBinding1.onModify.mockClear();
       const parentDataBinding2 = dataBinder.resolve('/myReferenceParent2', 'BINDING');
-      parentDataBinding2.should.be.instanceOf(ParentDataBinding);
+      expect(parentDataBinding2).toBeInstanceOf(ParentDataBinding);
       expect(parentDataBinding2.onModify).toHaveBeenCalledTimes(1);
       parentDataBinding2.onModify.mockClear();
       workspace.insert('myChild1', childPset1);
@@ -2352,7 +2345,7 @@ describe('DataBinder', function () {
 
       // we changed the reference for the first parent -> we get a notification
       expect(parentDataBinding1.onModify).toHaveBeenCalledTimes(1);
-      var modificationContext = parentDataBinding1.onModify.getCall(0).args[0];
+      var modificationContext = parentDataBinding1.onModify.mock.calls[0][0];
       expect(modificationContext.length).toEqual(1);
       expect(modificationContext[0].getAbsolutePath()).toEqual('myReferenceParent1.ref_ref');
       parentDataBinding1.onModify.mockClear();
@@ -2363,13 +2356,13 @@ describe('DataBinder', function () {
       doubleReferenceParentPSet2.get('ref_ref').set(childPset2);
       // we changed the reference for the second parent -> we get a notification
       expect(parentDataBinding2.onModify).toHaveBeenCalledTimes(1);
-      modificationContext = parentDataBinding2.onModify.getCall(0).args[0];
+      modificationContext = parentDataBinding2.onModify.mock.calls[0][0];
       expect(modificationContext.length).toEqual(1);
       expect(modificationContext[0].getAbsolutePath()).toEqual('myReferenceParent2.ref_ref');
       parentDataBinding2.onModify.mockClear();
       // the first parent should also be notified
       expect(parentDataBinding1.onModify).toHaveBeenCalledTimes(1);
-      modificationContext = parentDataBinding1.onModify.getCall(0).args[0];
+      modificationContext = parentDataBinding1.onModify.mock.calls[0][0];
       expect(modificationContext.length).toEqual(1);
       expect(modificationContext[0].getAbsolutePath()).toEqual('myReferenceParent2.ref_ref'); // the new value!
       parentDataBinding1.onModify.mockClear();
@@ -2379,12 +2372,12 @@ describe('DataBinder', function () {
 
       // we should get a notification for the second parent
       expect(parentDataBinding2.onModify).toHaveBeenCalledTimes(1);
-      modificationContext = parentDataBinding2.onModify.getCall(0).args[0];
+      modificationContext = parentDataBinding2.onModify.mock.calls[0][0];
       expect(modificationContext.length).toEqual(1);
       expect(modificationContext[0].getAbsolutePath()).toEqual('myChild2.text');
       parentDataBinding2.onModify.mockClear();
       expect(parentDataBinding1.onModify).toHaveBeenCalledTimes(1);
-      modificationContext = parentDataBinding1.onModify.getCall(0).args[0];
+      modificationContext = parentDataBinding1.onModify.mock.calls[0][0];
       expect(modificationContext.length).toEqual(1);
       expect(modificationContext[0].getAbsolutePath()).toEqual('myChild2.text');
       parentDataBinding1.onModify.mockClear();
@@ -2423,15 +2416,15 @@ describe('DataBinder', function () {
       expect(dataBinder._dataBindingCreatedCounter).toEqual(3);
       dataBinder._resetDebugCounters();
       const parentDataBinding1 = dataBinder.resolve('/myReferenceParent1', 'BINDING');
-      parentDataBinding1.should.be.instanceOf(ParentDataBinding);
+      expect(parentDataBinding1).toBeInstanceOf(ParentDataBinding);
       expect(parentDataBinding1.onModify).toHaveBeenCalledTimes(1);
       parentDataBinding1.onModify.mockClear();
       const parentDataBinding2 = dataBinder.resolve('/myReferenceParent2', 'BINDING');
-      parentDataBinding2.should.be.instanceOf(ParentDataBinding);
+      expect(parentDataBinding2).toBeInstanceOf(ParentDataBinding);
       expect(parentDataBinding2.onModify).toHaveBeenCalledTimes(1);
       parentDataBinding2.onModify.mockClear();
       const parentDataBinding3 = dataBinder.resolve('/myReferenceParent3', 'BINDING');
-      parentDataBinding3.should.be.instanceOf(ParentDataBinding);
+      expect(parentDataBinding3).toBeInstanceOf(ParentDataBinding);
       expect(parentDataBinding3.onModify).toHaveBeenCalledTimes(1);
       parentDataBinding3.onModify.mockClear();
       workspace.insert('myChild1', childPset1);
@@ -2443,7 +2436,7 @@ describe('DataBinder', function () {
 
       // we changed the reference for the first parent -> we get a notification
       expect(parentDataBinding1.onModify).toHaveBeenCalledTimes(1);
-      var modificationContext = parentDataBinding1.onModify.getCall(0).args[0];
+      var modificationContext = parentDataBinding1.onModify.mock.calls[0][0];
       expect(modificationContext.length).toEqual(1);
       expect(modificationContext[0].getAbsolutePath()).toEqual('myReferenceParent1.ref_ref');
       parentDataBinding1.onModify.mockClear();
@@ -2456,12 +2449,12 @@ describe('DataBinder', function () {
 
       // we changed the reference for the second parent -> we get a notification
       expect(parentDataBinding2.onModify).toHaveBeenCalledTimes(1);
-      modificationContext = parentDataBinding2.onModify.getCall(0).args[0];
+      modificationContext = parentDataBinding2.onModify.mock.calls[0][0];
       expect(modificationContext.length).toEqual(1);
       expect(modificationContext[0].getAbsolutePath()).toEqual('myReferenceParent2.ref_ref');
       parentDataBinding2.onModify.mockClear();
       expect(parentDataBinding1.onModify).toHaveBeenCalledTimes(1);
-      modificationContext = parentDataBinding1.onModify.getCall(0).args[0];
+      modificationContext = parentDataBinding1.onModify.mock.calls[0][0];
       expect(modificationContext.length).toEqual(1);
       expect(modificationContext[0].getAbsolutePath()).toEqual('myReferenceParent2.ref_ref');
       parentDataBinding1.onModify.mockClear();
@@ -2472,18 +2465,18 @@ describe('DataBinder', function () {
       doubleReferenceParentPSet3.get('ref_ref').set(childPset1);
       // we changed the reference for the third parent -> we get a notification
       expect(parentDataBinding3.onModify).toHaveBeenCalledTimes(1);
-      modificationContext = parentDataBinding3.onModify.getCall(0).args[0];
+      modificationContext = parentDataBinding3.onModify.mock.calls[0][0];
       expect(modificationContext.length).toEqual(1);
       expect(modificationContext[0].getAbsolutePath()).toEqual('myReferenceParent3.ref_ref');
       parentDataBinding3.onModify.mockClear();
       expect(parentDataBinding2.onModify).toHaveBeenCalledTimes(1);
-      modificationContext = parentDataBinding2.onModify.getCall(0).args[0];
+      modificationContext = parentDataBinding2.onModify.mock.calls[0][0];
       expect(modificationContext.length).toEqual(1);
       expect(modificationContext[0].getAbsolutePath()).toEqual('myReferenceParent3.ref_ref');
       parentDataBinding2.onModify.mockClear();
       // the first parent should also be notified
       expect(parentDataBinding1.onModify).toHaveBeenCalledTimes(1);
-      modificationContext = parentDataBinding1.onModify.getCall(0).args[0];
+      modificationContext = parentDataBinding1.onModify.mock.calls[0][0];
       expect(modificationContext.length).toEqual(1);
       expect(modificationContext[0].getAbsolutePath()).toEqual('myReferenceParent3.ref_ref');
       parentDataBinding1.onModify.mockClear();
@@ -2493,17 +2486,17 @@ describe('DataBinder', function () {
 
       // we should get a notification for the second parent
       expect(parentDataBinding3.onModify).toHaveBeenCalledTimes(1);
-      modificationContext = parentDataBinding3.onModify.getCall(0).args[0];
+      modificationContext = parentDataBinding3.onModify.mock.calls[0][0];
       expect(modificationContext.length).toEqual(1);
       expect(modificationContext[0].getAbsolutePath()).toEqual('myChild1.text');
       parentDataBinding3.onModify.mockClear();
       expect(parentDataBinding2.onModify).toHaveBeenCalledTimes(1);
-      modificationContext = parentDataBinding2.onModify.getCall(0).args[0];
+      modificationContext = parentDataBinding2.onModify.mock.calls[0][0];
       expect(modificationContext.length).toEqual(1);
       expect(modificationContext[0].getAbsolutePath()).toEqual('myChild1.text');
       parentDataBinding2.onModify.mockClear();
       expect(parentDataBinding1.onModify).toHaveBeenCalledTimes(1);
-      modificationContext = parentDataBinding1.onModify.getCall(0).args[0];
+      modificationContext = parentDataBinding1.onModify.mock.calls[0][0];
       expect(modificationContext.length).toEqual(1);
       expect(modificationContext[0].getAbsolutePath()).toEqual('myChild1.text');
       parentDataBinding1.onModify.mockClear();
@@ -2541,11 +2534,11 @@ describe('DataBinder', function () {
       expect(dataBinder._dataBindingCreatedCounter).toEqual(3);
       dataBinder._resetDebugCounters();
       const parentDataBinding1 = dataBinder.resolve(referenceParentPSet1, 'BINDING');
-      parentDataBinding1.should.be.instanceOf(ParentDataBinding);
+      expect(parentDataBinding1).toBeInstanceOf(ParentDataBinding);
       const parentDataBinding2 = dataBinder.resolve(referenceParentPSet2, 'BINDING');
-      parentDataBinding2.should.be.instanceOf(ParentDataBinding);
+      expect(parentDataBinding2).toBeInstanceOf(ParentDataBinding);
       const parentDataBinding3 = dataBinder.resolve(referenceParentPSet3, 'BINDING');
-      parentDataBinding3.should.be.instanceOf(ParentDataBinding);
+      expect(parentDataBinding3).toBeInstanceOf(ParentDataBinding);
 
       expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
       expect(referenceModifySpy).toHaveBeenCalledTimes(0);
@@ -2700,11 +2693,11 @@ describe('DataBinder', function () {
       expect(dataBinder._dataBindingCreatedCounter).toEqual(3);
       dataBinder._resetDebugCounters();
       const parentDataBinding1 = dataBinder.resolve(referenceParentPSet1, 'BINDING');
-      parentDataBinding1.should.be.instanceOf(ParentDataBinding);
+      expect(parentDataBinding1).toBeInstanceOf(ParentDataBinding);
       const parentDataBinding2 = dataBinder.resolve(referenceParentPSet2, 'BINDING');
-      parentDataBinding2.should.be.instanceOf(ParentDataBinding);
+      expect(parentDataBinding2).toBeInstanceOf(ParentDataBinding);
       const parentDataBinding3 = dataBinder.resolve(referenceParentPSet3, 'BINDING');
-      parentDataBinding3.should.be.instanceOf(ParentDataBinding);
+      expect(parentDataBinding3).toBeInstanceOf(ParentDataBinding);
 
       expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
       expect(referenceModifySpy).toHaveBeenCalledTimes(0);
@@ -2793,7 +2786,7 @@ describe('DataBinder', function () {
 
       reference.setValue('/array[0]');
       workspace.get(['array', 0, 'text']).setValue('changed');
-      expect(referenceModifySpy.callCount).to.equal(1);
+      expect(referenceModifySpy.mock.calls.length).toEqual(1);
 
       referenceModifySpy.mockClear();
 
@@ -2803,18 +2796,18 @@ describe('DataBinder', function () {
       reference.setValue('/array[3]');
       workspace.get(['array', 0, 'text']).setValue('changed2');
       workspace.popModifiedEventScope();
-      expect(referenceModifySpy.callCount).to.equal(0);
+      expect(referenceModifySpy.mock.calls.length).toEqual(0);
 
       reference2.setValue('/array[0]');
       reference.setValue('/array[2].ref');
-      expect(referenceModifySpy.callCount).to.equal(0);
+      expect(referenceModifySpy.mock.calls.length).toEqual(0);
 
       // This should also work for chained references
       workspace.pushModifiedEventScope();
       reference.setValue('/array[3]');
       workspace.get(['array', 0, 'text']).setValue('changed3');
       workspace.popModifiedEventScope();
-      expect(referenceModifySpy.callCount).to.equal(0);
+      expect(referenceModifySpy.mock.calls.length).toEqual(0);
 
       // This should also work and for multi-hop references
       reference.setValue('/array[2]');
@@ -2823,7 +2816,7 @@ describe('DataBinder', function () {
       reference2.setValue('/array[3]');
       workspace.get(['array', 0, 'text']).setValue('changed4');
       workspace.popModifiedEventScope();
-      expect(referenceModifySpy.callCount).to.equal(0);
+      expect(referenceModifySpy.mock.calls.length).toEqual(0);
 
       // And when removing the referencing property
       reference.setValue('/array[2]');
@@ -2832,7 +2825,7 @@ describe('DataBinder', function () {
       workspace.get(['array', 2]).remove('ref');
       workspace.get(['array', 0, 'text']).setValue('changed5');
       workspace.popModifiedEventScope();
-      expect(referenceModifySpy.callCount).to.equal(0);
+      expect(referenceModifySpy.mock.calls.length).toEqual(0);
 
       // Or when inserting the referencing property
       reference.setValue('/array[2]');
@@ -2840,7 +2833,7 @@ describe('DataBinder', function () {
       workspace.get(['array', 2]).insert('ref', PropertyFactory.create('Reference', undefined, '/array[3]'));
       workspace.get(['array', 3, 'text']).setValue('changed6');
       workspace.popModifiedEventScope();
-      expect(referenceModifySpy.callCount).to.equal(0);
+      expect(referenceModifySpy.mock.calls.length).toEqual(0);
     });
 
     it('should trigger referenceChanged events correctly', function () {
@@ -2852,14 +2845,14 @@ describe('DataBinder', function () {
       var childPset2 = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
       var invalidProperty = false; // we have to do this externally because HFDM would eat our exception from the spy
-      var referenceChangedSpy = sinon.spy(function (in_referenceChangedContext) {
+      var referenceChangedSpy = jest.fn(function (in_referenceChangedContext) {
       });
-      var propertySpy = sinon.spy(function (in_property) {
+      var propertySpy = jest.fn(function (in_property) {
         if (!in_property) {
           invalidProperty = true;
         }
       });
-      var referenceBoundSpy = sinon.spy(function (in_modificationContext) {
+      var referenceBoundSpy = jest.fn(function (in_modificationContext) {
         // console.log(in_modificationContext);
       });
       var invalidReferenceChangedSpy = jest.fn();
@@ -2940,7 +2933,7 @@ describe('DataBinder', function () {
       var childPset1 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       var childPset2 = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
-      var referenceSpy = sinon.spy(function (in_modificationContext) {
+      var referenceSpy = jest.fn(function (in_modificationContext) {
         //          console.log(in_modificationContext);
       });
       ParentDataBinding.registerOnPath('single_ref', ['modify'], referenceSpy);
@@ -3047,7 +3040,7 @@ describe('DataBinder', function () {
       ParentDataBinding.registerOnPath('map_ref[one].text', ['remove'], referenceRemoveSpy);
 
       var refChangedError = false;
-      var referenceChangedSpy = sinon.spy(function (in_referenceChangedContext) {
+      var referenceChangedSpy = jest.fn(function (in_referenceChangedContext) {
         var prop = in_referenceChangedContext.getProperty();
         // have to do it this way because HFDM swallows exceptions in callbacks :(
         if (prop) {
@@ -3386,11 +3379,11 @@ describe('DataBinder', function () {
       var childPset1 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       var childPset2 = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
-      var referenceInsertSpy = sinon.spy(function (in_modificationContext) {
+      var referenceInsertSpy = jest.fn(function (in_modificationContext) {
         var prop = in_modificationContext.getProperty();
         expect(PropertyFactory.instanceOf(prop, 'String', 'single')).to.be.true;
       });
-      var referenceModifySpy = sinon.spy(function (in_modificationContext) {
+      var referenceModifySpy = jest.fn(function (in_modificationContext) {
         var prop = in_modificationContext.getProperty();
         expect(PropertyFactory.instanceOf(prop, 'String', 'single')).to.be.true;
       });
@@ -3399,11 +3392,11 @@ describe('DataBinder', function () {
       ParentDataBinding.registerOnPath('single_ref.text', ['modify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref.text', ['remove'], referenceRemoveSpy);
 
-      var doubleReferenceInsertSpy = sinon.spy(function (in_modificationContext) {
+      var doubleReferenceInsertSpy = jest.fn(function (in_modificationContext) {
         var prop = in_modificationContext.getProperty();
         expect(PropertyFactory.instanceOf(prop, 'String', 'single')).to.be.true;
       });
-      var doubleReferenceModifySpy = sinon.spy(function (in_modificationContext) {
+      var doubleReferenceModifySpy = jest.fn(function (in_modificationContext) {
         var prop = in_modificationContext.getProperty();
         expect(PropertyFactory.instanceOf(prop, 'String', 'single')).to.be.true;
       });
@@ -3429,9 +3422,9 @@ describe('DataBinder', function () {
       var runTests = function (in_increment, in_refChangedCount) {
         expect(doubleReferenceRefChangedSpy).toHaveBeenCalledTimes(in_refChangedCount);
         // We should have a property if 'to' is defined
-        expect(!!doubleReferenceRefChangedSpy.getCall(0).args[0].getProperty()).to.equal(!!to);
+        expect(!!doubleReferenceRefChangedSpy.mock.calls[0][0].getProperty()).toEqual(!!to);
         if (to) {
-          expect(doubleReferenceRefChangedSpy.getCall(0).args[0].getProperty().getAbsolutePath()).to.equal(to);
+          expect(doubleReferenceRefChangedSpy.mock.calls[0][0].getProperty().getAbsolutePath()).toEqual(to);
         }
         if (in_refChangedCount === 1) {
           var dummy = from;
@@ -3560,7 +3553,7 @@ describe('DataBinder', function () {
       ParentDataBinding.registerOnPath('map_ref[a].text', ['remove'], referenceRemoveSpy);
 
       var refChangedError = false;
-      var referenceChangedSpy = sinon.spy(function (in_referenceChangedContext) {
+      var referenceChangedSpy = jest.fn(function (in_referenceChangedContext) {
         var prop = in_referenceChangedContext.getProperty();
         // have to do it this way because HFDM swallows exceptions in callbacks :(
         if (prop) {
@@ -3599,7 +3592,7 @@ describe('DataBinder', function () {
       referenceMap.setValue('a', '/myChild1');
       // this should trigger the referenceChanged spy
       expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
-      expect(referenceChangedSpy.getCall(0).args[0].getProperty().getAbsolutePath()).toEqual('/myChild1.text');
+      expect(referenceChangedSpy.mock.calls[0][0].getProperty().getAbsolutePath()).toEqual('/myChild1.text');
       referenceChangedSpy.mockClear();
 
       // should also trigger the modify spy
@@ -3613,7 +3606,7 @@ describe('DataBinder', function () {
       expect(referenceModifySpy).toHaveBeenCalledTimes(0);
       // this should also trigger the referenceChanged spy
       expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
-      should.not.exist(referenceChangedSpy.getCall(0).args[0].getProperty());
+      expect(referenceChangedSpy.mock.calls[0][0].getProperty()).toBeUndefined();
       referenceChangedSpy.mockClear();
       // set it to an invalid value
       referenceMap.setValue('a', '/invalid');
@@ -3625,7 +3618,7 @@ describe('DataBinder', function () {
       referenceMap.setValue('a', '/myChild1');
       // this should also trigger the referenceChanged spy
       expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
-      expect(referenceChangedSpy.getCall(0).args[0].getProperty().getAbsolutePath()).toEqual('/myChild1.text');
+      expect(referenceChangedSpy.mock.calls[0][0].getProperty().getAbsolutePath()).toEqual('/myChild1.text');
       referenceChangedSpy.mockClear();
       // but not the modified spy
       expect(referenceModifySpy).toHaveBeenCalledTimes(0);
@@ -3633,7 +3626,7 @@ describe('DataBinder', function () {
       referenceMap.remove('a');
       // this should also trigger the referenceChanged spy
       expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
-      should.not.exist(referenceChangedSpy.getCall(0).args[0].getProperty());
+      expect(referenceChangedSpy.mock.calls[0][0].getProperty()).toBeUndefined();
       referenceChangedSpy.mockClear();
       // but not the modified spy
       expect(referenceModifySpy).toHaveBeenCalledTimes(0);
@@ -3661,7 +3654,7 @@ describe('DataBinder', function () {
       ParentDataBinding.registerOnPath('array_ref[0].text', ['remove'], referenceRemoveSpy);
 
       var refChangedError = false;
-      var referenceChangedSpy = sinon.spy(function (in_referenceChangedContext) {
+      var referenceChangedSpy = jest.fn(function (in_referenceChangedContext) {
         var prop = in_referenceChangedContext.getProperty();
         // have to do it this way because HFDM swallows exceptions in callbacks :(
         if (prop) {
@@ -3894,11 +3887,11 @@ describe('DataBinder', function () {
       var childPset1 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       var childPset2 = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
-      var referenceInsertSpy = sinon.spy(function (in_modificationContext) {
+      var referenceInsertSpy = jest.fn(function (in_modificationContext) {
         var prop = in_modificationContext.getProperty();
         expect(PropertyFactory.instanceOf(prop, 'String', 'single')).to.be.true;
       });
-      var referenceModifySpy = sinon.spy(function (in_modificationContext) {
+      var referenceModifySpy = jest.fn(function (in_modificationContext) {
         var prop = in_modificationContext.getProperty();
         expect(PropertyFactory.instanceOf(prop, 'String', 'single')).to.be.true;
       });
@@ -3907,11 +3900,11 @@ describe('DataBinder', function () {
       ParentDataBinding.registerOnPath('single_ref.text', ['modify'], referenceModifySpy);
       ParentDataBinding.registerOnPath('single_ref.text', ['remove'], referenceRemoveSpy);
 
-      var doubleReferenceInsertSpy = sinon.spy(function (in_modificationContext) {
+      var doubleReferenceInsertSpy = jest.fn(function (in_modificationContext) {
         var prop = in_modificationContext.getProperty();
         expect(PropertyFactory.instanceOf(prop, 'String', 'single')).to.be.true;
       });
-      var doubleReferenceModifySpy = sinon.spy(function (in_modificationContext) {
+      var doubleReferenceModifySpy = jest.fn(function (in_modificationContext) {
         var prop = in_modificationContext.getProperty();
         expect(PropertyFactory.instanceOf(prop, 'String', 'single')).to.be.true;
       });
@@ -3936,9 +3929,9 @@ describe('DataBinder', function () {
       var to = '/myChild1.text';
       var runTests = function (in_increment, in_refChangedCount) {
         // We should have a property if 'to' is defined
-        expect(!!doubleReferenceRefChangedSpy.getCall(0).args[0].getProperty()).to.equal(!!to);
+        expect(!!doubleReferenceRefChangedSpy.mock.calls[0][0].getProperty()).toEqual(!!to);
         if (to) {
-          expect(doubleReferenceRefChangedSpy.getCall(0).args[0].getProperty().getAbsolutePath()).to.equal(to);
+          expect(doubleReferenceRefChangedSpy.mock.calls[0][0].getProperty().getAbsolutePath()).toEqual(to);
         }
         if (in_refChangedCount === 1) {
           var dummy = from;
@@ -4069,7 +4062,7 @@ describe('DataBinder', function () {
       ParentDataBinding.registerOnPath('array_ref[2].text', ['remove'], referenceRemoveSpy);
 
       var refChangedError = false;
-      var referenceChangedSpy = sinon.spy(function (in_referenceChangedContext) {
+      var referenceChangedSpy = jest.fn(function (in_referenceChangedContext) {
         var prop = in_referenceChangedContext.getProperty();
         // have to do it this way because HFDM swallows exceptions in callbacks :(
         if (prop) {
@@ -4132,7 +4125,7 @@ describe('DataBinder', function () {
       ParentDataBinding.registerOnPath('array_ref[0].text', ['remove'], referenceRemoveSpy);
 
       var refChangedError = false;
-      var referenceChangedSpy = sinon.spy(function (in_referenceChangedContext) {
+      var referenceChangedSpy = jest.fn(function (in_referenceChangedContext) {
         var prop = in_referenceChangedContext.getProperty();
         // have to do it this way because HFDM swallows exceptions in callbacks :(
         if (prop) {
@@ -4172,7 +4165,7 @@ describe('DataBinder', function () {
       referenceArray.set(0, '/myChild1');
       // this should trigger the referenceChanged spy
       expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
-      expect(referenceChangedSpy.getCall(0).args[0].getProperty().getAbsolutePath()).toEqual('/myChild1.text');
+      expect(referenceChangedSpy.mock.calls[0][0].getProperty().getAbsolutePath()).toEqual('/myChild1.text');
       referenceChangedSpy.mockClear();
 
       // should also trigger the modify spy
@@ -4183,7 +4176,7 @@ describe('DataBinder', function () {
       referenceArray.set(0, '');
       // this should also trigger the referenceChanged spy
       expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
-      should.not.exist(referenceChangedSpy.getCall(0).args[0].getProperty());
+      expect(referenceChangedSpy.mock.calls[0][0].getProperty()).toBeUndefined();
       referenceChangedSpy.mockClear();
       // the modify spy should not be triggered anymore
       childPset1.get('text').setValue('sixtyfour');
@@ -4199,7 +4192,7 @@ describe('DataBinder', function () {
       referenceArray.set(0, '/myChild1');
       // this should also trigger the referenceChanged spy
       expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
-      expect(referenceChangedSpy.getCall(0).args[0].getProperty().getAbsolutePath()).toEqual('/myChild1.text');
+      expect(referenceChangedSpy.mock.calls[0][0].getProperty().getAbsolutePath()).toEqual('/myChild1.text');
       referenceChangedSpy.mockClear();
       // but not the modified spy
       expect(referenceModifySpy).toHaveBeenCalledTimes(0);
@@ -4207,7 +4200,7 @@ describe('DataBinder', function () {
       referenceArray.remove(0);
       // this should also trigger the referenceChanged spy
       expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
-      should.not.exist(referenceChangedSpy.getCall(0).args[0].getProperty());
+      expect(referenceChangedSpy.mock.calls[0][0].getProperty()).toBeUndefined();
       referenceChangedSpy.mockClear();
       // but not the modified spy
       expect(referenceModifySpy).toHaveBeenCalledTimes(0);
@@ -4236,7 +4229,7 @@ describe('DataBinder', function () {
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve(referenceParentPSet, 'BINDING');
-      parentDataBinding.should.be.instanceOf(ParentDataBinding);
+      expect(parentDataBinding).toBeInstanceOf(ParentDataBinding);
       expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
       parentDataBinding.onModify.mockClear();
 

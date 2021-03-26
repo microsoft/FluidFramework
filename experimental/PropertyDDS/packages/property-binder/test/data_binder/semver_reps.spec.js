@@ -8,6 +8,7 @@
 
 import { registerTestTemplates } from './testTemplates';
 import { DataBinder, UpgradeType } from '../../src/index';
+import { SharedPropertyTree as MockWorkspace } from './shared_property_tree';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
 class VersionedRepresentation100 {
 }
@@ -17,7 +18,6 @@ class VersionedRepresentation120 {
 }
 
 describe('DataBinder runtime representations', () => {
-  let hfdm;
   let myDataBinder;
   let workspace;
 
@@ -26,11 +26,8 @@ describe('DataBinder runtime representations', () => {
   });
 
   beforeEach(() => {
-    hfdm = new HFDM();
-    workspace = hfdm.createWorkspace();
-    return workspace.initialize({ local: true }).then(() => {
-      myDataBinder = new DataBinder();
-    });
+    workspace = new MockWorkspace();
+    myDataBinder = new DataBinder();
   });
 
   afterEach(() => {
@@ -57,22 +54,22 @@ describe('DataBinder runtime representations', () => {
 
       // We should get the old representation for Older
       const older = myDataBinder.getRepresentation(workspace.get('Older'), 'MYBINDINGTYPE');
-      should.exist(older);
-      older.should.be.instanceOf(VersionedRepresentation100);
+      expect(older).toBeDefined();
+      expect(older).toBeInstanceOf(VersionedRepresentation100);
 
       // We should get the patched, since we take anything up to and including a minor revision
       const patched = myDataBinder.getRepresentation(workspace.get('Patched'), 'MYBINDINGTYPE');
-      should.exist(patched);
-      patched.should.be.instanceOf(VersionedRepresentation100);
+      expect(patched).toBeDefined();
+      expect(patched).toBeInstanceOf(VersionedRepresentation100);
 
       // Newer should give the old representation - minor revision
       const newer = myDataBinder.getRepresentation(workspace.get('Newer'), 'MYBINDINGTYPE');
-      should.exist(newer);
-      newer.should.be.instanceOf(VersionedRepresentation100);
+      expect(newer).toBeDefined();
+      expect(newer).toBeInstanceOf(VersionedRepresentation100);
 
       // Newest should not have a representation because we only specified MINOR upgrade
       const newest = myDataBinder.getRepresentation(workspace.get('Newest'), 'MYBINDINGTYPE');
-      should.not.exist(newest);
+      expect(newest).toBeUndefined();
     });
 
     it('Basic forward compatibility - major upgrade', () => {
@@ -93,23 +90,23 @@ describe('DataBinder runtime representations', () => {
 
       // We should get the old representation for Older
       const older = myDataBinder.getRepresentation(workspace.get('Older'), 'MYBINDINGTYPE');
-      should.exist(older);
-      older.should.be.instanceOf(VersionedRepresentation100);
+      expect(older).toBeDefined();
+      expect(older).toBeInstanceOf(VersionedRepresentation100);
 
       // We should get the patched, since we take anything up to and including a major revision
       const patched = myDataBinder.getRepresentation(workspace.get('Patched'), 'MYBINDINGTYPE');
-      should.exist(patched);
-      patched.should.be.instanceOf(VersionedRepresentation100);
+      expect(patched).toBeDefined();
+      expect(patched).toBeInstanceOf(VersionedRepresentation100);
 
       // Newer should give the old representation (forward compatibility)
       const newer = myDataBinder.getRepresentation(workspace.get('Newer'), 'MYBINDINGTYPE');
-      should.exist(newer);
-      newer.should.be.instanceOf(VersionedRepresentation100);
+      expect(newer).toBeDefined();
+      expect(newer).toBeInstanceOf(VersionedRepresentation100);
 
       // Newest should also work because we gave MAJOR upgrade
       const newest = myDataBinder.getRepresentation(workspace.get('Newest'), 'MYBINDINGTYPE');
-      should.exist(newest);
-      newest.should.be.instanceOf(VersionedRepresentation100);
+      expect(newest).toBeDefined();
+      expect(newest).toBeInstanceOf(VersionedRepresentation100);
     });
 
     it('Two representations overlapping minor versions', () => {
@@ -138,27 +135,27 @@ describe('DataBinder runtime representations', () => {
       myDataBinder.attachTo(workspace);
 
       const v100 = myDataBinder.getRepresentation(workspace.get('100'), 'MYBINDINGTYPE');
-      should.exist(v100);
-      v100.should.be.instanceOf(VersionedRepresentation100);
+      expect(v100).toBeDefined();
+      expect(v100).toBeInstanceOf(VersionedRepresentation100);
 
       const v101 = myDataBinder.getRepresentation(workspace.get('101'), 'MYBINDINGTYPE');
-      should.exist(v101);
-      v101.should.be.instanceOf(VersionedRepresentation100);
+      expect(v101).toBeDefined();
+      expect(v101).toBeInstanceOf(VersionedRepresentation100);
 
       const v110 = myDataBinder.getRepresentation(workspace.get('110'), 'MYBINDINGTYPE');
-      should.exist(v110);
-      v110.should.be.instanceOf(VersionedRepresentation100);
+      expect(v110).toBeDefined();
+      expect(v110).toBeInstanceOf(VersionedRepresentation100);
 
       const v120 = myDataBinder.getRepresentation(workspace.get('120'), 'MYBINDINGTYPE');
-      should.exist(v120);
-      v120.should.be.instanceOf(VersionedRepresentation120);
+      expect(v120).toBeDefined();
+      expect(v120).toBeInstanceOf(VersionedRepresentation120);
 
       const v130 = myDataBinder.getRepresentation(workspace.get('130'), 'MYBINDINGTYPE');
-      should.exist(v130);
-      v130.should.be.instanceOf(VersionedRepresentation120);
+      expect(v130).toBeDefined();
+      expect(v130).toBeInstanceOf(VersionedRepresentation120);
 
       const v200 = myDataBinder.getRepresentation(workspace.get('200'), 'MYBINDINGTYPE');
-      should.not.exist(v200);
+      expect(v200).toBeUndefined();
     });
 
     it('Two representations overlapping patch versions', () => {
@@ -187,29 +184,29 @@ describe('DataBinder runtime representations', () => {
       myDataBinder.attachTo(workspace);
 
       const v100 = myDataBinder.getRepresentation(workspace.get('100'), 'MYBINDINGTYPE');
-      should.exist(v100);
-      v100.should.be.instanceOf(VersionedRepresentation100);
+      expect(v100).toBeDefined();
+      expect(v100).toBeInstanceOf(VersionedRepresentation100);
 
       const v101 = myDataBinder.getRepresentation(workspace.get('101'), 'MYBINDINGTYPE');
-      should.exist(v101);
-      v101.should.be.instanceOf(VersionedRepresentation101);
+      expect(v101).toBeDefined();
+      expect(v101).toBeInstanceOf(VersionedRepresentation101);
 
       const v110 = myDataBinder.getRepresentation(workspace.get('110'), 'MYBINDINGTYPE');
-      should.exist(v110);
-      v110.should.be.instanceOf(VersionedRepresentation100);
+      expect(v110).toBeDefined();
+      expect(v110).toBeInstanceOf(VersionedRepresentation100);
 
       // Patch doesn't apply, but minor upgrade does
       const v120 = myDataBinder.getRepresentation(workspace.get('120'), 'MYBINDINGTYPE');
-      should.exist(v120);
-      v120.should.be.instanceOf(VersionedRepresentation100);
+      expect(v120).toBeDefined();
+      expect(v120).toBeInstanceOf(VersionedRepresentation100);
 
       // Patch doesn't apply, but minor upgrade does
       const v130 = myDataBinder.getRepresentation(workspace.get('130'), 'MYBINDINGTYPE');
-      should.exist(v130);
-      v130.should.be.instanceOf(VersionedRepresentation100);
+      expect(v130).toBeDefined();
+      expect(v130).toBeInstanceOf(VersionedRepresentation100);
 
       const v200 = myDataBinder.getRepresentation(workspace.get('200'), 'MYBINDINGTYPE');
-      should.not.exist(v200);
+      expect(v200).toBeUndefined();
     });
 
     it('Basic forward compatibility - minor upgrade, maps', () => {
@@ -240,22 +237,22 @@ describe('DataBinder runtime representations', () => {
 
       // We should get the old representation for Older
       const older = myDataBinder.getRepresentation(workspace.resolvePath('Older[bob]'), 'MYBINDINGTYPE');
-      should.exist(older);
-      older.should.be.instanceOf(VersionedRepresentation100);
+      expect(older).toBeDefined();
+      expect(older).toBeInstanceOf(VersionedRepresentation100);
 
       // We should get the patched, since we take anything up to and including a minor revision
       const patched = myDataBinder.getRepresentation(workspace.resolvePath('Patched[bob]'), 'MYBINDINGTYPE');
-      should.exist(patched);
-      patched.should.be.instanceOf(VersionedRepresentation100);
+      expect(patched).toBeDefined();
+      expect(patched).toBeInstanceOf(VersionedRepresentation100);
 
       // Newer should give the old representation - minor revision
       const newer = myDataBinder.getRepresentation(workspace.resolvePath('Newer[bob]'), 'MYBINDINGTYPE');
-      should.exist(newer);
-      newer.should.be.instanceOf(VersionedRepresentation100);
+      expect(newer).toBeDefined();
+      expect(newer).toBeInstanceOf(VersionedRepresentation100);
 
       // Newest should not have a representation because we only specified MINOR upgrade
       const newest = myDataBinder.getRepresentation(workspace.resolvePath('Newest[bob]'), 'MYBINDINGTYPE');
-      should.not.exist(newest);
+      expect(newest).toBeUndefined();
     });
 
     it('Definition for base type', () => {
@@ -271,7 +268,7 @@ describe('DataBinder runtime representations', () => {
       workspace.insert('myRelationship', PropertyFactory.create('RelationshipProperty', 'single'));
 
       const lookup = myDataBinder.getRepresentationAtPath('myRelationship', 'MYBINDINGTYPE');
-      should.exist(lookup);
+      expect(lookup).toBeDefined();
     });
 
     it('Definition inheriting from a base type', () => {
@@ -287,7 +284,7 @@ describe('DataBinder runtime representations', () => {
       workspace.insert('inherited', PropertyFactory.create('Test:InheritedTestBaseType-1.0.0', 'single'));
 
       const lookup = myDataBinder.getRepresentationAtPath('inherited', 'MYBINDINGTYPE');
-      should.exist(lookup);
+      expect(lookup).toBeDefined();
     });
 
   });

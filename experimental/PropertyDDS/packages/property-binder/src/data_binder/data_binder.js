@@ -23,7 +23,7 @@ import { DataBinding } from './data_binding';
 import { RESOLVE_NO_LEAFS, RESOLVE_ALWAYS, RESOLVE_NEVER } from '../internal/constants';
 
 import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-properties';
-import { PathHelper, TypeIdHelper } from '@fluid-experimental/property-changeset';
+import { PathHelper, TypeIdHelper, Utils } from '@fluid-experimental/property-changeset';
 
 import { IActivateDataBindingOptions } from './IActivateDataBindingOptions'; /* eslint-disable-line no-unused-vars */
 /* eslint-disable-next-line no-unused-vars */
@@ -65,7 +65,7 @@ let _dataBinderId = 0;
  *
  * @throws {Error} if there is an invalid path
  */
-const _normalizePath = function(in_path) {
+const _normalizePath = function (in_path) {
   let result;
   if (in_path === undefined || in_path === '') {
     result = '';
@@ -93,7 +93,7 @@ const _normalizePath = function(in_path) {
  *
  * @hidden
  */
-const _getStartPath = function(in_exactPath, in_includePrefix) {
+const _getStartPath = function (in_exactPath, in_includePrefix) {
   let startPath;
   if (in_exactPath !== '') {
     startPath = in_exactPath;
@@ -114,7 +114,7 @@ const _getStartPath = function(in_exactPath, in_includePrefix) {
  *
  * @hidden
  */
-const _pushUserData = function(in_context, in_data) {
+const _pushUserData = function (in_context, in_data) {
   in_data.__oldUserData = in_context.getUserData();
   in_context.setUserData(in_data);
 };
@@ -128,7 +128,7 @@ const _pushUserData = function(in_context, in_data) {
  *
  * @hidden
  */
-const _popUserData = function(in_context) {
+const _popUserData = function (in_context) {
   const currentUserData = in_context.getUserData();
   console.assert(currentUserData);
   if (currentUserData) {
@@ -211,7 +211,7 @@ class DataBinder {
     /**
      * A binding built to hold all absolute path callbacks. One per databinder
      */
-    class AbsolutePathDataBinding extends DataBinding {}
+    class AbsolutePathDataBinding extends DataBinding { }
 
     this._AbsolutePathDataBinding = AbsolutePathDataBinding;
 
@@ -300,13 +300,13 @@ class DataBinder {
     const definitionHandle = this.defineDataBinding(in_bindingType, in_typeID, in_bindingConstructor);
     const activationHandle = this.activateDataBinding(in_bindingType, in_typeID, in_options);
 
-    const handle = new DataBinderHandle(function() {
+    const handle = new DataBinderHandle(function () {
       activationHandle.destroy();
       definitionHandle.destroy();
     });
 
     // Be nice to current clients
-    handle.unregister = function() {
+    handle.unregister = function () {
       console.warn('unregister() on a handle is deprecated. Please use destroy()');
       this.destroy();
     };
@@ -603,7 +603,7 @@ class DataBinder {
 
       const delayedActivationRules = [];
 
-      handles.forEach(function(in_handle) {
+      handles.forEach(function (in_handle) {
         const rule = in_handle.getUserData();
         delayedActivationRules.push(rule);
 
@@ -788,7 +788,7 @@ class DataBinder {
         const treeNode = this._dataBindingTree.getNodeForTokenizedPath(tokenizedPath);
 
         // Check each rule, and see which ones apply
-        bindings.forEach(({rule, definition}) => {
+        bindings.forEach(({ rule, definition }) => {
           // The activation rule says we should have a binding here
           const existingBinding = treeNode ? treeNode.getDataBindingByType(rule.bindingType) : undefined;
           if (!existingBinding) {
@@ -1018,7 +1018,7 @@ class DataBinder {
     const removedBindings = [];
     const bindingType = in_activationRule.bindingType;
 
-    const visit = function(in_propertyElement, in_path, in_tokenizedPath, in_dataBindingTreeNode) {
+    const visit = function (in_propertyElement, in_path, in_tokenizedPath, in_dataBindingTreeNode) {
       if (in_activationRule.excludePrefix !== '' && in_path === in_activationRule.excludePrefix) {
         // Falls under our exclusion path: don't check this property, and don't recurse
         return false;
@@ -1112,7 +1112,7 @@ class DataBinder {
    */
   _getDataBindingsByType(in_bindingType) {
     var dataBindings = [];
-    this._dataBindingTree.forEachChild(function(value) {
+    this._dataBindingTree.forEachChild(function (value) {
       if (value) {
         var dataBinding = value.groupedByDataBindingType.get(in_bindingType);
         if (dataBinding) {
@@ -1163,7 +1163,7 @@ class DataBinder {
     }
     let callback;
     if (isDeferred) {
-      callback = function(context) {
+      callback = function (context) {
         dataBinder.requestChangesetPostProcessing(in_callback.bind(null, context), null);
       };
     } else {
@@ -1260,7 +1260,7 @@ class DataBinder {
           const handle = this._internalRegisterOnPath(path, in_operations, callback, newOptions);
           allHandles.push(handle);
         });
-        resultHandle = new DataBinderHandle(function() {
+        resultHandle = new DataBinderHandle(function () {
           allHandles.forEach(handle => {
             handle.destroy();
           });
@@ -1441,7 +1441,7 @@ class DataBinder {
     const dataBinder = this;
     this.pushBindingActivationScope();
 
-    this._activationHandlesByBindingType.forEach(function(in_handles, in_key) {
+    this._activationHandlesByBindingType.forEach(function (in_handles, in_key) {
       for (let i = 0; i < in_handles.length; ++i) {
         dataBinder._unbindActiveBindings(in_handles[i].getUserData());
         dataBinder._delayedActivationHandles.add(in_handles[i]);
@@ -1490,7 +1490,7 @@ class DataBinder {
         handles[0].destroy();
       }
     });
-    this._delayedActivationHandles.forEach(function(in_handle) {
+    this._delayedActivationHandles.forEach(function (in_handle) {
       if ((!in_bindingType || in_handle.getUserData().bindingType === in_bindingType) &&
         in_handle.getUserData().bindingType !== _INTERNAL_DATA_BINDINGTYPE) {
         in_handle.destroy();
@@ -1681,7 +1681,7 @@ class DataBinder {
 
     // Create the corresponding DataBindings and add them to the DataBinding tree
     const dataBinder = this;
-    definitions.forEach(function(in_definition) {
+    definitions.forEach(function (in_definition) {
       // Get all the activations that apply to this binding type
       const activations = dataBinder._activationHandlesByBindingType.get(in_definition.bindingType) || [];
       for (const handle of activations) {
@@ -1807,7 +1807,7 @@ class DataBinder {
     const fullTokenizedPath = PathHelper.tokenizePathString(in_path);
 
     const reinsertions = [];
-    var callback = function(post, value, tokenizedPath, dataBindingNode) {
+    var callback = function (post, value, tokenizedPath, dataBindingNode) {
       if (!value) {
         return;
       }
@@ -1823,7 +1823,7 @@ class DataBinder {
       if (value.ordered) {
         const oldLength = fullTokenizedPath.length;
         fullTokenizedPath.push(...tokenizedPath);
-        value.ordered.forEach(function(dataBinding) {
+        value.ordered.forEach(function (dataBinding) {
           var removalContext;
           if (post) {
             // the removalContext is dependent on the DataBinding so we need to create a new one for each DataBinding
@@ -2490,7 +2490,7 @@ class DataBinder {
     if (!in_representationInfo.stateless) {
       const dataBinder = this;
 
-      const visit = function(in_propElement, in_path, in_tokenizedPath, in_dataBindingTreeNode) {
+      const visit = function (in_propElement, in_path, in_tokenizedPath, in_dataBindingTreeNode) {
         if (!in_propElement.isPrimitiveCollectionElement() &&
           in_propElement.getTypeId() === in_representationInfo.typeID) {
           // Found a property that should have a runtime representation associated with it
@@ -2533,7 +2533,7 @@ class DataBinder {
     if (this._workspace) {
       const dataBinder = this;
       this._dataBindingTree.forEachChild(
-        function(value, path, dataBindingNode) {
+        function (value, path, dataBindingNode) {
           dataBinder._destroyAllRepresentationsAtNode(dataBindingNode);
         }
       );
@@ -2556,7 +2556,7 @@ class DataBinder {
     const dataBinder = this;
 
     if (value && value.representations) {
-      value.representations.forEach(function(representationEntry, bindingType) {
+      value.representations.forEach(function (representationEntry, bindingType) {
         dataBinder._destroyRepresentation(
           representationEntry.representation, representationEntry.representationInfo
         );
@@ -2814,7 +2814,7 @@ class DataBinder {
     let bestRepresentationInfo;
     const byBindingType = dataBinder._representationGenerators.get(in_bindingType);
     if (byBindingType) {
-      visitTypeHierarchy(in_property.getFullTypeid(), function(in_typeID) {
+      visitTypeHierarchy(in_property.getFullTypeid(), function (in_typeID) {
         const handle = byBindingType.best(in_typeID);
         if (handle) {
           bestRepresentationInfo = handle.getUserData();

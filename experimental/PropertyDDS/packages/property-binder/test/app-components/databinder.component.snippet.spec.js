@@ -91,12 +91,12 @@ class TutorialComponent {
   }
 }
 
-describe('DataBinder documentation snippets', function() {
-  beforeEach(function() {
+describe('DataBinder documentation snippets', function () {
+  beforeEach(function () {
     pointLoggerSpy.resetHistory();
   });
 
-  it('stand-alone snippet works', function() {
+  it('stand-alone snippet works', function () {
     // NOTE: This snippet is embedded based on line numbers. Be careful when changing it!
     // SnippetStart{StandAloneExample}
     // Create a DataBinder instance and its dependencies.
@@ -110,18 +110,18 @@ describe('DataBinder documentation snippets', function() {
     dataBinder.registerStateless('LOGGING', pointSchema.typeid, pointLogger);
 
     const promise = // This line (11) is excluded from the snippet
-    // We have to initialize the workspace before we can use it.
-    hfdmWorkspace.initializeComponent().then(workspace => {
-      // Any time a point is inserted to or modified in the workspace, we print its values to the console.
-      workspace.insert('point', PropertyFactory.create(pointSchema.typeid));
-    });
+      // We have to initialize the workspace before we can use it.
+      hfdmWorkspace.initializeComponent().then(workspace => {
+        // Any time a point is inserted to or modified in the workspace, we print its values to the console.
+        workspace.insert('point', PropertyFactory.create(pointSchema.typeid));
+      });
     // SnippetEnd{StandAloneExample}
     return promise.then(() => {
-      pointLoggerSpy.callCount.should.equal(1);
+      expect(pointLoggerSpy.mock.calls.length).toEqual(1);
     });
   });
 
-  it('explicit initialization snippet works', function() {
+  it('explicit initialization snippet works', function () {
     // Create a the DataBinder instance and its dependencies.
     const hfdm = new HFDMConnection();
     const hfdmWorkspace = new HFDMWorkspaceComponent(hfdm);
@@ -148,11 +148,11 @@ describe('DataBinder documentation snippets', function() {
     dataBinder.registerStateless('LOGGING', pointSchema.typeid, pointLogger);
 
     return dataBinder.initializeComponent().then(() => {
-      pointLoggerSpy.callCount.should.equal(1);
+      expect(pointLoggerSpy.mock.calls.length).toEqual(1);
     });
   });
 
-  it('component tree snippet works', function() {
+  it('component tree snippet works', function () {
     const providers = {
       // SnippetStart{Providers}
       providers: [
@@ -176,7 +176,7 @@ describe('DataBinder documentation snippets', function() {
     });
 
     return componentTree.create().then(() => {
-      pointLoggerSpy.callCount.should.equal(1);
+      except(pointLoggerSpy.mock.calls.length).toEqual(1);
     });
   });
 });

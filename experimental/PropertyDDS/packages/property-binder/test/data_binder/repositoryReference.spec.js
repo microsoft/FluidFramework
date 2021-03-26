@@ -18,7 +18,7 @@ import {
 import { catchConsoleErrors } from './catch_console_errors';
 import { unregisterAllOnPathListeners } from '../../src/data_binder/internal_utils';
 
-import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-properties';
+import { PropertyFactory } from '@fluid-experimental/property-properties';
 
 // TODO: we need to skip these tests for now as they rely on an external server which sometimes timeouts
 describe.skip('DataBinder', function () {
@@ -126,7 +126,7 @@ describe.skip('DataBinder', function () {
 
     it('should handle the relative path callbacks crossing the repository reference border',
       async function () {
-        var pathInsertSpy = sinon.spy(function (in_modificationContext) {
+        var pathInsertSpy = jest.fn(function (in_modificationContext) {
           console.log('path: ' + in_modificationContext.getAbsolutePath());
         });
         var pathModifySpy = jest.fn();
@@ -195,7 +195,7 @@ describe.skip('DataBinder', function () {
 
     it('should handle the relative path callbacks when the whole relative path is in the embedded repository',
       async function () {
-        var pathInsertSpy = sinon.spy(function (in_modificationContext) {
+        var pathInsertSpy = jest.fn(function (in_modificationContext) {
           console.log('path: ' + in_modificationContext.getAbsolutePath());
         });
         var pathModifySpy = jest.fn();

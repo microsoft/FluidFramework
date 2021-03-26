@@ -6,6 +6,7 @@
 import { DataBinder } from '../../src/data_binder/data_binder';
 import { SingletonDataBinding, StatelessDataBinding } from '../../src/data_binder/stateless_data_binding';
 import { catchConsoleErrors } from './catch_console_errors';
+import { SharedPropertyTree as MockWorkspace } from './shared_property_tree';
 
 import {
   registerTestTemplates, AnimalSchema, DogSchema, CatSchema, ChinchillaSchema
@@ -16,7 +17,6 @@ import { PropertyFactory } from '@fluid-experimental/property-properties';
 describe('Stateless Binder', function () {
   catchConsoleErrors();
 
-  let hfdm;
   let workspace;
   let dataBinder;
 
@@ -56,8 +56,8 @@ describe('Stateless Binder', function () {
       this.onPreModify = jest.fn();
       this.onPreRemove = jest.fn();
       // we need to amend these functions with spies (this way we won't have to reset() them)
-      this.onModify = sinon.spy(this, 'onModify');
-      this.onRemove = sinon.spy(this, 'onRemove');
+      this.onModify = jest.fn(this, 'onModify');
+      this.onRemove = jest.fn(this, 'onRemove');
     }
 
     /**
@@ -92,8 +92,8 @@ describe('Stateless Binder', function () {
       this.onPreModify = jest.fn();
       this.onPreRemove = jest.fn();
       // we need to amend these functions with spies (this way we won't have to reset() them)
-      this.onModify = sinon.spy(this, 'onModify');
-      this.onRemove = sinon.spy(this, 'onRemove');
+      this.onModify = jest.fn(this, 'onModify');
+      this.onRemove = jest.fn(this, 'onRemove');
     }
 
     /**
@@ -133,57 +133,54 @@ describe('Stateless Binder', function () {
     numDogs = 0;
     numChinchillas = 0;
 
-    hfdm = new HFDM();
-    workspace = hfdm.createWorkspace();
+    workspace = new MockWorkspace();
     dataBinder = new DataBinder();
 
-    return workspace.initialize({ local: true })
-      .then(function () {
-        dataBinder.attachTo(workspace);
 
-        // Register the entities
-        animalSingleton = new TestStatelessBinding();
-        catSingleton = new TestStatelessBinding({ userData: catUserData }); // cats have userdata
-        dogSingleton = new TestStatelessBinding();
-        chinchillaSingleton = new TestStatelessBinding();
+    dataBinder.attachTo(workspace);
 
-        catHandle = dataBinder.registerStateless('DataBindingTest', CatSchema.typeid, catSingleton);
-        dogHandle = dataBinder.registerStateless('DataBindingTest', DogSchema.typeid, dogSingleton);
-        chinchillaHandle = dataBinder.registerStateless(
-          'DataBindingTest',
-          ChinchillaSchema.typeid,
-          chinchillaSingleton
-        );
+    // Register the entities
+    animalSingleton = new TestStatelessBinding();
+    catSingleton = new TestStatelessBinding({ userData: catUserData }); // cats have userdata
+    dogSingleton = new TestStatelessBinding();
+    chinchillaSingleton = new TestStatelessBinding();
 
-        // We register 'Animal' in a different namespace. The DataBinder will always choose the 'best'
-        // binding within a namespace, so all the bindings in the DataBindingTest namespace will be bound to
-        // the leaf classes; in the DataBindingTestAnimal namespace, it will use Animal.
-        animalHandle = dataBinder.registerStateless('DataBindingTestAnimal', AnimalSchema.typeid, animalSingleton);
+    catHandle = dataBinder.registerStateless('DataBindingTest', CatSchema.typeid, catSingleton);
+    dogHandle = dataBinder.registerStateless('DataBindingTest', DogSchema.typeid, dogSingleton);
+    chinchillaHandle = dataBinder.registerStateless(
+      'DataBindingTest',
+      ChinchillaSchema.typeid,
+      chinchillaSingleton
+    );
 
-        // Cats are just children of the root
-        workspace.insert('markcat', createCat({ name: 'Mark' }));
-        workspace.insert('harrycat', createCat({ name: 'Harry' }));
-        workspace.insert('bobcat', createCat({ name: 'Bob' }));
+    // We register 'Animal' in a different namespace. The DataBinder will always choose the 'best'
+    // binding within a namespace, so all the bindings in the DataBindingTest namespace will be bound to
+    // the leaf classes; in the DataBindingTestAnimal namespace, it will use Animal.
+    animalHandle = dataBinder.registerStateless('DataBindingTestAnimal', AnimalSchema.typeid, animalSingleton);
 
-        // The dogs use arrays
-        const array = PropertyFactory.create(DogSchema.typeid, 'array');
-        workspace.insert('dogarray', array);
-        array.push(createDog({ name: 'Amanda' }));
-        array.push(createDog({ name: 'Karen' }));
+    // Cats are just children of the root
+    workspace.insert('markcat', createCat({ name: 'Mark' }));
+    workspace.insert('harrycat', createCat({ name: 'Harry' }));
+    workspace.insert('bobcat', createCat({ name: 'Bob' }));
 
-        // Chinchillas are in maps
-        const chinchillaMap = PropertyFactory.create(ChinchillaSchema.typeid, 'map');
-        workspace.insert('chinchillamap', chinchillaMap);
-        chinchillaMap.insert('pedro', createChincilla({ name: 'Pedro' }));
-        chinchillaMap.insert('alessandro', createChincilla({ name: 'Alessandro' }));
+    // The dogs use arrays
+    const array = PropertyFactory.create(DogSchema.typeid, 'array');
+    workspace.insert('dogarray', array);
+    array.push(createDog({ name: 'Amanda' }));
+    array.push(createDog({ name: 'Karen' }));
 
-        // A map of animals
-        const animalMap = PropertyFactory.create(AnimalSchema.typeid, 'map');
-        workspace.insert('animalmap', animalMap);
-        animalMap.insert('thedog', createDog({ name: 'Woofers' }));
-        animalMap.insert('thecat', createCat({ name: 'Mittens' }));
-        animalMap.insert('thechinchilla', createChincilla({ name: 'Andres' }));
-      });
+    // Chinchillas are in maps
+    const chinchillaMap = PropertyFactory.create(ChinchillaSchema.typeid, 'map');
+    workspace.insert('chinchillamap', chinchillaMap);
+    chinchillaMap.insert('pedro', createChincilla({ name: 'Pedro' }));
+    chinchillaMap.insert('alessandro', createChincilla({ name: 'Alessandro' }));
+
+    // A map of animals
+    const animalMap = PropertyFactory.create(AnimalSchema.typeid, 'map');
+    workspace.insert('animalmap', animalMap);
+    animalMap.insert('thedog', createDog({ name: 'Woofers' }));
+    animalMap.insert('thecat', createCat({ name: 'Mittens' }));
+    animalMap.insert('thechinchilla', createChincilla({ name: 'Andres' }));
   });
 
   // #region Create callback counts
@@ -240,10 +237,10 @@ describe('Stateless Binder', function () {
     dogHandle.destroy();
     chinchillaHandle.destroy();
 
-    expect(dogSingleton.onPreRemove).toHaveBeenCalledTimes(dogSingleton.onRemove.callCount);
-    expect(catSingleton.onPreRemove).toHaveBeenCalledTimes(catSingleton.onRemove.callCount);
-    expect(chinchillaSingleton.onPreRemove).toHaveBeenCalledTimes(chinchillaSingleton.onRemove.callCount);
-    expect(animalSingleton.onPreRemove).toHaveBeenCalledTimes(animalSingleton.onRemove.callCount);
+    expect(dogSingleton.onPreRemove).toHaveBeenCalledTimes(dogSingleton.onRemove.mock.calls.length);
+    expect(catSingleton.onPreRemove).toHaveBeenCalledTimes(catSingleton.onRemove.mock.calls.length);
+    expect(chinchillaSingleton.onPreRemove).toHaveBeenCalledTimes(chinchillaSingleton.onRemove.mock.calls.length);
+    expect(animalSingleton.onPreRemove).toHaveBeenCalledTimes(animalSingleton.onRemove.mock.calls.length);
   });
   // #endregion Unregister check
 
@@ -253,10 +250,10 @@ describe('Stateless Binder', function () {
     dogHandle.destroy();
     chinchillaHandle.destroy();
 
-    (function () { animalHandle.destroy(); }).should.throw(Error);
-    (function () { catHandle.destroy(); }).should.throw(Error);
-    (function () { dogHandle.destroy(); }).should.throw(Error);
-    (function () { chinchillaHandle.destroy(); }).should.throw(Error);
+    expect((function () { animalHandle.destroy(); })).toThrow();
+    expect((function () { catHandle.destroy(); })).toThrow();
+    expect((function () { dogHandle.destroy(); })).toThrow();
+    expect((function () { chinchillaHandle.destroy(); })).toThrow();
   });
 
   it('should not hear about changes after unregistering', function () {
@@ -265,10 +262,10 @@ describe('Stateless Binder', function () {
     dogHandle.destroy();
     chinchillaHandle.destroy();
 
-    const animalBeforeCount = animalSingleton.onModify.callCount;
-    const catBeforeCount = catSingleton.onModify.callCount;
-    const dogBeforeCount = dogSingleton.onModify.callCount;
-    const chinchillaBeforeCount = chinchillaSingleton.onModify.callCount;
+    const animalBeforeCount = animalSingleton.onModify.mock.calls.length;
+    const catBeforeCount = catSingleton.onModify.mock.calls.length;
+    const dogBeforeCount = dogSingleton.onModify.mock.calls.length;
+    const chinchillaBeforeCount = chinchillaSingleton.onModify.mock.calls.length;
 
     workspace.get(['harrycat', 'attitude']).setValue(10000);
     expect(catSingleton.onModify).toHaveBeenCalledTimes(catBeforeCount);
@@ -296,8 +293,8 @@ describe('Stateless Binder', function () {
 
   it('should get the correct userdata', function () {
     expect(catSingleton.getUserData()).toEqual(catUserData);
-    should.not.exist(dogSingleton.getUserData());
-    should.not.exist(animalSingleton.getUserData());
+    expect(dogSingleton.getUserData()).toBeUndefined();
+    expect(animalSingleton.getUserData()).toBeUndefined();
   });
 
   it('using the deprecated API should still work', function () {
@@ -314,7 +311,7 @@ describe('Stateless Binder', function () {
     singletonHandle.destroy();
 
     // should not hear about changes to cats anymore
-    const catBeforeCount = deprecatedCat.onModify.callCount;
+    const catBeforeCount = deprecatedCat.onModify.mock.calls.length;
 
     workspace.get(['harrycat', 'attitude']).setValue(10000);
     expect(deprecatedCat.onModify).toHaveBeenCalledTimes(catBeforeCount);

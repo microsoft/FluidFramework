@@ -12,12 +12,12 @@ import {
 } from '../../src/data_binder/data_binding';
 import { catchConsoleErrors } from './catch_console_errors';
 import { ModificationContext } from '../../src/data_binder/modification_context';
-
+import { SharedPropertyTree as MockWorkspace } from './shared_property_tree';
 import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-properties';
 
 describe('Decorated DataBinding', function () {
   catchConsoleErrors();
-  let hfdm, workspace, dataBinder;
+  let workspace, dataBinder;
   let testProp, dataBindingInstance;
   const infoTemplate = {
     properties: [
@@ -43,7 +43,7 @@ describe('Decorated DataBinding', function () {
   const logData = [];
   const log = function (target, property, descriptor) {
     const original = descriptor.value;
-    descriptor.value = sinon.spy(function (...args) {
+    descriptor.value = jest.fn(function (...args) {
       let path = args[0].getAbsolutePath();
       if (path[0] === '/') {
         path = path.slice(1);
@@ -57,7 +57,7 @@ describe('Decorated DataBinding', function () {
   // A decorator which adds a spy to a class method. This spy is per class and not per instance.
   const spyDecorator = function (target, property, descriptor) {
     const original = descriptor.value;
-    descriptor.value = sinon.spy(function (...args) {
+    descriptor.value = jest.fn(function (...args) {
       return original.apply(this, args);
     });
     return descriptor;
@@ -126,49 +126,46 @@ describe('Decorated DataBinding', function () {
     PropertyFactory.register(personTemplate);
     PropertyFactory.register(infoTemplate);
 
-    hfdm = new HFDM();
-    workspace = hfdm.createWorkspace();
+    workspace = new MockWorkspace();
     dataBinder = new DataBinder();
-    return workspace.initialize({ local: true }).then(function () {
-      dataBinder.attachTo(workspace);
-      dataBinder.register('View', personTemplate.typeid, TestDataBindingClass);
-      testProp = createPerson();
-      workspace.insert('person', testProp);
-      dataBindingInstance = dataBinder.resolve('person', 'View');
-    });
+    dataBinder.attachTo(workspace);
+    dataBinder.register('View', personTemplate.typeid, TestDataBindingClass);
+    testProp = createPerson();
+    workspace.insert('person', testProp);
+    dataBindingInstance = dataBinder.resolve('person', 'View');
   });
 
   it('should have instantiated a TestDataBindingClass data binding', function () {
-    should.exist(dataBindingInstance);
-    expect(dataBindingInstance).instanceof(TestDataBindingClass);
+    expect(dataBindingInstance).toBeDefined();
+    expect(dataBindingInstance).toBeInstanceOf(TestDataBindingClass);
   });
 
   it('should call onPropertyChange callback', function () {
     dataBindingInstance = dataBinder.resolve('person', 'View');
     testProp.get(['name']).setValue('John Foo');
     expect(dataBindingInstance.onPropertyRegisteredCallback).toHaveBeenCalledTimes(1);
-    expect(dataBindingInstance.onPropertyRegisteredCallback.args[0][0]).to.be.an.instanceOf(BaseProperty);
+    expect(dataBindingInstance.onPropertyRegisteredCallback.mock.calls[0][0]).toBeInstanceOf(BaseProperty);
   });
 
   it('should call onPathRegisteredCallback callback', function () {
     testProp.get(['lastName']).setValue('Bar');
     expect(dataBindingInstance.onPathRegisteredCallback).toHaveBeenCalledTimes(1);
-    expect(dataBindingInstance.onPathRegisteredCallback.args[0][0]).to.be.an.instanceOf(ModificationContext);
+    expect(dataBindingInstance.onPathRegisteredCallback.mock.calls[0][0]).toBeInstanceOf(ModificationContext);
   });
 
   it('should call onValuesRegisteredCallback callback', function () {
     testProp.get(['nickname']).setValue('Johnnie');
     expect(dataBindingInstance.onValuesRegisteredCallback).toHaveBeenCalledTimes(1);
-    expect(dataBindingInstance.onValuesRegisteredCallback.args[0][0]).to.equal(testProp.get(['nickname']).value);
+    expect(dataBindingInstance.onValuesRegisteredCallback.mock.calls[0][0]).toEqual(testProp.get(['nickname']).value);
   });
 
   it('should register commonCallback for each of the stacked calls of the registration decorators', function () {
     let new_value = 'John Foobar';
     testProp.get(['parent', 'name']).setValue(new_value);
-    expect(dataBindingInstance.commonCallback.args[0][0]).to.equal(new_value);
+    expect(dataBindingInstance.commonCallback.mock.calls[0][0]).toEqual(new_value);
     new_value = 'Bar';
     testProp.get(['parent', 'lastName']).setValue(new_value);
-    expect(dataBindingInstance.commonCallback.args[1][0]).to.equal(new_value);
+    expect(dataBindingInstance.commonCallback.mock.calls[1][0]).toEqual(new_value);
     expect(dataBindingInstance.commonCallback).toHaveBeenCalledTimes(2);
   });
 
@@ -214,7 +211,7 @@ describe('Decorated DataBinding', function () {
     anotherDataBindingInstance.onPropertyRegisteredCallback.mockClear();
     expect(anotherDataBindingInstance.onPropertyRegisteredCallback).toHaveBeenCalledTimes(0);
     expect(dataBindingInstance.onPropertyRegisteredCallback).toHaveBeenCalledTimes(
-      anotherDataBindingInstance.onPropertyRegisteredCallback.callCount);
+      anotherDataBindingInstance.onPropertyRegisteredCallback.mock.calls.length);
     anotherPerson.get(['name']).setValue('Jack Foobar');
     expect(anotherDataBindingInstance.onPropertyRegisteredCallback).toHaveBeenCalledTimes(1);
   });

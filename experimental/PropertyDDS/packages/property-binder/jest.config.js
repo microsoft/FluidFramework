@@ -8,7 +8,9 @@ module.exports = {
   preset: "ts-jest",
 
   // The glob patterns Jest uses to detect test files
-  testMatch: ["/**/test/data_binder/*.spec.js"],
+  testMatch: [
+    "/**/test/data_binder/*.spec.js"
+  ],
 
   testEnvironment: "jsdom",
 

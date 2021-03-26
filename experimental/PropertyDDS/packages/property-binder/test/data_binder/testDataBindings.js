@@ -22,7 +22,7 @@ class ParentDataBinding extends DataBinding {
     this.onPreModify = jest.fn();
     this.onModify = jest.fn();
     this.onPreRemove = jest.fn();
-    this.onRemove = sinon.spy(function (in_removalContext) {
+    this.onRemove = jest.fn(function (in_removalContext) {
       // Make sure, we always have a symmetric number of preRemove calls
       expect(that.onPreRemove).toHaveBeenCalledTimes(1);
     });
@@ -64,7 +64,7 @@ class ChildDataBinding extends DataBinding {
     this.onPreModify = jest.fn();
     this.onModify = jest.fn();
     this.onPreRemove = jest.fn();
-    this.onRemove = sinon.spy(function (in_removalContext) {
+    this.onRemove = jest.fn(function (in_removalContext) {
       // Make sure, we always have a symmetric number of preRemove calls
       expect(that.onPreRemove).toHaveBeenCalledTimes(1);
     });
@@ -90,7 +90,7 @@ class PrimitiveChildrenDataBinding extends DataBinding {
     this.onPreModify = jest.fn();
     this.onModify = jest.fn();
     this.onPreRemove = jest.fn();
-    this.onRemove = sinon.spy(function (in_removalContext) {
+    this.onRemove = jest.fn(function (in_removalContext) {
       // Make sure, we always have a symmetric number of preRemove calls
       expect(that.onPreRemove).toHaveBeenCalledTimes(1);
     });
@@ -117,7 +117,7 @@ class InheritedChildDataBinding extends DataBinding {
     this.onPreModify = jest.fn();
     this.onModify = jest.fn();
     this.onPreRemove = jest.fn();
-    this.onRemove = sinon.spy(function (in_removalContext) {
+    this.onRemove = jest.fn(function (in_removalContext) {
       // Make sure, we always have a symmetric number of preRemove calls
       expect(that.onPreRemove).toHaveBeenCalledTimes(1);
     });

@@ -7,49 +7,50 @@ import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-prop
 import { forEachProperty, minimalRootPaths, visitTypeHierarchy } from '../../src/data_binder/internal_utils';
 import { catchConsoleErrors } from './catch_console_errors';
 import { PrimitiveChildrenTemplate, AnimalSchema } from './testTemplates';
+import { SharedPropertyTree as MockWorkspace } from './shared_property_tree';
 
 describe('minimalRootPaths', () => {
   it('should return the same array for exclusive paths', () => {
     const paths = ['/this.is', '/an.exclusive', '/test'];
     const returnedPaths = minimalRootPaths(paths);
-    expect(paths.length).to.equal(returnedPaths.length);
-    expect(paths.sort()).to.eql(returnedPaths.sort());
+    expect(paths.length).toEqual(returnedPaths.length);
+    expect(paths.sort()).toEqual(returnedPaths.sort());
   });
 
   it('should only keep one from identical paths', () => {
     const paths = ['/this.is', '/this.is', '/repeated'];
     const returnedPaths = minimalRootPaths(paths);
-    expect(returnedPaths.length).to.equal(2);
-    expect(paths.sort()[0]).to.equal(returnedPaths.sort()[0]);
-    expect(paths.sort()[2]).to.equal(returnedPaths.sort()[1]);
+    expect(returnedPaths.length).toEqual(2);
+    expect(paths.sort()[0]).toEqual(returnedPaths.sort()[0]);
+    expect(paths.sort()[2]).toEqual(returnedPaths.sort()[1]);
   });
 
   it('should remove sub path', () => {
     const paths = ['/this.is', '/this.is.a.subpath'];
     const returnedPaths = minimalRootPaths(paths);
-    expect(returnedPaths.length).to.equal(1);
-    expect(returnedPaths[0]).to.equal(paths[0]);
+    expect(returnedPaths.length).toEqual(1);
+    expect(returnedPaths[0]).toEqual(paths[0]);
   });
 
   it('should take into account . character when considering a sub path', () => {
     const paths = ['/this.is', '/this.is.a.subpath', '/this.isnotasubpath'];
     const returnedPaths = minimalRootPaths(paths);
-    expect(returnedPaths.length).to.equal(2);
-    expect(returnedPaths.sort()).to.eql([paths[0], paths[2]].sort());
+    expect(returnedPaths.length).toEqual(2);
+    expect(returnedPaths.sort()).toEqual([paths[0], paths[2]].sort());
   });
 
   it('should consider special characters for arrays/maps', () => {
     const paths = ['/this.is', '/this.is[0]', '/this.isnotasubpath'];
     const returnedPaths = minimalRootPaths(paths);
-    expect(returnedPaths.length).to.equal(2);
-    expect(returnedPaths.sort()).to.eql([paths[0], paths[2]].sort());
+    expect(returnedPaths.length).toEqual(2);
+    expect(returnedPaths.sort()).toEqual([paths[0], paths[2]].sort());
   });
 
   it('should consider the root as the minimum path', () => {
     const paths = ['/', '/this.is', '/this.is[0]', '/this.isnotasubpath'];
     const returnedPaths = minimalRootPaths(paths);
-    expect(returnedPaths.length).to.equal(1);
-    expect(returnedPaths[0]).to.equal(paths[0]);
+    expect(returnedPaths.length).toEqual(1);
+    expect(returnedPaths[0]).toEqual(paths[0]);
   });
 });
 
@@ -80,7 +81,7 @@ describe('forEachProperty', () => {
       'single',
       initialValues);
     forEachProperty(primitiveChildrenPset, in_property => {
-      expect(in_property).to.be.instanceOf(BaseProperty);
+      expect(in_property).toBeInstanceOf(BaseProperty);
       return true;
     });
   });
@@ -105,7 +106,7 @@ describe('forEachProperty', () => {
     root.insert('enumSingle', enumSingle);
     root.insert('enumArray', enumArray);
     forEachProperty(root, in_property => {
-      expect(in_property).to.be.instanceOf(BaseProperty);
+      expect(in_property).toBeInstanceOf(BaseProperty);
       return true;
     });
   });
@@ -168,7 +169,7 @@ describe('forEachProperty', () => {
     root.insert('enums', enums);
     let propertyCounter = 0;
     forEachProperty(root, in_property => {
-      expect(in_property).to.be.instanceOf(BaseProperty);
+      expect(in_property).toBeInstanceOf(BaseProperty);
       propertyCounter++;
       return true;
     });
@@ -186,7 +187,7 @@ describe('forEachProperty', () => {
     root.insert('refArray', refArray);
     root.insert('refMap', refMap);
     forEachProperty(root, in_property => {
-      expect(in_property).to.be.instanceOf(BaseProperty);
+      expect(in_property).toBeInstanceOf(BaseProperty);
       return true;
     });
   });
@@ -200,7 +201,7 @@ describe('forEachProperty', () => {
     root.insert('invalidRef', invalidRef);
     root.insert('cyclicRef', cyclicRef);
     forEachProperty(root, in_property => {
-      expect(in_property).to.be.instanceOf(BaseProperty);
+      expect(in_property).toBeInstanceOf(BaseProperty);
       return true;
     });
   });
@@ -210,9 +211,7 @@ describe('visitTypeHierarchy', () => {
   let workspace;
   const callbackSpy = jest.fn();
   beforeAll(async () => {
-    const hfdm = new HFDM();
-    workspace = hfdm.createWorkspace();
-    await workspace.initialize({ local: true });
+    workspace = new MockWorkspace();
   });
 
   beforeEach(() => {
@@ -228,10 +227,10 @@ describe('visitTypeHierarchy', () => {
       workspace
     );
 
-    expect(callbackSpy.calledWith(PrimitiveChildrenTemplate.typeid)).to.equal(true);
-    expect(callbackSpy.calledWith('NamedProperty')).to.equal(true);
-    expect(callbackSpy.calledWith('BaseProperty')).to.equal(true);
-    expect(callbackSpy.callCount).to.equal(3);
+    expect(callbackSpy).toHaveBeenCalledWith(PrimitiveChildrenTemplate.typeid);
+    expect(callbackSpy).toHaveBeenCalledWith('NamedProperty');
+    expect(callbackSpy).toHaveBeenCalledWith('BaseProperty');
+    expect(callbackSpy.mock.calls.length).toEqual(3);
 
     // without workspace
     callbackSpy.mockClear();
@@ -240,10 +239,10 @@ describe('visitTypeHierarchy', () => {
       typeid => { callbackSpy(typeid); return true; }
     );
 
-    expect(callbackSpy.calledWith(PrimitiveChildrenTemplate.typeid)).to.equal(true);
-    expect(callbackSpy.calledWith('NamedProperty')).to.equal(true);
-    expect(callbackSpy.calledWith('BaseProperty')).to.equal(true);
-    expect(callbackSpy.callCount).to.equal(3);
+    expect(callbackSpy).toHaveBeenCalledWith(PrimitiveChildrenTemplate.typeid);
+    expect(callbackSpy).toHaveBeenCalledWith('NamedProperty');
+    expect(callbackSpy).toHaveBeenCalledWith('BaseProperty');
+    expect(callbackSpy.mock.calls.length).toEqual(3);
   });
 
   it('should traverse inheritance tree when providing strings as inheritance', () => {
@@ -260,10 +259,10 @@ describe('visitTypeHierarchy', () => {
       typeid => { callbackSpy(typeid); return true; },
       workspace
     );
-    expect(callbackSpy.calledWith(SlothSchema.typeid)).to.equal(true);
-    expect(callbackSpy.calledWith(AnimalSchema.typeid)).to.equal(true);
-    expect(callbackSpy.calledWith('BaseProperty')).to.equal(true);
-    expect(callbackSpy.callCount).to.equal(3);
+    expect(callbackSpy).toHaveBeenCalledWith(SlothSchema.typeid);
+    expect(callbackSpy).toHaveBeenCalledWith(AnimalSchema.typeid);
+    expect(callbackSpy).toHaveBeenCalledWith('BaseProperty');
+    expect(callbackSpy.mock.calls.length).toEqual(3);
   });
   it('should traverse inheritance tree when providing an array as inheritance', () => {
     const RedPandaSchema = {
@@ -279,9 +278,9 @@ describe('visitTypeHierarchy', () => {
       workspace
     );
 
-    expect(callbackSpy.calledWith(RedPandaSchema.typeid)).to.equal(true);
-    expect(callbackSpy.calledWith(AnimalSchema.typeid)).to.equal(true);
-    expect(callbackSpy.calledWith('BaseProperty')).to.equal(true);
-    expect(callbackSpy.callCount).to.equal(3);
+    expect(callbackSpy).toHaveBeenCalledWith(RedPandaSchema.typeid);
+    expect(callbackSpy).toHaveBeenCalledWith(AnimalSchema.typeid);
+    expect(callbackSpy).toHaveBeenCalledWith('BaseProperty');
+    expect(callbackSpy.mock.calls.length).toEqual(3);
   });
 });
