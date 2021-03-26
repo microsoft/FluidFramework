@@ -72,33 +72,34 @@ import { IOldestClientObserver } from "./interfaces";
  * not convenient to pass the Promise around.
  */
 export class OldestClientObserver extends EventEmitter implements IOldestClientObserver {
-    private currentOldest: string | undefined;
+    private currentIsOldest: boolean = false;
     constructor(private readonly quorum: IQuorum, private readonly containerRuntime: IContainerRuntime) {
         super();
-        this.currentOldest = this.computeOldest();
+        this.currentIsOldest = this.computeIsOldest();
         quorum.on("addMember", this.updateOldest);
         quorum.on("removeMember", this.updateOldest);
+        containerRuntime.on("disconnected", this.updateOldest);
     }
 
     public isOldest(): boolean {
-        return this.currentOldest === this.containerRuntime.clientId;
-    }
-
-    public getOldest(): string | undefined {
-        return this.currentOldest;
+        return this.computeIsOldest();
     }
 
     private readonly updateOldest = () => {
-        const newOldest = this.computeOldest();
-        if (this.currentOldest !== newOldest) {
-            this.currentOldest = newOldest;
+        const oldest = this.computeIsOldest();
+        if (this.currentIsOldest !== oldest) {
+            this.currentIsOldest = oldest;
         }
     };
 
-    private computeOldest(): string | undefined {
+    private computeIsOldest(): boolean {
+        if (this.containerRuntime.clientId === undefined) {
+            return false;
+        }
+
         const members = this.quorum.getMembers();
         if (members.size === 0) {
-            return undefined;
+            return false;
         }
 
         let oldestClient: { clientId: string, sequenceNumber: number } | undefined;
@@ -111,6 +112,6 @@ export class OldestClientObserver extends EventEmitter implements IOldestClientO
             }
         }
 
-        return oldestClient?.clientId;
+        return oldestClient?.clientId === this.containerRuntime.clientId;
     }
 }

@@ -48,10 +48,9 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
 }
 
 export interface IOldestClientObserverEvents extends IEvent {
-    (event: "becameOldest" | "lostOldest" | "oldestChanged", listener: () => void);
+    (event: "becameOldest" | "lostOldest", listener: () => void);
 }
 
 export interface IOldestClientObserver extends IEventProvider<IOldestClientObserverEvents> {
     isOldest(): boolean;
-    getOldest(): string | undefined;
 }
