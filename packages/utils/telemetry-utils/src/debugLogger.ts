@@ -55,7 +55,7 @@ export class DebugLogger extends TelemetryLogger {
 
         const multiSinkLogger = new MultiSinkLogger(undefined, properties);
         multiSinkLogger.addLogger(DebugLogger.create(namespace, this.tryGetBaseLoggerProps(baseLogger)));
-        multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace), true);
+        multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace));
 
         return multiSinkLogger;
     }

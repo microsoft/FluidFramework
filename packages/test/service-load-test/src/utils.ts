@@ -11,7 +11,7 @@ import { ITestDriver, TestDriverTypes, ITelemetryBufferedLogger } from "@fluidfr
 import { createFluidTestDriver } from "@fluidframework/test-drivers";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
-import { ITelemetryLoggerPropertyBags, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { fluidExport, ILoadTest } from "./loadTestDataStore";
@@ -26,20 +26,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     private  logs: ITelemetryBaseEvent[] = [];
 
     public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
-        super(undefined,{});
-    }
-
-    public addProperties(properties: ITelemetryLoggerPropertyBags) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.properties!.all = {
-            ...properties.all,
-            ... this.properties?.all,
-        };
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.properties!.error = {
-            ...properties.error,
-            ... this.properties?.error,
-        };
+        super();
     }
 
     async flush(runInfo?: {url: string,  runId?: number}): Promise<void> {
@@ -123,15 +110,12 @@ export async function load(testDriver: ITestDriver, url: string, runId: number) 
     const documentServiceFactory =
         new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
 
-    const logger = await loggerP;
-    logger.addProperties({all: { runId }});
-
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory,
         codeLoader,
-        logger,
+        logger: ChildLogger.create(await loggerP, undefined, {all: { runId }}),
     });
 
     const container = await loader.resolve({ url });

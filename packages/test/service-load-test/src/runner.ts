@@ -6,7 +6,6 @@
 import commander from "commander";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { Container } from "@fluidframework/container-loader";
-
 import { ILoadTestConfig } from "./testConfigFile";
 import { IRunConfig } from "./loadTestDataStore";
 import { createTestDriver, getProfile, load, loggerP, safeExit } from "./utils";
@@ -69,7 +68,7 @@ async function runnerProcess(
         while(!done) {
             const {documentServiceFactory, container, test} = await load(testDriver, url, runId);
             scheduleContainerClose(container, runConfig);
-            scheduleNackAndDisconnect(documentServiceFactory, container, runConfig);
+            scheduleFaultInjection(documentServiceFactory, container, runConfig);
             try{
                 printStatus(runId, `running`);
                 done = await test.run(runConfig, reset);
@@ -95,7 +94,7 @@ async function runnerProcess(
     }
 }
 
-function scheduleNackAndDisconnect(
+function scheduleFaultInjection(
     ds: FaultInjectionDocumentServiceFactory,
     container: Container,
     runConfig: IRunConfig) {
