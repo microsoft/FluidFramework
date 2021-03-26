@@ -49,7 +49,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.29.0-0",
+    "@fluidframework/common-utils": "^0.29.0",
     "@fluidframework/core-interfaces": "^0.37.0",
     "@fluidframework/driver-definitions": "^0.37.0",
     "@fluidframework/local-driver": "^0.37.0",
