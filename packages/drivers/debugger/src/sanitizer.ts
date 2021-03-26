@@ -252,9 +252,13 @@ export class Sanitizer {
     ) {
         this.defaultExcludedKeys.add("type");
         this.defaultExcludedKeys.add("id");
+        this.defaultExcludedKeys.add("markerId");
+        this.defaultExcludedKeys.add("address");
+        this.defaultExcludedKeys.add("url");
         this.defaultExcludedKeys.add("pkg");
         this.defaultExcludedKeys.add("snapshotFormatVersion");
         this.defaultExcludedKeys.add("packageVersion");
+        this.defaultExcludedKeys.add("version");
         this.mergeTreeExcludedKeys.add("nodeType");
     }
 
@@ -454,9 +458,11 @@ export class Sanitizer {
             // Blob (leaf) type
                 try {
                     if (typeof element.value.contents === "string") {
-                        let data = JSON.parse(element.value.contents);
-                        data = this.replaceObject(data);
-                        element.value.contents = JSON.stringify(data);
+                        if (this.fullScrub) {
+                            let data = JSON.parse(element.value.contents);
+                            data = this.replaceObject(data);
+                            element.value.contents = JSON.stringify(data);
+                        }
                     }
                 } catch (e) {
                     this.debugMsg(e);
