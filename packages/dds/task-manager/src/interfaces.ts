@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 export interface ITaskManagerEvents extends ISharedObjectEvents {
@@ -44,4 +45,13 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
      * @param taskId - Identifier for the task
      */
     queued(taskId: string): boolean;
+}
+
+export interface IOldestClientObserverEvents extends IEvent {
+    (event: "becameOldest" | "lostOldest" | "oldestChanged", listener: () => void);
+}
+
+export interface IOldestClientObserver extends IEventProvider<IOldestClientObserverEvents> {
+    isOldest(): boolean;
+    getOldest(): string | undefined;
 }
