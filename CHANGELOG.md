@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.75.0
+
+_Version update only._
+
 ## 0.73.2
 
 * build: Update package dependencies
