@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { assert, EventForwarder } from "@fluidframework/common-utils";
 import {
@@ -16,7 +21,6 @@ import {
     IDocumentMessage,
     INack,
     NackErrorType,
-// eslint-disable-next-line import/no-extraneous-dependencies
 } from "@fluidframework/protocol-definitions";
 
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {

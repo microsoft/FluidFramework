@@ -52,7 +52,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/driver-definitions": "^0.38.0",
     "@fluid-experimental/task-manager": "^0.38.0",
     "@fluidframework/aqueduct": "^0.38.0",
     "@fluidframework/common-definitions": "^0.19.1",
@@ -62,7 +61,9 @@
     "@fluidframework/core-interfaces": "^0.38.0",
     "@fluidframework/counter": "^0.38.0",
     "@fluidframework/datastore-definitions": "^0.38.0",
+    "@fluidframework/driver-definitions": "^0.38.0",
     "@fluidframework/map": "^0.38.0",
+    "@fluidframework/protocol-definitions": "^0.1022.0-0",
     "@fluidframework/runtime-utils": "^0.38.0",
     "@fluidframework/telemetry-utils": "^0.38.0",
     "@fluidframework/test-driver-definitions": "^0.38.0",
