@@ -11,11 +11,12 @@ import { ITestDriver, TestDriverTypes, ITelemetryBufferedLogger } from "@fluidfr
 import { createFluidTestDriver } from "@fluidframework/test-drivers";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerPropertyBags, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { fluidExport, ILoadTest } from "./loadTestDataStore";
 import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
+import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
@@ -25,7 +26,20 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     private  logs: ITelemetryBaseEvent[] = [];
 
     public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
-        super();
+        super(undefined,{});
+    }
+
+    public addProperties(properties: ITelemetryLoggerPropertyBags) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.properties!.all = {
+            ...properties.all,
+            ... this.properties?.all,
+        };
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.properties!.error = {
+            ...properties.error,
+            ... this.properties?.error,
+        };
     }
 
     async flush(runInfo?: {url: string,  runId?: number}): Promise<void> {
@@ -83,19 +97,15 @@ const codeDetails: IFluidCodeDetails = {
 
 const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 
-export async function createLoader(testDriver: ITestDriver, runId: number | undefined) {
+export async function initialize(testDriver: ITestDriver) {
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
         codeLoader,
-        logger: ChildLogger.create(await loggerP, undefined, {all: { runId }}),
+        logger: await loggerP,
     });
-    return loader;
-}
 
-export async function initialize(testDriver: ITestDriver) {
-    const loader = await createLoader(testDriver, undefined);
     const container = await loader.createDetachedContainer(codeDetails);
     container.on("error", (error) => {
         console.log(error);
@@ -110,9 +120,22 @@ export async function initialize(testDriver: ITestDriver) {
 }
 
 export async function load(testDriver: ITestDriver, url: string, runId: number) {
-    const loader = await createLoader(testDriver, runId);
+    const documentServiceFactory =
+        new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
+
+    const logger = await loggerP;
+    logger.addProperties({all: { runId }});
+
+    // Construct the loader
+    const loader = new Loader({
+        urlResolver: testDriver.createUrlResolver(),
+        documentServiceFactory,
+        codeLoader,
+        logger,
+    });
+
     const container = await loader.resolve({ url });
-    return {container, test: await requestFluidObject<ILoadTest>(container,"/")};
+    return {documentServiceFactory, container, test: await requestFluidObject<ILoadTest>(container,"/")};
 }
 
 export const createTestDriver =
