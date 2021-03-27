@@ -82,7 +82,7 @@ export class OldestClientObserver extends EventEmitter implements IOldestClientO
     }
 
     public isOldest(): boolean {
-        return this.computeIsOldest();
+        return this.currentIsOldest;
     }
 
     private readonly updateOldest = () => {
