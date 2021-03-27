@@ -52,7 +52,7 @@ class PendingProposal implements IPendingProposal, ISequencedProposal {
     }
 
     public addRejection(clientId: string) {
-        assert(!this.rejections.has(clientId), `!this.rejections.has(${clientId})`);
+        assert(!this.rejections.has(clientId), 0x1cd /* `!this.rejections.has(${clientId})` */);
         this.rejections.add(clientId);
     }
 }
@@ -157,7 +157,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
      * Adds a new client to the quorum
      */
     public addMember(clientId: string, details: ISequencedClient) {
-        assert(!this.members.has(clientId), `!this.members.has(${clientId})`);
+        assert(!this.members.has(clientId), 0x1ce /* `!this.members.has(${clientId})` */);
         this.members.set(clientId, details);
         this.emit("addMember", clientId, details);
     }
@@ -166,7 +166,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
      * Removes a client from the quorum
      */
     public removeMember(clientId: string) {
-        assert(this.members.has(clientId), `this.members.has(${clientId})`);
+        assert(this.members.has(clientId), 0x1cf /* `this.members.has(${clientId})` */);
         this.members.delete(clientId);
         this.emit("removeMember", clientId);
     }
@@ -212,10 +212,10 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
         sequenceNumber: number,
         local: boolean,
         clientSequenceNumber: number) {
-        assert(!this.proposals.has(sequenceNumber), `!this.proposals.has(${sequenceNumber})`);
+        assert(!this.proposals.has(sequenceNumber), 0x1d0 /* `!this.proposals.has(${sequenceNumber})` */);
         assert(
             !local || this.localProposals.has(clientSequenceNumber),
-            `!${local} || this.localProposals.has(${clientSequenceNumber})`);
+            0x1d1 /* `!${local} || this.localProposals.has(${clientSequenceNumber})` */);
 
         const proposal = new PendingProposal(
             this.sendReject,
@@ -244,7 +244,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
         // Proposals require unanimous approval so any rejection results in a rejection of the proposal. For error
         // detection we will keep a rejected proposal in the pending list until the MSN advances so that we can
         // track the total number of rejections.
-        assert(this.proposals.has(sequenceNumber), `this.proposals.has(${sequenceNumber})`);
+        assert(this.proposals.has(sequenceNumber), 0x1d2 /* `this.proposals.has(${sequenceNumber})` */);
 
         const proposal = this.proposals.get(sequenceNumber);
         if (proposal !== undefined) {
@@ -369,7 +369,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     public setConnectionState(connected: boolean, clientId?: string) {
         if (!connected) {
             this.localProposals.forEach((deferral) => {
-                deferral.reject("Client got disconnected");
+                deferral.reject(new Error("Client got disconnected"));
             });
             this.localProposals.clear();
         }

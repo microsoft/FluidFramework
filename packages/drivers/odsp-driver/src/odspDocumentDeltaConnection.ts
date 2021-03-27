@@ -73,7 +73,7 @@ class SocketReference {
      * @param isFatalError - true if the socket reference should be removed immediately due to a fatal error
      */
     public removeSocketIoReference(isFatalError: boolean) {
-        assert(this.references > 0, "No more socketIO refs to remove!");
+        assert(this.references > 0, 0x09f /* "No more socketIO refs to remove!" */);
         this.references--;
 
         // see comment in disconnected() getter
@@ -87,7 +87,7 @@ class SocketReference {
         if (this.references === 0 && this.delayDeleteTimeout === undefined) {
             this.delayDeleteTimeout = setTimeout(() => {
                 // We should not get here with active users.
-                assert(this.references === 0, "Unexpected socketIO references on timeout");
+                assert(this.references === 0, 0x0a0 /* "Unexpected socketIO references on timeout" */);
                 this.closeSocket();
             }, socketReferenceBufferTime);
             this.delayDeleteTimeoutSetTime = Date.now();
@@ -137,7 +137,7 @@ class SocketReference {
         this.clearTimer();
 
         assert(SocketReference.socketIoSockets.get(this.key) === this,
-            "Socket reference set unexpectedly does not point to this socket!");
+            0x0a1 /* "Socket reference set unexpectedly does not point to this socket!" */);
         SocketReference.socketIoSockets.delete(this.key);
 
         const socket = this._socket;
@@ -383,7 +383,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      */
     protected disconnect(socketProtocolError: boolean, reason: DriverError) {
         const socket = this.socketReference;
-        assert(socket !== undefined, "reentrancy not supported!");
+        assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
         this.socketReference = undefined;
 
         if (!socketProtocolError && this.hasDetails) {

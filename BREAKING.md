@@ -1,7 +1,14 @@
 ## 0.37 Breaking changes
+- [OpProcessingController marked for deprecation](#opprocessingcontroller-marked-for-deprecation)
 - [Loader in data stores deprecated](#Loader-in-data-stores-deprecated)
 - [TelemetryLogger Properties Format](#TelemetryLogger-Properties-Format)
+- [AgentScheduler moves and renames](#AgentScheduler-moves-and-renames)
 
+### OpProcessingController marked for deprecation
+`OpProcessingController` is marked for deprecation and we be removed in 0.38.
+`LoaderContainerTracker` is the replacement with better tracking.  The API differs from `OpProcessingController` in the following ways:
+- Loader is added for tracking and any Container created/loaded will be automatically tracked
+- The op control APIs accept Container instead of DeltaManager
 ### Loader in data stores deprecated
 The `loader` property on the `IContainerRuntime`, `IFluidDataStoreRuntime`, and `IFluidDataStoreContext` interfaces is now deprecated and will be removed in an upcoming release.  Data store objects will no longer have access to an `ILoader` by default.  To replicate the same behavior, existing users can make the `ILoader` used to create a `Container` available on the `scope` property of these interfaces instead by setting the `provideScopeLoader` `ILoaderOptions` flag when creating the loader.
 ```typescript
@@ -22,6 +29,9 @@ The previous format was just a property bag:
     `ChildLogger.create(logger, undefined, { someProperty: uuid() });`
 Whereas now it has nested property bags for error categories including `all` and `error`:
     `ChildLogger.create(logger, undefined, {all:{ someProperty: uuid() }});`
+
+### AgentScheduler moves and renames
+`IAgentScheduler` and `IProvideAgentScheduler` have been moved to the `@fluidframework/agent-scheduler` package, and `taskSchedulerId` has been renamed to `agentSchedulerId`.
 
 ## 0.36 Breaking changes
 - [Some `ILoader` APIs moved to `IHostLoader`](#Some-ILoader-APIs-moved-to-IHostLoader)

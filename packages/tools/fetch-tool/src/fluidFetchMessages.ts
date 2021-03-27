@@ -44,7 +44,7 @@ async function* loadAllSequencedMessages(
                 const fileContent = fs.readFileSync(`${dir}/messages${file}.json`, { encoding: "utf-8" });
                 const messages: ISequencedDocumentMessage[] = JSON.parse(fileContent);
                 assert(messages[0].sequenceNumber === lastSeq + 1,
-                    "Unexpected value for sequence number of first message in file");
+                    0x1b9 /* "Unexpected value for sequence number of first message in file" */);
                 yield messages;
                 lastSeq = messages[messages.length - 1].sequenceNumber;
             } catch (e) {
@@ -88,7 +88,7 @@ async function* loadAllSequencedMessages(
         requests++;
 
         // Empty buckets should never be returned
-        assert(messages.length !== 0, "should not return empty buckets");
+        assert(messages.length !== 0, 0x1ba /* "should not return empty buckets" */);
         // console.log(`Loaded ops at ${messages[0].sequenceNumber}`);
 
         // This parsing of message contents happens in delta manager. But when we analyze messages
@@ -170,10 +170,10 @@ async function* saveOps(
             }
             sequencedMessages = sequencedMessages.concat(messages);
             assert(sequencedMessages[0].sequenceNumber === curr,
-                "Unexpected sequence number on first of messages to save");
+                0x1bb /* "Unexpected sequence number on first of messages to save" */);
             assert(sequencedMessages[sequencedMessages.length - 1].sequenceNumber
                 === curr + sequencedMessages.length - 1,
-                "Unexpected sequence number on last of messages to save");
+                0x1bc /* "Unexpected sequence number on last of messages to save" */);
         }
 
         // Time to write it out?
@@ -186,7 +186,7 @@ async function* saveOps(
                 JSON.stringify(write, undefined, paramActualFormatting ? 0 : 2));
             curr += chunk;
             assert(sequencedMessages.length === 0 || sequencedMessages[0].sequenceNumber === curr,
-                "Stopped writing at unexpected sequence number");
+                0x1bd /* "Stopped writing at unexpected sequence number" */);
             index++;
         }
 

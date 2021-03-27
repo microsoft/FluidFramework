@@ -11,7 +11,7 @@ import { ITestDriver, TestDriverTypes, ITelemetryBufferedLogger } from "@fluidfr
 import { createFluidTestDriver } from "@fluidframework/test-drivers";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { fluidExport, ILoadTest } from "./loadTestDataStore";
@@ -19,32 +19,35 @@ import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
-class FileLogger implements ITelemetryBufferedLogger {
+class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     private error: boolean = false;
-    private readonly schema = new Set<string>();
+    private readonly schema = new Map<string, number>();
     private  logs: ITelemetryBaseEvent[] = [];
 
-    public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {}
+    public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
+        super();
+    }
 
     async flush(runInfo?: {url: string,  runId?: number}): Promise<void> {
         const baseFlushP =  this.baseLogger?.flush();
 
         if(this.error && runInfo !== undefined) {
             const logs = this.logs;
-            const path = `${__dirname}/output/${crypto.createHash("md5").update(runInfo.url).digest("hex")}/`;
-            if(!fs.existsSync(path)) {
-                fs.mkdirSync(path, {recursive: true});
+            const outputDir = `${__dirname}/output/${crypto.createHash("md5").update(runInfo.url).digest("hex")}`;
+            if(!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir, {recursive: true});
             }
-            const schema = [...this.schema];
+            // sort from most common column to least common
+            const schema = [...this.schema].sort((a,b)=>b[1] - a[1]).map((v)=>v[0]);
             const data = logs.reduce(
                 (file, event)=> `${file}\n${schema.reduce((line,k)=>`${line}${event[k] ?? ""},`,"")}`,
                 schema.join(","));
-
+            const filePath = `${outputDir}/${runInfo.runId ?? "orchestrator"}_${Date.now()}.csv`;
             fs.writeFileSync(
-                `${path}/${runInfo.runId ?? "orchestrator"}_${Date.now()}.csv`,
+                filePath,
                 data);
         }
-
+        this.schema.clear();
         this.error = false;
         this.logs = [];
         return baseFlushP;
@@ -53,7 +56,8 @@ class FileLogger implements ITelemetryBufferedLogger {
         this.baseLogger?.send(event);
 
         event.Event_Time = Date.now();
-        Object.keys(event).forEach((k)=>this.schema.add(k));
+        // keep track of the frequency of every log event, as we'll sort by most common on write
+        Object.keys(event).forEach((k)=>this.schema.set(k, (this.schema.get(k) ?? 0) + 1));
         if(event.category === "error") {
             this.error = true;
         }
@@ -108,7 +112,7 @@ export async function initialize(testDriver: ITestDriver) {
 export async function load(testDriver: ITestDriver, url: string, runId: number) {
     const loader = await createLoader(testDriver, runId);
     const container = await loader.resolve({ url });
-    return requestFluidObject<ILoadTest>(container,"/");
+    return {container, test: await requestFluidObject<ILoadTest>(container,"/")};
 }
 
 export const createTestDriver =

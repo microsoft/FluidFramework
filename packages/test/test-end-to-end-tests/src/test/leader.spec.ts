@@ -8,6 +8,7 @@ import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, ITestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
 async function ensureConnected(container: Container) {
     if (!container.connected) {
@@ -24,6 +25,12 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
         container1 = await provider.makeTestContainer() as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         await ensureConnected(container1);
+    });
+    afterEach(() => {
+        // Clean up all the listener
+        registeredListeners.forEach(([target, name, handler]) => {
+            target.off(name, handler);
+        });
     });
 
     it("Create and load", async () => {
@@ -51,13 +58,18 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
     });
 
     interface ListenerConfig { dataObject: ITestFluidObject, name: string, leader: boolean, notleader: boolean }
+    const registeredListeners: [IFluidDataStoreRuntime, "leader" | "notleader", any][] = [];
+    function registerListener(target: IFluidDataStoreRuntime, name: "leader" | "notleader", handler: () => void) {
+        target.on(name, handler);
+        registeredListeners.push([target, name, handler]);
+    }
     const setupListener = (config: ListenerConfig) => {
-        config.dataObject.runtime.on("leader", () => {
+        registerListener(config.dataObject.runtime, "leader", () => {
             assert(config.leader, `leader event not expected in ${config.name}`);
             config.leader = false;
         });
 
-        config.dataObject.runtime.on("notleader", () => {
+        registerListener(config.dataObject.runtime, "notleader", () => {
             assert(config.notleader, `notleader event not expected in ${config.name}`);
             config.notleader = false;
         });

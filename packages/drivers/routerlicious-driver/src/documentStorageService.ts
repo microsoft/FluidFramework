@@ -261,18 +261,18 @@ export class DocumentStorageService implements IDocumentStorageService {
         /** Previous snapshot, subtree relative to this path part */
         previousSnapshot: ISnapshotTreeEx,
     ): string {
-        assert(path.length > 0, "Expected at least 1 path part");
+        assert(path.length > 0, 0x0b3 /* "Expected at least 1 path part" */);
         const key = path[0];
         if (path.length === 1) {
             switch (handleType) {
                 case SummaryType.Blob: {
                     const tryId = previousSnapshot.blobs[key];
-                    assert(!!tryId, "Parent summary does not have blob handle for specified path.");
+                    assert(!!tryId, 0x0b4 /* "Parent summary does not have blob handle for specified path." */);
                     return tryId;
                 }
                 case SummaryType.Tree: {
                     const tryId = previousSnapshot.trees[key]?.id;
-                    assert(!!tryId, "Parent summary does not have tree handle for specified path.");
+                    assert(!!tryId, 0x0b5 /* "Parent summary does not have tree handle for specified path." */);
                     return tryId;
                 }
                 default:
@@ -292,7 +292,7 @@ export class DocumentStorageService implements IDocumentStorageService {
         if (!this.blobsShaCache.has(hash)) {
             this.blobsShaCache.set(hash, "");
             const blob = await this.manager.createBlob(parsedContent, encoding);
-            assert(hash === blob.sha, "Blob.sha and hash do not match!!");
+            assert(hash === blob.sha, 0x0b6 /* "Blob.sha and hash do not match!!" */);
         }
         return hash;
     }

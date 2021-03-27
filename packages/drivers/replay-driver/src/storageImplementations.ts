@@ -100,7 +100,7 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
         protected readonly storage: IDocumentStorageService,
         protected readonly docTree: ISnapshotTree | null) {
         super();
-        assert(!!this.docTree, "Missing document snapshot tree!");
+        assert(!!this.docTree, 0x0b0 /* "Missing document snapshot tree!" */);
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
