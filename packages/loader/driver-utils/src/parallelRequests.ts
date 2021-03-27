@@ -62,7 +62,7 @@ export class ParallelRequests<T> {
     private done() {
         // We should satisfy request fully.
         assert(this.to !== undefined, 0x104 /* "undefined end point for parallel fetch" */);
-        assert(this.nextToDeliver === this.to, 0x105 /* "unexpected end point for parallel fetch" */);
+        assert(this.nextToDeliver >= this.to, 0x105 /* "unexpected end point for parallel fetch" */);
         this.working = false;
         this.endEvent.resolve();
     }
@@ -192,23 +192,23 @@ export class ParallelRequests<T> {
 
             if (this.working) {
                 const fromOrig = from;
-                const payloadSize = payload.length;
-                let fullChunk = (requestedLength <= payloadSize); // we can possible get more than we asked.
+                const length = payload.length;
+                let fullChunk = (requestedLength <= length); // we can possible get more than we asked.
 
-                if (payload.length !== 0) {
+                if (length !== 0) {
                     // We can get more than we asked for!
                     // This can screw up logic in dispatch!
                     // So push only batch size, and keep the rest for later - if conditions are favorable, we
                     // will be able to use it. If not (parallel request overlapping these ops), it's easier to
                     // discard them and wait for another (overlapping) request to come in later.
-                    if (requestedLength > payload.length) {
+                    if (requestedLength < length) {
                         // This is error in a sense that it's not expected and likely points bug in other layer.
                         // This layer copes with this situation just fine.
-                        this.logger.sendErrorEvent({
+                        this.logger.sendTelemetryEvent({
                             eventName: "ParallelRequests_Over",
                             from,
                             to,
-                            length: payload.length,
+                            length,
                         });
                     }
                     const data = payload.splice(0, requestedLength);
@@ -243,11 +243,11 @@ export class ParallelRequests<T> {
                     // We will come back to request more, and if we can't get any more ops soon, it's
                     // catastrophic failure (see comment above on responsibility of callback to return something)
                     // This layer will just keep trying until it gets full set.
-                    this.logger.sendErrorEvent({
+                    this.logger.sendPerformanceEvent({
                         eventName: "ParallelRequests_Partial",
                         from: fromOrig,
                         to,
-                        length: payload.length,
+                        length,
                     });
                 }
 
