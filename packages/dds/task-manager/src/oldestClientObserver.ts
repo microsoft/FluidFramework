@@ -72,12 +72,15 @@ import { IOldestClientObserver } from "./interfaces";
  * not convenient to pass the Promise around.
  */
 export class OldestClientObserver extends EventEmitter implements IOldestClientObserver {
+    private readonly quorum: IQuorum;
     private currentIsOldest: boolean = false;
-    constructor(private readonly quorum: IQuorum, private readonly containerRuntime: IContainerRuntime) {
+    constructor(private readonly containerRuntime: IContainerRuntime) {
         super();
+        this.quorum = this.containerRuntime.getQuorum();
         this.currentIsOldest = this.computeIsOldest();
-        quorum.on("addMember", this.updateOldest);
-        quorum.on("removeMember", this.updateOldest);
+        this.quorum.on("addMember", this.updateOldest);
+        this.quorum.on("removeMember", this.updateOldest);
+        containerRuntime.on("connected", this.updateOldest);
         containerRuntime.on("disconnected", this.updateOldest);
     }
 
