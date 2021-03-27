@@ -89,6 +89,11 @@ export class OldestClientObserver extends EventEmitter implements IOldestClientO
         const oldest = this.computeIsOldest();
         if (this.currentIsOldest !== oldest) {
             this.currentIsOldest = oldest;
+            if (oldest) {
+                this.emit("becameOldest");
+            } else {
+                this.emit("lostOldest");
+            }
         }
     };
 
