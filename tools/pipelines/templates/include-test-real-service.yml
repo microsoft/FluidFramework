@@ -1,0 +1,131 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# include-test-real-service
+
+parameters:
+- name: poolBuild
+  type: object
+  default: Lite
+
+- name: testPackage
+  type: string
+  default: "@fluidframework/test-end-to-end-tests"
+
+- name: testSteps
+  type: stepList
+
+jobs:
+  - job: run
+    displayName: Run Tests
+    pool: ${{ parameters.poolBuild }}
+    timeoutInMinutes: 240
+    variables:
+    # We use 'chalk' to colorize output, which auto-detects color support in the
+    # running terminal.  The log output shown in Azure DevOps job runs only has
+    # basic ANSI color support though, so force that in the pipeline
+    - name: FORCE_COLOR
+      value: 1
+    - template: include-vars.yml
+      parameters:
+        buildNumberInPatch: true
+    - name: diDir
+      value: '$(Build.SourcesDirectory)/tools/pipelines/dependency-injection'
+    - name: testPackageDir
+      value: '${{ variables.diDir }}/node_modules/${{ parameters.testPackage }}'
+    - name: testPackageFilePattern
+      value: ${{ replace(replace(parameters.testPackage, '@', ' ' ), '/', '-') }}-*.tgz
+    steps:
+    # Setup
+    - checkout: self
+      clean: true
+      lfs: false
+      submodules: false
+
+    # Print parameters/Vars
+    - task: Bash@3
+      displayName: Print Parameters and Variables
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Show all task group conditions
+
+          echo "
+          Pipeline Parameters:
+            poolBuild=${{ parameters.poolBuild }}
+            testPackage=${{ parameters.testPackage }}
+
+          Pipeline Variables:
+            diDir=${{ variables.diDir }}
+            testPackageFilePattern=${{ variables.testPackageFilePattern }}
+          "
+
+    # Install
+    - task: UseNode@1
+      displayName: Use Node 12.x
+      inputs:
+        version: 12.x
+
+    # Download artifact
+    - download: client
+      artifact: pack
+      patterns: ${{ variables.testPackageFilePattern }}
+
+    # [DI] Auth to internal feed
+    - task: npmAuthenticate@0
+      displayName: '[DI] npm authenticate (internal feed)'
+      inputs:
+        workingFile: ${{ variables.diDir }}/.npmrc
+
+    # [DI] Auth to Office feed
+    - task: npmAuthenticate@0
+      displayName: '[DI] npm authenticate (office feed)'
+      inputs:
+        workingFile: ${{ variables.diDir }}/.npmrc
+        customEndpoint: 'Office Packages - Readonly'
+
+    # [DI] Prep dependency-injection package for install
+    - task: Bash@3
+      displayName: '[DI] Prepare DI package'
+      inputs:
+        targetType: 'inline'
+        script: 'mv _package.json package.json'
+        workingDirectory: ${{ variables.diDir }}
+
+    # [DI] Install dependency-injection package
+    - task: Npm@1
+      displayName: '[DI] npm install'
+      inputs:
+        command: 'custom'
+        workingDir: ${{ variables.diDir }}
+        customCommand: 'install'
+        customRegistry: 'useNpmrc'
+    - task: Bash@3
+      name: GetPackageFileName
+      displayName: Get package file name
+      inputs:
+        targetType: 'inline'
+        script: |
+          echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls $(PIPELINE.WORKSPACE)/client/pack/${{ variables.testPackageFilePattern }}`"
+
+    # Install test package
+    - task: Npm@1
+      displayName: 'npm install e2e'
+      inputs:
+        command: 'custom'
+        workingDir: ${{ variables.diDir }}
+        customCommand: 'install $(GetPackageFileName.testPackageTgz)'
+        customRegistry: 'useNpmrc'
+
+    # run the test
+    - ${{ parameters.testSteps }}
+
+    # Upload results
+    - task: PublishTestResults@2
+      displayName: Publish Test Results
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/*junit-report.xml'
+        searchFolder: ${{ variables.testPackageTgz }}/nyc
+        mergeTestResults: false
+      condition: succeededOrFailed()

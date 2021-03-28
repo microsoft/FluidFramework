@@ -20,9 +20,10 @@ resources:
 
 stages:
   # end-to-end tests routerlicious
-  - stage: e2e - routerlicious
-    job:
-    - template: template/include-test-real-service.yml
+  - stage:
+    displayName: e2e routerlicious
+    jobs:
+    - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Lite
         testPackage: "@fluidframework/test-end-to-end-tests"
@@ -44,9 +45,10 @@ stages:
             customCommand: 'run test:realsvc:routerlicious:report'
 
   # end-to-end tests odsp
-  - stage: e2e - odsp
-    job:
-    - template: template/include-test-real-service.yml
+  - stage:
+    displayName:  e2e - odsp
+    jobs:
+    - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Lite
         testPackage: "@fluidframework/test-end-to-end-tests"
