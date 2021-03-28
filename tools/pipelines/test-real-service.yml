@@ -17,6 +17,9 @@ resources:
       - releases/*
       - main
 
+variables:
+- name: diDir
+  value: '$(Build.SourcesDirectory)/tools/pipelines/dependency-injection'
 
 stages:
   # end-to-end tests routerlicious
@@ -27,6 +30,7 @@ stages:
       parameters:
         poolBuild: Lite
         testPackage: "@fluidframework/test-end-to-end-tests"
+        diDir: ${{ variables.diDir }}
         testSteps:
         # end-to-end tests routerlicious
         - task: Npm@1
@@ -47,11 +51,13 @@ stages:
   # end-to-end tests odsp
   - stage:
     displayName:  e2e - odsp
+    dependsOn: []
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Lite
         testPackage: "@fluidframework/test-end-to-end-tests"
+        diDir: ${{ variables.diDir }}
         testSteps:
         - task: Npm@1
           displayName: '[end-to-end tests] npm run test:realsvc:odsp:report'
