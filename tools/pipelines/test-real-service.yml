@@ -6,29 +6,21 @@
 name: $(Build.BuildId)
 
 parameters:
-- name: buildDirectory
-  type: string
-  default: .
-
-- name: taskBuild
-  type: string
-  default: ci:build
-
 - name: poolBuild
   type: object
-  default: Main
+  default: Lite
 
-- name: checkoutSubmodules
-  type: boolean
-  default: false
-
-trigger:
-  batch: true
-  branches:
-    include:
-    - main
-    - release/*
+trigger: none
 pr: none
+
+resources:
+  pipelines:
+  - pipeline: client   # Name of the pipeline resource
+    source: Build - client packages
+    trigger:
+      branches:
+      - releases/*
+      - main
 
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
@@ -41,34 +33,34 @@ variables:
       buildNumberInPatch: true
   - name: diDir
     value: '$(Build.SourcesDirectory)/tools/pipelines/dependency-injection'
+  - name: e2eDir
+    value: '${{ variables.diDir }}/node_modules/@fluidframework/test-end-to-end-tests'
+  - name: serviceLoadTestDir
+    value: '${{ variables.diDir }}/node_modules/@fluidframework/test-service-load-tests'
 
 jobs:
   - job: run
-    displayName: Build and Run Tests
+    displayName: Run Tests
     pool: ${{ parameters.poolBuild }}
     timeoutInMinutes: 240
     steps:
     # Setup
     - checkout: self
       clean: true
-      lfs: ${{ parameters.checkoutSubmodules }}
-      submodules: ${{ parameters.checkoutSubmodules }}
+      lfs: false
+      submodules: false
 
     # Print parameters/Vars
     - task: Bash@3
       displayName: Print Parameters and Variables
       inputs:
         targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
         script: |
           # Show all task group conditions
 
           echo "
           Pipeline Parameters:
-            buildDirectory=${{ parameters.buildDirectory }}
-            taskBuild=${{ parameters.taskBuild }}
             poolBuild=${{ parameters.poolBuild }}
-            checkoutSubmodules=${{ parameters.checkoutSubmodules }}
 
           Pipeline Variables:
             diDir=${{ variables.diDir }}
@@ -79,21 +71,11 @@ jobs:
       displayName: Use Node 12.x
       inputs:
         version: 12.x
-    - task: Npm@1
-      displayName: npm ci
-      inputs:
-        command: 'custom'
-        workingDir: ${{ parameters.buildDirectory }}
-        customCommand: 'ci --unsafe-perm'
-        customRegistry: 'useNpmrc'
 
-    # Build
-    - task: Npm@1
-      displayName: npm run ${{ parameters.taskBuild }}
-      inputs:
-        command: 'custom'
-        workingDir: ${{ parameters.buildDirectory }}
-        customCommand: 'run ${{ parameters.taskBuild }}'
+    # Download artifact
+    - download: client
+      artifact: pack
+      patterns: "**/fluidframework-test-end-to-end-tests-*.tgz"
 
     # [DI] Auth to internal feed
     - task: npmAuthenticate@0
@@ -124,6 +106,22 @@ jobs:
         workingDir: ${{ variables.diDir }}
         customCommand: 'install'
         customRegistry: 'useNpmrc'
+    - task: Bash@3
+      name: GetPackageFileName
+      displayName: Get package file name
+      inputs:
+        targetType: 'inline'
+        script: |
+          echo "##vso[task.setvariable variable=e2etgz;isOutput=true]`ls $(PIPELINE.WORKSPACE)/client/pack/fluidframework-test-end-to-end-tests-*.tgz`"
+
+    # Install end to end test
+    - task: Npm@1
+      displayName: 'npm install e2e'
+      inputs:
+        command: 'custom'
+        workingDir: ${{ variables.diDir }}
+        customCommand: 'install $(GetPackageFileName.e2etgz)'
+        customRegistry: 'useNpmrc'
 
     # end-to-end tests routerlicious
     - task: Npm@1
@@ -138,7 +136,7 @@ jobs:
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
       inputs:
         command: 'custom'
-        workingDir: packages/test/test-end-to-end-tests
+        workingDir: ${{ variables.e2eDir }}
         customCommand: 'run test:realsvc:routerlicious:report'
 
     # end-to-end tests odsp
@@ -153,30 +151,30 @@ jobs:
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
       inputs:
         command: 'custom'
-        workingDir: packages/test/test-end-to-end-tests
+        workingDir: ${{ variables.e2eDir }}
         customCommand: 'run test:realsvc:odsp:report'
 
     # Run Stress Tests
-    - task: Npm@1
-      displayName: '[stress tests] npm run start'
-      continueOnError: true
-      timeoutInMinutes: 60
-      env:
-        login__microsoft__clientId: $(login-microsoft-clientId)
-        login__microsoft__secret: $(login-microsoft-secret)
-        login__odsp__test__accounts: $(login-odsp-test-accounts)
-        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-      inputs:
-        command: 'custom'
-        workingDir: packages/test/service-load-test
-        customCommand: 'run start'
+    # - task: Npm@1
+    #   displayName: '[stress tests] npm run start'
+    #   continueOnError: true
+    #   timeoutInMinutes: 60
+    #   env:
+    #     login__microsoft__clientId: $(login-microsoft-clientId)
+    #     login__microsoft__secret: $(login-microsoft-secret)
+    #     login__odsp__test__accounts: $(login-odsp-test-accounts)
+    #     FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+    #   inputs:
+    #     command: 'custom'
+    #     workingDir: ${{ variables.serviceLoadTestDir }}
+    #     customCommand: 'run start'
 
     # Run Copy Test Results
     - task: Npm@1
       displayName: npm run test:copyresults'
       inputs:
         command: 'custom'
-        workingDir: ${{ parameters.buildDirectory }}
+        workingDir: ${{ variables.diDir }}
         customCommand: 'run test:copyresults'
 
     # Upload results
@@ -185,6 +183,6 @@ jobs:
       inputs:
         testResultsFormat: 'JUnit'
         testResultsFiles: '**/*junit-report.xml'
-        searchFolder: ${{ parameters.buildDirectory }}/nyc
+        searchFolder: ${{ variables.diDir }}/nyc
         mergeTestResults: false
       condition: succeededOrFailed()
