@@ -140,19 +140,19 @@ jobs:
         customCommand: 'run test:realsvc:routerlicious:report'
 
     # end-to-end tests odsp
-    - task: Npm@1
-      displayName: '[end-to-end tests] npm run test:realsvc:odsp:report'
-      continueOnError: true
-      timeoutInMinutes: 60
-      env:
-        login__microsoft__clientId: $(login-microsoft-clientId)
-        login__microsoft__secret: $(login-microsoft-secret)
-        login__odsp__test__accounts: $(login-odsp-test-accounts)
-        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-      inputs:
-        command: 'custom'
-        workingDir: ${{ variables.e2eDir }}
-        customCommand: 'run test:realsvc:odsp:report'
+    # - task: Npm@1
+    #   displayName: '[end-to-end tests] npm run test:realsvc:odsp:report'
+    #   continueOnError: true
+    #   timeoutInMinutes: 60
+    #   env:
+    #     login__microsoft__clientId: $(login-microsoft-clientId)
+    #     login__microsoft__secret: $(login-microsoft-secret)
+    #     login__odsp__test__accounts: $(login-odsp-test-accounts)
+    #     FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+    #   inputs:
+    #     command: 'custom'
+    #     workingDir: ${{ variables.e2eDir }}
+    #     customCommand: 'run test:realsvc:odsp:report'
 
     # Run Stress Tests
     # - task: Npm@1
