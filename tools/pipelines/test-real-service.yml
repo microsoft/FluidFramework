@@ -18,6 +18,7 @@ resources:
       - main
 
 variables:
+- group: prague-key-vault
 - name: diDir
   value: '$(Build.SourcesDirectory)/tools/pipelines/dependency-injection'
 
@@ -32,9 +33,9 @@ stages:
         testPackage: "@fluidframework/test-end-to-end-tests"
         diDir: ${{ variables.diDir }}
         testSteps:
-        # end-to-end tests routerlicious
         - task: Npm@1
           displayName: '[end-to-end tests] npm run test:realsvc:routerlicious:report'
+          continueOnError: true
           timeoutInMinutes: 60
           env:
             fluid__webpack__bearerSecret: $(fluid-webpack-bearerSecret)
@@ -60,6 +61,7 @@ stages:
         testSteps:
         - task: Npm@1
           displayName: '[end-to-end tests] npm run test:realsvc:odsp:report'
+          continueOnError: true
           timeoutInMinutes: 60
           env:
             login__microsoft__clientId: $(login-microsoft-clientId)

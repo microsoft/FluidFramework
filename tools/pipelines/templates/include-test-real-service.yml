@@ -29,6 +29,8 @@ jobs:
     # basic ANSI color support though, so force that in the pipeline
     - name: FORCE_COLOR
       value: 1
+    - name: testPackageDir
+      value: '${{ parameters.diDir }}/node_modules/${{ parameters.testPackage }}'
     - name: testPackageFilePattern
       value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
     steps:
@@ -106,7 +108,7 @@ jobs:
 
     # Install test package
     - task: Npm@1
-      displayName: 'npm install e2e'
+      displayName: 'npm install test package'
       inputs:
         command: 'custom'
         workingDir: ${{ parameters.diDir }}
@@ -122,6 +124,6 @@ jobs:
       inputs:
         testResultsFormat: 'JUnit'
         testResultsFiles: '**/*junit-report.xml'
-        searchFolder: ${{ variables.testPackageTgz }}/nyc
+        searchFolder: ${{ variables.testPackageDir }}/nyc
         mergeTestResults: false
       condition: succeededOrFailed()
