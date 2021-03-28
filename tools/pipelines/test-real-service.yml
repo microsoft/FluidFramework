@@ -24,7 +24,7 @@ variables:
 stages:
   # end-to-end tests routerlicious
   - stage:
-    displayName: e2e routerlicious
+    displayName: e2e - routerlicious
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
@@ -35,7 +35,6 @@ stages:
         # end-to-end tests routerlicious
         - task: Npm@1
           displayName: '[end-to-end tests] npm run test:realsvc:routerlicious:report'
-          continueOnError: true
           timeoutInMinutes: 60
           env:
             fluid__webpack__bearerSecret: $(fluid-webpack-bearerSecret)
@@ -45,7 +44,7 @@ stages:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
           inputs:
             command: 'custom'
-            workingDir: ${{ variables.e2eDir }}
+            workingDir: ${{ variables.diDir }}/node_modules/@fluidframework/test-end-to-end-tests
             customCommand: 'run test:realsvc:routerlicious:report'
 
   # end-to-end tests odsp
@@ -61,7 +60,6 @@ stages:
         testSteps:
         - task: Npm@1
           displayName: '[end-to-end tests] npm run test:realsvc:odsp:report'
-          continueOnError: true
           timeoutInMinutes: 60
           env:
             login__microsoft__clientId: $(login-microsoft-clientId)
@@ -70,7 +68,7 @@ stages:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
           inputs:
             command: 'custom'
-            workingDir: ${{ variables.e2eDir }}
+            workingDir: ${{ variables.diDir }}/node_modules/@fluidframework/test-end-to-end-tests
             customCommand: 'run test:realsvc:odsp:report'
 
     # Run Stress Tests

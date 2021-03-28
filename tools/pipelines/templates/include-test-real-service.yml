@@ -29,10 +29,8 @@ jobs:
     # basic ANSI color support though, so force that in the pipeline
     - name: FORCE_COLOR
       value: 1
-    - name: testPackageDir
-      value: '${{ parameters.diDir }}/node_modules/${{ parameters.testPackage }}'
     - name: testPackageFilePattern
-      value: ${{ replace(replace(parameters.testPackage, '@', ' ' ), '/', '-') }}-*.tgz
+      value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
     steps:
     # Setup
     - checkout: self
@@ -67,7 +65,7 @@ jobs:
     # Download artifact
     - download: client
       artifact: pack
-      patterns: ${{ variables.testPackageFilePattern }}
+      patterns: "**/${{ variables.testPackageFilePattern }}"
 
     # [DI] Auth to internal feed
     - task: npmAuthenticate@0
