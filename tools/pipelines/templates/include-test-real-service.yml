@@ -18,11 +18,15 @@ parameters:
 - name: diDir
   type: string
 
+- name: timeoutInMinutes
+  type: number
+  default: 60
+
 jobs:
   - job: run
     displayName: Run Tests
     pool: ${{ parameters.poolBuild }}
-    timeoutInMinutes: 240
+    timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
     variables:
     # We use 'chalk' to colorize output, which auto-detects color support in the
     # running terminal.  The log output shown in Azure DevOps job runs only has
