@@ -82,6 +82,7 @@ export class CheckpointContext {
                 sequenceNumber: checkpoint.sequenceNumber,
                 epoch: checkpoint.epoch,
                 term: checkpoint.term,
+                lastSentMSN: checkpoint.lastSentMSN,
             };
 
             updateP = this.checkpointManager.writeCheckpoint(deliCheckpoint);
