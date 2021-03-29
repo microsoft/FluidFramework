@@ -29,10 +29,10 @@ describe("Tests for Epoch Tracker", () => {
     let epochTracker: EpochTracker;
     let localCache: LocalPersistentCache;
     const hashedDocumentId = getHashedDocumentId(driveId, itemId);
+    const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
     beforeEach(() => {
         localCache = createUtLocalCache();
         // use null logger here as we expect errors
-        const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
         epochTracker = new EpochTracker(
             localCache,
             {
@@ -43,7 +43,6 @@ describe("Tests for Epoch Tracker", () => {
     });
 
     it("Cache, old versions", async () => {
-        const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
         const cacheEntry1: ICacheEntry = {
             key:"key1",
             type: "snapshot",
@@ -65,7 +64,6 @@ describe("Tests for Epoch Tracker", () => {
     });
 
     it("Epoch error when fetch error from cache should throw epoch error and clear cache", async () => {
-        const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
         const cacheEntry1: ICacheEntry = {
             key:"key1",
             type: "snapshot",
