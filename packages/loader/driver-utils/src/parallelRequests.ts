@@ -62,7 +62,7 @@ export class ParallelRequests<T> {
     private done() {
         // We should satisfy request fully.
         assert(this.to !== undefined, 0x104 /* "undefined end point for parallel fetch" */);
-        assert(this.nextToDeliver === this.to, 0x105 /* "unexpected end point for parallel fetch" */);
+        assert(this.nextToDeliver >= this.to, 0x105 /* "unexpected end point for parallel fetch" */);
         this.working = false;
         this.endEvent.resolve();
     }
@@ -79,15 +79,13 @@ export class ParallelRequests<T> {
                 break;
             }
             this.results.delete(this.nextToDeliver);
+            assert(value.length <= this.payloadSize, "addRequestCore() should break into smaller chunks");
             this.nextToDeliver += value.length;
             this.responseCallback(value);
         }
 
         // Account for cancellation - state might be not in consistent state on cancelling operation
         if (this.working) {
-            assert(this.requestsInFlight !== 0 || this.results.size === 0,
-                0x106 /* "in unexpected state after dispatching results" */);
-
             if (this.requestsInFlight === 0) {
                 // we should have dispatched everything, no matter whether we knew about the end or not.
                 // see comment in addRequestCore() around throwing away chunk if it's above this.to
@@ -193,8 +191,29 @@ export class ParallelRequests<T> {
             }
 
             if (this.working) {
-                if (payload.length !== 0) {
-                    this.results.set(from, payload);
+                const fromOrig = from;
+                const length = payload.length;
+                let fullChunk = (requestedLength <= length); // we can possible get more than we asked.
+
+                if (length !== 0) {
+                    // We can get more than we asked for!
+                    // This can screw up logic in dispatch!
+                    // So push only batch size, and keep the rest for later - if conditions are favorable, we
+                    // will be able to use it. If not (parallel request overlapping these ops), it's easier to
+                    // discard them and wait for another (overlapping) request to come in later.
+                    if (requestedLength < length) {
+                        // This is error in a sense that it's not expected and likely points bug in other layer.
+                        // This layer copes with this situation just fine.
+                        this.logger.sendTelemetryEvent({
+                            eventName: "ParallelRequests_Over",
+                            from,
+                            to,
+                            length,
+                        });
+                    }
+                    const data = payload.splice(0, requestedLength);
+                    this.results.set(from, data);
+                    from += data.length;
                 } else {
                     // 1. empty (partial) chunks should not be returned by various caching / adapter layers -
                     //    they should fall back to next layer. This might be important invariant to hold to ensure
@@ -210,14 +229,10 @@ export class ParallelRequests<T> {
                         0x110 /* "callback should retry until valid fetch before it learns new boundary" */);
                 }
 
-                let fullChunk = (requestedLength <= payload.length); // we can possible get more than we asked.
-                from += payload.length;
-
                 if (!partial && !fullChunk) {
                     if (!this.knewTo) {
                         if (this.to === undefined || this.to > from) {
                             // The END
-                            assert(!this.knewTo, 0x111 /* "should not know futher boundary at end" */);
                             this.to = from;
                         }
                         break;
@@ -228,16 +243,22 @@ export class ParallelRequests<T> {
                     // We will come back to request more, and if we can't get any more ops soon, it's
                     // catastrophic failure (see comment above on responsibility of callback to return something)
                     // This layer will just keep trying until it gets full set.
-                    this.logger.sendErrorEvent({
-                        eventName: "ParallelRequestsPartial",
-                        from,
+                    this.logger.sendPerformanceEvent({
+                        eventName: "ParallelRequests_Partial",
+                        from: fromOrig,
                         to,
-                        length: payload.length,
+                        length,
                     });
                 }
 
                 if (to === this.latestRequested) {
                     // we can go after full chunk at the end if we received partial chunk, or more than asked
+                    // Also if we got more than we asked to, we can actually use those ops!
+                    if (payload.length !== 0) {
+                        this.results.set(from, payload);
+                        from += payload.length;
+                    }
+
                     this.latestRequested = from;
                     fullChunk = true;
                 }
