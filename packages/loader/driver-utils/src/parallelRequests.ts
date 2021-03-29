@@ -2,8 +2,16 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert, Deferred } from "@fluidframework/common-utils";
+import { assert, Deferred, performance } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
+import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network";
+import { waitForConnectedState } from "./networkUtils";
+
+const MaxFetchDelaySeconds = 10;
+const MissingFetchDelaySeconds = 0.1;
 
 /**
  * Helper class to organize parallel fetching of data
@@ -62,7 +70,7 @@ export class ParallelRequests<T> {
     private done() {
         // We should satisfy request fully.
         assert(this.to !== undefined, 0x104 /* "undefined end point for parallel fetch" */);
-        assert(this.nextToDeliver === this.to, 0x105 /* "unexpected end point for parallel fetch" */);
+        assert(this.nextToDeliver >= this.to, 0x105 /* "unexpected end point for parallel fetch" */);
         this.working = false;
         this.endEvent.resolve();
     }
@@ -79,15 +87,13 @@ export class ParallelRequests<T> {
                 break;
             }
             this.results.delete(this.nextToDeliver);
+            assert(value.length <= this.payloadSize, 0x1d9 /* "addRequestCore() should break into smaller chunks" */);
             this.nextToDeliver += value.length;
             this.responseCallback(value);
         }
 
         // Account for cancellation - state might be not in consistent state on cancelling operation
         if (this.working) {
-            assert(this.requestsInFlight !== 0 || this.results.size === 0,
-                0x106 /* "in unexpected state after dispatching results" */);
-
             if (this.requestsInFlight === 0) {
                 // we should have dispatched everything, no matter whether we knew about the end or not.
                 // see comment in addRequestCore() around throwing away chunk if it's above this.to
@@ -193,8 +199,29 @@ export class ParallelRequests<T> {
             }
 
             if (this.working) {
-                if (payload.length !== 0) {
-                    this.results.set(from, payload);
+                const fromOrig = from;
+                const length = payload.length;
+                let fullChunk = (requestedLength <= length); // we can possible get more than we asked.
+
+                if (length !== 0) {
+                    // We can get more than we asked for!
+                    // This can screw up logic in dispatch!
+                    // So push only batch size, and keep the rest for later - if conditions are favorable, we
+                    // will be able to use it. If not (parallel request overlapping these ops), it's easier to
+                    // discard them and wait for another (overlapping) request to come in later.
+                    if (requestedLength < length) {
+                        // This is error in a sense that it's not expected and likely points bug in other layer.
+                        // This layer copes with this situation just fine.
+                        this.logger.sendTelemetryEvent({
+                            eventName: "ParallelRequests_Over",
+                            from,
+                            to,
+                            length,
+                        });
+                    }
+                    const data = payload.splice(0, requestedLength);
+                    this.results.set(from, data);
+                    from += data.length;
                 } else {
                     // 1. empty (partial) chunks should not be returned by various caching / adapter layers -
                     //    they should fall back to next layer. This might be important invariant to hold to ensure
@@ -210,14 +237,10 @@ export class ParallelRequests<T> {
                         0x110 /* "callback should retry until valid fetch before it learns new boundary" */);
                 }
 
-                let fullChunk = (requestedLength <= payload.length); // we can possible get more than we asked.
-                from += payload.length;
-
                 if (!partial && !fullChunk) {
                     if (!this.knewTo) {
                         if (this.to === undefined || this.to > from) {
                             // The END
-                            assert(!this.knewTo, 0x111 /* "should not know futher boundary at end" */);
                             this.to = from;
                         }
                         break;
@@ -228,16 +251,22 @@ export class ParallelRequests<T> {
                     // We will come back to request more, and if we can't get any more ops soon, it's
                     // catastrophic failure (see comment above on responsibility of callback to return something)
                     // This layer will just keep trying until it gets full set.
-                    this.logger.sendErrorEvent({
-                        eventName: "ParallelRequestsPartial",
-                        from,
+                    this.logger.sendPerformanceEvent({
+                        eventName: "ParallelRequests_Partial",
+                        from: fromOrig,
                         to,
-                        length: payload.length,
+                        length,
                     });
                 }
 
                 if (to === this.latestRequested) {
                     // we can go after full chunk at the end if we received partial chunk, or more than asked
+                    // Also if we got more than we asked to, we can actually use those ops!
+                    if (payload.length !== 0) {
+                        this.results.set(from, payload);
+                        from += payload.length;
+                    }
+
                     this.latestRequested = from;
                     fullChunk = true;
                 }
@@ -309,36 +338,186 @@ export class Queue<T> implements IReadPipe<T> {
 }
 
 /**
- * Helper function to expose ParallelRequests through IReadPipe interface
- * @param concurrency - level of concurrency
- * @param from - starting point of fetching data (inclusive)
- * @param to  - ending point of fetching data. exclusive, or undefined if unknown
- * @param payloadSize - batch size
- * @param logger - logger to use
- * @param requestCallback - callback to request batches
- * @returns - Queue that can be used to retrieve data
+ * Retrieve single batch of ops
+ * @param request - request index
+ * @param from - inclusive boundary
+ * @param to - exclusive boundary
+ * @param telemetryEvent - telemetry event used to track consecutive batch of requests
+ * @param strongTo - tells if ops in range from...to have to be there and have to be retrieved.
+ * If false, returning less ops would mean we reached end of file.
+ * @returns - an object with resulting ops and cancellation / partial result flags
  */
-export function parallel<T>(
+async function getSingleOpBatch(
+    deltaStorage: IDocumentDeltaStorageService,
+    request: number,
+    from: number,
+    to: number,
+    telemetryEvent: PerformanceEvent,
+    strongTo: boolean,
+    signal?: AbortSignal):
+        Promise<{ partial: boolean, cancel: boolean, payload: ISequencedDocumentMessage[] }>
+{
+    let lastSuccessTime: number | undefined;
+
+    let retry: number = 0;
+    const deltas: ISequencedDocumentMessage[] = [];
+    let deltasRetrievedTotal = 0;
+    const nothing = { partial: false, cancel: true, payload: []};
+
+    const start = performance.now();
+
+    while (signal?.aborted !== true) {
+        retry++;
+        let delay = Math.min(MaxFetchDelaySeconds, MissingFetchDelaySeconds * Math.pow(2, retry));
+        let canRetry = false;
+
+        try {
+            // Issue async request for deltas - limit the number fetched to MaxBatchDeltas
+            canRetry = true;
+            // left is inclusive for ParallelRequests, but exclusive for IDocumentDeltaStorageService
+            // right is exclusive for both
+            const deltasP = deltaStorage.get(from - 1, to);
+
+            const { messages, partialResult } = await deltasP;
+            deltas.push(...messages);
+
+            const deltasRetrievedLast = messages.length;
+            deltasRetrievedTotal += deltasRetrievedLast;
+
+            if (deltasRetrievedLast !== 0 || !strongTo) {
+                telemetryEvent.reportProgress({
+                    chunkDeltas: deltasRetrievedTotal,
+                    chunkFrom: from,
+                    chunkTo: to,
+                    chunkRequests: retry,
+                    chunkDuration: TelemetryLogger.formatTick(performance.now() - start),
+                });
+                return { payload: deltas, cancel: false, partial: partialResult};
+            }
+
+            // Storage does not have ops we need.
+            // Attempt to fetch more deltas. If we didn't receive any in the previous call we up our retry
+            // count since something prevented us from seeing those deltas
+
+            if (lastSuccessTime === undefined) {
+                lastSuccessTime = Date.now();
+            } else if (Date.now() - lastSuccessTime > 30000) {
+                // If we are connected and receiving proper responses from server, but can't get any ops back,
+                // then give up after some time. This likely indicates the issue with ordering service not flushing
+                // ops to storage quick enough, and possibly waiting for summaries, while summarizer can't get
+                // current as it can't get ops.
+                telemetryEvent.cancel({
+                    category: "error",
+                    error: "too many retries",
+                    retry,
+                    request,
+                    deltasRetrievedTotal,
+                    replayFrom: from,
+                    to,
+                });
+                throw createGenericNetworkError(
+                    "Failed to retrieve ops from storage: giving up after too many retries",
+                    false /* canRetry */,
+                );
+            }
+        } catch (error) {
+            canRetry = canRetry && canRetryOnError(error);
+
+            lastSuccessTime = undefined;
+
+            /*
+            logNetworkFailure(
+                this.logger,
+                {
+                    eventName: "GetDeltas_Error",
+                    fetchTo: to,
+                    from,
+                    request,
+                    retry,
+                },
+                error);
+                */
+
+            if (!canRetry) {
+                // It's game over scenario.
+                telemetryEvent.cancel({ category: "error" }, error);
+                throw error;
+            }
+            const retryAfter = getRetryDelayFromError(error);
+
+            if (retryAfter !== undefined && retryAfter >= 0) {
+                delay = retryAfter;
+            }
+        }
+
+        /*
+        if (to !== undefined && this.lastQueuedSequenceNumber >= to) {
+            // the client caught up while we were trying to fetch ops from storage
+            // bail out since we no longer need to request these ops
+            return nothing;
+        }
+        */
+
+        await waitForConnectedState(delay * 1000);
+    }
+
+    // Might need to change to non-error event
+    telemetryEvent.cancel({ error: "container closed" });
+    return nothing;
+}
+
+export function requestOps(
+    deltaStorage: IDocumentDeltaStorageService,
     concurrency: number,
     from: number,
     to: number | undefined,
     payloadSize: number,
     logger: ITelemetryLogger,
-    requestCallback: (request: number, from: number, to: number, strongTo: boolean) =>
-        Promise<{ partial: boolean, cancel: boolean, payload: T[] }>,
-): IReadPipe<T[]> {
-    const queue = new Queue<T[]>();
-    const manager = new ParallelRequests<T>(
+    signal?: AbortSignal,
+): IReadPipe<ISequencedDocumentMessage[]> {
+    let requests = 0;
+    let lastFetch: number | undefined;
+    let deltasRetrievedTotal = 0;
+    const queue = new Queue<ISequencedDocumentMessage[]>();
+
+    const telemetryEvent = PerformanceEvent.start(logger, {
+        eventName: `GetDeltas`,
+        from,
+        to,
+    });
+
+    const manager = new ParallelRequests<ISequencedDocumentMessage>(
         from,
         to,
         payloadSize,
         logger,
-        requestCallback,
-        (messages: T[]) => queue.pushValue(messages));
+        async (request: number, _from: number, _to: number, strongTo: boolean) => {
+            requests++;
+            return getSingleOpBatch(deltaStorage, request, _from, _to, telemetryEvent, strongTo, signal);
+        },
+        (deltas: ISequencedDocumentMessage[]) => {
+            lastFetch = deltas[deltas.length - 1].sequenceNumber;
+            deltasRetrievedTotal += deltas.length;
+            queue.pushValue(deltas);
+        });
 
     manager.run(concurrency)
-        .then(() => queue.pushDone())
-        .catch((error) => queue.pushError(error));
+        .then(() => {
+            telemetryEvent.end({
+                lastFetch,
+                deltasRetrievedTotal,
+                requests,
+            });
+            queue.pushDone();
+        })
+        .catch((error) => {
+            telemetryEvent.cancel({
+                lastFetch,
+                deltasRetrievedTotal,
+                requests,
+            }, error);
+            queue.pushError(error);
+        });
 
     return queue;
 }

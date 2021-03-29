@@ -54,10 +54,17 @@ export class DebugLogger extends TelemetryLogger {
         }
 
         const multiSinkLogger = new MultiSinkLogger(undefined, properties);
-        multiSinkLogger.addLogger(DebugLogger.create(namespace));
+        multiSinkLogger.addLogger(DebugLogger.create(namespace, this.tryGetBaseLoggerProps(baseLogger)));
         multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace));
 
         return multiSinkLogger;
+    }
+
+    private static tryGetBaseLoggerProps(baseLogger?: ITelemetryBaseLogger) {
+        if(baseLogger instanceof TelemetryLogger) {
+            return (baseLogger as any as {properties: ITelemetryLoggerPropertyBags}).properties;
+        }
+        return undefined;
     }
 
     constructor(
