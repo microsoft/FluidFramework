@@ -99,8 +99,8 @@ function scheduleFaultInjection(
     container: Container,
     runConfig: IRunConfig) {
     const schedule = ()=>{
-        const leaveTime = runConfig.testConfig.readWriteCycleMs * 5 * Math.random();
-        printStatus(runConfig.runId, `fault injection in ${(leaveTime / 60000).toString().substring(0,4)} min`);
+        const injectionTime = runConfig.testConfig.readWriteCycleMs * 5 * Math.random();
+        printStatus(runConfig.runId, `fault injection in ${(injectionTime / 60000).toString().substring(0,4)} min`);
         setTimeout(() => {
             if(container.connected && container.resolvedUrl !== undefined) {
                 const deltaConn =
@@ -134,7 +134,7 @@ function scheduleFaultInjection(
             if(!container.closed) {
                 schedule();
             }
-        }, leaveTime);
+        }, injectionTime);
     };
     schedule();
 }

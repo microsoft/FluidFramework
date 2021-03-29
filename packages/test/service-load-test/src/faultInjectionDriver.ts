@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { assert, EventForwarder } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
@@ -24,24 +24,25 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
-    private  readonly _last = new Map<IResolvedUrl, FaultInjectionDocumentService>();
+    private  readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
 
     public get protocolName() { return this.internal.protocolName;}
-    public get documentServices() {return this._last;}
+    public get documentServices() {return this._documentServices;}
 
     constructor(private readonly internal: IDocumentServiceFactory) { }
 
     async createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService> {
         const internal = await this.internal.createDocumentService(resolvedUrl, logger);
         const ds = new FaultInjectionDocumentService(internal);
-        assert(!this._last.has(resolvedUrl), "one ds per resolved url instance");
-        this._last.set(resolvedUrl, ds);
+        assert(!this._documentServices.has(resolvedUrl), "one ds per resolved url instance");
+        this._documentServices.set(resolvedUrl, ds);
         return ds;
     }
     async createContainer(
         createNewSummary: ISummaryTree,
         createNewResolvedUrl: IResolvedUrl,
-        logger?: ITelemetryBaseLogger):
+        logger?: ITelemetryBaseLogger,
+    ):
         Promise<IDocumentService> {
         return this.internal.createContainer(
             createNewSummary,
@@ -52,7 +53,7 @@ export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFac
 }
 
 export class FaultInjectionDocumentService implements IDocumentService {
-    private  _lastDeltaStream: FaultInjectionDocumentDeltaConnection | undefined;
+    private  _currentDeltaStream: FaultInjectionDocumentDeltaConnection | undefined;
 
     constructor(private readonly internal: IDocumentService) {
     }
@@ -60,7 +61,7 @@ export class FaultInjectionDocumentService implements IDocumentService {
     public get resolvedUrl() {return this.internal.resolvedUrl;}
     public get policies() {return this.internal.policies;}
     public get documentDeltaConnection() {
-        return this._lastDeltaStream;
+        return this._currentDeltaStream;
     }
 
     async connectToStorage(): Promise<IDocumentStorageService> {
@@ -73,11 +74,11 @@ export class FaultInjectionDocumentService implements IDocumentService {
 
     async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
         assert(
-            this._lastDeltaStream?.closed !== false,
+            this._currentDeltaStream?.closed !== false,
             "Document service factory should only have one open connection");
         const internal = await this.internal.connectToDeltaStream(client);
-        this._lastDeltaStream = new FaultInjectionDocumentDeltaConnection(internal);
-        return this._lastDeltaStream;
+        this._currentDeltaStream = new FaultInjectionDocumentDeltaConnection(internal);
+        return this._currentDeltaStream;
     }
 
     /**
@@ -86,10 +87,6 @@ export class FaultInjectionDocumentService implements IDocumentService {
     getErrorTrackingService(): IErrorTrackingService | null {
         return this.internal.getErrorTrackingService();
     }
-}
-
-export interface FaultInjectionDocumentDeltaConnectionEvents extends IEvent{
-    (event: "sumbit" | "submitSignal",listener: () => void);
 }
 
 export class FaultInjectionDocumentDeltaConnection
