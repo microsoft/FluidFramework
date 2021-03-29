@@ -71,6 +71,7 @@ jobs:
 
     # Download artifact
     - download: client
+      displayName: Download test package
       artifact: pack
       patterns: "**/${{ variables.testPackageFilePattern }}"
 
@@ -96,6 +97,7 @@ jobs:
           echo "always-auth=false" >> ./.npmrc
 
           echo "@fluidframework:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
+          echo "@fluid-experimental:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
           echo "@fluid-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
           echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
           echo "@ms:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
@@ -111,20 +113,20 @@ jobs:
 
     # Auth to internal feed
     - task: npmAuthenticate@0
-      displayName: '[DI] npm authenticate (internal feed)'
+      displayName: 'npm authenticate (internal feed)'
       inputs:
         workingFile: ${{ parameters.testWorkspace }}/.npmrc
 
     # Auth to Office feed
     - task: npmAuthenticate@0
-      displayName: '[DI] npm authenticate (office feed)'
+      displayName: 'npm authenticate (office feed)'
       inputs:
         workingFile: ${{ parameters.testWorkspace }}/.npmrc
         customEndpoint: 'Office Packages - Readonly'
 
     # Install test and logger package
     - task: Npm@1
-      displayName: 'npm install test package'
+      displayName: 'npm install'
       inputs:
         command: 'custom'
         workingDir: ${{ parameters.testWorkspace }}
