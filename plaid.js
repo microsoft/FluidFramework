@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 const esb = require('esbuild');
 const fs = require("fs-extra");
 const globby = require('globby');
@@ -14,7 +19,6 @@ const build = async (mode, globs) => {
             entryPoints: await globby(globs),
             tsconfig: 'tsconfig.json',
             target: ["es2017"],
-            // bundle: true,
             outbase: 'src',
             outdir: 'dist',
             format: 'cjs',
@@ -28,7 +32,6 @@ const build = async (mode, globs) => {
             entryPoints: await globby(globs),
             tsconfig: 'src/test/tsconfig.json',
             target: ["es2017"],
-            // bundle: true,
             outbase: 'src',
             outdir: 'dist',
             format: 'cjs',
@@ -42,7 +45,7 @@ const build = async (mode, globs) => {
 
 (async () => {
     const src = ['src/**/*.ts', 'src/**/*.tsx', '!src/test/**'];
-    const test = ['src/test/**'];
+    const test = ['src/test/**/*.ts', 'src/test/**/*.tsx'];
 
     // console.log(paths);
 
