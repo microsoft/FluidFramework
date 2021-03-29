@@ -6,14 +6,14 @@
 import * as path from "path";
 import * as winston from "winston";
 import { configureLogging } from "@fluidframework/server-services";
-import { runService } from "@fluidframework/server-services-utils";
+import * as core from "@fluidframework/server-services-core";
 import { AlfredResourcesFactory, AlfredRunnerFactory } from "@fluidframework/server-routerlicious-base";
 
 const configPath = path.join(__dirname, "../../config/config.json");
 
 configureLogging(configPath);
 
-runService(
+core.runService(
     new AlfredResourcesFactory(),
     new AlfredRunnerFactory(),
     winston,

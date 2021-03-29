@@ -70,7 +70,7 @@ export class OrdererManager implements core.IOrdererManager {
     }
 }
 
-export class AlfredResources implements utils.IResources {
+export class AlfredResources implements core.IResources {
     public webServerFactory: core.IWebServerFactory;
 
     constructor(
@@ -101,7 +101,7 @@ export class AlfredResources implements utils.IResources {
     }
 }
 
-export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredResources> {
+export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredResources> {
     public async create(config: Provider): Promise<AlfredResources> {
         // Producer used to publish messages
         const kafkaEndpoint = config.get("kafka:lib:endpoint");
@@ -320,8 +320,8 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
     }
 }
 
-export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources> {
-    public async create(resources: AlfredResources): Promise<utils.IRunner> {
+export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources> {
+    public async create(resources: AlfredResources): Promise<core.IRunner> {
         return new AlfredRunner(
             resources.webServerFactory,
             resources.config,

@@ -5,7 +5,7 @@
 
 import { inspect } from "util";
 import nconf from "nconf";
-import { ILogger } from "@fluidframework/server-services-core";
+import { ILogger } from "./lambdas";
 
 /**
  * A runner represents a task that starts once start is called. And ends when either start completes
