@@ -35,10 +35,10 @@ describeNoCompat("GC in summary", (getTestObjectProvider) => {
         TestDataObject,
         [],
         []);
-    const runtimeOptions: IContainerRuntimeOptions = flattenRuntimeOptions({
+    const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: { generateSummaries: false },
         gcOptions: { summaryEnableGC: true },
-    });
+    };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         dataObjectFactory,
         [
@@ -46,7 +46,7 @@ describeNoCompat("GC in summary", (getTestObjectProvider) => {
         ],
         undefined,
         undefined,
-        runtimeOptions,
+        flattenRuntimeOptions(runtimeOptions),
     );
 
     let provider: ITestObjectProvider;

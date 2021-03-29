@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { stringToBuffer, bufferToString } from "@fluidframework/common-utils";
-import { ContainerMessageType, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
