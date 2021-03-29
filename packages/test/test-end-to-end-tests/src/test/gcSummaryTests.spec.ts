@@ -16,6 +16,7 @@ import { SummaryType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -34,9 +35,10 @@ describeNoCompat("GC in summary", (getTestObjectProvider) => {
         TestDataObject,
         [],
         []);
-    const runtimeOptions: IContainerRuntimeOptions = {
+    const runtimeOptions: IContainerRuntimeOptions = flattenRuntimeOptions({
         summaryOptions: { generateSummaries: false },
-    };
+        gcOptions: { summaryEnableGC: true },
+    });
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         dataObjectFactory,
         [

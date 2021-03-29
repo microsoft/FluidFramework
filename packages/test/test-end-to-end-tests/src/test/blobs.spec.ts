@@ -13,22 +13,7 @@ import { v4 as uuid } from "uuid";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import { ITestObjectProvider, ITestContainerConfig } from "@fluidframework/test-utils";
 import { describeFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";
-
-/** Temporary function to make backwards compatible runtime options. */
-function flattenRuntimeOptions(
-    runtimeOptions?: IContainerRuntimeOptions,
-): IContainerRuntimeOptions | undefined {
-    if (runtimeOptions === undefined) {
-        return runtimeOptions;
-    }
-
-    // Promote all summaryOptions and gcOptions to top-layer.
-    return {
-        ...runtimeOptions.summaryOptions,
-        ...runtimeOptions.gcOptions,
-        ...runtimeOptions,
-    };
-}
+import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
 const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: flattenRuntimeOptions({
