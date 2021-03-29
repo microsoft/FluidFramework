@@ -15,7 +15,7 @@ parameters:
 - name: testSteps
   type: stepList
 
-- name: diDir
+- name: testWorkspace
   type: string
 
 - name: timeoutInMinutes
@@ -34,15 +34,16 @@ jobs:
     - name: FORCE_COLOR
       value: 1
     - name: testPackageDir
-      value: '${{ parameters.diDir }}/node_modules/${{ parameters.testPackage }}'
+      value: '${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}'
     - name: testPackageFilePattern
       value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
+    - name: testPackagePathPattern
+      value: $(Pipeline.Workspace)/client/pack/${{ variables.testPackageFilePattern }}
+
     steps:
     # Setup
-    - checkout: self
+    - checkout: none
       clean: true
-      lfs: false
-      submodules: false
 
     # Print parameters/Vars
     - task: Bash@3
@@ -58,7 +59,7 @@ jobs:
             testPackage=${{ parameters.testPackage }}
 
           Pipeline Variables:
-            diDir=${{ parameters.diDir }}
+            testWorkspace=${{ parameters.testWorkspace }}
             testPackageFilePattern=${{ variables.testPackageFilePattern }}
           "
 
@@ -73,50 +74,60 @@ jobs:
       artifact: pack
       patterns: "**/${{ variables.testPackageFilePattern }}"
 
-    # [DI] Auth to internal feed
-    - task: npmAuthenticate@0
-      displayName: '[DI] npm authenticate (internal feed)'
-      inputs:
-        workingFile: ${{ parameters.diDir }}/.npmrc
-
-    # [DI] Auth to Office feed
-    - task: npmAuthenticate@0
-      displayName: '[DI] npm authenticate (office feed)'
-      inputs:
-        workingFile: ${{ parameters.diDir }}/.npmrc
-        customEndpoint: 'Office Packages - Readonly'
-
-    # [DI] Prep dependency-injection package for install
     - task: Bash@3
-      displayName: '[DI] Prepare DI package'
-      inputs:
-        targetType: 'inline'
-        script: 'mv _package.json package.json'
-        workingDirectory: ${{ parameters.diDir }}
-
-    # [DI] Install dependency-injection package
-    - task: Npm@1
-      displayName: '[DI] npm install'
-      inputs:
-        command: 'custom'
-        workingDir: ${{ parameters.diDir }}
-        customCommand: 'install'
-        customRegistry: 'useNpmrc'
-    - task: Bash@3
-      name: GetPackageFileName
-      displayName: Get package file name
+      displayName: Create test directory
       inputs:
         targetType: 'inline'
         script: |
-          echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls $(PIPELINE.WORKSPACE)/client/pack/${{ variables.testPackageFilePattern }}`"
+          mkdir ${{ parameters.testWorkspace }}
 
-    # Install test package
+    - task: Bash@3
+      displayName: Initialize
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.testWorkspace }}
+        script: |
+          echo Initialize package
+          npm init --yes
+
+          echo Generating .npmrc
+          echo "registry=https://registry.npmjs.org" >> ./.npmrc
+          echo "always-auth=false" >> ./.npmrc
+
+          echo "@fluidframework:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
+          echo "@fluid-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
+          echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
+          echo "@ms:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
+          echo "always-auth=true" >> ./.npmrc
+          cat .npmrc
+
+          if [[ `ls -1 ${{ variables.testPackagePathPattern }} | wc -l` -eq 1 ]]; then
+            echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls ${{ variables.testPackagePathPattern }}`"
+          else
+            ls -1 ${{ variables.testPackagePathPattern }}
+            echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more then one found"
+          fi
+
+    # Auth to internal feed
+    - task: npmAuthenticate@0
+      displayName: '[DI] npm authenticate (internal feed)'
+      inputs:
+        workingFile: ${{ parameters.testWorkspace }}/.npmrc
+
+    # Auth to Office feed
+    - task: npmAuthenticate@0
+      displayName: '[DI] npm authenticate (office feed)'
+      inputs:
+        workingFile: ${{ parameters.testWorkspace }}/.npmrc
+        customEndpoint: 'Office Packages - Readonly'
+
+    # Install test and logger package
     - task: Npm@1
       displayName: 'npm install test package'
       inputs:
         command: 'custom'
-        workingDir: ${{ parameters.diDir }}
-        customCommand: 'install $(GetPackageFileName.testPackageTgz)'
+        workingDir: ${{ parameters.testWorkspace }}
+        customCommand: 'install $(GetPackageFileName.testPackageTgz) @ff-internal/aria-logger'
         customRegistry: 'useNpmrc'
 
     # run the test

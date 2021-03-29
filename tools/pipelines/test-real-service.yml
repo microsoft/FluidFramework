@@ -19,8 +19,8 @@ resources:
 
 variables:
 - group: prague-key-vault
-- name: diDir
-  value: '$(Build.SourcesDirectory)/tools/pipelines/dependency-injection'
+- name: testWorkspace
+  value: $(Pipeline.Workspace)/test
 
 stages:
   # end-to-end tests routerlicious
@@ -31,7 +31,7 @@ stages:
       parameters:
         poolBuild: Lite
         testPackage: "@fluidframework/test-end-to-end-tests"
-        diDir: ${{ variables.diDir }}
+        testWorkspace: ${{ variables.testWorkspace }}
         testSteps:
         - task: Npm@1
           displayName: '[end-to-end tests] npm run test:realsvc:routerlicious:report'
@@ -41,10 +41,10 @@ stages:
             fluid__webpack__fluidHost: $(fluid-webpack-fluidHost)
             fluid__webpack__tenantId: $(fluid-webpack-tenantId)
             fluid__webpack__tenantSecret: $(fluid-webpack-tenantSecret)
-            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
           inputs:
             command: 'custom'
-            workingDir: ${{ variables.diDir }}/node_modules/@fluidframework/test-end-to-end-tests
+            workingDir: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
             customCommand: 'run test:realsvc:routerlicious:report'
 
   # end-to-end tests odsp
@@ -56,7 +56,7 @@ stages:
       parameters:
         poolBuild: Lite
         testPackage: "@fluidframework/test-end-to-end-tests"
-        diDir: ${{ variables.diDir }}
+        testWorkspace: ${{ variables.testWorkspace }}
         timeoutInMinutes: 240
         testSteps:
         - task: Npm@1
@@ -66,10 +66,10 @@ stages:
             login__microsoft__clientId: $(login-microsoft-clientId)
             login__microsoft__secret: $(login-microsoft-secret)
             login__odsp__test__accounts: $(login-odsp-test-accounts)
-            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
           inputs:
             command: 'custom'
-            workingDir: ${{ variables.diDir }}/node_modules/@fluidframework/test-end-to-end-tests
+            workingDir: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
             customCommand: 'run test:realsvc:odsp:report'
 
     # Run Stress Tests
@@ -80,8 +80,8 @@ stages:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Main
-        testPackage: "@fluidframework/test-service-load"
-        diDir: ${{ variables.diDir }}
+        testPackage: "@fluid-internal/test-service-load"
+        testWorkspace: ${{ variables.testWorkspace }}
         testSteps:
         - task: Npm@1
           displayName: '[stress tests] npm run start'
@@ -91,8 +91,8 @@ stages:
             login__microsoft__clientId: $(login-microsoft-clientId)
             login__microsoft__secret: $(login-microsoft-secret)
             login__odsp__test__accounts: $(login-odsp-test-accounts)
-            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
           inputs:
             command: 'custom'
-            workingDir: ${{ variables.diDir }}/node_modules/@fluidframework/test-service-load
+            workingDir: ${{ variables.testWorkspace }}/node_modules/@fluid-internal/test-service-load
             customCommand: 'run start'
