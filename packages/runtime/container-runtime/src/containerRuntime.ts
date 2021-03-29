@@ -1335,10 +1335,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.dataStores.createDetachedDataStoreCore(pkg, false);
     }
 
-    public async _createDataStoreWithProps(pkg: string | string[], props?: any, id = uuid()):
-        Promise<IFluidDataStoreChannel> {
+    public async _createDataStoreWithProps(
+        pkg: string | string[],
+        props?: any,
+        id = uuid(),
+        isRoot = false,
+    ): Promise<IFluidDataStoreChannel> {
         return this.dataStores._createFluidDataStoreContext(
-            Array.isArray(pkg) ? pkg : [pkg], id, false /* isRoot */, props).realize();
+            Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
     }
 
     private async _createDataStore(
