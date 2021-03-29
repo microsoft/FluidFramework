@@ -105,6 +105,10 @@ export class OldestClientObserver extends EventEmitter implements IOldestClientO
             return false;
         }
 
+        if (!this.containerRuntime.connected) {
+            return false;
+        }
+
         const members = this.quorum.getMembers();
         if (members.size === 0) {
             return false;
