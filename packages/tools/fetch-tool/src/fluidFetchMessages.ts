@@ -7,7 +7,6 @@ import fs from "fs";
 import { assert} from "@fluidframework/common-utils";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import {
-    IDocumentDeltaStorageService,
     IDocumentService,
 } from "@fluidframework/driver-definitions";
 import {
@@ -16,7 +15,7 @@ import {
     MessageType,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { parallel } from "@fluidframework/driver-utils";
+import { requestOps } from "@fluidframework/driver-utils";
 import { printMessageStats } from "./fluidAnalyzeMessages";
 import {
     connectToWebSocket,
@@ -28,19 +27,6 @@ import {
 
 function filenameFromIndex(index: number): string {
     return index === 0 ? "" : index.toString(); // support old tools...
-}
-
-async function loadChunk(from: number, to: number, deltaStorage: IDocumentDeltaStorageService) {
-    console.log(`Loading ops at ${from}`);
-    for (let iter = 0; iter < 3; iter++) {
-        try {
-            return await deltaStorage.get(from - 1, to); // from is exclusive for get()
-        } catch (error) {
-            console.error("Hit error while downloading ops. Retrying");
-            console.error(error);
-        }
-    }
-    throw new Error("Giving up after 3 attempts to download chunk.");
 }
 
 async function* loadAllSequencedMessages(
@@ -58,7 +44,7 @@ async function* loadAllSequencedMessages(
                 const fileContent = fs.readFileSync(`${dir}/messages${file}.json`, { encoding: "utf-8" });
                 const messages: ISequencedDocumentMessage[] = JSON.parse(fileContent);
                 assert(messages[0].sequenceNumber === lastSeq + 1,
-                    "Unexpected value for sequence number of first message in file");
+                    0x1b9 /* "Unexpected value for sequence number of first message in file" */);
                 yield messages;
                 lastSeq = messages[messages.length - 1].sequenceNumber;
             } catch (e) {
@@ -85,16 +71,13 @@ async function* loadAllSequencedMessages(
     const concurrency = 4;
     const batch = 20000; // see data in issue #5211 on possible sizes we can use.
 
-    const queue = parallel<ISequencedDocumentMessage>(
+    const queue = requestOps(
+        deltaStorage,
         concurrency,
         lastSeq + 1, // inclusive left
         undefined, // to
         batch,
         new TelemetryUTLogger(),
-        async (_request: number, from: number, to: number) => {
-            const { messages, partialResult } = await loadChunk(from, to, deltaStorage);
-            return {partial: partialResult, cancel: false, payload: messages};
-        },
     );
 
     while (true) {
@@ -105,7 +88,7 @@ async function* loadAllSequencedMessages(
         requests++;
 
         // Empty buckets should never be returned
-        assert(messages.length !== 0);
+        assert(messages.length !== 0, 0x1ba /* "should not return empty buckets" */);
         // console.log(`Loaded ops at ${messages[0].sequenceNumber}`);
 
         // This parsing of message contents happens in delta manager. But when we analyze messages
@@ -187,10 +170,10 @@ async function* saveOps(
             }
             sequencedMessages = sequencedMessages.concat(messages);
             assert(sequencedMessages[0].sequenceNumber === curr,
-                "Unexpected sequence number on first of messages to save");
+                0x1bb /* "Unexpected sequence number on first of messages to save" */);
             assert(sequencedMessages[sequencedMessages.length - 1].sequenceNumber
                 === curr + sequencedMessages.length - 1,
-                "Unexpected sequence number on last of messages to save");
+                0x1bc /* "Unexpected sequence number on last of messages to save" */);
         }
 
         // Time to write it out?
@@ -203,7 +186,7 @@ async function* saveOps(
                 JSON.stringify(write, undefined, paramActualFormatting ? 0 : 2));
             curr += chunk;
             assert(sequencedMessages.length === 0 || sequencedMessages[0].sequenceNumber === curr,
-                "Stopped writing at unexpected sequence number");
+                0x1bd /* "Stopped writing at unexpected sequence number" */);
             index++;
         }
 

@@ -10,15 +10,11 @@ import {
 } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import {
-    createAndAttachContainer,
-    createDocumentId,
-    createLoader,
-    OpProcessingController,
-} from "@fluidframework/test-utils";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -34,12 +30,9 @@ class TestDataObject extends DataObject {
     }
 }
 
-describe("GC Data Store Requests", () => {
-    let documentId: string;
-    const codeDetails: IFluidCodeDetails = {
-        package: "garbageCollectionTestPackage",
-        config: {},
-    };
+// REVIEW: enable compat testing?
+describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
     const factory = new DataObjectFactory(
         "TestDataObject",
         TestDataObject,
@@ -67,27 +60,10 @@ describe("GC Data Store Requests", () => {
         runtimeOptions,
     );
 
-    let opProcessingController: OpProcessingController;
     let container1: IContainer;
 
-    async function createContainer(): Promise<IContainer> {
-        const driver = getFluidTestDriver();
-        const loader = createLoader(
-            [[codeDetails, runtimeFactory]],
-            driver.createDocumentServiceFactory(),
-            driver.createUrlResolver());
-        return createAndAttachContainer(
-            codeDetails, loader, driver.createCreateNewRequest(documentId));
-    }
-
-    async function loadContainer(): Promise<IContainer> {
-        const driver = getFluidTestDriver();
-        const loader = createLoader(
-            [[codeDetails, runtimeFactory]],
-            driver.createDocumentServiceFactory(),
-            driver.createUrlResolver());
-        return loader.resolve({ url: await driver.createContainerUrl(documentId) });
-    }
+    const createContainer = async (): Promise<IContainer> => provider.createContainer(runtimeFactory);
+    const loadContainer = async (): Promise<IContainer> => provider.loadContainer(runtimeFactory);
 
     async function waitForSummary(container: IContainer): Promise<string | undefined> {
         let handle: string | undefined;
@@ -104,12 +80,10 @@ describe("GC Data Store Requests", () => {
     }
 
     beforeEach(async () => {
-        documentId = createDocumentId();
-        opProcessingController = new OpProcessingController();
+        provider = getTestObjectProvider();
 
         // Create a Container for the first client.
         container1 = await createContainer();
-        opProcessingController.addDeltaManagers(container1.deltaManager);
     });
 
     it("should fail requests with externalRequest flag for unreferenced data stores", async () => {
@@ -120,7 +94,7 @@ describe("GC Data Store Requests", () => {
         dataStore1._root.set("dataStore2", dataStore2.handle);
 
         // Wait for ops to be processed so that summarizer creates dataStore2.
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
 
         // Now delete the handle so that dataStore2 is marked as unreferenced.
         dataStore1._root.delete("dataStore2");
@@ -154,7 +128,7 @@ describe("GC Data Store Requests", () => {
         dataStore1._root.set("dataStore2", dataStore2.handle);
 
         // Wait for ops to be processed so that summarizer creates dataStore2.
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
 
         // Now delete the handle so that dataStore2 is marked as unreferenced.
         dataStore1._root.delete("dataStore2");

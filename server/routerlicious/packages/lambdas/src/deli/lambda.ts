@@ -137,6 +137,8 @@ export class DeliLambda implements IPartitionLambda {
         this.term = lastCheckpoint.term;
         this.epoch = lastCheckpoint.epoch;
         this.durableSequenceNumber = lastCheckpoint.durableSequenceNumber;
+        this.lastSentMSN = lastCheckpoint.lastSentMSN ?? 0;
+
         const msn = this.clientSeqManager.getMinimumSequenceNumber();
         this.minimumSequenceNumber = msn === -1 ? this.sequenceNumber : msn;
 
@@ -716,6 +718,7 @@ export class DeliLambda implements IPartitionLambda {
             logOffset: this.logOffset,
             sequenceNumber: this.sequenceNumber,
             term: this.term,
+            lastSentMSN: this.lastSentMSN,
         };
     }
 

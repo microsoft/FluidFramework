@@ -17,13 +17,10 @@ import {
     TestDataObjectType,
 } from "@fluidframework/test-version-utils";
 
-describeFullCompat("FluidObjectHandle", (argsFactory: () => ITestObjectProvider) => {
-    let args: ITestObjectProvider;
-    beforeEach(()=>{
-        args = argsFactory();
-    });
-    afterEach(() => {
-        args.reset();
+describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    beforeEach(() => {
+        provider = getTestObjectProvider();
     });
 
     let firstContainerObject1: ITestDataObject;
@@ -32,17 +29,17 @@ describeFullCompat("FluidObjectHandle", (argsFactory: () => ITestObjectProvider)
 
     beforeEach(async () => {
         // Create a Container for the first client.
-        const firstContainer = await args.makeTestContainer();
+        const firstContainer = await provider.makeTestContainer();
         firstContainerObject1 = await requestFluidObject<ITestDataObject>(firstContainer, "default");
         const containerRuntime1 = firstContainerObject1._context.containerRuntime;
         const dataStore = await containerRuntime1.createDataStore(TestDataObjectType);
         firstContainerObject2 = await requestFluidObject<ITestDataObject>(dataStore, "");
 
         // Load the Container that was created by the first client.
-        const secondContainer = await args.loadTestContainer();
+        const secondContainer = await provider.loadTestContainer();
         secondContainerObject1 = await requestFluidObject<ITestDataObject>(secondContainer, "default");
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
     });
 
     it("should generate the absolute path for ContainerRuntime correctly", () => {
@@ -91,7 +88,7 @@ describeFullCompat("FluidObjectHandle", (argsFactory: () => ITestObjectProvider)
         // Add the handle to the root DDS of `firstContainerObject1`.
         firstContainerObject1._root.set("sharedMap", sharedMapHandle);
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         // Get the handle in the remote client.
         const remoteSharedMapHandle = secondContainerObject1._root.get<IFluidHandle<SharedMap>>("sharedMap");
@@ -122,7 +119,7 @@ describeFullCompat("FluidObjectHandle", (argsFactory: () => ITestObjectProvider)
         // Add the handle to the root DDS of `firstContainerObject1` so that the FluidDataObjectRuntime is different.
         firstContainerObject1._root.set("sharedMap", sharedMap.handle);
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         // Get the handle in the remote client.
         const remoteSharedMapHandle = secondContainerObject1._root.get<IFluidHandle<SharedMap>>("sharedMap");
@@ -150,7 +147,7 @@ describeFullCompat("FluidObjectHandle", (argsFactory: () => ITestObjectProvider)
         // FluidDataObjectRuntime is different.
         firstContainerObject1._root.set("dataObject2", firstContainerObject2.handle);
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         // Get the handle in the remote client.
         const remoteDataObjectHandle =

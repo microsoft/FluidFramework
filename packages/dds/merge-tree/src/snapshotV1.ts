@@ -33,9 +33,9 @@ import { SnapshotLegacy } from "./snapshotlegacy";
 export class SnapshotV1 {
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
     // Please note that this number has no direct relationship to anything other than size of raw text (characters).
-    // As we produce json for the blob (and then encode into base64 and send over the wire compressed), this number
+    // As we produce json for the blob (and then send over the wire compressed), this number
     // is really hard to correlate with any actual metric that matters (like bytes over the wire).
-    // For test with small number of chunks it would be closer to blob size (before base64 encoding),
+    // For test with small number of chunks it would be closer to blob size,
     // for very chunky text, blob size can easily be 4x-8x of that number.
     public static readonly chunkSize: number = 10000;
 
@@ -232,7 +232,7 @@ export class SnapshotV1 {
                 // sequence numbers.  Any remaining removal info should be preserved.
                 if (segment.removedSeq !== undefined) {
                     assert(segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq > minSeq,
-                        "On removal info preservation, segment has invalid removed sequence number!");
+                        0x065 /* "On removal info preservation, segment has invalid removed sequence number!" */);
                     raw.removedSeq = segment.removedSeq;
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     raw.removedClient = mergeTree.getLongClientId!(segment.removedClientId!);
@@ -241,7 +241,7 @@ export class SnapshotV1 {
             // Sanity check that we are preserving either the seq < minSeq or a removed segment's info.
                 assert(raw.seq !== undefined && raw.client !== undefined
                     || raw.removedSeq !== undefined && raw.removedClient !== undefined,
-                    "Corrupted preservation of segment metadata!");
+                    0x066 /* "Corrupted preservation of segment metadata!" */);
 
                 // Record the segment with it's required metadata.
                 pushSegRaw(raw, segment.cachedLength);

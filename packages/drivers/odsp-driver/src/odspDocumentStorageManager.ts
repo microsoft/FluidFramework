@@ -9,9 +9,9 @@ import { v4 as uuid } from "uuid";
 import {
     assert,
     fromBase64ToUtf8,
-    IsoBuffer,
     performance,
     stringToBuffer,
+    bufferToString,
 } from "@fluidframework/common-utils";
 import {
     PerformanceEvent,
@@ -131,7 +131,7 @@ class BlobCache {
     public addBlobs(blobs: IBlob[]) {
         blobs.forEach((blob) => {
             assert(blob.encoding === "base64" || blob.encoding === undefined,
-                `Unexpected blob encoding type: '${blob.encoding}'`);
+                0x0a4 /* `Unexpected blob encoding type: '${blob.encoding}'` */);
             this._blobCache.set(blob.id, blob);
         });
         // Reset the timer on cache set
@@ -247,8 +247,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private readonly blobCache = new BlobCache();
 
     public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
-        assert(this._ops === undefined, "Trying to set ops when they are already set!");
-        assert(ops !== undefined, "Input ops are undefined!");
+        assert(this._ops === undefined, 0x0a5 /* "Trying to set ops when they are already set!" */);
+        assert(ops !== undefined, 0x0a6 /* "Input ops are undefined!" */);
         this._ops = ops;
     }
 
@@ -287,7 +287,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return "";
     }
 
-    public async createBlob(file: Uint8Array): Promise<api.ICreateBlobResponse> {
+    public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
         this.checkAttachmentPOSTUrl();
 
         const response = await getWithRetryForTokenRefresh(async (options) => {
@@ -299,7 +299,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.logger,
                 {
                     eventName: "createBlob",
-                    size: file.length,
+                    size: file.byteLength,
                 },
                 async (event) => {
                     const res = await this.epochTracker.fetchAndParseAsJSON<api.ICreateBlobResponse>(
@@ -375,7 +375,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         // this prevents issues when generating summaries
         let documentAttributes: api.IDocumentAttributes;
         if (blob instanceof ArrayBuffer) {
-            documentAttributes = JSON.parse(IsoBuffer.from(blob).toString("utf8"));
+            documentAttributes = JSON.parse(bufferToString(blob, "utf8"));
         } else {
             documentAttributes = JSON.parse(blob.encoding === "base64" ? fromBase64ToUtf8(blob.content) : blob.content);
         }
@@ -752,7 +752,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize } = this.evalBlobsAndTrees(snapshot);
             const clientTime = networkTime ? overallTime - networkTime : undefined;
 
-            assert(this._snapshotCacheEntry === undefined, "snapshotCacheEntry already defined!");
+            assert(this._snapshotCacheEntry === undefined, 0x0a7 /* "snapshotCacheEntry already defined!" */);
             this._snapshotCacheEntry = {
                 file: this.fileEntry,
                 type: "snapshot",

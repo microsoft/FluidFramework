@@ -5,14 +5,14 @@
 
 import { strict as assert } from "assert";
 import { DriverErrorType, IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { IsoBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
+import { stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { RetriableDocumentStorageService } from "../retriableDocumentStorageService";
 
 describe("RetriableDocumentStorageService Tests", () => {
     let retriableStorageService: RetriableDocumentStorageService;
     let internalService: IDocumentStorageService;
-    const iso_true = IsoBuffer.from("true").buffer;
-    const iso_false = IsoBuffer.from("false").buffer;
+    const iso_true = stringToBuffer("true", "utf-8");
+    const iso_false = stringToBuffer("false", "utf-8");
     beforeEach(() => {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         internalService = {} as IDocumentStorageService;

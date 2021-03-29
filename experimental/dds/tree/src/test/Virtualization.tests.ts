@@ -12,12 +12,7 @@ import { Edit, EditWithoutId } from '../PersistedTypes';
 import { SharedTree, SharedTreeEvent } from '../SharedTree';
 import { fullHistorySummarizer_0_1_0, SharedTreeSummary } from '../Summary';
 import { assertNotUndefined } from '../Common';
-import {
-	ITestContainerConfig,
-	makeTestNode,
-	setUpLocalServerTestSharedTree,
-	testTrait,
-} from './utilities/TestUtilities';
+import { makeTestNode, setUpLocalServerTestSharedTree, testTrait } from './utilities/TestUtilities';
 
 describe('SharedTree history virtualization', () => {
 	let sharedTree: SharedTree;
@@ -41,7 +36,7 @@ describe('SharedTree history virtualization', () => {
 		}
 
 		// Wait for the ops to to be submitted and processed across the containers.
-		await localTestObjectProvider.opProcessingController.process();
+		await localTestObjectProvider.ensureSynchronized();
 
 		// Initiate the edit upload
 		sharedTree.saveSummary();
@@ -50,7 +45,7 @@ describe('SharedTree history virtualization', () => {
 		await new Promise((resolve) => sharedTree.once(SharedTreeEvent.ChunksUploaded, resolve));
 
 		// Wait for the handle op to be processed.
-		await localTestObjectProvider.opProcessingController.process();
+		await localTestObjectProvider.ensureSynchronized();
 
 		return expectedEdits;
 	};
@@ -74,7 +69,7 @@ describe('SharedTree history virtualization', () => {
 		sharedTree.processLocalEdit(edit);
 
 		// Wait for the op to to be submitted and processed across the containers.
-		await localTestObjectProvider.opProcessingController.process();
+		await localTestObjectProvider.ensureSynchronized();
 
 		// Initiate edit upload
 		sharedTree.saveSummary();
@@ -83,7 +78,7 @@ describe('SharedTree history virtualization', () => {
 		await new Promise((resolve) => sharedTree.once(SharedTreeEvent.ChunksUploaded, resolve));
 
 		// Wait for any handle ops to be processed.
-		await localTestObjectProvider.opProcessingController.process();
+		await localTestObjectProvider.ensureSynchronized();
 
 		const { editHistory } = sharedTree.saveSummary() as SharedTreeSummary;
 		const { editChunks } = assertNotUndefined(editHistory);
@@ -106,7 +101,7 @@ describe('SharedTree history virtualization', () => {
 		}
 
 		// Wait for the ops to to be submitted and processed across the containers.
-		await localTestObjectProvider.opProcessingController.process();
+		await localTestObjectProvider.ensureSynchronized();
 
 		// Initiate edit upload
 		sharedTree.saveSummary();
@@ -115,7 +110,7 @@ describe('SharedTree history virtualization', () => {
 		await new Promise((resolve) => sharedTree.once(SharedTreeEvent.ChunksUploaded, resolve));
 
 		// Wait for the handle op to be processed.
-		await localTestObjectProvider.opProcessingController.process();
+		await localTestObjectProvider.ensureSynchronized();
 
 		const { editHistory } = sharedTree.saveSummary() as SharedTreeSummary;
 		const { editChunks } = assertNotUndefined(editHistory);

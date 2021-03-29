@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
 import { Container, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
@@ -14,7 +14,6 @@ import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { LoaderContainerTracker } from "./loaderContainerTracker";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
-import { OpProcessingController } from "./opProcessingController";
 import { ChannelFactoryRegistry } from "./testFluidObject";
 
 const defaultCodeDetails: IFluidCodeDetails = {
@@ -22,8 +21,17 @@ const defaultCodeDetails: IFluidCodeDetails = {
     config: {},
 };
 
+export interface IOpProcessingController {
+    processIncoming(...containers: IContainer[]): Promise<void>;
+    processOutgoing(...containers: IContainer[]): Promise<void>;
+    pauseProcessing(...containers: IContainer[]): Promise<void>;
+    resumeProcessing(...containers: IContainer[]): void;
+}
+
 export interface ITestObjectProvider {
-    createContainer(entryPoint: fluidEntryPoint): Promise<IContainer>;
+    createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, options?: ILoaderOptions): IHostLoader;
+    createContainer(entryPoint: fluidEntryPoint, options?: ILoaderOptions): Promise<IContainer>;
+    loadContainer(entryPoint: fluidEntryPoint, options?: ILoaderOptions): Promise<IContainer>;
 
     /**
      * Used to create a test Container. The Loader/ContainerRuntime/DataRuntime might be different versioned.
@@ -36,7 +44,7 @@ export interface ITestObjectProvider {
     documentServiceFactory: IDocumentServiceFactory,
     urlResolver: IUrlResolver,
     defaultCodeDetails: IFluidCodeDetails,
-    opProcessingController: OpProcessingController,
+    opProcessingController: IOpProcessingController,
 
     ensureSynchronized(): Promise<void>;
     reset(): void,
@@ -71,7 +79,6 @@ export class TestObjectProvider {
     private readonly _loaderContainerTracker = new LoaderContainerTracker();
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _urlResolver: IUrlResolver | undefined;
-    private _opProcessingController?: OpProcessingController;
     private _documentId?: string;
 
     /**
@@ -112,11 +119,8 @@ export class TestObjectProvider {
         return defaultCodeDetails;
     }
 
-    get opProcessingController(): OpProcessingController {
-        if (this._opProcessingController === undefined) {
-            this._opProcessingController = new OpProcessingController();
-        }
-        return this._opProcessingController;
+    get opProcessingController(): IOpProcessingController {
+        return this._loaderContainerTracker;
     }
 
     /**
@@ -128,13 +132,14 @@ export class TestObjectProvider {
      *
      * @param packageEntries - list of code details and fluidEntryPoint pairs.
      */
-    private createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>) {
+    public createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, options?: ILoaderOptions) {
         const codeLoader = new LocalCodeLoader(packageEntries);
         const loader = new this.LoaderConstructor({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
-            logger:ChildLogger.create(getTestLogger?.(), undefined, {all:{driverType: this.driver.type}}),
+            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: this.driver.type } }),
+            options,
         });
         this._loaderContainerTracker.add(loader);
         return loader;
@@ -149,17 +154,20 @@ export class TestObjectProvider {
      *
      * @param packageEntries - list of code details and fluidEntryPoint pairs.
      */
-    public async createContainer(entryPoint: fluidEntryPoint) {
-        const loader = this.createLoader([[defaultCodeDetails, entryPoint]]);
+    public async createContainer(entryPoint: fluidEntryPoint, options?: ILoaderOptions) {
+        const loader = this.createLoader([[defaultCodeDetails, entryPoint]], options);
         const container = await createAndAttachContainer(
             defaultCodeDetails,
             loader,
-            this.driver.createCreateNewRequest(createDocumentId()),
+            this.driver.createCreateNewRequest(this.documentId),
         );
-        this.opProcessingController.addDeltaManagers(container.deltaManager);
         return container;
     }
 
+    public async loadContainer(entryPoint: fluidEntryPoint, options?: ILoaderOptions) {
+        const loader = this.createLoader([[defaultCodeDetails, entryPoint]], options);
+        return loader.resolve({ url: await this.driver.createContainerUrl(this.documentId) });
+    }
     /**
      * Make a test loader.  Container created/loaded thru this loader will not be automatically added
      * to the OpProcessingController, and will need to be added manually if needed.
@@ -182,7 +190,6 @@ export class TestObjectProvider {
                 defaultCodeDetails,
                 loader,
                 this.driver.createCreateNewRequest(this.documentId));
-        this.opProcessingController.addDeltaManagers(container.deltaManager);
         return container;
     }
 
@@ -195,7 +202,6 @@ export class TestObjectProvider {
         const loader = this.makeTestLoader(testContainerConfig);
         const container = await loader.resolve({ url: await this.driver.createContainerUrl(this.documentId) });
         await waitContainerToCatchUp(container);
-        this.opProcessingController.addDeltaManagers(container.deltaManager);
         return container;
     }
 
@@ -203,12 +209,10 @@ export class TestObjectProvider {
         this._loaderContainerTracker.reset();
         this._documentServiceFactory = undefined;
         this._urlResolver = undefined;
-        this._opProcessingController = undefined;
         this._documentId = undefined;
     }
 
     public async ensureSynchronized() {
-        await this.opProcessingController.process();
         return this._loaderContainerTracker.ensureSynchronized();
     }
 }

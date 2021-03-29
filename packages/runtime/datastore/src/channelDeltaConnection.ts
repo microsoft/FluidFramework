@@ -12,7 +12,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     private _handler: IDeltaHandler | undefined;
 
     private get handler(): IDeltaHandler {
-        assert(!!this._handler, "Missing delta handler");
+        assert(!!this._handler, 0x177 /* "Missing delta handler" */);
         return this._handler;
     }
     public get connected(): boolean {
@@ -27,7 +27,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     }
 
     public attach(handler: IDeltaHandler) {
-        assert(this._handler === undefined, "Missing delta handler on attach");
+        assert(this._handler === undefined, 0x178 /* "Missing delta handler on attach" */);
         this._handler = handler;
     }
 
@@ -42,14 +42,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
             this.handler.process(message, local, localOpMetadata);
         } catch (error) {
             // eslint-disable-next-line @typescript-eslint/no-throw-literal
-            throw CreateProcessingError(error, {
-                messageClientId: message.clientId,
-                sequenceNumber: message.sequenceNumber,
-                clientSequenceNumber: message.clientSequenceNumber,
-                referenceSequenceNumber: message.referenceSequenceNumber,
-                minimumSequenceNumber: message.minimumSequenceNumber,
-                messageTimestamp: message.timestamp,
-            });
+            throw CreateProcessingError(error, message);
         }
     }
 

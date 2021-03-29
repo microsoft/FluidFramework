@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { isOnline, OnlineStatus } from "@fluidframework/driver-utils";
+import { isOnline, OnlineStatus } from "./network";
 
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any) {
     const newEvent = { ...event };
@@ -13,9 +13,11 @@ export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErr
         newEvent.online = error.online as string;
     }
 
+    // eslint-disable-next-line no-null/no-null
     if (typeof navigator === "object" && navigator !== null) {
         const nav = navigator as any;
         const connection = nav.connection ?? nav.mozConnection ?? nav.webkitConnection;
+        // eslint-disable-next-line no-null/no-null
         if (connection !== null && typeof connection === "object") {
             newEvent.connectionType = connection.type;
         }

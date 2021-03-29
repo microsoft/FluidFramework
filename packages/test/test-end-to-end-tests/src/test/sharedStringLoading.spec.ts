@@ -25,8 +25,10 @@ import { NetworkErrorBasic, readAndParse } from "@fluidframework/driver-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
 
-describe("SharedString", () => {
+// REVIEW: enable compat testing?
+describeNoCompat("SharedString", (getTestObjectProvider) => {
     it("Failure to Load in Shared String", async () => {
         const stringId = "sharedStringKey";
         const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
@@ -35,8 +37,8 @@ describe("SharedString", () => {
         };
         const text = "hello world";
         const documentId = createDocumentId();
-        const driver = getFluidTestDriver();
-        const logger = ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}});
+        const provider = getTestObjectProvider();
+        const logger = ChildLogger.create(getTestLogger?.(), undefined, {all: {driverType: provider.driver.type}});
 
         { // creating client
             const codeDetails = { package: "no-dynamic-pkg" };
@@ -45,8 +47,8 @@ describe("SharedString", () => {
             ]);
 
             const loader = new Loader({
-                urlResolver: driver.createUrlResolver(),
-                documentServiceFactory: driver.createDocumentServiceFactory(),
+                urlResolver: provider.urlResolver,
+                documentServiceFactory: provider.documentServiceFactory,
                 codeLoader,
                 logger,
             });
@@ -57,7 +59,7 @@ describe("SharedString", () => {
             assert(sharedString);
             sharedString.insertText(0, text);
 
-            await container.attach(driver.createCreateNewRequest(documentId));
+            await container.attach(provider.driver.createCreateNewRequest(documentId));
         }
         { // normal load client
             const codeDetails = { package: "no-dynamic-pkg" };
@@ -66,20 +68,20 @@ describe("SharedString", () => {
             ]);
 
             const loader = new Loader({
-                urlResolver: driver.createUrlResolver(),
-                documentServiceFactory: driver.createDocumentServiceFactory(),
+                urlResolver: provider.urlResolver,
+                documentServiceFactory: provider.documentServiceFactory,
                 codeLoader,
                 logger,
             });
 
-            const container = await loader.resolve({ url: await driver.createContainerUrl(documentId) });
+            const container = await loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
             const sharedString = await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
             assert(sharedString);
             assert.strictEqual(sharedString.getText(0), text);
         }
         { // failure load client
-            const realSf: IDocumentServiceFactory = driver.createDocumentServiceFactory();
+            const realSf: IDocumentServiceFactory = provider.documentServiceFactory;
             const documentServiceFactory: IDocumentServiceFactory = {
                 ...realSf,
                 createDocumentService: async (resolvedUrl, logger2) => {
@@ -116,13 +118,13 @@ describe("SharedString", () => {
             ]);
 
             const loader = new Loader({
-                urlResolver: driver.createUrlResolver(),
+                urlResolver: provider.urlResolver,
                 documentServiceFactory,
                 codeLoader,
                 logger,
             });
 
-            const container = await loader.resolve({ url: await driver.createContainerUrl(documentId) });
+            const container = await loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
 
             try {
@@ -140,8 +142,8 @@ describe("SharedString", () => {
         };
         const text = "hello world";
         const documentId = createDocumentId();
-        const driver = getFluidTestDriver();
-        const logger = ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}});
+        const provider = getTestObjectProvider();
+        const logger = ChildLogger.create(getTestLogger?.(), undefined, {all: {driverType: provider.driver.type}});
 
         let initialText = "";
         { // creating client
@@ -151,8 +153,8 @@ describe("SharedString", () => {
             ]);
 
             const loader = new Loader({
-                urlResolver: driver.createUrlResolver(),
-                documentServiceFactory: driver.createDocumentServiceFactory(),
+                urlResolver: provider.urlResolver,
+                documentServiceFactory: provider.documentServiceFactory,
                 codeLoader,
                 logger,
             });
@@ -177,7 +179,7 @@ describe("SharedString", () => {
             }
             initialText = sharedString.getText();
 
-            await container.attach(driver.createCreateNewRequest(documentId));
+            await container.attach(provider.driver.createCreateNewRequest(documentId));
         }
         { // normal load client
             const codeDetails = { package: "no-dynamic-pkg" };
@@ -186,13 +188,13 @@ describe("SharedString", () => {
             ]);
 
             const loader = new Loader({
-                urlResolver: driver.createUrlResolver(),
-                documentServiceFactory: driver.createDocumentServiceFactory(),
+                urlResolver: provider.urlResolver,
+                documentServiceFactory: provider.documentServiceFactory,
                 codeLoader,
                 logger,
             });
 
-            const container = await loader.resolve({ url: await driver.createContainerUrl(documentId) });
+            const container = await loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
             const sharedString = await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
             assert(sharedString);

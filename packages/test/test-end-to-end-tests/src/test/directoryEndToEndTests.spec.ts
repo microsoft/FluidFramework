@@ -24,15 +24,11 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) => {
-    let args: ITestObjectProvider;
+describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
     beforeEach(() => {
-        args = argsFactory();
+        provider = getTestObjectProvider();
     });
-    afterEach(() => {
-        args.reset();
-    });
-
     let dataObject1: ITestFluidObject;
     let sharedDirectory1: ISharedDirectory;
     let sharedDirectory2: ISharedDirectory;
@@ -40,21 +36,21 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
 
     beforeEach(async () => {
         // Create a Container for the first client.
-        const container1 = await args.makeTestContainer(testContainerConfig);
+        const container1 = await provider.makeTestContainer(testContainerConfig);
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         sharedDirectory1 = await dataObject1.getSharedObject<SharedDirectory>(directoryId);
 
         // Load the Container that was created by the first client.
-        const container2 = await args.loadTestContainer(testContainerConfig);
+        const container2 = await provider.loadTestContainer(testContainerConfig);
         const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         sharedDirectory2 = await dataObject2.getSharedObject<SharedDirectory>(directoryId);
 
         // Load the Container that was created by the first client.
-        const container3 = await args.loadTestContainer(testContainerConfig);
+        const container3 = await provider.loadTestContainer(testContainerConfig);
         const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
         sharedDirectory3 = await dataObject3.getSharedObject<SharedDirectory>(directoryId);
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
     });
 
     function expectAllValues(msg, key, path, value1, value2, value3) {
@@ -105,7 +101,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
 
         it("should set a key in the directory in three containers correctly", async () => {
             sharedDirectory1.set("testKey1", "testValue1");
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             expectAllAfterValues("testKey1", "/", "testValue1");
         });
     });
@@ -113,13 +109,13 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
     describe("Root operations", () => {
         beforeEach("Populate with a value under the root", async () => {
             sharedDirectory1.set("testKey1", "testValue1");
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             expectAllAfterValues("testKey1", "/", "testValue1");
         });
 
         it("should delete a value in 3 containers correctly", async () => {
             sharedDirectory2.delete("testKey1");
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
 
             const hasKey1 = sharedDirectory1.has("testKey1");
             assert.equal(hasKey1, false, "testKey1 not deleted in container 1");
@@ -134,7 +130,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
         it("should have the correct size in three containers", async () => {
             sharedDirectory3.set("testKey3", true);
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
 
             // check the number of keys in the map (2 keys set)
             expectAllSize(2);
@@ -144,7 +140,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
             sharedDirectory2.set("testKey1", undefined);
             sharedDirectory2.set("testKey2", undefined);
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
 
             expectAllAfterValues("testKey1", "/", undefined);
             expectAllAfterValues("testKey2", "/", undefined);
@@ -184,7 +180,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
 
             sharedDirectory1.set("testKey1", "updatedValue");
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
 
             assert.equal(user1ValueChangedCount, 0, "Incorrect number of valueChanged op received in container 1");
             assert.equal(user2ValueChangedCount, 1, "Incorrect number of valueChanged op received in container 2");
@@ -202,7 +198,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
 
                 expectAllBeforeValues("testKey1", "/", "value1", "value2", "value3");
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 expectAllAfterValues("testKey1", "/", "value3");
             });
@@ -215,7 +211,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
 
                 expectAllBeforeValues("testKey1", "/", "value1.1", undefined, "value1.3");
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 expectAllAfterValues("testKey1", "/", "value1.3");
             });
@@ -227,13 +223,13 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
                 sharedDirectory3.set("testKey2", "value2.3");
 
                 // drain the outgoing so that the next set will come after
-                await args.opProcessingController.processOutgoing();
+                await provider.opProcessingController.processOutgoing();
 
                 sharedDirectory2.set("testKey2", "value2.2");
 
                 expectAllBeforeValues("testKey2", "/", "value2.1", "value2.2", "value2.3");
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 expectAllAfterValues("testKey2", "/", "value2.2");
             });
@@ -246,7 +242,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
 
                 expectAllBeforeValues("testKey3", "/", "value3.1", "value3.2", undefined);
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 expectAllAfterValues("testKey3", "/", undefined);
             });
@@ -261,7 +257,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
 
                 assert.equal(sharedDirectory3.size, 0, "Incorrect map size after clear");
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 expectAllAfterValues("testKey1", "/", undefined);
                 expectAllSize(0);
@@ -274,12 +270,12 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
                 sharedDirectory3.set("testKey2", "value2.3");
 
                 // drain the outgoing so that the next set will come after
-                await args.opProcessingController.processOutgoing();
+                await provider.opProcessingController.processOutgoing();
 
                 sharedDirectory2.set("testKey2", "value2.2");
                 expectAllBeforeValues("testKey2", "/", "value2.1", "value2.2", "value2.3");
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 expectAllAfterValues("testKey2", "/", "value2.2");
                 expectAllSize(1);
@@ -292,7 +288,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
                 sharedDirectory3.set("testKey3", "value3.3");
                 expectAllBeforeValues("testKey3", "/", "value3.1", undefined, "value3.3");
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 expectAllAfterValues("testKey3", "/", "value3.3");
                 expectAllSize(1);
@@ -304,7 +300,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
                 const newMap = SharedMap.create(dataObject1.runtime);
                 sharedDirectory1.set("mapKey", newMap.handle);
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 const [map1, map2, map3] = await Promise.all([
                     sharedDirectory1.get<IFluidHandle<ISharedMap>>("mapKey")?.get(),
@@ -318,7 +314,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
 
                 map2.set("testMapKey", "testMapValue");
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 assert.equal(map3.get("testMapKey"), "testMapValue", "Wrong values in map in container 3");
             });
@@ -329,7 +325,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
         it("should set a key in a SubDirectory in three containers correctly", async () => {
             sharedDirectory1.createSubDirectory("testSubDir1").set("testKey1", "testValue1");
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
 
             expectAllAfterValues("testKey1", "testSubDir1", "testValue1");
         });
@@ -337,14 +333,14 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
         it("should delete a key in a SubDirectory in three containers correctly", async () => {
             sharedDirectory2.createSubDirectory("testSubDir1").set("testKey1", "testValue1");
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
 
             expectAllAfterValues("testKey1", "testSubDir1", "testValue1");
             const subDir1 = sharedDirectory3.getWorkingDirectory("testSubDir1");
             assert(subDir1);
             subDir1.delete("testKey1");
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
 
             expectAllAfterValues("testKey1", "testSubDir1", undefined);
         });
@@ -352,12 +348,12 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
         it("should delete a child SubDirectory in a SubDirectory in three containers correctly", async () => {
             sharedDirectory2.createSubDirectory("testSubDir1").set("testKey1", "testValue1");
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
 
             expectAllAfterValues("testKey1", "testSubDir1", "testValue1");
             sharedDirectory3.deleteSubDirectory("testSubDir1");
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
 
             assert.equal(
                 sharedDirectory1.getWorkingDirectory("testSubDir1"),
@@ -378,12 +374,12 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
             sharedDirectory2.createSubDirectory("testSubDir1").set("testKey2", "testValue2");
             sharedDirectory3.createSubDirectory("otherSubDir2").set("testKey3", "testValue3");
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
 
             expectAllSize(2, "testSubDir1");
             sharedDirectory3.getWorkingDirectory("testSubDir1")?.clear();
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
 
             expectAllSize(0, "testSubDir1");
         });
@@ -425,7 +421,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
 
             sharedDirectory1.createSubDirectory("testSubDir1").set("testKey1", "updatedValue");
 
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
 
             assert.equal(user1ValueChangedCount, 0, "Incorrect number of valueChanged op received in container 1");
             assert.equal(user2ValueChangedCount, 1, "Incorrect number of valueChanged op received in container 2");
@@ -441,7 +437,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
             beforeEach(async () => {
                 sharedDirectory1.createSubDirectory("testSubDir").set("dummyKey", "dummyValue");
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 root1SubDir = sharedDirectory1.getWorkingDirectory("testSubDir");
                 root2SubDir = sharedDirectory2.getWorkingDirectory("testSubDir");
@@ -456,7 +452,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
 
                 expectAllBeforeValues("testKey1", "/testSubDir", "value1", "value2", "value3");
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 expectAllAfterValues("testKey1", "/testSubDir", "value3");
             });
@@ -469,7 +465,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
 
                 expectAllBeforeValues("testKey1", "/testSubDir", "value1.1", undefined, "value1.3");
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 expectAllAfterValues("testKey1", "/testSubDir", "value1.3");
             });
@@ -481,12 +477,12 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
                 root3SubDir.set("testKey2", "value2.3");
 
                 // drain the outgoing so that the next set will come after
-                await args.opProcessingController.processOutgoing();
+                await provider.opProcessingController.processOutgoing();
 
                 root2SubDir.set("testKey2", "value2.2");
                 expectAllBeforeValues("testKey2", "/testSubDir", "value2.1", "value2.2", "value2.3");
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 expectAllAfterValues("testKey2", "/testSubDir", "value2.2");
             });
@@ -499,7 +495,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
 
                 expectAllBeforeValues("testKey3", "/testSubDir", "value3.1", "value3.2", undefined);
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 expectAllAfterValues("testKey3", "/testSubDir", undefined);
             });
@@ -512,7 +508,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
                 expectAllBeforeValues("testKey1", "/testSubDir", "value1.1", "value1.2", undefined);
                 assert.equal(root3SubDir.size, 0, "Incorrect map size after clear");
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 expectAllAfterValues("testKey1", "/testSubDir", undefined);
                 expectAllSize(0, "/testSubDir");
@@ -525,12 +521,12 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
                 root3SubDir.set("testKey2", "value2.3");
 
                 // drain the outgoing so that the next set will come after
-                await args.opProcessingController.processOutgoing();
+                await provider.opProcessingController.processOutgoing();
 
                 root2SubDir.set("testKey2", "value2.2");
                 expectAllBeforeValues("testKey2", "/testSubDir", "value2.1", "value2.2", "value2.3");
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 expectAllAfterValues("testKey2", "/testSubDir", "value2.2");
                 expectAllSize(1, "/testSubDir");
@@ -543,7 +539,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
                 root3SubDir.set("testKey3", "value3.3");
                 expectAllBeforeValues("testKey3", "/testSubDir", "value3.1", undefined, "value3.3");
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 expectAllAfterValues("testKey3", "/testSubDir", "value3.3");
                 expectAllSize(1, "/testSubDir");
@@ -576,7 +572,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
                 // Now add the handle to an attached directory so the new directory gets attached too.
                 sharedDirectory1.set("newSharedDirectory", newDirectory1.handle);
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 // The new directory should be available in the remote client and it should contain that key that was
                 // set in local state.
@@ -591,7 +587,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
                 // Set a new value for the same key in the remote directory.
                 newDirectory2.set("newKey", "anotherNewValue");
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 // Verify that the new value is updated in both the directories.
                 assert.equal(
@@ -615,7 +611,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
                 // Now add the handle to an attached directory so the new directory gets attached too.
                 sharedDirectory1.set("newSharedDirectory", newDirectory1.handle);
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 // The new directory should be available in the remote client and it should contain that key that was
                 // set in local state.
@@ -629,7 +625,7 @@ describeFullCompat("SharedDictionary", (argsFactory: () => ITestObjectProvider) 
                 // Delete the sub directory from the remote client.
                 newDirectory2.deleteSubDirectory(subDirName);
 
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 // Verify that the sub directory is deleted from both the directories.
                 assert.equal(

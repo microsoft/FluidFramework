@@ -12,18 +12,12 @@ import {
 } from "@fluidframework/aqueduct";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { IFluidCodeDetails, IRequest, IResponse } from "@fluidframework/core-interfaces";
-import {
-    createAndAttachContainer,
-    createDocumentId,
-    createLoader,
-    OpProcessingController,
-} from "@fluidframework/test-utils";
+import { IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
 
 class TestSharedDataObject1 extends DataObject {
-    public inspectRequest: boolean = false;
-
     public get _root() {
         return this.root;
     }
@@ -41,9 +35,9 @@ class TestSharedDataObject1 extends DataObject {
     public async request(request: IRequest): Promise<IResponse> {
         const url = request.url;
         const parsed = parse(url, true);
-        if (this.inspectRequest) {
+        if (parsed.query.inspect === "1") {
             // returning query params instead of the data object for testing purposes
-            return { mimeType: "text/plain", status: 200, value : `${parsed.search}` };
+            return { mimeType: "text/plain", status: 200, value: `${parsed.search}` };
         } else if (parsed?.pathname === "/") {
             return { value: this, status: 200, mimeType: "fluid/object" };
         } else {
@@ -92,56 +86,42 @@ const testSharedDataObjectFactory2 = new DataObjectFactory(
     [],
     []);
 
-describe("Loader.request", () => {
-    const codeDetails: IFluidCodeDetails = {
-        package: "loaderRequestTestPackage",
-        config: {},
-    };
+// REVIEW: enable compat testing?
+describeNoCompat("Loader.request", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
 
     let dataStore1: TestSharedDataObject1;
     let dataStore2: TestSharedDataObject2;
     let loader: IHostLoader;
-    let opProcessingController: OpProcessingController;
 
-    async function createContainer(documentId: string): Promise<IContainer> {
-        const runtimeFactory =
-            new ContainerRuntimeFactoryWithDefaultDataStore(
-                testSharedDataObjectFactory1,
-                [
-                    [testSharedDataObjectFactory1.type, Promise.resolve(testSharedDataObjectFactory1)],
-                    [testSharedDataObjectFactory2.type, Promise.resolve(testSharedDataObjectFactory2)],
-                ],
-            );
-        const driver = getFluidTestDriver();
-        loader = createLoader(
-            [[codeDetails, runtimeFactory]],
-            driver.createDocumentServiceFactory(),
-            driver.createUrlResolver(),
+    const runtimeFactory =
+        new ContainerRuntimeFactoryWithDefaultDataStore(
+            testSharedDataObjectFactory1,
+            [
+                [testSharedDataObjectFactory1.type, Promise.resolve(testSharedDataObjectFactory1)],
+                [testSharedDataObjectFactory2.type, Promise.resolve(testSharedDataObjectFactory2)],
+            ],
         );
-        return createAndAttachContainer(
-            codeDetails, loader, driver.createCreateNewRequest(documentId));
-    }
+    const createContainer = async (): Promise<IContainer> => provider.createContainer(runtimeFactory);
     let container: IContainer;
     beforeEach(async () => {
-        const documentId = createDocumentId();
-        container = await createContainer(documentId);
+        provider = getTestObjectProvider();
+        container = await createContainer();
+        loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
         dataStore1 = await requestFluidObject(container, "default");
 
         dataStore2 = await testSharedDataObjectFactory2.createInstance(dataStore1._context.containerRuntime);
 
         // this binds dataStore2 to dataStore1
         dataStore1._root.set("key", dataStore2.handle);
-
-        opProcessingController = new OpProcessingController();
-        opProcessingController.addDeltaManagers(container.deltaManager);
     });
 
     it("can create the data objects with correct types", async () => {
         const testUrl1 = await container.getAbsoluteUrl(dataStore1.handle.absolutePath);
-        assert(testUrl1,"dataStore1 url is undefined");
+        assert(testUrl1, "dataStore1 url is undefined");
         const testDataStore1 = await requestFluidObject(loader, testUrl1);
         const testUrl2 = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
-        assert(testUrl2,"dataStore2 url is undefined");
+        assert(testUrl2, "dataStore2 url is undefined");
         const testDataStore2 = await requestFluidObject(loader, testUrl2);
 
         assert(testDataStore1 instanceof TestSharedDataObject1, "requestFromLoader returns the wrong type for default");
@@ -179,7 +159,6 @@ describe("Loader.request", () => {
         const url = await container.getAbsoluteUrl("");
         assert(url, "url is undefined");
         const container2 = await loader.resolve({ url, headers });
-        opProcessingController.addDeltaManagers(container2.deltaManager);
 
         // create a new data store using the original container
         const newDataStore = await testSharedDataObjectFactory2.createInstance(dataStore1._context.containerRuntime);
@@ -201,7 +180,7 @@ describe("Loader.request", () => {
         (container2 as Container).resume();
 
         // Flush all the ops
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
 
         const newDataStore2 = await requestFluidObject(container2, { url: newDataStore.id });
         assert(newDataStore2 instanceof TestSharedDataObject2, "requestFromLoader returns the wrong type for object2");
@@ -212,7 +191,6 @@ describe("Loader.request", () => {
         assert(url, "url is undefined");
         // load the containers paused
         const container1 = await loader.resolve({ url, headers: { [LoaderHeader.pause]: true } });
-        opProcessingController.addDeltaManagers(container1.deltaManager);
         const container2 = await loader.resolve({ url, headers: { [LoaderHeader.pause]: true } });
 
         assert.strictEqual(container1, container2, "container not cached across multiple loader requests");
@@ -225,7 +203,7 @@ describe("Loader.request", () => {
         (container1 as Container).resume();
 
         // Flush all the ops
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
 
         const sameDataStore1 = await requestFluidObject(container1, {
             url: newDataStore.id,
@@ -240,10 +218,9 @@ describe("Loader.request", () => {
     });
 
     it("can handle url with query params", async () => {
-        dataStore1.inspectRequest = true;
         const url = await container.getAbsoluteUrl("");
         assert(url, "url is undefined");
-        const testUrl = `${url}${url.includes("?") ? "&query1=1&query2=2" : "?query1=1&query2=2"}`;
+        const testUrl = `${url}${url.includes("?") ? "&query1=1&query2=2&inspect=1" : "?query1=1&query2=2&inspect=1"}`;
 
         const response = await loader.request({ url: testUrl });
         const searchParams = new URLSearchParams(response.value);

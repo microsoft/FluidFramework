@@ -24,7 +24,6 @@ import {
     Deferred,
     LazyPromise,
     TypedEventEmitter,
-    unreachableCase,
 } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
@@ -65,36 +64,36 @@ import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils"
 import { ContainerRuntime } from "./containerRuntime";
 import {
     dataStoreAttributesBlobName,
-    DataStoreSnapshotFormatVersion,
-} from "./snapshot";
+    hasIsolatedChannels,
+    wrapSummaryInChannelsTree,
+    ReadFluidDataStoreAttributes,
+    WriteFluidDataStoreAttributes,
+    getAttributesFormatVersion,
+} from "./summaryFormat";
 
-function createAttributes(pkg: readonly string[], isRootDataStore: boolean): IFluidDataStoreAttributes {
+function createAttributes(
+    pkg: readonly string[],
+    isRootDataStore: boolean,
+    disableIsolatedChannels: boolean,
+): WriteFluidDataStoreAttributes {
     const stringifiedPkg = JSON.stringify(pkg);
-    return {
+    return disableIsolatedChannels ? {
         pkg: stringifiedPkg,
         snapshotFormatVersion: "0.1",
         isRootDataStore,
+    } : {
+        pkg: stringifiedPkg,
+        summaryFormatVersion: 2,
+        isRootDataStore,
     };
 }
-export function createAttributesBlob(pkg: readonly string[], isRootDataStore: boolean): ITreeEntry {
-    const attributes = createAttributes(pkg, isRootDataStore);
+export function createAttributesBlob(
+    pkg: readonly string[],
+    isRootDataStore: boolean,
+    disableIsolatedChannels: boolean,
+): ITreeEntry {
+    const attributes = createAttributes(pkg, isRootDataStore, disableIsolatedChannels);
     return new BlobTreeEntry(dataStoreAttributesBlobName, JSON.stringify(attributes));
-}
-
-/**
- * Added IFluidDataStoreAttributes similar to IChannelAttributes which will tell the attributes of a
- * store like the package, snapshotFormatVersion to take different decisions based on a particular
- * snapshotFormatVersion.
- */
-export interface IFluidDataStoreAttributes {
-    pkg: string;
-    readonly snapshotFormatVersion: DataStoreSnapshotFormatVersion;
-    /**
-     * This tells whether a data store is root. Root data stores are never collected.
-     * Non-root data stores may be collected if they are not used. If this is not present, default it to
-     * true. This will ensure that older data stores are incorrectly collected.
-     */
-    readonly isRootDataStore?: boolean;
 }
 
 interface ISnapshotDetails {
@@ -123,7 +122,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public get packagePath(): readonly string[] {
-        assert(this.pkg !== undefined, "Undefined package path");
+        assert(this.pkg !== undefined, 0x139 /* "Undefined package path" */);
         return this.pkg;
     }
 
@@ -178,6 +177,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return (await this.getInitialSnapshotDetails()).isRootDataStore;
     }
 
+    protected get disableIsolatedChannels(): boolean {
+        return this._containerRuntime.disableIsolatedChannels;
+    }
+
     protected registry: IFluidDataStoreRegistry | undefined;
 
     protected detachedRuntimeCreation = false;
@@ -206,15 +209,15 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         // URIs use slashes as delimiters. Handles use URIs.
         // Thus having slashes in types almost guarantees trouble down the road!
-        assert(id.indexOf("/") === -1, `Data store ID contains slash: ${id}`);
+        assert(id.indexOf("/") === -1, 0x13a /* `Data store ID contains slash: ${id}` */);
 
         this._attachState = this.containerRuntime.attachState !== AttachState.Detached && existing ?
             this.containerRuntime.attachState : AttachState.Detached;
 
         this.bindToContext = () => {
-            assert(this.bindState === BindState.NotBound, "datastore context is already in bound state");
+            assert(this.bindState === BindState.NotBound, 0x13b /* "datastore context is already in bound state" */);
             this.bindState = BindState.Binding;
-            assert(this.channel !== undefined, "undefined channel on datastore context");
+            assert(this.channel !== undefined, 0x13c /* "undefined channel on datastore context" */);
             bindChannel(this.channel);
             this.bindState = BindState.Bound;
         };
@@ -252,7 +255,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public async realize(): Promise<IFluidDataStoreChannel> {
-        assert(!this.detachedRuntimeCreation, "Detached runtime creation on realize()");
+        assert(!this.detachedRuntimeCreation, 0x13d /* "Detached runtime creation on realize()" */);
         if (!this.channelDeferred) {
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore().catch((error) => {
@@ -263,7 +266,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     protected async factoryFromPackagePath(packages?: readonly string[]) {
-        assert(this.pkg === packages, "Unexpected package path");
+        assert(this.pkg === packages, 0x13e /* "Unexpected package path" */);
         if (packages === undefined) {
             this.rejectDeferredRealize("packages is undefined");
         }
@@ -300,11 +303,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         const { factory, registry } = await this.factoryFromPackagePath(packages);
 
-        assert(this.registry === undefined, "datastore context registry is already set");
+        assert(this.registry === undefined, 0x13f /* "datastore context registry is already set" */);
         this.registry = registry;
 
         const channel = await factory.instantiateDataStore(this);
-        assert(channel !== undefined, "undefined channel on datastore context");
+        assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
         this.bindRuntime(channel);
     }
 
@@ -322,7 +325,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             return;
         }
 
-        assert(this.connected === connected, "Unexpected connected state");
+        assert(this.connected === connected, 0x141 /* "Unexpected connected state" */);
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.channel!.setConnectionState(connected, clientId);
@@ -343,7 +346,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         if (this.loaded) {
             return this.channel?.process(message, local, localOpMetadata);
         } else {
-            assert(!local, "local store channel is not loaded");
+            assert(!local, 0x142 /* "local store channel is not loaded" */);
             this.pending?.push(message);
         }
     }
@@ -381,10 +384,17 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const summarizeResult = await this.channel!.summarize(fullTree, trackState);
+        let pathPartsForChildren: string[] | undefined;
+
+        if (!this.disableIsolatedChannels) {
+            // Wrap dds summaries in .channels subtree.
+            wrapSummaryInChannelsTree(summarizeResult);
+            pathPartsForChildren = [channelsTreeName];
+        }
 
         // Add data store's attributes to the summary.
         const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
-        const attributes: IFluidDataStoreAttributes = createAttributes(pkg, isRootDataStore);
+        const attributes = createAttributes(pkg, isRootDataStore, this.disableIsolatedChannels);
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // Add GC details to the summary.
@@ -399,7 +409,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             summarizeResult.summary.unreferenced = true;
         }
 
-        return { ...summarizeResult, id: this.id };
+        return {
+            ...summarizeResult,
+            id: this.id,
+            pathPartsForChildren,
+        };
     }
 
     /**
@@ -421,7 +435,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      */
     private async getGCDataInternal(fullGC: boolean = false): Promise<IGarbageCollectionData> {
         await this.realize();
-        assert(this.channel !== undefined, "Channel should not be undefined when running GC");
+        assert(this.channel !== undefined, 0x143 /* "Channel should not be undefined when running GC" */);
 
         return this.channel.getGCData(fullGC);
     }
@@ -456,8 +470,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * 2. When the data store is realized. This updates the channel's used routes as per last GC run.
      */
     private updateChannelUsedRoutes() {
-        assert(this.loaded, "Channel should be loaded when updating used routes");
-        assert(this.channel !== undefined, "Channel should be present when data store is loaded");
+        assert(this.loaded, 0x144 /* "Channel should be loaded when updating used routes" */);
+        assert(this.channel !== undefined, 0x145 /* "Channel should be present when data store is loaded" */);
 
         // Remove the route to this data store, if it exists.
         const usedChannelRoutes = this.summarizerNode.usedRoutes.filter(
@@ -476,7 +490,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
         this.verifyNotClosed();
-        assert(!!this.channel, "Channel must exist when submitting message");
+        assert(!!this.channel, 0x146 /* "Channel must exist when submitting message" */);
         const fluidDataStoreContent: FluidDataStoreMessage = {
             content,
             type,
@@ -513,7 +527,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
-        assert(!!this.channel, "Channel must exist on submitting signal");
+        assert(!!this.channel, 0x147 /* "Channel must exist on submitting signal" */);
         return this._containerRuntime.submitDataStoreSignal(this.id, type, content);
     }
 
@@ -544,9 +558,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         try
         {
-            assert(!this.detachedRuntimeCreation, "Detached runtime creation on runtime bind");
-            assert(this.channelDeferred !== undefined, "Undefined channel defferal");
-            assert(this.pkg !== undefined, "Undefined package path");
+            assert(!this.detachedRuntimeCreation, 0x148 /* "Detached runtime creation on runtime bind" */);
+            assert(this.channelDeferred !== undefined, 0x149 /* "Undefined channel defferal" */);
+            assert(this.pkg !== undefined, 0x14a /* "Undefined package path" */);
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const pending = this.pending!;
@@ -601,7 +615,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     public abstract getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
-        assert(!!this.channel, "Channel must exist when resubmitting ops");
+        assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
         const innerContents = contents as FluidDataStoreMessage;
         this.channel.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
     }
@@ -610,7 +624,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         if (!this.channel) {
             await this.realize();
         }
-        assert(!!this.channel, "Channel must exist when rebasing ops");
+        assert(!!this.channel, 0x14c /* "Channel must exist when rebasing ops" */);
         const innerContents = contents as FluidDataStoreMessage;
         return this.channel.applyStashedOp(innerContents.content);
     }
@@ -691,33 +705,20 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
             // Need to rip through snapshot and use that to populate extraBlobs
             const attributes =
-                await localReadAndParse<IFluidDataStoreAttributes>(tree.blobs[dataStoreAttributesBlobName]);
+                await localReadAndParse<ReadFluidDataStoreAttributes>(tree.blobs[dataStoreAttributesBlobName]);
 
             let pkgFromSnapshot: string[];
             // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
-            // For snapshotFormatVersion = "0.1" or above, pkg is jsonified, otherwise it is just a string.
-            switch (attributes.snapshotFormatVersion) {
-                case undefined: {
-                    if (attributes.pkg.startsWith("[\"") && attributes.pkg.endsWith("\"]")) {
-                        pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
-                    } else {
-                        pkgFromSnapshot = [attributes.pkg];
-                    }
-                    break;
-                }
-                case 2: {
-                    tree = tree.trees[channelsTreeName];
-                    // Intentional fallthrough, since package is still JSON
-                }
-                case "0.1": {
+            // For snapshotFormatVersion = "0.1" (1) or above, pkg is jsonified, otherwise it is just a string.
+            const formatVersion = getAttributesFormatVersion(attributes);
+            if (formatVersion < 1) {
+                if (attributes.pkg.startsWith("[\"") && attributes.pkg.endsWith("\"]")) {
                     pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
-                    break;
+                } else {
+                    pkgFromSnapshot = [attributes.pkg];
                 }
-                default: {
-                    unreachableCase(
-                        attributes.snapshotFormatVersion,
-                        `Invalid snapshot format version ${attributes.snapshotFormatVersion}`);
-                }
+            } else {
+                pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
             }
             this.pkg = pkgFromSnapshot;
 
@@ -727,6 +728,10 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
              * roots in the document but they won't break.
              */
             isRootDataStore = attributes.isRootDataStore ?? true;
+
+            if (hasIsolatedChannels(attributes)) {
+                tree = tree.trees[channelsTreeName];
+            }
         }
 
         return {
@@ -798,24 +803,34 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
     private attachListeners(): void {
         this.once("attaching", () => {
-            assert(this.attachState === AttachState.Detached, "Should move from detached to attaching");
+            assert(this.attachState === AttachState.Detached, 0x14d /* "Should move from detached to attaching" */);
             this._attachState = AttachState.Attaching;
         });
         this.once("attached", () => {
-            assert(this.attachState === AttachState.Attaching, "Should move from attaching to attached");
+            assert(this.attachState === AttachState.Attaching, 0x14e /* "Should move from attaching to attached" */);
             this._attachState = AttachState.Attached;
         });
     }
 
     public generateAttachMessage(): IAttachMessage {
-        assert(this.channel !== undefined, "There should be a channel when generating attach message");
-        assert(this.pkg !== undefined, "pkg should be available in local data store context");
-        assert(this.isRootDataStore !== undefined, "isRootDataStore should be available in local data store context");
+        assert(this.channel !== undefined, 0x14f /* "There should be a channel when generating attach message" */);
+        assert(this.pkg !== undefined, 0x150 /* "pkg should be available in local data store context" */);
+        assert(this.isRootDataStore !== undefined,
+            0x151 /* "isRootDataStore should be available in local data store context" */);
 
         const summarizeResult = this.channel.getAttachSummary();
 
+        if (!this.disableIsolatedChannels) {
+            // Wrap dds summaries in .channels subtree.
+            wrapSummaryInChannelsTree(summarizeResult);
+        }
+
         // Add data store's attributes to the summary.
-        const attributes: IFluidDataStoreAttributes = createAttributes(this.pkg, this.isRootDataStore);
+        const attributes = createAttributes(
+            this.pkg,
+            this.isRootDataStore,
+            this.disableIsolatedChannels,
+        );
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // Add GC details to the summary.
@@ -838,11 +853,16 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     }
 
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
-        assert(this.pkg !== undefined, "pkg should be available in local data store");
-        assert(this.isRootDataStore !== undefined, "isRootDataStore should be available in local data store");
+        assert(this.pkg !== undefined, 0x152 /* "pkg should be available in local data store" */);
+        assert(this.isRootDataStore !== undefined,
+            0x153 /* "isRootDataStore should be available in local data store" */);
+
+        const snapshot = this.disableIsolatedChannels
+            ? this.snapshotTree
+            : this.snapshotTree?.trees[channelsTreeName];
         return {
             pkg: this.pkg,
-            snapshot: this.snapshotTree,
+            snapshot,
             isRootDataStore: this.isRootDataStore,
         };
     }
@@ -928,15 +948,15 @@ export class LocalDetachedFluidDataStoreContext
         registry: IProvideFluidDataStoreFactory,
         dataStoreRuntime: IFluidDataStoreChannel)
     {
-        assert(this.detachedRuntimeCreation, "runtime creation is already attached");
-        assert(this.channelDeferred === undefined, "channel deferral is already set");
+        assert(this.detachedRuntimeCreation, 0x154 /* "runtime creation is already attached" */);
+        assert(this.channelDeferred === undefined, 0x155 /* "channel deferral is already set" */);
 
         const factory = registry.IFluidDataStoreFactory;
 
         const entry = await this.factoryFromPackagePath(this.pkg);
-        assert(entry.factory === factory, "Unexpected factory for package path");
+        assert(entry.factory === factory, 0x156 /* "Unexpected factory for package path" */);
 
-        assert(this.registry === undefined, "datastore registry already attached");
+        assert(this.registry === undefined, 0x157 /* "datastore registry already attached" */);
         this.registry = entry.registry;
 
         this.detachedRuntimeCreation = false;

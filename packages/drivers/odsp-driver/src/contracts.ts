@@ -132,7 +132,7 @@ export enum SnapshotType {
     Channel = "channel",
 }
 
-export interface ISnapshotRequest {
+export interface IOdspSummaryPayload {
     type: SnapshotType;
     message: string;
     sequenceNumber: number;

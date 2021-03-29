@@ -20,9 +20,9 @@ import {
     createAndAttachContainer,
     createDocumentId,
     LocalCodeLoader,
-    OpProcessingController,
     timeoutPromise,
     LoaderContainerTracker,
+    ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { Loader } from "@fluidframework/container-loader";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -31,6 +31,7 @@ import {
     getContainerRuntimeApi,
     getDataRuntimeApi,
     TestDataObjectType,
+    describeNoCompat,
 } from "@fluidframework/test-version-utils";
 
 interface ITestDataStore {
@@ -72,11 +73,18 @@ function getTestDataStoreClasses(api: ReturnType<typeof getDataRuntimeApi>) {
 
 const { TestDataStoreV1, TestDataStoreV2 } = getTestDataStoreClasses(getDataRuntimeApi());
 
-describe("context reload (hot-swap)", function() {
+// REVIEW: enable compat testing?
+describeNoCompat("context reload (hot-swap)", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    beforeEach(() => {
+        provider = getTestObjectProvider();
+    });
+    afterEach(() => {
+        loaderContainerTracker.reset();
+    });
     let container: IContainer;
     let containerError = false;
     let dataStoreV1: ITestDataStore;
-    let opProcessingController: OpProcessingController;
     const loaderContainerTracker = new LoaderContainerTracker();
     const codeDetails = (version: string): IFluidCodeDetails => {
         return {
@@ -103,14 +111,14 @@ describe("context reload (hot-swap)", function() {
         packageEntries,
         documentId: string,
         LoaderConstructor = Loader): Promise<IContainer> {
-        const driver = getFluidTestDriver();
+        const driver = provider.driver;
 
         const loader = new LoaderConstructor({
             codeLoader: new LocalCodeLoader(packageEntries),
             options: { hotSwapContext: true },
-            urlResolver: driver.createUrlResolver(),
-            documentServiceFactory: driver.createDocumentServiceFactory(),
-            logger: ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}}),
+            urlResolver: provider.urlResolver,
+            documentServiceFactory: provider.documentServiceFactory,
+            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: driver.type } }),
         });
         loaderContainerTracker.add(loader);
         return createAndAttachContainer(
@@ -138,7 +146,6 @@ describe("context reload (hot-swap)", function() {
 
         afterEach(async function() {
             assert.strictEqual(containerError, false, "container error");
-            loaderContainerTracker.reset();
         });
 
         it("is followed by an immediate summary", async function() {
@@ -148,9 +155,10 @@ describe("context reload (hot-swap)", function() {
             const test = ["fluid", "is great!"];
             dataStoreV1._root.set(test[0], test[1]);
 
-            while (!dataStoreV1._runtime.deltaManager.active) {
-                await opProcessingController.process();
-            }
+            await loaderContainerTracker.ensureSynchronized();
+
+            // should be active ensureSynchronized
+            assert(dataStoreV1._runtime.deltaManager.active);
 
             await container.getQuorum().propose("code", codeDetails(V2));
 
@@ -171,9 +179,10 @@ describe("context reload (hot-swap)", function() {
             const test = ["fluid", "is great!"];
             dataStoreV1._root.set(test[0], test[1]);
 
-            while (!dataStoreV1._runtime.deltaManager.active) {
-                await opProcessingController.process();
-            }
+            await loaderContainerTracker.ensureSynchronized();
+
+            // should be active ensureSynchronized
+            assert(dataStoreV1._runtime.deltaManager.active);
 
             await proposeAndWaitForReload(V2, container);
 
@@ -191,9 +200,10 @@ describe("context reload (hot-swap)", function() {
             const test = ["fluid", "is great!"];
             dataStoreV1._root.set(test[0], test[1]);
 
-            while (!dataStoreV1._runtime.deltaManager.active) {
-                await opProcessingController.process();
-            }
+            await loaderContainerTracker.ensureSynchronized();
+
+            // should be active ensureSynchronized
+            assert(dataStoreV1._runtime.deltaManager.active);
 
             await proposeAndWaitForReload(V2, container);
 
@@ -216,9 +226,6 @@ describe("context reload (hot-swap)", function() {
                 docId);
             dataStoreV1 = await requestFluidObject<ITestDataStore>(container, "default");
             assert.strictEqual(dataStoreV1.version, TestDataStoreV1.version);
-
-            opProcessingController = new OpProcessingController();
-            opProcessingController.addDeltaManagers(container.deltaManager);
         });
 
         tests();
@@ -226,13 +233,13 @@ describe("context reload (hot-swap)", function() {
 
     describe("two containers", () => {
         async function loadContainer(packageEntries, documentId): Promise<IContainer> {
-            const driver = getFluidTestDriver();
+            const driver = provider.driver;
             const loader = new Loader({
                 codeLoader: new LocalCodeLoader(packageEntries),
                 options: { hotSwapContext: true },
-                urlResolver: driver.createUrlResolver(),
-                documentServiceFactory: driver.createDocumentServiceFactory(),
-                logger: ChildLogger.create(getTestLogger(), undefined, {all: {testDriverType: driver.type}}),
+                urlResolver: provider.urlResolver,
+                documentServiceFactory: provider.documentServiceFactory,
+                logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: driver.type } }),
             });
             loaderContainerTracker.add(loader);
             return loader.resolve({ url: await driver.createContainerUrl(documentId) });
@@ -240,7 +247,6 @@ describe("context reload (hot-swap)", function() {
 
         it("loads version 2", async () => {
             const docId = createDocumentId();
-            opProcessingController = new OpProcessingController();
 
             const packageEntries = [
                 [codeDetails(V1), createRuntimeFactory(TestDataStoreV1)],
@@ -255,8 +261,6 @@ describe("context reload (hot-swap)", function() {
             containers.map((c) => c.on("warning", () => success = false));
             containers.map((c) => c.on("closed", (error) => success = success && error === undefined));
 
-            containers.map((c) => opProcessingController.addDeltaManagers(c.deltaManager));
-
             let dataStores = await Promise.all(containers.map(
                 async (c) => requestFluidObject<ITestDataStore>(c, "default")));
 
@@ -269,9 +273,10 @@ describe("context reload (hot-swap)", function() {
             const test = ["fluid", "is great!"];
             dataStores[0]._root.set(test[0], test[1]);
 
-            while (!dataStores[0]._runtime.deltaManager.active) {
-                await opProcessingController.process();
-            }
+            await loaderContainerTracker.ensureSynchronized();
+
+            // should be active ensureSynchronized
+            assert(dataStores[0]._runtime.deltaManager.active);
 
             await proposeAndWaitForReload(V2, ...containers);
 
@@ -311,7 +316,7 @@ describe("context reload (hot-swap)", function() {
             );
         }
 
-        describe(`compat N${compatVersions} - old loader, new runtime`, () => {
+        describe(`compat N${compatVersion} - old loader, new runtime`, () => {
             beforeEach(async function() {
                 const documentId = createDocumentId();
                 container = await createContainer(
@@ -323,14 +328,11 @@ describe("context reload (hot-swap)", function() {
                     oldLoaderApi.Loader);
                 dataStoreV1 = await requestFluidObject<ITestDataStore>(container, "default");
                 assert.strictEqual(dataStoreV1.version, TestDataStoreV1.version);
-
-                opProcessingController = new OpProcessingController();
-                opProcessingController.addDeltaManagers(container.deltaManager);
             });
 
             tests();
         });
-        describe(`compat N${compatVersions} - new loader, old runtime`, () => {
+        describe(`compat N${compatVersion} - new loader, old runtime`, () => {
             beforeEach(async function() {
                 container = await createContainer(
                     [
@@ -340,9 +342,6 @@ describe("context reload (hot-swap)", function() {
                     createDocumentId());
                 dataStoreV1 = await requestFluidObject<ITestDataStore>(container, "default");
                 assert.strictEqual(dataStoreV1.version, TestDataStoreV1.version);
-
-                opProcessingController = new OpProcessingController();
-                opProcessingController.addDeltaManagers(container.deltaManager);
             });
 
             tests();

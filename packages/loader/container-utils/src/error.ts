@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 function messageFromError(error: any): string {
     if (typeof error?.message === "string") {
@@ -81,10 +82,19 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
     readonly errorType = ContainerErrorType.dataProcessingError;
     readonly canRetry = false;
 
-    constructor(errorMessage: string, props: ITelemetryProperties) {
+    constructor(errorMessage: string, props?: ITelemetryProperties) {
         super(errorMessage, props);
     }
 }
+
+export const extractSafePropertiesFromMessage = (message: ISequencedDocumentMessage)=> ({
+        messageClientId: message.clientId,
+        messageSequenceNumber: message.sequenceNumber,
+        messageClientSequenceNumber: message.clientSequenceNumber,
+        messageReferenceSequenceNumber: message.referenceSequenceNumber,
+        messageMinimumSequenceNumber: message.minimumSequenceNumber,
+        messageTimestamp: message.timestamp,
+    });
 
 /**
  * Conditionally coerce the throwable input into a DataProcessingError.
@@ -92,18 +102,13 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
  */
 export function CreateProcessingError(
     error: any,
-    info: Partial<{
-        clientId: string;
-        messageClientId: string;
-        sequenceNumber: number;
-        clientSequenceNumber: number;
-        referenceSequenceNumber: number;
-        minimumSequenceNumber: number;
-        messageTimestamp: number;
-    }> = {},
+    message: ISequencedDocumentMessage | undefined,
 ): ICriticalContainerError {
+    const info = message !== undefined
+        ? extractSafePropertiesFromMessage(message)
+        : undefined;
     if (typeof error === "string") {
-        return new DataProcessingError(error, { ...info });
+        return new DataProcessingError(error, info);
     } else if (!isRegularObject(error)) {
         return new DataProcessingError(
             "DataProcessingError without explicit message (needs review)",
@@ -128,7 +133,7 @@ export function CreateProcessingError(
  * @param error - Error to be converted.
  */
 export function CreateContainerError(error: any): ICriticalContainerError {
-    assert(error !== undefined, "Missing error input");
+    assert(error !== undefined, 0x0f5 /* "Missing error input" */);
 
     if (typeof error === "object" && error !== null) {
         const err = error;

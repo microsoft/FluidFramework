@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerMessageType, taskSchedulerId } from "@fluidframework/container-runtime";
+import { ContainerMessageType, agentSchedulerId } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -33,13 +33,10 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
-    let args: ITestObjectProvider;
-    beforeEach(()=>{
-        args = argsFactory();
-    });
-    afterEach(() => {
-        args.reset();
+describeFullCompat("Batching", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    beforeEach(() => {
+        provider = getTestObjectProvider();
     });
 
     let dataObject1: ITestFluidObject;
@@ -53,7 +50,7 @@ describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
         dataStore.context.containerRuntime.on("op", (message: ISequencedDocumentMessage) => {
             if (message.type === ContainerMessageType.FluidDataStoreOp) {
                 const envelope = message.contents as IEnvelope;
-                if (envelope.address !== taskSchedulerId) {
+                if (envelope.address !== agentSchedulerId) {
                     receivedMessages.push(message);
                 }
             }
@@ -77,29 +74,29 @@ describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
 
     // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
     async function waitForCleanContainers(...dataStores: ITestFluidObject[]) {
-        return Promise.all(dataStores.map(async (dataStore)=>{
+        return Promise.all(dataStores.map(async (dataStore) => {
             const runtime = dataStore.context.containerRuntime as IContainerRuntime;
             while (runtime.isDirty) {
-                await timeoutPromise((resolve)=>runtime.once("batchEnd", resolve));
+                await timeoutPromise((resolve) => runtime.once("batchEnd", resolve));
             }
         }));
     }
 
     beforeEach(async () => {
         // Create a Container for the first client.
-        const container1 = await args.makeTestContainer(testContainerConfig);
+        const container1 = await provider.makeTestContainer(testContainerConfig);
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
         dataObject1map2 = await dataObject1.getSharedObject<SharedMap>(map2Id);
 
         // Load the Container that was created by the first client.
-        const container2 = await args.loadTestContainer(testContainerConfig);
+        const container2 = await provider.loadTestContainer(testContainerConfig);
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         dataObject2map1 = await dataObject2.getSharedObject<SharedMap>(map1Id);
         dataObject2map2 = await dataObject2.getSharedObject<SharedMap>(map2Id);
 
         await waitForCleanContainers(dataObject1, dataObject2);
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
     });
 
     describe("Local ops batch metadata verification", () => {
@@ -122,7 +119,7 @@ describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 4, "Incorrect number of messages received on local client");
@@ -139,7 +136,7 @@ describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 1, "Incorrect number of messages received on local client");
@@ -166,7 +163,7 @@ describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 4, "Incorrect number of messages received on local client");
@@ -191,7 +188,7 @@ describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 0, "Incorrect number of messages received on local client");
@@ -216,7 +213,7 @@ describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 4, "Incorrect number of messages received on local client");
@@ -243,7 +240,7 @@ describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
                 (dataObject1.context.containerRuntime as IContainerRuntime).flush();
 
                 // Wait for the ops to get processed by both the containers.
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 4, "Incorrect number of messages received on local client");
@@ -264,7 +261,7 @@ describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
                 dataObject2.context.containerRuntime.setFlushMode(FlushMode.Automatic);
 
                 // Wait for the ops to get processed by both the containers.
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 1, "Incorrect number of messages received on local client");
@@ -309,7 +306,7 @@ describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
                 dataObject2.context.containerRuntime.setFlushMode(FlushMode.Automatic);
 
                 // Wait for the ops to get processed by both the containers.
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 assert.equal(
                     dataObject1BatchMessages.length, 6, "Incorrect number of messages received on local client");
@@ -356,7 +353,7 @@ describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(dataObject1, false);
@@ -374,7 +371,7 @@ describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(dataObject1, false);
@@ -396,7 +393,7 @@ describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 // Check that the document dirty state is cleaned after the ops are processed.
                 // Verify that the document dirty state is cleaned after the ops are processed.
@@ -425,7 +422,7 @@ describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(dataObject1, false);
@@ -443,7 +440,7 @@ describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(dataObject1, false);
@@ -462,7 +459,7 @@ describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(dataObject1, false);
@@ -483,7 +480,7 @@ describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 // Check that the document dirty state is cleaned after the ops are processed.
                 // Verify that the document dirty state is cleaned after the ops are processed.
@@ -514,7 +511,7 @@ describeFullCompat("Batching", (argsFactory: () => ITestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await args.ensureSynchronized();
+                await provider.ensureSynchronized();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(dataObject1, false);
