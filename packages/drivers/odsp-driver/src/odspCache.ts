@@ -96,7 +96,7 @@ export interface IPersistedCache {
  * Similar to IPersistedCache, but exposes cache interface for single file
  */
 export interface IPersistedFileCache {
-    get<T = unknown>(entry: IEntry): Promise<T | undefined>;
+    get(entry: IEntry): Promise<any>;
     put(entry: IEntry, value: any): Promise<boolean>; // returns false if failed to put value
     removeEntries(): Promise<void>;
 }

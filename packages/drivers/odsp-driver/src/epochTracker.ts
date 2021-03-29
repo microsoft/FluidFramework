@@ -29,14 +29,14 @@ export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "
 export type FetchTypeInternal = FetchType | "cache";
 
 // exported only of test purposes
-export interface IVersionedValueWithEpoch<T> {
-    value: T;
+export interface IVersionedValueWithEpoch {
+    value: any;
     fluidEpoch: string,
-    version: "0.2",
+    version: 2,
 }
 
 // exported only of test purposes
-export const persistedCacheValueVersion = "0.2";
+export const persistedCacheValueVersion = 2;
 
 /**
  * This class is a wrapper around fetch calls. It adds epoch to the request made so that the
@@ -73,11 +73,11 @@ export class EpochTracker implements IPersistedFileCache {
         );
     }
 
-    public async get<T>(
+    public async get(
         entry: IEntry,
-    ): Promise<T | undefined> {
+    ): Promise<any> {
         try {
-            const value: IVersionedValueWithEpoch<T> = await this.cache.get(this.fileEntryFromEntry(entry));
+            const value: IVersionedValueWithEpoch = await this.cache.get(this.fileEntryFromEntry(entry));
             if (value === undefined || value.version !== persistedCacheValueVersion) {
                 return undefined;
             }
@@ -87,6 +87,7 @@ export class EpochTracker implements IPersistedFileCache {
             } else if (this._fluidEpoch !== value.fluidEpoch) {
                 return undefined;
             }
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return value.value;
         } catch (error) {
             this.logger.sendErrorEvent({ eventName: "cacheFetchError", type: entry.type }, error);
@@ -96,7 +97,7 @@ export class EpochTracker implements IPersistedFileCache {
 
     public async put(entry: IEntry, value: any) {
         assert(this._fluidEpoch !== undefined, "no epoch");
-        const data: IVersionedValueWithEpoch<any> = {
+        const data: IVersionedValueWithEpoch = {
             value,
             version: persistedCacheValueVersion,
             fluidEpoch: this._fluidEpoch,
@@ -309,10 +310,10 @@ export class EpochTrackerWithRedemption extends EpochTracker {
         this.treesLatestDeferral.resolve();
     }
 
-    public async get<T>(
+    public async get(
         entry: IEntry,
-    ): Promise<T | undefined> {
-        return super.get<T>(entry).catch((error) => {
+    ): Promise<any> {
+        return super.get(entry).catch((error) => {
             // equivalence of what happens in fetchAndParseAsJSON()
             if (entry.type === snapshotKey) {
                 this.treesLatestDeferral.reject(error);

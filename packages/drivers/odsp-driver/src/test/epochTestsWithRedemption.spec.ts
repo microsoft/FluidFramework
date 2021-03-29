@@ -68,7 +68,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 
         try {
             // We will trigger a successful call to return the value set in the cache after the failed joinSession call
-            epochCallback.setCallback(async () => epochTracker.get<string>(cacheEntry1));
+            epochCallback.setCallback(async () => epochTracker.get(cacheEntry1));
 
             // Initial joinSession call will return 404 but after the timeout, the call will be retried and succeed
             await mockFetchMultiple(

@@ -510,7 +510,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         this.logger,
                         { eventName: "ObtainSnapshot" },
                         async (event: PerformanceEvent) => {
-                            const cachedSnapshotP = this.epochTracker.get<ISnapshotCacheValue>(this._snapshotCacheEntry);
+                            const cachedSnapshotP: Promise<ISnapshotCacheValue | undefined> = this.epochTracker.get(this._snapshotCacheEntry);
 
                             let method: string;
                             if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
