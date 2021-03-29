@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerMessageType, taskSchedulerId } from "@fluidframework/container-runtime";
+import { ContainerMessageType, agentSchedulerId } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -50,7 +50,7 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
         dataStore.context.containerRuntime.on("op", (message: ISequencedDocumentMessage) => {
             if (message.type === ContainerMessageType.FluidDataStoreOp) {
                 const envelope = message.contents as IEnvelope;
-                if (envelope.address !== taskSchedulerId) {
+                if (envelope.address !== agentSchedulerId) {
                     receivedMessages.push(message);
                 }
             }

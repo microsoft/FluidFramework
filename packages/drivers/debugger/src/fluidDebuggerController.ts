@@ -207,9 +207,9 @@ export class DebugReplayController extends ReplayController implements IDebugger
             return this.shouldUseController;
         }
 
-        assert(!!documentService, "Invalid document service!");
-        assert(!this.documentService, "Document service already set!");
-        assert(!this.documentStorageService, "Document storage service already set!");
+        assert(!!documentService, 0x080 /* "Invalid document service!" */);
+        assert(!this.documentService, 0x081 /* "Document service already set!" */);
+        assert(!this.documentStorageService, 0x082 /* "Document storage service already set!" */);
         this.documentService = documentService;
         this.documentStorageService = await documentService.connectToStorage();
 
@@ -246,7 +246,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
         this.shouldUseController = await this.startSeqDeferred.promise !== DebugReplayController.WindowClosedSeq;
 
         assert(this.isSelectionMade() === this.shouldUseController,
-            "User selection status does not match replay controller use status!");
+            0x083 /* "User selection status does not match replay controller use status!" */);
         return this.shouldUseController;
     }
 
@@ -334,10 +334,10 @@ export class DebugReplayController extends ReplayController implements IDebugger
         seq: number,
         storage: ReadDocumentStorageServiceBase,
         version: IVersion | string) {
-        assert(!this.isSelectionMade(), "On storage resolve, user selection already made!");
-        assert(!!storage, "On storage resolve, missing storage!");
+        assert(!this.isSelectionMade(), 0x084 /* "On storage resolve, user selection already made!" */);
+        assert(!!storage, 0x085 /* "On storage resolve, missing storage!" */);
         this.storage = storage;
-        assert(this.isSelectionMade(), "After storage resolve, user selection status still false!");
+        assert(this.isSelectionMade(), 0x086 /* "After storage resolve, user selection status still false!" */);
 
         this.ui.versionSelected(seq, version);
         this.startSeqDeferred.resolve(seq);
@@ -351,7 +351,7 @@ async function* generateSequencedMessagesFromDeltaStorage(deltaStorage: IDocumen
         const { messages, partialResult } = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
         if (messages.length === 0) {
             assert(!partialResult,
-                "No messages loaded from chunk, but nonzero number of partial results loaded from chunk!");
+                0x087 /* "No messages loaded from chunk, but nonzero number of partial results loaded from chunk!" */);
             break;
         }
         yield messages;

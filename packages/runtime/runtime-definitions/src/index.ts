@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./agent";
 export * from "./dataStoreFactory";
 export * from "./dataStoreRegistry";
 export * from "./dataStoreContext";

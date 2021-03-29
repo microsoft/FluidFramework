@@ -10,6 +10,7 @@ import registerDebug from "debug";
 import { controls, ui } from "@fluid-example/client-ui-lib";
 import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
 import * as API from "@fluid-internal/client-api";
+import { IAgentScheduler } from "@fluidframework/agent-scheduler";
 import { SharedCell } from "@fluidframework/cell";
 import { performance } from "@fluidframework/common-utils";
 import {
@@ -27,7 +28,6 @@ import {
 } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import {
-    IAgentScheduler,
     IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";
 import {

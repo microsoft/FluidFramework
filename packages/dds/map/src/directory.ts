@@ -654,7 +654,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         const message = content as IDirectoryOperation;
         const handler = this.messageHandlers.get(message.type);
-        assert(handler !== undefined, `Missing message handler for message type: ${message.type}`);
+        assert(handler !== undefined, 0x00d /* `Missing message handler for message type: ${message.type}` */);
         handler.submit(message, localOpMetadata);
     }
 
@@ -744,7 +744,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         if (message.type === MessageType.Operation) {
             const op: IDirectoryOperation = message.contents as IDirectoryOperation;
             const handler = this.messageHandlers.get(op.type);
-            assert(handler !== undefined, `Missing message handler for message type: ${message.type}`);
+            assert(handler !== undefined, 0x00e /* `Missing message handler for message type: ${message.type}` */);
             handler.process(op, local, message, localOpMetadata);
         }
     }
@@ -1278,7 +1278,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     ): void {
         if (local) {
             assert(localOpMetadata !== undefined,
-                `pendingMessageId is missing from the local client's ${op.type} operation`);
+                0x00f /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
             const pendingMessageId = localOpMetadata as number;
             if (this.pendingClearMessageId === pendingMessageId) {
                 this.pendingClearMessageId = -1;
@@ -1485,7 +1485,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         if (this.pendingClearMessageId !== -1) {
             if (local) {
                 assert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
-                    "Received out of order storage op when there is an unackd clear message");
+                    0x010 /* "Received out of order storage op when there is an unackd clear message" */);
             }
             // If I have a NACK clear, we can ignore all ops.
             return false;
@@ -1496,7 +1496,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             // match the message's and don't process the op.
             if (local) {
                 assert(localOpMetadata !== undefined,
-                    `pendingMessageId is missing from the local client's ${op.type} operation`);
+                    0x011 /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
                 const pendingMessageId = localOpMetadata as number;
                 const pendingKeyMessageId = this.pendingKeys.get(op.key);
                 if (pendingKeyMessageId === pendingMessageId) {
@@ -1529,7 +1529,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         if (this.pendingSubDirectories.has(op.subdirName)) {
             if (local) {
                 assert(localOpMetadata !== undefined,
-                    `pendingMessageId is missing from the local client's ${op.type} operation`);
+                    0x012 /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
                 const pendingMessageId = localOpMetadata as number;
                 const pendingSubDirectoryMessageId = this.pendingSubDirectories.get(op.subdirName);
                 if (pendingSubDirectoryMessageId === pendingMessageId) {

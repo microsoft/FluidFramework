@@ -160,7 +160,7 @@ describe("Shared String with Interception", () => {
                 sharedStringWithInterception.replaceText(1, 2, text);
             } catch (error) {
                 assert.strictEqual(error.message,
-                    "Interception wrapper methods called recursively from the interception callback",
+                    "c8",
                     "We should have caught an assert in replaceText because it detects an infinite recursion");
                 asserted = true;
             }

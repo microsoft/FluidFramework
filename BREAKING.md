@@ -3,6 +3,7 @@
 - [Loader in data stores deprecated](#Loader-in-data-stores-deprecated)
 - [TelemetryLogger Properties Format](#TelemetryLogger-Properties-Format)
 - [IContainerRuntimeOptions Format Change](#IContainerRuntimeOptions-Format-Change)
+- [AgentScheduler moves and renames](#AgentScheduler-moves-and-renames)
 
 ### OpProcessingController marked for deprecation
 `OpProcessingController` is marked for deprecation and we be removed in 0.38.
@@ -45,6 +46,9 @@ The runtime options passed into `ContainerRuntime` have been subdivided into nes
     -   `runFullGC`
 
 For a few versions we will keep supporting the old format, but the typings have already been updated.
+
+### AgentScheduler moves and renames
+`IAgentScheduler` and `IProvideAgentScheduler` have been moved to the `@fluidframework/agent-scheduler` package, and `taskSchedulerId` has been renamed to `agentSchedulerId`.
 
 ## 0.36 Breaking changes
 - [Some `ILoader` APIs moved to `IHostLoader`](#Some-ILoader-APIs-moved-to-IHostLoader)
