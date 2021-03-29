@@ -6,13 +6,14 @@
 import commander from "commander";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { ILoadTestConfig } from "./testConfigFile";
 import { IRunConfig } from "./loadTestDataStore";
 import { createTestDriver, getProfile, load, loggerP, safeExit } from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
 
-function printStatus(runId: number, message: string) {
-    console.log(`${runId.toString().padStart(3)}> ${message}`);
+function printStatus(runConfig: IRunConfig, message: string) {
+    if(runConfig.verbose) {
+        console.log(`${runConfig.runId.toString().padStart(3)}> ${message}`);
+    }
 }
 
 async function main() {
@@ -23,6 +24,7 @@ async function main() {
         .requiredOption("-u --url <url>", "Load an existing data store from the url")
         .requiredOption("-r, --runId <runId>", "run a child process with the given id. Requires --url option.")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
+        .option("-v, --verbose", "Enables verbose logging")
         .parse(process.argv);
 
     const driver: TestDriverTypes = commander.driver;
@@ -30,6 +32,7 @@ async function main() {
     const url: string = commander.url;
     const runId: number  = commander.runId;
     const log: string | undefined = commander.log;
+    const verbose: boolean = commander.verbose ?? false;
 
     const profile = getProfile(profileArg);
 
@@ -41,7 +44,14 @@ async function main() {
         console.error("Missing --url argument needed to run child process");
         process.exit(-1);
     }
-    const result = await runnerProcess(driver, profile, runId, url);
+    const result = await runnerProcess(
+        driver,
+        {
+            runId,
+            testConfig: profile,
+            verbose,
+        },
+        url);
 
     await safeExit(result, url, runId);
 }
@@ -51,28 +61,22 @@ async function main() {
  */
 async function runnerProcess(
     driver: TestDriverTypes,
-    profile: ILoadTestConfig,
-    runId: number,
+    runConfig: IRunConfig,
     url: string,
 ): Promise<number> {
     try {
-        const runConfig: IRunConfig = {
-            runId,
-            testConfig: profile,
-        };
-
         const testDriver = await createTestDriver(driver);
 
         let reset = true;
         let done = false;
         while(!done) {
-            const {documentServiceFactory, container, test} = await load(testDriver, url, runId);
+            const {documentServiceFactory, container, test} = await load(testDriver, url, runConfig.runId);
             scheduleContainerClose(container, runConfig);
             scheduleFaultInjection(documentServiceFactory, container, runConfig);
             try{
-                printStatus(runId, `running`);
+                printStatus(runConfig, `running`);
                 done = await test.run(runConfig, reset);
-                printStatus(runId, done ?  `finished` : "closed");
+                printStatus(runConfig, done ?  `finished` : "closed");
             }catch(error) {
                 await loggerP.then(
                     async (l)=>l.sendErrorEvent({eventName: "RunnerFailed", runId: runConfig.runId}, error));
@@ -83,12 +87,12 @@ async function runnerProcess(
                 if(!container.closed) {
                     container.close();
                 }
-                await loggerP.then(async (l)=>l.flush({url, runId}));
+                await loggerP.then(async (l)=>l.flush({url, runId: runConfig.runId}));
             }
         }
         return 0;
     } catch (e) {
-        printStatus(runId, `error: loading test`);
+        printStatus(runConfig, `error: loading test`);
         console.error(e);
         return -1;
     }
@@ -100,7 +104,7 @@ function scheduleFaultInjection(
     runConfig: IRunConfig) {
     const schedule = ()=>{
         const injectionTime = runConfig.testConfig.readWriteCycleMs * 5 * Math.random();
-        printStatus(runConfig.runId, `fault injection in ${(injectionTime / 60000).toString().substring(0,4)} min`);
+        printStatus(runConfig, `fault injection in ${(injectionTime / 60000).toString().substring(0,4)} min`);
         setTimeout(() => {
             if(container.connected && container.resolvedUrl !== undefined) {
                 const deltaConn =
@@ -112,20 +116,20 @@ function scheduleFaultInjection(
                         // dispreferr errors
                         case 0: {
                             deltaConn.injectError(canRetry);
-                            printStatus(runConfig.runId, `error injected canRetry:${canRetry}`);
+                            printStatus(runConfig, `error injected canRetry:${canRetry}`);
                             break;
                         }
                         case 1:
                         case 2: {
                             deltaConn.injectDisconnect();
-                            printStatus(runConfig.runId, "disconnect injected");
+                            printStatus(runConfig, "disconnect injected");
                             break;
                         }
                         case 3:
                         case 4:
                         default: {
                             deltaConn.injectNack(container.id, canRetry);
-                            printStatus(runConfig.runId, `nack injected canRetry:${canRetry}`);
+                            printStatus(runConfig, `nack injected canRetry:${canRetry}`);
                             break;
                         }
                     }
@@ -168,7 +172,7 @@ function scheduleContainerClose(container: Container, runConfig: IRunConfig) {
                 if(quorumIndex >= 0 && quorumIndex <= runConfig.testConfig.numClients / 4) {
                     quorum.off("removeMember",scheduleLeave);
                     const leaveTime = runConfig.testConfig.readWriteCycleMs * 5 * Math.random();
-                    printStatus(runConfig.runId, `closing in ${(leaveTime / 60000).toString().substring(0,4)} min`);
+                    printStatus(runConfig, `closing in ${(leaveTime / 60000).toString().substring(0,4)} min`);
                     setTimeout(
                         ()=>{
                             if(!container.closed) {
