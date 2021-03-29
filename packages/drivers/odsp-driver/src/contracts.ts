@@ -8,6 +8,7 @@ import * as api from "@fluidframework/protocol-definitions";
 
 export interface IOdspResolvedUrl extends IFluidResolvedUrl {
     type: "fluid";
+    odspResolvedUrl: true;
 
     // URL to send to fluid, contains the documentId and the path
     url: string;

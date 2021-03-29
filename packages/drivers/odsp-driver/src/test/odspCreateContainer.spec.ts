@@ -11,7 +11,7 @@ import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions"
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
 import { IOdspResolvedUrl } from "../contracts";
-import { getHashedDocumentId } from "../odspUtils";
+import { getHashedDocumentId, getOdspResolvedUrl } from "../odspUtils";
 import { mockFetch } from "./mockFetch";
 
 describe("Odsp Create Container Test", () => {
@@ -85,7 +85,7 @@ describe("Odsp Create Container Test", () => {
                 summary,
                 resolved,
                 new TelemetryUTLogger()));
-        const finalResolverUrl = docService.resolvedUrl as IOdspResolvedUrl;
+        const finalResolverUrl = getOdspResolvedUrl(docService.resolvedUrl);
         assert.strictEqual(finalResolverUrl.driveId, driveId, "Drive Id should match");
         assert.strictEqual(finalResolverUrl.itemId, itemId, "ItemId should match");
         assert.strictEqual(finalResolverUrl.siteUrl, siteUrl, "SiteUrl should match");

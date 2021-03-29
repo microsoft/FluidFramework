@@ -45,7 +45,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
     let epochCallback: DeferralWithCallback;
 
     beforeEach(() => {
-        const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
+        const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
         epochTracker = new EpochTrackerWithRedemption(
             new LocalPersistentCache(),
             {

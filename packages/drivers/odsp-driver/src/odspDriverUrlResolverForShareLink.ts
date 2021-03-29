@@ -14,6 +14,7 @@ import { IOdspResolvedUrl, OdspDocumentInfo, OdspFluidDataStoreLocator, SharingL
 import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 import { createOdspUrl } from "./createOdspUrl";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
+import { getOdspResolvedUrl } from "./odspUtils";
 import {
     IdentityType,
     isTokenFromCache,
@@ -197,7 +198,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         relativeUrl: string,
         codeDetails?: IFluidCodeDetails,
     ): Promise<string> {
-        const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
+        const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
         const shareLink = await this.getShareLinkPromise(odspResolvedUrl);
 

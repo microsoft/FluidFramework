@@ -4,9 +4,9 @@
  */
 
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { IResolvedUrl, DriverErrorType } from "@fluidframework/driver-definitions";
 import { isOnline, OnlineStatus } from "@fluidframework/driver-utils";
-import { performance } from "@fluidframework/common-utils";
+import { assert, performance } from "@fluidframework/common-utils";
 import {
     fetchIncorrectResponse,
     offlineFetchFailureStatusCode,
@@ -26,6 +26,7 @@ import sha from "sha.js";
 import { debug } from "./debug";
 import { TokenFetchOptions } from "./tokenFetch";
 import { RateLimiter } from "./rateLimiter";
+import { IOdspResolvedUrl } from "./contracts";
 
 /** Parse the given url and return the origin (host name) */
 export const getOrigin = (url: string) => new URL(url).origin;
@@ -198,4 +199,9 @@ export interface INewFileInfo {
     driveId: string;
     filename: string;
     filePath: string;
+}
+
+export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl {
+    assert((resolvedUrl as IOdspResolvedUrl).odspResolvedUrl === true, "Not an ODSP resolved url");
+    return resolvedUrl as IOdspResolvedUrl;
 }

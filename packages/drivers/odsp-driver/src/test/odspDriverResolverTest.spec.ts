@@ -56,6 +56,7 @@ describe("Odsp Driver Resolver", () => {
             },
             tokens: {},
             type: "fluid",
+            odspResolvedUrl: true,
             url: "fluid-odsp://https://localhost?driveId=driveId&path=path&version=null",
             siteUrl: "https://localhost",
             hashedDocumentId: "",

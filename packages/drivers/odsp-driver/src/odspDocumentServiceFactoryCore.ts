@@ -27,7 +27,7 @@ import {
     ICacheAndTracker,
 } from "./epochTracker";
 import { OdspDocumentService } from "./odspDocumentService";
-import { INewFileInfo } from "./odspUtils";
+import { INewFileInfo, getOdspResolvedUrl } from "./odspUtils";
 import { createNewFluidFile } from "./createFile";
 import {
     TokenFetchOptions,
@@ -56,7 +56,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(createNewResolvedUrl);
 
-        let odspResolvedUrl = createNewResolvedUrl as IOdspResolvedUrl;
+        let odspResolvedUrl = getOdspResolvedUrl(createNewResolvedUrl);
         const [, queryString] = odspResolvedUrl.url.split("?");
 
         const searchParams = new URLSearchParams(queryString);
@@ -129,7 +129,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         logger?: ITelemetryBaseLogger,
         cacheAndTrackerArg?: ICacheAndTracker,
     ): Promise<IDocumentService> {
-        const odspResolvedUrl = (resolvedUrl as IOdspResolvedUrl);
+        const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
         const odspLogger = ChildLogger.create(logger, "OdspDriver");
         const cacheAndTracker = cacheAndTrackerArg ?? createOdspCacheAndTracker(
             this.persistedCache,

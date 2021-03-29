@@ -34,7 +34,7 @@ import { IOdspCache } from "./odspCache";
 import { OdspDeltaStorageService } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
-import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
+import { getWithRetryForTokenRefresh, isLocalStorageAvailable, getOdspResolvedUrl } from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { TokenFetchOptions } from "./tokenFetch";
@@ -119,7 +119,7 @@ export class OdspDocumentService implements IDocumentService {
         epochTracker: EpochTracker,
     ): Promise<IDocumentService> {
         return new OdspDocumentService(
-            resolvedUrl as IOdspResolvedUrl,
+            getOdspResolvedUrl(resolvedUrl),
             getStorageToken,
             getWebsocketToken,
             logger,
