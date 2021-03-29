@@ -62,6 +62,7 @@ const DefaultDeli: IDeliState = {
     logOffset: -1,
     sequenceNumber: 0,
     term: 1,
+    lastSentMSN: 0,
 };
 
 class LocalSocketPublisher implements IPublisher {
