@@ -118,7 +118,10 @@
     "run-script-os": "^1.1.5",
     "start-server-and-test": "^1.11.7",
     "tinylicious": "^0.4.18879",
-    "typescript": "~4.1.3"
+    "typescript": "~4.1.3",
+    "esbuild": "^0.11.0",
+    "fs-extra": "^9.0.1",
+    "globby": "^11.0.3"
   },
   "fluidBuild": {
     "repoPackages": {
