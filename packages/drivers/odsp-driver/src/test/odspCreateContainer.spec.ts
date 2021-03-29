@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { DriverErrorType, IDocumentService } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { DebugLogger } from "@fluidframework/telemetry-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
@@ -68,7 +68,7 @@ describe("Odsp Create Container Test", () => {
     ): Promise<IDocumentService> => odspDocumentServiceFactory.createContainer(
         summary,
         resolved,
-        DebugLogger.create("fluid:createContainer"));
+        new TelemetryUTLogger());
 
     beforeEach(() => {
         resolver = new OdspDriverUrlResolver();
@@ -84,7 +84,7 @@ describe("Odsp Create Container Test", () => {
             async () => odspDocumentServiceFactory.createContainer(
                 summary,
                 resolved,
-                DebugLogger.create("fluid:createContainer")));
+                new TelemetryUTLogger()));
         const finalResolverUrl = docService.resolvedUrl as IOdspResolvedUrl;
         assert.strictEqual(finalResolverUrl.driveId, driveId, "Drive Id should match");
         assert.strictEqual(finalResolverUrl.itemId, itemId, "ItemId should match");

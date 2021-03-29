@@ -14,6 +14,7 @@ import {
 import {
     IEntry,
     LocalPersistentCache,
+    snapshotKey,
 } from "../odspCache";
 import { getHashedDocumentId } from "../odspUtils";
 import { mockFetchCore, mockFetchMultiple, okResponse, notFound } from "./mockFetch";
@@ -61,7 +62,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
         epochTracker.setEpoch("epoch1", true, "test");
         const cacheEntry1: IEntry = {
             key:"key1",
-            type: "snapshot",
+            type: snapshotKey,
         };
         await epochTracker.put(cacheEntry1, "val1");
 
