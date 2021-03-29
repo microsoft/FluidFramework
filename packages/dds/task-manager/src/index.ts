@@ -3,5 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./taskManager";
 export * from "./interfaces";
+export * from "./taskManager";
+export * from "./oldestClientObserver";
