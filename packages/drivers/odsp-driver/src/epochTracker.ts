@@ -19,7 +19,6 @@ import {
     INonPersistentCache,
     LocalPersistentCache,
     IPersistedFileCache,
-    PersistedCacheWithErrorHandling,
     snapshotKey,
  } from "./odspCache";
 import { RateLimiter } from "./rateLimiter";
@@ -47,18 +46,16 @@ export const persistedCacheValueVersion = "0.2";
  */
 export class EpochTracker implements IPersistedFileCache {
     private _fluidEpoch: string | undefined;
-    private _fileEntry: IFileEntry | undefined;
-    private readonly cache: PersistedCacheWithErrorHandling;
 
     public readonly rateLimiter: RateLimiter;
 
     constructor(
-        cache: IPersistedCache,
+        protected readonly cache: IPersistedCache,
+        protected readonly fileEntry: IFileEntry,
         protected readonly logger: ITelemetryLogger,
     ) {
         // Limits the max number of concurrent requests to 24.
         this.rateLimiter = new RateLimiter(24);
-        this.cache = new PersistedCacheWithErrorHandling(cache, logger);
     }
 
     // public for UT purposes only!
@@ -79,47 +76,45 @@ export class EpochTracker implements IPersistedFileCache {
     public async get<T>(
         entry: IEntry,
     ): Promise<T | undefined> {
-        const value: IVersionedValueWithEpoch<T> = await this.cache.get(this.fileEntryFromEntry(entry));
-        if (value === undefined || value.version !== persistedCacheValueVersion) {
-            return undefined;
-        }
-        if (this._fluidEpoch !== undefined && this._fluidEpoch !== value.fluidEpoch) {
-            return undefined;
-        }
-        assert(value.fluidEpoch !== undefined, "all entries have to have epoch");
-        const fetchType = "cache";
         try {
-            this.validateEpochFromResponse(value.fluidEpoch, fetchType, true);
+            const value: IVersionedValueWithEpoch<T> = await this.cache.get(this.fileEntryFromEntry(entry));
+            if (value === undefined || value.version !== persistedCacheValueVersion) {
+                return undefined;
+            }
+            assert(value.fluidEpoch !== undefined, "all entries have to have epoch");
+            if (this._fluidEpoch === undefined) {
+                this.setEpoch(value.fluidEpoch, true, "cache");
+            } else if (this._fluidEpoch !== value.fluidEpoch) {
+                return undefined;
+            }
+            return value.value;
         } catch (error) {
-            await this.checkForEpochError(error, value.fluidEpoch, fetchType, true);
-            throw error;
+            this.logger.sendErrorEvent({ eventName: "cacheFetchError", type: entry.type }, error);
+            return undefined;
         }
-        return value.value;
     }
 
-    public put(entry: IEntry, value: any) {
+    public async put(entry: IEntry, value: any) {
         assert(this._fluidEpoch !== undefined, "no epoch");
         const data: IVersionedValueWithEpoch<any> = {
             value,
             version: persistedCacheValueVersion,
             fluidEpoch: this._fluidEpoch,
         };
-        this.cache.put(this.fileEntryFromEntry(entry), data);
+        return this.cache.put(this.fileEntryFromEntry(entry), data)
+            .then(() => true)
+            .catch((error) => {
+                this.logger.sendErrorEvent({ eventName: "cachePutError", type: entry.type }, error);
+                return false;
+            });
     }
 
     public async removeEntries(): Promise<void> {
-        assert(this.fileEntry !== undefined, "fileEntry");
-        return this.cache.removeEntries(this.fileEntry);
-    }
-
-    public set fileEntry(fileEntry: IFileEntry | undefined) {
-        assert(this._fileEntry === undefined, 0x09b /* "File Entry should be set only once" */);
-        assert(fileEntry !== undefined, 0x09c /* "Passed file entry should not be undefined" */);
-        this._fileEntry = fileEntry;
-    }
-
-    public get fileEntry(): IFileEntry | undefined {
-        return this._fileEntry;
+        try {
+            return await this.cache.removeEntries(this.fileEntry);
+        } catch (error) {
+            this.logger.sendErrorEvent({ eventName: "removeCacheEntries" }, error);
+        }
     }
 
     public get fluidEpoch() {
@@ -272,7 +267,6 @@ export class EpochTracker implements IPersistedFileCache {
                     fetchType,
                 });
                 this.logger.sendErrorEvent({ eventName: "EpochVersionMismatch" }, epochError);
-                assert(!!this.fileEntry, 0x09e /* "File Entry should be set to clear the cached entries!!" */);
                 // If the epoch mismatches, then clear all entries for such file entry from cache.
                 await this.removeEntries();
                 throw epochError;
@@ -295,7 +289,6 @@ export class EpochTracker implements IPersistedFileCache {
     }
 
     private fileEntryFromEntry(entry: IEntry): ICacheEntry {
-        assert(this.fileEntry !== undefined, "fileEntry");
         return { ...entry, file: this.fileEntry };
     }
 }
@@ -381,9 +374,10 @@ export interface ICacheAndTracker {
 export function createOdspCacheAndTracker(
     persistedCacheArg: IPersistedCache,
     nonpersistentCache: INonPersistentCache,
+    fileEntry: IFileEntry,
     logger: ITelemetryLogger): ICacheAndTracker
 {
-    const epochTracker = new EpochTracker(persistedCacheArg, logger);
+    const epochTracker = new EpochTracker(persistedCacheArg, fileEntry, logger);
     return {
         cache: {
             ...nonpersistentCache,
@@ -393,5 +387,5 @@ export function createOdspCacheAndTracker(
     };
 }
 
-export const createUtEpochTracker = (logger) =>
-    new EpochTracker(new LocalPersistentCache(), logger);
+export const createUtEpochTracker = (fileEntry: IFileEntry, logger: ITelemetryLogger) =>
+    new EpochTracker(new LocalPersistentCache(), fileEntry, logger);

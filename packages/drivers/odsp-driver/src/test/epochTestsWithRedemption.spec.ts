@@ -44,15 +44,16 @@ describe("Tests for Epoch Tracker With Redemption", () => {
     let epochCallback: DeferralWithCallback;
 
     beforeEach(() => {
-        epochTracker = new EpochTrackerWithRedemption(new LocalPersistentCache(), new TelemetryUTLogger());
+        const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
+        epochTracker = new EpochTrackerWithRedemption(
+            new LocalPersistentCache(),
+            {
+                docId: hashedDocumentId,
+                resolvedUrl,
+            },
+            new TelemetryUTLogger());
         epochCallback = new DeferralWithCallback();
         (epochTracker as any).treesLatestDeferral = epochCallback;
-
-        const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
-        epochTracker.fileEntry = {
-            docId: hashedDocumentId,
-            resolvedUrl,
-        };
     });
 
     it("joinSession call should succeed on retrying after any network call to the file succeeds", async () => {
@@ -62,7 +63,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
             key:"key1",
             type: "snapshot",
         };
-        epochTracker.put(cacheEntry1, "val1");
+        await epochTracker.put(cacheEntry1, "val1");
 
         try {
             // We will trigger a successful call to return the value set in the cache after the failed joinSession call

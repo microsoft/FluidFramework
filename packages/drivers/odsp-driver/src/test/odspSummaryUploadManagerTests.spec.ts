@@ -14,7 +14,7 @@ import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { EpochTracker, createUtEpochTracker } from "../epochTracker";
 import { IDedupCaches, OdspSummaryUploadManager } from "../odspSummaryUploadManager";
-import { IBlob } from "../contracts";
+import { IBlob, IOdspResolvedUrl } from "../contracts";
 import { TokenFetchOptions } from "../tokenFetch";
 import { mockFetch } from "./mockFetch";
 
@@ -23,7 +23,8 @@ describe("Odsp Summary Upload Manager Tests", () => {
     let odspSummaryUploadManager: OdspSummaryUploadManager;
     beforeEach(() => {
         const logger = new TelemetryUTLogger();
-        epochTracker = createUtEpochTracker(logger);
+        let resolvedUrl: IOdspResolvedUrl | undefined;
+        epochTracker = createUtEpochTracker({ docId: "docId", resolvedUrl: resolvedUrl! }, logger);
         odspSummaryUploadManager = new OdspSummaryUploadManager(
             "snapshotStorageUrl",
             async (options: TokenFetchOptions, name?: string) => "token",

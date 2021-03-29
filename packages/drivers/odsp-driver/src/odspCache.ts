@@ -5,7 +5,6 @@
 
 import { PromiseCache } from "@fluidframework/common-utils";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ISocketStorageDiscovery, IOdspResolvedUrl } from "./contracts";
 /**
  * Describes what kind of content is stored in cache entry.
@@ -98,7 +97,7 @@ export interface IPersistedCache {
  */
 export interface IPersistedFileCache {
     get<T = unknown>(entry: IEntry): Promise<T | undefined>;
-    put(entry: IEntry, value: any): void;
+    put(entry: IEntry, value: any): Promise<boolean>; // returns false if failed to put value
     removeEntries(): Promise<void>;
 }
 
@@ -135,40 +134,6 @@ class GarbageCollector<TKey> {
         if (timeout !== undefined) {
             clearTimeout(timeout);
             this.gcTimeouts.delete(key);
-        }
-    }
-}
-
-export class PersistedCacheWithErrorHandling {
-    public constructor(
-        protected readonly cache: IPersistedCache,
-        protected readonly logger: ITelemetryLogger) {
-    }
-
-    public async get(entry: ICacheEntry): Promise<any> {
-        return this.cache.get(entry).catch((error) => {
-            this.logger.sendErrorEvent({ eventName: "cacheFetchError", type: entry.type }, error);
-            return undefined;
-        });
-    }
-
-    public put(entry: ICacheEntry, value: any) {
-        this.cache.put(entry, value).catch((error) => {
-            this.logger.sendErrorEvent({ eventName: "cachePutError", type: entry.type }, error);
-            return undefined;
-        });
-    }
-
-    async removeEntries(file: IFileEntry): Promise<void> {
-        try {
-            await this.cache.removeEntries(file);
-        } catch (error) {
-            this.logger.sendErrorEvent(
-                {
-                    eventName: "removeCacheEntries",
-                    docId: file.docId,
-                },
-            error);
         }
     }
 }
@@ -240,7 +205,7 @@ export interface INonPersistentCache {
 /**
  * Internal cache interface used within driver only
  */
- export interface IOdspCache extends INonPersistentCache {
+export interface IOdspCache extends INonPersistentCache {
     /**
      * Persisted cache - only serializable content is allowed
      */

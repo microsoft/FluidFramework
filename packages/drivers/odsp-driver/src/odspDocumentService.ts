@@ -164,11 +164,6 @@ export class OdspDocumentService implements IDocumentService {
             storageOnly: odspResolvedUrl.fileVersion !== undefined,
         };
 
-        epochTracker.fileEntry = {
-            resolvedUrl: odspResolvedUrl,
-            docId: odspResolvedUrl.hashedDocumentId,
-        };
-
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
         this.isOdc = isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin);
         this.logger = ChildLogger.create(logger,

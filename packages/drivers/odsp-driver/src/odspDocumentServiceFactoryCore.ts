@@ -75,6 +75,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         const cacheAndTracker = createOdspCacheAndTracker(
             this.persistedCache,
             this.nonPersistentCache,
+            { resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
             logger2);
 
         return PerformanceEvent.timedExecAsync(
@@ -128,24 +129,26 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         logger?: ITelemetryBaseLogger,
         cacheAndTrackerArg?: ICacheAndTracker,
     ): Promise<IDocumentService> {
+        const odspResolvedUrl = (resolvedUrl as IOdspResolvedUrl);
         const odspLogger = ChildLogger.create(logger, "OdspDriver");
         const cacheAndTracker = cacheAndTrackerArg ?? createOdspCacheAndTracker(
             this.persistedCache,
             this.nonPersistentCache,
+            { resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
             odspLogger);
 
         return OdspDocumentService.create(
             resolvedUrl,
             this.toInstrumentedOdspTokenFetcher(
                 odspLogger,
-                resolvedUrl as IOdspResolvedUrl,
+                odspResolvedUrl,
                 this.getStorageToken,
                 "OdspDocumentService",
                 true /* throwOnNullToken */,
             ),
             this.toInstrumentedOdspTokenFetcher(
                 odspLogger,
-                resolvedUrl as IOdspResolvedUrl,
+                odspResolvedUrl,
                 this.getWebsocketToken,
                 "GetWebsocketToken",
                 false /* throwOnNullToken */,

@@ -31,12 +31,14 @@ describe("Tests for Epoch Tracker", () => {
     beforeEach(() => {
         localCache = new LocalPersistentCache();
         // use null logger here as we expect errors
-        epochTracker = new EpochTracker(localCache, new TelemetryNullLogger());
         const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
-        epochTracker.fileEntry = {
-            docId: hashedDocumentId,
-            resolvedUrl,
-        };
+        epochTracker = new EpochTracker(
+            localCache,
+            {
+                docId: hashedDocumentId,
+                resolvedUrl,
+            },
+            new TelemetryNullLogger());
     });
 
     it("Cache, old versions", async () => {
@@ -90,7 +92,7 @@ describe("Tests for Epoch Tracker", () => {
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
-        epochTracker.put(cacheEntry1, "val1");
+        await epochTracker.put(cacheEntry1, "val1");
         // This will set the initial epoch value in epoch tracker.
         await epochTracker.get(cacheEntry1);
         try {
@@ -113,7 +115,7 @@ describe("Tests for Epoch Tracker", () => {
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
-        epochTracker.put(cacheEntry1, "val1");
+        await epochTracker.put(cacheEntry1, "val1");
             // This will set the initial epoch value in epoch tracker.
         await mockFetch({}, async () => {
             return epochTracker.get<string>(cacheEntry1);
@@ -138,7 +140,7 @@ describe("Tests for Epoch Tracker", () => {
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
-        epochTracker.put(cacheEntry1, "val1");
+        await epochTracker.put(cacheEntry1, "val1");
         // This will set the initial epoch value in epoch tracker.
         await mockFetch({}, async () => {
             return epochTracker.get<string>(cacheEntry1);
@@ -164,7 +166,7 @@ describe("Tests for Epoch Tracker", () => {
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
-        epochTracker.put(cacheEntry1, "val1");
+        await epochTracker.put(cacheEntry1, "val1");
         // This will set the initial epoch value in epoch tracker.
         await mockFetch({}, async () => {
             return epochTracker.get(cacheEntry1);
@@ -190,7 +192,7 @@ describe("Tests for Epoch Tracker", () => {
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
-        epochTracker.put(cacheEntry1, "val1");
+        await epochTracker.put(cacheEntry1, "val1");
         // This will set the initial epoch value in epoch tracker.
         await mockFetch({}, async () => {
             return epochTracker.get(cacheEntry1);
@@ -217,7 +219,7 @@ describe("Tests for Epoch Tracker", () => {
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
-        epochTracker.put(cacheEntry1, "val1");
+        await epochTracker.put(cacheEntry1, "val1");
         // This will set the initial epoch value in epoch tracker.
         await mockFetch({}, async () => {
             return epochTracker.get<string>(cacheEntry1);

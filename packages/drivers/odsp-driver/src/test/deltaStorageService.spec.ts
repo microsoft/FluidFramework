@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
+import { IOdspResolvedUrl } from "../contracts";
 import { createUtEpochTracker } from "../epochTracker";
 import { OdspDeltaStorageService } from "../odspDeltaStorageService";
 import { mockFetch } from "./mockFetch";
@@ -17,6 +18,8 @@ describe("DeltaStorageService", () => {
     const deltaStorageBasePath = "https://fake.microsoft.com";
     const deltaStorageRelativePath = "/drives/testdrive/items/testitem/opStream";
     const testDeltaStorageUrl = `${deltaStorageBasePath}${deltaStorageRelativePath}`;
+    let resolvedUrl: IOdspResolvedUrl | undefined;
+    const fileEntry = { docId: "docId", resolvedUrl: resolvedUrl! };
 
     it("Should build the correct sharepoint delta url with auth", async () => {
         const logger = new TelemetryUTLogger();
@@ -24,7 +27,7 @@ describe("DeltaStorageService", () => {
             async () => testDeltaStorageUrl,
             undefined,
             async (_refresh) => "?access_token=123",
-            createUtEpochTracker(logger),
+            createUtEpochTracker(fileEntry, logger),
             logger);
         const actualDeltaUrl = await deltaStorageService.buildUrl(2, 8);
         // eslint-disable-next-line max-len
@@ -75,7 +78,7 @@ describe("DeltaStorageService", () => {
                 async () => testDeltaStorageUrl,
                 undefined,
                 async (_refresh) => "",
-                createUtEpochTracker(logger),
+                createUtEpochTracker(fileEntry, logger),
                 logger);
         });
 
@@ -131,7 +134,7 @@ describe("DeltaStorageService", () => {
                 async () => testDeltaStorageUrl,
                 undefined,
                 async (_refresh) => "",
-                createUtEpochTracker(logger),
+                createUtEpochTracker(fileEntry, logger),
                 logger);
         });
 
