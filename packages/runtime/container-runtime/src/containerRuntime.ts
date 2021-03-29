@@ -770,7 +770,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
          This will override the value in runtimeOptions if it is set (true/false). So setting it in
          runtimeOptions will only specify what to do if it has never been set before.
          Note that even leaving it undefined will force it to false if no metadata blob is written. */
-        const prevSummaryEnableGC = context.baseSnapshot ? gcEnabled(metadata) : undefined;
+        const prevSummaryEnableGC = context.existing ? gcEnabled(metadata) : undefined;
         // Default to false for now.
         this.summaryEnableGC = prevSummaryEnableGC ?? this.runtimeOptions.gcOptions.summaryEnableGC ?? false;
 
