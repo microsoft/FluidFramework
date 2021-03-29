@@ -102,7 +102,12 @@ export interface IContainerRuntimeBase extends
      * @deprecated 0.16 Issue #1537, #3631
      * @internal
      */
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IFluidRouter>;
+    _createDataStoreWithProps(
+        pkg: string | string[],
+        props?: any,
+        id?: string,
+        isRoot?: boolean,
+    ): Promise<IFluidRouter>;
 
     /**
      * Creates data store. Returns router of data store. Data store is not bound to container,
