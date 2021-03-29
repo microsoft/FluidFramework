@@ -13,6 +13,8 @@ import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
 function printStatus(runConfig: IRunConfig, message: string) {
     if(runConfig.verbose) {
         console.log(`${runConfig.runId.toString().padStart(3)}> ${message}`);
+    }else{
+        process.stdout.write(".");
     }
 }
 
