@@ -8,7 +8,7 @@ import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { IOdspResolvedUrl } from "../contracts";
 import { createUtEpochTracker } from "../epochTracker";
 import { OdspDeltaStorageService } from "../odspDeltaStorageService";
-import { mockFetch } from "./mockFetch";
+import { mockFetchOk } from "./mockFetch";
 
 describe("DeltaStorageService", () => {
     /*
@@ -83,9 +83,10 @@ describe("DeltaStorageService", () => {
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
-            const { messages, partialResult } = await mockFetch(expectedDeltaFeedResponse, async () => {
-                return deltaStorageService.get(2, 8);
-            });
+            const { messages, partialResult } = await mockFetchOk(
+                async () => deltaStorageService.get(2, 8),
+                expectedDeltaFeedResponse,
+            );
             assert(!partialResult, "partialResult === false");
             assert.equal(messages.length, 2, "Deserialized feed response is not of expected length");
             assert.equal(messages[0].sequenceNumber, 1,
@@ -139,9 +140,10 @@ describe("DeltaStorageService", () => {
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
-            const { messages, partialResult } = await mockFetch(expectedDeltaFeedResponse, async () => {
-                return deltaStorageService.get(2, 8);
-            });
+            const { messages, partialResult } = await mockFetchOk(
+                async () => deltaStorageService.get(2, 8),
+                expectedDeltaFeedResponse,
+            );
             assert(!partialResult, "partialResult === false");
             assert.equal(messages.length, 2, "Deserialized feed response is not of expected length");
             assert.equal(messages[0].sequenceNumber, 1,

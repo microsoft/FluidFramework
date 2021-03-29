@@ -20,7 +20,7 @@ import {
     LocalPersistentCache,
  } from "../odspCache";
 import { getHashedDocumentId } from "../odspUtils";
-import { mockFetch, mockFetchCore, createResponse } from "./mockFetch";
+import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch";
 
 describe("Tests for Epoch Tracker", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -97,9 +97,9 @@ describe("Tests for Epoch Tracker", () => {
         // This will set the initial epoch value in epoch tracker.
         await epochTracker.get(cacheEntry1);
         try {
-            await mockFetch(
-                {},
+            await mockFetchOk(
                 async () => epochTracker.fetchArray("fetchUrl", {}, "test"),
+                {},
                 { "x-fluid-epoch": "epoch2" });
         } catch (error) {
             success = false;
@@ -118,13 +118,11 @@ describe("Tests for Epoch Tracker", () => {
         epochTracker.setEpoch("epoch1", true, "test");
         await epochTracker.put(cacheEntry1, "val1");
             // This will set the initial epoch value in epoch tracker.
-        await mockFetch({}, async () => {
-            return epochTracker.get(cacheEntry1);
-        });
+        await epochTracker.get(cacheEntry1);
         try {
-            await mockFetch(
-                {},
+            await mockFetchOk(
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
+                {},
                 { "x-fluid-epoch": "epoch2" });
         } catch (error) {
             success = false;
@@ -143,13 +141,9 @@ describe("Tests for Epoch Tracker", () => {
         epochTracker.setEpoch("epoch1", true, "test");
         await epochTracker.put(cacheEntry1, "val1");
         // This will set the initial epoch value in epoch tracker.
-        await mockFetch({}, async () => {
-            return epochTracker.get(cacheEntry1);
-        });
+        await epochTracker.get(cacheEntry1);
         try {
-            await mockFetch({}, async () => {
-                return epochTracker.fetchArray("fetchUrl", {}, "test");
-            });
+            await mockFetchOk(async () => epochTracker.fetchArray("fetchUrl", {}, "test"));
         } catch (error) {
             success = false;
         }
@@ -169,13 +163,11 @@ describe("Tests for Epoch Tracker", () => {
         epochTracker.setEpoch("epoch1", true, "test");
         await epochTracker.put(cacheEntry1, "val1");
         // This will set the initial epoch value in epoch tracker.
-        await mockFetch({}, async () => {
-            return epochTracker.get(cacheEntry1);
-        });
+        await epochTracker.get(cacheEntry1);
         try {
-            await mockFetch(
-                {},
+            await mockFetchOk(
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
+                {},
                 { "x-fluid-epoch": "epoch1" });
         } catch (error) {
             success = false;
@@ -195,11 +187,9 @@ describe("Tests for Epoch Tracker", () => {
         epochTracker.setEpoch("epoch1", true, "test");
         await epochTracker.put(cacheEntry1, "val1");
         // This will set the initial epoch value in epoch tracker.
-        await mockFetch({}, async () => {
-            return epochTracker.get(cacheEntry1);
-        });
+        await epochTracker.get(cacheEntry1);
         try {
-            await mockFetchCore(
+            await mockFetchSingle(
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
                 async () => createResponse({ "x-fluid-epoch": "epoch1" }, undefined, 409));
         } catch (error) {
@@ -222,11 +212,9 @@ describe("Tests for Epoch Tracker", () => {
         epochTracker.setEpoch("epoch1", true, "test");
         await epochTracker.put(cacheEntry1, "val1");
         // This will set the initial epoch value in epoch tracker.
-        await mockFetch({}, async () => {
-            return epochTracker.get(cacheEntry1);
-        });
+        await epochTracker.get(cacheEntry1);
         try {
-            await mockFetchCore(
+            await mockFetchSingle(
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
                 async () => createResponse({ "x-fluid-epoch": "epoch2" }, undefined, 409));
         } catch (error) {
