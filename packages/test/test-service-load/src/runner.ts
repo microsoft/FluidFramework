@@ -18,6 +18,12 @@ function printStatus(runConfig: IRunConfig, message: string) {
     }
 }
 
+function printProgress(runConfig: IRunConfig) {
+    if(!runConfig.verbose) {
+        process.stdout.write(".");
+    }
+}
+
 async function main() {
     commander
         .version("0.0.1")
@@ -76,6 +82,7 @@ async function runnerProcess(
             scheduleContainerClose(container, runConfig);
             scheduleFaultInjection(documentServiceFactory, container, runConfig);
             try{
+                printProgress(runConfig);
                 printStatus(runConfig, `running`);
                 done = await test.run(runConfig, reset);
                 printStatus(runConfig, done ?  `finished` : "closed");
