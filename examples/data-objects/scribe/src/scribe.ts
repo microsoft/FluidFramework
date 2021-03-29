@@ -26,7 +26,6 @@ import { IDocumentFactory } from "@fluid-example/host-service-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IFluidDataStoreRuntime,
-    IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import {
     IFluidDataStoreContext,
@@ -483,17 +482,15 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
     }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
-        const dataTypes = new Map<string, IChannelFactory>();
-        const mapFactory = SharedMap.getFactory();
-        dataTypes.set(mapFactory.type, mapFactory);
-
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const router = await routerP;
                 return router.request(request);
             });
 
-        const runtime = new runtimeClass(context, dataTypes);
+        const runtime = new runtimeClass(context, new Map([
+            SharedMap.getFactory(),
+        ].map((factory) => [factory.type, factory])));
         const routerP = Scribe.load(runtime, context);
 
         return runtime;
