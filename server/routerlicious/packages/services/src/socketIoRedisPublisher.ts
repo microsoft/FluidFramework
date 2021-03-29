@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
-import * as redis from "redis";
+import Redis from "ioredis";
 import socketIoEmitter from "socket.io-emitter";
 
 export class SocketIoRedisTopic implements core.ITopic {
@@ -19,16 +19,19 @@ export class SocketIoRedisTopic implements core.ITopic {
 }
 
 export class SocketIoRedisPublisher implements core.IPublisher {
-    private readonly redisClient: redis.RedisClient;
+    private readonly redisClient: Redis.Redis;
     private readonly io: any;
     private readonly events = new EventEmitter();
 
-    constructor(port: number, host: string, options: any) {
-        this.redisClient = redis.createClient(port, host, options);
+    constructor(options: Redis.RedisOptions) {
+        this.redisClient = new Redis(options);
         this.io = socketIoEmitter(this.redisClient);
 
         this.redisClient.on("error", (error) => {
-            this.events.emit("error", error);
+            if (this.events.listenerCount("error") > 0)
+            {
+                this.events.emit("error", error);
+            }
         });
     }
 

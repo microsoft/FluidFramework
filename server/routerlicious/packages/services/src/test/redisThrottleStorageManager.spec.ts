@@ -4,22 +4,22 @@
  */
 
 import assert from "assert";
-import { RedisClient } from "redis";
-import redis from "redis-mock";
+import { Redis } from "ioredis";
+import RedisMock from "ioredis-mock";
 import { IThrottlingMetrics } from "@fluidframework/server-services-core";
 import { RedisThrottleStorageManager } from "../redisThrottleStorageManager";
 import Sinon from "sinon";
 
 describe("RedisThrottleStorageManager", () => {
-    let mockRedisClient: RedisClient;
+    let mockRedisClient: Redis;
     beforeEach(() => {
         // use fake timers to have full control over the passage of time
         Sinon.useFakeTimers()
-        mockRedisClient = redis.createClient() as RedisClient;
+        mockRedisClient = new RedisMock() as Redis;
     });
     afterEach(() => {
         mockRedisClient.flushall();
-        mockRedisClient.end();
+        mockRedisClient.quit();
         Sinon.restore();
     });
     it("Creates and retrieves throttlingMetric", async () => {
