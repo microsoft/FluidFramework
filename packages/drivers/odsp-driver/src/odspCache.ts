@@ -143,9 +143,10 @@ class GarbageCollector<TKey> {
  * used if no persisted cache is provided by the host
  */
 export class LocalPersistentCache implements IPersistedCache {
-    private readonly snapshotExpiryPolicy = 30 * 1000;
     private readonly cache = new Map<string, any>();
     private readonly gc = new GarbageCollector<string>((key) => this.cache.delete(key));
+
+    public constructor(private readonly snapshotExpiryPolicy = 30 * 1000) {}
 
     async get(entry: ICacheEntry): Promise<any> {
         const key = this.keyFromEntry(entry);

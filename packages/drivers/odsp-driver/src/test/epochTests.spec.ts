@@ -12,6 +12,7 @@ import {
     EpochTracker,
     IVersionedValueWithEpoch,
     persistedCacheValueVersion,
+    createUtLocalCache,
 } from "../epochTracker";
 import {
     ICacheEntry,
@@ -29,7 +30,7 @@ describe("Tests for Epoch Tracker", () => {
     let localCache: LocalPersistentCache;
     const hashedDocumentId = getHashedDocumentId(driveId, itemId);
     beforeEach(() => {
-        localCache = new LocalPersistentCache();
+        localCache = createUtLocalCache();
         // use null logger here as we expect errors
         const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
         epochTracker = new EpochTracker(

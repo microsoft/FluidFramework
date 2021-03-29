@@ -47,7 +47,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
     beforeEach(() => {
         const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
         epochTracker = new EpochTrackerWithRedemption(
-            new LocalPersistentCache(),
+            new LocalPersistentCache(2000),
             {
                 docId: hashedDocumentId,
                 resolvedUrl,
@@ -58,27 +58,21 @@ describe("Tests for Epoch Tracker With Redemption", () => {
     });
 
     it("joinSession call should succeed on retrying after any network call to the file succeeds", async () => {
-        let success: boolean = true;
         epochTracker.setEpoch("epoch1", true, "test");
         const cacheEntry1: IEntry = {
-            key:"key1",
             type: snapshotKey,
+            key:"key1",
         };
         await epochTracker.put(cacheEntry1, "val1");
 
-        try {
-            // We will trigger a successful call to return the value set in the cache after the failed joinSession call
-            epochCallback.setCallback(async () => epochTracker.get(cacheEntry1));
+        // We will trigger a successful call to return the value set in the cache after the failed joinSession call
+        epochCallback.setCallback(async () => epochTracker.get(cacheEntry1));
 
-            // Initial joinSession call will return 404 but after the timeout, the call will be retried and succeed
-            await mockFetchMultiple(
-                [notFound(), okResponse({ "x-fluid-epoch": "epoch1" }, {})],
-                async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
-            );
-        } catch (error) {
-            success = false;
-        }
-        assert.strictEqual(success, true, "Join session should succeed after retrying");
+        // Initial joinSession call will return 404 but after the timeout, the call will be retried and succeed
+        await mockFetchMultiple(
+            [notFound(), okResponse({ "x-fluid-epoch": "epoch1" }, {})],
+            async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
+        );
     });
 
     it("Requests should fail if joinSession call fails and the getLatest call also fails", async () => {

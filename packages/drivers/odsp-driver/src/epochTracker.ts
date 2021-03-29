@@ -313,13 +313,26 @@ export class EpochTrackerWithRedemption extends EpochTracker {
     public async get(
         entry: IEntry,
     ): Promise<any> {
-        return super.get(entry).catch((error) => {
-            // equivalence of what happens in fetchAndParseAsJSON()
-            if (entry.type === snapshotKey) {
-                this.treesLatestDeferral.reject(error);
-            }
-            throw error;
-        });
+        let result = super.get(entry);
+
+        // equivalence of what happens in fetchAndParseAsJSON()
+        if (entry.type === snapshotKey) {
+            result = result
+                .then((value) => {
+                    // If there is nothing in cache, we need to wait for network call to complete (and do redemption)
+                    // Otherwise file was redeemed in prior session, so if joinSession failed, we should not retry
+                    if (value !== undefined) {
+                        this.treesLatestDeferral.resolve();
+                    }
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                    return value;
+                })
+                .catch((error) => {
+                    this.treesLatestDeferral.reject(error);
+                    throw error;
+                });
+        }
+        return result;
     }
 
     public async fetchAndParseAsJSON<T>(
@@ -357,8 +370,14 @@ export class EpochTrackerWithRedemption extends EpochTracker {
         // to unblock the process.
         await PerformanceEvent.timedExecAsync(this.logger, { eventName: "JoinSessionSyncWait" }, async (event) => {
             const timeoutRes = 51; // anything will work here
-            const timeoutP = new Promise<number>((accept) => setTimeout(() => { accept(timeoutRes); }, 15000));
-            const res = await Promise.race([timeoutP, this.treesLatestDeferral.promise]);
+            let timer: ReturnType<typeof setTimeout>;
+            const timeoutP = new Promise<number>((accept) => {
+                timer = setTimeout(() => { accept(timeoutRes); }, 15000);
+            });
+            const res = await Promise.race([
+                timeoutP,
+                // cancel timeout to unblock UTs (otherwise Node process does not exit for 15 sec)
+                this.treesLatestDeferral.promise.finally(() => clearTimeout(timer))]);
             if (res === timeoutRes) {
                 event.cancel();
             }
@@ -388,5 +407,6 @@ export function createOdspCacheAndTracker(
     };
 }
 
+export const createUtLocalCache = () => new LocalPersistentCache(2000);
 export const createUtEpochTracker = (fileEntry: IFileEntry, logger: ITelemetryLogger) =>
-    new EpochTracker(new LocalPersistentCache(), fileEntry, logger);
+    new EpochTracker(createUtLocalCache(), fileEntry, logger);
