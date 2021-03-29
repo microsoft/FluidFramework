@@ -87,7 +87,7 @@ export class ParallelRequests<T> {
                 break;
             }
             this.results.delete(this.nextToDeliver);
-            assert(value.length <= this.payloadSize, "addRequestCore() should break into smaller chunks");
+            assert(value.length <= this.payloadSize, 0x1d9 /* "addRequestCore() should break into smaller chunks" */);
             this.nextToDeliver += value.length;
             this.responseCallback(value);
         }
