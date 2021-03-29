@@ -17,6 +17,7 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:genver": "gen-version",
+    "build:plaid": "node \"/home/tylerbu/code/FluidFramework/plaid.js\"",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "debug": "node --inspect-brk ./dist/nodeStressTest.js --debug",
     "debug:mini": "node --inspect-brk ./dist/nodeStressTest.js --debug --profile mini",

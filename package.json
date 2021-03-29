@@ -12,7 +12,7 @@
     "build:compile": "lerna run build:compile --stream",
     "build:docs": "lerna run build:docs --stream --parallel",
     "build:fast": "fluid-build --root .",
-    "build:plaid": "lerna run build:plaid --stream",
+    "build:plaid": "lerna run build:plaid --stream --scope @fluidframework/*",
     "build:full": "npm run build:genver && npm run build:full:compile && npm run lint && npm run build:docs",
     "build:full:compile": "lerna run build:full:compile --stream",
     "build:gendocs": "copyfiles server/routerlicious/_api-extractor-temp/** ./_api-extractor-temp/doc-models/ -f -V && cd docs && npm run build",
