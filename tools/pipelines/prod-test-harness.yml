@@ -15,27 +15,27 @@ pool:
 steps:
 - task: UseNode@1
   displayName: Use Node 12.x
-  inputs: 
+  inputs:
     version: 12.x
 
 - task: Npm@1
   displayName: npm run usePrereleaseDeps
   inputs:
     command: 'custom'
-    workingDir: 'packages/test/service-load-test'
+    workingDir: 'packages/test/test-service-load'
     customCommand: 'run usePrereleaseDeps'
 
 - task: npmAuthenticate@0
   displayName: 'npm Authenticate .npmrc'
   inputs:
-    workingFile: packages/test/service-load-test/.npmrc
+    workingFile: packages/test/test-service-load/.npmrc
     customEndpoint: Offnet Packages
 
 - task: Npm@1
   displayName: npm i
   inputs:
     command: 'custom'
-    workingDir: 'packages/test/service-load-test'
+    workingDir: 'packages/test/test-service-load'
     customCommand: 'install'
     customRegistry: 'useNpmrc'
 
@@ -43,7 +43,7 @@ steps:
   displayName: npm run build
   inputs:
     command: 'custom'
-    workingDir: 'packages/test/service-load-test'
+    workingDir: 'packages/test/test-service-load'
     customCommand: 'run build'
 
 - task: Npm@1
@@ -53,5 +53,5 @@ steps:
     login__microsoft__secret: $(clientSecret)
   inputs:
     command: 'custom'
-    workingDir: 'packages/test/service-load-test'
+    workingDir: 'packages/test/test-service-load'
     customCommand: 'run start:mini -- -w $(Password)'

@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-internal/service-load-test",
+  "name": "@fluid-internal/test-service-load",
   "version": "0.38.0",
   "description": "End to end tests",
   "homepage": "https://fluidframework.com",
