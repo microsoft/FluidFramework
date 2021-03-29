@@ -19,11 +19,13 @@ import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp
 import { IOdspResolvedUrl, HostStoragePolicy } from "./contracts";
 import {
     LocalPersistentCache,
-    createOdspCache,
     NonPersistentCache,
     IPersistedCache,
-    LocalPersistentCacheAdapter,
 } from "./odspCache";
+import {
+    createOdspCacheAndTracker,
+    ICacheAndTracker,
+} from "./epochTracker";
 import { OdspDocumentService } from "./odspDocumentService";
 import { INewFileInfo } from "./odspUtils";
 import { createNewFluidFile } from "./createFile";
@@ -34,7 +36,6 @@ import {
     OdspResourceTokenFetchOptions,
     TokenFetcher,
 } from "./tokenFetch";
-import { EpochTracker, EpochTrackerWithRedemption } from "./epochTracker";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -71,7 +72,11 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         };
 
         const logger2 = ChildLogger.create(logger, "OdspDriver");
-        const epochTracker = new EpochTracker(new LocalPersistentCacheAdapter(this.persistedCache), logger2);
+        const cacheAndTracker = createOdspCacheAndTracker(
+            this.persistedCache,
+            this.nonPersistentCache,
+            logger2);
+
         return PerformanceEvent.timedExecAsync(
             logger2,
             {
@@ -90,9 +95,9 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     newFileParams,
                     logger2,
                     createNewSummary,
-                    epochTracker,
+                    cacheAndTracker.epochTracker,
                 );
-                const docService = this.createDocumentService(odspResolvedUrl, logger, epochTracker);
+                const docService = this.createDocumentService(odspResolvedUrl, logger, cacheAndTracker);
                 event.end({
                     docId: odspResolvedUrl.hashedDocumentId,
                 });
@@ -121,10 +126,10 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
-        epochTracker?: EpochTracker,
+        cacheAndTrackerArg?: ICacheAndTracker,
     ): Promise<IDocumentService> {
         const odspLogger = ChildLogger.create(logger, "OdspDriver");
-        const cache = createOdspCache(
+        const cacheAndTracker = cacheAndTrackerArg ?? createOdspCacheAndTracker(
             this.persistedCache,
             this.nonPersistentCache,
             odspLogger);
@@ -147,10 +152,9 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             ),
             odspLogger,
             this.getSocketIOClient,
-            cache,
+            cacheAndTracker.cache,
             this.hostPolicy,
-            epochTracker ?? new EpochTrackerWithRedemption(
-                new LocalPersistentCacheAdapter(this.persistedCache), odspLogger),
+            cacheAndTracker.epochTracker,
         );
     }
 

@@ -9,10 +9,10 @@ import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 import * as api from "@fluidframework/protocol-definitions";
-import { hashFile, IsoBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
+import { hashFile, IsoBuffer } from "@fluidframework/common-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
-import { EpochTracker } from "../epochTracker";
-import { LocalPersistentCache, LocalPersistentCacheAdapter } from "../odspCache";
+import { EpochTracker, createUtEpochTracker } from "../epochTracker";
 import { IDedupCaches, OdspSummaryUploadManager } from "../odspSummaryUploadManager";
 import { IBlob } from "../contracts";
 import { TokenFetchOptions } from "../tokenFetch";
@@ -20,12 +20,10 @@ import { mockFetch } from "./mockFetch";
 
 describe("Odsp Summary Upload Manager Tests", () => {
     let epochTracker: EpochTracker;
-    let cache: LocalPersistentCacheAdapter;
     let odspSummaryUploadManager: OdspSummaryUploadManager;
     beforeEach(() => {
-        const logger = new TelemetryNullLogger();
-        cache = new LocalPersistentCacheAdapter(new LocalPersistentCache());
-        epochTracker = new EpochTracker(cache, logger);
+        const logger = new TelemetryUTLogger();
+        epochTracker = createUtEpochTracker(logger);
         odspSummaryUploadManager = new OdspSummaryUploadManager(
             "snapshotStorageUrl",
             async (options: TokenFetchOptions, name?: string) => "token",

@@ -4,9 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { EpochTracker } from "../epochTracker";
-import { LocalPersistentCache, LocalPersistentCacheAdapter } from "../odspCache";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
+import { createUtEpochTracker } from "../epochTracker";
 import { OdspDeltaStorageService } from "../odspDeltaStorageService";
 import { mockFetch } from "./mockFetch";
 
@@ -20,12 +19,12 @@ describe("DeltaStorageService", () => {
     const testDeltaStorageUrl = `${deltaStorageBasePath}${deltaStorageRelativePath}`;
 
     it("Should build the correct sharepoint delta url with auth", async () => {
-        const logger = new TelemetryNullLogger();
+        const logger = new TelemetryUTLogger();
         const deltaStorageService = new OdspDeltaStorageService(
             async () => testDeltaStorageUrl,
             undefined,
             async (_refresh) => "?access_token=123",
-            new EpochTracker(new LocalPersistentCacheAdapter(new LocalPersistentCache()), logger),
+            createUtEpochTracker(logger),
             logger);
         const actualDeltaUrl = await deltaStorageService.buildUrl(2, 8);
         // eslint-disable-next-line max-len
@@ -71,12 +70,12 @@ describe("DeltaStorageService", () => {
 
         let deltaStorageService: OdspDeltaStorageService;
         before(() => {
-            const logger = new TelemetryNullLogger();
+            const logger = new TelemetryUTLogger();
             deltaStorageService = new OdspDeltaStorageService(
                 async () => testDeltaStorageUrl,
                 undefined,
                 async (_refresh) => "",
-                new EpochTracker(new LocalPersistentCacheAdapter(new LocalPersistentCache()), logger),
+                createUtEpochTracker(logger),
                 logger);
         });
 
@@ -127,11 +126,12 @@ describe("DeltaStorageService", () => {
 
         let deltaStorageService: OdspDeltaStorageService;
         before(() => {
-            const logger = new TelemetryNullLogger();
-            deltaStorageService = new OdspDeltaStorageService(async () => testDeltaStorageUrl,
+            const logger = new TelemetryUTLogger();
+            deltaStorageService = new OdspDeltaStorageService(
+                async () => testDeltaStorageUrl,
                 undefined,
                 async (_refresh) => "",
-                new EpochTracker(new LocalPersistentCacheAdapter(new LocalPersistentCache()), logger),
+                createUtEpochTracker(logger),
                 logger);
         });
 

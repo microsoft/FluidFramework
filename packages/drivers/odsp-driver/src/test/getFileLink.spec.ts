@@ -4,14 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { getFileLink } from "../getFileLink";
 import { mockFetch, mockFetchMultiple, okResponse, notFound } from "./mockFetch";
 
 describe("getFileLink", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
     const driveId = "driveId";
-    const logger = new TelemetryNullLogger();
+    const logger = new TelemetryUTLogger();
     const storageTokenFetcher = async () => "StorageToken";
     const fileItemResponse = {
         webDavUrl: "fetchDavUrl",

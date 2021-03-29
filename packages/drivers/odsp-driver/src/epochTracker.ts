@@ -10,11 +10,34 @@ import { ThrottlingError } from "@fluidframework/driver-utils";
 import { IConnected } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent, LoggingError } from "@fluidframework/telemetry-utils";
 import { fetchAndParseAsJSONHelper, fetchArray, IOdspResponse } from "./odspUtils";
-import { ICacheEntry, IFileEntry, LocalPersistentCacheAdapter } from "./odspCache";
+import {
+    ICacheEntry,
+    IEntry,
+    IFileEntry,
+    IOdspCache,
+    IPersistedCache,
+    INonPersistentCache,
+    LocalPersistentCache,
+    IPersistedFileCache,
+    PersistedCacheWithErrorHandling,
+    snapshotKey,
+ } from "./odspCache";
 import { RateLimiter } from "./rateLimiter";
 
-export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "other" | "snapshotTree" |
+export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" |
     "treesLatest" | "uploadSummary" | "push" | "versions";
+
+export type FetchTypeInternal = FetchType | "cache";
+
+// exported only of test purposes
+export interface IVersionedValueWithEpoch<T> {
+    value: T;
+    fluidEpoch: string,
+    version: "0.2",
+}
+
+// exported only of test purposes
+export const persistedCacheValueVersion = "0.2";
 
 /**
  * This class is a wrapper around fetch calls. It adds epoch to the request made so that the
@@ -22,17 +45,71 @@ export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "
  * It also validates the epoch value received in response of fetch calls. If the epoch does not match,
  * then it also clears all the cached entries for the given container.
  */
-export class EpochTracker {
+export class EpochTracker implements IPersistedFileCache {
     private _fluidEpoch: string | undefined;
     private _fileEntry: IFileEntry | undefined;
+    private readonly cache: PersistedCacheWithErrorHandling;
+
     public readonly rateLimiter: RateLimiter;
 
     constructor(
-        private readonly persistedCache: LocalPersistentCacheAdapter,
+        cache: IPersistedCache,
         protected readonly logger: ITelemetryLogger,
     ) {
         // Limits the max number of concurrent requests to 24.
         this.rateLimiter = new RateLimiter(24);
+        this.cache = new PersistedCacheWithErrorHandling(cache, logger);
+    }
+
+    // public for UT purposes only!
+    public setEpoch(epoch: string, fromCache: boolean, fetchType: FetchTypeInternal) {
+        assert(this._fluidEpoch === undefined, "epoch exists");
+        this._fluidEpoch = epoch;
+
+        this.logger.sendTelemetryEvent(
+            {
+                eventName: "EpochLearnedFirstTime",
+                epoch,
+                fetchType,
+                fromCache,
+            },
+        );
+    }
+
+    public async get<T>(
+        entry: IEntry,
+    ): Promise<T | undefined> {
+        const value: IVersionedValueWithEpoch<T> = await this.cache.get(this.fileEntryFromEntry(entry));
+        if (value === undefined || value.version !== persistedCacheValueVersion) {
+            return undefined;
+        }
+        if (this._fluidEpoch !== undefined && this._fluidEpoch !== value.fluidEpoch) {
+            return undefined;
+        }
+        assert(value.fluidEpoch !== undefined, "all entries have to have epoch");
+        const fetchType = "cache";
+        try {
+            this.validateEpochFromResponse(value.fluidEpoch, fetchType, true);
+        } catch (error) {
+            await this.checkForEpochError(error, value.fluidEpoch, fetchType, true);
+            throw error;
+        }
+        return value.value;
+    }
+
+    public put(entry: IEntry, value: any) {
+        assert(this._fluidEpoch !== undefined, "no epoch");
+        const data: IVersionedValueWithEpoch<any> = {
+            value,
+            version: persistedCacheValueVersion,
+            fluidEpoch: this._fluidEpoch,
+        };
+        this.cache.put(this.fileEntryFromEntry(entry), data);
+    }
+
+    public async removeEntries(): Promise<void> {
+        assert(this.fileEntry !== undefined, "fileEntry");
+        return this.cache.removeEntries(this.fileEntry);
     }
 
     public set fileEntry(fileEntry: IFileEntry | undefined) {
@@ -57,23 +134,6 @@ export class EpochTracker {
         } catch (error) {
             await this.checkForEpochError(error, epoch, "push");
             throw error;
-        }
-    }
-
-    public async fetchFromCache<T>(
-        entry: ICacheEntry,
-        maxOpCount: number | undefined,
-        fetchType: FetchType,
-    ): Promise<T | undefined> {
-        const value = await this.persistedCache.get(entry, maxOpCount);
-        if (value !== undefined) {
-            try {
-                this.validateEpochFromResponse(value.fluidEpoch, fetchType, true);
-            } catch (error) {
-                await this.checkForEpochError(error, value.fluidEpoch, fetchType, true);
-                throw error;
-            }
-            return value.value as T;
         }
     }
 
@@ -183,29 +243,21 @@ export class EpochTracker {
 
     protected validateEpochFromResponse(
         epochFromResponse: string | undefined,
-        fetchType: FetchType,
+        fetchType: FetchTypeInternal,
         fromCache: boolean = false,
     ) {
         this.checkForEpochErrorCore(epochFromResponse);
         if (epochFromResponse !== undefined) {
             if (this._fluidEpoch === undefined) {
-                this.logger.sendTelemetryEvent(
-                    {
-                        eventName: "EpochLearnedFirstTime",
-                        epoch: epochFromResponse,
-                        fetchType,
-                        fromCache,
-                    },
-                );
+                this.setEpoch(epochFromResponse, fromCache, fetchType);
             }
-            this._fluidEpoch = epochFromResponse;
         }
     }
 
     private async checkForEpochError(
         error: any,
         epochFromResponse: string | null | undefined,
-        fetchType: FetchType,
+        fetchType: FetchTypeInternal,
         fromCache: boolean = false,
     ) {
         if (error.errorType === OdspErrorType.epochVersionMismatch) {
@@ -222,7 +274,7 @@ export class EpochTracker {
                 this.logger.sendErrorEvent({ eventName: "EpochVersionMismatch" }, epochError);
                 assert(!!this.fileEntry, 0x09e /* "File Entry should be set to clear the cached entries!!" */);
                 // If the epoch mismatches, then clear all entries for such file entry from cache.
-                await this.persistedCache.removeEntries(this.fileEntry);
+                await this.removeEntries();
                 throw epochError;
             }
             // If it was categorized as epoch error but the epoch returned in response matches with the client epoch
@@ -241,6 +293,11 @@ export class EpochTracker {
             throwOdspNetworkError(message ?? "Epoch Mismatch", fluidEpochMismatchError);
         }
     }
+
+    private fileEntryFromEntry(entry: IEntry): ICacheEntry {
+        assert(this.fileEntry !== undefined, "fileEntry");
+        return { ...entry, file: this.fileEntry };
+    }
 }
 
 export class EpochTrackerWithRedemption extends EpochTracker {
@@ -257,6 +314,18 @@ export class EpochTrackerWithRedemption extends EpochTracker {
         // That covers cases of "treesLatest" as well as "getVersions" or "createFile" - all the ways we can start
         // exploring a file.
         this.treesLatestDeferral.resolve();
+    }
+
+    public async get<T>(
+        entry: IEntry,
+    ): Promise<T | undefined> {
+        return super.get<T>(entry).catch((error) => {
+            // equivalence of what happens in fetchAndParseAsJSON()
+            if (entry.type === snapshotKey) {
+                this.treesLatestDeferral.reject(error);
+            }
+            throw error;
+        });
     }
 
     public async fetchAndParseAsJSON<T>(
@@ -303,3 +372,26 @@ export class EpochTrackerWithRedemption extends EpochTracker {
         return super.fetchAndParseAsJSON<T>(url, fetchOptions, fetchType, addInBody);
     }
 }
+
+export interface ICacheAndTracker {
+    cache: IOdspCache;
+    epochTracker: EpochTracker;
+}
+
+export function createOdspCacheAndTracker(
+    persistedCacheArg: IPersistedCache,
+    nonpersistentCache: INonPersistentCache,
+    logger: ITelemetryLogger): ICacheAndTracker
+{
+    const epochTracker = new EpochTracker(persistedCacheArg, logger);
+    return {
+        cache: {
+            ...nonpersistentCache,
+            persistedCache: epochTracker,
+        },
+        epochTracker,
+    };
+}
+
+export const createUtEpochTracker = (logger) =>
+    new EpochTracker(new LocalPersistentCache(), logger);

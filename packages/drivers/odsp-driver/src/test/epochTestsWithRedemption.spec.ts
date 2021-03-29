@@ -4,11 +4,17 @@
  */
 
 import { strict as assert } from "assert";
-import { TelemetryNullLogger, Deferred } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/common-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "../contracts";
-import { EpochTrackerWithRedemption } from "../epochTracker";
-import { ICacheEntry, LocalPersistentCache, LocalPersistentCacheAdapter } from "../odspCache";
+import {
+    EpochTrackerWithRedemption,
+} from "../epochTracker";
+import {
+    IEntry,
+    LocalPersistentCache,
+} from "../odspCache";
 import { getHashedDocumentId } from "../odspUtils";
 import { mockFetchCore, mockFetchMultiple, okResponse, notFound } from "./mockFetch";
 
@@ -34,13 +40,11 @@ describe("Tests for Epoch Tracker With Redemption", () => {
     const driveId = "driveId";
     const itemId = "fileId";
     let epochTracker: EpochTrackerWithRedemption;
-    let cache: LocalPersistentCacheAdapter;
     const hashedDocumentId = getHashedDocumentId(driveId, itemId);
     let epochCallback: DeferralWithCallback;
 
     beforeEach(() => {
-        cache = new LocalPersistentCacheAdapter(new LocalPersistentCache());
-        epochTracker = new EpochTrackerWithRedemption(cache, new TelemetryNullLogger());
+        epochTracker = new EpochTrackerWithRedemption(new LocalPersistentCache(), new TelemetryUTLogger());
         epochCallback = new DeferralWithCallback();
         (epochTracker as any).treesLatestDeferral = epochCallback;
 
@@ -53,16 +57,16 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 
     it("joinSession call should succeed on retrying after any network call to the file succeeds", async () => {
         let success: boolean = true;
-        const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
-        const cacheEntry1: ICacheEntry = {
+        epochTracker.setEpoch("epoch1", true, "test");
+        const cacheEntry1: IEntry = {
             key:"key1",
             type: "snapshot",
-            file: { docId: hashedDocumentId, resolvedUrl } };
-        cache.put(cacheEntry1, { value: "val1", fluidEpoch: "epoch1", version: "0.1" }, 0);
+        };
+        epochTracker.put(cacheEntry1, "val1");
 
         try {
             // We will trigger a successful call to return the value set in the cache after the failed joinSession call
-            epochCallback.setCallback(async () => epochTracker.fetchFromCache(cacheEntry1, undefined, "other"));
+            epochCallback.setCallback(async () => epochTracker.get<string>(cacheEntry1));
 
             // Initial joinSession call will return 404 but after the timeout, the call will be retried and succeed
             await mockFetchMultiple(
