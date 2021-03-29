@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 
 /** Temporary function to make backwards compatible runtime options. */
