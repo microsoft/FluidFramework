@@ -9,6 +9,7 @@ import { Container } from "@fluidframework/container-loader";
 import { ILoadTestConfig } from "./testConfigFile";
 import { IRunConfig } from "./loadTestDataStore";
 import { createTestDriver, getProfile, load, loggerP, safeExit } from "./utils";
+import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
 
 function printStatus(runId: number, message: string) {
     console.log(`${runId.toString().padStart(3)}> ${message}`);
@@ -65,8 +66,9 @@ async function runnerProcess(
         let reset = true;
         let done = false;
         while(!done) {
-            const {container, test} = await load(testDriver, url, runId);
+            const {documentServiceFactory, container, test} = await load(testDriver, url, runId);
             scheduleContainerClose(container, runConfig);
+            scheduleFaultInjection(documentServiceFactory, container, runConfig);
             try{
                 printStatus(runId, `running`);
                 done = await test.run(runConfig, reset);
@@ -90,6 +92,51 @@ async function runnerProcess(
         console.error(e);
         return -1;
     }
+}
+
+function scheduleFaultInjection(
+    ds: FaultInjectionDocumentServiceFactory,
+    container: Container,
+    runConfig: IRunConfig) {
+    const schedule = ()=>{
+        const injectionTime = runConfig.testConfig.readWriteCycleMs * 5 * Math.random();
+        printStatus(runConfig.runId, `fault injection in ${(injectionTime / 60000).toString().substring(0,4)} min`);
+        setTimeout(() => {
+            if(container.connected && container.resolvedUrl !== undefined) {
+                const deltaConn =
+                    ds.documentServices.get(container.resolvedUrl)?.documentDeltaConnection;
+                if(deltaConn !== undefined) {
+                    // 1 in numClients chance of non-retritable error to not overly conflict with container close
+                    const canRetry = Math.floor(Math.random() * runConfig.testConfig.numClients) === 0 ? false : true;
+                    switch(Math.floor(Math.random() * 5)) {
+                        // dispreferr errors
+                        case 0: {
+                            deltaConn.injectError(canRetry);
+                            printStatus(runConfig.runId, `error injected canRetry:${canRetry}`);
+                            break;
+                        }
+                        case 1:
+                        case 2: {
+                            deltaConn.injectDisconnect();
+                            printStatus(runConfig.runId, "disconnect injected");
+                            break;
+                        }
+                        case 3:
+                        case 4:
+                        default: {
+                            deltaConn.injectNack(container.id, canRetry);
+                            printStatus(runConfig.runId, `nack injected canRetry:${canRetry}`);
+                            break;
+                        }
+                    }
+                }
+            }
+            if(!container.closed) {
+                schedule();
+            }
+        }, injectionTime);
+    };
+    schedule();
 }
 
 function scheduleContainerClose(container: Container, runConfig: IRunConfig) {
@@ -121,7 +168,7 @@ function scheduleContainerClose(container: Container, runConfig: IRunConfig) {
                 if(quorumIndex >= 0 && quorumIndex <= runConfig.testConfig.numClients / 4) {
                     quorum.off("removeMember",scheduleLeave);
                     const leaveTime = runConfig.testConfig.readWriteCycleMs * 5 * Math.random();
-                    printStatus(runConfig.runId, `closing in ${leaveTime / 60000} min`);
+                    printStatus(runConfig.runId, `closing in ${(leaveTime / 60000).toString().substring(0,4)} min`);
                     setTimeout(
                         ()=>{
                             if(!container.closed) {

@@ -16,6 +16,7 @@ import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { fluidExport, ILoadTest } from "./loadTestDataStore";
 import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
+import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
@@ -83,19 +84,15 @@ const codeDetails: IFluidCodeDetails = {
 
 const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 
-export async function createLoader(testDriver: ITestDriver, runId: number | undefined) {
+export async function initialize(testDriver: ITestDriver) {
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
         codeLoader,
-        logger: ChildLogger.create(await loggerP, undefined, {all: { runId }}),
+        logger: ChildLogger.create(await loggerP, undefined, {all: { driverType: testDriver.type }}),
     });
-    return loader;
-}
 
-export async function initialize(testDriver: ITestDriver) {
-    const loader = await createLoader(testDriver, undefined);
     const container = await loader.createDetachedContainer(codeDetails);
     container.on("error", (error) => {
         console.log(error);
@@ -110,9 +107,19 @@ export async function initialize(testDriver: ITestDriver) {
 }
 
 export async function load(testDriver: ITestDriver, url: string, runId: number) {
-    const loader = await createLoader(testDriver, runId);
+    const documentServiceFactory =
+        new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
+
+    // Construct the loader
+    const loader = new Loader({
+        urlResolver: testDriver.createUrlResolver(),
+        documentServiceFactory,
+        codeLoader,
+        logger: ChildLogger.create(await loggerP, undefined, {all: { runId, driverType: testDriver.type }}),
+    });
+
     const container = await loader.resolve({ url });
-    return {container, test: await requestFluidObject<ILoadTest>(container,"/")};
+    return {documentServiceFactory, container, test: await requestFluidObject<ILoadTest>(container,"/")};
 }
 
 export const createTestDriver =
