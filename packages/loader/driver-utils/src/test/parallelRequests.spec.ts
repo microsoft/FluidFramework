@@ -167,4 +167,52 @@ describe("Parallel Requests", () => {
         await testCancel(1, 1000, 502, 10, 60);
         await testCancel(1, undefined, 502, 10, 60);
     });
+
+    it("exception in request", async () => {
+        const manager = new ParallelRequests<number>(
+            1,
+            100,
+            10,
+            new TelemetryUTLogger(),
+            async (request: number, _from: number, _to: number) => {
+                throw new Error("request");
+            },
+            (deltas: number[]) => {
+                throw new Error("response");
+            },
+        );
+
+        let success = true;
+        try {
+            await manager.run(10);
+        } catch (error) {
+            success = false;
+            assert(error.message === "request");
+        }
+        assert(!success);
+    });
+
+    it("exception in response", async () => {
+        const manager = new ParallelRequests<number>(
+            1,
+            100,
+            10,
+            new TelemetryUTLogger(),
+            async (request: number, _from: number, _to: number) => {
+                return { cancel: false, partial: false, payload: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] };
+            },
+            (deltas: number[]) => {
+                throw new Error("response");
+            },
+        );
+
+        let success = true;
+        try {
+            await manager.run(10);
+        } catch (error) {
+            success = false;
+            assert(error.message === "response");
+        }
+        assert(!success);
+    });
 });

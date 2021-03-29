@@ -7,6 +7,5 @@ export * from "./audience";
 export * from "./container";
 export * from "./deltaManager";
 export * from "./loader";
-export * from "./networkUtils";
 export * from "./utils";
 export * from "./retriableDocumentStorageService";
