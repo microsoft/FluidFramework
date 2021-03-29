@@ -5,6 +5,7 @@
 
 import { EventEmitter } from "events";
 
+import { AttachState } from "@fluidframework/container-definitions";
 import { IQuorum } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IOldestClientObserver } from "./interfaces";
@@ -101,6 +102,11 @@ export class OldestClientObserver extends EventEmitter implements IOldestClientO
     };
 
     private computeIsOldest(): boolean {
+        // If the container is detached, we are the only ones that know about it and are the oldest by default.
+        if (this.containerRuntime.attachState === AttachState.Detached) {
+            return true;
+        }
+
         if (this.containerRuntime.clientId === undefined) {
             return false;
         }
