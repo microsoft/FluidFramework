@@ -17,7 +17,8 @@ import { ILoadTestConfig } from "./testConfigFile";
 
 export interface IRunConfig {
     runId: number,
-    testConfig: ILoadTestConfig
+    testConfig: ILoadTestConfig,
+    verbose: boolean,
 }
 
 export interface ILoadTest {
@@ -208,23 +209,25 @@ class LoadTestDataStoreModel {
     }
 
     public printStatus() {
-        const now = Date.now();
-        const totalMin = (now - this.startTime) / 60000;
-        const taskMin = this.totalTaskTime / 60000;
-        const opCount  = this.runtime.deltaManager.lastKnownSeqNumber;
-        const opRate = Math.floor(this.runtime.deltaManager.lastKnownSeqNumber / totalMin);
-        const sendRate = Math.floor(this.counter.value / taskMin);
-        const disposed = this.runtime.disposed;
-        console.log(
-            `${this.config.runId.toString().padStart(3)}>` +
-            ` seen: ${opCount.toString().padStart(8)} (${opRate.toString().padStart(4)}/min),` +
-            ` sent: ${this.counter.value.toString().padStart(8)} (${sendRate.toString().padStart(2)}/min),` +
-            ` run time: ${taskMin.toFixed(2).toString().padStart(5)} min`,
-            ` total time: ${totalMin.toFixed(2).toString().padStart(5)} min`,
-            `hasTask: ${this.haveTaskLock()}`,
-            !disposed ? `audience: ${this.runtime.getAudience().getMembers().size}` : "",
-            !disposed ? `quorum: ${this.runtime.getQuorum().getMembers().size}` : "",
-        );
+        if(this.config.verbose) {
+            const now = Date.now();
+            const totalMin = (now - this.startTime) / 60000;
+            const taskMin = this.totalTaskTime / 60000;
+            const opCount  = this.runtime.deltaManager.lastKnownSeqNumber;
+            const opRate = Math.floor(this.runtime.deltaManager.lastKnownSeqNumber / totalMin);
+            const sendRate = Math.floor(this.counter.value / taskMin);
+            const disposed = this.runtime.disposed;
+            console.log(
+                `${this.config.runId.toString().padStart(3)}>` +
+                ` seen: ${opCount.toString().padStart(8)} (${opRate.toString().padStart(4)}/min),` +
+                ` sent: ${this.counter.value.toString().padStart(8)} (${sendRate.toString().padStart(2)}/min),` +
+                ` run time: ${taskMin.toFixed(2).toString().padStart(5)} min`,
+                ` total time: ${totalMin.toFixed(2).toString().padStart(5)} min`,
+                `hasTask: ${this.haveTaskLock()}`,
+                !disposed ? `audience: ${this.runtime.getAudience().getMembers().size}` : "",
+                !disposed ? `quorum: ${this.runtime.getQuorum().getMembers().size}` : "",
+            );
+        }
     }
 }
 
@@ -247,12 +250,14 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         // and listen cycles
 
         const cycleMs = config.testConfig.readWriteCycleMs;
-        let t: NodeJS.Timeout;
-        const printProgress = () => {
-            dataModel.printStatus();
+        let t: NodeJS.Timeout | undefined;
+        if(config.verbose) {
+            const printProgress = () => {
+                dataModel.printStatus();
+                t = setTimeout(printProgress, config.testConfig.progressIntervalMs);
+            };
             t = setTimeout(printProgress, config.testConfig.progressIntervalMs);
-        };
-        t = setTimeout(printProgress, config.testConfig.progressIntervalMs);
+        }
 
         const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
         const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
@@ -283,7 +288,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
             }
             return !this.runtime.disposed;
         }finally{
-            clearTimeout(t);
+            if(t !== undefined) {
+                clearTimeout(t);
+            }
             dataModel.printStatus();
         }
     }
