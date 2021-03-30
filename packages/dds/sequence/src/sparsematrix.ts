@@ -189,7 +189,9 @@ export function positionToRowCol(position: number) {
     return { row, col };
 }
 
-export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
+/**
+ *  @deprecated - Use SharedMatrix
+ */
     /**
      * Create a new sparse matrix
      *
@@ -326,6 +328,9 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     }
 }
 
+/**
+ *  @deprecated - Use SharedMatrixFactory
+ */
 export class SparseMatrixFactory implements IChannelFactory {
     public static Type = "https://graph.microsoft.com/types/mergeTree/sparse-matrix";
 
