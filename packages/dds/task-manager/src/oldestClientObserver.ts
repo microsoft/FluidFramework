@@ -87,10 +87,12 @@ export class OldestClientObserver extends EventEmitter implements IOldestClientO
             return true;
         }
 
+        // Without a clientId we can't verify if we're oldest, assume we are not
         if (this.containerRuntime.clientId === undefined) {
             return false;
         }
 
+        // If we're not connected we can't be the oldest connected client
         if (!this.containerRuntime.connected) {
             return false;
         }

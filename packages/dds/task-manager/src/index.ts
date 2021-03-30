@@ -4,5 +4,5 @@
  */
 
 export * from "./interfaces";
-export * from "./taskManager";
 export * from "./oldestClientObserver";
+export * from "./taskManager";
