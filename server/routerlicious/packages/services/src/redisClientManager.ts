@@ -6,6 +6,7 @@
 import { IClient, ISignalClient } from "@fluidframework/protocol-definitions";
 import { IClientManager } from "@fluidframework/server-services-core";
 import { Redis } from "ioredis";
+import * as winston from "winston";
 
 // Manages the set of connected clients in redis hashes with an expiry of 'expireAfterSeconds'.
 export class ClientManager implements IClientManager {
@@ -22,6 +23,10 @@ export class ClientManager implements IClientManager {
         this.removeAsync = client.hdel.bind(client);
         this.findAllAsync = client.hgetall.bind(client);
         this.expire = client.expire.bind(client);
+
+        client.on("error", (error) => {
+            winston.error("Client Manager Redis Error:", error);
+        });
     }
 
     public async addClient(tenantId: string, documentId: string, clientId: string, details: IClient): Promise<void> {

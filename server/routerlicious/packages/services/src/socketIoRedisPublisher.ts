@@ -28,10 +28,7 @@ export class SocketIoRedisPublisher implements core.IPublisher {
         this.io = socketIoEmitter(this.redisClient);
 
         this.redisClient.on("error", (error) => {
-            if (this.events.listenerCount("error") > 0)
-            {
-                this.events.emit("error", error);
-            }
+            this.events.emit("error", error);
         });
     }
 

@@ -11,6 +11,7 @@ import * as _ from "lodash";
 import Redis from "ioredis";
 import socketIo from "socket.io";
 import socketIoRedis from "socket.io-redis";
+import * as winston from "winston";
 import * as redisSocketIoAdapter from "./redisSocketIoAdapter";
 import { SocketIORedisConnection, SocketIoRedisSubscriptionConnection } from "./socketIoRedisConnection";
 
@@ -94,6 +95,13 @@ export function create(
 
     const pub = new Redis(_.clone(options));
     const sub = new Redis(_.clone(options));
+
+    pub.on("error", (err) => {
+        winston.error("Error with Redis pub connection: ", err);
+    });
+    sub.on("error", (err) => {
+        winston.error("Error with Redis sub connection: ", err);
+    });
 
     // Create and register a socket.io connection on the server
     const io = socketIo();

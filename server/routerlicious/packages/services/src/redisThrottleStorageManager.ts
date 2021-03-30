@@ -8,6 +8,7 @@ import {
     IThrottlingMetrics,
 } from "@fluidframework/server-services-core";
 import { Redis } from "ioredis";
+import * as winston from "winston";
 
 /**
  * Manages storage of throttling metrics in redis hashes with an expiry of 'expireAfterSeconds'.
@@ -25,6 +26,10 @@ export class RedisThrottleStorageManager implements IThrottleStorageManager {
         this.setAsync = client.hmset.bind(client);
         this.getAsync = client.hgetall.bind(client);
         this.expire = client.expire.bind(client);
+
+        client.on("error", (error) => {
+            winston.error("Throttle Manager Redis Error:", error);
+        });
     }
 
     public async setThrottlingMetric(
