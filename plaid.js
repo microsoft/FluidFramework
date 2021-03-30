@@ -58,18 +58,26 @@ const build = async (mode, globs) => {
     }
 }
 
-(async () => {
+const start = async () => {
     const src = ['src/**/*.ts', 'src/**/*.tsx', '!src/test/**'];
     const test = ['src/test/**/*.ts', 'src/test/**/*.tsx'];
 
     // console.log(paths);
 
-    const result = shell.exec("npm run tsc -- --emitDeclarationOnly").code;
-    if (result !== 0 && result !== undefined) {
-        shell.echo(`Error: ${result}`);
-    }
-
     await build("commonjs", src);
     await build("esnext", src);
     await build("test", test);
-})();
+
+    // console.log(JSON.stringify(process.argv));
+
+    if(process.argv.length >= 3) {
+        console.log(`Skipping type generation.`);
+    } else {
+        const result = shell.exec("npm run tsc -- --emitDeclarationOnly").code;
+        if (result !== 0 && result !== undefined) {
+            shell.echo(`Error: ${result}`);
+        }
+    }
+}
+
+start().catch(err => console.error(err));
