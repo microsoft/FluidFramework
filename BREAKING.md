@@ -50,7 +50,7 @@ The runtime options passed into `ContainerRuntime` have been subdivided into nes
     -   `disableIsolatedChannels`
 -   `gcOptions` - contains all Garbage Collection related options
     -   `disableGC`
-    -   `summaryEnableGC` (new)
+    -   `gcAllowed` (new)
     -   `runFullGC`
 
 For a few versions we will keep supporting the old format, but the typings have already been updated.
