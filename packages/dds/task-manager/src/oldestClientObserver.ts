@@ -11,66 +11,46 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { IOldestClientObserver } from "./interfaces";
 
 /**
- * The `OldestClientObserver` is a utility to observe a `Quorum` for changes to which client is the oldest.
+ * The `OldestClientObserver` is a utility inspect if the local client is the oldest amongst connected clients (in
+ * terms of when they connected) and watch for changes.
  *
  * It is still experimental and under development.  Please do try it out, but expect breaking changes in the future.
  *
  * @remarks
  * ### Creation
  *
- * To create a `TaskManager`, call the static create method:
+ * The `OldestClientObserver` constructor takes an `IContainerRuntime`:
  *
  * ```typescript
- * const taskManager = TaskManager.create(this.runtime, id);
+ * const oldestClientObserver = new OldestClientObserver(containerRuntime);
  * ```
  *
  * ### Usage
  *
- * To volunteer for a task, use the `lockTask()` method.  This returns a Promise that will resolve once the client
- * has acquired exclusive rights to run the task, or reject if the client is removed from the queue without acquiring
- * the rights.
+ * To check if the local client is the oldest, use the `isOldest()` method.
  *
  * ```typescript
- * taskManager.lockTask("NameOfTask")
- *     .then(() => { doTheTask(); })
- *     .catch((err) => { console.error(err); });
- * ```
- *
- * To release the rights to the task, use the `abandon()` method.  The next client in the queue will then get the
- * rights to run the task.
- *
- * ```typescript
- * taskManager.abandon("NameOfTask");
- * ```
- *
- * To inspect your state in the queue, you can use the `queued()` and `haveTaskLock()` methods.
- *
- * ```typescript
- * if (taskManager.queued("NameOfTask")) {
- *     console.log("This client is somewhere in the queue, potentially even having the lock");
- * }
- *
- * if (taskManager.queued("NameOfTask")) {
- *     console.log("This client currently has the rights to run the task");
+ * if (oldestClientObserver.isOldest()) {
+ *     console.log("I'm the oldest");
+ * } else {
+ *     console.log("Someone else is older");
  * }
  * ```
  *
  * ### Eventing
  *
- * `TaskManager` is an `EventEmitter`, and will emit events when a task is assigned to the client or released.
+ * `OldestClientObserver` is an `EventEmitter`, and will emit events when the local client becomes the oldest and when
+ * it is no longer the oldest.
  *
  * ```typescript
- * taskManager.on("assigned", (taskId: string) => {
- *     console.log(`Client was assigned task: ${taskId}`);
+ * oldestClientObserver.on("becameOldest", () => {
+ *     console.log("I'm the oldest now");
  * });
  *
- * taskManager.on("lost", (taskId: string) => {
- *     console.log(`Client released task: ${taskId}`);
+ * oldestClientObserver.on("lostOldest", () => {
+ *     console.log("I'm not the oldest anymore");
  * });
  * ```
- *
- * These can be useful if the logic to volunteer for a task is separated from the logic to perform the task and it's
- * not convenient to pass the Promise around.
  */
 export class OldestClientObserver extends EventEmitter implements IOldestClientObserver {
     private readonly quorum: IQuorum;
