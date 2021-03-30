@@ -53,7 +53,7 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
             summaryConfigOverrides,
         },
         gcOptions: {
-            summaryEnableGC: true,
+            gcAllowed: true,
         },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(

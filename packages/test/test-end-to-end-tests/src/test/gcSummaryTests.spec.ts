@@ -37,7 +37,7 @@ describeNoCompat("GC in summary", (getTestObjectProvider) => {
         []);
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: { generateSummaries: false },
-        gcOptions: { summaryEnableGC: true },
+        gcOptions: { gcAllowed: true },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         dataObjectFactory,

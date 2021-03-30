@@ -224,7 +224,7 @@ export interface IGCRuntimeOptions {
      * Currently if this is set to false, it will take priority and any container will
      * never run GC.
      */
-    summaryEnableGC?: boolean;
+    gcAllowed?: boolean;
 
     /**
      * Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether the node
@@ -264,13 +264,13 @@ interface IRuntimeMessageMetadata {
     batch?: boolean;
 }
 
-function localStorageEnableGC(): boolean | undefined {
+function localStorageRunGC(): boolean | undefined {
     try {
         if (typeof localStorage === "object" && localStorage !== null) {
-            if  (localStorage.FluidEnableGC === "1") {
+            if  (localStorage.FluidRunGC === "1") {
                 return true;
             }
-            if  (localStorage.FluidEnableGC === "0") {
+            if  (localStorage.FluidRunGC === "0") {
                 return false;
             }
         }
@@ -497,7 +497,7 @@ function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions):
         return runtimeOptions;
     }
 
-    type OldContainerRuntimeOptions = Omit<IGCRuntimeOptions, "summaryEnableGC"> & ISummaryRuntimeOptions;
+    type OldContainerRuntimeOptions = Omit<IGCRuntimeOptions, "gcAllowed"> & ISummaryRuntimeOptions;
     const oldRuntimeOptions = runtimeOptions as OldContainerRuntimeOptions;
 
     const summaryOptions: ISummaryRuntimeOptions = runtimeOptions.summaryOptions ?? {
@@ -775,10 +775,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const prevSummaryGCFeature = context.existing ? gcFeature(metadata) : undefined;
         // Default to false for now.
         this.summaryGCFeature = prevSummaryGCFeature ??
-            (this.runtimeOptions.gcOptions.summaryEnableGC === true ? 1 : 0);
+            (this.runtimeOptions.gcOptions.gcAllowed === true ? 1 : 0);
 
         // Can override with localStorage flag.
-        this.shouldRunGC = localStorageEnableGC() ?? (
+        this.shouldRunGC = localStorageRunGC() ?? (
             // Must not be disabled permanently in summary.
             (this.summaryGCFeature > 0)
             // Must not be disabled by runtime option.
