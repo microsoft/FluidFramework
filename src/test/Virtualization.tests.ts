@@ -15,7 +15,8 @@ import {
 	testTrait,
 } from './utilities/TestUtilities';
 
-describe('SharedTree history virtualization', () => {
+// TODO:#49901: Enable these tests once we write edit chunk handles to summaries
+describe.skip('SharedTree history virtualization', () => {
 	let sharedTree: SharedTree;
 	let testObjectProvider: TestObjectProvider<ITestContainerConfig>;
 

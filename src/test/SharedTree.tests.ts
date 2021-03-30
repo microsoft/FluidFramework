@@ -552,7 +552,8 @@ describe('SharedTree', () => {
 			expect(await tree.edits.tryGetEdit(editID)).to.be.undefined;
 		});
 
-		it('does not swallow errors in asynchronous blob uploading', async () => {
+		// TODO:#49901: Enable these tests once we write edit chunk handles to summaries
+		it.skip('does not swallow errors in asynchronous blob uploading', async () => {
 			const errorMessage = 'Simulated exception in uploadBlob';
 			const { tree, componentRuntime, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			componentRuntime.uploadBlob = async () => {

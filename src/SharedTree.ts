@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8, IsoBuffer } from '@fluidframework/common-utils';
+import { fromBase64ToUtf8 } from '@fluidframework/common-utils';
 import { IFluidHandle, IFluidSerializer } from '@fluidframework/core-interfaces';
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from '@fluidframework/protocol-definitions';
 import { IFluidDataStoreRuntime, IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
-import { serializeHandles, SharedObject } from '@fluidframework/shared-object-base';
+import { SharedObject } from '@fluidframework/shared-object-base';
 import { IErrorEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger } from '@fluidframework/telemetry-utils';
 import { assert, fail, SharedTreeTelemetryProperties } from './Common';
@@ -322,12 +322,13 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 	 * Uploads the edit chunk and sends the chunk key along with the resulting handle as an op.
 	 */
 	private async uploadEditChunk(edits: EditWithoutId[], chunkKey: number): Promise<void> {
-		const editHandle = await this.runtime.uploadBlob(IsoBuffer.from(JSON.stringify({ edits })));
-		this.submitLocalMessage({
-			editHandle: serializeHandles(editHandle, this.serializer, this.handle),
-			chunkKey,
-			type: SharedTreeOpType.Handle,
-		});
+		// TODO:#49901: Enable writing of edit chunk blobs to summary
+		// const editHandle = await this.runtime.uploadBlob(IsoBuffer.from(JSON.stringify({ edits })));
+		// this.submitLocalMessage({
+		// 	editHandle: serializeHandles(editHandle, this.serializer, this.handle),
+		// 	chunkKey,
+		// 	type: SharedTreeOpType.Handle,
+		// });
 	}
 
 	/**
