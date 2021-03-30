@@ -18,7 +18,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:plaid": "node \"/home/tylerbu/code/FluidFramework/plaid.js\"",
+    "build:plaid": "node \"../../../plaid.js\"",
     "bump-version": "lerna version minor --no-push --no-git-tag-version",
     "ci:build": "npm run build:compile",
     "ci:test": "echo No test for this package",

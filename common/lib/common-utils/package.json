@@ -24,7 +24,7 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:genver": "gen-version",
-    "build:plaid": "node \"/home/tylerbu/code/FluidFramework/plaid.js\"",
+    "build:plaid": "node \"../../../plaid.js\"",
     "build:test": "concurrently npm:build:test:mocha npm:build:test:jest",
     "build:test:jest": "tsc --project ./src/test/jest/tsconfig.json",
     "build:test:mocha": "tsc --project ./src/test/mocha/tsconfig.json",

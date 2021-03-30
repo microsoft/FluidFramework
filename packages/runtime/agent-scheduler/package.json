@@ -16,7 +16,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:plaid": "node \"/home/tylerbu/code/FluidFramework/plaid.js\"",
+    "build:plaid": "node \"../../../plaid.js\"",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "dev": "npm run build:dev -- --watch",
     "eslint": "eslint --format stylish src",

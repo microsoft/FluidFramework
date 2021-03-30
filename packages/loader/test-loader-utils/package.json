@@ -15,7 +15,7 @@
     "build:compile": "npm run tsc",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:plaid": "node \"/home/tylerbu/code/FluidFramework/plaid.js\"",
+    "build:plaid": "node \"../../../plaid.js\"",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix",
