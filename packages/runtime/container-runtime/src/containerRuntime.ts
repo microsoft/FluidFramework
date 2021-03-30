@@ -218,7 +218,7 @@ export interface IGCRuntimeOptions {
     disableGC?: boolean;
 
     /**
-     * Flag representing the summary's preference for enabling garbage collection.
+     * Flag representing the summary's preference for allowing garbage collection.
      * This is stored in the summary and unchangeable (for now). So this runtime option
      * only takes affect on new containers.
      * Currently if this is set to false, it will take priority and any container will
