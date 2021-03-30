@@ -75,8 +75,8 @@ export interface IContainerRuntimeMetadata {
     readonly summaryFormatVersion: 1;
     /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
     readonly disableIsolatedChannels?: true;
-    /** True to enable GC, false to disable GC, undefined to not specify a preference. */
-    readonly enableGC?: boolean;
+    /** 1 to enable GC, 0 to disable GC, undefined defaults to disabled. */
+    readonly gcFeature?: 0 | 1;
 }
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
@@ -101,12 +101,14 @@ export function rootHasIsolatedChannels(metadata: IContainerRuntimeMetadata | un
     return !!metadata && !metadata.disableIsolatedChannels;
 }
 
-export function gcEnabled(metadata: IContainerRuntimeMetadata | undefined): boolean | undefined {
+export function gcFeature(
+    metadata: IContainerRuntimeMetadata | undefined,
+): Required<IContainerRuntimeMetadata>["gcFeature"] {
     if (!metadata) {
-        // Force to false in prior versions
-        return false;
+        // Force to 0/disabled in prior versions
+        return 0;
     }
-    return metadata.enableGC;
+    return metadata.gcFeature ?? 0;
 }
 
 export const protocolTreeName = ".protocol";
