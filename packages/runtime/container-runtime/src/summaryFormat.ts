@@ -105,7 +105,7 @@ export function gcFeature(
     metadata: IContainerRuntimeMetadata | undefined,
 ): Required<IContainerRuntimeMetadata>["gcFeature"] {
     if (!metadata) {
-        // Force to 0/disabled in prior versions
+        // Force to 0/disallowed in prior versions
         return 0;
     }
     return metadata.gcFeature ?? 0;
