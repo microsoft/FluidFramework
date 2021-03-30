@@ -192,6 +192,7 @@ export function positionToRowCol(position: number) {
 /**
  *  @deprecated - Use SharedMatrix
  */
+ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     /**
      * Create a new sparse matrix
      *
