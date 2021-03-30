@@ -62,13 +62,9 @@ const start = async () => {
     const src = ['src/**/*.ts', 'src/**/*.tsx', '!src/test/**'];
     const test = ['src/test/**/*.ts', 'src/test/**/*.tsx'];
 
-    // console.log(paths);
-
     await build("commonjs", src);
     await build("esnext", src);
     await build("test", test);
-
-    // console.log(JSON.stringify(process.argv));
 
     if(process.argv.length >= 3) {
         console.log(`Skipping type generation.`);
