@@ -34,8 +34,7 @@ describe("No Delta Stream", () => {
     };
     const factory = new TestContainerRuntimeFactory(
         "",
-        new TestFluidObjectFactory([[stringId, SharedString.getFactory()]]),
-        { generateSummaries: true });
+        new TestFluidObjectFactory([[stringId, SharedString.getFactory()]]));
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let loaderContainerTracker: LoaderContainerTracker;

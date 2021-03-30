@@ -10,12 +10,13 @@ import {
 } from "@fluidframework/aqueduct";
 import { assert, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { Container } from "@fluidframework/container-loader";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -34,8 +35,9 @@ describeNoCompat("GC in summary", (getTestObjectProvider) => {
         TestDataObject,
         [],
         []);
-    const runtimeOptions = {
-        generateSummaries: false,
+    const runtimeOptions: IContainerRuntimeOptions = {
+        summaryOptions: { generateSummaries: false },
+        gcOptions: { gcAllowed: true },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         dataObjectFactory,
@@ -44,7 +46,7 @@ describeNoCompat("GC in summary", (getTestObjectProvider) => {
         ],
         undefined,
         undefined,
-        runtimeOptions,
+        flattenRuntimeOptions(runtimeOptions),
     );
 
     let provider: ITestObjectProvider;
