@@ -97,21 +97,19 @@ export class OldestClientObserver extends EventEmitter implements IOldestClientO
             return false;
         }
 
-        const members = this.quorum.getMembers();
-        if (members.size === 0) {
+        const selfSequencedClient = this.quorum.getMember(this.containerRuntime.clientId);
+        if (selfSequencedClient === undefined) {
             return false;
         }
 
-        let oldestClient: { clientId: string, sequenceNumber: number } | undefined;
-        for (const [clientId, sequencedClient] of members.entries()) {
-            if (oldestClient === undefined || sequencedClient.sequenceNumber < oldestClient.sequenceNumber) {
-                oldestClient = {
-                    clientId,
-                    sequenceNumber: sequencedClient.sequenceNumber,
-                };
+        const members = this.quorum.getMembers();
+        for (const sequencedClient of members.values()) {
+            if (sequencedClient.sequenceNumber < selfSequencedClient.sequenceNumber) {
+                return false;
             }
         }
 
-        return oldestClient?.clientId === this.containerRuntime.clientId;
+        // No member of the quorum was older
+        return true;
     }
 }
