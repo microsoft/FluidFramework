@@ -6,12 +6,14 @@
 const esb = require('esbuild');
 const fs = require("fs-extra");
 const globby = require('globby');
-const { program } = require('commander');
+const shell = require("shelljs");
 
-program
-    .option('-d, --debug', 'output extra debugging')
-    .option('-s, --small', 'small pizza size')
-    .option('-p, --pizza-type <type>', 'flavour of pizza');
+// const { program } = require('commander');
+
+// program
+//    .option('-d, --debug', 'output extra debugging')
+//    .option('-s, --small', 'small pizza size')
+//    .option('-p, --pizza-type <type>', 'flavour of pizza');
 
 const build = async (mode, globs) => {
     if (mode === "commonjs") {
@@ -27,7 +29,7 @@ const build = async (mode, globs) => {
             logLimit: 50,
             metafile: true,
         }).catch(() => process.exit(1));
-    } else if (mode === "test") {
+    } else if (mode === "test" && fs.existsSync('src/test/tsconfig.json')) {
         esb.build({
             entryPoints: await globby(globs),
             tsconfig: 'src/test/tsconfig.json',
@@ -35,6 +37,19 @@ const build = async (mode, globs) => {
             outbase: 'src',
             outdir: 'dist',
             format: 'cjs',
+            sourcemap: true,
+            logLevel: 'info',
+            logLimit: 50,
+            metafile: true,
+        }).catch(() => process.exit(1));
+    } else if (mode === "esnext" && fs.existsSync('tsconfig.esnext.json')) {
+        esb.build({
+            entryPoints: await globby(globs),
+            tsconfig: 'tsconfig.esnext.json',
+            target: ["es2020"],
+            outbase: 'src',
+            outdir: 'lib',
+            format: 'esm',
             sourcemap: true,
             logLevel: 'info',
             logLimit: 50,
@@ -49,6 +64,12 @@ const build = async (mode, globs) => {
 
     // console.log(paths);
 
+    const result = shell.exec("npm run tsc -- --emitDeclarationOnly").code;
+    if (result !== 0 && result !== undefined) {
+        shell.echo(`Error: ${result}`);
+    }
+
     await build("commonjs", src);
-    await build("test", test)
+    await build("esnext", src);
+    await build("test", test);
 })();
