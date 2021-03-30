@@ -15,7 +15,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
-import { AsSerializable } from "@fluidframework/datastore-definitions";
+import { Serializable } from "@fluidframework/datastore-definitions";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import { RequestParser } from "@fluidframework/runtime-utils";
@@ -39,7 +39,7 @@ export interface ISpacesItem {
     /**
      * The unknown blob of data that backs the instance of the item.  Probably contains handles, etc.
      */
-    serializableObject: AsSerializable<any>;
+    serializableObject: Serializable;
     /**
      * A key matching an entry in the spacesItemMap, which we'll use to pair the unknown blob with an entry that
      * knows how to deal with it.

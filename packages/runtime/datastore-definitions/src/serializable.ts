@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { AsJsonable, Jsonable, JsonablePrimitive } from "./jsonable";
+import { Jsonable } from "./jsonable";
 
 /**
  * A union of the types that Fluid can intrinsically serialize, which is any type is that is
@@ -14,6 +14,4 @@ import { AsJsonable, Jsonable, JsonablePrimitive } from "./jsonable";
  *
  * (See Jsonable for caveats regarding serialization of `undefined` and non-finite numbers.)
  */
-export type Serializable = Jsonable<JsonablePrimitive | IFluidHandle>;
-
-export type AsSerializable<T> = AsJsonable<T, JsonablePrimitive | IFluidHandle>;
+export type Serializable<T = any> = Jsonable<T, IFluidHandle>;

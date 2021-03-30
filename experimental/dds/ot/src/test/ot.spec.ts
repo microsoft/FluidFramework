@@ -40,7 +40,7 @@ describe("OT", () => {
             ot.replace([], null, {});
         });
 
-        const expect = (expected: Jsonable) => {
+        const expect = <T>(expected: Jsonable<T>) => {
             assert.deepEqual(ot.get(), expected);
         };
 
@@ -110,7 +110,7 @@ describe("OT", () => {
                 ot1.replace([], null, {});
             });
 
-            const expect = (expected: Jsonable) => {
+            const expect = <T>(expected: Jsonable<T>) => {
                 containerRuntimeFactory.processAllMessages();
                 assert.deepEqual(ot1.get(), expected);
                 assert.deepEqual(ot2.get(), expected);

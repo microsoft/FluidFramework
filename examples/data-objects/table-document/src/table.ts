@@ -3,14 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { Serializable } from "@fluidframework/datastore-definitions";
 import { ICombiningOp, PropertySet } from "@fluidframework/merge-tree";
-import {
-    Jsonable,
-    JsonablePrimitive,
-} from "@fluidframework/datastore-definitions";
 
-export type TableDocumentItem = Jsonable<JsonablePrimitive | IFluidHandle>;
+export type TableDocumentItem = Serializable;
 
 /**
  * @deprecated - Use SharedMatrix with IMatrixProducer/Consumer interfaces instead.
