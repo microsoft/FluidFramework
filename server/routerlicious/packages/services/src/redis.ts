@@ -5,6 +5,7 @@
 
 import { ICache } from "@fluidframework/server-services-core";
 import { Redis } from "ioredis";
+import * as winston from "winston";
 /**
  * Redis based cache client
  */
@@ -15,6 +16,10 @@ export class RedisCache implements ICache {
     constructor(client: Redis, private readonly prefix = "page") {
         this.getAsync = client.get.bind(client);
         this.setAsync = client.set.bind(client);
+
+        client.on("error", (err) => {
+            winston.error("Error with Redis:", err);
+        });
     }
 
     public async get(key: string): Promise<string> {

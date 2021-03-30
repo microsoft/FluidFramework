@@ -4,11 +4,11 @@
 - [@fluidframework/server-services-shared@0.1023](#@fluidframework/server-services-shared@0.1023)
   - [`shared.SocketIORedisConnection and shared.SocketIoServer` takes in an ioredis client instead of a node-redis client](#`shared.SocketIORedisConnection-and-shared.SocketIoServer`-using-ioredis)
 - [@fluidframework/server-services@0.1023](#@fluidframework/server-services@0.1023)
-  - [`services.ClientManager, services.RedisThrottleManager, and services.SocketIoRedisPublisher` uses ioredis client instead of a node-redis client](#`services.managers-and-services.publisher-using-ioredis)
+  - [`services.RedisCache, services.ClientManager, services.RedisThrottleManager, and services.SocketIoRedisPublisher` uses ioredis client instead of a node-redis client](#`services.managers-and-services.publisher-using-ioredis)
 
 ### @fluidframework/server-services-shared@0.1023
 
-#### `shared.SocketIORedisConnection-and-shared.SocketIoServer` using ioredis
+#### `shared.SocketIORedisConnection and shared.SocketIoServer` using ioredis
 
 ```ts
 import Redis from "ioredis";
@@ -27,7 +27,7 @@ const subConn =  new SocketIORedisConnection(sub);
 const server = new SocketIoServer(new SocketIo(), pub, sub);
 ```
 
-#### `services.managers-and-services-publisher` using ioredis
+#### `services.RedisCache, services.ClientManager, services.RedisThrottleManager, and services.SocketIoRedisPublisher` using ioredis
 
 ```ts
 import Redis from "ioredis";
@@ -39,6 +39,7 @@ const options: Redis.RedisOptions = {
 };
 const redisClient = new Redis(options);
 
+const redisCache = new services.RedisCache(redisClient);
 const clientManager = new services.ClientManager(redisClient);
 const redisClientForThrottling = new services.RedisThrottleStorageManager(redisClient);
 

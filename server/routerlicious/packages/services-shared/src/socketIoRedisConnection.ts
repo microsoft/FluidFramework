@@ -4,14 +4,19 @@
  */
 
 import { Redis } from "ioredis";
+import * as winston from "winston";
 import { ISocketIoRedisConnection, ISocketIoRedisSubscriptionConnection } from "./redisSocketIoAdapter";
 
 /**
- * Simple implementation of ISocketIoRedisConnection, which wraps a node-redis client
+ * Simple implementation of ISocketIoRedisConnection, which wraps a redis client
  * and only provides Pub functionality
  */
 export class SocketIORedisConnection implements ISocketIoRedisConnection {
-    constructor(protected readonly client: Redis) {}
+    constructor(protected readonly client: Redis) {
+        client.on("error", (err) => {
+            winston.error("Error with Redis:", err);
+        });
+    }
 
     public async publish(channel: string, message: string) {
         await this.client.publish(channel, message);

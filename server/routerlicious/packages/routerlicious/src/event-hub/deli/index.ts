@@ -48,6 +48,9 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         };
     }
     const publisher = new services.SocketIoRedisPublisher(redisOptions);
+    publisher.on("error", (err) => {
+        winston.error("Error with Redis Publisher:", err);
+    });
 
     const localContext = new LocalContext(winston);
 
