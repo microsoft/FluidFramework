@@ -30,7 +30,8 @@ export interface ITableDocumentEvents extends IEvent {
 }
 
 /**
- * @deprecated - SparseMatrix is an abandoned prototype.  Please use SharedMatrix instead.
+ * @deprecated - TableDocument is an abandoned prototype.  Please use SharedMatrix with
+ *               the IMatrixProducer/Consumer interfaces instead.
  */
 // eslint-disable-next-line @typescript-eslint/ban-types
 export class TableDocument extends DataObject<{}, {}, ITableDocumentEvents> implements ITable {
