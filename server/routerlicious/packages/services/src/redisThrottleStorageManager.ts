@@ -14,19 +14,11 @@ import * as winston from "winston";
  * Manages storage of throttling metrics in redis hashes with an expiry of 'expireAfterSeconds'.
  */
 export class RedisThrottleStorageManager implements IThrottleStorageManager {
-    private readonly setAsync: any;
-    private readonly getAsync: any;
-    private readonly expire: any;
-
     constructor(
-        client: Redis,
+        private readonly client: Redis,
         private readonly expireAfterSeconds = 60 * 60 * 24,
         private readonly prefix = "throttle",
     ) {
-        this.setAsync = client.hmset.bind(client);
-        this.getAsync = client.hgetall.bind(client);
-        this.expire = client.expire.bind(client);
-
         client.on("error", (error) => {
             winston.error("Throttle Manager Redis Error:", error);
         });
@@ -37,17 +29,17 @@ export class RedisThrottleStorageManager implements IThrottleStorageManager {
         throttlingMetric: IThrottlingMetrics,
     ): Promise<void> {
         const key = this.getKey(id);
-        const result = await this.setAsync(key, throttlingMetric);
 
+        const result = await this.client.hmset(key, throttlingMetric as { [key: string]: any });
         if (result !== "OK") {
             return Promise.reject(result);
         }
-        await this.expire(key, this.expireAfterSeconds);
+
+        await this.client.expire(key, this.expireAfterSeconds);
     }
 
     public async getThrottlingMetric(id: string): Promise<IThrottlingMetrics | undefined> {
-        const throttlingMetric = await this.getAsync(this.getKey(id));
-
+        const throttlingMetric = await this.client.hgetall(this.getKey(id));
         if (Object.keys(throttlingMetric).length === 0) {
             return undefined;
         }
