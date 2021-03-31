@@ -15,6 +15,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "concurrently npm:build npm:webpack",
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
+    "build:plaid": "node \"../../../../plaid.js\"",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix",

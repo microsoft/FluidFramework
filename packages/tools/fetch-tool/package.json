@@ -16,7 +16,7 @@
     "build:compile": "npm run tsc",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:plaid": "node \"../../../plaid.js\"",
+    "build:plaid": "npm run build:compile",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix",
