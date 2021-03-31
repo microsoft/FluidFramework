@@ -162,11 +162,6 @@ describeNoCompat("Garbage Collection", (getTestObjectProvider) => {
             const container = await createContainer() as Container;
             defaultDataStore = await requestFluidObject<TestDataObject>(container, "/");
             containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
-
-            // Wait for the Container to get connected.
-            if (!container.connected) {
-                await new Promise<void>((resolve) => container.on("connected", () => resolve()));
-            }
         });
 
         it("marks default data store as referenced", async () => {
