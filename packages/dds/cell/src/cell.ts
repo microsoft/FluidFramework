@@ -149,7 +149,7 @@ export class SharedCell<T = Serializable> extends SharedObject<ISharedCellEvents
     /**
      * {@inheritDoc ISharedCell.get}
      */
-    public get() {
+    public get(): Serializable<T> | undefined {
         return this.data;
     }
 

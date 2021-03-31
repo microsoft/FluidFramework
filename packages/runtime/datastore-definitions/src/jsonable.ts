@@ -4,39 +4,34 @@
  */
 
 /**
- * Take a type, usually an interface and tries to map it to a compatible jsonable type.
- * This is basically taking advantage of duck typing. We are generating a type we know
- * is jsonable from the input type, but setting anything not serializable to never,
- * which will cause compile time issues with objects of the original type if they
- * have properties that are not jsonable.
+ * Used to constrain a type 'T' to types that are JSON serializable as JSON.  Produces an
+ * error if `T` contains non-Jsonable members.
  *
- * The usage looks like `foo<T>(input: AsJsonable<T>)`
+ * Typical usage:
+ * ```ts
+ *      function foo<T>(value: Jsonable<T>) { ... }
+ * ```
  *
- * if T isn't jsonable then all values of input will be invalid,
- * as all the properties will need to be never which isn't possible.
+ * Important: `T extends Jsonable<T>` is a *superset* of `Jsonable<T>` and usually incorrect.
  *
- * This won't be fool proof, but if someone modifies a type used in an
- * AsJsonable to add a property that isn't Jsonable, they should get a compile time
- * break, which is pretty good.
+ * The optional 'TReplaced' parameter may be used to permit additional leaf types to support
+ * situations where a `replacer` is used to handle special values (e.g., `Jsonable<{ x: IFluidHandle }, IFluidHandle>`).
  *
- * What this type does:
- * If T is Jsonable<J>
- *      return T
- *      Else if f T is not a function,
- *          For each property K of T recursively
- *              if property K is not a symbol
- *                  return AsJsonable of the property
- *                  Else return never
- *          Else return never
+ * Note that the Jsonable type does not protect against the following pitfalls when serializing
+ * `undefined` and non-finite numbers:
+ *
+ *  - `undefined` properties on objects are omitted (i.e., properties become undefined instead of equal to undefined).
+ *  - When `undefined` appears as the root object or as an array element it is coerced to `null`.
+ *  - Non-finite numbers (`NaN`, `+/-Infinity`) are also coerced to `null`.
  */
- export type Jsonable<T = any, J = void> =
-    T extends null | boolean | number | string | J
+export type Jsonable<T = any, TReplaced = void> =
+    T extends undefined | null | boolean | number | string | TReplaced
         ? T
         // eslint-disable-next-line @typescript-eslint/ban-types
         : Extract<T, Function> extends never
             ? {
                 [K in keyof T]: Extract<K, symbol> extends never
-                    ? Jsonable<T[K], J>
+                    ? Jsonable<T[K], TReplaced>
                     : never
             }
             : never;
