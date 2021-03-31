@@ -330,7 +330,8 @@ export function positionToRowCol(position: number) {
 }
 
 /**
- *  @deprecated - Use SharedMatrixFactory
+ * @deprecated - SparseMatrixFactory/SparseMatrix is an abandoned prototype.  Please use
+ *               SharedMatrix/SharedMatrixFactory instead.
  */
 export class SparseMatrixFactory implements IChannelFactory {
     public static Type = "https://graph.microsoft.com/types/mergeTree/sparse-matrix";
