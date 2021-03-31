@@ -41,6 +41,7 @@ import {
 } from "@fluidframework/container-runtime-definitions";
 import {
     assert,
+    createLocalStorageConfigurationProxy,
     Deferred,
     Trace,
     TypedEventEmitter,
@@ -703,10 +704,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ) {
         super();
 
-        this.runtimeOptions = {
-            ...{ disableIsolatedChannels: true },
-            ...runtimeOptions,
-        };
+        this.runtimeOptions =
+            createLocalStorageConfigurationProxy<IContainerRuntimeOptions>(
+                "fluid.runtime",
+                {
+                    ...{ disableIsolatedChannels: true },
+                    ...runtimeOptions,
+                });
 
         this._connected = this.context.connected;
         this.chunkMap = new Map<string, string[]>(chunks);

@@ -24,7 +24,10 @@ import {
     IProxyLoaderFactory,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
-import { Deferred, performance } from "@fluidframework/common-utils";
+import {
+    createLocalStorageConfigurationProxy,
+    Deferred,
+    performance } from "@fluidframework/common-utils";
 import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
@@ -252,7 +255,9 @@ export class Loader extends EventEmitter implements IHostLoader {
             urlResolver: createCachedResolver(MultiUrlResolver.create(loaderProps.urlResolver)),
             documentServiceFactory: MultiDocumentServiceFactory.create(loaderProps.documentServiceFactory),
             codeLoader: loaderProps.codeLoader,
-            options: loaderProps.options ?? {},
+            options: createLocalStorageConfigurationProxy<ILoaderOptions>(
+                "fluid.loader",
+                loaderProps.options ?? {}),
             scope,
             subLogger: DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all:{loaderId: uuid()} }),
             proxyLoaderFactories: loaderProps.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
