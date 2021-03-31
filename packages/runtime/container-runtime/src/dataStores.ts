@@ -507,6 +507,20 @@ export class DataStores implements IDisposable {
     }
 
     /**
+     * When running GC in test mode, this is called to delete objects whose routes are unused. This enables testing
+     * scenarios with accessing deleted content.
+     * @param unusedRoutes - The routes that are unused in all data stores in this Container.
+     */
+    public deleteUnusedRoutes(unusedRoutes: string[]) {
+        assert(this.runtime.options.runGCInTestMode, "Data stores should be deleted only in GC test mode");
+        for (const route of unusedRoutes) {
+            // Delete the contexts of unused data stores.
+            const dataStoreId = route.split("/")[1];
+            this.contexts.delete(dataStoreId);
+        }
+    }
+
+    /**
      * Returns the outbound routes of this channel. Only root data stores are considered referenced and their paths are
      * part of outbound routes.
      */
