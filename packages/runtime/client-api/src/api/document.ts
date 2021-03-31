@@ -242,7 +242,7 @@ export async function load(
     urlResolver: IUrlResolver,
     options: ILoaderOptions = {},
     documentServiceFactory: IDocumentServiceFactory = defaultDocumentServiceFactory,
-    runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false },
+    runtimeOptions: IContainerRuntimeOptions = { summaryOptions: { generateSummaries: false } },
 ): Promise<Document> {
     const codeLoader = new CodeLoader(runtimeOptions);
 

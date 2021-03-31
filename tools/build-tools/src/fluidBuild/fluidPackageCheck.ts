@@ -428,9 +428,15 @@ export class FluidPackageCheck {
             "nyc",
             "*.log",
             "**/*.tsbuildinfo",
-            "**/_api-extractor-temp/**",
-        ]
-        const expected = pkg.name.startsWith("@fluidframework/test-") ?
+        ];
+
+        if (pkg.getScript("build:docs")) {
+            expectedCommon.push("**/_api-extractor-temp/**");
+        }
+
+        const testPackage = pkg.name.startsWith("@fluidframework/test-")
+            || pkg.name.startsWith("@fluid-internal/test-")
+        const expected = testPackage ?
             expectedCommon :
             [...expectedCommon,
                 "src/test",

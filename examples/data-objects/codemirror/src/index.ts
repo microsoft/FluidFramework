@@ -34,8 +34,7 @@ class CodeMirrorFactory implements IRuntimeFactory {
             registry,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
-                innerRequestHandler),
-            { generateSummaries: true });
+                innerRequestHandler));
 
         // Flush mode to manual to batch operations within a turn
         runtime.setFlushMode(FlushMode.Manual);
