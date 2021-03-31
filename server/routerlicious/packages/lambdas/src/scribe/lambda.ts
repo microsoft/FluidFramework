@@ -225,7 +225,7 @@ export class ScribeLambda extends SequencedLambda {
                                     await this.sendSummaryNack(nackMessage);
                                     this.context.log?.error(
                                         `Client summary failure @${value.operation.sequenceNumber}. `
-                                        + `Error: ${JSON.stringify(nackMessage, undefined, 2)}`,
+                                        + `Error: ${nackMessage.errorMessage}`,
                                         {
                                             messageMetaData: {
                                                 documentId: this.documentId,
