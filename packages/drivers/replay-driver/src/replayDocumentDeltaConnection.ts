@@ -21,11 +21,9 @@ import {
     IVersion,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { debug } from "./debug";
 import { ReplayController } from "./replayController";
-
-const MaxBatchDeltas = 2000;
 
 const ReplayDocumentId = "documentId";
 
@@ -76,9 +74,10 @@ export class ReplayControllerStatic extends ReplayController {
     }
 
     public fetchTo(currentOp: number) {
-        const useFetchToBatch = !(this.unitIsTime !== true && this.replayTo >= 0);
-        const fetchToBatch = currentOp + MaxBatchDeltas;
-        return useFetchToBatch ? fetchToBatch : Math.min(fetchToBatch, this.replayTo);
+        if (!(this.unitIsTime !== true && this.replayTo >= 0)) {
+            return undefined;
+        }
+        return this.replayTo;
     }
 
     public isDoneFetch(currentOp: number, lastTimeStamp?: number) {
@@ -166,7 +165,6 @@ export class ReplayControllerStatic extends ReplayController {
                         }
                     }
                 }
-                // eslint-disable-next-line @typescript-eslint/no-use-before-define
                 scheduleNext(nextInterval);
                 emitter(playbackOps);
             };
@@ -312,24 +310,26 @@ export class ReplayDocumentDeltaConnection
         do {
             const fetchTo = controller.fetchTo(currentOp);
 
-            const { messages, partialResult } = await documentStorageService.get(currentOp, fetchTo);
+            const pipe = documentStorageService.get(currentOp, fetchTo);
+            do {
+                const messages = await pipe.pop();
 
-            if (messages.length === 0) {
-                // No more ops. But, they can show up later, either because document was just created,
-                // or because another client keeps submitting new ops.
-                assert(!partialResult, 0x0af /* "No more ops, but nonzero partial results!" */);
-                if (controller.isDoneFetch(currentOp, undefined)) {
-                    break;
+                if (messages === undefined) {
+                    // No more ops. But, they can show up later, either because document was just created,
+                    // or because another client keeps submitting new ops.
+                    if (controller.isDoneFetch(currentOp, undefined)) {
+                        break;
+                    }
+                    await delay(2000);
+                    continue;
                 }
-                await delay(2000);
-                continue;
-            }
 
-            replayPromiseChain = replayPromiseChain.then(
-                async () => controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), messages));
+                replayPromiseChain = replayPromiseChain.then(
+                    async () => controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), messages));
 
-            currentOp += messages.length;
-            done = controller.isDoneFetch(currentOp, messages[messages.length - 1].timestamp);
+                currentOp += messages.length;
+                done = controller.isDoneFetch(currentOp, messages[messages.length - 1].timestamp);
+            } while (!done);
         } while (!done);
 
         return replayPromiseChain;

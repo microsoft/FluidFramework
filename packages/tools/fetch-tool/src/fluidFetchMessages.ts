@@ -5,7 +5,6 @@
 
 import fs from "fs";
 import { assert} from "@fluidframework/common-utils";
-import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import {
     IDocumentService,
 } from "@fluidframework/driver-definitions";
@@ -15,7 +14,6 @@ import {
     MessageType,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { requestOps } from "@fluidframework/driver-utils";
 import { printMessageStats } from "./fluidAnalyzeMessages";
 import {
     connectToWebSocket,
@@ -68,16 +66,15 @@ async function* loadAllSequencedMessages(
     let requests = 0;
     let opsStorage = 0;
 
+    /**
+     * we are loosing this!!!
     const concurrency = 4;
     const batch = 20000; // see data in issue #5211 on possible sizes we can use.
+    */
 
-    const queue = requestOps(
-        deltaStorage,
-        concurrency,
+    const queue = deltaStorage.get(
         lastSeq + 1, // inclusive left
         undefined, // to
-        batch,
-        new TelemetryUTLogger(),
     );
 
     while (true) {
@@ -108,7 +105,7 @@ async function* loadAllSequencedMessages(
     }
 
     // eslint-disable-next-line max-len
-    console.log(`\n${Math.floor((Date.now() - timeStart) / 1000)} seconds to retrieve ${opsStorage} ops in ${requests} requests, using ${concurrency} parallel requests`);
+    console.log(`\n${Math.floor((Date.now() - timeStart) / 1000)} seconds to retrieve ${opsStorage} ops in ${requests} requests`);
 
     if (connectToWebSocket) {
         let logMsg = "";

@@ -15,7 +15,7 @@ import { TokenFetchOptions } from "./tokenFetch";
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.
  */
-export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService {
+export class OdspDeltaStorageService {
     constructor(
         private readonly deltaFeedUrlProvider: () => Promise<string>,
         private ops: ISequencedDeltaOpMessage[] | undefined,

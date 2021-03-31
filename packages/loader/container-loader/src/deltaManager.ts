@@ -18,7 +18,7 @@ import {
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
-import { PerformanceEvent, TelemetryLogger, ChildLogger, safeRaiseEvent } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, TelemetryLogger, safeRaiseEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -51,7 +51,6 @@ import {
     getRetryDelayFromError,
     logNetworkFailure,
     waitForConnectedState,
-    requestOps,
 } from "@fluidframework/driver-utils";
 import {
     CreateContainerError,
@@ -65,7 +64,6 @@ import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService
 
 const MaxReconnectDelaySeconds = 8;
 const InitialReconnectDelaySeconds = 1;
-const MaxBatchDeltas = 5000; // Please see Issue #5211 for data around batch sizing
 const DefaultChunkSize = 16 * 1024;
 
 function getNackReconnectInfo(nackContent: INackContent) {
@@ -808,17 +806,8 @@ export class DeltaManager
             this.deltaStorageP = docService.connectToDeltaStorage();
         }
 
-        const pipe = requestOps(
-            await this.deltaStorageP,
-            // Staging: starting with no concurrency, listening for feedback first.
-            // In future releases we will switch to actual concurrency
-            1, // concurrency
-            from + 1, // from is exclusive, but ParallelRequests uses inclusive left
-            to, // exclusive right
-            MaxBatchDeltas,
-            ChildLogger.create(this.logger, undefined, { all: {reason: telemetryEventSuffix } }),
-            this.closeAbortController.signal,
-        );
+        const storage = await this.deltaStorageP;
+        const pipe = storage.get(from + 1, to, false, this.closeAbortController.signal);
 
         // eslint-disable-next-line no-constant-condition
         while (true) {

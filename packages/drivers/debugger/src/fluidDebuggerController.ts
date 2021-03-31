@@ -28,8 +28,6 @@ import { Sanitizer } from "./sanitizer";
 
 export type debuggerUIFactory = (controller: IDebuggerController) => IDebuggerUI | null;
 
-const MaxBatchDeltas = 2000;
-
 /**
  * Replay controller that uses pop-up window to control op playback
  */
@@ -172,8 +170,8 @@ export class DebugReplayController extends ReplayController implements IDebugger
         return messages;
     }
 
-    public fetchTo(currentOp: number): number {
-        return currentOp + MaxBatchDeltas;
+    public fetchTo(currentOp: number): number | undefined {
+        return undefined;
     }
 
     // Returns true if version / file / ops selections is made.
@@ -345,27 +343,12 @@ export class DebugReplayController extends ReplayController implements IDebugger
 }
 
 async function* generateSequencedMessagesFromDeltaStorage(deltaStorage: IDocumentDeltaStorageService)  {
-    let lastSeq = 0;
-    const batch = 2000;
+    const pipe = deltaStorage.get(1, undefined);
     while (true) {
-        const { messages, partialResult } = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
-        if (messages.length === 0) {
-            assert(!partialResult,
-                0x087 /* "No messages loaded from chunk, but nonzero number of partial results loaded from chunk!" */);
-            break;
+        const messages = await pipe.pop();
+        if (messages === undefined) {
+            return;
         }
         yield messages;
-        lastSeq = messages[messages.length - 1].sequenceNumber;
     }
-}
-
-async function loadChunk(from: number, to: number, deltaStorage: IDocumentDeltaStorageService) {
-    for (let iter = 0; iter < 3; iter++) {
-        try {
-            return await deltaStorage.get(from, to);
-        } catch (error) {
-            // Retry
-        }
-    }
-    throw new Error("Giving up after 3 attempts to download chunk of ops.");
 }

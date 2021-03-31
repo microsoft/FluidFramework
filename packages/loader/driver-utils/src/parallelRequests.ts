@@ -6,7 +6,7 @@ import { assert, Deferred, performance } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
+import { IDeltasFetchResult, IReadPipe } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network";
 import { waitForConnectedState } from "./networkUtils";
 
@@ -285,13 +285,6 @@ export class ParallelRequests<T> {
 }
 
 /**
- * Read interface for the Queue
- */
-export interface IReadPipe<T> {
-    pop(): Promise<T | undefined>;
-}
-
-/**
  * Helper queue class to allow async push / pull
  * It's essentially a pipe allowing multiple writers, and single reader
  */
@@ -348,7 +341,7 @@ export class Queue<T> implements IReadPipe<T> {
  * @returns - an object with resulting ops and cancellation / partial result flags
  */
 async function getSingleOpBatch(
-    deltaStorage: IDocumentDeltaStorageService,
+    get: (from: number, to: number) => Promise<IDeltasFetchResult>,
     request: number,
     from: number,
     to: number,
@@ -376,7 +369,7 @@ async function getSingleOpBatch(
             canRetry = true;
             // left is inclusive for ParallelRequests, but exclusive for IDocumentDeltaStorageService
             // right is exclusive for both
-            const deltasP = deltaStorage.get(from - 1, to);
+            const deltasP = get(from - 1, to);
 
             const { messages, partialResult } = await deltasP;
             deltas.push(...messages);
@@ -467,7 +460,7 @@ async function getSingleOpBatch(
 }
 
 export function requestOps(
-    deltaStorage: IDocumentDeltaStorageService,
+    get: (from: number, to: number) => Promise<IDeltasFetchResult>,
     concurrency: number,
     from: number,
     to: number | undefined,
@@ -493,7 +486,7 @@ export function requestOps(
         logger,
         async (request: number, _from: number, _to: number, strongTo: boolean) => {
             requests++;
-            return getSingleOpBatch(deltaStorage, request, _from, _to, telemetryEvent, strongTo, signal);
+            return getSingleOpBatch(get, request, _from, _to, telemetryEvent, strongTo, signal);
         },
         (deltas: ISequencedDocumentMessage[]) => {
             lastFetch = deltas[deltas.length - 1].sequenceNumber;
@@ -520,4 +513,18 @@ export function requestOps(
         });
 
     return queue;
+}
+
+export function pipeFromOps(messagesArg: Promise<ISequencedDocumentMessage[]>): IReadPipe<ISequencedDocumentMessage[]> {
+    let messages: Promise<ISequencedDocumentMessage[]> | undefined = messagesArg;
+    return {
+        pop: async () => {
+            if (messages === undefined) {
+                return undefined;
+            }
+            const result = await messages;
+            messages = undefined;
+            return result.length === 0 ? undefined : result;
+        },
+    };
 }

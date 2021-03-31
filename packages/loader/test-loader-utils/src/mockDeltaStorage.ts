@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentDeltaStorageService, IDeltasFetchResult } from "@fluidframework/driver-definitions";
+import {
+    IDocumentDeltaStorageService,
+    IReadPipe,
+} from "@fluidframework/driver-definitions";
+import { pipeFromOps } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 /**
@@ -14,7 +18,15 @@ export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageSer
         this.messages = messages.sort((a, b) => b.sequenceNumber - a.sequenceNumber);
     }
 
-    public async get(from: number, to: number): Promise<IDeltasFetchResult> {
+    public get(
+        from: number,
+        to: number | undefined,
+        cachedOnly?: boolean,
+        abortSignal?: AbortSignal): IReadPipe<ISequencedDocumentMessage[]> {
+            return pipeFromOps(this.getCore(from, to));
+    }
+
+    private async getCore(from: number, to?: number) {
         const messages: ISequencedDocumentMessage[] = [];
         let index: number = 0;
 
@@ -24,11 +36,11 @@ export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageSer
         }
 
         // start reading
-        while (index < this.messages.length && this.messages[index].sequenceNumber < to) {
+        while (index < this.messages.length && (to === undefined || this.messages[index].sequenceNumber < to)) {
             messages.push(this.messages[index]);
             index++;
         }
 
-        return { messages, partialResult: false };
+        return messages;
     }
 }

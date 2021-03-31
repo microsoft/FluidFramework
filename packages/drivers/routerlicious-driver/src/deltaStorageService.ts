@@ -7,9 +7,11 @@ import {
     IDeltaStorageService,
     IDocumentDeltaStorageService,
     IDeltasFetchResult,
+    IReadPipe,
 } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse, requestOps } from "@fluidframework/driver-utils";
+import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ITokenProvider } from "./tokens";
@@ -31,7 +33,24 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 
     private logtailSha: string | undefined = this.documentStorageService.logTailSha;
 
-    public async get(from: number, to: number): Promise<IDeltasFetchResult> {
+    get(from: number,
+        to: number | undefined,
+        cachedOnly?: boolean,
+        abortSignal?: AbortSignal): IReadPipe<ISequencedDocumentMessage[]> {
+        return requestOps(
+            this.getCore.bind(this),
+            // Staging: starting with no concurrency, listening for feedback first.
+            // In future releases we will switch to actual concurrency
+            1, // concurrency
+            from, // inclusive
+            to, // exclusive
+            MaxBatchDeltas,
+            new TelemetryNullLogger(),
+            abortSignal,
+        );
+    }
+
+    private async getCore(from: number, to: number): Promise<IDeltasFetchResult> {
         const opsFromLogTail = this.logtailSha ? await readAndParse<ISequencedDocumentMessage[]>
             (this.documentStorageService, this.logtailSha) : [];
 
@@ -45,16 +64,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
             }
         }
 
-        const length = to - from - 1; // to & from are exclusive!
-        const batchLength = Math.min(MaxBatchDeltas, length); // limit number of ops we retrieve at once
-        const result = await this.storageService.get(this.tenantId, this.id, from, from + batchLength + 1);
-
-        // if we got full batch, and did not fully satisfy original request, then there is likely more...
-        // Note that it's not disallowed to return more ops than requested!
-        if (result.messages.length >= batchLength && result.messages.length !== length) {
-            result.partialResult = true;
-        }
-        return result;
+        return this.storageService.get(this.tenantId, this.id, from, to);
     }
 }
 

@@ -54,13 +54,23 @@ export interface IDeltaStorageService {
 }
 
 /**
+ * Read interface for the Queue
+ */
+ export interface IReadPipe<T> {
+    pop(): Promise<T | undefined>;
+}
+
+/**
  * Interface to provide access to stored deltas for a shared object
  */
 export interface IDocumentDeltaStorageService {
     /**
      * Retrieves all the delta operations within the exclusive sequence number range
      */
-    get(from: number, to: number): Promise<IDeltasFetchResult>;
+    get(from: number,
+        to: number | undefined,
+        cachedOnly?: boolean,
+        abortSignal?: AbortSignal): IReadPipe<ISequencedDocumentMessage[]>;
 }
 
 export interface IDocumentStorageServicePolicies {
