@@ -10,7 +10,7 @@ import { IFluidDataStoreRuntime, IChannelStorageService } from '@fluidframework/
 import { AttachState } from '@fluidframework/container-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { IErrorEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
-import { ChildLogger } from '@fluidframework/telemetry-utils';
+import { ChildLogger, PerformanceEvent } from '@fluidframework/telemetry-utils';
 import { assert, fail, SharedTreeTelemetryProperties } from './Common';
 import { editsPerChunk, EditLog, OrderedEditSet } from './EditLog';
 import {
@@ -442,12 +442,21 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
-		const header = await storage.read(snapshotFileName);
-		const summary = deserialize(fromBase64ToUtf8(header), this.serializer);
-		if (typeof summary === 'string') {
-			fail(summary);
-		}
-		this.loadSummary(summary);
+		await PerformanceEvent.timedExecAsync(
+			this.logger,
+			{
+				eventName: 'SummaryLoad',
+				historySize: this.edits.length,
+			},
+			async () => {
+				const header = await storage.read(snapshotFileName);
+				const summary = deserialize(fromBase64ToUtf8(header), this.serializer);
+				if (typeof summary === 'string') {
+					fail(summary);
+				}
+				this.loadSummary(summary);
+			}
+		);
 	}
 
 	/**
