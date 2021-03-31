@@ -13,9 +13,15 @@ import { v4 as uuid } from "uuid";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import { ITestObjectProvider, ITestContainerConfig } from "@fluidframework/test-utils";
 import { describeFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";
+import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
 const testContainerConfig: ITestContainerConfig = {
-    runtimeOptions: { initialSummarizerDelayMs: 20, summaryConfigOverrides: { maxOps: 1 } },
+    runtimeOptions: flattenRuntimeOptions({
+        summaryOptions: {
+            initialSummarizerDelayMs: 20,
+            summaryConfigOverrides: { maxOps: 1 },
+        },
+    }),
     registry: [["sharedString", SharedString.getFactory()]],
 };
 

@@ -9,7 +9,8 @@ import { ICombiningOp, PropertySet } from "@fluidframework/merge-tree";
 export type TableDocumentItem = Serializable;
 
 /**
- * @deprecated - Use SharedMatrix with IMatrixProducer/Consumer interfaces instead.
+ * @deprecated - ITable is an abandoned prototype.  Please use SharedMatrix with
+ *               the IMatrixProducer/Consumer interfaces instead.
  */
 export interface ITable {
     readonly numRows: number;
