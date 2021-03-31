@@ -229,3 +229,24 @@ export class GitRepo {
         return execNoError(`git ${command}`, this.resolvedRoot, pipeStdIn);
     }
 }
+
+/**
+ * Runs policy check in fix/resolution mode the apply any an necessary changes
+ * Currently this should only apply assert short codes, but could apply
+ * additional policies in the future
+ * @param gitRepo - the git repo context to run policy check on
+ */
+export async function runPolicyCheckWithFix(gitRepo: GitRepo){
+    console.log("Running Policy Check with Resolution(fix)");
+    await exec(
+        `node ${__dirname}\\..\\repoPolicyCheck\\repoPolicyCheck.js -r -q`,
+        gitRepo.resolvedRoot,
+        "policy-check:fix failed");
+
+    // check for policy check violation
+    const afterPolicyCheckStatus = await gitRepo.getStatus();
+    if (afterPolicyCheckStatus !== "") {
+        console.log("======================================================================================================");
+        fatal(`Policy check needed to make modifications. Please create PR for the changes and merge before retrying.\n${afterPolicyCheckStatus}`);
+    }
+}

@@ -40,6 +40,7 @@ const getDefaultCheckpooint = (epoch: number): IDeliState => {
         logOffset: -1,
         sequenceNumber: 0,
         term: 1,
+        lastSentMSN: 0,
     };
 };
 

@@ -168,7 +168,7 @@ jobs:
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
       inputs:
         command: 'custom'
-        workingDir: packages/test/service-load-test
+        workingDir: packages/test/test-service-load
         customCommand: 'run start'
 
     # Run Copy Test Results

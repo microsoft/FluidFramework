@@ -10,18 +10,13 @@ import {
 } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import {
-    createAndAttachContainer,
-    createDocumentId,
-    createLoader,
-    ITestObjectProvider,
-    OpProcessingController,
-} from "@fluidframework/test-utils";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -40,11 +35,6 @@ class TestDataObject extends DataObject {
 // REVIEW: enable compat testing?
 describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    let documentId: string;
-    const codeDetails: IFluidCodeDetails = {
-        package: "garbageCollectionTestPackage",
-        config: {},
-    };
     const factory = new DataObjectFactory(
         "TestDataObject",
         TestDataObject,
@@ -56,11 +46,15 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
         idleTime: IdleDetectionTime,
         maxTime: IdleDetectionTime * 12,
     };
-    const runtimeOptions = {
-        generateSummaries: true,
-        enableWorker: false,
-        initialSummarizerDelayMs: 10,
-        summaryConfigOverrides,
+    const runtimeOptions: IContainerRuntimeOptions = {
+        summaryOptions: {
+            generateSummaries: true,
+            initialSummarizerDelayMs: 10,
+            summaryConfigOverrides,
+        },
+        gcOptions: {
+            gcAllowed: true,
+        },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         factory,
@@ -69,32 +63,13 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
         ],
         undefined,
         undefined,
-        runtimeOptions,
+        flattenRuntimeOptions(runtimeOptions),
     );
 
-    let opProcessingController: OpProcessingController;
     let container1: IContainer;
 
-    async function createContainer(): Promise<IContainer> {
-        const loader = createLoader(
-            [[codeDetails, runtimeFactory]],
-            provider.documentServiceFactory,
-            provider.urlResolver,
-            ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
-        );
-        return createAndAttachContainer(
-            codeDetails, loader, provider.driver.createCreateNewRequest(documentId));
-    }
-
-    async function loadContainer(): Promise<IContainer> {
-        const loader = createLoader(
-            [[codeDetails, runtimeFactory]],
-            provider.documentServiceFactory,
-            provider.urlResolver,
-            ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
-        );
-        return loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
-    }
+    const createContainer = async (): Promise<IContainer> => provider.createContainer(runtimeFactory);
+    const loadContainer = async (): Promise<IContainer> => provider.loadContainer(runtimeFactory);
 
     async function waitForSummary(container: IContainer): Promise<string | undefined> {
         let handle: string | undefined;
@@ -112,12 +87,9 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
 
     beforeEach(async () => {
         provider = getTestObjectProvider();
-        documentId = createDocumentId();
-        opProcessingController = provider.opProcessingController;
 
         // Create a Container for the first client.
         container1 = await createContainer();
-        opProcessingController.addDeltaManagers(container1.deltaManager);
     });
 
     it("should fail requests with externalRequest flag for unreferenced data stores", async () => {

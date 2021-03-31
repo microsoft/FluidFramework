@@ -225,7 +225,7 @@ export async function loadContainer(
     const chaincode = new API.Chaincode(
         () => { throw new Error("Can't close Document"); },
         mixinDataStoreWithAnyChannel());
-    const codeLoader = new API.CodeLoader({ generateSummaries: false },
+    const codeLoader = new API.CodeLoader({ summaryOptions: { generateSummaries: false } },
         [
             ["@ms/atmentions", Promise.resolve(chaincode)],
             ["@ms/augloop", Promise.resolve(chaincode)],
@@ -264,7 +264,8 @@ export async function loadContainer(
     });
     const container: Container = await loader.resolve({ url: resolved.url });
 
-    assert(container.existing, "Container does not exist!"); // ReplayFileDeltaConnection.create() guarantees that
+    assert(container.existing,
+        0x1c4 /* "Container does not exist!" */); // ReplayFileDeltaConnection.create() guarantees that
 
     return container;
 }

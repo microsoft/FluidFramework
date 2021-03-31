@@ -6,23 +6,11 @@
 import { strict as assert } from "assert";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { UpgradeManager } from "@fluidframework/base-host";
-import {
-    ICodeLoader,
-    IContainer,
-} from "@fluidframework/container-definitions";
-import { Container, Loader } from "@fluidframework/container-loader";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IContainer } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import {
-    createAndAttachContainer,
-    createDocumentId,
-    ITestObjectProvider,
-    LocalCodeLoader,
-    OpProcessingController,
-} from "@fluidframework/test-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 
 class TestDataObject extends DataObject {
@@ -41,44 +29,16 @@ class TestDataObject extends DataObject {
 }
 
 describeNoCompat("UpgradeManager (hot-swap)", (getTestObjectProvider) => {
-    const codeDetails: IFluidCodeDetails = {
-        package: "localLoaderTestPackage",
-        config: {},
-    };
     let provider: ITestObjectProvider;
-    let opProcessingController: OpProcessingController;
 
-    async function createContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
-        const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-        const loader = new Loader({
-            urlResolver: provider.urlResolver,
-            documentServiceFactory: provider.documentServiceFactory,
-            codeLoader,
-            options: { hotSwapContext: true },
-            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver.type } }),
-        });
+    const createContainer = async (): Promise<IContainer> =>
+        provider.createContainer(TestDataObject.getFactory(), { hotSwapContext: true });
 
-        return createAndAttachContainer(
-            codeDetails, loader, provider.driver.createCreateNewRequest(documentId));
-    }
-
-    async function loadContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
-        const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-
-        const loader = new Loader({
-            urlResolver: provider.urlResolver,
-            documentServiceFactory: provider.documentServiceFactory,
-            codeLoader,
-            options: { hotSwapContext: true },
-            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver.type } }),
-        });
-
-        return loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
-    }
+    const loadContainer = async (): Promise<IContainer> =>
+        provider.loadContainer(TestDataObject.getFactory(), { hotSwapContext: true });
 
     beforeEach(async () => {
         provider = getTestObjectProvider();
-        opProcessingController = provider.opProcessingController;
     });
 
     it("prevents multiple approved proposals", async () => {
@@ -87,22 +47,19 @@ describeNoCompat("UpgradeManager (hot-swap)", (getTestObjectProvider) => {
         const addCounts = Array(clients).fill(0);
         const approveCounts = Array(clients).fill(0);
         const containers: IContainer[] = [];
-        const documentId = createDocumentId();
 
         // Create the first Container.
-        const container1 = await createContainer(documentId, TestDataObject.getFactory());
+        const container1 = await createContainer();
         containers.push(container1);
 
         // Load rest of the Containers.
         const restOfContainersP =
-            Array(clients - 1).fill(undefined).map(async () => loadContainer(documentId, TestDataObject.getFactory()));
+            Array(clients - 1).fill(undefined).map(async () => loadContainer());
         const restOfContainers = await Promise.all(restOfContainersP);
         containers.push(...restOfContainers);
 
         const dataObjects = await Promise.all(containers.map(
             async (container) => requestFluidObject<TestDataObject>(container, "default")));
-
-        opProcessingController.addDeltaManagers(...containers.map((c) => c.deltaManager));
 
         dataObjects.map((c, i) => {
             c._runtime.getQuorum().on("addProposal", () => { ++addCounts[i]; });
@@ -124,7 +81,7 @@ describeNoCompat("UpgradeManager (hot-swap)", (getTestObjectProvider) => {
         }
 
         // upgrade all containers at once
-        const resultsP = upgradeManagers.map(async (u) => u.upgrade(codeDetails, true));
+        const resultsP = upgradeManagers.map(async (u) => u.upgrade(provider.defaultCodeDetails, true));
 
         await Promise.all(succeededP);
 
@@ -138,12 +95,9 @@ describeNoCompat("UpgradeManager (hot-swap)", (getTestObjectProvider) => {
     });
 
     it("1 client low priority is immediate", async () => {
-        const documentId = createDocumentId();
-
-        const container = await createContainer(documentId, TestDataObject.getFactory());
+        const container = await createContainer();
         const dataObject = await requestFluidObject<TestDataObject>(container, "default");
 
-        opProcessingController.addDeltaManagers(container.deltaManager);
         const upgradeManager = new UpgradeManager((container as any).context.runtime);
 
         const upgradeP = new Promise<void>((resolve) => {
@@ -159,19 +113,17 @@ describeNoCompat("UpgradeManager (hot-swap)", (getTestObjectProvider) => {
         }
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        upgradeManager.upgrade(codeDetails);
+        upgradeManager.upgrade(provider.defaultCodeDetails);
         await provider.ensureSynchronized();
         await upgradeP;
     });
 
     it("2 clients low priority is delayed", async () => {
-        const documentId = createDocumentId();
-
         // Create the first Container.
-        const container1 = await createContainer(documentId, TestDataObject.getFactory());
+        const container1 = await createContainer();
 
         // Load the second Container.
-        const container2 = await loadContainer(documentId, TestDataObject.getFactory()) as Container;
+        const container2 = await loadContainer() as Container;
 
         const upgradeManager = new UpgradeManager((container1 as any).context.runtime);
 
@@ -186,7 +138,6 @@ describeNoCompat("UpgradeManager (hot-swap)", (getTestObjectProvider) => {
         });
 
         const dataObject = await requestFluidObject<TestDataObject>(container1, "default");
-        opProcessingController.addDeltaManagers(container1.deltaManager);
 
         // Set a key in the root map of the first container's dataObject. The Container is created in "read" mode so the
         // first op it sends will get nack'd and it reconnects.
@@ -196,7 +147,7 @@ describeNoCompat("UpgradeManager (hot-swap)", (getTestObjectProvider) => {
             await provider.ensureSynchronized();
         }
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        upgradeManager.upgrade(codeDetails);
+        upgradeManager.upgrade(provider.defaultCodeDetails);
 
         // disconnect one client, which should initiate upgrade
         assert(container2.clientId);

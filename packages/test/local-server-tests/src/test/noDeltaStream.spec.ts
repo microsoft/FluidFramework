@@ -10,7 +10,7 @@ import {
     createLocalResolverCreateNewRequest,
     LocalDocumentServiceFactory,
     LocalResolver,
- } from "@fluidframework/local-driver";
+} from "@fluidframework/local-driver";
 import { SharedString } from "@fluidframework/sequence";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -18,7 +18,7 @@ import {
     createAndAttachContainer,
     createLoader,
     ITestFluidObject,
-    OpProcessingController,
+    LoaderContainerTracker,
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
@@ -34,22 +34,21 @@ describe("No Delta Stream", () => {
     };
     const factory = new TestContainerRuntimeFactory(
         "",
-        new TestFluidObjectFactory([[stringId, SharedString.getFactory()]]),
-        {generateSummaries: true});
+        new TestFluidObjectFactory([[stringId, SharedString.getFactory()]]));
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let opc: OpProcessingController;
+    let loaderContainerTracker: LoaderContainerTracker;
 
     async function createContainer(): Promise<IContainer> {
         const loader = createLoader(
             [[codeDetails, factory]],
             new LocalDocumentServiceFactory(deltaConnectionServer),
             new LocalResolver());
+        loaderContainerTracker.add(loader);
         const container = await createAndAttachContainer(
             codeDetails,
             loader,
             createLocalResolverCreateNewRequest(documentId));
-        opc.addDeltaManagers(container.deltaManager);
         return container;
     }
 
@@ -58,14 +57,14 @@ describe("No Delta Stream", () => {
             [[codeDetails, factory]],
             new LocalDocumentServiceFactory(deltaConnectionServer, { storageOnly }),
             new LocalResolver());
+        loaderContainerTracker.add(loader);
         const container = await loader.resolve({ url: documentLoadUrl });
-        opc.addDeltaManagers(container.deltaManager);
         return container;
     }
 
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
-        opc = new OpProcessingController();
+        loaderContainerTracker = new LoaderContainerTracker();
 
         // Create a Container for the first client.
         const container = await createContainer();
@@ -79,7 +78,11 @@ describe("No Delta Stream", () => {
         assert.notStrictEqual(dataObject.runtime.clientId, undefined, "clientId");
 
         dataObject.root.set("test", "key");
-        await opc.process();
+        await loaderContainerTracker.ensureSynchronized();
+    });
+
+    afterEach(() => {
+        loaderContainerTracker.reset();
     });
 
     it("Validate Properties on Loaded Container With No Delta Stream", async () => {

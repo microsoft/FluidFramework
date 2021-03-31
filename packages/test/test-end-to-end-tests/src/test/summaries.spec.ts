@@ -6,8 +6,7 @@
 import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { assert, bufferToString, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { ContainerRuntime, ISummaryRuntimeOptions } from "@fluidframework/container-runtime";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
@@ -15,14 +14,7 @@ import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedObjectSequence } from "@fluidframework/sequence";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-
-import {
-    ITestObjectProvider,
-    createAndAttachContainer,
-    createDocumentId,
-    createLoader,
-} from "@fluidframework/test-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
 
 const defaultDataStoreId = "default";
 
@@ -35,13 +27,8 @@ class TestDataObject extends DataObject {
 
 async function createContainer(
     provider: ITestObjectProvider,
-    runtimeOptions: Omit<IContainerRuntimeOptions, "generateSummaries">,
+    summaryOpt: Omit<ISummaryRuntimeOptions, "generateSummaries">,
 ): Promise<IContainer> {
-    const documentId = createDocumentId();
-    const codeDetails: IFluidCodeDetails = {
-        package: "summarizerTestPackage",
-    };
-
     const factory = new DataObjectFactory(TestDataObject.dataObjectName, TestDataObject, [
         SharedMap.getFactory(),
         SharedDirectory.getFactory(),
@@ -49,10 +36,9 @@ async function createContainer(
         SharedObjectSequence.getFactory(),
     ], []);
 
-    const thisRuntimeOptions: IContainerRuntimeOptions = {
-        ...{ generateSummaries: false },
-        ...runtimeOptions,
-    };
+    // Force generateSummaries to false.
+    const summaryOptions: ISummaryRuntimeOptions = { ...summaryOpt };
+    summaryOptions.generateSummaries = false;
 
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         factory,
@@ -62,23 +48,10 @@ async function createContainer(
         ],
         undefined,
         undefined,
-        thisRuntimeOptions,
+        { summaryOptions },
     );
 
-    const loader = createLoader(
-        [[codeDetails, runtimeFactory]],
-        provider.documentServiceFactory,
-        provider.urlResolver,
-        ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
-    );
-    const container = await createAndAttachContainer(
-        codeDetails,
-        loader,
-        provider.driver.createCreateNewRequest(documentId));
-
-    provider.opProcessingController.addDeltaManagers(container.deltaManager);
-
-    return container;
+    return provider.createContainer(runtimeFactory);
 }
 
 function readBlobContent(content: ISummaryBlob["content"]): unknown {

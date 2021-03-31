@@ -25,7 +25,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
         } else if (server === "www.office.com") {
             const getRequiredParam = (name: string): string => {
                 const value = reqUrl.searchParams.get(name);
-                assert(!!value, `Missing ${name} from office.com URL parameter`);
+                assert(!!value, 0x097 /* `Missing ${name} from office.com URL parameter` */);
                 return value;
             };
             contents = {

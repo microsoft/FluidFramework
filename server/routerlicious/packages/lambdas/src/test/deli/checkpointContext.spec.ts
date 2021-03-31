@@ -25,6 +25,7 @@ describe("Routerlicious", () => {
                     logOffset,
                     sequenceNumber,
                     term: 1,
+                    lastSentMSN: 0,
                     queuedMessage: {
                         offset: logOffset,
                         partition: 1,

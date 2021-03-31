@@ -10,19 +10,13 @@ import {
 } from "@fluidframework/aqueduct";
 import { assert, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { Container } from "@fluidframework/container-loader";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import {
-    createAndAttachContainer,
-    createDocumentId,
-    createLoader,
-    ITestObjectProvider,
-} from "@fluidframework/test-utils";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -36,18 +30,14 @@ class TestDataObject extends DataObject {
 
 // REVIEW: enable compat testing?
 describeNoCompat("GC in summary", (getTestObjectProvider) => {
-    let documentId: string;
-    const codeDetails: IFluidCodeDetails = {
-        package: "garbageCollectionTestPackage",
-        config: {},
-    };
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
         TestDataObject,
         [],
         []);
-    const runtimeOptions = {
-        generateSummaries: false,
+    const runtimeOptions: IContainerRuntimeOptions = {
+        summaryOptions: { generateSummaries: false },
+        gcOptions: { gcAllowed: true },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         dataObjectFactory,
@@ -56,23 +46,14 @@ describeNoCompat("GC in summary", (getTestObjectProvider) => {
         ],
         undefined,
         undefined,
-        runtimeOptions,
+        flattenRuntimeOptions(runtimeOptions),
     );
 
     let provider: ITestObjectProvider;
     let containerRuntime: ContainerRuntime;
     let defaultDataStore: TestDataObject;
 
-    async function createContainer(): Promise<IContainer> {
-        const loader = createLoader(
-            [[codeDetails, runtimeFactory]],
-            provider.documentServiceFactory,
-            provider.urlResolver,
-            ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
-        );
-        return createAndAttachContainer(
-            codeDetails, loader, provider.driver.createCreateNewRequest(documentId));
-    }
+    const createContainer = async (): Promise<IContainer> => provider.createContainer(runtimeFactory);
 
     // Summarizes the container and validates that the data store's reference state is correct in the summary.
     async function validateDataStoreReferenceState(dataStoreId: string, referenced: boolean) {
@@ -103,12 +84,9 @@ describeNoCompat("GC in summary", (getTestObjectProvider) => {
 
     beforeEach(async () => {
         provider = getTestObjectProvider();
-        documentId = createDocumentId();
-
         const container = await createContainer() as Container;
         defaultDataStore = await requestFluidObject<TestDataObject>(container, "/");
         containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
-        provider.opProcessingController.addDeltaManagers(containerRuntime.deltaManager);
 
         // Wait for the Container to get connected.
         if (!container.connected) {

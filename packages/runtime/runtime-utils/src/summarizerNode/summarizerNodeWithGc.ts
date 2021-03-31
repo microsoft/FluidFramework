@@ -141,7 +141,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // If GC is not disabled and we are tracking a summary, GC should have run and updated the used routes for this
         //  summary by calling updateUsedRoutes which sets wipSerializedUsedRoutes.
         if (!this.gcDisabled && this.isTrackingInProgress()) {
-            assert(this.wipSerializedUsedRoutes !== undefined, "wip used routes should be set if tracking a summary");
+            assert(this.wipSerializedUsedRoutes !== undefined,
+                0x1b1 /* "wip used routes should be set if tracking a summary" */);
         }
 
         // If trackState is true, get summary from base summarizer node which tracks summary state.
@@ -149,7 +150,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         if (trackState) {
             const summarizeResult = await super.summarize(fullTree);
 
-            // If there is no cached GC data, return empty data in summarize result. It is the caller's responsiblity
+            // If there is no cached GC data, return empty data in summarize result. It is the caller's responsibility
             // to ensure that GC data is available by calling getGCData before calling summarize.
             const gcData = this.gcData !== undefined ? cloneGCData(this.gcData) : { gcNodes: {} };
 
@@ -174,8 +175,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
      * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
     public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
-        assert(!this.gcDisabled, "Getting GC data should not be called when GC is disabled!");
-        assert(this.getGCDataFn !== undefined, "GC data cannot be retrieved without getGCDataFn");
+        assert(!this.gcDisabled, 0x1b2 /* "Getting GC data should not be called when GC is disabled!" */);
+        assert(this.getGCDataFn !== undefined, 0x1b3 /* "GC data cannot be retrieved without getGCDataFn" */);
 
         // Load GC details from the initial summary, if not already loaded. If this is the first time this function is
         // called and the node's data has not changed since last summary, the GC data in initial details is returned.
@@ -201,7 +202,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         if (!this.gcDisabled) {
             assert(
                 this.wipSerializedUsedRoutes === undefined,
-                "We should not already be tracking used routes when to track a new summary");
+                0x1b4 /* "We should not already be tracking used routes when to track a new summary" */);
 
             // back-compat: 0.33 - This will be done in `updateUsedRoutes`. Older clients do not have that method, so
             // keeping this one for now.
@@ -223,7 +224,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // If GC is disabled, don't set wip used routes.
         if (!this.gcDisabled) {
             wipSerializedUsedRoutes = this.wipSerializedUsedRoutes;
-            assert(wipSerializedUsedRoutes !== undefined, "We should have been tracking used routes");
+            assert(wipSerializedUsedRoutes !== undefined, 0x1b5 /* "We should have been tracking used routes" */);
         }
 
         super.completeSummaryCore(proposalHandle, parentPath, parentSkipRecursion);
@@ -321,7 +322,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
         getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
     ): ISummarizerNodeWithGC {
-        assert(!this.children.has(id), "Create SummarizerNode child already exists");
+        assert(!this.children.has(id), 0x1b6 /* "Create SummarizerNode child already exists" */);
 
         const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
         const child = new SummarizerNodeWithGC(
