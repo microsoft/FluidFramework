@@ -30,7 +30,7 @@ export interface ITableDocumentEvents extends IEvent {
 }
 
 /**
- * @deprecated - Use SharedMatrix instead
+ * @deprecated - SparseMatrix is an abandoned prototype.  Please use SharedMatrix instead.
  */
 // eslint-disable-next-line @typescript-eslint/ban-types
 export class TableDocument extends DataObject<{}, {}, ITableDocumentEvents> implements ITable {
