@@ -7,7 +7,6 @@ import { EventEmitter } from "events";
 
 import { assert } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { ILocalSequencedClient } from "@fluidframework/container-loader";
 import { IQuorum } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IOldestClientObserver } from "./interfaces";
@@ -96,7 +95,7 @@ export class OldestClientObserver extends EventEmitter implements IOldestClientO
 
         assert(this.containerRuntime.clientId !== undefined, "Client id should be set if connected");
 
-        const selfSequencedClient: ILocalSequencedClient = this.quorum.getMember(this.containerRuntime.clientId);
+        const selfSequencedClient = this.quorum.getMember(this.containerRuntime.clientId);
         // When in readonly mode our clientId will not be present in the quorum.
         if (selfSequencedClient === undefined) {
             return false;
