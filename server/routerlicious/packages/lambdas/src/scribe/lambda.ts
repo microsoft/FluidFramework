@@ -221,9 +221,11 @@ export class ScribeLambda extends SequencedLambda {
                                         },
                                     );
                                 } else {
-                                    await this.sendSummaryNack(summaryResponse.message as ISummaryNack);
+                                    const nackMessage = summaryResponse.message as ISummaryNack;
+                                    await this.sendSummaryNack(nackMessage);
                                     this.context.log?.error(
-                                        `Client summary failure @${value.operation.sequenceNumber}`,
+                                        `Client summary failure @${value.operation.sequenceNumber}. `
+                                        + `Error: ${JSON.stringify(nackMessage, undefined, 2)}`,
                                         {
                                             messageMetaData: {
                                                 documentId: this.documentId,
