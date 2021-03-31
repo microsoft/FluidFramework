@@ -190,7 +190,7 @@ export function positionToRowCol(position: number) {
 }
 
 /**
- *  @deprecated - Use SharedMatrix
+ * @deprecated - SparseMatrix is an abandoned prototype.  Please use SharedMatrix instead.
  */
  export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     /**
