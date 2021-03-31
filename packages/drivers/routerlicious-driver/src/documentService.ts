@@ -40,6 +40,8 @@ export class DocumentService implements api.IDocumentService {
 
     private documentStorageService: DocumentStorageService | undefined;
 
+    public dispose() {}
+
     /**
      * Connects to a storage endpoint for snapshot service.
      *

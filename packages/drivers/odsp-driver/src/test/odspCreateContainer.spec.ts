@@ -6,13 +6,14 @@
 import { strict as assert } from "assert";
 import { DriverErrorType, IDocumentService } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { DebugLogger } from "@fluidframework/telemetry-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { fetchIncorrectResponse } from "@fluidframework/odsp-doclib-utils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
 import { IOdspResolvedUrl } from "../contracts";
-import { getHashedDocumentId } from "../odspUtils";
-import { mockFetch } from "./mockFetch";
+import { getHashedDocumentId, getOdspResolvedUrl } from "../odspUtils";
+import { mockFetchOk, mockFetchMultiple, okResponse } from "./mockFetch";
 
 describe("Odsp Create Container Test", () => {
     const siteUrl = "https://www.localhost.xxx";
@@ -68,7 +69,7 @@ describe("Odsp Create Container Test", () => {
     ): Promise<IDocumentService> => odspDocumentServiceFactory.createContainer(
         summary,
         resolved,
-        DebugLogger.create("fluid:createContainer"));
+        new TelemetryUTLogger());
 
     beforeEach(() => {
         resolver = new OdspDriverUrlResolver();
@@ -79,13 +80,11 @@ describe("Odsp Create Container Test", () => {
         const resolved = await resolver.resolve(request);
         const docID = getHashedDocumentId(driveId, itemId);
         const summary = createSummary(true, true);
-        const docService = await mockFetch(
+        const docService = await mockFetchOk(
+            async () => odspDocumentServiceFactory.createContainer(summary, resolved, new TelemetryUTLogger()),
             expectedResponse,
-            async () => odspDocumentServiceFactory.createContainer(
-                summary,
-                resolved,
-                DebugLogger.create("fluid:createContainer")));
-        const finalResolverUrl = docService.resolvedUrl as IOdspResolvedUrl;
+        );
+        const finalResolverUrl = getOdspResolvedUrl(docService.resolvedUrl);
         assert.strictEqual(finalResolverUrl.driveId, driveId, "Drive Id should match");
         assert.strictEqual(finalResolverUrl.itemId, itemId, "ItemId should match");
         assert.strictEqual(finalResolverUrl.siteUrl, siteUrl, "SiteUrl should match");
@@ -117,9 +116,17 @@ describe("Odsp Create Container Test", () => {
         const summary = createSummary(true, true);
 
         try{
-            await mockFetch({}, async () => createService(summary, resolved));
+            await mockFetchMultiple(
+                async () => createService(summary, resolved),
+                [
+                    // Due to retry logic in getWithRetryForTokenRefresh() for DriverErrorType.incorrectServerResponse
+                    // Need to mock two calls
+                    async () => okResponse({}, {}),
+                    async () => okResponse({}, {}),
+                ],
+            );
         } catch (error) {
-            assert.strictEqual(error.statusCode, 712, "Error code should be 712");
+            assert.strictEqual(error.statusCode, fetchIncorrectResponse, "Wrong error code");
             assert.strictEqual(error.errorType, DriverErrorType.incorrectServerResponse,
                 "Error type should be correct");
             assert.strictEqual(error.message, "Could not parse item from Vroom response", "Message should be correct");

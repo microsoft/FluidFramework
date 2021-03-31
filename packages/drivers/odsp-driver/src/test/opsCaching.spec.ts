@@ -1,0 +1,155 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+import { strict as assert } from "assert";
+import { OpsCache, ICache, IMessage } from "../opsCaching";
+
+export type MyDataInput = IMessage & { data: string; };
+
+class MockCache implements ICache {
+    public async write(batchNumber: string, data: string) {
+        this.data[batchNumber] = JSON.parse(data);
+    }
+
+    public async read(batchNumber: string) {
+        const content = this.data[batchNumber];
+        if (content === undefined) {
+            return undefined;
+        }
+        return JSON.stringify(content);
+    }
+
+    public readonly data: { [key: string]: any; } = {};
+}
+
+async function runTest(
+    batchSize: number,
+    initialSeq: number,
+    mockData: MyDataInput[],
+    expected: { [key: number]: (MyDataInput | undefined)[] })
+{
+    const mockCache = new MockCache();
+
+    const cache = new OpsCache(
+        initialSeq,
+        mockCache,
+        batchSize,
+    );
+
+    cache.addOps(mockData);
+
+    assert.deepEqual(mockCache.data, JSON.parse(JSON.stringify(expected)));
+
+    const expectedArr: MyDataInput[] = [];
+    for (const values of Object.values(expected)) {
+        for (const op of values) {
+            if (op !== undefined) {
+                expectedArr.push(op);
+            }
+        }
+    }
+
+    let result = await cache.get(initialSeq, undefined);
+    assert.deepEqual(result, expectedArr);
+
+    if (initialSeq >= 10) {
+        result = await cache.get(0, 10);
+        assert(result.length === 0);
+    }
+
+    // Asking for one too early should result in empty result, as hit miss should result in no ops.
+    if (initialSeq > 0) {
+        result = await cache.get(initialSeq - 1, undefined);
+        assert(result.length === 0);
+    }
+
+    if (expectedArr.length > 0) {
+        const last = expectedArr[expectedArr.length - 1].sequenceNumber;
+
+        result = await cache.get(last, undefined);
+        assert(result.length === 0);
+
+        result = await cache.get(last + 10, undefined);
+        assert(result.length === 0);
+
+        result = await cache.get(initialSeq + 1, last);
+        assert.deepEqual(result, expectedArr.slice(1, -1));
+
+        result = await cache.get(initialSeq + 1, last + 100000);
+        assert.deepEqual(result, expectedArr.slice(1));
+    }
+}
+
+describe("OpsCache write", () => {
+    const mockData1: MyDataInput[] = [
+        { sequenceNumber: 105, data: "105" },
+        { sequenceNumber: 110, data: "110" },
+        { sequenceNumber: 115, data: "115" },
+        { sequenceNumber: 120, data: "120" },
+        { sequenceNumber: 125, data: "125" },
+        { sequenceNumber: 130, data: "130" },
+        { sequenceNumber: 135, data: "135" },
+        { sequenceNumber: 140, data: "140" },
+        { sequenceNumber: 145, data: "140" },
+    ];
+
+    it("1 element in each batch of 5 should not commit", async () => {
+        await runTest(5, 100, mockData1, {});
+    });
+
+    it("2 element in each batch of 10 should not commit", async () => {
+        await runTest(10, 100, mockData1, {});
+    });
+
+    it("6 sequential elements with batch of 5 should commit 1 batch", async () => {
+        await runTest(
+            5,
+            100,
+            [
+                { sequenceNumber: 101, data: "101" },
+                { sequenceNumber: 102, data: "102" },
+                { sequenceNumber: 103, data: "103" },
+                { sequenceNumber: 104, data: "104" },
+                { sequenceNumber: 105, data: "105" },
+            ],
+            {
+                20: [
+                undefined,
+                { sequenceNumber: 101, data: "101" },
+                { sequenceNumber: 102, data: "102" },
+                { sequenceNumber: 103, data: "103" },
+                { sequenceNumber: 104, data: "104" },
+                ],
+            });
+    });
+
+    const mockData3: MyDataInput[] = [
+        { sequenceNumber: 102, data: "102" },
+        { sequenceNumber: 103, data: "103" },
+    ];
+
+    it("3 sequential elements with batch of 2 and offset of 1 should commit 2 batches", async () => {
+        await runTest(
+            2,
+            101,
+            mockData3,
+            {
+            51: [
+                { sequenceNumber: 102, data: "102" },
+                { sequenceNumber: 103, data: "103" },
+            ],
+            });
+    });
+
+    it("with batch size of 1 all ops should commit in own batch", async () => {
+        await runTest(
+            1,
+            101,
+            mockData3,
+            {
+            102: [{ sequenceNumber: 102, data: "102" }],
+            103: [{ sequenceNumber: 103, data: "103" }],
+            });
+    });
+});

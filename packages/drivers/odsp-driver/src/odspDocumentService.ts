@@ -30,15 +30,16 @@ import {
     HostStoragePolicyInternal,
     ISocketStorageDiscovery,
 } from "./contracts";
-import { IOdspCache, startingUpdateUsageOpFrequency, updateUsageOpMultiplier } from "./odspCache";
+import { IEntry, IOdspCache } from "./odspCache";
 import { OdspDeltaStorageService } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
-import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
+import { getWithRetryForTokenRefresh, isLocalStorageAvailable, getOdspResolvedUrl } from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { TokenFetchOptions } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
+import { OpsCache } from "./opsCaching";
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
@@ -97,8 +98,6 @@ function writeLocalStorage(key: string, value: string) {
  * clients
  */
 export class OdspDocumentService implements IDocumentService {
-    protected updateUsageOpFrequency = startingUpdateUsageOpFrequency;
-
     readonly policies: IDocumentServicePolicies;
 
     /**
@@ -121,7 +120,7 @@ export class OdspDocumentService implements IDocumentService {
         epochTracker: EpochTracker,
     ): Promise<IDocumentService> {
         return new OdspDocumentService(
-            resolvedUrl as IOdspResolvedUrl,
+            getOdspResolvedUrl(resolvedUrl),
             getStorageToken,
             getWebsocketToken,
             logger,
@@ -140,11 +139,9 @@ export class OdspDocumentService implements IDocumentService {
 
     private readonly isOdc: boolean;
 
-    // Track maximum sequence number we observed and communicated to cache layer.
-    private opSeqNumberMax = 0;
-    private opSeqNumberMaxHostNotified = 0;
-
     private readonly hostPolicy: HostStoragePolicyInternal;
+
+    private _opsCache?: OpsCache;
 
     /**
      * @param getStorageToken - function that can provide the storage token. This is is also referred to as
@@ -170,10 +167,6 @@ export class OdspDocumentService implements IDocumentService {
             storageOnly: odspResolvedUrl.fileVersion !== undefined,
         };
 
-        epochTracker.fileEntry = {
-            resolvedUrl: odspResolvedUrl,
-            docId: odspResolvedUrl.hashedDocumentId,
-        };
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
         this.isOdc = isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin);
         this.logger = ChildLogger.create(logger,
@@ -227,19 +220,48 @@ export class OdspDocumentService implements IDocumentService {
             return websocketEndpoint.deltaStorageUrl;
         };
 
+        let snapshotOps = this.storageManager?.ops;
         const service = new OdspDeltaStorageService(
             urlProvider,
-            this.storageManager?.ops,
             this.getStorageToken,
             this.epochTracker,
             this.logger,
         );
 
+        let missed = false;
         return {
             get: async (from: number, to: number) => {
-                const { messages, partialResult } = await service.get(from, to);
-                this.opsReceived(messages);
-                return { messages, partialResult };
+                if (snapshotOps !== undefined && snapshotOps.length !== 0) {
+                    const messages = snapshotOps.filter((op) => op.sequenceNumber > from).map((op) => op.op);
+                    snapshotOps = undefined;
+                    if (messages.length > 0 && messages[0].sequenceNumber === from + 1) {
+                        // Consider not caching these ops as they will be cached as part of snapshot cache entry
+                        this.opsReceived(messages);
+                        return { messages, partialResult: true };
+                    } else {
+                        this.logger.sendErrorEvent({
+                            eventName: "SnapshotOpsNotUsed",
+                            length: messages.length,
+                            first: messages[0].sequenceNumber,
+                            from,
+                            to,
+                        });
+                    }
+                }
+
+                // We always write ops sequentially. Once there is a miss, stop consulting cache.
+                // This saves a bit of processing time
+                if (!missed) {
+                    const messagesFromCache = await this.opsCache?.get(from, to);
+                    if (messagesFromCache !== undefined && messagesFromCache.length !== 0) {
+                        return { messages: messagesFromCache as ISequencedDocumentMessage[], partialResult: true };
+                    }
+                    missed = true;
+                }
+
+                const result = await service.get(from, to);
+                this.opsReceived(result.messages);
+                return result;
             },
         };
     }
@@ -456,22 +478,43 @@ export class OdspDocumentService implements IDocumentService {
         }
     }
 
-    // Called whenever re receive ops through any channel for this document (snapshot, delta connection, delta storage)
-    // We use it to notify caching layer of how stale is snapshot stored in cache.
-    protected opsReceived(ops: ISequencedDocumentMessage[]) {
-        const cacheEntry = this.storageManager?.snapshotCacheEntry;
-        if (ops.length === 0 || cacheEntry === undefined) {
+    public dispose() {
+        this._opsCache?.flushOps();
+    }
+
+    protected get opsCache() {
+        if (this._opsCache) {
+            return this._opsCache;
+        }
+
+        const seqNumber = this.storageManager?.snapshotSequenceNumber;
+        if (seqNumber === undefined) {
             return;
         }
 
-        const maxSeq = ops[ops.length - 1].sequenceNumber;
-        if (this.opSeqNumberMax < maxSeq) {
-            this.opSeqNumberMax = maxSeq;
+        const opsKey: Omit<IEntry, "key"> = {
+            type: "ops",
+        };
+        this._opsCache = new OpsCache(
+            seqNumber,
+            {
+                write: async (key: string, opsData: string) => {
+                    return this.cache.persistedCache.put({...opsKey, key}, opsData);
+                },
+                read: async (batch: string) => undefined,
+            },
+        );
+        return this._opsCache;
+    }
+
+    // Called whenever re receive ops through any channel for this document (snapshot, delta connection, delta storage)
+    // We use it to notify caching layer of how stale is snapshot stored in cache.
+    protected opsReceived(ops: ISequencedDocumentMessage[]) {
+        // No need for two clients to save same ops
+        if (ops.length === 0 || !this.odspResolvedUrl.summarizer) {
+            return;
         }
-        if (this.opSeqNumberMaxHostNotified + this.updateUsageOpFrequency < this.opSeqNumberMax) {
-            this.opSeqNumberMaxHostNotified = this.opSeqNumberMax;
-            this.updateUsageOpFrequency *= updateUsageOpMultiplier;
-            this.cache.persistedCache.updateUsage(cacheEntry, this.opSeqNumberMax);
-        }
+
+        this.opsCache?.addOps(ops);
     }
 }

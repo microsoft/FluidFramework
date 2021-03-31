@@ -9,23 +9,22 @@ import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 import * as api from "@fluidframework/protocol-definitions";
-import { hashFile, IsoBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
+import { hashFile, IsoBuffer } from "@fluidframework/common-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
-import { EpochTracker } from "../epochTracker";
-import { LocalPersistentCache, LocalPersistentCacheAdapter } from "../odspCache";
+import { EpochTracker, createUtEpochTracker } from "../epochTracker";
 import { IDedupCaches, OdspSummaryUploadManager } from "../odspSummaryUploadManager";
-import { IBlob } from "../contracts";
+import { IBlob, IOdspResolvedUrl } from "../contracts";
 import { TokenFetchOptions } from "../tokenFetch";
-import { mockFetch } from "./mockFetch";
+import { mockFetchOk } from "./mockFetch";
 
 describe("Odsp Summary Upload Manager Tests", () => {
     let epochTracker: EpochTracker;
-    let cache: LocalPersistentCacheAdapter;
     let odspSummaryUploadManager: OdspSummaryUploadManager;
     beforeEach(() => {
-        const logger = new TelemetryNullLogger();
-        cache = new LocalPersistentCacheAdapter(new LocalPersistentCache());
-        epochTracker = new EpochTracker(cache, logger);
+        const logger = new TelemetryUTLogger();
+        let resolvedUrl: IOdspResolvedUrl | undefined;
+        epochTracker = createUtEpochTracker({ docId: "docId", resolvedUrl: resolvedUrl! }, logger);
         odspSummaryUploadManager = new OdspSummaryUploadManager(
             "snapshotStorageUrl",
             async (options: TokenFetchOptions, name?: string) => "token",
@@ -127,12 +126,10 @@ describe("Odsp Summary Upload Manager Tests", () => {
             },
         };
 
-        await mockFetch({ id: summaryContext.proposalHandle }, async () => {
-            return odspSummaryUploadManager.writeSummaryTree(
-                appSummary,
-                summaryContext,
-            );
-        });
+        await mockFetchOk(
+            async () => odspSummaryUploadManager.writeSummaryTree(appSummary, summaryContext),
+            { id: summaryContext.proposalHandle },
+        );
 
         assert.strictEqual(odspSummaryUploadManager["blobTreeDedupCaches"].blobShaToPath.size, 2,
             "2 blobs should be in cache");
@@ -151,12 +148,10 @@ describe("Odsp Summary Upload Manager Tests", () => {
             },
         };
         const componentBlobNewPath = ".app/default2/component2";
-        await mockFetch({ id: summaryContext.proposalHandle }, async () => {
-            return odspSummaryUploadManager.writeSummaryTree(
-                appSummary,
-                summaryContext,
-            );
-        });
+        await mockFetchOk(
+            async () => odspSummaryUploadManager.writeSummaryTree(appSummary, summaryContext),
+            { id: summaryContext.proposalHandle },
+        );
 
         assert.strictEqual(odspSummaryUploadManager["blobTreeDedupCaches"].blobShaToPath.size, 1,
             "1 blobs should be in cache");

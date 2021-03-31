@@ -255,6 +255,7 @@ export interface IDocumentService {
      */
     getErrorTrackingService(): IErrorTrackingService | null;
 
+    dispose(): void;
 }
 
 export interface IDocumentServiceFactory {

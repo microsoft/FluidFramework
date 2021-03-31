@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import Axios, { AxiosRequestConfig } from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
@@ -60,7 +60,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 
         axiosMockAdapter.reset();
         restWrapper = new RouterliciousRestWrapper(
-            new TelemetryNullLogger(),
+            new TelemetryUTLogger(),
             getAuthHeader,
         );
         await restWrapper.load();
