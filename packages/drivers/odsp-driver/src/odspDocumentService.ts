@@ -141,7 +141,7 @@ export class OdspDocumentService implements IDocumentService {
 
     private readonly hostPolicy: HostStoragePolicyInternal;
 
-    private opsCache?: OpsCache;
+    private _opsCache?: OpsCache;
 
     /**
      * @param getStorageToken - function that can provide the storage token. This is is also referred to as
@@ -228,12 +228,15 @@ export class OdspDocumentService implements IDocumentService {
             this.logger,
         );
 
+        let missed = false;
         return {
             get: async (from: number, to: number) => {
                 if (snapshotOps !== undefined && snapshotOps.length !== 0) {
                     const messages = snapshotOps.filter((op) => op.sequenceNumber > from).map((op) => op.op);
                     snapshotOps = undefined;
                     if (messages.length > 0 && messages[0].sequenceNumber === from + 1) {
+                        // Consider not caching these ops as they will be cached as part of snapshot cache entry
+                        this.opsReceived(messages);
                         return { messages, partialResult: true };
                     } else {
                         this.logger.sendErrorEvent({
@@ -244,6 +247,16 @@ export class OdspDocumentService implements IDocumentService {
                             to,
                         });
                     }
+                }
+
+                // We always write ops sequentially. Once there is a miss, stop consulting cache.
+                // This saves a bit of processing time
+                if (!missed) {
+                    const messagesFromCache = await this.opsCache?.get(from, to);
+                    if (messagesFromCache !== undefined && messagesFromCache.length !== 0) {
+                        return { messages: messagesFromCache as ISequencedDocumentMessage[], partialResult: true };
+                    }
+                    missed = true;
                 }
 
                 const result = await service.get(from, to);
@@ -466,31 +479,40 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     public dispose() {
-        this.opsCache?.flushOps();
+        this._opsCache?.flushOps();
+    }
+
+    protected get opsCache() {
+        if (this._opsCache) {
+            return this._opsCache;
+        }
+
+        const seqNumber = this.storageManager?.snapshotSequenceNumber;
+        if (seqNumber === undefined) {
+            return;
+        }
+
+        const opsKey: Omit<IEntry, "key"> = {
+            type: "ops",
+        };
+        this._opsCache = new OpsCache(
+            seqNumber,
+            {
+                write: async (key: string, opsData: string) => {
+                    return this.cache.persistedCache.put({...opsKey, key}, opsData);
+                },
+                read: async (batch: string) => undefined,
+            },
+        );
+        return this._opsCache;
     }
 
     // Called whenever re receive ops through any channel for this document (snapshot, delta connection, delta storage)
     // We use it to notify caching layer of how stale is snapshot stored in cache.
     protected opsReceived(ops: ISequencedDocumentMessage[]) {
-        const seqNumber = this.storageManager?.snapshotSequenceNumber;
-        if (ops.length === 0 || seqNumber === undefined) {
-            return;
-        }
-
         // No need for two clients to save same ops
-        if (!this.odspResolvedUrl.summarizer && !this.opsCache) {
-            const opsKey: Omit<IEntry, "key"> = {
-                type: "ops",
-            };
-            this.opsCache = new OpsCache(
-                seqNumber,
-                {
-                    write: async (key: string, opsData: string) => {
-                        return this.cache.persistedCache.put({...opsKey, key}, opsData);
-                    },
-                    read: async (batch: string) => undefined,
-                },
-            );
+        if (ops.length === 0 || !this.odspResolvedUrl.summarizer) {
+            return;
         }
 
         this.opsCache?.addOps(ops);

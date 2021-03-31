@@ -2,11 +2,17 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
+// ISequencedDocumentMessage
+export interface IMessage {
+    sequenceNumber: number;
+}
+
+type CacheEntry = (IMessage | undefined)[];
 
 interface IBatch {
     currentBatchSize: number;
-    batchData: (ISequencedDocumentMessage | undefined)[];
+    batchData: CacheEntry;
     dirty: boolean;
 }
 
@@ -49,7 +55,7 @@ export class OpsCache {
         }
     }
 
-    public addOps(ops: ISequencedDocumentMessage[]) {
+    public addOps(ops: IMessage[]) {
         if (this.totalOpsToCache <= 0) {
             return;
         }
@@ -94,6 +100,40 @@ export class OpsCache {
         }
     }
 
+    public async get(from: number, to?: number): Promise<IMessage[]> {
+        const messages: IMessage[] = [];
+        let batchNumber = this.getBatchNumber(from + 1);
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            const res = await this.cache.read(batchNumber.toString());
+            if (res === undefined) {
+                break;
+            }
+            const result: CacheEntry = JSON.parse(res);
+            for (const op of result) {
+                // Note that we write out undefined, but due to JSON.stringify, it turns into null!
+                if (op) {
+                    if (to !== undefined && op.sequenceNumber >= to) {
+                        break;
+                    }
+                    if (messages.length === 0) {
+                        if (op.sequenceNumber > from + 1) {
+                            break;
+                        } else if (op.sequenceNumber <= from) {
+                            continue;
+                        }
+                    }
+                    messages.push(op);
+                } else if (messages.length !== 0) {
+                    break;
+                }
+            }
+
+            batchNumber++;
+        }
+        return messages;
+    }
+
     protected write(batchNumber: number, payload: IBatch) {
         // Errors are caught and logged by PersistedCacheWithErrorHandling that sits
         // in the adapter chain of cache adapters
@@ -120,7 +160,7 @@ export class OpsCache {
     }
 
     private initializeNewBatchDataArray() {
-        const tempArray: ISequencedDocumentMessage[] = [];
+        const tempArray: IMessage[] = [];
         tempArray.length = this.batchSize; // fill with empty, undefined elements
         return tempArray;
     }
