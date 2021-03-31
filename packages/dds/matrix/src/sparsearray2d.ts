@@ -42,6 +42,7 @@ const r0c0ToMorton2x16 = (row: number, col: number) => (r0ToMorton16(row) | c0To
 type RecurArrayHelper<T> = RecurArray<T> | T;
 type RecurArray<T> = RecurArrayHelper<T>[];
 
+/** Undo JSON serialization's coercion of 'undefined' to null. */
 const nullToUndefined = <T>(array: RecurArray<T | null>): RecurArray<T | undefined> => array.map((value) => {
     // eslint-disable-next-line no-null/no-null
     return value === null
@@ -56,13 +57,13 @@ type UA<T> = (T | undefined)[];
 /**
  * A sparse 4 billion x 4 billion array stored as 16x16 tiles.
  */
-export class SparseArray2D<T> implements IMatrixReader<T | undefined | null>, IMatrixWriter<T | undefined> {
+export class SparseArray2D<T> implements IMatrixReader<T | undefined>, IMatrixWriter<T | undefined> {
     constructor(private readonly root: UA<UA<UA<UA<UA<T>>>>> = [undefined]) { }
 
     public get rowCount() { return 0xFFFFFFFF; }
     public get colCount() { return 0xFFFFFFFF; }
 
-    public getCell(row: number, col: number): T | undefined | null {
+    public getCell(row: number, col: number): T | undefined {
         const keyHi = r0c0ToMorton2x16(row >>> 16, col >>> 16);
         const level0 = this.root[keyHi];
         if (level0 !== undefined) {

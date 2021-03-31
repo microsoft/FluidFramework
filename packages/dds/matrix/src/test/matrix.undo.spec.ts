@@ -4,14 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { Serializable } from "@fluidframework/datastore-definitions";
 import {
     MockFluidDataStoreRuntime,
     MockEmptyDeltaConnection,
     MockStorage,
     MockContainerRuntimeFactory,
 } from "@fluidframework/test-runtime-utils";
-import { SharedMatrix, SharedMatrixFactory } from "..";
+import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "..";
 import { extract, expectSize } from "./utils";
 import { TestConsumer } from "./testconsumer";
 import { UndoRedoStackManager } from "./undoRedoStackManager";
@@ -23,7 +22,7 @@ describe("Matrix", () => {
         // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
         let consumer1: TestConsumer<undefined | null | number>;
         let undo1: UndoRedoStackManager;
-        let expect: <T extends Serializable>(expected: readonly (readonly T[])[]) => Promise<void>;
+        let expect: <T>(expected: readonly (readonly (MatrixItem<T>)[])[]) => Promise<void>;
 
         function singleClientTests() {
             it("undo/redo setCell", async () => {
@@ -436,7 +435,7 @@ describe("Matrix", () => {
         describe("local client", () => {
             // Summarizes the given `SharedMatrix`, loads the summary into a 2nd SharedMatrix, vets that the two are
             // equivalent, and then returns the 2nd matrix.
-            async function summarize<T extends Serializable>(matrix: SharedMatrix<T>) {
+            async function summarize<T>(matrix: SharedMatrix<T>) {
                 // Create a summay
                 const objectStorage = MockStorage.createFromSummary(matrix.summarize().summary);
 
@@ -467,7 +466,7 @@ describe("Matrix", () => {
             }
 
             before(() => {
-                expect = async <T extends Serializable>(expected: readonly (readonly T[])[]) => {
+                expect = async <T>(expected: readonly (readonly (MatrixItem<T>)[])[]) => {
                     const actual = extract(matrix1);
                     assert.deepEqual(actual, expected, "Matrix must match expected.");
                     assert.deepEqual(extract(consumer1), actual, "Matrix must notify IMatrixConsumers of all changes.");

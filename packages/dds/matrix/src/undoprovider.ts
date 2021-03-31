@@ -4,9 +4,8 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { Serializable } from "@fluidframework/datastore-definitions";
 import { TrackingGroup, MergeTreeDeltaOperationType, MergeTreeDeltaType } from "@fluidframework/merge-tree";
-import { SharedMatrix } from "./matrix";
+import { MatrixItem, SharedMatrix } from "./matrix";
 import { Handle, isHandleValid } from "./handletable";
 import { PermutationSegment, PermutationVector } from "./permutationvector";
 import { IUndoConsumer } from "./types";
@@ -108,7 +107,7 @@ export class VectorUndoProvider {
     }
 }
 
-export class MatrixUndoProvider<T extends Serializable = Serializable> {
+export class MatrixUndoProvider<T> {
     constructor(
         private readonly consumer: IUndoConsumer,
         private readonly matrix: SharedMatrix<T>,
@@ -137,7 +136,7 @@ export class MatrixUndoProvider<T extends Serializable = Serializable> {
         );
     }
 
-    cellSet(rowHandle: Handle, colHandle: Handle, oldValue: T) {
+    cellSet(rowHandle: Handle, colHandle: Handle, oldValue: MatrixItem<T>) {
         assert(isHandleValid(rowHandle) && isHandleValid(colHandle),
             0x02c /* "On cellSet(), invalid row and/or column handles!" */);
 
