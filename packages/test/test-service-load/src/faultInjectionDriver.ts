@@ -64,7 +64,9 @@ export class FaultInjectionDocumentService implements IDocumentService {
         return this._currentDeltaStream;
     }
 
-    public dispose() {}
+    public dispose() {
+        this.internal.dispose();
+    }
 
     async connectToStorage(): Promise<IDocumentStorageService> {
         return this.internal.connectToStorage();

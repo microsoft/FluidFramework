@@ -17,7 +17,6 @@ import {
     IOdspCache,
     IPersistedCache,
     INonPersistentCache,
-    LocalPersistentCache,
     IPersistedFileCache,
     snapshotKey,
  } from "./odspCache";
@@ -406,7 +405,3 @@ export function createOdspCacheAndTracker(
         epochTracker,
     };
 }
-
-export const createUtLocalCache = () => new LocalPersistentCache(2000);
-export const createUtEpochTracker = (fileEntry: IFileEntry, logger: ITelemetryLogger) =>
-    new EpochTracker(createUtLocalCache(), fileEntry, logger);

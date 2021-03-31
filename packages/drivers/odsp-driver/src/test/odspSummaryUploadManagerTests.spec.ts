@@ -12,11 +12,14 @@ import * as api from "@fluidframework/protocol-definitions";
 import { hashFile, IsoBuffer } from "@fluidframework/common-utils";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
-import { EpochTracker, createUtEpochTracker } from "../epochTracker";
+import { EpochTracker } from "../epochTracker";
 import { IDedupCaches, OdspSummaryUploadManager } from "../odspSummaryUploadManager";
 import { IBlob, IOdspResolvedUrl } from "../contracts";
+import { LocalPersistentCache } from "../odspCache";
 import { TokenFetchOptions } from "../tokenFetch";
 import { mockFetchOk } from "./mockFetch";
+
+const createUtLocalCache = () => new LocalPersistentCache(2000);
 
 describe("Odsp Summary Upload Manager Tests", () => {
     let epochTracker: EpochTracker;
@@ -24,7 +27,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
     beforeEach(() => {
         const logger = new TelemetryUTLogger();
         let resolvedUrl: IOdspResolvedUrl | undefined;
-        epochTracker = createUtEpochTracker({ docId: "docId", resolvedUrl: resolvedUrl! }, logger);
+        epochTracker = new EpochTracker(createUtLocalCache(), { docId: "docId", resolvedUrl: resolvedUrl! }, logger);
         odspSummaryUploadManager = new OdspSummaryUploadManager(
             "snapshotStorageUrl",
             async (options: TokenFetchOptions, name?: string) => "token",
