@@ -69,8 +69,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
  */
 export interface IContainerRuntimeBase extends
     IEventProvider<IContainerRuntimeBaseEvents>,
-    IProvideFluidHandleContext
-{
+    IProvideFluidHandleContext {
 
     readonly logger: ITelemetryLogger;
     readonly clientDetails: IClientDetails;
@@ -236,7 +235,9 @@ export interface IFluidDataStoreContextEvents extends IEvent {
  * get information and call functionality to the container.
  */
 export interface IFluidDataStoreContext extends
-IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegistry> {
+    IEventProvider<IFluidDataStoreContextEvents>,
+    Partial<IProvideFluidDataStoreRegistry>,
+    IProvideFluidHandleContext {
     readonly documentId: string;
     readonly id: string;
     /**
@@ -263,6 +264,8 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     readonly baseSnapshot: ISnapshotTree | undefined;
+    readonly logger: ITelemetryLogger;
+    readonly clientDetails: IClientDetails;
     /**
      * @deprecated 0.37 Use the provideScopeLoader flag to make the loader
      * available through scope instead
