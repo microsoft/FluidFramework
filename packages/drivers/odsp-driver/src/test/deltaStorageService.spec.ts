@@ -6,9 +6,13 @@
 import { strict as assert } from "assert";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { IOdspResolvedUrl } from "../contracts";
-import { createUtEpochTracker } from "../epochTracker";
 import { OdspDeltaStorageService } from "../odspDeltaStorageService";
+import { LocalPersistentCache } from "../odspCache";
+import { EpochTracker } from "../epochTracker";
 import { mockFetchOk } from "./mockFetch";
+
+const createUtLocalCache = () => new LocalPersistentCache(2000);
+const createUtEpochTracker = (fileEntry, logger) => new EpochTracker(createUtLocalCache(), fileEntry, logger);
 
 describe("DeltaStorageService", () => {
     /*

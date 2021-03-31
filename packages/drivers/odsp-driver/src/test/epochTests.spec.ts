@@ -12,7 +12,6 @@ import {
     EpochTracker,
     IVersionedValueWithEpoch,
     persistedCacheValueVersion,
-    createUtLocalCache,
 } from "../epochTracker";
 import {
     ICacheEntry,
@@ -21,6 +20,8 @@ import {
  } from "../odspCache";
 import { getHashedDocumentId } from "../odspUtils";
 import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch";
+
+const createUtLocalCache = () => new LocalPersistentCache(2000);
 
 describe("Tests for Epoch Tracker", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";

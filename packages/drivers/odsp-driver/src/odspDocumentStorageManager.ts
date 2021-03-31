@@ -760,12 +760,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.logger.sendErrorEvent({ eventName: "fetchSnapshotError", sequenceNumber, seqNumberFromOps });
                 value.sequenceNumber = undefined;
             } else if (canCache) {
-                // Errors are automatically logged by EpochTracker
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.cache.persistedCache.put(
                     this._snapshotCacheEntry,
                     value,
-                );
+                ).catch(() => {});
             }
 
             event.end({
