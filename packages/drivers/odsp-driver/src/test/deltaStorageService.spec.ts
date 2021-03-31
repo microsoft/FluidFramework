@@ -25,7 +25,6 @@ describe("DeltaStorageService", () => {
         const logger = new TelemetryUTLogger();
         const deltaStorageService = new OdspDeltaStorageService(
             async () => testDeltaStorageUrl,
-            undefined,
             async (_refresh) => "?access_token=123",
             createUtEpochTracker(fileEntry, logger),
             logger);
@@ -76,7 +75,6 @@ describe("DeltaStorageService", () => {
             const logger = new TelemetryUTLogger();
             deltaStorageService = new OdspDeltaStorageService(
                 async () => testDeltaStorageUrl,
-                undefined,
                 async (_refresh) => "",
                 createUtEpochTracker(fileEntry, logger),
                 logger);
@@ -133,7 +131,6 @@ describe("DeltaStorageService", () => {
             const logger = new TelemetryUTLogger();
             deltaStorageService = new OdspDeltaStorageService(
                 async () => testDeltaStorageUrl,
-                undefined,
                 async (_refresh) => "",
                 createUtEpochTracker(fileEntry, logger),
                 logger);

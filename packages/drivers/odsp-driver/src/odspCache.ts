@@ -97,7 +97,7 @@ export interface IPersistedCache {
  */
 export interface IPersistedFileCache {
     get(entry: IEntry): Promise<any>;
-    put(entry: IEntry, value: any): Promise<boolean>; // returns false if failed to put value
+    put(entry: IEntry, value: any): Promise<void>;
     removeEntries(): Promise<void>;
 }
 

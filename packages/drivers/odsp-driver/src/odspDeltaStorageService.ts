@@ -18,7 +18,6 @@ import { TokenFetchOptions } from "./tokenFetch";
 export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService {
     constructor(
         private readonly deltaFeedUrlProvider: () => Promise<string>,
-        private ops: ISequencedDeltaOpMessage[] | undefined,
         private readonly getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
         private readonly epochTracker: EpochTracker,
         private readonly logger: ITelemetryLogger,
@@ -29,16 +28,6 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
         from: number,
         to: number,
     ): Promise<api.IDeltasFetchResult> {
-        const ops = this.ops;
-        this.ops = undefined;
-        if (ops !== undefined) {
-            const messages = ops.filter((op) => op.sequenceNumber > from).map((op) => op.op);
-            if (messages.length > 0) {
-                return { messages, partialResult: true };
-            }
-        }
-        this.ops = undefined;
-
         return getWithRetryForTokenRefresh(async (options) => {
             // Note - this call ends up in getSocketStorageDiscovery() and can refresh token
             // Thus it needs to be done before we call getStorageToken() to reduce extra calls

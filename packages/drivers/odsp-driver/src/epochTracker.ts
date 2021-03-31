@@ -103,10 +103,9 @@ export class EpochTracker implements IPersistedFileCache {
             fluidEpoch: this._fluidEpoch,
         };
         return this.cache.put(this.fileEntryFromEntry(entry), data)
-            .then(() => true)
             .catch((error) => {
                 this.logger.sendErrorEvent({ eventName: "cachePutError", type: entry.type }, error);
-                return false;
+                throw error;
             });
     }
 

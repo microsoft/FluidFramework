@@ -30,7 +30,7 @@ import {
     HostStoragePolicyInternal,
     ISocketStorageDiscovery,
 } from "./contracts";
-import { IOdspCache } from "./odspCache";
+import { IEntry, IOdspCache } from "./odspCache";
 import { OdspDeltaStorageService } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
@@ -39,6 +39,7 @@ import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { TokenFetchOptions } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
+import { OpsCache } from "./opsCaching";
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
@@ -140,6 +141,8 @@ export class OdspDocumentService implements IDocumentService {
 
     private readonly hostPolicy: HostStoragePolicyInternal;
 
+    private opsCache?: OpsCache;
+
     /**
      * @param getStorageToken - function that can provide the storage token. This is is also referred to as
      * the "VROOM" token in SPO.
@@ -217,9 +220,9 @@ export class OdspDocumentService implements IDocumentService {
             return websocketEndpoint.deltaStorageUrl;
         };
 
+        let snapshotOps = this.storageManager?.ops;
         const service = new OdspDeltaStorageService(
             urlProvider,
-            this.storageManager?.ops,
             this.getStorageToken,
             this.epochTracker,
             this.logger,
@@ -227,9 +230,25 @@ export class OdspDocumentService implements IDocumentService {
 
         return {
             get: async (from: number, to: number) => {
-                const { messages, partialResult } = await service.get(from, to);
-                this.opsReceived(messages);
-                return { messages, partialResult };
+                if (snapshotOps !== undefined && snapshotOps.length !== 0) {
+                    const messages = snapshotOps.filter((op) => op.sequenceNumber > from).map((op) => op.op);
+                    snapshotOps = undefined;
+                    if (messages.length > 0 && messages[0].sequenceNumber === from + 1) {
+                        return { messages, partialResult: true };
+                    } else {
+                        this.logger.sendErrorEvent({
+                            eventName: "SnapshotOpsNotUsed",
+                            length: messages.length,
+                            first: messages[0].sequenceNumber,
+                            from,
+                            to,
+                        });
+                    }
+                }
+
+                const result = await service.get(from, to);
+                this.opsReceived(result.messages);
+                return result;
             },
         };
     }
@@ -447,6 +466,7 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     public dispose() {
+        this.opsCache?.flushOps();
     }
 
     // Called whenever re receive ops through any channel for this document (snapshot, delta connection, delta storage)
@@ -456,5 +476,23 @@ export class OdspDocumentService implements IDocumentService {
         if (ops.length === 0 || seqNumber === undefined) {
             return;
         }
+
+        // No need for two clients to save same ops
+        if (!this.odspResolvedUrl.summarizer && !this.opsCache) {
+            const opsKey: Omit<IEntry, "key"> = {
+                type: "ops",
+            };
+            this.opsCache = new OpsCache(
+                seqNumber,
+                {
+                    write: async (key: string, opsData: string) => {
+                        return this.cache.persistedCache.put({...opsKey, key}, opsData);
+                    },
+                    read: async (batch: string) => undefined,
+                },
+            );
+        }
+
+        this.opsCache?.addOps(ops);
     }
 }
