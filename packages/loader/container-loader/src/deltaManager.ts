@@ -794,7 +794,7 @@ export class DeltaManager
     }
 
     private async getDeltas(
-        telemetryEventSuffix: string,
+        reason: string,
         from: number, // exclusive
         to: number | undefined, // exclusive
         callback: (messages: ISequencedDocumentMessage[]) => void)
@@ -816,7 +816,7 @@ export class DeltaManager
             from + 1, // from is exclusive, but ParallelRequests uses inclusive left
             to, // exclusive right
             MaxBatchDeltas,
-            ChildLogger.create(this.logger, undefined, { all: {reason: telemetryEventSuffix } }),
+            ChildLogger.create(this.logger, undefined, { all: {reason } }),
             this.closeAbortController.signal,
         );
 
@@ -899,12 +899,9 @@ export class DeltaManager
         }
     }
 
-    private readonly opHandler = (documentId: string, messages: ISequencedDocumentMessage[]) => {
-        if (messages instanceof Array) {
-            this.enqueueMessages(messages);
-        } else {
-            this.enqueueMessages([messages]);
-        }
+    private readonly opHandler = (documentId: string, messagesArg: ISequencedDocumentMessage[]) => {
+        const messages = messagesArg instanceof Array ? messagesArg : [messagesArg];
+        this.enqueueMessages(messages, "opHandler");
     };
 
     private readonly signalHandler = (message: ISignalMessage) => {
@@ -1010,7 +1007,7 @@ export class DeltaManager
         connection.on("error", this.errorHandler);
         connection.on("pong", this.pongHandler);
 
-        const initialMessages = connection.initialMessages;
+        const initialMessages = connection.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
 
         this._hasCheckpointSequenceNumber = false;
 
@@ -1037,10 +1034,16 @@ export class DeltaManager
             DeltaManager.detailsFromConnection(connection),
             this._hasCheckpointSequenceNumber ? this.lastKnownSeqNumber - this.lastSequenceNumber : undefined);
 
-        this.processInitialMessages(
+        this.enqueueMessages(
             initialMessages,
-            connection.initialSignals ?? [],
-            this.connectFirstConnection ? "InitialOps" : "ReconnectOps");
+            this.connectFirstConnection ? "InitialOps" : "ReconnectOps",
+            true /* allowDuplicates */);
+
+        if (connection.initialSignals !== undefined) {
+            for (const signal of connection.initialSignals) {
+                this._inboundSignal.push(signal);
+            }
+        }
 
         // If we got some initial ops, then we know the gap and call above fetched ops to fill it.
         // Same is true for "write" mode even if we have no ops - we will get self "join" ops very very soon.
@@ -1142,19 +1145,6 @@ export class DeltaManager
         }
     }
 
-    private processInitialMessages(
-        messages: ISequencedDocumentMessage[],
-        signals: ISignalMessage[],
-        reason: string,
-    ): void {
-        if (messages.length > 0) {
-            this.catchUp(messages, reason);
-        }
-        for (const signal of signals) {
-            this._inboundSignal.push(signal);
-        }
-    }
-
     // returns parts of message (in string format) that should never change for a given message.
     // Used for message comparison. It attempts to avoid comparing fields that potentially may differ.
     // for example, it's not clear if serverMetadata or timestamp property is a property of message or server state.
@@ -1168,7 +1158,8 @@ export class DeltaManager
 
     private enqueueMessages(
         messages: ISequencedDocumentMessage[],
-        telemetryEventSuffix: string = "OutOfOrderMessage",
+        reason: string,
+        allowDuplicates = false,
     ): void {
         if (this.handler === undefined) {
             // We did not setup handler yet.
@@ -1180,13 +1171,64 @@ export class DeltaManager
             return;
         }
 
-        let duplicateStart: number | undefined;
-        let duplicateEnd: number | undefined;
-        let duplicateCount = 0;
+        // Pending ops should never just hang around for nothing.
+        // This invariant will stay true through this function execution,
+        // so there is no need to process pending ops here.
+        // It's responsibility of
+        // - attachOpHandler()
+        // - fetchMissingDeltas() after it's done with querying storage
+        assert(this.pending.length === 0 || this.fetching, "Pending ops");
 
-        if (messages.length > 0) {
-            this.updateLatestKnownOpSeqNumber(messages[messages.length - 1].sequenceNumber);
+        if (messages.length === 0) {
+            return;
         }
+
+        // Report stats about missing and duplicate ops
+        // This helps better understand why we fetch ops from storage, and thus may delay
+        // getting current / sending ops
+        const last = messages[messages.length - 1].sequenceNumber;
+        // It's possible that this batch is already too late - do not bother
+        if (last > this.lastQueuedSequenceNumber) {
+            const first = messages[0].sequenceNumber;
+            let prev = first - 1;
+            const messageGap = prev - this.lastQueuedSequenceNumber;
+            let firstMissing: number | undefined;
+            let duplicate = 0;
+            let missing = 0;
+
+            // Count all missing and duplicates
+            for (const message of messages) {
+                if (message.sequenceNumber === prev) {
+                    duplicate++;
+                } else if (message.sequenceNumber !== prev + 1) {
+                    missing++;
+                    if (firstMissing === undefined) {
+                        firstMissing = prev + 1;
+                    }
+                }
+                prev = message.sequenceNumber;
+            }
+
+            // Report if there is something to report
+            // Do not report when pending fetch is in progress, as such reporting will not
+            // correctly take into account pending ops.
+            if (duplicate !== 0 && allowDuplicates || missing !== 0 || messageGap > 0 && !this.fetching) {
+                this.logger.sendPerformanceEvent({
+                    eventName: "enqueueMessages",
+                    reason,
+                    length: messages.length,
+                    fetchingOps: this.fetching,
+                    duplicate,
+                    missing,
+                    messageGap,
+                    first,
+                    last,
+                    firstMissing,
+                });
+            }
+        }
+
+        this.updateLatestKnownOpSeqNumber(messages[messages.length - 1].sequenceNumber);
 
         const n = this.previouslyProcessedMessage?.sequenceNumber;
         assert(n === undefined || n === this.lastQueuedSequenceNumber,
@@ -1195,14 +1237,6 @@ export class DeltaManager
         for (const message of messages) {
             // Check that the messages are arriving in the expected order
             if (message.sequenceNumber <= this.lastQueuedSequenceNumber) {
-                duplicateCount++;
-                if (duplicateStart === undefined || duplicateStart > message.sequenceNumber) {
-                    duplicateStart = message.sequenceNumber;
-                }
-                if (duplicateEnd === undefined || duplicateEnd < message.sequenceNumber) {
-                    duplicateEnd = message.sequenceNumber;
-                }
-
                 // Validate that we do not have data loss, i.e. sequencing is reset and started again
                 // with numbers that this client already observed before.
                 if (this.previouslyProcessedMessage?.sequenceNumber === message.sequenceNumber) {
@@ -1223,27 +1257,12 @@ export class DeltaManager
                 }
             } else if (message.sequenceNumber !== this.lastQueuedSequenceNumber + 1) {
                 this.pending.push(message);
-                this.fetchMissingDeltas(telemetryEventSuffix, this.lastQueuedSequenceNumber, message.sequenceNumber);
+                this.fetchMissingDeltas(reason, this.lastQueuedSequenceNumber, message.sequenceNumber);
             } else {
                 this.lastQueuedSequenceNumber = message.sequenceNumber;
                 this.previouslyProcessedMessage = message;
                 this._inbound.push(message);
-
-                if (this.pending.length > 0) {
-                    // we processed a correctly sequenced inbound op while some are pending
-                    // pending might include ops after the current sequence number, so process them now
-                    this.processPendingOps(`EnqueueMessages_${telemetryEventSuffix}`);
-                }
             }
-        }
-
-        if (duplicateCount !== 0) {
-            this.logger.sendTelemetryEvent({
-                eventName: `DuplicateMessages_${telemetryEventSuffix}`,
-                start: duplicateStart,
-                end: duplicateEnd,
-                count: duplicateCount,
-            });
         }
     }
 
@@ -1333,7 +1352,7 @@ export class DeltaManager
     /**
      * Retrieves the missing deltas between the given sequence numbers
      */
-    private fetchMissingDeltas(telemetryEventSuffix: string, fromArg: number, to?: number) {
+    private fetchMissingDeltas(reasonArg: string, fromArg: number, to?: number) {
         // Exit out early if we're already fetching deltas
         if (this.fetching) {
             return;
@@ -1361,49 +1380,28 @@ export class DeltaManager
 
         this.fetching = true;
 
-        this.getDeltas(telemetryEventSuffix, from, to, (messages) => {
+        const reason = `${reasonArg}_GetDeltas`;
+        this.getDeltas(reasonArg, from, to, (messages) => {
             this.refreshDelayInfo(this.deltaStorageDelayId);
-            this.enqueueMessages(messages, telemetryEventSuffix);
+            this.enqueueMessages(messages, reason);
         }).finally(() => {
             this.refreshDelayInfo(this.deltaStorageDelayId);
             this.fetching = false;
+            this.processPendingOps(reason);
         }).catch ((error) => {
             this.logger.sendErrorEvent({eventName: "GetDeltas_Exception"}, error);
             this.close(CreateContainerError(error));
         });
     }
 
-    private catchUp(messages: ISequencedDocumentMessage[], telemetryEventSuffix: string): void {
-        const props: {
-            eventName: string;
-            messageCount: number;
-            pendingCount: number;
-            from?: number;
-            to?: number;
-            messageGap?: number;
-        } = {
-            eventName: `CatchUp_${telemetryEventSuffix}`,
-            messageCount: messages.length,
-            pendingCount: this.pending.length,
-        };
-        if (messages.length !== 0) {
-            props.from = messages[0].sequenceNumber;
-            props.to = messages[messages.length - 1].sequenceNumber;
-            props.messageGap = this.handler !== undefined ? props.from - this.lastQueuedSequenceNumber - 1 : undefined;
-        }
-        this.logger.sendPerformanceEvent(props);
-
-        this.enqueueMessages(messages, telemetryEventSuffix);
-    }
-
     /**
      * Sorts pending ops and attempts to apply them
      */
-    private processPendingOps(telemetryEventSuffix?: string): void {
+    private processPendingOps(reason?: string): void {
         if (this.handler !== undefined) {
             const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
             this.pending = [];
-            this.enqueueMessages(pendingSorted, telemetryEventSuffix);
+            this.enqueueMessages(pendingSorted, `${reason}_pending`, true /* allowDuplicates */);
         }
     }
 
