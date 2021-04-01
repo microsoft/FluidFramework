@@ -49,8 +49,9 @@ export interface IDeltaStorageService {
     get(
         tenantId: string,
         id: string,
-        from: number,
-        to: number): Promise<IDeltasFetchResult>;
+        from: number, // inclusive
+        to: number // exclusive
+    ): Promise<IDeltasFetchResult>;
 }
 
 /**
@@ -69,8 +70,9 @@ export interface IDocumentDeltaStorageService {
      */
     get(from: number,
         to: number | undefined,
+        abortSignal?: AbortSignal,
         cachedOnly?: boolean,
-        abortSignal?: AbortSignal): IReadPipe<ISequencedDocumentMessage[]>;
+    ): IReadPipe<ISequencedDocumentMessage[]>;
 }
 
 export interface IDocumentStorageServicePolicies {

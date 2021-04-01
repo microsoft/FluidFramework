@@ -19,11 +19,12 @@ export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageSer
     }
 
     public get(
-        from: number,
-        to: number | undefined,
+        from: number, // inclusive
+        to: number | undefined, // exclusive
+        abortSignal?: AbortSignal,
         cachedOnly?: boolean,
-        abortSignal?: AbortSignal): IReadPipe<ISequencedDocumentMessage[]> {
-            return pipeFromOps(this.getCore(from, to));
+    ): IReadPipe<ISequencedDocumentMessage[]> {
+        return pipeFromOps(this.getCore(from, to));
     }
 
     private async getCore(from: number, to?: number) {
@@ -31,7 +32,7 @@ export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageSer
         let index: number = 0;
 
         // Find first
-        while (index < this.messages.length && this.messages[index].sequenceNumber <= from) {
+        while (index < this.messages.length && this.messages[index].sequenceNumber < from) {
             index++;
         }
 

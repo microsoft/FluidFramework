@@ -35,8 +35,8 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
 
     public get(from: number,
         to: number | undefined,
-        cachedOnly?: boolean,
         abortSignal?: AbortSignal,
+        cachedOnly?: boolean,
     ): IReadPipe<api.ISequencedDocumentMessage[]> {
         return {
             pop: async () => undefined,

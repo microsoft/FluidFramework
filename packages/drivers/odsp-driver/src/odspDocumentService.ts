@@ -239,8 +239,8 @@ export class OdspDocumentService implements IDocumentService {
             get: (
                 from: number,
                 to: number | undefined,
-                cachedOnly?: boolean,
-                abortSignal?: AbortSignal) =>
+                abortSignal?: AbortSignal,
+                cachedOnly?: boolean) =>
                     requestOps(
                         service.get.bind(service),
                         // Staging: starting with no concurrency, listening for feedback first.
@@ -248,7 +248,7 @@ export class OdspDocumentService implements IDocumentService {
                         1, // concurrency
                         from, // inclusive
                         to, // exclusive
-                        5000, // batch size
+                        5000, // batch size, please see issue #5211 for data around batch sizing
                         this.logger,
                         abortSignal,
                     ),

@@ -32,7 +32,7 @@ export class OdspDeltaStorageService {
         const ops = this.ops;
         this.ops = undefined;
         if (ops !== undefined) {
-            const messages = ops.filter((op) => op.sequenceNumber > from).map((op) => op.op);
+            const messages = ops.filter((op) => op.sequenceNumber >= from).map((op) => op.op);
             if (messages.length > 0) {
                 return { messages, partialResult: true };
             }
@@ -74,10 +74,7 @@ export class OdspDeltaStorageService {
     }
 
     public async buildUrl(from: number, to: number) {
-        const fromInclusive = from + 1;
-        const toInclusive = to - 1;
-
-        const filter = encodeURIComponent(`sequenceNumber ge ${fromInclusive} and sequenceNumber le ${toInclusive}`);
+        const filter = encodeURIComponent(`sequenceNumber ge ${from} and sequenceNumber le ${to - 1}`);
         const queryString = `?filter=${filter}`;
         return `${await this.deltaFeedUrlProvider()}${queryString}`;
     }

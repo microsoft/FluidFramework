@@ -18,15 +18,16 @@ export class LocalDeltaStorageService implements api.IDocumentDeltaStorageServic
     public get(
         from: number,
         to: number | undefined,
+        abortSignal?: AbortSignal,
         cachedOnly?: boolean,
-        abortSignal?: AbortSignal): api.IReadPipe<ISequencedDocumentMessage[]> {
+    ): api.IReadPipe<ISequencedDocumentMessage[]> {
             return pipeFromOps(this.getCore(from, to));
     }
 
     private async getCore(from: number, to?: number) {
         const query = { documentId: this.id, tenantId: this.tenantId };
         query["operation.sequenceNumber"] = {};
-        query["operation.sequenceNumber"].$gt = from;
+        query["operation.sequenceNumber"].$gt = from - 1; // from is inclusive
         if (to !== undefined) {
             query["operation.sequenceNumber"].$lt = to;
         }

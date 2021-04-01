@@ -35,8 +35,10 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 
     get(from: number,
         to: number | undefined,
+        abortSignal?: AbortSignal,
         cachedOnly?: boolean,
-        abortSignal?: AbortSignal): IReadPipe<ISequencedDocumentMessage[]> {
+    ): IReadPipe<ISequencedDocumentMessage[]>
+    {
         return requestOps(
             this.getCore.bind(this),
             // Staging: starting with no concurrency, listening for feedback first.
@@ -57,7 +59,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
         this.logtailSha = undefined;
         if (opsFromLogTail.length > 0) {
             const messages = opsFromLogTail.filter((op) =>
-                op.sequenceNumber > from,
+                op.sequenceNumber >= from,
             );
             if (messages.length > 0) {
                 return { messages, partialResult: true };
@@ -81,8 +83,10 @@ export class DeltaStorageService implements IDeltaStorageService {
     public async get(
         tenantId: string,
         id: string,
-        from: number,
-        to: number): Promise<IDeltasFetchResult> {
+        from: number, // inclusive
+        to: number, // exclusive
+        ): Promise<IDeltasFetchResult>
+    {
         const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
             tenantId, id, this.tokenProvider, this.logger);
         const ops = await PerformanceEvent.timedExecAsync(
@@ -93,7 +97,9 @@ export class DeltaStorageService implements IDeltaStorageService {
                 to,
             },
             async (event) => {
-                const response = await ordererRestWrapper.get<ISequencedDocumentMessage[]>(this.url, { from, to });
+                const response = await ordererRestWrapper.get<ISequencedDocumentMessage[]>(
+                    this.url,
+                    { from: from - 1, to });
                 event.end({
                     count: response.length,
                 });

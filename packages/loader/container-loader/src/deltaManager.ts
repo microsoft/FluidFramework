@@ -807,7 +807,10 @@ export class DeltaManager
         }
 
         const storage = await this.deltaStorageP;
-        const pipe = storage.get(from + 1, to, false, this.closeAbortController.signal);
+        const pipe = storage.get(
+            from, // inclusive
+            to, // exclusive
+            this.closeAbortController.signal);
 
         // eslint-disable-next-line no-constant-condition
         while (true) {
@@ -1322,7 +1325,7 @@ export class DeltaManager
     /**
      * Retrieves the missing deltas between the given sequence numbers
      */
-    private fetchMissingDeltas(telemetryEventSuffix: string, fromArg: number, to?: number) {
+    private fetchMissingDeltas(telemetryEventSuffix: string, lastKnowOp: number, to?: number) {
         // Exit out early if we're already fetching deltas
         if (this.fetching) {
             return;
@@ -1333,8 +1336,8 @@ export class DeltaManager
             return;
         }
 
-        assert(fromArg === this.lastQueuedSequenceNumber, 0x0f1 /* "from arg" */);
-        let from = fromArg;
+        assert(lastKnowOp === this.lastQueuedSequenceNumber, 0x0f1 /* "from arg" */);
+        let from = lastKnowOp + 1;
 
         const n = this.previouslyProcessedMessage?.sequenceNumber;
         if (n !== undefined) {
@@ -1343,8 +1346,8 @@ export class DeltaManager
             // Knowing about this mechanism, we could ask for op we already observed to increase validation.
             // This is especially useful when coming out of offline mode or loading from
             // very old cached (by client / driver) snapshot.
-            assert(n === fromArg, 0x0f2 /* "previouslyProcessedMessage" */);
-            assert(from > 0, 0x0f3 /* "not positive" */);
+            assert(n === lastKnowOp, 0x0f2 /* "previouslyProcessedMessage" */);
+            assert(from > 1, 0x0f3 /* "not positive" */);
             from--;
         }
 

@@ -16,8 +16,8 @@ export class EmptyDeltaStorageService implements IDocumentDeltaStorageService {
     public get(
         from: number,
         to: number | undefined,
-        cachedOnly?: boolean,
-        abortSignal?: AbortSignal): IReadPipe<ISequencedDocumentMessage[]>
+        abortSignal?: AbortSignal,
+        cachedOnly?: boolean): IReadPipe<ISequencedDocumentMessage[]>
     {
         return { pop: async () => undefined };
     }

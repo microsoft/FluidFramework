@@ -367,9 +367,7 @@ async function getSingleOpBatch(
         try {
             // Issue async request for deltas - limit the number fetched to MaxBatchDeltas
             canRetry = true;
-            // left is inclusive for ParallelRequests, but exclusive for IDocumentDeltaStorageService
-            // right is exclusive for both
-            const deltasP = get(from - 1, to);
+            const deltasP = get(from, to);
 
             const { messages, partialResult } = await deltasP;
             deltas.push(...messages);
