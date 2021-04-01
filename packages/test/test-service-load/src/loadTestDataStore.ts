@@ -15,8 +15,9 @@ import { IDirectory, ISharedDirectory } from "@fluidframework/map";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { Lazy } from "@fluidframework/common-utils";
+import { generatePairwiseOptions } from "@fluid-internal/test-pairwise-generator";
 import { ILoadTestConfig } from "./testConfigFile";
-import { buildPairwiseOptions, runtimeOptionsMatrix } from "./optionsMatrix";
+import { runtimeOptionsMatrix } from "./optionsMatrix";
 
 export interface IRunConfig {
     runId: number,
@@ -309,18 +310,19 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
     {},
 );
 
-const runtimeOptions = new Lazy(()=>
-    buildPairwiseOptions<IContainerRuntimeOptions>(runtimeOptionsMatrix));
+const pairwiseRuntimeOptions = new Lazy<IContainerRuntimeOptions[]>(()=>
+    generatePairwiseOptions<IContainerRuntimeOptions>(runtimeOptionsMatrix));
 
 export function createFluidExport(runId: number | undefined) {
     const optionsIndex = runId === undefined
-        ? Math.floor(runtimeOptions.value.length * Math.random())
-        : runtimeOptions[runId % runtimeOptions.value.length];
+        ? Math.floor(pairwiseRuntimeOptions.value.length * Math.random())
+        : runId % pairwiseRuntimeOptions.value.length;
+
     return new ContainerRuntimeFactoryWithDefaultDataStore(
         LoadTestDataStoreInstantiationFactory,
         new Map([[LoadTestDataStore.DataStoreName, Promise.resolve(LoadTestDataStoreInstantiationFactory)]]),
         undefined,
         undefined,
-        runtimeOptions[optionsIndex],
+        pairwiseRuntimeOptions[optionsIndex],
     );
 }
