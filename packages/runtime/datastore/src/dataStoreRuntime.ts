@@ -14,7 +14,6 @@ import {
     IAudience,
     IDeltaManager,
     ContainerWarning,
-    ILoader,
     BindState,
     AttachState,
     ILoaderOptions,
@@ -131,10 +130,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
     public get clientDetails(): IClientDetails {
         return this.dataStoreContext.containerRuntime.clientDetails;
-    }
-
-    public get loader(): ILoader {
-        return this.dataStoreContext.loader;
     }
 
     public get isAttached(): boolean {

@@ -8,7 +8,6 @@ import {
     AttachState,
     ContainerWarning,
     IDeltaManager,
-    ILoader,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import {
@@ -79,11 +78,6 @@ export interface IContainerRuntime extends
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
-    /**
-     * @deprecated 0.37 Use the provideScopeLoader flag to make the loader
-     * available through scope instead
-     */
-    readonly loader: ILoader;
     readonly flushMode: FlushMode;
     readonly scope: IFluidObject;
     /**

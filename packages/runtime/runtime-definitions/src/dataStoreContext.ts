@@ -16,7 +16,6 @@ import {
     IAudience,
     IDeltaManager,
     ContainerWarning,
-    ILoader,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -263,11 +262,6 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     readonly baseSnapshot: ISnapshotTree | undefined;
-    /**
-     * @deprecated 0.37 Use the provideScopeLoader flag to make the loader
-     * available through scope instead
-     */
-    readonly loader: ILoader;
     /**
      * Indicates the attachment state of the data store to a host service.
      */
