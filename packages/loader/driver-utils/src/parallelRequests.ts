@@ -513,6 +513,8 @@ export function requestOps(
     return queue;
 }
 
+export const emptyOpsPipe: IReadPipe<ISequencedDocumentMessage[]> = { pop: async () => undefined };
+
 export function pipeFromOps(messagesArg: Promise<ISequencedDocumentMessage[]>): IReadPipe<ISequencedDocumentMessage[]> {
     let messages: Promise<ISequencedDocumentMessage[]> | undefined = messagesArg;
     return {

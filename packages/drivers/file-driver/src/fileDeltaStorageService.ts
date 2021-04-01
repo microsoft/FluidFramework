@@ -6,6 +6,7 @@
 import fs from "fs";
 import { assert } from "@fluidframework/common-utils";
 import { IDocumentDeltaStorageService, IReadPipe } from "@fluidframework/driver-definitions";
+import { emptyOpsPipe } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
 
 /**
@@ -38,9 +39,7 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,
     ): IReadPipe<api.ISequencedDocumentMessage[]> {
-        return {
-            pop: async () => undefined,
-        };
+        return emptyOpsPipe;
     }
 
     public get ops(): readonly Readonly<api.ISequencedDocumentMessage>[] {

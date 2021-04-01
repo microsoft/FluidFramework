@@ -67,6 +67,10 @@ export interface IDeltaStorageService {
 export interface IDocumentDeltaStorageService {
     /**
      * Retrieves all the delta operations within the exclusive sequence number range
+     * @param from - first op to retrieve (inclusive)
+     * @param to - first op not to retrieve (exclusive end)
+     * @param abortSignal - signal that aborts operation
+     * @param cachedOnly - return only cached ops, i.e. ops available locally on client.
      */
     get(from: number,
         to: number | undefined,

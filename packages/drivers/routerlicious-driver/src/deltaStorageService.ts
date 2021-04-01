@@ -10,7 +10,7 @@ import {
     IReadPipe,
 } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { readAndParse, requestOps } from "@fluidframework/driver-utils";
+import { readAndParse, requestOps, emptyOpsPipe } from "@fluidframework/driver-utils";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
@@ -39,6 +39,9 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
         cachedOnly?: boolean,
     ): IReadPipe<ISequencedDocumentMessage[]>
     {
+        if (cachedOnly) {
+            return emptyOpsPipe;
+        }
         return requestOps(
             this.getCore.bind(this),
             // Staging: starting with no concurrency, listening for feedback first.

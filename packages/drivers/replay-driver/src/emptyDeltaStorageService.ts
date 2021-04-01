@@ -5,6 +5,7 @@
 
 import { IDocumentDeltaStorageService, IReadPipe } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { emptyOpsPipe } from "@fluidframework/driver-utils";
 
 export class EmptyDeltaStorageService implements IDocumentDeltaStorageService {
     /**
@@ -19,6 +20,6 @@ export class EmptyDeltaStorageService implements IDocumentDeltaStorageService {
         abortSignal?: AbortSignal,
         cachedOnly?: boolean): IReadPipe<ISequencedDocumentMessage[]>
     {
-        return { pop: async () => undefined };
+        return emptyOpsPipe;
     }
 }

@@ -17,7 +17,7 @@ import {
     IDocumentStorageService,
     IDocumentServicePolicies,
 } from "@fluidframework/driver-definitions";
-import { canRetryOnError, requestOps } from "@fluidframework/driver-utils";
+import { canRetryOnError, requestOps, emptyOpsPipe } from "@fluidframework/driver-utils";
 import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
@@ -240,8 +240,12 @@ export class OdspDocumentService implements IDocumentService {
                 from: number,
                 to: number | undefined,
                 abortSignal?: AbortSignal,
-                cachedOnly?: boolean) =>
-                    requestOps(
+                cachedOnly?: boolean) => {
+                    // Proper implementaiton Coming in future
+                    if (cachedOnly) {
+                        return emptyOpsPipe;
+                    }
+                    return requestOps(
                         service.get.bind(service),
                         // Staging: starting with no concurrency, listening for feedback first.
                         // In future releases we will switch to actual concurrency
@@ -251,7 +255,8 @@ export class OdspDocumentService implements IDocumentService {
                         5000, // batch size, please see issue #5211 for data around batch sizing
                         this.logger,
                         abortSignal,
-                    ),
+                    );
+                },
         };
     }
 
