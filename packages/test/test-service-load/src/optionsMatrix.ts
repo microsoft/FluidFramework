@@ -14,7 +14,7 @@ export type OptionsMatrix<T extends Record<string, any>> =
             : readonly (OptionsMatrix<T[K]>)[]
     }>;
 
-export const booleanCases: readonly (boolean | undefined)[] = [true, false, undefined];
+export const booleanCases: readonly (boolean | undefined)[] = [true, false];
 export const undefinedCases: readonly (undefined)[] = [undefined];
 
 export const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
@@ -51,6 +51,40 @@ export const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptions> = {
     summaryOptions: [undefined, summaryOptionsMatrix],
 };
 
+function applyPair<T>(potentials: T[], pair: {iKey: string, jKey: string, iVal: any, jVal: any}) {
+    let potential: T | undefined;
+    let found: boolean = false;
+    for(const output of potentials) {
+        // the pair exists, so nothing to do
+        if(output[pair.iKey] === pair.iVal && output[pair.jKey] === pair.jVal) {
+            found = true;
+            break;
+        }
+        // half the pair exists, and the other half is empty, so cache this as a potential for to satisfy the pair
+        // we can't give up, as the pair may exist in which case we'll not need to apply
+        if(potential === undefined) {
+            if(pair.iKey in output && output[pair.iKey] === pair.iVal && !(pair.jKey in output)
+                || pair.jKey in output && output[pair.jKey] === pair.jVal && !(pair.iKey in output)) {
+                potential = output;
+            }
+        }
+    }
+    if(!found) {
+        if(potential === undefined) {
+            potentials.push({
+                [pair.iKey]: pair.iVal,
+                [pair.jKey]: pair.jVal,
+            } as any);
+        }else{
+            if(pair.iKey in potential) {
+                potential[pair.jKey] = pair.jVal;
+            }else{
+                potential[pair.iKey] = pair.iVal;
+            }
+        }
+    }
+}
+
 export function buildPairwiseOptions<T>(optionsMatrix: OptionsMatrix<T>): T[] {
     const valuesMap = new Map<string, any[]>();
     for(const key of Object.keys(optionsMatrix)) {
@@ -61,65 +95,34 @@ export function buildPairwiseOptions<T>(optionsMatrix: OptionsMatrix<T>): T[] {
         if(matrixProp.length > 1 || matrixProp[0] !== undefined) {
             for(const val of matrixProp) {
                 if(typeof val === "object") {
-                    values.push(...buildPairwiseOptions<any>(val));
+                    const subOptions = buildPairwiseOptions<any>(val);
+                    if(subOptions.length > 1 || subOptions[0] !== undefined) {
+                        values.push(...subOptions);
+                    }
                 }else{
                     values.push(val);
                 }
             }
-            valuesMap.set(key, values);
+            if(values.length > 1 || values[0] !== undefined) {
+                valuesMap.set(key, values);
+            }
         }
     }
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const matrixKeys = [...valuesMap.keys()].sort((a,b)=>valuesMap.get(b)!.length  - valuesMap.get(a)!.length);
     const matrixKeysMidPoint = Math.ceil(matrixKeys.length / 2);
-    // compute all the pairs of property values
-    const pairs: {iKey: string, jKey: string, iVal: any, jVal: any}[] = [];
+    // compute all the pairs of property values, and apply them
+    const outputs: T[] = [];
     for(const iKey of matrixKeys.slice(0, matrixKeysMidPoint)) {
         for(const jKey of matrixKeys.slice(matrixKeysMidPoint)) {
             for(const iVal of valuesMap.get(iKey) ?? []) {
                 for(const jVal of valuesMap.get(jKey) ?? []) {
-                    pairs.push({iKey,jKey,iVal,jVal});
+                    applyPair(outputs,{iKey,iVal,jKey,jVal});
                 }
             }
         }
     }
-    const outputs: T[] = [];
-    // walk all the pairs, and apply them to outputs
-    while(pairs.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const pair = pairs.shift()!;
-        let potential: T | undefined;
-        let found: boolean = false;
-        for(const output of outputs) {
-            // the pair exists, so nothing to do
-            if(output[pair.iKey] === pair.iVal && output[pair.jKey] === pair.jVal) {
-                found = true;
-                break;
-            }
-            // half the pair exists, and the other half is empty, so cache this as a potential for to satisfy the pair
-            // we can't give up, as the pair may exist in which case we'll not need to apply
-            if(potential === undefined) {
-                if(pair.iKey in output && output[pair.iKey] === pair.iVal && !(pair.jKey in output)
-                    || pair.jKey in output && output[pair.jKey] === pair.jVal && !(pair.iKey in output)) {
-                    potential = output;
-                }
-            }
-        }
-        if(!found) {
-            if(potential === undefined) {
-                outputs.push({
-                    [pair.iKey]: pair.iVal,
-                    [pair.jKey]: pair.jVal,
-                } as any);
-            }else{
-                if(pair.iKey in potential) {
-                    potential[pair.jKey] = pair.jVal;
-                }else{
-                    potential[pair.iKey] = pair.iVal;
-                }
-            }
-        }
-    }
+
     // fix up any incomplete outputs
     for(const output of outputs) {
         for(const key of matrixKeys) {
@@ -130,6 +133,5 @@ export function buildPairwiseOptions<T>(optionsMatrix: OptionsMatrix<T>): T[] {
             }
         }
     }
-
     return outputs;
 }
