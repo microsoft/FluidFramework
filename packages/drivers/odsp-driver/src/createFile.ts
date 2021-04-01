@@ -173,7 +173,7 @@ export function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree):
 
         const entry: SnapshotTreeEntry = {
             path: encodeURIComponent(key),
-            type: getGitType(summaryObject),
+            type: getGitType(summaryObject) as "blob" | "commit" | "tree" | "blob",
             value,
         };
         snapshotTree.entries?.push(entry);
