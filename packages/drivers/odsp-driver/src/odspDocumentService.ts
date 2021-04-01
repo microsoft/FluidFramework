@@ -235,6 +235,10 @@ export class OdspDocumentService implements IDocumentService {
             this.logger,
         );
 
+        // batch size, please see issue #5211 for data around batch sizing
+        const batchSize = this.hostPolicy.opsBatchSize ?? 5000;
+        const concurrency = this.hostPolicy.concurrentOpsBatches ?? 1;
+
         return {
             get: (
                 from: number,
@@ -249,10 +253,10 @@ export class OdspDocumentService implements IDocumentService {
                         service.get.bind(service),
                         // Staging: starting with no concurrency, listening for feedback first.
                         // In future releases we will switch to actual concurrency
-                        1, // concurrency
+                        concurrency,
                         from, // inclusive
                         to, // exclusive
-                        5000, // batch size, please see issue #5211 for data around batch sizing
+                        batchSize,
                         this.logger,
                         abortSignal,
                     );

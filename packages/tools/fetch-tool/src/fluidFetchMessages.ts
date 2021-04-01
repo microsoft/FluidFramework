@@ -66,12 +66,6 @@ async function* loadAllSequencedMessages(
     let requests = 0;
     let opsStorage = 0;
 
-    /**
-     * we are loosing this!!!
-    const concurrency = 4;
-    const batch = 20000; // see data in issue #5211 on possible sizes we can use.
-    */
-
     const queue = deltaStorage.get(
         lastSeq + 1, // inclusive left
         undefined, // to

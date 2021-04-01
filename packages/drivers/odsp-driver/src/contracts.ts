@@ -249,6 +249,10 @@ export interface HostStoragePolicy {
     concurrentSnapshotFetch?: boolean;
 
     blobDeduping?: boolean;
+
+    // Options overwriting default ops fetching from storage.
+    opsBatchSize?: number;
+    concurrentOpsBatches?: number;
 }
 
 /**
