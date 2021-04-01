@@ -6,6 +6,7 @@
 /* eslint-disable no-null/no-null */
 
 import assert from "assert";
+import { inspect } from "util";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import {
     IDocumentMessage,
@@ -237,6 +238,7 @@ export class ScribeLambda extends SequencedLambda {
                                 }
                             }
                         } catch (ex) {
+                            this.context.log?.error(`Failed to summarize the document. Exception: ${inspect(ex)}`);
                             this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
                             // If this flag is set, we should ignore any storage specific error and move forward
                             // to process the next message.
