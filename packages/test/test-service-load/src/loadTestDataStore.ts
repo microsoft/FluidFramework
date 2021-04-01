@@ -13,11 +13,8 @@ import {ISharedCounter, SharedCounter} from "@fluidframework/counter";
 import { ITaskManager, TaskManager } from "@fluid-experimental/task-manager";
 import { IDirectory, ISharedDirectory } from "@fluidframework/map";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { Lazy } from "@fluidframework/common-utils";
-import { generatePairwiseOptions } from "@fluid-internal/test-pairwise-generator";
 import { ILoadTestConfig } from "./testConfigFile";
-import { runtimeOptionsMatrix } from "./optionsMatrix";
+import { pairwiseRuntimeOptions } from "./optionsMatrix";
 
 export interface IRunConfig {
     runId: number,
@@ -310,9 +307,6 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
     {},
 );
 
-const pairwiseRuntimeOptions = new Lazy<IContainerRuntimeOptions[]>(()=>
-    generatePairwiseOptions<IContainerRuntimeOptions>(runtimeOptionsMatrix));
-
 export function createFluidExport(runId: number | undefined) {
     const optionsIndex = runId === undefined
         ? Math.floor(pairwiseRuntimeOptions.value.length * Math.random())
@@ -323,6 +317,6 @@ export function createFluidExport(runId: number | undefined) {
         new Map([[LoadTestDataStore.DataStoreName, Promise.resolve(LoadTestDataStoreInstantiationFactory)]]),
         undefined,
         undefined,
-        pairwiseRuntimeOptions[optionsIndex],
+        pairwiseRuntimeOptions.value[optionsIndex],
     );
 }

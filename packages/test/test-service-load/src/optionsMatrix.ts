@@ -6,9 +6,15 @@
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { ILoaderOptions  } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions, IGCRuntimeOptions, ISummaryRuntimeOptions } from "@fluidframework/container-runtime";
-import { booleanCases, OptionsMatrix, undefinedCases } from "@fluid-internal/test-pairwise-generator";
+import {
+    booleanCases,
+    generatePairwiseOptions,
+    OptionsMatrix,
+    undefinedCases,
+} from "@fluid-internal/test-pairwise-generator";
+import { Lazy } from "@fluidframework/common-utils";
 
-export const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
+const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
     cache: booleanCases,
     hotSwapContext: booleanCases,
     provideScopeLoader: booleanCases,
@@ -17,27 +23,33 @@ export const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
     noopTimeFrequency: undefinedCases,
 };
 
-export const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
+export const pairwiseLoaderOptions = new Lazy(()=>
+    generatePairwiseOptions<ILoaderOptions>(loaderOptionsMatrix));
+
+const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
     disableGC: booleanCases,
     gcAllowed: booleanCases,
     runFullGC: booleanCases,
 };
 
-export const summaryConfigurationMatrix: OptionsMatrix<Partial<ISummaryConfiguration>> = {
+const summaryConfigurationMatrix: OptionsMatrix<Partial<ISummaryConfiguration>> = {
     idleTime: undefinedCases,
     maxAckWaitTime: undefinedCases,
     maxOps: undefinedCases,
     maxTime: undefinedCases,
 };
 
-export const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
+const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
     disableIsolatedChannels: booleanCases,
     generateSummaries: booleanCases,
     initialSummarizerDelayMs: undefinedCases,
     summaryConfigOverrides:[undefined, summaryConfigurationMatrix],
 };
 
-export const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptions> = {
+const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptions> = {
     gcOptions: [undefined, gcOptionsMatrix],
     summaryOptions: [undefined, summaryOptionsMatrix],
 };
+
+export const pairwiseRuntimeOptions = new Lazy<IContainerRuntimeOptions[]>(()=>
+    generatePairwiseOptions<IContainerRuntimeOptions>(runtimeOptionsMatrix));
