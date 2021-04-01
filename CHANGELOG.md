@@ -1,5 +1,23 @@
 # Change Log
 
+## 0.80.1
+
+* fix: Log SharedTree history size after summary load completes
+  * Associated pull request: [29299](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29299)
+  * Commit: [871d0cc8b85ba30731e89b080b569696961c49b2](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/871d0cc8b85ba30731e89b080b569696961c49b2)
+* feat: Performance logging for SharedTree summary load
+  * Associated pull request: [29291](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29291)
+  * Commit: [22c5dca28e346af5be7b4a47c31248a9e43c0a87](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/22c5dca28e346af5be7b4a47c31248a9e43c0a87)
+* fix: Disable edit chunk blob upload in SharedTree
+  * Associated pull request: [29223](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29223)
+  * Commit: [b0986c74d44bce27363698a172e79fb4bc4c98f1](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/b0986c74d44bce27363698a172e79fb4bc4c98f1)
+* build: removes staging step from most packages
+  * Associated pull request: [28984](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28984)
+  * Commit: [4ff7f7b1065d44d1a81014ab73a3858993db3b05](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4ff7f7b1065d44d1a81014ab73a3858993db3b05)
+* merge: releases/2021.03.4 into master
+  * Associated pull request: [29155](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29155)
+  * Commit: [ab90efbcaa28e0ef772eafd708f00f6126429f4f](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/ab90efbcaa28e0ef772eafd708f00f6126429f4f)
+
 ## 0.75.0
 
 _Version update only._
