@@ -17,7 +17,7 @@ export type OptionsMatrix<T extends Record<string, any>> =
     }>;
 
 export const booleanCases: readonly (boolean)[] = [true, false];
-export const undefinedCases: readonly (undefined)[] = [undefined];
+export const numberCases: readonly (number | undefined)[] = [undefined];
 
 function applyPair<T extends Record<string, any>>(
     potentials: T[], pair: {iKey: keyof T, jKey: keyof T, iVal: any, jVal: any}) {

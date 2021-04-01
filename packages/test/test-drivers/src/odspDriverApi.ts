@@ -15,7 +15,7 @@ import {
     booleanCases,
     generatePairwiseOptions,
     OptionsMatrix,
-    undefinedCases,
+    numberCases,
  } from "@fluid-internal/test-pairwise-generator";
 import { Lazy } from "@fluidframework/common-utils";
 import { pkgVersion } from "./packageVersion";
@@ -31,11 +31,11 @@ export const OdspDriverApi = {
 export type OdspDriverApiType = typeof OdspDriverApi;
 
 export const odspSnapshotOptions: OptionsMatrix<ISnapshotOptions> = {
-    blobs: undefinedCases,
-    channels: undefinedCases,
-    deltas: undefinedCases,
-    mds: undefinedCases,
-    timeout: undefinedCases,
+    blobs: numberCases,
+    channels: numberCases,
+    deltas: numberCases,
+    mds: numberCases,
+    timeout: numberCases,
 };
 
 export const odspHostPolicyMatrix: OptionsMatrix<HostStoragePolicy> = {

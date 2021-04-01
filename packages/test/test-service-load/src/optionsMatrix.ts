@@ -10,7 +10,7 @@ import {
     booleanCases,
     generatePairwiseOptions,
     OptionsMatrix,
-    undefinedCases,
+    numberCases,
 } from "@fluid-internal/test-pairwise-generator";
 import { Lazy } from "@fluidframework/common-utils";
 
@@ -18,9 +18,9 @@ const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
     cache: booleanCases,
     hotSwapContext: booleanCases,
     provideScopeLoader: booleanCases,
-    maxClientLeaveWaitTime: undefinedCases,
-    noopCountFrequency: undefinedCases,
-    noopTimeFrequency: undefinedCases,
+    maxClientLeaveWaitTime: numberCases,
+    noopCountFrequency: numberCases,
+    noopTimeFrequency: numberCases,
 };
 
 export const pairwiseLoaderOptions = new Lazy(()=>
@@ -33,16 +33,16 @@ const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
 };
 
 const summaryConfigurationMatrix: OptionsMatrix<Partial<ISummaryConfiguration>> = {
-    idleTime: undefinedCases,
-    maxAckWaitTime: undefinedCases,
-    maxOps: undefinedCases,
-    maxTime: undefinedCases,
+    idleTime: numberCases,
+    maxAckWaitTime: numberCases,
+    maxOps: numberCases,
+    maxTime: numberCases,
 };
 
 const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
     disableIsolatedChannels: booleanCases,
     generateSummaries: booleanCases,
-    initialSummarizerDelayMs: undefinedCases,
+    initialSummarizerDelayMs: numberCases,
     summaryConfigOverrides:[undefined, summaryConfigurationMatrix],
 };
 
