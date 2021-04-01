@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { ILoaderOptions  } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions, IGCRuntimeOptions, ISummaryRuntimeOptions } from "@fluidframework/container-runtime";
