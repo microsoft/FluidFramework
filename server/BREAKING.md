@@ -1,5 +1,52 @@
 > **Note:** These breaking changes are only relevant to the server packages and images released from `./routerlicious`.
 
+## 0.1023 Breaking Changes
+- [@fluidframework/server-services-shared@0.1023](#@fluidframework/server-services-shared@0.1023)
+  - [`shared.SocketIORedisConnection and shared.SocketIoServer` takes in an ioredis client instead of a node-redis client](#`shared.SocketIORedisConnection-and-shared.SocketIoServer`-using-ioredis)
+- [@fluidframework/server-services@0.1023](#@fluidframework/server-services@0.1023)
+  - [`services.RedisCache, services.ClientManager, services.RedisThrottleManager, and services.SocketIoRedisPublisher` uses ioredis client instead of a node-redis client](#`services.managers-and-services.publisher-using-ioredis)
+
+### @fluidframework/server-services-shared@0.1023
+
+#### `shared.SocketIORedisConnection and shared.SocketIoServer` using ioredis
+
+```ts
+import Redis from "ioredis";
+import socketIo from "socket.io";
+import { SocketIORedisConnection } from '@fluidframework/server-services'
+
+const options: Redis.RedisOptions = {
+        host: "host",
+        port: "6379",
+};
+const pub = new Redis(options);
+const sub = new Redis(options);
+
+const pubConn =  new SocketIORedisConnection(pub);
+const subConn =  new SocketIORedisConnection(sub);
+const server = new SocketIoServer(new SocketIo(), pub, sub);
+```
+
+#### `services.RedisCache, services.ClientManager, services.RedisThrottleManager, and services.SocketIoRedisPublisher` using ioredis
+
+```ts
+import Redis from "ioredis";
+import * as services from "@fluidframework/server-services";
+
+const options: Redis.RedisOptions = {
+        host: "host",
+        port: "6379",
+};
+const redisClient = new Redis(options);
+
+const redisCache = new services.RedisCache(redisClient);
+const clientManager = new services.ClientManager(redisClient);
+const redisClientForThrottling = new services.RedisThrottleStorageManager(redisClient);
+
+const publisher = new services.SocketIoRedisPublisher(options);
+```
+
+
 ## 0.1022 Breaking Changes
 
 - [@fluidframework/server-services-client@0.1022](#@fluidframework/server-services-client@0.1022)

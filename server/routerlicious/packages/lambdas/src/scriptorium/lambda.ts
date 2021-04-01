@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { inspect } from "util";
 import {
     extractBoxcar,
     ICollection,
@@ -100,6 +101,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
         return this.opCollection
             .insertMany(dbOps, false)
             .catch(async (error) => {
+                this.context.log?.error(`Error inserting operation in the database: ${inspect(error)}`);
+
                 // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
                 // All other errors result in a rejected promise.
                 if (error.code !== 11000) {
