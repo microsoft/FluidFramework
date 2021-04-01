@@ -9,8 +9,8 @@ import { IContainerRuntimeOptions, IGCRuntimeOptions, ISummaryRuntimeOptions } f
 import { assert } from "@fluidframework/common-utils";
 
 // converts all properties of an object to arrays of the
-// properties potential value. This will be used later
-// to compute a objects that contain pairwise combinations
+// properties potential values. This will be used by buildPairwiseOptions
+// to compute original objects that contain pairwise combinations
 // of all property values
 export type OptionsMatrix<T extends Record<string, any>> =
     Required<{
