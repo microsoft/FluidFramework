@@ -31,6 +31,8 @@ import {
     getRandomInt,
     generateClientId,
 } from "../utils";
+import { inspect } from "util";
+import { IOrdererConnection } from "@fluidframework/server-services-core";
 
 interface IRoom {
 
@@ -212,7 +214,12 @@ export function configureWebSocketServices(
             // Subscribe to channels.
             await Promise.all([
                 socket.join(getRoomId(room)),
-                socket.join(`client#${clientId}`)]);
+                socket.join(`client#${clientId}`)])
+                .catch(async (err) => {
+                    logger.error(`Could not subscribe to channels due to error: ${inspect(err)}`, room);
+                    // eslint-disable-next-line prefer-promise-reject-errors
+                    return Promise.reject({ code: 500, message: "Failed to connect client to document." });
+                });
 
             // Todo: should all the client details come from the claims???
             // we are still trusting the users permissions and type here.
@@ -241,7 +248,12 @@ export function configureWebSocketServices(
             const detailsP = storage.getOrCreateDocument(claims.tenantId, claims.documentId);
             const clientsP = clientManager.getClients(claims.tenantId, claims.documentId);
 
-            const [details, clients] = await Promise.all([detailsP, clientsP]);
+            const [details, clients] = await Promise.all([detailsP, clientsP])
+            .catch(async (err) => {
+                logger.error(`Failed to obtain document details or clients due to error: ${inspect(err)}`, room);
+                // eslint-disable-next-line prefer-promise-reject-errors
+                return Promise.reject({ code: 500, message: "Failed to connect client to document." });
+            });
 
             if (clients.length > maxNumberOfClientsPerDocument) {
                 // eslint-disable-next-line prefer-promise-reject-errors
@@ -252,11 +264,17 @@ export function configureWebSocketServices(
                 });
             }
 
-            await clientManager.addClient(
-                claims.tenantId,
-                claims.documentId,
-                clientId,
-                messageClient as IClient);
+            try {
+                await clientManager.addClient(
+                    claims.tenantId,
+                    claims.documentId,
+                    clientId,
+                    messageClient as IClient);
+            } catch (err) {
+                logger.error(`Could not add client due to error: ${inspect(err)}`, room);
+                // eslint-disable-next-line prefer-promise-reject-errors
+                return Promise.reject({ code: 500, message: `Failed to connect client to document.` });
+            }
 
             if (isTokenExpiryEnabled) {
                 const lifeTimeMSec = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
@@ -265,8 +283,20 @@ export function configureWebSocketServices(
 
             let connectedMessage: IConnected;
             if (isWriter(messageClient.scopes, details.existing, message.mode)) {
-                const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
-                const connection = await orderer.connect(socket, clientId, messageClient as IClient, details);
+                let connection: IOrdererConnection;
+                try {
+                    const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
+                    connection = await orderer.connect(socket, clientId, messageClient as IClient, details);
+                } catch (err) {
+                    const messageMetaData = {
+                        documentId: claims.documentId,
+                        tenantId: claims.tenantId,
+                    };
+                    logger.error(`Failed to obtain orderer connection. Error: ${inspect(err)}`, { messageMetaData });
+                    // eslint-disable-next-line prefer-promise-reject-errors
+                    return Promise.reject({ code: 500, message: `Failed to connect client to document.` });
+                }
+
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 connection.connect();
 
