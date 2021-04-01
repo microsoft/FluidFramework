@@ -76,7 +76,7 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 
 export const getDataStoreFactory = createGetDataStoreFactoryFunction(getDataRuntimeApi());
 
-async function createVersionedFluidTestDriver(
+export async function createVersionedFluidTestDriver(
     driverConfig?: {
         type?: TestDriverTypes,
         config?: FluidTestDriverConfig,

@@ -32,7 +32,9 @@ import {
     getDataRuntimeApi,
     TestDataObjectType,
     describeNoCompat,
+    createVersionedFluidTestDriver,
 } from "@fluidframework/test-version-utils";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 interface ITestDataStore {
     readonly version: string;
@@ -110,14 +112,14 @@ describeNoCompat("context reload (hot-swap)", (getTestObjectProvider) => {
     async function createContainer(
         packageEntries,
         documentId: string,
-        LoaderConstructor = Loader): Promise<IContainer> {
-        const driver = provider.driver;
-
+        LoaderConstructor = Loader,
+        driver = provider.driver): Promise<IContainer>
+    {
         const loader = new LoaderConstructor({
             codeLoader: new LocalCodeLoader(packageEntries),
             options: { hotSwapContext: true },
             urlResolver: provider.urlResolver,
-            documentServiceFactory: provider.documentServiceFactory,
+            documentServiceFactory: driver.createDocumentServiceFactory(),
             logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: driver.type } }),
         });
         loaderContainerTracker.add(loader);
@@ -301,11 +303,16 @@ describeNoCompat("context reload (hot-swap)", (getTestObjectProvider) => {
         let oldContainerRuntimeApi: ReturnType<typeof getContainerRuntimeApi>;
         let oldDataRuntimeApi: ReturnType<typeof getDataRuntimeApi>;
         let oldDataStoreClasses: ReturnType<typeof getTestDataStoreClasses>;
+        let oldDriver: ITestDriver;
         before(async () => {
             oldLoaderApi = getLoaderApi(compatVersion);
             oldContainerRuntimeApi = getContainerRuntimeApi(compatVersion);
             oldDataRuntimeApi = getDataRuntimeApi(compatVersion);
             oldDataStoreClasses = getTestDataStoreClasses(oldDataRuntimeApi);
+            oldDriver = await createVersionedFluidTestDriver({
+                // type: getTestObjectProvider().driver.type,
+                version: compatVersion,
+                });
         });
         function createOldRuntimeFactory(dataStore): IRuntimeFactory {
             const type = TestDataObjectType;
@@ -319,13 +326,16 @@ describeNoCompat("context reload (hot-swap)", (getTestObjectProvider) => {
         describe(`compat N${compatVersion} - old loader, new runtime`, () => {
             beforeEach(async function() {
                 const documentId = createDocumentId();
+
                 container = await createContainer(
                     [
                         [codeDetails(V1), createOldRuntimeFactory(oldDataStoreClasses.TestDataStoreV1)],
                         [codeDetails(V2), createRuntimeFactory(TestDataStoreV2)],
                     ],
                     documentId,
-                    oldLoaderApi.Loader);
+                    oldLoaderApi.Loader,
+                    oldDriver,
+                );
                 dataStoreV1 = await requestFluidObject<ITestDataStore>(container, "default");
                 assert.strictEqual(dataStoreV1.version, TestDataStoreV1.version);
             });
