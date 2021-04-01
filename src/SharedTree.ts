@@ -442,21 +442,21 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
-		await PerformanceEvent.timedExecAsync(
-			this.logger,
-			{
-				eventName: 'SummaryLoad',
-				historySize: this.edits.length,
-			},
-			async () => {
-				const header = await storage.read(snapshotFileName);
-				const summary = deserialize(fromBase64ToUtf8(header), this.serializer);
-				if (typeof summary === 'string') {
-					fail(summary);
-				}
-				this.loadSummary(summary);
+		const summaryLoadPerformanceEvent = PerformanceEvent.start(this.logger, { eventName: 'SummaryLoad' });
+
+		try {
+			const header = await storage.read(snapshotFileName);
+			const summary = deserialize(fromBase64ToUtf8(header), this.serializer);
+			if (typeof summary === 'string') {
+				fail(summary);
 			}
-		);
+			this.loadSummary(summary);
+
+			summaryLoadPerformanceEvent.end({ historySize: this.edits.length });
+		} catch (error) {
+			summaryLoadPerformanceEvent.cancel(undefined, error);
+			throw error;
+		}
 	}
 
 	/**
