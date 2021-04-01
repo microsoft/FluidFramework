@@ -130,7 +130,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public get clientDetails(): IClientDetails {
-        return this.dataStoreContext.clientDetails;
+        // back-compat 0.38 - clientDetails is added to IFluidDataStoreContext in 0.38.
+        return this.dataStoreContext.clientDetails ?? this.dataStoreContext.containerRuntime.clientDetails;
     }
 
     public get loader(): ILoader {
@@ -150,7 +151,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public get routeContext(): IFluidHandleContext {
-        return this.dataStoreContext.IFluidHandleContext;
+        // back-compat 0.38 - IFluidHandleContext is added to IFluidDataStoreContext in 0.38.
+        return this.dataStoreContext.IFluidHandleContext ?? this.dataStoreContext.containerRuntime.IFluidHandleContext;
     }
 
     private readonly serializer = new FluidSerializer(this.IFluidHandleContext);
@@ -201,7 +203,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         super();
 
         this.logger = ChildLogger.create(
-            dataStoreContext.logger, undefined, {all:{ dataStoreId: uuid() }});
+            // back-compat 0.38 - logger is added to IFluidDataStoreContext in 0.38.
+            dataStoreContext.logger ?? dataStoreContext.containerRuntime.logger,
+            undefined,
+            {all:{ dataStoreId: uuid() }},
+        );
         this.documentId = dataStoreContext.documentId;
         this.id = dataStoreContext.id;
         this.existing = dataStoreContext.existing;
