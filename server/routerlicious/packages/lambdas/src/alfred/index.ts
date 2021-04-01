@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { inspect } from "util";
 import {
     ConnectionMode,
     IClient,
@@ -31,8 +32,6 @@ import {
     getRandomInt,
     generateClientId,
 } from "../utils";
-import { inspect } from "util";
-import { IOrdererConnection } from "@fluidframework/server-services-core";
 
 interface IRoom {
 
@@ -283,7 +282,7 @@ export function configureWebSocketServices(
 
             let connectedMessage: IConnected;
             if (isWriter(messageClient.scopes, details.existing, message.mode)) {
-                let connection: IOrdererConnection;
+                let connection: core.IOrdererConnection;
                 try {
                     const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
                     connection = await orderer.connect(socket, clientId, messageClient as IClient, details);
