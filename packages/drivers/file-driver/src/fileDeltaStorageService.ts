@@ -5,8 +5,8 @@
 
 import fs from "fs";
 import { assert } from "@fluidframework/common-utils";
-import { IDocumentDeltaStorageService, IReadPipe } from "@fluidframework/driver-definitions";
-import { emptyOpsPipe } from "@fluidframework/driver-utils";
+import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions";
+import { emptyMessageStream } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
 
 /**
@@ -34,12 +34,12 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
         }
     }
 
-    public get(from: number,
+    public readMessages(from: number,
         to: number | undefined,
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,
-    ): IReadPipe<api.ISequencedDocumentMessage[]> {
-        return emptyOpsPipe;
+    ): IStream<api.ISequencedDocumentMessage[]> {
+        return emptyMessageStream;
     }
 
     public get ops(): readonly Readonly<api.ISequencedDocumentMessage>[] {

@@ -66,7 +66,7 @@ async function* loadAllSequencedMessages(
     let requests = 0;
     let opsStorage = 0;
 
-    const queue = deltaStorage.get(
+    const queue = deltaStorage.readMessages(
         lastSeq + 1, // inclusive left
         undefined, // to
     );

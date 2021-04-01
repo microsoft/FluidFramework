@@ -57,8 +57,12 @@ export interface IDeltaStorageService {
 /**
  * Read interface for the Queue
  */
- export interface IReadPipe<T> {
+ export interface IStream<T> {
     pop(): Promise<T | undefined>;
+    /**
+     * aborts processing and releases resources
+     */
+    cancel(): void;
 }
 
 /**
@@ -72,11 +76,11 @@ export interface IDocumentDeltaStorageService {
      * @param abortSignal - signal that aborts operation
      * @param cachedOnly - return only cached ops, i.e. ops available locally on client.
      */
-    get(from: number,
+     readMessages(from: number,
         to: number | undefined,
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,
-    ): IReadPipe<ISequencedDocumentMessage[]>;
+    ): IStream<ISequencedDocumentMessage[]>;
 }
 
 export interface IDocumentStorageServicePolicies {

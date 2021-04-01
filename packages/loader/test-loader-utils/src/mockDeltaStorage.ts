@@ -5,9 +5,9 @@
 
 import {
     IDocumentDeltaStorageService,
-    IReadPipe,
+    IStream,
 } from "@fluidframework/driver-definitions";
-import { pipeFromOps } from "@fluidframework/driver-utils";
+import { streamFromMessages } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 /**
@@ -18,13 +18,13 @@ export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageSer
         this.messages = messages.sort((a, b) => b.sequenceNumber - a.sequenceNumber);
     }
 
-    public get(
+    public readMessages(
         from: number, // inclusive
         to: number | undefined, // exclusive
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,
-    ): IReadPipe<ISequencedDocumentMessage[]> {
-        return pipeFromOps(this.getCore(from, to));
+    ): IStream<ISequencedDocumentMessage[]> {
+        return streamFromMessages(this.getCore(from, to));
     }
 
     private async getCore(from: number, to?: number) {

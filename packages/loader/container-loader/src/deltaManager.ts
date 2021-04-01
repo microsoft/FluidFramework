@@ -807,7 +807,7 @@ export class DeltaManager
         }
 
         const storage = await this.deltaStorageP;
-        const pipe = storage.get(
+        const pipe = storage.readMessages(
             from, // inclusive
             to, // exclusive
             this.closeAbortController.signal);

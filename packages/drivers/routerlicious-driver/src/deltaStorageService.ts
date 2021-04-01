@@ -7,10 +7,10 @@ import {
     IDeltaStorageService,
     IDocumentDeltaStorageService,
     IDeltasFetchResult,
-    IReadPipe,
+    IStream,
 } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { readAndParse, requestOps, emptyOpsPipe } from "@fluidframework/driver-utils";
+import { readAndParse, requestOps, emptyMessageStream } from "@fluidframework/driver-utils";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
@@ -33,14 +33,14 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 
     private logtailSha: string | undefined = this.documentStorageService.logTailSha;
 
-    get(from: number,
+    readMessages(from: number,
         to: number | undefined,
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,
-    ): IReadPipe<ISequencedDocumentMessage[]>
+    ): IStream<ISequencedDocumentMessage[]>
     {
         if (cachedOnly) {
-            return emptyOpsPipe;
+            return emptyMessageStream;
         }
         return requestOps(
             this.getCore.bind(this),

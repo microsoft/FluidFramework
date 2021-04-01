@@ -6,7 +6,7 @@
 import * as api from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDatabaseManager } from "@fluidframework/server-services-core";
-import { pipeFromOps } from "@fluidframework/driver-utils";
+import { streamFromMessages } from "@fluidframework/driver-utils";
 
 export class LocalDeltaStorageService implements api.IDocumentDeltaStorageService {
     constructor(
@@ -15,13 +15,13 @@ export class LocalDeltaStorageService implements api.IDocumentDeltaStorageServic
         private readonly databaseManager: IDatabaseManager) {
     }
 
-    public get(
+    public readMessages(
         from: number,
         to: number | undefined,
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,
-    ): api.IReadPipe<ISequencedDocumentMessage[]> {
-            return pipeFromOps(this.getCore(from, to));
+    ): api.IStream<ISequencedDocumentMessage[]> {
+            return streamFromMessages(this.getCore(from, to));
     }
 
     private async getCore(from: number, to?: number) {

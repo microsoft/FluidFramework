@@ -17,7 +17,7 @@ import {
     IDocumentStorageService,
     IDocumentServicePolicies,
 } from "@fluidframework/driver-definitions";
-import { canRetryOnError, requestOps, emptyOpsPipe } from "@fluidframework/driver-utils";
+import { canRetryOnError, requestOps, emptyMessageStream } from "@fluidframework/driver-utils";
 import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
@@ -240,14 +240,14 @@ export class OdspDocumentService implements IDocumentService {
         const concurrency = this.hostPolicy.concurrentOpsBatches ?? 1;
 
         return {
-            get: (
+            readMessages: (
                 from: number,
                 to: number | undefined,
                 abortSignal?: AbortSignal,
                 cachedOnly?: boolean) => {
                     // Proper implementaiton Coming in future
                     if (cachedOnly) {
-                        return emptyOpsPipe;
+                        return emptyMessageStream;
                     }
                     return requestOps(
                         service.get.bind(service),

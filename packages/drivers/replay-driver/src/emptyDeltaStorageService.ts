@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentDeltaStorageService, IReadPipe } from "@fluidframework/driver-definitions";
+import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { emptyOpsPipe } from "@fluidframework/driver-utils";
+import { emptyMessageStream } from "@fluidframework/driver-utils";
 
 export class EmptyDeltaStorageService implements IDocumentDeltaStorageService {
     /**
@@ -14,12 +14,12 @@ export class EmptyDeltaStorageService implements IDocumentDeltaStorageService {
      * @param to - Op are returned from to - 1.
      * @returns Array of ops requested by the user.
      */
-    public get(
+    public readMessages(
         from: number,
         to: number | undefined,
         abortSignal?: AbortSignal,
-        cachedOnly?: boolean): IReadPipe<ISequencedDocumentMessage[]>
+        cachedOnly?: boolean): IStream<ISequencedDocumentMessage[]>
     {
-        return emptyOpsPipe;
+        return emptyMessageStream;
     }
 }

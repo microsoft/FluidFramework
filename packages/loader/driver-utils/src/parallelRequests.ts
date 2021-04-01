@@ -6,7 +6,7 @@ import { assert, Deferred, performance } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IDeltasFetchResult, IReadPipe } from "@fluidframework/driver-definitions";
+import { IDeltasFetchResult, IStream } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network";
 import { waitForConnectedState } from "./networkUtils";
 
@@ -288,7 +288,7 @@ export class ParallelRequests<T> {
  * Helper queue class to allow async push / pull
  * It's essentially a pipe allowing multiple writers, and single reader
  */
-export class Queue<T> implements IReadPipe<T> {
+export class Queue<T> implements IStream<T> {
     private readonly queue: Promise<T | undefined>[] = [];
     private deferred: Deferred<T | undefined> | undefined;
     private done = false;
@@ -327,6 +327,9 @@ export class Queue<T> implements IReadPipe<T> {
         assert(!this.done, 0x115 /* "queue should not be done during pop" */);
         this.deferred = new Deferred<T>();
         return this.deferred.promise;
+    }
+
+    public cancel() {
     }
 }
 
@@ -465,7 +468,7 @@ export function requestOps(
     payloadSize: number,
     logger: ITelemetryLogger,
     signal?: AbortSignal,
-): IReadPipe<ISequencedDocumentMessage[]> {
+): IStream<ISequencedDocumentMessage[]> {
     let requests = 0;
     let lastFetch: number | undefined;
     let deltasRetrievedTotal = 0;
@@ -513,9 +516,14 @@ export function requestOps(
     return queue;
 }
 
-export const emptyOpsPipe: IReadPipe<ISequencedDocumentMessage[]> = { pop: async () => undefined };
+export const emptyMessageStream: IStream<ISequencedDocumentMessage[]> = {
+    pop: async () => undefined,
+    cancel: () => {},
+};
 
-export function pipeFromOps(messagesArg: Promise<ISequencedDocumentMessage[]>): IReadPipe<ISequencedDocumentMessage[]> {
+export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessage[]>):
+    IStream<ISequencedDocumentMessage[]>
+{
     let messages: Promise<ISequencedDocumentMessage[]> | undefined = messagesArg;
     return {
         pop: async () => {
@@ -526,5 +534,6 @@ export function pipeFromOps(messagesArg: Promise<ISequencedDocumentMessage[]>): 
             messages = undefined;
             return result.length === 0 ? undefined : result;
         },
+        cancel: () => {},
     };
 }
