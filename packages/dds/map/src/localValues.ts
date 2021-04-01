@@ -5,12 +5,11 @@
 
 import {
     IFluidHandle,
+    IFluidHandleEncoder,
     IFluidSerializer,
     ISerializedHandle,
 } from "@fluidframework/core-interfaces";
 import {
-    parseHandles,
-    serializeHandles,
     SharedObject,
     ValueType,
 } from "@fluidframework/shared-object-base";
@@ -21,6 +20,17 @@ import {
     IValueOperation,
     IValueType,
 } from "./interfaces";
+
+const serializeHandles = (
+    value: any,
+    serializer: IFluidSerializer,
+    bind: IFluidHandle,
+): string | undefined => // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    value !== undefined
+        ? serializer.stringify(
+            value,
+            bind)
+        : value;
 
 /**
  * A local value to be stored in a container type DDS.
@@ -164,8 +174,7 @@ export class LocalValueMaker {
      * Create a new LocalValueMaker.
      * @param serializer - The serializer to serialize / parse handles.
      */
-    constructor(private readonly serializer: IFluidSerializer) {
-    }
+    constructor(private readonly handleEncoder: IFluidHandleEncoder) { }
 
     /**
      * Register a value type this maker will be able to produce.
@@ -191,7 +200,7 @@ export class LocalValueMaker {
             serializable.value = handle;
         }
 
-        const translatedValue = parseHandles(serializable.value, this.serializer);
+        const translatedValue = this.handleEncoder.decode(serializable.value);
 
         return new PlainLocalValue(translatedValue);
     }
@@ -206,7 +215,7 @@ export class LocalValueMaker {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const valueType = this.valueTypes.get(serializable.type)!;
 
-            serializable.value = parseHandles(serializable.value, this.serializer);
+            serializable.value = this.handleEncoder.decode(serializable.value);
 
             const localValue = valueType.factory.load(emitter, serializable.value);
             return new ValueTypeLocalValue(localValue, valueType);

@@ -7,7 +7,7 @@ import { v4 as uuid } from "uuid";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidHandleEncoder, IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
@@ -93,10 +93,14 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         return this._serializer;
     }
 
+    protected get handleEncoder(): IFluidHandleEncoder {
+        return this._serializer;
+    }
+
     /**
      * The serializer to use to serialize / parse handles, if any.
      */
-    private readonly _serializer: IFluidSerializer;
+    private readonly _serializer: FluidSerializer;
 
     /**
      * @param id - The id of the shared object

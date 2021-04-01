@@ -152,6 +152,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         super(id, runtime, attributes);
         this.kernel = new MapKernel(
             this.serializer,
+            this.handleEncoder,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             () => this.isAttached(),

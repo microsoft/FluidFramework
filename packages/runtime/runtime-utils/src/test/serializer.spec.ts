@@ -42,12 +42,12 @@ describe("FluidSerializer", () => {
         // Add an array that contains each of our constructed test cases.
         simple.push([...simple]);
 
-        // Verify that `replaceHandles` is a no-op for these simple cases.
+        // Verify that `encode` is a no-op for these simple cases.
         for (const input of simple) {
             it(`${printHandle(input)} -> ${JSON.stringify(input)}`, () => {
-                const actual = serializer.replaceHandles(input, handle);
+                const actual = serializer.encode(input, handle);
                 assert.strictEqual(actual, input,
-                    "replaceHandles() on input with no handles must return original input.");
+                    "encode() on input with no handles must return original input.");
 
                 const stringified = serializer.stringify(input, handle);
                 const parsed = serializer.parse(stringified);
@@ -60,8 +60,8 @@ describe("FluidSerializer", () => {
             });
         }
 
-        it("replaceHandles() must round-trip undefined", () => {
-            assert.strictEqual(serializer.replaceHandles(undefined, handle), undefined);
+        it("encode() must round-trip undefined", () => {
+            assert.strictEqual(serializer.encode(undefined, handle), undefined);
         });
     });
 
@@ -76,17 +76,17 @@ describe("FluidSerializer", () => {
 
         function check(input, expected) {
             it(`${printHandle(input)} -> ${JSON.stringify(expected)}`, () => {
-                const replaced = serializer.replaceHandles(input, handle);
+                const replaced = serializer.encode(input, handle);
                 assert.notStrictEqual(replaced, input,
-                    "replaceHandles() must shallow-clone rather than mutate original object.");
+                    "encode() must shallow-clone rather than mutate original object.");
                 assert.deepStrictEqual(replaced, expected,
-                    "replaceHandles() must return expected output.");
+                    "encode() must return expected output.");
 
                 const stringified = serializer.stringify(input, handle);
 
                 // Note that we're using JSON.parse() in this test, so the handles remained serialized.
                 assert.deepStrictEqual(JSON.parse(stringified), expected,
-                    "Round-trip through stringify()/JSON.parse() must produce the same output as replaceHandles()");
+                    "Round-trip through stringify()/JSON.parse() must produce the same output as encode()");
 
                 const parsed = serializer.parse(stringified);
                 assert.deepStrictEqual(parsed, input,
@@ -109,9 +109,9 @@ describe("FluidSerializer", () => {
             input.h = handle;
             input.o1.h = handle;
 
-            const replaced = serializer.replaceHandles(input, handle);
+            const replaced = serializer.encode(input, handle);
             assert.notStrictEqual(replaced, input,
-                "replaceHandles() must shallow-clone rather than mutate original object.");
+                "encode() must shallow-clone rather than mutate original object.");
 
             const stringified = serializer.stringify(input, handle);
             const parsed = serializer.parse(stringified);

@@ -119,6 +119,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         super(id, runtime, attributes);
         this.intervalMapKernel = new MapKernel(
             this.serializer,
+            this.handleEncoder,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             () => this.isAttached(),

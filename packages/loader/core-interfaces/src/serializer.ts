@@ -23,15 +23,6 @@ export interface IProvideFluidSerializer {
 
 export interface IFluidSerializer extends IProvideFluidSerializer {
     /**
-     * Given a mostly-plain object that may have handle objects embedded within, will return a fully-plain object
-     * where any embedded IFluidHandles have been replaced with a serializable form.
-     *
-     * The original `input` object is not mutated.  This method will shallowly clones all objects in the path from
-     * the root to any replaced handles.  (If no handles are found, returns the original object.)
-     */
-    replaceHandles(value: any, bind: IFluidHandle): any;
-
-    /**
      * Stringifies a given value. Converts any IFluidHandle to its stringified equivalent.
      */
     stringify(value: any, bind: IFluidHandle): string;

@@ -429,7 +429,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         attributes: IChannelAttributes,
     ) {
         super(id, runtime, attributes);
-        this.localValueMaker = new LocalValueMaker(this.serializer);
+        this.localValueMaker = new LocalValueMaker(this.handleEncoder);
         this.setMessageHandlers();
         // Mirror the containedValueChanged op on the SharedDirectory
         this.root.on(

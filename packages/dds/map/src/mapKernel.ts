@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidHandleEncoder, IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { makeHandlesSerializable, parseHandles, ValueType } from "@fluidframework/shared-object-base";
+import { ValueType } from "@fluidframework/shared-object-base";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ISerializableValue,
@@ -186,13 +186,14 @@ export class MapKernel implements IValueTypeCreator {
      */
     constructor(
         private readonly serializer: IFluidSerializer,
+        private readonly handleEncoder: IFluidHandleEncoder,
         private readonly handle: IFluidHandle,
         private readonly submitMessage: (op: any, localOpMetadata: unknown) => void,
         private readonly isAttached: () => boolean,
         valueTypes: Readonly<IValueType<any>[]>,
         public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
-        this.localValueMaker = new LocalValueMaker(serializer);
+        this.localValueMaker = new LocalValueMaker(handleEncoder);
         this.messageHandlers = this.getMessageHandlers();
         for (const type of valueTypes) {
             this.localValueMaker.registerValueType(type);
@@ -366,10 +367,7 @@ export class MapKernel implements IValueTypeCreator {
         // TODO ideally we could use makeSerialized in this case as well. But the interval
         // collection has assumptions of attach being called prior. Given the IFluidSerializer it
         // may be possible to remove custom value type serialization entirely.
-        const transformedValue = makeHandlesSerializable(
-            params,
-            this.serializer,
-            this.handle);
+        const transformedValue = this.handleEncoder.encode(params, this.handle);
 
         // Set the value locally.
         this.setCore(
@@ -720,9 +718,7 @@ export class MapKernel implements IValueTypeCreator {
 
                     const handler = localValue.getOpHandler(op.value.opName);
                     const previousValue = localValue.value;
-                    const translatedValue = parseHandles(
-                        op.value.value,
-                        this.serializer);
+                    const translatedValue = this.handleEncoder.decode(op.value.value);
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IValueChanged = { key: op.key, previousValue };
                     this.eventEmitter.emit("valueChanged", event, local, message, this.eventEmitter);
@@ -763,10 +759,7 @@ export class MapKernel implements IValueTypeCreator {
      */
     private makeMapValueOpEmitter(key: string): IValueOpEmitter {
         const emit = (opName: string, previousValue: any, params: any) => {
-            const translatedParams = makeHandlesSerializable(
-                params,
-                this.serializer,
-                this.handle);
+            const translatedParams = this.handleEncoder.encode(params, this.handle);
 
             const op: IMapValueTypeOperation = {
                 key,

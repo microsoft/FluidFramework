@@ -18,8 +18,6 @@ import {
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import {
-    makeHandlesSerializable,
-    parseHandles,
     SharedObject,
 } from "@fluidframework/shared-object-base";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
@@ -452,7 +450,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         //       (See https://github.com/microsoft/FluidFramework/issues/2559)
         assert(this.isAttached() === true);
 
-        super.submitLocalMessage(makeHandlesSerializable(message, this.serializer, this.handle), localOpMetadata);
+        super.submitLocalMessage(this.handleEncoder.encode(message, this.handle), localOpMetadata);
 
         // Ensure that row/col 'localSeq' are synchronized (see 'nextLocalSeq()').
         assert(
@@ -545,7 +543,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
     }
 
     protected processCore(rawMessage: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        const msg = parseHandles(rawMessage, this.serializer);
+        const msg = this.handleEncoder.decode(rawMessage);
 
         const contents = msg.contents;
 
