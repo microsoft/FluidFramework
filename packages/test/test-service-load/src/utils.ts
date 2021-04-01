@@ -10,13 +10,15 @@ import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { ITestDriver, TestDriverTypes, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import { createFluidTestDriver } from "@fluidframework/test-drivers";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { assert, LazyPromise } from "@fluidframework/common-utils";
+import { assert, Lazy, LazyPromise } from "@fluidframework/common-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { ILoaderOptions } from "@fluidframework/container-definitions";
 import { pkgName, pkgVersion } from "./packageVersion";
-import { fluidExport, ILoadTest } from "./loadTestDataStore";
+import { createFluidExport, ILoadTest } from "./loadTestDataStore";
 import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
+import { buildPairwiseOptions, loaderOptionsMatrix } from "./optionsMatrix";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
@@ -82,14 +84,15 @@ const codeDetails: IFluidCodeDetails = {
     config: {},
 };
 
-const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
+const createCodeLoader =
+    (runId: number | undefined)=> new LocalCodeLoader([[codeDetails, createFluidExport(runId)]]);
 
 export async function initialize(testDriver: ITestDriver) {
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
-        codeLoader,
+        codeLoader: createCodeLoader(undefined),
         logger: ChildLogger.create(await loggerP, undefined, {all: { driverType: testDriver.type }}),
     });
 
@@ -106,16 +109,20 @@ export async function initialize(testDriver: ITestDriver) {
     return testDriver.createContainerUrl(testId);
 }
 
+const optionsMatrix = new Lazy(()=>
+    buildPairwiseOptions<ILoaderOptions>(loaderOptionsMatrix));
+
 export async function load(testDriver: ITestDriver, url: string, runId: number) {
     const documentServiceFactory =
         new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
-
+    const options = optionsMatrix.value[runId % optionsMatrix.value.length];
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory,
-        codeLoader,
+        codeLoader: createCodeLoader(runId),
         logger: ChildLogger.create(await loggerP, undefined, {all: { runId, driverType: testDriver.type }}),
+        options,
     });
 
     const container = await loader.resolve({ url });
