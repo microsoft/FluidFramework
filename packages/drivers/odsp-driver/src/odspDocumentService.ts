@@ -488,7 +488,8 @@ export class OdspDocumentService implements IDocumentService {
         }
 
         const seqNumber = this.storageManager?.snapshotSequenceNumber;
-        if (seqNumber === undefined) {
+        const batchSize = this.hostPolicy.opsCaching?.batchSize ?? 100;
+        if (seqNumber === undefined || batchSize < 1) {
             return;
         }
 
@@ -497,6 +498,7 @@ export class OdspDocumentService implements IDocumentService {
         };
         this._opsCache = new OpsCache(
             seqNumber,
+            this.logger,
             {
                 write: async (key: string, opsData: string) => {
                     return this.cache.persistedCache.put({...opsKey, key}, opsData);
@@ -514,7 +516,7 @@ export class OdspDocumentService implements IDocumentService {
     // We use it to notify caching layer of how stale is snapshot stored in cache.
     protected opsReceived(ops: ISequencedDocumentMessage[]) {
         // No need for two clients to save same ops
-        if (ops.length === 0 || !this.odspResolvedUrl.summarizer) {
+        if (ops.length === 0 || this.odspResolvedUrl.summarizer) {
             return;
         }
 
