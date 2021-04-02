@@ -53,15 +53,15 @@ function getRoomId(room: IRoom) {
     return `${room.tenantId}/${room.documentId}`;
 }
 
-const getMessageMetadata = (document: string, tenant: string) => ({
-    documentId: document,
-    tenantId: tenant,
+const getMessageMetadata = (documentId: string, tenantId: string) => ({
+    documentId,
+    tenantId,
 });
 
-const handleServerError = async (logger: core.ILogger, errorMessage: string, document: string, tenant: string) => {
+const handleServerError = async (logger: core.ILogger, errorMessage: string, documentId: string, tenantId: string) => {
     logger.error(
         errorMessage,
-        getMessageMetadata(document, tenant));
+        getMessageMetadata(documentId, tenantId));
     // eslint-disable-next-line prefer-promise-reject-errors
     return Promise.reject({ code: 500, message: "Failed to connect client to document." });
 };
@@ -228,7 +228,7 @@ export function configureWebSocketServices(
                     socket.join(getRoomId(room)),
                     socket.join(`client#${clientId}`)]);
             } catch (err) {
-                const errMsg = `Could not subscribe to channels due to error: ${safeStringify(err, undefined, 2)}`;
+                const errMsg = `Could not subscribe to channels. Error: ${safeStringify(err, undefined, 2)}`;
                 return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
             }
 
@@ -264,7 +264,7 @@ export function configureWebSocketServices(
 
             const clientsP = clientManager.getClients(claims.tenantId, claims.documentId)
                 .catch(async (err) => {
-                    const errMsg = `Failed to get clients due to error: ${safeStringify(err, undefined, 2)}`;
+                    const errMsg = `Failed to get clients. Error: ${safeStringify(err, undefined, 2)}`;
                     return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
                 });
 
@@ -286,7 +286,7 @@ export function configureWebSocketServices(
                     clientId,
                     messageClient as IClient);
             } catch (err) {
-                const errMsg = `Could not add client due to error: ${safeStringify(err, undefined, 2)}`;
+                const errMsg = `Could not add client. Error: ${safeStringify(err, undefined, 2)}`;
                 return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
             }
 
@@ -311,10 +311,8 @@ export function configureWebSocketServices(
 
                 // Eventually we will send disconnect reason as headers to client.
                 connection.once("error", (error) => {
-                    const messageMetaData = {
-                        documentId: connection.documentId,
-                        tenantId: connection.tenantId,
-                    };
+                    const messageMetaData = getMessageMetadata(connection.documentId, connection.tenantId);
+
                     // eslint-disable-next-line max-len
                     logger.error(`Disconnecting socket on connection error: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
                     clearExpirationTimer();
