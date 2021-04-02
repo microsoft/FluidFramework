@@ -258,7 +258,7 @@ export function configureWebSocketServices(
 
             const detailsP = storage.getOrCreateDocument(claims.tenantId, claims.documentId)
                 .catch(async (err) => {
-                    const errMsg = `Failed to get or create document with error: ${safeStringify(err, undefined, 2)}`;
+                    const errMsg = `Failed to get or create document. Error: ${safeStringify(err, undefined, 2)}`;
                     return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
                 });
 
@@ -321,7 +321,8 @@ export function configureWebSocketServices(
 
                 connection.connect()
                     .catch(async (err) => {
-                        const errMsg = `Error connecting the orderer connection: ${safeStringify(err, undefined, 2)}`;
+                        // eslint-disable-next-line max-len
+                        const errMsg = `Failed to connect to the orderer connection. Error: ${safeStringify(err, undefined, 2)}`;
                         return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
                     });
 
