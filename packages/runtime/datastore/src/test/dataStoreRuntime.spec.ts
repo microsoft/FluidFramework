@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SummaryType } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { IContainerRuntimeBase, IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import { MockFluidDataStoreContext } from "@fluidframework/test-runtime-utils";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime";
 
@@ -15,6 +15,9 @@ describe("FluidDataStoreRuntime Tests", () => {
 
     beforeEach(() => {
         dataStoreContext = new MockFluidDataStoreContext();
+        // back-compat 0.38 - DataStoreRuntime looks in container runtime for certain properties that are unavailable
+        // in the data store context.
+        dataStoreContext.containerRuntime = {} as unknown as IContainerRuntimeBase;
         sharedObjectRegistry = {
             get(name: string) {
                 throw new Error("Not implemented");
