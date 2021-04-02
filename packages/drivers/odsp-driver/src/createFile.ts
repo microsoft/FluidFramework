@@ -97,7 +97,7 @@ export async function createNewFluidFile(
             { cancel: "error" });
     });
 
-    const odspUrl = createOdspUrl(newFileInfo.siteUrl, newFileInfo.driveId, itemId, "/");
+    const odspUrl = createOdspUrl({... newFileInfo, itemId, dataStorePath: "/"});
     const resolver = new OdspDriverUrlResolver();
     return resolver.resolve({ url: odspUrl });
 }

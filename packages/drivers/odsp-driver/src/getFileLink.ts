@@ -7,6 +7,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PromiseCache } from "@fluidframework/common-utils";
 import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { IOdspUrlParts } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { fetchHelper, getWithRetryForTokenRefresh } from "./odspUtils";
 import {
@@ -42,13 +43,11 @@ const fileLinkCache = new PromiseCache<string, string | undefined>();
  */
 export async function getFileLink(
     getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
-    siteUrl: string,
-    driveId: string,
-    itemId: string,
+    odspUrlParts: IOdspUrlParts,
     identityType: IdentityType,
     logger: ITelemetryLogger,
 ): Promise<string | undefined> {
-    const cacheKey = `${siteUrl}_${driveId}_${itemId}`;
+    const cacheKey = `${odspUrlParts.siteUrl}_${odspUrlParts.driveId}_${odspUrlParts.itemId}`;
     if (fileLinkCache.has(cacheKey)) {
         return fileLinkCache.get(cacheKey);
     }
@@ -59,7 +58,7 @@ export async function getFileLink(
         let retryAfter = 0;
         do {
             try {
-                result = await getFileLinkCore(getToken, siteUrl, driveId, itemId, identityType, logger);
+                result = await getFileLinkCore(getToken, odspUrlParts, identityType, logger);
                 success = true;
             } catch (err) {
                 // If it is not retriable, then just return undefined
@@ -81,13 +80,11 @@ export async function getFileLink(
 
 async function getFileLinkCore(
     getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
-    siteUrl: string,
-    driveId: string,
-    itemId: string,
+    odspUrlParts: IOdspUrlParts,
     identityType: IdentityType,
     logger: ITelemetryLogger,
 ): Promise<string | undefined> {
-    const fileItem = await getFileItemLite(getToken, siteUrl, driveId, itemId, logger);
+    const fileItem = await getFileItemLite(getToken, odspUrlParts, logger);
     if (!fileItem) {
         return undefined;
     }
@@ -106,9 +103,9 @@ async function getFileLinkCore(
             let additionalProps;
             const fileLink = await getWithRetryForTokenRefresh(async (options) => {
                 attempts++;
-                const token = await getToken({ ...options, siteUrl, driveId, itemId });
+                const token = await getToken({ ...options, ... odspUrlParts });
                 const { url, headers } = getUrlAndHeadersWithAuth(
-                    `${siteUrl}/_api/web/GetFileByUrl(@a1)/ListItemAllFields/GetSharingInformation?@a1=${
+                    `${odspUrlParts.siteUrl}/_api/web/GetFileByUrl(@a1)/ListItemAllFields/GetSharingInformation?@a1=${
                         encodeURIComponent(`'${fileItem.webDavUrl}'`)
                     }`, tokenFromResponse(token));
                 const requestInit = {
@@ -143,9 +140,7 @@ interface FileItemLite {
 
 async function getFileItemLite(
     getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
-    siteUrl: string,
-    driveId: string,
-    itemId: string,
+    odspUrlParts: IOdspUrlParts,
     logger: ITelemetryLogger,
 ): Promise<FileItemLite | undefined> {
     return PerformanceEvent.timedExecAsync(
@@ -156,7 +151,8 @@ async function getFileItemLite(
             let additionalProps;
             const fileItem = await getWithRetryForTokenRefresh(async (options) => {
                 attempts++;
-                const token = await getToken({ ...options, siteUrl, driveId, itemId });
+                const {siteUrl, driveId, itemId} = odspUrlParts;
+                const token = await getToken({ ...options, siteUrl, driveId, itemId});
                 const { url, headers } = getUrlAndHeadersWithAuth(
                     `${siteUrl}/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl`,
                     tokenFromResponse(token),

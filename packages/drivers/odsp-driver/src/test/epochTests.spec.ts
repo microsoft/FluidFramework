@@ -26,7 +26,7 @@ const createUtLocalCache = () => new LocalPersistentCache(2000);
 describe("Tests for Epoch Tracker", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
     const driveId = "driveId";
-    const itemId = "fileId";
+    const itemId = "itemId";
     let epochTracker: EpochTracker;
     let localCache: LocalPersistentCache;
     const hashedDocumentId = getHashedDocumentId(driveId, itemId);
