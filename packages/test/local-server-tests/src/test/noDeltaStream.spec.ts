@@ -52,13 +52,17 @@ describe("No Delta Stream", () => {
         return container;
     }
 
-    async function loadContainer(storageOnly: boolean): Promise<IContainer> {
+    async function loadContainer(storageOnly: boolean, track = true): Promise<IContainer> {
+        const service = new LocalDocumentServiceFactory(deltaConnectionServer, { storageOnly });
         const loader = createLoader(
             [[codeDetails, factory]],
-            new LocalDocumentServiceFactory(deltaConnectionServer, { storageOnly }),
+            service,
             new LocalResolver());
-        loaderContainerTracker.add(loader);
+        if (track) {
+            loaderContainerTracker.add(loader);
+        }
         const container = await loader.resolve({ url: documentLoadUrl });
+        await loaderContainerTracker.ensureSynchronized();
         return container;
     }
 
@@ -116,7 +120,7 @@ describe("No Delta Stream", () => {
     });
 
     it("doesn't affect normal containers", async () => {
-        await loadContainer(true) as Container;
+        await loadContainer(true, false) as Container;
         const normalContainer1 = await loadContainer(false) as Container;
         const normalContainer2 = await loadContainer(false) as Container;
         const normalDataObject1 = await requestFluidObject<ITestFluidObject>(normalContainer1, "default");
