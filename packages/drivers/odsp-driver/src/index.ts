@@ -29,3 +29,4 @@ export * from "./odspFluidFileLink";
 export * from "./checkUrl";
 export * from "./rateLimiter";
 export * from "./odspSummaryUploadManager";
+export * from "./opsCaching";

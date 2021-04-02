@@ -30,7 +30,7 @@ import {
     HostStoragePolicyInternal,
     ISocketStorageDiscovery,
 } from "./contracts";
-import { IOdspCache } from "./odspCache";
+import { IEntry, IOdspCache } from "./odspCache";
 import { OdspDeltaStorageService } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
@@ -39,6 +39,7 @@ import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { TokenFetchOptions } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
+import { OpsCache } from "./opsCaching";
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
@@ -140,6 +141,8 @@ export class OdspDocumentService implements IDocumentService {
 
     private readonly hostPolicy: HostStoragePolicyInternal;
 
+    private _opsCache?: OpsCache;
+
     /**
      * @param getStorageToken - function that can provide the storage token. This is is also referred to as
      * the "VROOM" token in SPO.
@@ -217,19 +220,48 @@ export class OdspDocumentService implements IDocumentService {
             return websocketEndpoint.deltaStorageUrl;
         };
 
+        let snapshotOps = this.storageManager?.ops;
         const service = new OdspDeltaStorageService(
             urlProvider,
-            this.storageManager?.ops,
             this.getStorageToken,
             this.epochTracker,
             this.logger,
         );
 
+        let missed = false;
         return {
             get: async (from: number, to: number) => {
-                const { messages, partialResult } = await service.get(from, to);
-                this.opsReceived(messages);
-                return { messages, partialResult };
+                if (snapshotOps !== undefined && snapshotOps.length !== 0) {
+                    const messages = snapshotOps.filter((op) => op.sequenceNumber > from).map((op) => op.op);
+                    snapshotOps = undefined;
+                    if (messages.length > 0 && messages[0].sequenceNumber === from + 1) {
+                        // Consider not caching these ops as they will be cached as part of snapshot cache entry
+                        this.opsReceived(messages);
+                        return { messages, partialResult: true };
+                    } else {
+                        this.logger.sendErrorEvent({
+                            eventName: "SnapshotOpsNotUsed",
+                            length: messages.length,
+                            first: messages[0].sequenceNumber,
+                            from,
+                            to,
+                        });
+                    }
+                }
+
+                // We always write ops sequentially. Once there is a miss, stop consulting cache.
+                // This saves a bit of processing time
+                if (!missed) {
+                    const messagesFromCache = await this.opsCache?.get(from, to);
+                    if (messagesFromCache !== undefined && messagesFromCache.length !== 0) {
+                        return { messages: messagesFromCache as ISequencedDocumentMessage[], partialResult: true };
+                    }
+                    missed = true;
+                }
+
+                const result = await service.get(from, to);
+                this.opsReceived(result.messages);
+                return result;
             },
         };
     }
@@ -447,14 +479,45 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     public dispose() {
+        this._opsCache?.flushOps();
+    }
+
+    protected get opsCache() {
+        if (this._opsCache) {
+            return this._opsCache;
+        }
+
+        const seqNumber = this.storageManager?.snapshotSequenceNumber;
+        if (seqNumber === undefined) {
+            return;
+        }
+
+        const opsKey: Omit<IEntry, "key"> = {
+            type: "ops",
+        };
+        this._opsCache = new OpsCache(
+            seqNumber,
+            {
+                write: async (key: string, opsData: string) => {
+                    return this.cache.persistedCache.put({...opsKey, key}, opsData);
+                },
+                read: async (batch: string) => undefined,
+            },
+            this.hostPolicy.opsCaching?.batchSize ?? 100,
+            this.hostPolicy.opsCaching?.timerGranularity ?? 5000,
+            this.hostPolicy.opsCaching?.totalOpsToCache ?? 5000,
+        );
+        return this._opsCache;
     }
 
     // Called whenever re receive ops through any channel for this document (snapshot, delta connection, delta storage)
     // We use it to notify caching layer of how stale is snapshot stored in cache.
     protected opsReceived(ops: ISequencedDocumentMessage[]) {
-        const seqNumber = this.storageManager?.snapshotSequenceNumber;
-        if (ops.length === 0 || seqNumber === undefined) {
+        // No need for two clients to save same ops
+        if (ops.length === 0 || !this.odspResolvedUrl.summarizer) {
             return;
         }
+
+        this.opsCache?.addOps(ops);
     }
 }
