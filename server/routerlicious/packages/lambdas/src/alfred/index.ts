@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { inspect } from "util";
 import {
     ConnectionMode,
     IClient,
@@ -53,6 +52,19 @@ interface IConnectedClient {
 function getRoomId(room: IRoom) {
     return `${room.tenantId}/${room.documentId}`;
 }
+
+const getMessageMetadata = (document: string, tenant: string) => ({
+    documentId: document,
+    tenantId: tenant,
+});
+
+const handleServerError = async (logger: core.ILogger, errorMessage: string, document: string, tenant: string) => {
+    logger.error(
+        errorMessage,
+        getMessageMetadata(document, tenant));
+    // eslint-disable-next-line prefer-promise-reject-errors
+    return Promise.reject({ code: 500, message: "Failed to connect client to document." });
+};
 
 const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocketConn`;
 
@@ -210,15 +222,15 @@ export function configureWebSocketServices(
                 documentId: claims.documentId,
             };
 
-            // Subscribe to channels.
-            await Promise.all([
-                socket.join(getRoomId(room)),
-                socket.join(`client#${clientId}`)])
-                .catch(async (err) => {
-                    logger.error(`Could not subscribe to channels due to error: ${inspect(err)}`, room);
-                    // eslint-disable-next-line prefer-promise-reject-errors
-                    return Promise.reject({ code: 500, message: "Failed to connect client to document." });
-                });
+            try {
+                // Subscribe to channels.
+                await Promise.all([
+                    socket.join(getRoomId(room)),
+                    socket.join(`client#${clientId}`)]);
+            } catch (err) {
+                const errMsg = `Could not subscribe to channels due to error: ${safeStringify(err, undefined, 2)}`;
+                return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+            }
 
             // Todo: should all the client details come from the claims???
             // we are still trusting the users permissions and type here.
@@ -244,15 +256,19 @@ export function configureWebSocketServices(
                 });
             }
 
-            const detailsP = storage.getOrCreateDocument(claims.tenantId, claims.documentId);
-            const clientsP = clientManager.getClients(claims.tenantId, claims.documentId);
-
-            const [details, clients] = await Promise.all([detailsP, clientsP])
+            const detailsP = storage.getOrCreateDocument(claims.tenantId, claims.documentId)
             .catch(async (err) => {
-                logger.error(`Failed to obtain document details or clients due to error: ${inspect(err)}`, room);
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject({ code: 500, message: "Failed to connect client to document." });
+                const errMsg = `Failed to get or create document with error: ${safeStringify(err, undefined, 2)}`;
+                return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
             });
+
+            const clientsP = clientManager.getClients(claims.tenantId, claims.documentId)
+            .catch(async (err) => {
+                const errMsg = `Failed to get clients due to error: ${safeStringify(err, undefined, 2)}`;
+                return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+            });
+
+            const [details, clients] = await Promise.all([detailsP, clientsP]);
 
             if (clients.length > maxNumberOfClientsPerDocument) {
                 // eslint-disable-next-line prefer-promise-reject-errors
@@ -270,9 +286,8 @@ export function configureWebSocketServices(
                     clientId,
                     messageClient as IClient);
             } catch (err) {
-                logger.error(`Could not add client due to error: ${inspect(err)}`, room);
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject({ code: 500, message: `Failed to connect client to document.` });
+                const errMsg = `Could not add client due to error: ${safeStringify(err, undefined, 2)}`;
+                return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
             }
 
             if (isTokenExpiryEnabled) {
@@ -282,24 +297,17 @@ export function configureWebSocketServices(
 
             let connectedMessage: IConnected;
             if (isWriter(messageClient.scopes, details.existing, message.mode)) {
-                let connection: core.IOrdererConnection;
-                try {
-                    const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
-                    connection = await orderer.connect(socket, clientId, messageClient as IClient, details);
-                } catch (err) {
-                    const messageMetaData = {
-                        documentId: claims.documentId,
-                        tenantId: claims.tenantId,
-                    };
-                    logger.error(`Failed to obtain orderer connection. Error: ${inspect(err)}`, { messageMetaData });
-                    // eslint-disable-next-line prefer-promise-reject-errors
-                    return Promise.reject({ code: 500, message: `Failed to connect client to document.` });
-                }
+                const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId)
+                .catch(async (err) => {
+                    const errMsg = `Failed to get orderer manager. Error: ${safeStringify(err, undefined, 2)}`;
+                    return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+                });
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                connection.connect();
-
-                connectionsMap.set(clientId, connection);
+                const connection = await orderer.connect(socket, clientId, messageClient as IClient, details)
+                .catch(async (err) => {
+                    const errMsg = `Failed to connect to orderer. Error: ${safeStringify(err, undefined, 2)}`;
+                    return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+                });
 
                 // Eventually we will send disconnect reason as headers to client.
                 connection.once("error", (error) => {
@@ -312,6 +320,10 @@ export function configureWebSocketServices(
                     clearExpirationTimer();
                     socket.disconnect(true);
                 });
+
+                void connection.connect();
+
+                connectionsMap.set(clientId, connection);
 
                 connectedMessage = {
                     claims,
