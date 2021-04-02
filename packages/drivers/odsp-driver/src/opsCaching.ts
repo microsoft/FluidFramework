@@ -11,8 +11,11 @@ export interface IMessage {
 type CacheEntry = (IMessage | undefined)[];
 
 interface IBatch {
-    currentBatchSize: number;
+    remainingSlots: number;
     batchData: CacheEntry;
+    /**
+     * Tells if this batch is  dirty, i.e. it contains ops that were not flushed to cache
+     */
     dirty: boolean;
 }
 
@@ -35,10 +38,10 @@ export class OpsCache {
         /** initial batch is a special case because it will never be full - all ops prior (inclusive) to
          *  startingSequenceNumber are never going to show up (undefined)
          */
-        const currentBatchSize = this.getPositionInBatchArray(startingSequenceNumber) + 1; // inclusive
-        if (currentBatchSize !== this.batchSize) {
+        const remainingSlots = this.batchSize - this.getPositionInBatchArray(startingSequenceNumber) - 1;
+        if (remainingSlots !== 0) {
             this.batches.set(this.getBatchNumber(startingSequenceNumber), {
-                currentBatchSize,
+                remainingSlots,
                 batchData : this.initializeNewBatchDataArray(),
                 dirty: false,
             });
@@ -68,7 +71,7 @@ export class OpsCache {
 
             if (currentBatch === undefined) {
                 currentBatch = {
-                    currentBatchSize: 1,
+                    remainingSlots: this.batchSize - 1,
                     batchData: this.initializeNewBatchDataArray(),
                     dirty: true,
                 };
@@ -76,14 +79,14 @@ export class OpsCache {
                 this.batches.set(batchNumber, currentBatch);
             } else if (currentBatch !== null && currentBatch.batchData[positionInBatch] === undefined) {
                 currentBatch.batchData[positionInBatch] = op;
-                currentBatch.currentBatchSize++;
+                currentBatch.remainingSlots--;
                 currentBatch.dirty = true;
             } else {
                 // Either batch was flushed or this op was already there - nothing to do!
                 return;
             }
 
-            if (currentBatch.currentBatchSize === this.batchSize) {
+            if (currentBatch.remainingSlots === 0) {
                 // batch is full, flush to cache
                 this.write(batchNumber, currentBatch);
                 this.batches.set(batchNumber, null);

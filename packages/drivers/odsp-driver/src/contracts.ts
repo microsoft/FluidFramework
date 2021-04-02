@@ -269,6 +269,7 @@ export interface HostStoragePolicy {
          * To reduce the problem of losing trailing ops when using big batch sizes, host
          * could specify how often driver should flush ops it has not flushed yet.
          * -1 means do not use timer.
+         * Measured in ms.
          * Default: 5000
          */
         timerGranularity?: number,
