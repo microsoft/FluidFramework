@@ -19,38 +19,39 @@ export type OptionsMatrix<T extends Record<string, any>> =
 export const booleanCases: readonly (boolean)[] = [true, false];
 export const numberCases: readonly (number | undefined)[] = [undefined];
 
-function applyPair<T extends Record<string, any>>(
-    potentials: T[], pair: {iKey: keyof T, jKey: keyof T, iVal: any, jVal: any}) {
-    let potential: T | undefined;
-    let found: boolean = false;
-    for(const output of potentials) {
+type PartialWithKeyCount<T extends Record<string, any>>= (Partial<T> & {__paritalKeyCount?: number});
+
+function applyPairToPartial<T extends Record<string, any>>(
+    partials: PartialWithKeyCount<T>[],
+    pair: {iKey: keyof T, jKey: keyof T, iVal: any, jVal: any},
+) {
+    let found: PartialWithKeyCount<T> | undefined;
+    for(const partial of partials) {
         // the pair exists, so nothing to do
-        if(output[pair.iKey] === pair.iVal && output[pair.jKey] === pair.jVal) {
-            found = true;
+        if(partial[pair.iKey] === pair.iVal && partial[pair.jKey] === pair.jVal) {
+            return;
+        }
+
+        if(pair.iKey in partial && partial[pair.iKey] === pair.iVal && !(pair.jKey in partial)
+            || pair.jKey in partial && partial[pair.jKey] === pair.jVal && !(pair.iKey in partial)) {
+            found = partial;
             break;
         }
-        // half the pair exists, and the other half is empty, so cache this as a potential for to satisfy the pair
-        // we can't give up, as the pair may exist in which case we'll not need to apply
-        if(potential === undefined) {
-            if(pair.iKey in output && output[pair.iKey] === pair.iVal && !(pair.jKey in output)
-                || pair.jKey in output && output[pair.jKey] === pair.jVal && !(pair.iKey in output)) {
-                potential = output;
-            }
-        }
     }
-    if(!found) {
-        if(potential === undefined) {
-            potentials.push({
-                [pair.iKey]: pair.iVal,
-                [pair.jKey]: pair.jVal,
-            } as any);
+    if(found === undefined) {
+        const partial: PartialWithKeyCount<T> = {};
+        partial.__paritalKeyCount = 2;
+        partial[pair.iKey] = pair.iVal;
+        partial[pair.jKey] = pair.jVal;
+        partials.push(partial);
+    }else{
+        if(pair.iKey in found) {
+            found[pair.jKey] = pair.jVal;
         }else{
-            if(pair.iKey in potential) {
-                potential[pair.jKey] = pair.jVal;
-            }else{
-                potential[pair.iKey] = pair.iVal;
-            }
+            found[pair.iKey] = pair.iVal;
         }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        found.__paritalKeyCount!++;
     }
 }
 
@@ -80,29 +81,31 @@ export function generatePairwiseOptions<T extends Record<string, any>>(optionsMa
     /* eslint-disable @typescript-eslint/no-non-null-assertion */
     const matrixKeys: (keyof T)[] =
         Array.from(valuesMap.keys()).sort((a,b)=>valuesMap.get(b)!.length  - valuesMap.get(a)!.length);
-    const matrixKeysMidPoint = Math.ceil(matrixKeys.length / 2);
     // compute all the pairs of property values, and apply them
-    const outputs: T[] = [];
-    for(const iKey of matrixKeys.slice(0, matrixKeysMidPoint)) {
-        for(const jKey of matrixKeys.slice(matrixKeysMidPoint)) {
+    const partials: PartialWithKeyCount<T>[] = [];
+    for(const iKey of matrixKeys) {
+        for(const jKey of matrixKeys.slice(matrixKeys.indexOf(iKey) + 1)) {
             for(const iVal of valuesMap.get(iKey)!) {
                 for(const jVal of valuesMap.get(jKey)!) {
-                    applyPair(outputs,{iKey,iVal,jKey,jVal});
+                    applyPairToPartial(partials, {iKey, iVal, jKey, jVal});
                 }
             }
         }
     }
 
     // fix up any incomplete outputs
-    for(const output of outputs) {
-        for(const key of matrixKeys) {
-            if(!(key in output)) {
-                const values = valuesMap.get(key)!;
-                output[key] = values[Math.floor(Math.random() * values.length)];
+    for(const partial of partials) {
+        if(partial.__paritalKeyCount !== matrixKeys.length) {
+            for(const key of matrixKeys) {
+                if(!(key in partial)) {
+                    const values = valuesMap.get(key)!;
+                    partial[key] = values[Math.floor(Math.random() * values.length)];
+                }
             }
         }
+        delete partial.__paritalKeyCount;
     }
     /* eslint-enable @typescript-eslint/no-non-null-assertion */
 
-    return outputs;
+    return partials as T[];
 }
