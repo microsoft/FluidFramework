@@ -8,9 +8,9 @@ export interface IMessage {
     sequenceNumber: number;
 }
 
-type CacheEntry = (IMessage | undefined)[];
+export type CacheEntry = (IMessage | undefined)[];
 
-interface IBatch {
+export interface IBatch {
     remainingSlots: number;
     batchData: CacheEntry;
     /**
