@@ -257,16 +257,16 @@ export function configureWebSocketServices(
             }
 
             const detailsP = storage.getOrCreateDocument(claims.tenantId, claims.documentId)
-            .catch(async (err) => {
-                const errMsg = `Failed to get or create document with error: ${safeStringify(err, undefined, 2)}`;
-                return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
-            });
+                .catch(async (err) => {
+                    const errMsg = `Failed to get or create document with error: ${safeStringify(err, undefined, 2)}`;
+                    return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+                });
 
             const clientsP = clientManager.getClients(claims.tenantId, claims.documentId)
-            .catch(async (err) => {
-                const errMsg = `Failed to get clients due to error: ${safeStringify(err, undefined, 2)}`;
-                return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
-            });
+                .catch(async (err) => {
+                    const errMsg = `Failed to get clients due to error: ${safeStringify(err, undefined, 2)}`;
+                    return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+                });
 
             const [details, clients] = await Promise.all([detailsP, clientsP]);
 
@@ -298,16 +298,16 @@ export function configureWebSocketServices(
             let connectedMessage: IConnected;
             if (isWriter(messageClient.scopes, details.existing, message.mode)) {
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId)
-                .catch(async (err) => {
-                    const errMsg = `Failed to get orderer manager. Error: ${safeStringify(err, undefined, 2)}`;
-                    return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
-                });
+                    .catch(async (err) => {
+                        const errMsg = `Failed to get orderer manager. Error: ${safeStringify(err, undefined, 2)}`;
+                        return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+                    });
 
                 const connection = await orderer.connect(socket, clientId, messageClient as IClient, details)
-                .catch(async (err) => {
-                    const errMsg = `Failed to connect to orderer. Error: ${safeStringify(err, undefined, 2)}`;
-                    return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
-                });
+                    .catch(async (err) => {
+                        const errMsg = `Failed to connect to orderer. Error: ${safeStringify(err, undefined, 2)}`;
+                        return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+                    });
 
                 // Eventually we will send disconnect reason as headers to client.
                 connection.once("error", (error) => {
@@ -321,7 +321,11 @@ export function configureWebSocketServices(
                     socket.disconnect(true);
                 });
 
-                void connection.connect();
+                connection.connect()
+                    .catch(async (err) => {
+                        const errMsg = `Error connecting the orderer connection: ${safeStringify(err, undefined, 2)}`;
+                        return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+                    });
 
                 connectionsMap.set(clientId, connection);
 
