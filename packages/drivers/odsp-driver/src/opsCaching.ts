@@ -28,9 +28,9 @@ export class OpsCache {
   constructor(
     startingSequenceNumber: number,
     private readonly cache: ICache,
-    private readonly batchSize: number = 100,
-    private readonly timerGranularity = 5000,
-    private totalOpsToCache = 5000,
+    private readonly batchSize: number,
+    private readonly timerGranularity,
+    private totalOpsToCache,
   ) {
         /** initial batch is a special case because it will never be full - all ops prior (inclusive) to
          *  startingSequenceNumber are never going to show up (undefined)
@@ -143,7 +143,7 @@ export class OpsCache {
     }
 
     protected scheduleTimer() {
-        if (!this.timer) {
+        if (!this.timer && this.timerGranularity > 0) {
             this.timer = setTimeout(() => {
                 this.timer = undefined;
                 this.flushOps();

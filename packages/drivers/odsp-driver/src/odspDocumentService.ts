@@ -503,6 +503,9 @@ export class OdspDocumentService implements IDocumentService {
                 },
                 read: async (batch: string) => undefined,
             },
+            this.hostPolicy.opsCaching?.batchSize ?? 100,
+            this.hostPolicy.opsCaching?.timerGranularity ?? 5000,
+            this.hostPolicy.opsCaching?.totalOpsToCache ?? 5000,
         );
         return this._opsCache;
     }

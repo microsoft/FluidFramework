@@ -35,6 +35,8 @@ async function runTest(
         initialSeq,
         mockCache,
         batchSize,
+        5000, // timerGranularity
+        5000, // totalOpsToCache
     );
 
     cache.addOps(mockData);
