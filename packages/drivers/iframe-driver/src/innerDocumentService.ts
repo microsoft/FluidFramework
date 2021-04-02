@@ -67,7 +67,7 @@ export class InnerDocumentService implements IDocumentService {
      */
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
         return {
-            readMessages: (...args) => this.outerProxy.deltaStorage.readMessages(...args),
+            fetchMessages: (...args) => this.outerProxy.deltaStorage.fetchMessages(...args),
         };
     }
 

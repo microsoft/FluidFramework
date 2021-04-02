@@ -34,7 +34,7 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
         }
     }
 
-    public readMessages(from: number,
+    public fetchMessages(from: number,
         to: number | undefined,
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,

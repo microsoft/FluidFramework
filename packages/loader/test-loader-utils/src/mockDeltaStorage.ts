@@ -18,7 +18,7 @@ export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageSer
         this.messages = messages.sort((a, b) => b.sequenceNumber - a.sequenceNumber);
     }
 
-    public readMessages(
+    public fetchMessages(
         from: number, // inclusive
         to: number | undefined, // exclusive
         abortSignal?: AbortSignal,

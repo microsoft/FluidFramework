@@ -343,12 +343,12 @@ export class DebugReplayController extends ReplayController implements IDebugger
 }
 
 async function* generateSequencedMessagesFromDeltaStorage(deltaStorage: IDocumentDeltaStorageService)  {
-    const pipe = deltaStorage.readMessages(1, undefined);
+    const stream = deltaStorage.fetchMessages(1, undefined);
     while (true) {
-        const messages = await pipe.pop();
-        if (messages === undefined) {
+        const result = await stream.read();
+        if (result.done) {
             return;
         }
-        yield messages;
+        yield result.value;
     }
 }

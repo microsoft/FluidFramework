@@ -33,7 +33,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 
     private logtailSha: string | undefined = this.documentStorageService.logTailSha;
 
-    readMessages(from: number,
+    fetchMessages(from: number,
         to: number | undefined,
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,

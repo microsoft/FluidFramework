@@ -66,17 +66,18 @@ async function* loadAllSequencedMessages(
     let requests = 0;
     let opsStorage = 0;
 
-    const queue = deltaStorage.readMessages(
+    const stream = deltaStorage.fetchMessages(
         lastSeq + 1, // inclusive left
         undefined, // to
     );
 
     while (true) {
-        const messages = await queue.pop();
-        if (messages === undefined) {
+        const result = await stream.read();
+        if (result.done) {
             break;
         }
         requests++;
+        const messages = result.value;
 
         // Empty buckets should never be returned
         assert(messages.length !== 0, 0x1ba /* "should not return empty buckets" */);

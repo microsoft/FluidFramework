@@ -54,15 +54,13 @@ export interface IDeltaStorageService {
     ): Promise<IDeltasFetchResult>;
 }
 
+export type IStreamResult<T> = { done: true; } | { done: false; value: T; };
+
 /**
  * Read interface for the Queue
  */
  export interface IStream<T> {
-    pop(): Promise<T | undefined>;
-    /**
-     * aborts processing and releases resources
-     */
-    cancel(): void;
+    read(): Promise<IStreamResult<T>>;
 }
 
 /**
@@ -76,7 +74,7 @@ export interface IDocumentDeltaStorageService {
      * @param abortSignal - signal that aborts operation
      * @param cachedOnly - return only cached ops, i.e. ops available locally on client.
      */
-     readMessages(from: number,
+     fetchMessages(from: number,
         to: number | undefined,
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,

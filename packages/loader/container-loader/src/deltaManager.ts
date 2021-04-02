@@ -807,21 +807,21 @@ export class DeltaManager
         }
 
         const storage = await this.deltaStorageP;
-        const pipe = storage.readMessages(
+        const stream = storage.fetchMessages(
             from, // inclusive
             to, // exclusive
             this.closeAbortController.signal);
 
         // eslint-disable-next-line no-constant-condition
         while (true) {
-            const deltas = await pipe.pop();
-            if (deltas === undefined) {
+            const result = await stream.read();
+            if (result.done) {
                 break;
             }
             PerformanceEvent.timedExec(
                 this.logger,
-                { eventName: "GetDeltas_OpProcessing", count: deltas.length},
-                () => callback(deltas),
+                { eventName: "GetDeltas_OpProcessing", count: result.value.length},
+                () => callback(result.value),
                 { end: true, cancel: "error" });
         }
     }

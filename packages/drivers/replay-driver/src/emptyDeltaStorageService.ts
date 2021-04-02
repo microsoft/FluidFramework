@@ -14,7 +14,7 @@ export class EmptyDeltaStorageService implements IDocumentDeltaStorageService {
      * @param to - Op are returned from to - 1.
      * @returns Array of ops requested by the user.
      */
-    public readMessages(
+    public fetchMessages(
         from: number,
         to: number | undefined,
         abortSignal?: AbortSignal,

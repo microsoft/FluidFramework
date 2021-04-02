@@ -240,7 +240,7 @@ export class OdspDocumentService implements IDocumentService {
         const concurrency = this.hostPolicy.concurrentOpsBatches ?? 1;
 
         return {
-            readMessages: (
+            fetchMessages: (
                 from: number,
                 to: number | undefined,
                 abortSignal?: AbortSignal,

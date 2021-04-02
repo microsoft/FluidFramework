@@ -6,7 +6,7 @@ import { assert, Deferred, performance } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IDeltasFetchResult, IStream } from "@fluidframework/driver-definitions";
+import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network";
 import { waitForConnectedState } from "./networkUtils";
 
@@ -289,12 +289,12 @@ export class ParallelRequests<T> {
  * It's essentially a pipe allowing multiple writers, and single reader
  */
 export class Queue<T> implements IStream<T> {
-    private readonly queue: Promise<T | undefined>[] = [];
-    private deferred: Deferred<T | undefined> | undefined;
+    private readonly queue: Promise<IStreamResult<T>>[] = [];
+    private deferred: Deferred<IStreamResult<T>> | undefined;
     private done = false;
 
     public pushValue(value: T) {
-        this.pushCore(Promise.resolve(value));
+        this.pushCore(Promise.resolve({ done: false, value }));
     }
 
     public pushError(error: any) {
@@ -303,11 +303,11 @@ export class Queue<T> implements IStream<T> {
     }
 
     public pushDone() {
-        this.pushCore(Promise.resolve(undefined));
+        this.pushCore(Promise.resolve({ done: true }));
         this.done = true;
     }
 
-    protected pushCore(value: Promise<T | undefined>) {
+    protected pushCore(value: Promise<IStreamResult<T>>) {
         assert(!this.done, 0x112 /* "cannot push onto queue if done" */);
         if (this.deferred) {
             assert(this.queue.length === 0, 0x113 /* "deferred queue should be empty" */);
@@ -318,18 +318,15 @@ export class Queue<T> implements IStream<T> {
         }
     }
 
-    public async pop(): Promise<T | undefined> {
+    public async read(): Promise<IStreamResult<T>> {
         assert(this.deferred === undefined, 0x114 /* "cannot pop if deferred" */);
-        const el = this.queue.shift();
-        if (el !== undefined) {
-            return el;
+        const value = this.queue.shift();
+        if (value !== undefined) {
+            return value;
         }
         assert(!this.done, 0x115 /* "queue should not be done during pop" */);
-        this.deferred = new Deferred<T>();
+        this.deferred = new Deferred<IStreamResult<T>>();
         return this.deferred.promise;
-    }
-
-    public cancel() {
     }
 }
 
@@ -517,8 +514,7 @@ export function requestOps(
 }
 
 export const emptyMessageStream: IStream<ISequencedDocumentMessage[]> = {
-    pop: async () => undefined,
-    cancel: () => {},
+    read: async () => { return { done: true };},
 };
 
 export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessage[]>):
@@ -526,14 +522,13 @@ export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessag
 {
     let messages: Promise<ISequencedDocumentMessage[]> | undefined = messagesArg;
     return {
-        pop: async () => {
+        read: async () => {
             if (messages === undefined) {
-                return undefined;
+                return { done: true };
             }
-            const result = await messages;
+            const value = await messages;
             messages = undefined;
-            return result.length === 0 ? undefined : result;
+            return value.length === 0 ? { done: true } : { done: false, value };
         },
-        cancel: () => {},
     };
 }

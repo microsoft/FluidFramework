@@ -190,10 +190,10 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
     }
 
     private getDeltaStorage(deltaStorage: IDocumentDeltaStorageService): IDocumentDeltaStorageService {
-        const readMessages = Comlink.proxy(deltaStorage.readMessages.bind(deltaStorage));
+        const fetchMessages = Comlink.proxy(deltaStorage.fetchMessages.bind(deltaStorage));
 
         return {
-            readMessages,
+            fetchMessages,
         };
     }
 
