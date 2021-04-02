@@ -130,7 +130,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public get clientDetails(): IClientDetails {
-        return this.dataStoreContext.containerRuntime.clientDetails;
+        // back-compat 0.38 - clientDetails is added to IFluidDataStoreContext in 0.38.
+        return this.dataStoreContext.clientDetails ?? this.dataStoreContext.containerRuntime.clientDetails;
     }
 
     public get loader(): ILoader {
@@ -150,7 +151,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public get routeContext(): IFluidHandleContext {
-        return this.dataStoreContext.containerRuntime.IFluidHandleContext;
+        // back-compat 0.38 - IFluidHandleContext is added to IFluidDataStoreContext in 0.38.
+        return this.dataStoreContext.IFluidHandleContext ?? this.dataStoreContext.containerRuntime.IFluidHandleContext;
     }
 
     private readonly serializer = new FluidSerializer(this.IFluidHandleContext);
@@ -201,7 +203,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         super();
 
         this.logger = ChildLogger.create(
-            dataStoreContext.containerRuntime.logger, undefined, {all:{ dataStoreId: uuid() }});
+            // back-compat 0.38 - logger is added to IFluidDataStoreContext in 0.38.
+            dataStoreContext.logger ?? dataStoreContext.containerRuntime.logger,
+            undefined,
+            {all:{ dataStoreId: uuid() }},
+        );
         this.documentId = dataStoreContext.documentId;
         this.id = dataStoreContext.id;
         this.existing = dataStoreContext.existing;
@@ -213,9 +219,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         const tree = dataStoreContext.baseSnapshot;
 
         this.initialChannelUsedRoutesP = new LazyPromise(async () => {
-            // back-compat: 0.35.0. getInitialGCSummaryDetails is added to IFluidDataStoreContext in 0.35.0. Remove
-            // undefined check when N > 0.36.0.
-            const gcDetailsInInitialSummary = await this.dataStoreContext.getInitialGCSummaryDetails?.();
+            const gcDetailsInInitialSummary = await this.dataStoreContext.getInitialGCSummaryDetails();
             if (gcDetailsInInitialSummary?.usedRoutes !== undefined) {
                 // Remove the route to this data store, if it exists.
                 const usedRoutes = gcDetailsInInitialSummary.usedRoutes.filter(
@@ -227,9 +231,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         });
 
         this.initialChannelGCDataP = new LazyPromise(async () => {
-            // back-compat: 0.35.0. getInitialGCSummaryDetails is added to IFluidDataStoreContext in 0.35.0. Remove
-            // undefined check when N > 0.36.0.
-            const gcDetailsInInitialSummary = await this.dataStoreContext.getInitialGCSummaryDetails?.();
+            const gcDetailsInInitialSummary = await this.dataStoreContext.getInitialGCSummaryDetails();
             if (gcDetailsInInitialSummary?.gcData !== undefined) {
                 const gcData = cloneGCData(gcDetailsInInitialSummary.gcData);
                 // Remove GC node for this data store, if any.

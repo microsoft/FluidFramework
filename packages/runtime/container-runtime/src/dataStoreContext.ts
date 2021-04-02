@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
     IRequest,
@@ -29,6 +29,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { BlobTreeEntry } from "@fluidframework/protocol-base";
 import {
+    IClientDetails,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
@@ -134,6 +135,14 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.clientId;
     }
 
+    public get clientDetails(): IClientDetails {
+        return this._containerRuntime.clientDetails;
+    }
+
+    public get logger(): ITelemetryLogger {
+        return this._containerRuntime.logger;
+    }
+
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
         return this._containerRuntime.deltaManager;
     }
@@ -148,6 +157,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public get loader(): ILoader {
         return this._containerRuntime.loader;
+    }
+
+    public get IFluidHandleContext() {
+        return this._containerRuntime.IFluidHandleContext;
     }
 
     public get containerRuntime(): IContainerRuntime {
@@ -243,7 +256,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.channelDeferred.promise.then((runtime) => {
                 runtime.dispose();
             }).catch((error) => {
-                this._containerRuntime.logger.sendErrorEvent(
+                this.logger.sendErrorEvent(
                     { eventName: "ChannelDisposeError", fluidDataStoreId: this.id },
                     error);
             });
