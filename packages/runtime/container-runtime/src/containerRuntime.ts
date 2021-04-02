@@ -6,7 +6,6 @@
 import { EventEmitter } from "events";
 import {
     AgentSchedulerFactory,
-    IProvideAgentScheduler,
     IAgentScheduler,
 } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -1996,20 +1995,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.closeFn(CreateContainerError(err));
             });
         }
-    }
-
-    /**
-     * @deprecated starting in 0.36. The AgentScheduler can be requested directly, though this will also be removed in
-     * a future release when an alternative is available: containerRuntime.request(\{ url: "/_scheduler" \}).
-     * getTaskManager should be removed in 0.38.
-     */
-    public async getTaskManager(): Promise<IProvideAgentScheduler> {
-        console.error("getTaskManager is deprecated.");
-        const agentScheduler = await this.getScheduler();
-        // Prior versions would return a TaskManager, which was an IProvideAgentScheduler -- returning this for back
-        // compat.  Wrapping the agentScheduler in an IProvideAgentScheduler will help catch any cases where customers
-        // try to call other TaskManager functionality.
-        return { IAgentScheduler: agentScheduler };
     }
 
     private async getScheduler(): Promise<IAgentScheduler> {
