@@ -1577,6 +1577,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // Remove this node's route ("/") and notify data stores of routes that are used in it.
                 const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
                 this.dataStores.updateUsedRoutes(usedRoutes);
+
+                // If we are running in GC test mode, delete objects for unused routes. This enables testing
+                // scenarios involving access to deleted data.
+                if (this.options.runGCInTestMode) {
+                    this.dataStores.deleteUnusedRoutes(deletedNodeIds);
+                }
             } catch (error) {
                 event.cancel(gcStats, error);
                 throw error;

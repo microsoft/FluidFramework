@@ -706,6 +706,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         assert(this.connectionState === ConnectionState.Disconnected, 0x0cf /* "disconnect event was not raised!" */);
 
+        this.service?.dispose();
+
         if (error !== undefined) {
             // Log current sequence number - useful if we have access to a file to understand better
             // what op caused trouble (if it's related to op processing).

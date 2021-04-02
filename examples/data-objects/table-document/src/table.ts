@@ -12,6 +12,9 @@ import {
 
 export type TableDocumentItem = Jsonable<JsonablePrimitive | IFluidHandle>;
 
+/**
+ * @deprecated - ITable is an abandoned prototype.  Please use SharedMatrix with
+ *               the IMatrixProducer/Consumer interfaces instead. */
 export interface ITable {
     readonly numRows: number;
     readonly numCols: number;

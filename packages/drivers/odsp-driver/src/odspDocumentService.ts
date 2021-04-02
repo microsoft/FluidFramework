@@ -30,11 +30,11 @@ import {
     HostStoragePolicyInternal,
     ISocketStorageDiscovery,
 } from "./contracts";
-import { IOdspCache, startingUpdateUsageOpFrequency, updateUsageOpMultiplier } from "./odspCache";
+import { IOdspCache } from "./odspCache";
 import { OdspDeltaStorageService } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
-import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
+import { getWithRetryForTokenRefresh, isLocalStorageAvailable, getOdspResolvedUrl } from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { TokenFetchOptions } from "./tokenFetch";
@@ -97,8 +97,6 @@ function writeLocalStorage(key: string, value: string) {
  * clients
  */
 export class OdspDocumentService implements IDocumentService {
-    protected updateUsageOpFrequency = startingUpdateUsageOpFrequency;
-
     readonly policies: IDocumentServicePolicies;
 
     /**
@@ -121,7 +119,7 @@ export class OdspDocumentService implements IDocumentService {
         epochTracker: EpochTracker,
     ): Promise<IDocumentService> {
         return new OdspDocumentService(
-            resolvedUrl as IOdspResolvedUrl,
+            getOdspResolvedUrl(resolvedUrl),
             getStorageToken,
             getWebsocketToken,
             logger,
@@ -139,10 +137,6 @@ export class OdspDocumentService implements IDocumentService {
     private readonly joinSessionKey: string;
 
     private readonly isOdc: boolean;
-
-    // Track maximum sequence number we observed and communicated to cache layer.
-    private opSeqNumberMax = 0;
-    private opSeqNumberMaxHostNotified = 0;
 
     private readonly hostPolicy: HostStoragePolicyInternal;
 
@@ -170,10 +164,6 @@ export class OdspDocumentService implements IDocumentService {
             storageOnly: odspResolvedUrl.fileVersion !== undefined,
         };
 
-        epochTracker.fileEntry = {
-            resolvedUrl: odspResolvedUrl,
-            docId: odspResolvedUrl.hashedDocumentId,
-        };
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
         this.isOdc = isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin);
         this.logger = ChildLogger.create(logger,
@@ -456,22 +446,15 @@ export class OdspDocumentService implements IDocumentService {
         }
     }
 
+    public dispose() {
+    }
+
     // Called whenever re receive ops through any channel for this document (snapshot, delta connection, delta storage)
     // We use it to notify caching layer of how stale is snapshot stored in cache.
     protected opsReceived(ops: ISequencedDocumentMessage[]) {
-        const cacheEntry = this.storageManager?.snapshotCacheEntry;
-        if (ops.length === 0 || cacheEntry === undefined) {
+        const seqNumber = this.storageManager?.snapshotSequenceNumber;
+        if (ops.length === 0 || seqNumber === undefined) {
             return;
-        }
-
-        const maxSeq = ops[ops.length - 1].sequenceNumber;
-        if (this.opSeqNumberMax < maxSeq) {
-            this.opSeqNumberMax = maxSeq;
-        }
-        if (this.opSeqNumberMaxHostNotified + this.updateUsageOpFrequency < this.opSeqNumberMax) {
-            this.opSeqNumberMaxHostNotified = this.opSeqNumberMax;
-            this.updateUsageOpFrequency *= updateUsageOpMultiplier;
-            this.cache.persistedCache.updateUsage(cacheEntry, this.opSeqNumberMax);
         }
     }
 }

@@ -1,3 +1,12 @@
+## 0.38 Breaking changes
+- [IPersistedCache changes](#IPersistedCache-changes)
+
+### IPersistedCache changes
+IPersistedCache implementation no longer needs to implement updateUsage() method (removed form interface).
+Same goes for sequence number / maxOpCount arguments.
+put() changed from fire-and-forget to promise, with intention of returning write errors back to caller. Driver could use this information to stop recording any data about given file if driver needs to follow all-or-nothing strategy in regards to info about a file.
+Please note that format of data stored by driver changed. It will ignore cache entries recorded by previous versions of driver.
+
 ## 0.37 Breaking changes
 
 -   [OpProcessingController marked for deprecation](#opprocessingcontroller-marked-for-deprecation)

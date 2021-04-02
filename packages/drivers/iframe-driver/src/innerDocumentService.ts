@@ -51,6 +51,8 @@ export class InnerDocumentService implements IDocumentService {
         this.logger.addLogger(outerProxy.logger);
     }
 
+    public dispose() {}
+
     /**
      * Connects to a storage endpoint for snapshot service.
      *

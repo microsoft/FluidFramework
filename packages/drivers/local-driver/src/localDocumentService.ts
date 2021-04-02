@@ -33,6 +33,8 @@ export class LocalDocumentService implements api.IDocumentService {
         private readonly innerDocumentService?: api.IDocumentService,
     ) { }
 
+    public dispose() {}
+
     /**
      * Creates and returns a document storage service for local use.
      */

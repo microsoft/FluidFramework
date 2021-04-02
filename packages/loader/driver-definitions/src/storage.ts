@@ -255,6 +255,13 @@ export interface IDocumentService {
      */
     getErrorTrackingService(): IErrorTrackingService | null;
 
+    /**
+     * Dispose storage. Called by storage consumer (Container) when it's done with storage (Container closed).
+     * Useful for storage to commit any pending state if any (including any local caching).
+     * Please note that it does not remove the need for caller to close all active delta connections,
+     * as storage may not be tracking such objects.
+     */
+    dispose(): void;
 }
 
 export interface IDocumentServiceFactory {
