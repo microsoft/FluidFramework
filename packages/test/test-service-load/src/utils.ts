@@ -110,9 +110,12 @@ export async function initialize(testDriver: ITestDriver) {
     return testDriver.createContainerUrl(testId);
 }
 
-export async function load(testDriver: ITestDriver, url: string, runId: number) {
-    const documentServiceFactory =
-        new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
+export async function load(
+    testDriver: ITestDriver,
+    documentServiceFactory: FaultInjectionDocumentServiceFactory,
+    url: string,
+    runId: number)
+{
     const options = pairwiseLoaderOptions.value[runId % pairwiseLoaderOptions.value.length];
     // Construct the loader
     const loader = new Loader({
