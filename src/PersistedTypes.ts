@@ -8,6 +8,7 @@
 // and thus have no impact on serialization as long as the primitive type they are an alias for does not change.
 // This does mean that the various UuidString types must remain strings, and must never change the format unless the process for changing
 // persisted types (as documented below) is followed.
+import { Serializable } from '@fluidframework/datastore-definitions';
 import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel, UuidString } from './Identifiers';
 import { assertNotUndefined, assert } from './Common';
 
@@ -16,12 +17,12 @@ import { assertNotUndefined, assert } from './Common';
  *
  * Types describing locations in the tree are stable in the presence of other concurrent edits.
  *
- * All types are JSON compatible and immutable.
+ * All types are compatible with Fluid Serializable.
  *
  * These types can only be modified in ways that are both backwards and forwards compatible since they
- * are used in edits, and thus are persisted (using JSON).
+ * are used in edits, and thus are persisted (using Fluid serialization).
  *
- * This means these types cannot be changed in any way that impacts their JSON serialization
+ * This means these types cannot be changed in any way that impacts their Fluid serialization
  * except through a very careful process:
  *
  * 1. The planned change must support all old data, and maintain the exact semantics of it.
@@ -103,6 +104,16 @@ export type Change = Insert | Detach | Build | SetValue | Constraint;
 /**
  * Constructs a sequence of nodes, associates it with the supplied ID, and stores it for use in later changes.
  * Does not modify the document.
+ *
+ * Valid if (transitively) all DetachedSequenceId are used according to their rules (use here counts as a destination),
+ * and all Nodes' identifiers are previously unused.
+ *
+ * TODO: Design Decision:
+ * If allowing 'moving from nowhere' to restore nodes: all new Nodes must have never before used identifiers.
+ * Otherwise could just forbid identifiers currently reachable?
+ * Could also allow introducing a node with a particular identifier to mean replacing that node with the new one
+ * (could include optional constraint to require/prevent this).
+ *
  * @public
  */
 export interface Build {
@@ -253,23 +264,17 @@ export interface TraitMap<TChild> {
 export type TreeNodeSequence<TChild> = readonly TChild[];
 
 /**
- * Valid if (transitively) all DetachedSequenceId are used according to their rules (use here counts as a destination),
- * and all Nodes' identifiers are previously unused.
+ * Json compatible representation of a payload storing arbitrary Serializable data.
  *
- * TODO: Design Decision:
- * If allowing 'moving from nowhere' to restore nodes: all new Nodes must have never before used identifiers.
- * Otherwise could just forbid identifiers currently reachable?
- * Could also allow introducing a node with a particular identifier to mean replacing that node with the new one
- * (could include optional constraint to require/prevent this).
- */
-
-/**
- * Json compatible payload
+ * Keys starting with "IFluid" are reserved for special use such as the JavaScript feature detection pattern and should not be used.
+ *
+ * See {@link comparePayloads} for equality semantics and related details (like what is allowed to be lost when serializing)
+ *
+ * TODO:#51984: Allow opting into heuristic blobbing in snapshots with a special IFluid key.
+ *
  * @public
  */
-export interface Payload {
-	readonly base64: string;
-}
+export type Payload = Serializable;
 
 /**
  * The fields required by a node in a tree

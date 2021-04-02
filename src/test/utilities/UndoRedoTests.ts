@@ -180,7 +180,8 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 
 			tree.editor.insert(newNode, StablePlace.after(left));
 			afterEdit();
-			const setValueId = tree.applyEdit(Change.setPayload(newNode.identifier, { base64: 'dGVzdA==' }));
+			const testPayload = 5;
+			const setValueId = tree.applyEdit(Change.setPayload(newNode.identifier, testPayload));
 			afterEdit();
 			expect(tree.edits.length).to.equal(3);
 
@@ -220,7 +221,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 				label: leftTraitLabel,
 			});
 			const nodeAfterRedo = tree.currentView.getSnapshotNode(leftTraitAfterRedo[1]);
-			expect(nodeAfterRedo.payload?.base64).to.equal('dGVzdA==');
+			expect(nodeAfterRedo.payload).equal(testPayload);
 		});
 
 		if (testOutOfOrderRevert === true) {
@@ -330,7 +331,8 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 
 				tree.editor.insert(newNode, StablePlace.after(left));
 				afterEdit();
-				const setValueId = tree.applyEdit(Change.setPayload(newNode.identifier, { base64: 'dGVzdA==' }));
+				const testPayload = 10;
+				const setValueId = tree.applyEdit(Change.setPayload(newNode.identifier, testPayload));
 				afterEdit();
 				tree.editor.insert(newNode, StablePlace.after(left));
 				afterEdit();
@@ -372,7 +374,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 					label: leftTraitLabel,
 				});
 				const nodeAfterRedo = tree.currentView.getSnapshotNode(leftTraitAfterRedo[1]);
-				expect(nodeAfterRedo.payload?.base64).to.equal('dGVzdA==');
+				expect(nodeAfterRedo.payload).equal(testPayload);
 			});
 		}
 	});

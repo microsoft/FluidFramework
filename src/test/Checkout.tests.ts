@@ -18,6 +18,7 @@ import {
 	SharedTreeEvent,
 	Checkout,
 	CheckoutEvent,
+	Change,
 } from '../index';
 import {
 	left,
@@ -281,6 +282,16 @@ export function checkoutTests(
 			const invalidations = await countViewChange(
 				(checkout) => {
 					checkout.applyEdit(Delete.create(StableRange.only(left)));
+				},
+				{ initialTree: simpleTestTree }
+			);
+			expect(invalidations).equals(1);
+		});
+
+		it('will emit invalidation messages in response to payload change', async () => {
+			const invalidations = await countViewChange(
+				(checkout) => {
+					checkout.applyEdit(Change.setPayload(left.identifier, 5));
 				},
 				{ initialTree: simpleTestTree }
 			);

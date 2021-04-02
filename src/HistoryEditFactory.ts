@@ -12,7 +12,6 @@ import {
 	EditNode,
 	Insert,
 	TreeNode,
-	Edit,
 	SetValue,
 	StableRange,
 	StablePlace,
@@ -23,7 +22,7 @@ import { Transaction } from './Transaction';
 
 /**
  * Creates the changes required to revert the given edit associated with respect to the supplied view.
- * @param edit - the edit to produce an inverse of
+ * @param toUndo - the changes to produce an inverse of. Change array instead of Edit to allow use without and EditId.
  * @param before - a snapshot before `edit` is applied to use as context for generating the inverse.
  * @returns a sequences of changes, that if applied to the output of applying `edit` to `before`, will produce `before`.
  * The resulting changes can be use on other snapshots,
@@ -32,7 +31,7 @@ import { Transaction } from './Transaction';
  * TODO: what should this do if `edit` fails to apply to `before`?
  * @public
  */
-export function revert(edit: Edit, before: Snapshot): Change[] {
+export function revert(toUndo: readonly Change[], before: Snapshot): Change[] {
 	const result: Change[] = [];
 
 	const builtNodes = new Map<DetachedSequenceId, NodeId[]>();
@@ -42,7 +41,7 @@ export function revert(edit: Edit, before: Snapshot): Change[] {
 	// Open edit on revision to update it as changes are walked through
 	const editor = new Transaction(before);
 	// Apply `edit`, generating an inverse as we go.
-	for (const change of edit.changes) {
+	for (const change of toUndo) {
 		// Generate an inverse of each change
 		switch (change.type) {
 			case ChangeType.Build: {

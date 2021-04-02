@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as fs from 'fs';
 import { resolve, join } from 'path';
 import { v5 as uuidv5 } from 'uuid';
@@ -15,13 +20,7 @@ import {
 	SharedTreeSummarizer,
 	SharedTreeSummaryBase,
 } from '../Summary';
-import {
-	ITestContainerConfig,
-	left,
-	makeEmptyNode,
-	setUpLocalServerTestSharedTree,
-	setUpTestSharedTree,
-} from './utilities/TestUtilities';
+import { left, makeEmptyNode, setUpLocalServerTestSharedTree, setUpTestSharedTree } from './utilities/TestUtilities';
 import { TestFluidSerializer } from './utilities/TestSerializer';
 
 // This accounts for this file being executed after compilation. If many tests want to leverage resources, we should unify
@@ -48,7 +47,7 @@ describe('Summary', () => {
 	const testSerializer = new TestFluidSerializer();
 
 	let expectedTree: SharedTree;
-	let testObjectProvider: TestObjectProvider<ITestContainerConfig>;
+	let testObjectProvider: TestObjectProvider<unknown>;
 
 	const testSummaryFiles = fs.readdirSync(pathBase);
 
@@ -176,7 +175,7 @@ describe('Summary', () => {
 
 			// Every subsequent edit is a set payload
 			for (let i = 1; i < numberOfEdits; i++) {
-				const edit = newEdit([Change.setPayload(nodeId, { base64: 'dGVzdA==' })]);
+				const edit = newEdit([Change.setPayload(nodeId, i)]);
 				expectedTree.processLocalEdit({ ...edit, id: uuidv5(i.toString(), uuidNamespace) as EditId });
 			}
 
@@ -208,7 +207,7 @@ describe('Summary', () => {
 
 			// Every subsequent edit is a set payload
 			for (let i = 1; i < numberOfEdits; i++) {
-				const edit = newEdit([Change.setPayload(nodeId, { base64: 'dGVzdA==' })]);
+				const edit = newEdit([Change.setPayload(nodeId, i)]);
 				expectedTree.processLocalEdit({ ...edit, id: uuidv5(i.toString(), uuidNamespace) as EditId });
 			}
 

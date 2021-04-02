@@ -4,9 +4,8 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { assert, compareArrays } from './Common';
 import { DetachedSequenceId, EditId } from './Identifiers';
-import { Edit, TreeNodeSequence, EditNode, ChangeNode, Change, StableRange, TraitLocation } from './PersistedTypes';
+import { Edit, TreeNodeSequence, EditNode, Change, StableRange, TraitLocation } from './PersistedTypes';
 
 /**
  * Functions for constructing and comparing Edits.
@@ -19,65 +18,6 @@ export function compareEdits(editIdA: EditId, editIdB: EditId): boolean {
 	// TODO #45414: We should also be deep comparing the list of changes in the edit. This is not straightforward.
 	// We can use our edit validation code when we write it since it will need to do deep walks of the changes.
 	return editIdA === editIdB;
-}
-
-/**
- * Check if two trees are equivalent, meaning they have the same descendants with the same properties.
- */
-export function deepCompareNodes(a: ChangeNode, b: ChangeNode): boolean {
-	if (a.identifier !== b.identifier) {
-		return false;
-	}
-
-	if (a.definition !== b.definition) {
-		return false;
-	}
-
-	if (a.payload) {
-		assert(a.payload.base64, 'deepCompareNodes only supports base64 payloads');
-	}
-
-	if (b.payload) {
-		assert(b.payload.base64, 'deepCompareNodes only supports base64 payloads');
-	}
-
-	if (a.payload?.base64 !== b.payload?.base64) {
-		return false;
-	}
-
-	const traitsA = Object.entries(a.traits);
-	const traitsB = Object.entries(b.traits);
-
-	if (traitsA.length !== traitsB.length) {
-		return false;
-	}
-
-	for (let i = 0; i < traitsA.length; i++) {
-		const [traitLabelA, childrenA] = traitsA[i];
-		const [traitLabelB, childrenB] = traitsB[i];
-		if (traitLabelA !== traitLabelB) {
-			return false;
-		}
-
-		if (childrenA.length !== childrenB.length) {
-			return false;
-		}
-
-		const traitsEqual = compareArrays(childrenA, childrenB, (childA, childB) => {
-			if (typeof childA === 'number' || typeof childB === 'number') {
-				// Check if children are DetachedSequenceIds
-				return childA === childB;
-			}
-
-			return deepCompareNodes(childA, childB);
-		});
-
-		if (!traitsEqual) {
-			return false;
-		}
-	}
-
-	return true;
 }
 
 /**
@@ -106,5 +46,20 @@ export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<EditNode>
  * Generates a new edit object from the supplied changes.
  */
 export function newEdit(changes: readonly Change[]): Edit {
-	return { id: uuidv4() as EditId, changes };
+	return { id: newEditId(), changes };
+}
+
+/**
+ * Generates a new edit object from the supplied changes.
+ */
+export function newEditId(): EditId {
+	return uuidv4() as EditId;
+}
+
+/**
+ * Determine if an EditNode is a DetachedSequenceId.
+ * @internal
+ */
+export function isDetachedSequenceId(node: EditNode): node is DetachedSequenceId {
+	return typeof node !== 'object';
 }

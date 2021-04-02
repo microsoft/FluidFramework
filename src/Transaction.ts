@@ -19,6 +19,7 @@ import {
 	SetValue,
 } from './PersistedTypes';
 import { EditValidationResult, SnapshotNode, Snapshot } from './Snapshot';
+import { isDetachedSequenceId } from './EditUtilities';
 
 /**
  * Result of applying a transaction.
@@ -30,12 +31,18 @@ export type EditingResult =
 			readonly changes: readonly Change[];
 			readonly before: Snapshot;
 	  }
-	| {
-			readonly result: EditResult.Applied;
-			readonly changes: readonly Change[];
-			readonly before: Snapshot;
-			readonly after: Snapshot;
-	  };
+	| ValidEditingResult;
+
+/**
+ * Result of applying a valid transaction.
+ * @public
+ */
+export interface ValidEditingResult {
+	readonly result: EditResult.Applied;
+	readonly changes: readonly Change[];
+	readonly before: Snapshot;
+	readonly after: Snapshot;
+}
 
 /**
  * A mutable transaction for applying sequences of changes to a Snapshot.
@@ -274,10 +281,11 @@ export class Transaction {
 		if (payload === null) {
 			delete newNode.payload;
 		} else {
-			if (typeof payload.base64 !== 'string') {
-				return EditResult.Malformed;
-			}
-			newNode.payload = { base64: payload.base64 };
+			// TODO: detect payloads that are not Fluid Serializable here.
+			// The consistency of editing does not actually depend on payloads being well formed,
+			// but its better to detect bugs producing bad payloads here than let them pass.
+
+			newNode.payload = payload;
 		}
 		this._view = this.view.replaceNode(change.nodeToModify, newNode);
 		return EditResult.Applied;
@@ -313,10 +321,6 @@ export class Transaction {
 		map: Map<NodeId, SnapshotNode>,
 		onInvalidDetachedId: () => void
 	): Iterable<NodeId> {
-		function isDetachedSequenceId(node: EditNode): node is DetachedSequenceId {
-			return typeof node !== 'object';
-		}
-
 		for (const node of sequence) {
 			if (isDetachedSequenceId(node)) {
 				// Retrieve the detached sequence from the void.

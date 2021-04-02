@@ -454,9 +454,7 @@ export class EditLog implements OrderedEditSet {
 				editChunks: this.editChunks.toArray().map(([key, { handle, edits }]) => {
 					return {
 						key,
-						chunk:
-							handle ||
-							assertNotUndefined(edits, 'An edit chunk must have either a handle or a list of edits.'),
+						chunk: handle ?? edits ?? fail('An edit chunk must have either a handle or a list of edits.'),
 					};
 				}),
 				editIds: this.sequencedEditIds,

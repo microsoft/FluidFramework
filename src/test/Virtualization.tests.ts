@@ -8,17 +8,12 @@ import { Edit, EditWithoutId } from '../PersistedTypes';
 import { SharedTree } from '../SharedTree';
 import { fullHistorySummarizer_0_1_0, SharedTreeSummary } from '../Summary';
 import { assertNotUndefined } from '../Common';
-import {
-	ITestContainerConfig,
-	makeTestNode,
-	setUpLocalServerTestSharedTree,
-	testTrait,
-} from './utilities/TestUtilities';
+import { makeTestNode, setUpLocalServerTestSharedTree, testTrait } from './utilities/TestUtilities';
 
 // TODO:#49901: Enable these tests once we write edit chunk handles to summaries
 describe.skip('SharedTree history virtualization', () => {
 	let sharedTree: SharedTree;
-	let testObjectProvider: TestObjectProvider<ITestContainerConfig>;
+	let testObjectProvider: TestObjectProvider<unknown>;
 
 	beforeEach(async () => {
 		const testingComponents = await setUpLocalServerTestSharedTree({ summarizer: fullHistorySummarizer_0_1_0 });

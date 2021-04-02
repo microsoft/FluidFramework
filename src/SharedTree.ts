@@ -23,7 +23,6 @@ import {
 	ChangeNode,
 	StableRange,
 	StablePlace,
-	Payload,
 	SharedTreeOpType,
 	SharedTreeEditOp,
 	SharedTreeHandleOp,
@@ -106,16 +105,6 @@ export interface ISharedTreeEvents extends IErrorEvent {
  */
 export type EditCommittedHandler = (args: EditCommittedEventArguments) => void;
 
-// TODO:#48151: Support reference payloads, and use this type to identify them.
-/**
- * Note: if API extractor supported it, ideally this would use a "private" tag and not be exported by the package.
- * See discussion on the following issue threads:
- * https://github.com/microsoft/rushstack/issues/1664#issuecomment-568216792
- * https://github.com/microsoft/rushstack/issues/1260#issuecomment-489774076
- * @internal
- */
-export type BlobId = string;
-
 /**
  * Wrapper around a `SharedTree` which provides ergonomic imperative editing functionality. All methods apply changes in their own edit.
  *
@@ -194,7 +183,7 @@ export class SharedTreeEditor {
 	 * @param view - the revision to which the edit is applied (not the output of applying edit: it's the one just before that)
 	 */
 	public revert(edit: Edit, view: Snapshot): EditId {
-		return this.tree.applyEdit(...HistoryEditFactory.revert(edit, view));
+		return this.tree.applyEdit(...HistoryEditFactory.revert(edit.changes, view));
 	}
 
 	private isNode(source: ChangeNode | StableRange): source is ChangeNode {
@@ -241,12 +230,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 	 * @internal
 	 */
 	public logViewer: LogViewer;
-
-	/**
-	 * TODO:#48151: Cache of downloaded reference payloads
-	 * @internal
-	 */
-	public payloadCache: Map<BlobId, Payload> = new Map();
 
 	protected readonly logger: ITelemetryLogger;
 
@@ -468,7 +451,14 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 			const { editHandle, chunkKey } = message.contents as SharedTreeHandleOp;
 			this.editLog.processEditChunkHandle(this.deserializeHandle(editHandle), chunkKey);
 		} else if (type === SharedTreeOpType.Edit) {
-			const { edit } = message.contents as SharedTreeEditOp;
+			const semiSerializedEdit = message.contents.edit;
+			// semiSerializedEdit may have handles which have been replaced by `serializer.replaceHandles`.
+			// Since there is no API to un-replace them except via parse, re-stringify the edit, then parse it.
+			// Stringify using JSON, not IFluidSerializer since OPs use JSON directly.
+			// TODO:Performance:#48025: Avoid this serialization round trip.
+			const stringEdit = JSON.stringify(semiSerializedEdit);
+			const parsedEdit = this.serializer.parse(stringEdit);
+			const edit = parsedEdit as Edit;
 			this.processSequencedEdit(edit);
 		}
 	}
@@ -512,11 +502,21 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 			type: SharedTreeOpType.Edit,
 			edit,
 		};
+
+		// IFluidHandles are not allowed in Ops.
+		// Ops can contain Fluid's Serializable (for payloads) which allows IFluidHandles.
+		// So replace the handles before sending:
+		const semiSerialized = this.serializer.replaceHandles(editOp, this.handle);
+
 		// TODO:44711: what should be passed in when unattached?
-		this.submitLocalMessage(editOp);
+		this.submitLocalMessage(semiSerialized);
 		this.editLog.addLocalEdit(edit);
 
 		const eventArguments: EditCommittedEventArguments = { editId: edit.id, local: true, tree: this };
 		this.emit(SharedTreeEvent.EditCommitted, eventArguments);
+	}
+
+	public getRuntime(): IFluidDataStoreRuntime {
+		return this.runtime;
 	}
 }

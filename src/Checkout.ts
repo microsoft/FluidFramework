@@ -8,9 +8,9 @@ import { IDisposable, IErrorEvent } from '@fluidframework/common-definitions';
 import { assert } from './Common';
 import { EditId } from './Identifiers';
 import { Change, Edit, EditResult } from './PersistedTypes';
-import { newEdit } from './EditUtilities';
+import { newEditId } from './EditUtilities';
 import { EditValidationResult, Snapshot } from './Snapshot';
-import { Transaction } from './Transaction';
+import { ValidEditingResult, Transaction } from './Transaction';
 import { EditCommittedHandler, SharedTree, SharedTreeEvent } from './SharedTree';
 
 /**
@@ -152,21 +152,30 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 		this.currentEdit = undefined;
 		const editingResult = currentEdit.close();
 		assert(editingResult.result === EditResult.Applied, 'Locally constructed edits must be well-formed and valid');
-		const edit = newEdit(editingResult.changes);
 
-		// As an optimization, inform logViewer of this editing result so it can reuse it if applied to the same before snapshot.
-		this.tree.logViewer.setKnownEditingResult(edit, editingResult);
+		const id: EditId = newEditId();
 
-		this.handleNewEdit(edit, editingResult.before, editingResult.after);
-
-		return edit.id;
+		this.handleNewEdit(id, editingResult);
+		return id;
 	}
 
 	/**
 	 * Take any needed action between when an edit is completed.
 	 * Usually this will include submitting it to a SharedTree.
+	 *
+	 * Override this to customize.
 	 */
-	protected abstract handleNewEdit(edit: Edit, before: Snapshot, after: Snapshot): void;
+	protected handleNewEdit(id: EditId, result: ValidEditingResult): void {
+		const edit: Edit = { id, changes: result.changes };
+
+		// As an optimization, inform logViewer of this editing result so it can reuse it if applied to the same before snapshot.
+		this.tree.logViewer.setKnownEditingResult(edit, result);
+
+		// Since external edits could have been applied while currentEdit was pending,
+		// do not use the produced view: just go to the newest revision
+		// (which processLocalEdit will do, including invalidation).
+		this.tree.processLocalEdit(edit);
+	}
 
 	/**
 	 * Applies the supplied changes to the tree and emits a change event.
@@ -258,10 +267,10 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 *
 	 * Override this in Checkouts that may have edits which are not included in tree.edits.
 	 */
-	public getEditAndSnapshotBeforeInSession(id: EditId): { edit: Edit; before: Snapshot } {
+	public getChangesAndSnapshotBeforeInSession(id: EditId): { changes: readonly Change[]; before: Snapshot } {
 		const editIndex = this.tree.edits.getIndexOfId(id);
 		return {
-			edit: this.tree.edits.getEditInSessionAtIndex(editIndex),
+			changes: this.tree.edits.getEditInSessionAtIndex(editIndex).changes,
 			before: this.tree.logViewer.getSnapshotInSession(editIndex),
 		};
 	}

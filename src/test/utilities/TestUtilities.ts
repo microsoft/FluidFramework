@@ -5,7 +5,6 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { expect } from 'chai';
-import { DataObject } from '@fluidframework/aqueduct';
 import { Container } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
 import {
@@ -23,13 +22,14 @@ import {
 import { LocalServerTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
-import { fail } from '../../Common';
+import { compareArrays, fail } from '../../Common';
 import { ChangeNode, NodeData, TraitLocation } from '../../PersistedTypes';
 import { SharedTree } from '../../SharedTree';
 import { newEdit, setTrait } from '../../EditUtilities';
 import { fullHistorySummarizer, SharedTreeSummarizer } from '../../Summary';
 import { initialTree } from '../../InitialTree';
 import { Snapshot } from '../../Snapshot';
+import { comparePayloads } from '../../SnapshotUtilities';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents {
@@ -129,31 +129,12 @@ export function setUpTestSharedTree(
 	};
 }
 
-class TestDataObject extends DataObject {
-	public static readonly type = '@fluid-example/test-dataStore';
-	public get _root() {
-		return this.root;
-	}
-}
-
-enum DataObjectFactoryType {
-	Primed, // default
-	Test,
-}
-
-/** Configuration used for the LocalTestObjectProvider created by setUpLocalServerTestSharedTree. */
-export interface ITestContainerConfig {
-	// TestFluidDataObject instead of PrimedDataStore
-	fluidDataObjectType?: DataObjectFactoryType;
-
-	// An array of channel name and DDS factory pairs to create on container creation time
-	registry?: ChannelFactoryRegistry;
-}
+const TestDataStoreType = '@fluid-example/test-dataStore';
 
 /** Objects returned by setUpLocalServerTestSharedTree */
 export interface LocalServerSharedTreeTestingComponents {
 	/** The testObjectProvider created if one was not set in the options. */
-	testObjectProvider: TestObjectProvider<ITestContainerConfig>;
+	testObjectProvider: TestObjectProvider<unknown>;
 	/** The SharedTree created and set up. */
 	tree: SharedTree;
 }
@@ -169,7 +150,7 @@ export interface LocalServerSharedTreeTestingOptions {
 	/** Node to initialize the SharedTree with. */
 	initialTree?: ChangeNode;
 	/** If set, uses the provider to create the container and create the SharedTree. */
-	testObjectProvider?: TestObjectProvider<ITestContainerConfig>;
+	testObjectProvider?: TestObjectProvider<unknown>;
 	/**
 	 * If not set, full history will be preserved.
 	 */
@@ -191,14 +172,14 @@ export async function setUpLocalServerTestSharedTree(
 ): Promise<LocalServerSharedTreeTestingComponents> {
 	const { id, initialTree, testObjectProvider, setupEditId, summarizer } = options;
 
-	const treeId = id || 'test';
+	const treeId = id ?? 'test';
 	const registry: ChannelFactoryRegistry = [[treeId, SharedTree.getFactory()]];
-	const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
-		new TestContainerRuntimeFactory(TestDataObject.type, new TestFluidObjectFactory(registry), {
+	const runtimeFactory = () =>
+		new TestContainerRuntimeFactory(TestDataStoreType, new TestFluidObjectFactory(registry), {
 			initialSummarizerDelayMs: 0,
 		});
 
-	let provider: TestObjectProvider<ITestContainerConfig>;
+	let provider: TestObjectProvider<unknown>;
 	let container: Container;
 
 	if (testObjectProvider !== undefined) {
@@ -340,3 +321,56 @@ export const simpleTreeSnapshot = Snapshot.fromTree(simpleTestTree);
 
 /** Convenient pre-made Snapshot for 'initialTree'. */
 export const initialSnapshot = Snapshot.fromTree(initialTree);
+
+/**
+ * Check if two trees are equivalent, meaning they have the same descendants with the same properties.
+ *
+ * See {@link comparePayloads} for payload comparison semantics.
+ */
+export function deepCompareNodes(a: ChangeNode, b: ChangeNode): boolean {
+	if (a.identifier !== b.identifier) {
+		return false;
+	}
+
+	if (a.definition !== b.definition) {
+		return false;
+	}
+
+	if (!comparePayloads(a.payload, b.payload)) {
+		return false;
+	}
+
+	const traitsA = Object.entries(a.traits);
+	const traitsB = Object.entries(b.traits);
+
+	if (traitsA.length !== traitsB.length) {
+		return false;
+	}
+
+	for (let i = 0; i < traitsA.length; i++) {
+		const [traitLabelA, childrenA] = traitsA[i];
+		const [traitLabelB, childrenB] = traitsB[i];
+		if (traitLabelA !== traitLabelB) {
+			return false;
+		}
+
+		if (childrenA.length !== childrenB.length) {
+			return false;
+		}
+
+		const traitsEqual = compareArrays(childrenA, childrenB, (childA, childB) => {
+			if (typeof childA === 'number' || typeof childB === 'number') {
+				// Check if children are DetachedSequenceIds
+				return childA === childB;
+			}
+
+			return deepCompareNodes(childA, childB);
+		});
+
+		if (!traitsEqual) {
+			return false;
+		}
+	}
+
+	return true;
+}

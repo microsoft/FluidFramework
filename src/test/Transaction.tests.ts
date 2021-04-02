@@ -132,7 +132,7 @@ describe('Transaction', () => {
 			const transaction = new Transaction(initialSnapshot);
 			transaction.applyChange({
 				nodeToModify: '7969ee2e-5418-43db-929a-4e9a23c5499d' as NodeId, // Arbitrary id not equal to initialTree.identifier
-				payload: { base64: 'eg==' }, // Arbitrary valid base64 string.
+				payload: {}, // Arbitrary payload.
 				type: ChangeType.SetValue,
 			});
 			expect(transaction.result).equals(EditResult.Invalid);
@@ -140,25 +140,29 @@ describe('Transaction', () => {
 
 		it('can change payload', () => {
 			const transaction = new Transaction(initialSnapshot);
+			const payload = { foo: {} };
 			transaction.applyChange({
 				nodeToModify: initialTree.identifier,
-				payload: { base64: 'eg==' }, // Arbitrary valid base64 string.
+				payload, // Arbitrary payload.
 				type: ChangeType.SetValue,
 			});
 			expect(transaction.result).equals(EditResult.Applied);
-			expect(transaction.view.getSnapshotNode(initialTree.identifier).payload?.base64).equals('eg==');
+			expect(transaction.view.getSnapshotNode(initialTree.identifier).payload).deep.equals(payload);
 		});
 
-		it('can set empty payload', () => {
-			const transaction = new Transaction(initialSnapshot);
-			transaction.applyChange({
-				nodeToModify: initialTree.identifier,
-				payload: { base64: '' },
-				type: ChangeType.SetValue,
+		// 'null' is not included here since it means clear the payload in setValue.
+		for (const payload of [0, '', [], {}]) {
+			it(`can set payload to ${JSON.stringify(payload)}`, () => {
+				const transaction = new Transaction(initialSnapshot);
+				transaction.applyChange({
+					nodeToModify: initialTree.identifier,
+					payload,
+					type: ChangeType.SetValue,
+				});
+				expect(transaction.result).equals(EditResult.Applied);
+				expect(transaction.view.getSnapshotNode(initialTree.identifier).payload).equals(payload);
 			});
-			expect(transaction.result).equals(EditResult.Applied);
-			expect(transaction.view.getSnapshotNode(initialTree.identifier).payload?.base64).equals('');
-		});
+		}
 
 		it('can clear an unset payload', () => {
 			const transaction = new Transaction(initialSnapshot);
@@ -172,7 +176,7 @@ describe('Transaction', () => {
 			const transaction = new Transaction(initialSnapshot);
 			transaction.applyChange({
 				nodeToModify: initialTree.identifier,
-				payload: { base64: '' },
+				payload: {},
 				type: ChangeType.SetValue,
 			});
 

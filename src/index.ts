@@ -18,7 +18,6 @@
 
 export { initialTree } from './InitialTree';
 export {
-	BlobId,
 	EditCommittedHandler,
 	EditCommittedEventArguments,
 	ISharedTreeEvents,
@@ -72,8 +71,9 @@ export {
 	SnapshotPlace,
 	SnapshotRange,
 } from './Snapshot';
-export { setTrait, newEdit } from './EditUtilities';
+export { setTrait, newEdit, isDetachedSequenceId } from './EditUtilities';
 export { LogViewer } from './LogViewer';
 export { Checkout, CheckoutEvent, ICheckoutEvents } from './Checkout';
 export { BasicCheckout } from './BasicCheckout';
-export { EditingResult } from './Transaction';
+export { comparePayloads } from './SnapshotUtilities';
+export { EditingResult, ValidEditingResult } from './Transaction';

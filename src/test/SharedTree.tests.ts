@@ -11,7 +11,7 @@ import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../I
 import { SharedTree, SharedTreeEvent } from '../SharedTree';
 import { Change, ChangeType, EditNode, Delete, Insert, ChangeNode, StablePlace, StableRange } from '../PersistedTypes';
 import { editsPerChunk } from '../EditLog';
-import { deepCompareNodes, newEdit } from '../EditUtilities';
+import { newEdit } from '../EditUtilities';
 import { noHistorySummarizer, serialize } from '../Summary';
 import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
@@ -30,6 +30,7 @@ import {
 	areNodesEquivalent,
 	rightTraitLabel,
 	assertNoDelta,
+	deepCompareNodes,
 } from './utilities/TestUtilities';
 import { runSharedTreeUndoRedoTestSuite } from './utilities/UndoRedoTests';
 import { TestFluidHandle, TestFluidSerializer } from './utilities/TestSerializer';
@@ -663,13 +664,13 @@ describe('SharedTree', () => {
 			const nodeA: ChangeNode = {
 				identifier: rootId,
 				definition: 'node' as Definition,
-				payload: { base64: 'pardesio' },
+				payload: 'test1',
 				traits: {},
 			};
 			const nodeB: ChangeNode = {
 				identifier: rootId,
 				definition: 'node' as Definition,
-				payload: { base64: 'hortonio' },
+				payload: 'test2',
 				traits: {},
 			};
 

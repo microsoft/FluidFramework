@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Edit } from './PersistedTypes';
 import { Snapshot } from './Snapshot';
 import { EditCommittedEventArguments, SharedTree } from './SharedTree';
 import { Checkout, CheckoutEvent } from './Checkout';
@@ -24,13 +23,6 @@ export class BasicCheckout extends Checkout {
 			this.emitChange();
 			this.emit(CheckoutEvent.EditCommitted, args.editId);
 		});
-	}
-
-	protected handleNewEdit(edit: Edit, before: Snapshot, after: Snapshot): void {
-		// Since external edits could have been applied while currentEdit was pending,
-		// do not use the produced view: just go to the newest revision
-		// (which processLocalEdit will do, including invalidation).
-		this.tree.processLocalEdit(edit);
 	}
 
 	protected get latestCommittedView(): Snapshot {

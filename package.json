@@ -47,7 +47,6 @@
 		"uuid": "^8.3.2"
 	},
 	"devDependencies": {
-		"@fluidframework/aqueduct": "^0.35.3",
 		"@fluidframework/build-common": "^0.19.2",
 		"@fluidframework/container-definitions": "^0.35.3",
 		"@fluidframework/container-loader": "^0.35.3",
