@@ -10,6 +10,7 @@ import {
     OdspDriverUrlResolver,
     HostStoragePolicy,
     ISnapshotOptions,
+    IOpsCachingPolicy,
 } from "@fluidframework/odsp-driver";
 import {
     booleanCases,
@@ -38,10 +39,17 @@ export const odspSnapshotOptions: OptionsMatrix<ISnapshotOptions> = {
     timeout: numberCases,
 };
 
+export const odspOpsCaching: OptionsMatrix<IOpsCachingPolicy> = {
+    batchSize: numberCases,
+    timerGranularity: numberCases,
+    totalOpsToCache: numberCases,
+};
+
 export const odspHostPolicyMatrix: OptionsMatrix<HostStoragePolicy> = {
     blobDeduping: booleanCases,
     concurrentSnapshotFetch: booleanCases,
     snapshotOptions:[undefined, odspSnapshotOptions],
+    opsCaching: [undefined, odspOpsCaching],
 };
 
 export const pairwiseOdspHostStoragePolicy = new Lazy(()=>
