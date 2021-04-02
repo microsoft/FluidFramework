@@ -20,11 +20,11 @@ import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRe
 describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
     const driveId = "driveId";
-    const itemId = "itemId";
+    const itemId = "fileId";
     const dataStorePath = "dataStorePath";
     const fileName = "fileName";
     const sharelink = "https://microsoft.sharepoint-df.com/site/SHARELINK";
-    // Base64 encoded and then URI encoded string: d=driveId&f=itemId&c=dataStorePath&s=siteUrl&fluid=1
+    // Base64 encoded and then URI encoded string: d=driveId&f=fileId&c=dataStorePath&s=siteUrl&fluid=1
     const urlWithNavParam = "https://microsoft.sharepoint-df.com/test?nav=cz0lMkZzaXRlVXJsJmQ9ZHJpdmVJZCZmPWZpbGVJZCZjPWRhdGFTdG9yZVBhdGgmZmx1aWQ9MQ%3D%3D";
     let urlResolverWithTokenFetcher: OdspDriverUrlResolverForShareLink;
     let urlResolverWithoutTokenFetcher: OdspDriverUrlResolverForShareLink;
