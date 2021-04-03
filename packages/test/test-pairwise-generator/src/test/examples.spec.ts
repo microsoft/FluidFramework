@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { generatePairwiseOptions, OptionsMatrix } from "../index";
 
 describe("generatePairwiseOptions.examples",()=>{
@@ -40,6 +41,26 @@ describe("generatePairwiseOptions.examples",()=>{
         const runScenario = (instance: MyObject)=>{};
         for(const instance of myObjects) {
             runScenario(instance);
+        }
+    });
+
+    it("Generate an Array",()=>{
+        const arrayMatrix: OptionsMatrix<ArrayLike<number>> = {
+            0:[3,6,9,12,15],
+            1:[7,14,28],
+            length: [2],
+        };
+
+        const myArrayLikes = generatePairwiseOptions<ArrayLike<number>>(arrayMatrix);
+
+        // use the array to drive a scenario
+        const runScenario = (numbers: number[])=>{
+            assert.strictEqual(numbers.length, 2);
+            assert(numbers[0] % 3 === 0);
+            assert(numbers[1] % 7 === 0);
+        };
+        for(const arrayLike of myArrayLikes) {
+            runScenario(Array.from(arrayLike));
         }
     });
 });

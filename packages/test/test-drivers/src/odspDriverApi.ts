@@ -45,12 +45,12 @@ export const odspOpsCaching: OptionsMatrix<IOpsCachingPolicy> = {
     totalOpsToCache: numberCases,
 };
 
-export const odspHostPolicyMatrix: OptionsMatrix<HostStoragePolicy> = {
+export const odspHostPolicyMatrix = new Lazy<OptionsMatrix<HostStoragePolicy>> (()=>({
     blobDeduping: booleanCases,
     concurrentSnapshotFetch: booleanCases,
-    snapshotOptions:[undefined, odspSnapshotOptions],
-    opsCaching: [undefined, odspOpsCaching],
-};
+    snapshotOptions:[undefined, ...generatePairwiseOptions(odspSnapshotOptions)],
+    opsCaching: [undefined, ...generatePairwiseOptions(odspOpsCaching)],
+}));
 
 export const pairwiseOdspHostStoragePolicy = new Lazy(()=>
-    generatePairwiseOptions<HostStoragePolicy>(odspHostPolicyMatrix));
+    generatePairwiseOptions<HostStoragePolicy>(odspHostPolicyMatrix.value));
