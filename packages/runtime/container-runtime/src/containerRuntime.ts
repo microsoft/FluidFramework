@@ -80,7 +80,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
-    InboundAttachMessage,
     IFluidDataStoreContext,
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
@@ -481,16 +480,6 @@ export class ScheduleManager {
 
 export const agentSchedulerId = "_scheduler";
 
-// Wraps the provided list of packages and augments with some system level services.
-class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
-    constructor(namedEntries: NamedFluidDataStoreRegistryEntries) {
-        super([
-            ...namedEntries,
-            AgentSchedulerFactory.registryEntry,
-        ]);
-    }
-}
-
 /** This is a temporary helper function for parsing runtimeOptions in the old format. */
 function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions): IContainerRuntimeOptions | undefined {
     if (runtimeOptions === undefined) {
@@ -513,6 +502,44 @@ function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions):
 
     return { summaryOptions, gcOptions };
 }
+
+export const makeLegacyContainerRuntime = async (
+    context: IContainerContext,
+    registryEntries: NamedFluidDataStoreRegistryEntries,
+    requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
+    runtimeOptions?: IContainerRuntimeOptions,
+    containerScope?: IFluidObject,
+) => {
+    const augmentedRegistry = [
+        ...registryEntries,
+        AgentSchedulerFactory.registryEntry,
+    ];
+
+    const runtime = await ContainerRuntime.load(
+        context,
+        augmentedRegistry,
+        requestHandler,
+        runtimeOptions,
+        containerScope,
+    );
+
+    // Create all internal data stores if not already existing on storage or loaded a detached
+    // container from snapshot(ex. draft mode).
+    if (!context.existing) {
+        await runtime.createRootDataStore(AgentSchedulerFactory.type, agentSchedulerId);
+    }
+
+    if (context.clientDetails.capabilities.interactive) {
+        const scheduler = await requestFluidObject<IAgentScheduler>(
+            await runtime.getRootDataStore(agentSchedulerId, true),
+            "",
+        );
+        const leadershipManager = new LeadershipManager(scheduler);
+        leadershipManager.volunteerForLeadership();
+    }
+
+    return runtime;
+};
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
@@ -569,7 +596,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
-        const registry = new ContainerRuntimeDataStoreRegistry(registryEntries);
+        const registry = new FluidDataStoreRegistry(registryEntries);
 
         const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
             const blobId = context.baseSnapshot?.blobs[blobName];
@@ -598,21 +625,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             logger,
             requestHandler,
             storage);
-
-        // Create all internal data stores if not already existing on storage or loaded a detached
-        // container from snapshot(ex. draft mode).
-        if (!context.existing) {
-            await runtime.createRootDataStore(AgentSchedulerFactory.type, agentSchedulerId);
-        }
-
-        if (context.clientDetails.capabilities.interactive) {
-            const scheduler = await requestFluidObject<IAgentScheduler>(
-                await runtime.getDataStore(agentSchedulerId, true),
-                "",
-            );
-            const leadershipManager = new LeadershipManager(scheduler);
-            leadershipManager.volunteerForLeadership();
-        }
 
         return runtime;
     }
@@ -1493,17 +1505,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private isContainerMessageDirtyable(type: ContainerMessageType, contents: any) {
-        if (type === ContainerMessageType.Attach) {
-            const attachMessage = contents as InboundAttachMessage;
-            if (attachMessage.id === agentSchedulerId) {
-                return false;
-            }
-        } else if (type === ContainerMessageType.FluidDataStoreOp) {
-            const envelope = contents as IEnvelope;
-            if (envelope.address === agentSchedulerId) {
-                return false;
-            }
-        }
         return true;
     }
 

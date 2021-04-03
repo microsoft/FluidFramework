@@ -68,6 +68,9 @@ export interface ITestContainerConfig {
 
     // Container runtime options for the container instance
     runtimeOptions?: IContainerRuntimeOptions,
+
+    // Use legacy container runtime with AgentScheduler
+    useLegacyContainerRuntime?: boolean,
 }
 
 export const createDocumentId = (): string => uuid();

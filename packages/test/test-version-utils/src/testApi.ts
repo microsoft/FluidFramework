@@ -10,7 +10,7 @@ import { Loader } from "@fluidframework/container-loader";
 import { DriverApi } from "@fluidframework/test-drivers";
 
 // ContainerRuntime API
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ContainerRuntime, makeLegacyContainerRuntime } from "@fluidframework/container-runtime";
 
 // Data Runtime API
 import { SharedCell } from "@fluidframework/cell";
@@ -58,10 +58,18 @@ const LoaderApi = {
     Loader,
 };
 
-const ContainerRuntimeApi = {
+interface IContainerRuntimeApi {
+    version: string;
+    ContainerRuntime: typeof ContainerRuntime;
+    ContainerRuntimeFactoryWithDefaultDataStore: typeof ContainerRuntimeFactoryWithDefaultDataStore;
+    makeLegacyContainerRuntime: typeof makeLegacyContainerRuntime;
+}
+
+const ContainerRuntimeApi: IContainerRuntimeApi = {
     version: pkgVersion,
     ContainerRuntime,
     ContainerRuntimeFactoryWithDefaultDataStore,
+    makeLegacyContainerRuntime,
 };
 
 const DataRuntimeApi = {
@@ -109,6 +117,9 @@ export function getContainerRuntimeApi(requested?: number | string): typeof Cont
         ContainerRuntime: loadPackage(modulePath, "@fluidframework/container-runtime").ContainerRuntime,
         ContainerRuntimeFactoryWithDefaultDataStore:
             loadPackage(modulePath, "@fluidframework/aqueduct").ContainerRuntimeFactoryWithDefaultDataStore,
+        makeLegacyContainerRuntime:
+            loadPackage(modulePath, "@fluidframework/container-runtime").makeLegacyContainerRuntime
+            ?? loadPackage(modulePath, "@fluidframework/container-runtime").ContainerRuntime.load,
     };
 }
 
