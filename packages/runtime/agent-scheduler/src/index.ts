@@ -4,4 +4,5 @@
  */
 
 export * from "./agent";
+export * from "./leadershipManager";
 export { AgentSchedulerFactory } from "./scheduler";
