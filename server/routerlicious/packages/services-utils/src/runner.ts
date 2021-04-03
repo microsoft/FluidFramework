@@ -72,6 +72,7 @@ export async function run<T extends IResources>(
                     .stop()
                     .catch((innerError) => {
                         logger?.error(`Could not stop runner due to error: ${innerError}`);
+                        error.forceKill = true;
                     });
             return Promise.reject(error);
         });
@@ -111,6 +112,10 @@ export function runService<T extends IResources>(
         (error) => {
             logger?.error(`${group} service exiting due to error`);
             logger?.error(inspect(error));
-            process.exit(1);
+            if (error.forceKill) {
+                process.kill(process.pid, "SIGKILL");
+            } else {
+                process.exit(1);
+            }
         });
 }
