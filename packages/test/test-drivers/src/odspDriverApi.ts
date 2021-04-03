@@ -40,7 +40,7 @@ export const odspSnapshotOptions: OptionsMatrix<ISnapshotOptions> = {
 };
 
 export const odspOpsCaching: OptionsMatrix<IOpsCachingPolicy> = {
-    batchSize: numberCases,
+    batchSize: [undefined, -1],
     timerGranularity: numberCases,
     totalOpsToCache: numberCases,
 };

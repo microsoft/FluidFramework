@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+
 // ISequencedDocumentMessage
 export interface IMessage {
     sequenceNumber: number;
@@ -30,6 +32,7 @@ export class OpsCache {
 
   constructor(
     startingSequenceNumber: number,
+    private readonly logger: ITelemetryLogger,
     private readonly cache: ICache,
     private readonly batchSize: number,
     private readonly timerGranularity,
@@ -96,6 +99,7 @@ export class OpsCache {
 
             this.totalOpsToCache--;
             if (this.totalOpsToCache === 0) {
+                this.logger.sendPerformanceEvent({ eventName: "CacheOpsLimitHit"});
                 this.flushOps();
                 this.batches.clear();
                 break;
@@ -133,6 +137,14 @@ export class OpsCache {
             }
 
             batchNumber++;
+        }
+        if (messages.length > 0) {
+            this.logger.sendPerformanceEvent({
+                eventName: "CacheOpsUsed",
+                from,
+                to,
+                length: messages.length,
+            });
         }
         return messages;
     }
