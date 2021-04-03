@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import {
     AgentSchedulerFactory,
     IAgentScheduler,
+    LeadershipManager,
 } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
@@ -604,7 +605,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             await runtime.createRootDataStore(AgentSchedulerFactory.type, agentSchedulerId);
         }
 
-        runtime.subscribeToLeadership();
+        if (context.clientDetails.capabilities.interactive) {
+            const scheduler = await requestFluidObject<IAgentScheduler>(
+                await runtime.getDataStore(agentSchedulerId, true),
+                "",
+            );
+            const leadershipManager = new LeadershipManager(scheduler);
+            leadershipManager.volunteerForLeadership();
+        }
 
         return runtime;
     }
@@ -1963,27 +1971,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
         }
-    }
-
-    private subscribeToLeadership() {
-        if (this.context.clientDetails.capabilities.interactive) {
-            this.getScheduler().then((scheduler) => {
-                const LeaderTaskId = "leader";
-
-                // Each client expresses interest to be a leader.
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                scheduler.pick(LeaderTaskId, async () => { });
-            }).catch((err) => {
-                this.closeFn(CreateContainerError(err));
-            });
-        }
-    }
-
-    private async getScheduler(): Promise<IAgentScheduler> {
-        return requestFluidObject<IAgentScheduler>(
-            await this.getDataStore(agentSchedulerId, true),
-            "",
-        );
     }
 
     /** Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck */
