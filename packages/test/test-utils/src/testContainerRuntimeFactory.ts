@@ -12,7 +12,7 @@ import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 /**
  * Create a container runtime factory class that allows you to set runtime options
  */
-export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof ContainerRuntime) => {
+export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof ContainerRuntime.load) => {
     return class implements IRuntimeFactory {
         public get IRuntimeFactory() { return this; }
 
@@ -30,7 +30,7 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
                 defaultRouteRequestHandler("default"),
                 innerRequestHandler);
 
-            const runtime = await containerRuntimeCtor.load(
+            const runtime = await containerRuntimeCtor(
                 context,
                 [
                     ["default", Promise.resolve(this.dataStoreFactory)],
@@ -62,4 +62,4 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
 /**
  * A container runtime factory that allows you to set runtime options
  */
-export const TestContainerRuntimeFactory = createTestContainerRuntimeFactory(ContainerRuntime);
+export const TestContainerRuntimeFactory = createTestContainerRuntimeFactory(ContainerRuntime.load);
