@@ -106,8 +106,8 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         this.locallyRunnableTasks.set(taskId, worker);
 
         // Note: we are not checking for this.context.deltaManager.clientDetails.capabilities.interactive
-        // in isActive(). This check is done by users of this class - containerRuntime.ts (for "leader") and
-        // TaskManager. In the future, as new usage shows up, we may need to reconsider that.
+        // in isActive(). This check is done by users of this class - containerRuntime.ts (for "leader").
+        // In the future, as new usage shows up, we may need to reconsider that.
         // I'm adding assert here to catch that case and make decision on which way we go - push requirements
         // to consumers to make a choice, or centrally make this call here.
         assert(this.context.deltaManager.clientDetails.capabilities.interactive,

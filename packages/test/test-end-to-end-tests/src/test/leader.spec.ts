@@ -4,11 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+import { EventEmitter } from "events";
+import { IAgentScheduler } from "@fluidframework/agent-scheduler";
 import { Container } from "@fluidframework/container-loader";
+import { agentSchedulerId } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, ITestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
 async function ensureConnected(container: Container) {
     if (!container.connected) {
@@ -16,14 +18,37 @@ async function ensureConnected(container: Container) {
     }
 }
 
+class LeaderWatcher extends EventEmitter {
+    public get leader() {
+        return this.agentScheduler.pickedTasks().includes("leader");
+    }
+
+    constructor(private readonly agentScheduler: IAgentScheduler) {
+        super();
+        agentScheduler.on("picked", (taskId: string) => {
+            if (taskId === "leader") {
+                this.emit("leader");
+            }
+        });
+        agentScheduler.on("lost", (taskId: string) => {
+            if (taskId === "leader") {
+                this.emit("notleader");
+            }
+        });
+    }
+}
+
 describeFullCompat("Leader", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let container1: Container;
     let dataObject1: ITestFluidObject;
+    let leaderWatcher1: LeaderWatcher;
     beforeEach(async () => {
         provider = getTestObjectProvider();
         container1 = await provider.makeTestContainer() as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+        const scheduler1 = await requestFluidObject<IAgentScheduler>(container1, agentSchedulerId);
+        leaderWatcher1 = new LeaderWatcher(scheduler1);
         await ensureConnected(container1);
     });
     afterEach(() => {
@@ -38,38 +63,39 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
         assert(!container1.deltaManager.active);
 
         // shouldn't be a leader in view only mode
-        assert(!dataObject1.context.leader);
+        assert(!leaderWatcher1.leader);
 
         const container2 = await provider.loadTestContainer() as Container;
+        const scheduler2 = await requestFluidObject<IAgentScheduler>(container2, agentSchedulerId);
+        const leaderWatcher2 = new LeaderWatcher(scheduler2);
         await ensureConnected(container2);
         await provider.ensureSynchronized();
-        const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
         // Currently, we load a container in write mode from the start. See issue #3304.
         // Once that is fix, this needs to change
         assert(container2.deltaManager.active);
-        if (!dataObject2.context.leader) {
+        if (!leaderWatcher2.leader) {
             await timeoutPromise(
-                (resolve) => { dataObject2.context.once("leader", () => { resolve(); }); },
+                (resolve) => { leaderWatcher2.once("leader", () => { resolve(); }); },
                 { durationMs: 4000 },
             );
         }
-        assert(dataObject2.context.leader);
+        assert(leaderWatcher2.leader);
     });
 
-    interface ListenerConfig { dataObject: ITestFluidObject, name: string, leader: boolean, notleader: boolean }
-    const registeredListeners: [IFluidDataStoreRuntime, "leader" | "notleader", any][] = [];
-    function registerListener(target: IFluidDataStoreRuntime, name: "leader" | "notleader", handler: () => void) {
+    interface ListenerConfig { leaderWatcher: LeaderWatcher, name: string, leader: boolean, notleader: boolean }
+    const registeredListeners: [LeaderWatcher, "leader" | "notleader", any][] = [];
+    function registerListener(target: LeaderWatcher, name: "leader" | "notleader", handler: () => void) {
         target.on(name, handler);
         registeredListeners.push([target, name, handler]);
     }
     const setupListener = (config: ListenerConfig) => {
-        registerListener(config.dataObject.runtime, "leader", () => {
+        registerListener(config.leaderWatcher, "leader", () => {
             assert(config.leader, `leader event not expected in ${config.name}`);
             config.leader = false;
         });
 
-        registerListener(config.dataObject.runtime, "notleader", () => {
+        registerListener(config.leaderWatcher, "notleader", () => {
             assert(config.notleader, `notleader event not expected in ${config.name}`);
             config.notleader = false;
         });
@@ -81,7 +107,7 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
     };
 
     it("View to write mode", async () => {
-        const config = { dataObject: dataObject1, name: "dataObject1", leader: true, notleader: false };
+        const config = { leaderWatcher: leaderWatcher1, name: "leaderWatcher1", leader: true, notleader: false };
         setupListener(config);
 
         // write something to get out of view only mode and take leadership
@@ -89,7 +115,7 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
 
         checkExpected(config);
-        assert(dataObject1.context.leader);
+        assert(leaderWatcher1.leader);
     });
 
     it("force read only", async () => {
@@ -97,14 +123,14 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
         dataObject1.root.set("blah", "blah");
         await provider.ensureSynchronized();
 
-        const config = { dataObject: dataObject1, name: "dataObject1", leader: false, notleader: true };
+        const config = { leaderWatcher: leaderWatcher1, name: "leaderWatcher1", leader: false, notleader: true };
         setupListener(config);
 
         container1.forceReadonly(true);
         await provider.ensureSynchronized();
 
         checkExpected(config);
-        assert(!dataObject1.context.leader);
+        assert(!leaderWatcher1.leader);
     });
 
     it("Events on close", async () => {
@@ -115,18 +141,19 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
 
         const container2 = await provider.loadTestContainer() as Container;
-        const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const scheduler2 = await requestFluidObject<IAgentScheduler>(container2, agentSchedulerId);
+        const leaderWatcher2 = new LeaderWatcher(scheduler2);
 
         // Currently, we load a container in write mode from the start. See issue #3304.
         // Once that is fix, this needs to change
         await ensureConnected(container2);
         await provider.ensureSynchronized();
 
-        assert(dataObject1.context.leader);
-        assert(!dataObject2.context.leader);
+        assert(leaderWatcher1.leader);
+        assert(!leaderWatcher2.leader);
 
-        const config1 = { dataObject: dataObject1, name: "dataObject1", leader: false, notleader: true };
-        const config2 = { dataObject: dataObject2, name: "dataObject2", leader: true, notleader: false };
+        const config1 = { leaderWatcher: leaderWatcher1, name: "leaderWatcher1", leader: false, notleader: true };
+        const config2 = { leaderWatcher: leaderWatcher2, name: "leaderWatcher2", leader: true, notleader: false };
         setupListener(config1);
         setupListener(config2);
 
@@ -136,35 +163,37 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
 
         checkExpected(config1);
         checkExpected(config2);
-        assert(!dataObject1.context.leader);
-        assert(dataObject2.context.leader);
+        assert(!leaderWatcher1.leader);
+        assert(leaderWatcher2.leader);
     });
 
     it("Concurrent update", async () => {
         // write something to get out of view only mode and take leadership
         dataObject1.root.set("blah", "blah");
         await provider.ensureSynchronized();
-        assert(dataObject1.context.leader);
+        assert(leaderWatcher1.leader);
 
         const container2 = await provider.loadTestContainer() as Container;
-        const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const scheduler2 = await requestFluidObject<IAgentScheduler>(container2, agentSchedulerId);
+        const leaderWatcher2 = new LeaderWatcher(scheduler2);
 
         const container3 = await provider.loadTestContainer() as Container;
-        const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+        const scheduler3 = await requestFluidObject<IAgentScheduler>(container3, agentSchedulerId);
+        const leaderWatcher3 = new LeaderWatcher(scheduler3);
 
         // Currently, we load a container in write mode from the start. See issue #3304.
         // Once that is fix, this needs to change
         await Promise.all([ensureConnected(container2), ensureConnected(container3)]);
         await provider.ensureSynchronized();
 
-        assert(dataObject1.context.leader);
-        assert(!dataObject2.context.leader);
-        assert(!dataObject3.context.leader);
+        assert(leaderWatcher1.leader);
+        assert(!leaderWatcher2.leader);
+        assert(!leaderWatcher3.leader);
 
         await provider.opProcessingController.pauseProcessing();
 
-        const config2 = { dataObject: dataObject2, name: "dataObject2", leader: false, notleader: false };
-        const config3 = { dataObject: dataObject3, name: "dataObject3", leader: false, notleader: false };
+        const config2 = { leaderWatcher: leaderWatcher2, name: "leaderWatcher2", leader: false, notleader: false };
+        const config3 = { leaderWatcher: leaderWatcher3, name: "leaderWatcher3", leader: false, notleader: false };
         setupListener(config2);
         setupListener(config3);
 
@@ -174,22 +203,22 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
         await provider.opProcessingController.processIncoming();
 
         // No one should be a leader yet
-        assert(!dataObject1.context.leader);
-        assert(!dataObject2.context.leader);
-        assert(!dataObject3.context.leader);
+        assert(!leaderWatcher1.leader);
+        assert(!leaderWatcher2.leader);
+        assert(!leaderWatcher3.leader);
 
         config2.leader = true;
         config3.leader = true;
 
         await provider.ensureSynchronized();
-        assert((dataObject2.context.leader || dataObject3.context.leader) &&
-            (!dataObject2.context.leader || !dataObject3.context.leader),
+        assert((leaderWatcher2.leader || leaderWatcher3.leader) &&
+            (!leaderWatcher2.leader || !leaderWatcher3.leader),
             "only one container should be the leader");
 
-        if (dataObject2.context.leader) {
+        if (leaderWatcher2.leader) {
             assert(config3.leader);
             config3.leader = false;
-        } else if (dataObject3.context.leader) {
+        } else if (leaderWatcher3.leader) {
             assert(config2.leader);
             config2.leader = false;
         }

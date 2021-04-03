@@ -56,11 +56,9 @@ export enum FlushMode {
 }
 
 export interface IContainerRuntimeBaseEvents extends IEvent{
-
     (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void);
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
-    (event: "leader" | "notleader", listener: () => void);
 }
 
 /**
@@ -227,7 +225,7 @@ export type CreateChildSummarizerNodeFn = (
 ) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {
-    (event: "leader" | "notleader" | "attaching" | "attached", listener: () => void);
+    (event: "attaching" | "attached", listener: () => void);
 }
 
 /**
@@ -260,7 +258,6 @@ export interface IFluidDataStoreContext extends
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
     readonly connected: boolean;
-    readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     readonly baseSnapshot: ISnapshotTree | undefined;

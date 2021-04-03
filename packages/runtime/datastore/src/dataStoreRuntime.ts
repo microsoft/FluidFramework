@@ -121,10 +121,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this.dataStoreContext.connected;
     }
 
-    public get leader(): boolean {
-        return this.dataStoreContext.leader;
-    }
-
     public get clientId(): string | undefined {
         return this.dataStoreContext.clientId;
     }
@@ -903,12 +899,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
     private attachListener() {
         this.setMaxListeners(Number.MAX_SAFE_INTEGER);
-        this.dataStoreContext.on("leader", () => {
-            this.emit("leader");
-        });
-        this.dataStoreContext.on("notleader", () => {
-            this.emit("notleader");
-        });
         this.dataStoreContext.once("attaching", () => {
             assert(this.bindState !== BindState.NotBound,
                 0x186 /* "Data store attaching should not occur if it is not bound" */);

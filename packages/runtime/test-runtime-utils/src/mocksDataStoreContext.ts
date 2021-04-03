@@ -45,7 +45,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     public clientId: string | undefined = uuid();
     public clientDetails: IClientDetails;
     public connected: boolean = true;
-    public leader: boolean;
     public baseSnapshot: ISnapshotTree | undefined;
     public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     public containerRuntime: IContainerRuntimeBase;
@@ -77,8 +76,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 
     on(event: string | symbol, listener: (...args: any[]) => void): this {
         switch (event) {
-            case "leader":
-            case "notleader":
             case "attaching":
             case "attached":
                 return this;

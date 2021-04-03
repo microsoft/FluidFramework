@@ -28,7 +28,7 @@ import { IChannel } from ".";
 
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
     (
-        event: "disconnected" | "dispose" | "leader" | "notleader" | "attaching" | "attached",
+        event: "disconnected" | "dispose" | "attaching" | "attached",
         listener: () => void,
     );
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);

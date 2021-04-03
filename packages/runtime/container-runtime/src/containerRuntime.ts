@@ -700,19 +700,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private needsFlush = false;
     private flushTrigger = false;
 
-    // Always matched IAgentScheduler.leader property
-    private _leader = false;
-
     private _connected: boolean;
 
     private paused: boolean = false;
 
     public get connected(): boolean {
         return this._connected;
-    }
-
-    public get leader(): boolean {
-        return this._leader;
     }
 
     public get summarizerClientId(): string | undefined {
@@ -1979,18 +1972,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
                 // Each client expresses interest to be a leader.
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                scheduler.pick(LeaderTaskId, async () => {
-                    assert(!this._leader, 0x134 /* "Client is already leader" */);
-                    this.updateLeader(true);
-                });
-
-                scheduler.on("lost", (key) => {
-                    if (key === LeaderTaskId) {
-                        assert(this._leader, 0x135 /* "Got leader key but client is not leader" */);
-                        this._leader = false;
-                        this.updateLeader(false);
-                    }
-                });
+                scheduler.pick(LeaderTaskId, async () => { });
             }).catch((err) => {
                 this.closeFn(CreateContainerError(err));
             });
@@ -2002,19 +1984,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             await this.getDataStore(agentSchedulerId, true),
             "",
         );
-    }
-
-    private updateLeader(leadership: boolean) {
-        this._leader = leadership;
-        if (this.leader) {
-            assert(this.clientId === undefined || this.connected && this.deltaManager && this.deltaManager.active,
-                0x136 /* "Leader must either have undefined clientId or be connected with active delta manager!" */);
-            this.emit("leader");
-        } else {
-            this.emit("notleader");
-        }
-
-        this.dataStores.updateLeader();
     }
 
     /** Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck */
