@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import { IFluidObject, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import {
     IFluidModule,
@@ -11,7 +10,6 @@ import {
 import { Loader, Container } from "@fluidframework/container-loader";
 import { WebCodeLoader } from "@fluidframework/web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
-import { initializeContainerCode } from "./initializeContainerCode";
 
 /**
  * Create a loader and return it.
@@ -53,23 +51,9 @@ export class BaseHost {
         return this.loaderP;
     }
 
-    public async initializeContainer(url: string, codeDetails?: IFluidCodeDetails): Promise<Container> {
+    public async loadContainer(url: string): Promise<Container> {
         const loader = await this.getLoader();
         const container = await loader.resolve({ url });
-
-        // if a package is provided, try to initialize the code proposal with it
-        // if not we assume the container already has a code proposal
-        if (codeDetails) {
-            await initializeContainerCode(container, codeDetails)
-                .catch((error) => console.error("code proposal error", error));
-        }
-
-        // If we're loading from ops, the context might be in the middle of reloading.  Check for that case and wait
-        // for the contextChanged event to avoid returning before that reload completes.
-        if (container.hasNullRuntime()) {
-            await new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
-        }
-
         return container;
     }
 
@@ -81,7 +65,6 @@ export class BaseHost {
         const loader = await this.getLoader();
         const container = await loader.createDetachedContainer(codeDetails);
 
-        assert(container.hasNullRuntime() === false, 0x0cb /* "Detached container should never have null runtime" */);
         return container;
     }
 
@@ -93,7 +76,6 @@ export class BaseHost {
         const loader = await this.getLoader();
         const container = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
 
-        assert(container.hasNullRuntime() === false, 0x0cc /* "Detached container should never have null runtime" */);
         return container;
     }
 

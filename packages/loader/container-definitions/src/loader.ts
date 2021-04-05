@@ -221,15 +221,6 @@ export type ILoaderOptions = {
     [key in string | number]: any;
 } & {
     /**
-     * Affects the behavior of the Container when a new code proposal
-     * is accepted that the current loaded code does not satisfy.
-     * True to reload the context without closing the container, or
-     * false to only close the container.
-     * Defaults to false.
-     */
-    hotSwapContext?: boolean;
-
-    /**
      * Set caching behavior for the loader.  If true, we will load a container from cache if one
      * with the same id/version exists or create a new container and cache it if it does not. If
      * false, always load a new container and don't cache it. If the container has already been
