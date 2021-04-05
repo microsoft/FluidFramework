@@ -58,7 +58,7 @@ interface ComplexOptions {
 const complexOptionsMatrix: OptionsMatrix<ComplexOptions> = {
     boolean: [undefined, true, false],
     oSimple: [undefined],
-    rSimple: [...simpleValues],
+    rSimple: simpleValues,
 };
 
 const complexValues = generatePairwiseOptions<ComplexOptions>(complexOptionsMatrix);
