@@ -503,6 +503,12 @@ function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions):
     return { summaryOptions, gcOptions };
 }
 
+/**
+ * Produce a ContainerRuntime with AgentScheduler, compatible with ContainerRuntime.load() from versions prior to 0.38.
+ * @deprecated This is provided as a migration tool only.  If you require back compat with documents produced prior to
+ * 0.38, you'll need to add AgentScheduler to your ContainerRuntime registry.  If you want AgentScheduler
+ * functionality, you should instantiate it in your container code as your scenario demands.
+ */
 export const makeLegacyContainerRuntime = async (
     context: IContainerContext,
     registryEntries: NamedFluidDataStoreRegistryEntries,

@@ -1,11 +1,21 @@
 ## 0.38 Breaking changes
 - [IPersistedCache changes](#IPersistedCache-changes)
+- [AgentScheduler removed as a default member of ContainerRuntime](#AgentScheduler-removed-as-a-default-member-of-ContainerRuntime)
+- [Leader API surface removed](Leader-API-surface-removed)
 
 ### IPersistedCache changes
 IPersistedCache implementation no longer needs to implement updateUsage() method (removed form interface).
 Same goes for sequence number / maxOpCount arguments.
 put() changed from fire-and-forget to promise, with intention of returning write errors back to caller. Driver could use this information to stop recording any data about given file if driver needs to follow all-or-nothing strategy in regards to info about a file.
 Please note that format of data stored by driver changed. It will ignore cache entries recorded by previous versions of driver.
+
+### AgentScheduler removed as a default member of ContainerRuntime
+Prior to 0.38, `ContainerRuntime` would automatically add an `AgentScheduler` to the container upon creation.  This is no longer added by default.  If you support back compat with documents created prior to 0.38, they will require the `AgentScheduler` to be present in the registry for compatibility.
+
+To facilitate migration, `makeLegacyContainerRuntime()` is provided in the `@fluidframework/container-runtime` package that produces a runtime which is compatible with the old `ContainerRuntime.load()`, including adding an `AgentScheduler` and subscribing to leadership by default.  This helper is deprecated for new use and will be removed in an upcoming release.  Container authors should plan to incorporate these behaviors into their container code if they are desirable, and move to the new `ContainerRuntime.load()`.
+
+### Leader API surface removed
+Since the `AgentScheduler` is no longer built into `ContainerRuntime`, the leadership election functionality which depended upon it is also no longer built into the runtime.  For leader election, you can use the `LeadershipManager` from the `@fluidframework/agent-scheduler` package which exposes a `.leader` property and `"leader"`/`"notleader"` events matching those previously available on the `ContainerRuntime` and data store interfaces.
 
 ## 0.37 Breaking changes
 
