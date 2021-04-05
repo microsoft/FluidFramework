@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IFluidDataStoreFactory, NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IFluidDataStoreFactory, NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 import { DependencyContainerRegistry } from "@fluidframework/synthesize";
 import {
     RuntimeRequestHandler,
     innerRequestHandler,
 } from "@fluidframework/request-handler";
-import { defaultRouteRequestHandler } from "../request-handlers";
 import { AgentSchedulerBaseContainerRuntimeFactory } from "./agentSchedulerBaseContainerRuntimeFactory";
 
 const defaultDataStoreId = "default";

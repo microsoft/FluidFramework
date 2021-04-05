@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import {
-    AgentSchedulerContainerRuntimeFactoryWithDefaultDataStore,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
@@ -13,6 +12,9 @@ import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import {
+    AgentSchedulerContainerRuntimeFactoryWithDefaultDataStore,
+} from "@fluidframework/deprecated-aqueduct";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedDirectory } from "@fluidframework/map";

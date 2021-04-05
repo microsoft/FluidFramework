@@ -18,7 +18,6 @@
  * @packageDocumentation
  */
 
-export * from "./agent-scheduler-container-runtime-factories";
 export * from "./container-runtime-factories";
 export * from "./container-services";
 export * from "./data-object-factories";
