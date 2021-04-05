@@ -12,7 +12,7 @@ import {
     innerRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "../request-handlers";
-import { LegacyBaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
+import { LegacyBaseContainerRuntimeFactory } from "./legacyBaseContainerRuntimeFactory";
 
 const defaultDataStoreId = "default";
 
