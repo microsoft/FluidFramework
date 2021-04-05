@@ -101,3 +101,16 @@ export interface IGitManager {
     upsertRef(branch: string, commitSha: string): Promise<git.IRef>;
     write(branch: string, inputTree: api.ITree, parents: string[], message: string): Promise<git.ICommit>;
 }
+
+/**
+ * Uploads a summary to storage.
+ */
+export interface ISummaryUploadManager {
+    /**
+     * Writes summary tree to storage.
+     * @param summaryTree Summary tree to write to storage
+     * @param parentHandle Parent summary acked handle (from summary ack)
+     * @returns Id of created tree.
+     */
+    writeSummaryTree(summaryTree: api.ISummaryTree, parentHandle: string): Promise<string>;
+}
