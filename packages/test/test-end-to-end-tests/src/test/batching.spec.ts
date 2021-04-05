@@ -31,6 +31,7 @@ const registry: ChannelFactoryRegistry = [
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
+    useLegacyContainerRuntime: true,
 };
 
 describeFullCompat("Batching", (getTestObjectProvider) => {

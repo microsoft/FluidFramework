@@ -57,6 +57,7 @@ const registry: ChannelFactoryRegistry = [
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
+    useLegacyContainerRuntime: true,
 };
 
 describeFullCompat("Detached Container", (getTestObjectProvider) => {

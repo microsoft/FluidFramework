@@ -23,6 +23,7 @@ const testContainerConfig: ITestContainerConfig = {
         },
     }),
     registry: [["sharedString", SharedString.getFactory()]],
+    useLegacyContainerRuntime: true,
 };
 
 describeFullCompat("blobs", (getTestObjectProvider) => {

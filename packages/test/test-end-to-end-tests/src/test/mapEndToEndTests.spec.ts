@@ -23,6 +23,7 @@ const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
+    useLegacyContainerRuntime: true,
 };
 
 describeFullCompat("SharedMap", (getTestObjectProvider) => {

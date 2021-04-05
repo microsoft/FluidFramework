@@ -29,14 +29,14 @@ describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
 
     beforeEach(async () => {
         // Create a Container for the first client.
-        const firstContainer = await provider.makeTestContainer();
+        const firstContainer = await provider.makeTestContainer({ useLegacyContainerRuntime: true });
         firstContainerObject1 = await requestFluidObject<ITestDataObject>(firstContainer, "default");
         const containerRuntime1 = firstContainerObject1._context.containerRuntime;
         const dataStore = await containerRuntime1.createDataStore(TestDataObjectType);
         firstContainerObject2 = await requestFluidObject<ITestDataObject>(dataStore, "");
 
         // Load the Container that was created by the first client.
-        const secondContainer = await provider.loadTestContainer();
+        const secondContainer = await provider.loadTestContainer({ useLegacyContainerRuntime: true });
         secondContainerObject1 = await requestFluidObject<ITestDataObject>(secondContainer, "default");
 
         await provider.ensureSynchronized();

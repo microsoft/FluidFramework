@@ -21,6 +21,7 @@ const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
+    useLegacyContainerRuntime: true,
 };
 
 describeFullCompat("SharedCell", (getTestObjectProvider) => {

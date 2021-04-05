@@ -70,6 +70,10 @@ export interface ITestContainerConfig {
     runtimeOptions?: IContainerRuntimeOptions,
 
     // Use legacy container runtime with AgentScheduler
+    // TODO: This option is added in 0.38, such that back compat testing continues testing using the legacy
+    // ContainerRuntime.  This is necessary because there is no non-legacy ContainerRuntime in
+    // versions < 0.38 to test against.  However, once we are on 0.40 we should remove this flag and prefer
+    // testing on the non-legacy runtime.
     useLegacyContainerRuntime?: boolean,
 }
 

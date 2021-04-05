@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { LegacyContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import {
     ICodeLoader,
     IProvideRuntimeFactory,
@@ -60,7 +60,7 @@ export class LocalCodeLoader implements ICodeLoader {
                         fluidExport: {
                             ... maybeExport,
                             IRuntimeFactory:
-                                new ContainerRuntimeFactoryWithDefaultDataStore(
+                                new LegacyContainerRuntimeFactoryWithDefaultDataStore(
                                     defaultFactory,
                                     [[defaultFactory.type, Promise.resolve(defaultFactory)]],
                                     undefined,
