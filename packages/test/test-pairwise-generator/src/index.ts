@@ -15,7 +15,7 @@ export type OptionsMatrix<T extends Record<string, any>> =
     }>;
 
 export const booleanCases: readonly (boolean)[] = [true, false];
-export const numberCases: readonly (number | undefined)[] = [undefined,-1,0,1,1000];
+export const numberCases: readonly (number | undefined)[] = [undefined];
 
 type PartialWithKeyCount<T extends Record<string, any>>= (Partial<T> & {__paritalKeyCount?: number});
 
