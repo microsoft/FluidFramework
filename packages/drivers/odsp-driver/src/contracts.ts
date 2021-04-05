@@ -242,6 +242,7 @@ export interface IOpsCachingPolicy {
      * At the same time, big number means we wait for so many ops to accumulate, which
      * increases chances and number of trailing ops that would not be flushed to cache
      * when user closes tab
+     * Use any number below 1 to disable caching
      * Default: 100
      */
     batchSize?: number;

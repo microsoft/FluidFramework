@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { OpsCache, ICache, IMessage, CacheEntry } from "../opsCaching";
 
 export type MyDataInput = IMessage & { data: string; };
@@ -94,6 +95,7 @@ async function runTestNoTimer(
 
     const cache = new OpsCache(
         initialSeq,
+        new TelemetryUTLogger(),
         mockCache,
         batchSize,
         -1, // timerGranularity
@@ -122,6 +124,7 @@ export async function runTestWithTimer(
 
     const cache = new OpsCache(
         initialSeq,
+        new TelemetryUTLogger(),
         mockCache,
         batchSize,
         1, // timerGranularity
