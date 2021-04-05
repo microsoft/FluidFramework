@@ -32,10 +32,10 @@ describeNoCompat("UpgradeManager (hot-swap)", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
 
     const createContainer = async (): Promise<IContainer> =>
-        provider.createContainer(TestDataObject.getFactory(), { hotSwapContext: true });
+        provider.createContainer(TestDataObject.getFactory());
 
     const loadContainer = async (): Promise<IContainer> =>
-        provider.loadContainer(TestDataObject.getFactory(), { hotSwapContext: true });
+        provider.loadContainer(TestDataObject.getFactory());
 
     beforeEach(async () => {
         provider = getTestObjectProvider();

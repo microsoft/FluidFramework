@@ -1344,9 +1344,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // back compat for old containers where the code details
         // we're delay added. All new creates should be detached
-        // as start with an initial code details.
+        // and start with an initial code details.
         if(getCodeProposal(protocol.quorum) === undefined) {
-            this.logger.sendErrorEvent({
+            this.logger.sendTelemetryEvent({
                 eventName:"NoCodeProposal",
             });
             await new Promise<void>((resolve)=>{
