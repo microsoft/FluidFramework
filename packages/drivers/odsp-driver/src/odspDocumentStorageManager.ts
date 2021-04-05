@@ -301,6 +301,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 {
                     eventName: "createBlob",
                     size: file.byteLength,
+                    waitQueueLength: this.epochTracker.createBlobRateLimiter.waitQueueLength,
                 },
                 async (event) => {
                     const res = await this.epochTracker.fetchAndParseAsJSON<api.ICreateBlobResponse>(
