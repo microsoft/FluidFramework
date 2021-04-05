@@ -227,6 +227,7 @@ export async function loadContainer(
         mixinDataStoreWithAnyChannel());
     const codeLoader = new API.CodeLoader({ summaryOptions: { generateSummaries: false } },
         [
+            ["_scheduler", Promise.resolve(chaincode)],
             ["@ms/atmentions", Promise.resolve(chaincode)],
             ["@ms/augloop", Promise.resolve(chaincode)],
             ["@ms/catalog", Promise.resolve(chaincode)],
