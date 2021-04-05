@@ -135,17 +135,14 @@ export async function load(
     return {documentServiceFactory, container, test: await requestFluidObject<ILoadTest>(container,"/")};
 }
 
-export async function createTestDriver(driver: TestDriverTypes, runId: number | undefined) {
-    const optionsIndex = runId === undefined
-        ? Math.floor(pairwiseOdspHostStoragePolicy.value.length * Math.random())
-        : runId % pairwiseOdspHostStoragePolicy.value.length;
-
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+export async function createTestDriver(driver: TestDriverTypes, optionsIndex: number) {
     return createFluidTestDriver(
         driver,
         {
             odsp: {
                 directory: "stress",
-                options: pairwiseOdspHostStoragePolicy.value[optionsIndex],
+                options: pairwiseOdspHostStoragePolicy.value[optionsIndex % pairwiseOdspHostStoragePolicy.value.length],
             },
         });
 }

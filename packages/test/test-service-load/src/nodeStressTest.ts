@@ -7,6 +7,7 @@ import child_process from "child_process";
 import commander from "commander";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import random from "random-js";
+import { pairwiseOdspHostStoragePolicy } from "@fluidframework/test-drivers";
 import { ILoadTestConfig } from "./testConfigFile";
 import { createTestDriver, getProfile, initialize, safeExit } from "./utils";
 
@@ -49,11 +50,13 @@ async function orchestratorProcess(
     profile: ILoadTestConfig & { name: string },
     args: { testId?: string, debug?: true, verbose?: true, seed?: number },
 ) {
-    const testDriver = await createTestDriver(driver, undefined);
-
     const randEng = random.engines.mt19937();
-    const seed = args.seed === undefined ? random.integer(0, Number.MAX_SAFE_INTEGER)(randEng) : args.seed;
+    const seed = args.seed ?? Date.now();
     randEng.seed(seed);
+
+    const testDriver = await createTestDriver(
+        driver,
+        random.integer(0, pairwiseOdspHostStoragePolicy.value.length)(randEng));
 
     // Create a new file if a testId wasn't provided
     const url = args.testId !== undefined
@@ -66,7 +69,7 @@ async function orchestratorProcess(
     console.log(`Selected test profile: ${profile.name}`);
     console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
 
-    const p: Promise<void>[] = [];
+    const runnerArgs: string[][] = [];
     for (let i = 0; i < profile.numClients; i++) {
         const childArgs: string[] = [
             "./dist/runner.js",
@@ -84,15 +87,18 @@ async function orchestratorProcess(
             childArgs.push("--verbose");
         }
 
-        const process = child_process.spawn(
-            "node",
-            childArgs,
-            { stdio: "inherit" },
-        );
-        p.push(new Promise((resolve) => process.on("close", resolve)));
+        console.log(childArgs.join(" "));
+        runnerArgs.push(childArgs);
     }
     try{
-    await Promise.all(p);
+        await Promise.all(runnerArgs.map(async (childArgs)=>{
+            const process = child_process.spawn(
+                "node",
+                childArgs,
+                { stdio: "inherit" },
+            );
+            return new Promise((resolve) => process.once("close", resolve));
+        }));
     } finally{
         await safeExit(0, url);
     }
