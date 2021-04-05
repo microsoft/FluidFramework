@@ -149,11 +149,11 @@ export class OdspTestDriver implements ITestDriver {
 
             this.testIdToUrl.set(
                 testId,
-                this.api.createOdspUrl(
+                this.api.createOdspUrl({
+                    ... driveItem,
                     siteUrl,
-                    driveItem.drive,
-                    driveItem.item,
-                    "/"));
+                    dataStorePath: "/",
+                }));
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.testIdToUrl.get(testId)!;
