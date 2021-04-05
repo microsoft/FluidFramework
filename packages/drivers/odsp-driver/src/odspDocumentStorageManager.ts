@@ -785,6 +785,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 overalltime: overallTime,
                 networktime: networkTime,
                 clienttime: clientTime,
+                sltelemetry: response.headers.get("x-fluid-sltelemetry"),
                 ...response.commonSpoHeaders,
             });
             return value;
