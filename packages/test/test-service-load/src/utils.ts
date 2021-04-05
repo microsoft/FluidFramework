@@ -13,11 +13,13 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import random from "random-js";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { createFluidExport, ILoadTest } from "./loadTestDataStore";
 import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
-import { pairwiseLoaderOptions } from "./optionsMatrix";
+import { pairwiseLoaderOptions, pairwiseRuntimeOptions } from "./optionsMatrix";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
@@ -84,15 +86,16 @@ const codeDetails: IFluidCodeDetails = {
 };
 
 const createCodeLoader =
-    (runId: number | undefined)=> new LocalCodeLoader([[codeDetails, createFluidExport(runId)]]);
+    (options: IContainerRuntimeOptions)=>
+        new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
 
-export async function initialize(testDriver: ITestDriver) {
-    const options = pairwiseLoaderOptions.value[Math.floor(pairwiseLoaderOptions.value.length * Math.random())];
+export async function initialize(testDriver: ITestDriver, randEng: Random.Engine) {
+    const options = random.pick(randEng, pairwiseLoaderOptions.value);
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
-        codeLoader: createCodeLoader(undefined),
+        codeLoader: createCodeLoader(random.pick(randEng, pairwiseRuntimeOptions.value)),
         logger: ChildLogger.create(await loggerP, undefined, {all: { driverType: testDriver.type }}),
         options,
     });
@@ -113,14 +116,16 @@ export async function initialize(testDriver: ITestDriver) {
 export async function load(testDriver: ITestDriver, url: string, runId: number) {
     const documentServiceFactory =
         new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
-    const options = pairwiseLoaderOptions.value[runId % pairwiseLoaderOptions.value.length];
+    const loaderOptions = pairwiseLoaderOptions.value[runId % pairwiseLoaderOptions.value.length];
+    const containerOptions = pairwiseRuntimeOptions.value[runId % pairwiseRuntimeOptions.value.length];
+
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory,
-        codeLoader: createCodeLoader(runId),
+        codeLoader: createCodeLoader(containerOptions),
         logger: ChildLogger.create(await loggerP, undefined, {all: { runId, driverType: testDriver.type }}),
-        options,
+        options: loaderOptions,
     });
 
     const container = await loader.resolve({ url });

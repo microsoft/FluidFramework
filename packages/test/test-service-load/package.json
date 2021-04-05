@@ -71,7 +71,8 @@
     "@fluidframework/test-drivers": "^0.38.0",
     "@fluidframework/test-utils": "^0.38.0",
     "@fluidframework/tool-utils": "^0.38.0",
-    "commander": "^5.1.0"
+    "commander": "^5.1.0",
+    "random-js": "^1.0.8"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.20.0",
@@ -79,6 +80,7 @@
     "@fluidframework/mocha-test-setup": "^0.38.0",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",
+    "@types/random-js": "^1.0.31",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
     "concurrently": "^5.2.0",

@@ -6,6 +6,7 @@
 import commander from "commander";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { Container } from "@fluidframework/container-loader";
+import random from "random-js";
 import { IRunConfig } from "./loadTestDataStore";
 import { createTestDriver, getProfile, load, loggerP, safeExit } from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
@@ -31,6 +32,7 @@ async function main() {
         .requiredOption("-p, --profile <profile>", "Which test profile to use from testConfig.json", "ci")
         .requiredOption("-u --url <url>", "Load an existing data store from the url")
         .requiredOption("-r, --runId <runId>", "run a child process with the given id. Requires --url option.")
+        .requiredOption("-s, --seed <number>", "Seed for this runners random number generator")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .option("-v, --verbose", "Enables verbose logging")
         .parse(process.argv);
@@ -41,6 +43,7 @@ async function main() {
     const runId: number  = commander.runId;
     const log: string | undefined = commander.log;
     const verbose: boolean = commander.verbose ?? false;
+    const seed: number = commander.seed;
 
     const profile = getProfile(profileArg);
 
@@ -52,12 +55,17 @@ async function main() {
         console.error("Missing --url argument needed to run child process");
         process.exit(-1);
     }
+
+    const randEng = random.engines.mt19937();
+    randEng.seed(seed);
+
     const result = await runnerProcess(
         driver,
         {
             runId,
             testConfig: profile,
             verbose,
+            randEng,
         },
         url);
 
@@ -112,7 +120,7 @@ function scheduleFaultInjection(
     container: Container,
     runConfig: IRunConfig) {
     const schedule = ()=>{
-        const injectionTime = runConfig.testConfig.readWriteCycleMs * 5 * Math.random();
+        const injectionTime = runConfig.testConfig.readWriteCycleMs * random.integer(0, 5)(runConfig.randEng);
         printStatus(runConfig, `fault injection in ${(injectionTime / 60000).toString().substring(0,4)} min`);
         setTimeout(() => {
             if(container.connected && container.resolvedUrl !== undefined) {
@@ -120,8 +128,9 @@ function scheduleFaultInjection(
                     ds.documentServices.get(container.resolvedUrl)?.documentDeltaConnection;
                 if(deltaConn !== undefined) {
                     // 1 in numClients chance of non-retritable error to not overly conflict with container close
-                    const canRetry = Math.floor(Math.random() * runConfig.testConfig.numClients) === 0 ? false : true;
-                    switch(Math.floor(Math.random() * 5)) {
+                    const canRetry =
+                        random.integer(0,  runConfig.testConfig.numClients - 1)(runConfig.randEng) === 0 ? false : true;
+                    switch(random.integer(0,  5)(runConfig.randEng)) {
                         // dispreferr errors
                         case 0: {
                             deltaConn.injectError(canRetry);
@@ -180,7 +189,7 @@ function scheduleContainerClose(container: Container, runConfig: IRunConfig) {
                 // this will bias toward the summarizer client which is always quorum index 0.
                 if(quorumIndex >= 0 && quorumIndex <= runConfig.testConfig.numClients / 4) {
                     quorum.off("removeMember",scheduleLeave);
-                    const leaveTime = runConfig.testConfig.readWriteCycleMs * 5 * Math.random();
+                    const leaveTime = runConfig.testConfig.readWriteCycleMs * random.integer(0,  5)(runConfig.randEng);
                     printStatus(runConfig, `closing in ${(leaveTime / 60000).toString().substring(0,4)} min`);
                     setTimeout(
                         ()=>{

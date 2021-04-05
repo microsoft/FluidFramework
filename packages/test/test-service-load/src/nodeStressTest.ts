@@ -6,6 +6,7 @@
 import child_process from "child_process";
 import commander from "commander";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import random from "random-js";
 import { ILoadTestConfig } from "./testConfigFile";
 import { createTestDriver, getProfile, initialize, safeExit } from "./utils";
 
@@ -15,6 +16,7 @@ async function main() {
         .requiredOption("-d, --driver <driver>", "Which test driver info to use", "odsp")
         .requiredOption("-p, --profile <profile>", "Which test profile to use from testConfig.json", "ci")
         .option("-id, --testId <testId>", "Load an existing data store rather than creating new")
+        .option("-s, --seed <number>", "Seed for this run")
         .option("-dbg, --debug", "Debug child processes via --inspect-brk")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .option("-v, --verbose", "Enables verbose logging")
@@ -26,6 +28,7 @@ async function main() {
     const debug: true | undefined = commander.debug;
     const log: string | undefined = commander.log;
     const verbose: true | undefined = commander.verbose;
+    const seed: number | undefined = commander.seed;
 
     const profile = getProfile(profileArg);
 
@@ -36,7 +39,7 @@ async function main() {
     await orchestratorProcess(
             driver,
             { ...profile, name: profileArg },
-            { testId, debug, verbose });
+            { testId, debug, verbose, seed });
 }
 /**
  * Implementation of the orchestrator process. Returns the return code to exit the process with.
@@ -44,17 +47,22 @@ async function main() {
 async function orchestratorProcess(
     driver: TestDriverTypes,
     profile: ILoadTestConfig & { name: string },
-    args: { testId?: string, debug?: true, verbose?: true },
+    args: { testId?: string, debug?: true, verbose?: true, seed?: number },
 ) {
     const testDriver = await createTestDriver(driver, undefined);
+
+    const randEng = random.engines.mt19937();
+    const seed = args.seed === undefined ? random.integer(0, Number.MAX_SAFE_INTEGER)(randEng) : args.seed;
+    randEng.seed(seed);
 
     // Create a new file if a testId wasn't provided
     const url = args.testId !== undefined
         ? await testDriver.createContainerUrl(args.testId)
-        : await initialize(testDriver);
+        : await initialize(testDriver, randEng);
 
     const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
-    console.log(`Connecting to ${args.testId ? "existing" : "new"} Container targeting with url:\n${url }`);
+    console.log(`Connecting to ${args.testId ? "existing" : "new"} with seed 0x${seed.toString(16)}`);
+    console.log(`Container targeting with url:\n${url }`);
     console.log(`Selected test profile: ${profile.name}`);
     console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
 
@@ -65,7 +73,9 @@ async function orchestratorProcess(
             "--driver", driver,
             "--profile", profile.name,
             "--runId", i.toString(),
-            "--url", url];
+            "--url", url,
+            "--seed", `0x${random.integer(0,Number.MAX_SAFE_INTEGER)(randEng).toString(16)}`,
+        ];
         if (args.debug) {
             const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
             childArgs.unshift(`--inspect-brk=${debugPort}`);

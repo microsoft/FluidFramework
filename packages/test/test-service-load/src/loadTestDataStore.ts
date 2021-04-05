@@ -13,13 +13,15 @@ import {ISharedCounter, SharedCounter} from "@fluidframework/counter";
 import { ITaskManager, TaskManager } from "@fluid-experimental/task-manager";
 import { IDirectory, ISharedDirectory } from "@fluidframework/map";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import random from "random-js";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ILoadTestConfig } from "./testConfigFile";
-import { pairwiseRuntimeOptions } from "./optionsMatrix";
 
 export interface IRunConfig {
     runId: number,
     testConfig: ILoadTestConfig,
     verbose: boolean,
+    randEng: random.Engine,
 }
 
 export interface ILoadTest {
@@ -307,16 +309,11 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
     {},
 );
 
-export function createFluidExport(runId: number | undefined) {
-    const optionsIndex = runId === undefined
-        ? Math.floor(pairwiseRuntimeOptions.value.length * Math.random())
-        : runId % pairwiseRuntimeOptions.value.length;
-
-    return new ContainerRuntimeFactoryWithDefaultDataStore(
+export const createFluidExport = (options: IContainerRuntimeOptions) =>
+    new ContainerRuntimeFactoryWithDefaultDataStore(
         LoadTestDataStoreInstantiationFactory,
         new Map([[LoadTestDataStore.DataStoreName, Promise.resolve(LoadTestDataStoreInstantiationFactory)]]),
         undefined,
         undefined,
-        pairwiseRuntimeOptions.value[optionsIndex],
+        options,
     );
-}
