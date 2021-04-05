@@ -19,7 +19,9 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
         constructor(
             public type: string,
             public dataStoreFactory: IFluidDataStoreFactory,
-            public runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
+            public runtimeOptions: IContainerRuntimeOptions = {
+                summaryOptions: { initialSummarizerDelayMs: 0 },
+            },
         ) { }
 
         public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {

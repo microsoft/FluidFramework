@@ -8,6 +8,7 @@ import * as api from "@fluidframework/protocol-definitions";
 
 export interface IOdspResolvedUrl extends IFluidResolvedUrl {
     type: "fluid";
+    odspResolvedUrl: true;
 
     // URL to send to fluid, contains the documentId and the path
     url: string;
@@ -234,6 +235,34 @@ export interface ISnapshotOptions {
     timeout?: number;
 }
 
+export interface IOpsCachingPolicy {
+    /**
+     * Batch size. Controls how many ops are grouped together as single cache entry
+     * The bigger the number, the more efficient it is (less reads & writes)
+     * At the same time, big number means we wait for so many ops to accumulate, which
+     * increases chances and number of trailing ops that would not be flushed to cache
+     * when user closes tab
+     * Use any number below 1 to disable caching
+     * Default: 100
+     */
+    batchSize?: number;
+
+    /**
+     * To reduce the problem of losing trailing ops when using big batch sizes, host
+     * could specify how often driver should flush ops it has not flushed yet.
+     * -1 means do not use timer.
+     * Measured in ms.
+     * Default: 5000
+     */
+    timerGranularity?: number,
+
+    /**
+     * Total number of ops to cache. When we reach that number, ops caching stops
+     * Default: 5000
+     */
+    totalOpsToCache?: number;
+}
+
 export interface HostStoragePolicy {
     snapshotOptions?: ISnapshotOptions;
 
@@ -249,6 +278,11 @@ export interface HostStoragePolicy {
     concurrentSnapshotFetch?: boolean;
 
     blobDeduping?: boolean;
+
+    /**
+     * Policy controlling ops caching (leveraging IPersistedCache passed to driver factory)
+     */
+    opsCaching?: IOpsCachingPolicy;
 }
 
 /**

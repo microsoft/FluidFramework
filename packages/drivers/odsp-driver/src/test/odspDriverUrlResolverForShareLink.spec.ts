@@ -27,6 +27,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
     const urlWithNavParam = "https://microsoft.sharepoint-df.com/test?nav=cz0lMkZzaXRlVXJsJmQ9ZHJpdmVJZCZmPWZpbGVJZCZjPWRhdGFTdG9yZVBhdGgmZmx1aWQ9MQ%3D%3D";
     let urlResolverWithTokenFetcher: OdspDriverUrlResolverForShareLink;
     let urlResolverWithoutTokenFetcher: OdspDriverUrlResolverForShareLink;
+    const mockResolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
 
     beforeEach(() => {
         urlResolverWithTokenFetcher = new OdspDriverUrlResolverForShareLink(async () => "SharingLinkToken");
@@ -101,7 +102,6 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
     });
 
     it("getAbsoluteUrl - Should generate sharelink if none was generated on resolve", async () => {
-        const mockResolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
         const absoluteUrl = await mockGetFileLink(Promise.resolve(sharelink), async () => {
             return urlResolverWithTokenFetcher.getAbsoluteUrl(mockResolvedUrl, dataStorePath);
         });
@@ -116,7 +116,6 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
     });
 
     it("getAbsoluteUrl - Should throw if getShareLink throws and clear the promise from shareLinkMap", async () => {
-        const mockResolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
         let success = true;
         const absoluteUrl = await mockGetFileLink(Promise.reject(new Error("No Sharelink")), async () => {
             return urlResolverWithTokenFetcher.getAbsoluteUrl(mockResolvedUrl, dataStorePath);
@@ -132,7 +131,6 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
     });
 
     it("getAbsoluteUrl - Should throw if using resolver without TokenFetcher", async () => {
-        const mockResolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
         let success = true;
         const absoluteUrl = await mockGetFileLink(Promise.resolve(sharelink), async () => {
             return urlResolverWithoutTokenFetcher.getAbsoluteUrl(mockResolvedUrl, dataStorePath);

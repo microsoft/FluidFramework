@@ -73,7 +73,7 @@ async function runnerProcess(
     url: string,
 ): Promise<number> {
     try {
-        const testDriver = await createTestDriver(driver);
+        const testDriver = await createTestDriver(driver, runConfig.runId);
 
         let reset = true;
         let done = false;

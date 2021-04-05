@@ -15,6 +15,8 @@ import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -44,11 +46,15 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
         idleTime: IdleDetectionTime,
         maxTime: IdleDetectionTime * 12,
     };
-    const runtimeOptions = {
-        generateSummaries: true,
-        enableWorker: false,
-        initialSummarizerDelayMs: 10,
-        summaryConfigOverrides,
+    const runtimeOptions: IContainerRuntimeOptions = {
+        summaryOptions: {
+            generateSummaries: true,
+            initialSummarizerDelayMs: 10,
+            summaryConfigOverrides,
+        },
+        gcOptions: {
+            gcAllowed: true,
+        },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         factory,
@@ -57,7 +63,7 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
         ],
         undefined,
         undefined,
-        runtimeOptions,
+        flattenRuntimeOptions(runtimeOptions),
     );
 
     let container1: IContainer;

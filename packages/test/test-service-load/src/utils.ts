@@ -8,15 +8,16 @@ import { Loader } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { ITestDriver, TestDriverTypes, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
-import { createFluidTestDriver } from "@fluidframework/test-drivers";
+import { createFluidTestDriver, pairwiseOdspHostStoragePolicy } from "@fluidframework/test-drivers";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { pkgName, pkgVersion } from "./packageVersion";
-import { fluidExport, ILoadTest } from "./loadTestDataStore";
+import { createFluidExport, ILoadTest } from "./loadTestDataStore";
 import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
+import { pairwiseLoaderOptions } from "./optionsMatrix";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
@@ -82,15 +83,18 @@ const codeDetails: IFluidCodeDetails = {
     config: {},
 };
 
-const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
+const createCodeLoader =
+    (runId: number | undefined)=> new LocalCodeLoader([[codeDetails, createFluidExport(runId)]]);
 
 export async function initialize(testDriver: ITestDriver) {
+    const options = pairwiseLoaderOptions.value[Math.floor(pairwiseLoaderOptions.value.length * Math.random())];
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
-        codeLoader,
+        codeLoader: createCodeLoader(undefined),
         logger: ChildLogger.create(await loggerP, undefined, {all: { driverType: testDriver.type }}),
+        options,
     });
 
     const container = await loader.createDetachedContainer(codeDetails);
@@ -109,25 +113,34 @@ export async function initialize(testDriver: ITestDriver) {
 export async function load(testDriver: ITestDriver, url: string, runId: number) {
     const documentServiceFactory =
         new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
-
+    const options = pairwiseLoaderOptions.value[runId % pairwiseLoaderOptions.value.length];
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory,
-        codeLoader,
+        codeLoader: createCodeLoader(runId),
         logger: ChildLogger.create(await loggerP, undefined, {all: { runId, driverType: testDriver.type }}),
+        options,
     });
 
     const container = await loader.resolve({ url });
     return {documentServiceFactory, container, test: await requestFluidObject<ILoadTest>(container,"/")};
 }
 
-export const createTestDriver =
-    async (driver: TestDriverTypes) => createFluidTestDriver(driver,{
-        odsp: {
-            directory: "stress",
-        },
-    });
+export async function createTestDriver(driver: TestDriverTypes, runId: number | undefined) {
+    const optionsIndex = runId === undefined
+        ? Math.floor(pairwiseOdspHostStoragePolicy.value.length * Math.random())
+        : runId % pairwiseOdspHostStoragePolicy.value.length;
+
+    return createFluidTestDriver(
+        driver,
+        {
+            odsp: {
+                directory: "stress",
+                options: pairwiseOdspHostStoragePolicy.value[optionsIndex],
+            },
+        });
+}
 
 export function getProfile(profileArg: string) {
     let config: ITestConfig;
