@@ -18,9 +18,10 @@
  * @packageDocumentation
  */
 
-export * from "./data-object-factories";
-export * from "./data-objects";
 export * from "./container-runtime-factories";
 export * from "./container-services";
+export * from "./data-object-factories";
+export * from "./data-objects";
+export * from "./legacy-container-runtime-factories";
 export * from "./request-handlers";
 export * from "./utils";
