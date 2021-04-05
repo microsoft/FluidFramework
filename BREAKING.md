@@ -1,5 +1,6 @@
 ## 0.38 Breaking changes
 - [IPersistedCache changes](#IPersistedCache-changes)
+- [ODSP Driver Type Unification](#ODSP-Driver-Type-Unification)
 - [AgentScheduler removed as a default member of ContainerRuntime](#AgentScheduler-removed-as-a-default-member-of-ContainerRuntime)
 - [Leader API surface removed](Leader-API-surface-removed)
 
@@ -8,6 +9,55 @@ IPersistedCache implementation no longer needs to implement updateUsage() method
 Same goes for sequence number / maxOpCount arguments.
 put() changed from fire-and-forget to promise, with intention of returning write errors back to caller. Driver could use this information to stop recording any data about given file if driver needs to follow all-or-nothing strategy in regards to info about a file.
 Please note that format of data stored by driver changed. It will ignore cache entries recorded by previous versions of driver.
+
+## ODSP Driver Type Unification
+This change reuses existing contracts to reduce redundancy improve consistency.
+
+The breaking protion of  this change does rename some parameters to some helper functions, but the change are purely mechanical. In most cases you will likely find you are pulling properties off an object individually to pass them as params, whereas now you can just pass the object itself.
+
+``` typescript
+// before:
+createOdspUrl(
+    siteUrl,
+    driveId,
+    fileId,
+    "/",
+    containerPackageName,
+);
+fetchJoinSession(
+    driveId,
+    itemId,
+    siteUrl,
+    ...
+)
+getFileLink(
+    getToken,
+    something.driveId,
+    something.itemId,
+    something.siteUrl,
+    ...
+)
+
+// After:
+createOdspUrl({
+    siteUrl,
+    driveId,
+    itemId: fileId,
+    dataStorePath: "/",
+    containerPackageName,
+});
+
+fetchJoinSession(
+    {driveId, itemId, siteUrl},
+    ...
+);
+
+getFileLink(
+    getToken,
+    something,
+    ...
+)
+```
 
 ### AgentScheduler removed as a default member of ContainerRuntime
 Prior to 0.38, `ContainerRuntime` would automatically add an `AgentScheduler` to the container upon creation.  This is no longer added by default.  If you support back compat with documents created prior to 0.38, they will require the `AgentScheduler` to be present in the registry for compatibility.

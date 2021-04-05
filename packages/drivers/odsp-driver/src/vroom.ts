@@ -5,7 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { ISocketStorageDiscovery } from "./contracts";
+import { IOdspUrlParts, ISocketStorageDiscovery } from "./contracts";
 import { getWithRetryForTokenRefresh, getOrigin } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
 import { TokenFetchOptions } from "./tokenFetch";
@@ -23,9 +23,7 @@ import { EpochTracker } from "./epochTracker";
  * @param epochTracker - fetch wrapper which incorporates epoch logic around joisSession call.
  */
 export async function fetchJoinSession(
-    driveId: string,
-    itemId: string,
-    siteUrl: string,
+    urlParts: IOdspUrlParts,
     path: string,
     method: string,
     logger: ITelemetryLogger,
@@ -47,7 +45,7 @@ export async function fetchJoinSession(
             async (event) =>
         {
             // TODO Extract the auth header-vs-query logic out
-            const siteOrigin = getOrigin(siteUrl);
+            const siteOrigin = getOrigin(urlParts.siteUrl);
             let queryParams = `access_token=${token}`;
             let headers = {};
             if (queryParams.length > 2048) {
@@ -56,7 +54,7 @@ export async function fetchJoinSession(
             }
 
             const response = await epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
-                `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
+                `${getApiRoot(siteOrigin)}/drives/${urlParts.driveId}/items/${urlParts.itemId}/${path}?${queryParams}`,
                 { method, headers },
                 "joinSession",
             );

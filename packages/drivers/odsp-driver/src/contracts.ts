@@ -6,7 +6,13 @@
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 
-export interface IOdspResolvedUrl extends IFluidResolvedUrl {
+export interface IOdspUrlParts {
+    siteUrl: string;
+    driveId: string;
+    itemId: string;
+}
+
+export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
     type: "fluid";
     odspResolvedUrl: true;
 
@@ -15,12 +21,6 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
 
     // A hashed identifier that is unique to this document
     hashedDocumentId: string;
-
-    siteUrl: string;
-
-    driveId: string;
-
-    itemId: string;
 
     endpoints: {
         snapshotStorageUrl: string;
@@ -210,12 +210,6 @@ export interface IOdspSnapshot {
     ops?: ISequencedDeltaOpMessage[];
 }
 
-export interface IOdspUrlParts {
-    site: string;
-    drive: string;
-    item: string;
-}
-
 export interface ISnapshotOptions {
     blobs?: number;
     deltas?: number;
@@ -242,6 +236,7 @@ export interface IOpsCachingPolicy {
      * At the same time, big number means we wait for so many ops to accumulate, which
      * increases chances and number of trailing ops that would not be flushed to cache
      * when user closes tab
+     * Use any number below 1 to disable caching
      * Default: 100
      */
     batchSize?: number;
@@ -301,17 +296,12 @@ export interface ICreateFileResponse {
     sequenceNumber: number;
 }
 
-export interface OdspDocumentInfo {
-    siteUrl: string;
-    driveId: string;
-    fileId: string;
-    dataStorePath: string;
-}
+/**
+ * @deprecated - use OdspFluidDataStoreLocator
+ */
+export type OdspDocumentInfo = OdspFluidDataStoreLocator;
 
-export interface OdspFluidDataStoreLocator {
-    siteUrl: string;
-    driveId: string;
-    fileId: string;
+export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
     dataStorePath: string;
     appName?: string;
     containerPackageName?: string;

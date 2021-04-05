@@ -129,24 +129,25 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         relativeUrl: string,
         codeDetails?: IFluidCodeDetails,
     ): Promise<string> {
-        let url = relativeUrl;
-        if (url.startsWith("/")) {
-            url = url.substr(1);
+        let dataStorePath = relativeUrl;
+        if (dataStorePath.startsWith("/")) {
+            dataStorePath = dataStorePath.substr(1);
         }
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
-        const packageName = isFluidPackage(codeDetails?.package) ? codeDetails?.package.name : codeDetails?.package ??
-             odspResolvedUrl.codeHint?.containerPackageName;
+        const containerPackageName =
+            isFluidPackage(codeDetails?.package) ? codeDetails?.package.name : codeDetails?.package ??
+            odspResolvedUrl.codeHint?.containerPackageName;
 
-        return createOdspUrl(
-            odspResolvedUrl.siteUrl,
-            odspResolvedUrl.driveId,
-            odspResolvedUrl.itemId,
-            url,
-            packageName,
-            odspResolvedUrl.fileVersion,
-        );
+        return createOdspUrl({
+            ... odspResolvedUrl,
+            containerPackageName,
+            dataStorePath,
+        });
     }
 
+    /**
+     * @deprecated - use createOdspCreateContainerRequest
+     */
     public createCreateNewRequest(
         siteUrl: string,
         driveId: string,
