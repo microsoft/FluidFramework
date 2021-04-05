@@ -113,10 +113,15 @@ export async function initialize(testDriver: ITestDriver, randEng: Random.Engine
     return testDriver.createContainerUrl(testId);
 }
 
-export async function createLoader(testDriver: ITestDriver, runId: number) {
+export async function load(
+    testDriver: ITestDriver,
+    documentServiceFactory: FaultInjectionDocumentServiceFactory,
+    url: string,
+    runId: number)
+{
     const loaderOptions = pairwiseLoaderOptions.value[runId % pairwiseLoaderOptions.value.length];
     const containerOptions = pairwiseRuntimeOptions.value[runId % pairwiseRuntimeOptions.value.length];
-    const documentServiceFactory = new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
+
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
@@ -126,16 +131,8 @@ export async function createLoader(testDriver: ITestDriver, runId: number) {
         options: loaderOptions,
     });
 
-    return {loader, documentServiceFactory};
-}
-
-export async function load(
-    loader: Loader,
-    url: string,
-   )
-{
     const container = await loader.resolve({ url });
-    return  {container, test: await requestFluidObject<ILoadTest>(container,"/")};
+    return {documentServiceFactory, container, test: await requestFluidObject<ILoadTest>(container,"/")};
 }
 
 export async function createTestDriver(driver: TestDriverTypes, runId: number | undefined) {

@@ -8,7 +8,7 @@ import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { Container } from "@fluidframework/container-loader";
 import random from "random-js";
 import { IRunConfig } from "./loadTestDataStore";
-import { createLoader, createTestDriver, getProfile, load, loggerP, safeExit } from "./utils";
+import { createTestDriver, getProfile, load, loggerP, safeExit } from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
 
 function printStatus(runConfig: IRunConfig, message: string) {
@@ -85,7 +85,8 @@ async function runnerProcess(
 
         let reset = true;
         let done = false;
-        const originalLoaderArgs = await createLoader(testDriver, runConfig.runId);
+        const documentServiceFactoryReused =
+            new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
         let counter = 0;
 
         while(!done) {
@@ -93,13 +94,13 @@ async function runnerProcess(
             // Switch between creating new factory vs. reusing factory.
             // Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
             // At the same time we want to test newly created factory.
-            const {loader, documentServiceFactory} = counter % 1 === 0 ?
-                originalLoaderArgs :
-                await createLoader(testDriver, runConfig.runId);
+            const factory = counter % 1 === 0 ?
+                documentServiceFactoryReused :
+                new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
 
-            const {container, test} = await load(loader, url);
+            const {container, test} = await load(testDriver, factory, url, runConfig.runId);
             scheduleContainerClose(container, runConfig);
-            scheduleFaultInjection(documentServiceFactory, container, runConfig);
+            scheduleFaultInjection(factory, container, runConfig);
             try{
                 printProgress(runConfig);
                 printStatus(runConfig, `running`);
