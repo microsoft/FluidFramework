@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-
 // converts all properties of an object to arrays of the
 // properties potential values. This will be used by generatePairwiseOptions
 // to compute original objects that contain pairwise combinations
@@ -84,7 +82,6 @@ export function generatePairwiseOptions<T extends Record<string, any>>(optionsMa
             for(const key of matrixKeys) {
                 if(!(key in partial)) {
                     const index = Math.floor(Math.random() * optionsMatrix[key].length);
-                    assert(partial[key] === undefined,"foo");
                     partial[key] = optionsMatrix[key][index];
                 }
             }
