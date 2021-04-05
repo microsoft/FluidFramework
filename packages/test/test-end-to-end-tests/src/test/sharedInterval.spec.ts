@@ -71,7 +71,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             const testContainerConfig: ITestContainerConfig = {
                 fluidDataObjectType: DataObjectFactoryType.Test,
                 registry,
-                useLegacyContainerRuntime: true,
+                useContainerRuntimeWithAgentScheduler: true,
             };
             const container = await provider.makeTestContainer(testContainerConfig);
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
@@ -185,7 +185,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             const testContainerConfig: ITestContainerConfig = {
                 fluidDataObjectType: DataObjectFactoryType.Test,
                 registry,
-                useLegacyContainerRuntime: true,
+                useContainerRuntimeWithAgentScheduler: true,
             };
 
             // Create a Container for the first client.
@@ -230,7 +230,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
         const testContainerConfig: ITestContainerConfig = {
             fluidDataObjectType: DataObjectFactoryType.Test,
             registry,
-            useLegacyContainerRuntime: true,
+            useContainerRuntimeWithAgentScheduler: true,
         };
 
         let dataObject1: ITestFluidObject;

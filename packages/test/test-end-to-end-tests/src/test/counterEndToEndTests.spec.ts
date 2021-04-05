@@ -20,7 +20,7 @@ const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
-    useLegacyContainerRuntime: true,
+    useContainerRuntimeWithAgentScheduler: true,
 };
 
 describeFullCompat("SharedCounter", (getTestObjectProvider) => {

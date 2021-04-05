@@ -509,7 +509,7 @@ function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions):
  * 0.38, you'll need to add AgentScheduler to your ContainerRuntime registry.  If you want AgentScheduler
  * functionality, you should instantiate it in your container code as your scenario demands.
  */
-export const makeLegacyContainerRuntime = async (
+export const makeContainerRuntimeWithAgentScheduler = async (
     context: IContainerContext,
     registryEntries: NamedFluidDataStoreRegistryEntries,
     requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,

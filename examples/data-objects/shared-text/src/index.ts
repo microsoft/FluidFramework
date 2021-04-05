@@ -8,7 +8,7 @@
 import "./publicpath";
 
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
-import { makeLegacyContainerRuntime } from "@fluidframework/container-runtime";
+import { makeContainerRuntimeWithAgentScheduler } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
@@ -72,7 +72,7 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
      * Instantiates a new chaincode host
      */
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await makeLegacyContainerRuntime(
+        const runtime = await makeContainerRuntimeWithAgentScheduler(
             context,
             [
                 ...defaultRegistryEntries,

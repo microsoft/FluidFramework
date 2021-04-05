@@ -109,8 +109,8 @@ export async function getVersionedTestObjectProvider(
     const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(dataRuntimeApi);
     const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
         const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
-        const containerRuntimeCtor = containerOptions?.useLegacyContainerRuntime === true
-            ? containerRuntimeApi.makeLegacyContainerRuntime ?? containerRuntimeApi.ContainerRuntime.load
+        const containerRuntimeCtor = containerOptions?.useContainerRuntimeWithAgentScheduler === true
+            ? containerRuntimeApi.makeContainerRuntimeWithAgentScheduler ?? containerRuntimeApi.ContainerRuntime.load
             : containerRuntimeApi.ContainerRuntime.load;
         const factoryCtor = createTestContainerRuntimeFactory(containerRuntimeCtor);
         return new factoryCtor(TestDataObjectType, dataStoreFactory, containerOptions?.runtimeOptions);

@@ -21,7 +21,7 @@ const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]]
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
-    useLegacyContainerRuntime: true,
+    useContainerRuntimeWithAgentScheduler: true,
 };
 
 describeFullCompat("SharedString", (getTestObjectProvider) => {

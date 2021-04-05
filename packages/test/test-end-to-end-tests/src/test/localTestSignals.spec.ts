@@ -18,7 +18,7 @@ import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
-    useLegacyContainerRuntime: true,
+    useContainerRuntimeWithAgentScheduler: true,
 };
 
 const waitForSignal =

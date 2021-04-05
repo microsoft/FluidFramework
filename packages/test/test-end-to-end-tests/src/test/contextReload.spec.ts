@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import {
-    LegacyContainerRuntimeFactoryWithDefaultDataStore,
+    AgentSchedulerContainerRuntimeFactoryWithDefaultDataStore,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
@@ -130,7 +130,7 @@ describeNoCompat("context reload (hot-swap)", (getTestObjectProvider) => {
     const createRuntimeFactory = (dataStore): IRuntimeFactory => {
         const type = TestDataStoreType;
         const factory = new DataObjectFactory(type, dataStore, [], {});
-        return new LegacyContainerRuntimeFactoryWithDefaultDataStore(
+        return new AgentSchedulerContainerRuntimeFactoryWithDefaultDataStore(
             factory,
             [[type, Promise.resolve(factory)]],
         );

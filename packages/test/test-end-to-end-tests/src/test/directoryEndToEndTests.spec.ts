@@ -22,7 +22,7 @@ const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFacto
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
-    useLegacyContainerRuntime: true,
+    useContainerRuntimeWithAgentScheduler: true,
 };
 
 describeFullCompat("SharedDictionary", (getTestObjectProvider) => {

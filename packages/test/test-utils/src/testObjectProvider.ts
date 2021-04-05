@@ -74,7 +74,7 @@ export interface ITestContainerConfig {
     // ContainerRuntime.  This is necessary because there is no non-legacy ContainerRuntime in
     // versions < 0.38 to test against.  However, once we are on 0.40 we should remove this flag and prefer
     // testing on the non-legacy runtime.
-    useLegacyContainerRuntime?: boolean,
+    useContainerRuntimeWithAgentScheduler?: boolean,
 }
 
 export const createDocumentId = (): string => uuid();

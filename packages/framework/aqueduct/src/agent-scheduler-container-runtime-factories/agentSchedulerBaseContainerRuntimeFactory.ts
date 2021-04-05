@@ -7,7 +7,7 @@ import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/co
 import {
     IContainerRuntimeOptions,
     FluidDataStoreRegistry,
-    makeLegacyContainerRuntime,
+    makeContainerRuntimeWithAgentScheduler,
 } from "@fluidframework/container-runtime";
 import {
     IContainerRuntime,
@@ -31,7 +31,7 @@ import { DependencyContainer, DependencyContainerRegistry } from "@fluidframewor
  * @deprecated Only use if your scenario requires backwards compatibility with documents that were produced before
  * AgentScheduler was removed from ContainerRuntime.
  */
-export class LegacyBaseContainerRuntimeFactory implements
+export class AgentSchedulerBaseContainerRuntimeFactory implements
     IProvideFluidDataStoreRegistry,
     IRuntimeFactory {
     public get IFluidDataStoreRegistry() { return this.registry; }
@@ -72,7 +72,7 @@ export class LegacyBaseContainerRuntimeFactory implements
         const scope: any = context.scope;
         scope.IFluidDependencySynthesizer = dc;
 
-        const runtime = await makeLegacyContainerRuntime(
+        const runtime = await makeContainerRuntimeWithAgentScheduler(
             context,
             this.registryEntries,
             buildRuntimeRequestHandler(

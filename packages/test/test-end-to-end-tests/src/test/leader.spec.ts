@@ -24,7 +24,9 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
     let leadershipManager1: LeadershipManager;
     beforeEach(async () => {
         provider = getTestObjectProvider();
-        container1 = await provider.makeTestContainer({ useLegacyContainerRuntime: true }) as Container;
+        container1 = await provider.makeTestContainer({
+            useContainerRuntimeWithAgentScheduler: true,
+        }) as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         const scheduler1 = await requestFluidObject<IAgentScheduler>(container1, agentSchedulerId);
         leadershipManager1 = new LeadershipManager(scheduler1);
@@ -45,7 +47,9 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
         assert(!leadershipManager1.leader);
 
         // Use legacy ContainerRuntime which has an AgentScheduler
-        const container2 = await provider.loadTestContainer({ useLegacyContainerRuntime: true }) as Container;
+        const container2 = await provider.loadTestContainer({
+            useContainerRuntimeWithAgentScheduler: true,
+        }) as Container;
         const scheduler2 = await requestFluidObject<IAgentScheduler>(container2, agentSchedulerId);
         const leadershipManager2 = new LeadershipManager(scheduler2);
         await ensureConnected(container2);
@@ -130,7 +134,9 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
         // Make sure we reconnect as a writer and processed the op
         await provider.ensureSynchronized();
 
-        const container2 = await provider.loadTestContainer({ useLegacyContainerRuntime: true }) as Container;
+        const container2 = await provider.loadTestContainer({
+            useContainerRuntimeWithAgentScheduler: true,
+        }) as Container;
         const scheduler2 = await requestFluidObject<IAgentScheduler>(container2, agentSchedulerId);
         const leadershipManager2 = new LeadershipManager(scheduler2);
 
@@ -173,11 +179,15 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
         assert(leadershipManager1.leader);
 
-        const container2 = await provider.loadTestContainer({ useLegacyContainerRuntime: true }) as Container;
+        const container2 = await provider.loadTestContainer({
+            useContainerRuntimeWithAgentScheduler: true,
+        }) as Container;
         const scheduler2 = await requestFluidObject<IAgentScheduler>(container2, agentSchedulerId);
         const leadershipManager2 = new LeadershipManager(scheduler2);
 
-        const container3 = await provider.loadTestContainer({ useLegacyContainerRuntime: true }) as Container;
+        const container3 = await provider.loadTestContainer({
+            useContainerRuntimeWithAgentScheduler: true,
+        }) as Container;
         const scheduler3 = await requestFluidObject<IAgentScheduler>(container3, agentSchedulerId);
         const leadershipManager3 = new LeadershipManager(scheduler3);
 

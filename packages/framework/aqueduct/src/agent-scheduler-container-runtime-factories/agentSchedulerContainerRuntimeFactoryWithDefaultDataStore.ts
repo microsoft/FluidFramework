@@ -12,7 +12,7 @@ import {
     innerRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "../request-handlers";
-import { LegacyBaseContainerRuntimeFactory } from "./legacyBaseContainerRuntimeFactory";
+import { AgentSchedulerBaseContainerRuntimeFactory } from "./agentSchedulerBaseContainerRuntimeFactory";
 
 const defaultDataStoreId = "default";
 
@@ -24,7 +24,8 @@ const defaultDataStoreId = "default";
  * @deprecated Only use if your scenario requires backwards compatibility with documents that were produced before
  * AgentScheduler was removed from ContainerRuntime.
  */
-export class LegacyContainerRuntimeFactoryWithDefaultDataStore extends LegacyBaseContainerRuntimeFactory {
+export class AgentSchedulerContainerRuntimeFactoryWithDefaultDataStore
+    extends AgentSchedulerBaseContainerRuntimeFactory {
     public static readonly defaultDataStoreId = defaultDataStoreId;
 
     /**
