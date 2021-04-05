@@ -27,6 +27,10 @@ const defaultDataStoreId = "default";
 export class LegacyContainerRuntimeFactoryWithDefaultDataStore extends LegacyBaseContainerRuntimeFactory {
     public static readonly defaultDataStoreId = defaultDataStoreId;
 
+    /**
+     * @deprecated Only use if your scenario requires backwards compatibility with documents that were produced before
+     * AgentScheduler was removed from ContainerRuntime.
+     */
     constructor(
         protected readonly defaultFactory: IFluidDataStoreFactory,
         registryEntries: NamedFluidDataStoreRegistryEntries,

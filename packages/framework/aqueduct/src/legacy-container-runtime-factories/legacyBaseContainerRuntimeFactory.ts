@@ -43,6 +43,8 @@ export class LegacyBaseContainerRuntimeFactory implements
      * @param serviceRegistry - The service registry for containers produced
      * @param requestHandlers - Request handlers for containers produced
      * @param runtimeOptions - The runtime options passed to the ContainerRuntime when instantiating it
+     * @deprecated Only use if your scenario requires backwards compatibility with documents that were produced before
+     * AgentScheduler was removed from ContainerRuntime.
      */
     constructor(
         private readonly registryEntries: NamedFluidDataStoreRegistryEntries,
