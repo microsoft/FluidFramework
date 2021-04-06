@@ -304,9 +304,8 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
             return false;
         }
 
-        // Note: we are not checking for this.context.deltaManager.clientDetails.capabilities.interactive
-        // here. This is done by users of this class - containerRuntime.ts (for "leader") and TaskManager.
-        // In the future, as new usage shows up, we may need to reconsider that.
+        // Note: we are not checking for this.context.deltaManager.clientDetails.capabilities.interactive here.
+        // This is done by users of this class. In the future, as new usage shows up, we may need to reconsider that.
         // I'm adding assert in pick() to catch that case and make decision on which way we go - push requirements
         // to consumers to make a choice, or centrally make this call here.
 
