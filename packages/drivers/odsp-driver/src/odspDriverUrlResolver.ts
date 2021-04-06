@@ -119,6 +119,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             codeHint: {
                 containerPackageName,
             },
+            fileVersion,
         };
     }
 
