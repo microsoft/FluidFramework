@@ -22,7 +22,7 @@ import {
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { Container, DeltaManager } from "@fluidframework/container-loader";
+import { Container, DeltaManager, waitContainerToCatchUp } from "@fluidframework/container-loader";
 
 describe("No Delta Stream", () => {
     const documentId = "localServerTest";
@@ -58,7 +58,7 @@ describe("No Delta Stream", () => {
             [[codeDetails, factory]],
             service,
             new LocalResolver());
-        if (track) {
+        if (!storageOnly) {
             loaderContainerTracker.add(loader);
         }
         const container = await loader.resolve({ url: documentLoadUrl });
@@ -131,6 +131,7 @@ describe("No Delta Stream", () => {
         assert.strictEqual(await normalDataObject2.root.wait("fluid"), "great");
 
         const storageOnlyContainer = await loadContainer(true);
+        await waitContainerToCatchUp(storageOnlyContainer as Container);
         const storageOnlyDataObject = await requestFluidObject<ITestFluidObject>(storageOnlyContainer, "default");
         assert.strictEqual(await storageOnlyDataObject.root.wait("prague"), "a city in europe");
         assert.strictEqual(await storageOnlyDataObject.root.wait("fluid"), "great");

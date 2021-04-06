@@ -63,7 +63,7 @@ export interface IPendingMessageReader {
      * @param from Starting sequence number (inclusive)
      * @param to End sequence number (inclusive)
      */
-     fetchMessages(from: number, to: number): Promise<ISequencedDocumentMessage[]>;
+     readMessages(from: number, to: number): Promise<ISequencedDocumentMessage[]>;
 }
 
 /**
