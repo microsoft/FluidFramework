@@ -203,8 +203,8 @@ export class DeltaManager
     private connection: IDocumentDeltaConnection | undefined;
     private clientSequenceNumber = 0;
     private clientSequenceNumberObserved = 0;
-    // Represents the latest topmost noops sent by the client.
-    private lastNoOps = 0;
+    // Counts the number of noops sent by the client which may not be acked.
+    private topNoOpsCount = 0;
     private closed = false;
     private storageService: RetriableDocumentStorageService | undefined;
     private readonly deltaStreamDelayId = uuid();
@@ -360,7 +360,7 @@ export class DeltaManager
 
     public shouldJoinWrite(): boolean {
         // We don't have to wait for ack for topmost NoOps. So subtract those.
-        return this.clientSequenceNumberObserved < (this.clientSequenceNumber - this.lastNoOps);
+        return this.clientSequenceNumberObserved < (this.clientSequenceNumber - this.topNoOpsCount);
     }
 
     public async connectToStorage(): Promise<IDocumentStorageService> {
@@ -776,9 +776,9 @@ export class DeltaManager
         };
 
         if (type === MessageType.NoOp) {
-            this.lastNoOps++;
+            this.topNoOpsCount++;
         } else {
-            this.lastNoOps = 0;
+            this.topNoOpsCount = 0;
         }
 
         this.emit("submitOp", message);
