@@ -21,6 +21,7 @@ type PartialWithKeyCount<T extends Record<string, any>>= (Partial<T> & {__parita
 
 function applyPairToPartial<T extends Record<string, any>>(
     randEng: random.Engine,
+    keyCount: number,
     partials: PartialWithKeyCount<T>[],
     pair: {iKey: keyof T, jKey: keyof T, iVal: any, jVal: any},
 ) {
@@ -33,10 +34,12 @@ function applyPairToPartial<T extends Record<string, any>>(
             && partial[pair.jKey] === pair.jVal) {
             return;
         }
-
-        if((pair.iKey in partial && !(pair.jKey in partial) && partial[pair.iKey] === pair.iVal)
-            || (pair.jKey in partial && !(pair.iKey in partial) && partial[pair.jKey] === pair.jVal)) {
-            matchingPartials.push(partial);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        if(partial.__paritalKeyCount! < keyCount) {
+            if((pair.iKey in partial && !(pair.jKey in partial) && partial[pair.iKey] === pair.iVal)
+                || (pair.jKey in partial && !(pair.iKey in partial) && partial[pair.jKey] === pair.jVal)) {
+                matchingPartials.push(partial);
+            }
         }
     }
     if(matchingPartials.length === 0) {
@@ -81,7 +84,11 @@ export function generatePairwiseOptions<T extends Record<string, any>>(
             const jKey = matrixKeys[j];
             for(const iVal of  optionsMatrix[iKey]) {
                 for(const jVal of optionsMatrix[jKey]) {
-                    applyPairToPartial(randEng, partials, {iKey, iVal, jKey, jVal});
+                    applyPairToPartial(
+                        randEng,
+                        matrixKeys.length,
+                        partials,
+                        {iKey, iVal, jKey, jVal});
                 }
             }
         }

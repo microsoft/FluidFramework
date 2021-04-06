@@ -283,7 +283,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
                         await wait(cycleMs / 2);
                     }else{
                         // Random jitter of +- 50% of opWaitMs
-                        await wait(opsGapMs + opsGapMs * (Math.random() - 0.5));
+                        await wait(opsGapMs + opsGapMs * random.real(0,.5,true)(config.randEng));
                     }
                 }else{
                     await dataModel.lockTask();
