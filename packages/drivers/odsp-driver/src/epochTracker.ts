@@ -47,7 +47,6 @@ export class EpochTracker implements IPersistedFileCache {
     private _fluidEpoch: string | undefined;
 
     public readonly rateLimiter: RateLimiter;
-    public readonly createBlobRateLimiter: RateLimiter;
 
     constructor(
         protected readonly cache: IPersistedCache,
@@ -56,7 +55,6 @@ export class EpochTracker implements IPersistedFileCache {
     ) {
         // Limits the max number of concurrent requests to 24.
         this.rateLimiter = new RateLimiter(24);
-        this.createBlobRateLimiter = new RateLimiter(1);
     }
 
     // public for UT purposes only!
@@ -150,10 +148,9 @@ export class EpochTracker implements IPersistedFileCache {
         const request = this.addEpochInRequest(url, fetchOptions, addInBody);
         let epochFromResponse: string | undefined;
         try {
-            const fetchFn = async () => fetchAndParseAsJSONHelper<T>(request.url, request.fetchOptions);
-            const response = fetchType === "createBlob"
-                ? await this.createBlobRateLimiter.schedule(fetchFn)
-                : await this.rateLimiter.schedule(fetchFn);
+            const response = await this.rateLimiter.schedule(
+                async () => fetchAndParseAsJSONHelper<T>(request.url, request.fetchOptions),
+            );
             epochFromResponse = response.headers.get("x-fluid-epoch");
             this.validateEpochFromResponse(epochFromResponse, fetchType);
             return response;
