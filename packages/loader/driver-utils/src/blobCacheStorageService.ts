@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString } from "@fluidframework/common-utils";
 import { IDocumentStorageService, IDocumentStorageServicePolicies } from "@fluidframework/driver-definitions";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 
@@ -20,15 +19,6 @@ export class BlobCacheStorageService extends DocumentStorageServiceProxy {
 
     public get policies(): IDocumentStorageServicePolicies | undefined {
         return this.internalStorageService.policies;
-    }
-
-    public async read(id: string): Promise<string> {
-        const blob = this.blobs.get(id);
-        if (blob !== undefined) {
-            return bufferToString(blob, "base64");
-        }
-
-        return bufferToString(await this.internalStorageService.readBlob(id), "base64");
     }
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {
