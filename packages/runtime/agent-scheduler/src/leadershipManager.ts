@@ -33,6 +33,8 @@ export class LeadershipManager extends EventEmitter {
         if (!this.subscribed) {
             // AgentScheduler throws if the same task is picked twice but we don't care because our
             // worker does nothing.  We only care that the AgentScheduler is trying to pick.
+            // We also don't care if we throw due to failing the interactive check, because then we'll
+            // just appear to never get the leadership.
             this.agentScheduler.pick(leadershipTaskId, async () => { }).catch(() => { });
             this.subscribed = true;
         }

@@ -6,8 +6,6 @@
 import { EventEmitter } from "events";
 import {
     AgentSchedulerFactory,
-    IAgentScheduler,
-    LeadershipManager,
 } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
@@ -106,7 +104,6 @@ import {
     createRootSummarizerNodeWithGC,
     FluidSerializer,
     IRootSummarizerNodeWithGC,
-    requestFluidObject,
     RequestParser,
     create404Response,
     exceptionToResponse,
@@ -533,15 +530,6 @@ export const makeContainerRuntimeWithAgentScheduler = async (
     // container from snapshot(ex. draft mode).
     if (!context.existing) {
         await runtime.createRootDataStore(AgentSchedulerFactory.type, agentSchedulerId);
-    }
-
-    if (context.clientDetails.capabilities.interactive) {
-        const scheduler = await requestFluidObject<IAgentScheduler>(
-            await runtime.getRootDataStore(agentSchedulerId, true),
-            "",
-        );
-        const leadershipManager = new LeadershipManager(scheduler);
-        leadershipManager.volunteerForLeadership();
     }
 
     return runtime;
