@@ -151,7 +151,7 @@ function scheduleFaultInjection(
     container: Container,
     runConfig: IRunConfig) {
     const schedule = ()=>{
-        const injectionTime = runConfig.testConfig.readWriteCycleMs * random.integer(0, 5)(runConfig.randEng);
+        const injectionTime = runConfig.testConfig.readWriteCycleMs * random.real(0, 5)(runConfig.randEng);
         printStatus(runConfig, `fault injection in ${(injectionTime / 60000).toString().substring(0,4)} min`);
         setTimeout(() => {
             if(container.connected && container.resolvedUrl !== undefined) {
@@ -220,7 +220,7 @@ function scheduleContainerClose(container: Container, runConfig: IRunConfig) {
                 // this will bias toward the summarizer client which is always quorum index 0.
                 if(quorumIndex >= 0 && quorumIndex <= runConfig.testConfig.numClients / 4) {
                     quorum.off("removeMember",scheduleLeave);
-                    const leaveTime = runConfig.testConfig.readWriteCycleMs * random.integer(0,  5)(runConfig.randEng);
+                    const leaveTime = runConfig.testConfig.readWriteCycleMs * random.real(0,  5)(runConfig.randEng);
                     printStatus(runConfig, `closing in ${(leaveTime / 60000).toString().substring(0,4)} min`);
                     setTimeout(
                         ()=>{
