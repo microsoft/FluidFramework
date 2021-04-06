@@ -8,7 +8,7 @@
 import "./publicpath";
 
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
-import { makeContainerRuntimeWithAgentScheduler } from "@fluidframework/container-runtime";
+import { makeContainerRuntimeWithAgentScheduler } from "@fluidframework/deprecated-agent-scheduler-container-runtime";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,

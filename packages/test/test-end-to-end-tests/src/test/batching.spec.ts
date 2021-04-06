@@ -4,8 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerMessageType, agentSchedulerId } from "@fluidframework/container-runtime";
+import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { agentSchedulerId } from "@fluidframework/deprecated-agent-scheduler-container-runtime";
 import { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IEnvelope, FlushMode } from "@fluidframework/runtime-definitions";

@@ -4,7 +4,9 @@
  */
 
 import assert from "assert";
-import { AgentSchedulerContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/deprecated-aqueduct";
+import {
+    AgentSchedulerContainerRuntimeFactoryWithDefaultDataStore,
+} from "@fluidframework/deprecated-agent-scheduler-container-runtime";
 import {
     ICodeLoader,
     IProvideRuntimeFactory,

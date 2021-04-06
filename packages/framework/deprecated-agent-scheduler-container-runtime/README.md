@@ -1,4 +1,4 @@
-# @fluidframework/deprecated-aqueduct
+# @fluidframework/deprecated-agent-scheduler-container-runtime
 
 ## Agent scheduler container runtime factories
 

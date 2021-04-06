@@ -7,7 +7,6 @@ import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/co
 import {
     IContainerRuntimeOptions,
     FluidDataStoreRegistry,
-    makeContainerRuntimeWithAgentScheduler,
 } from "@fluidframework/container-runtime";
 import {
     IContainerRuntime,
@@ -23,6 +22,9 @@ import {
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { DependencyContainer, DependencyContainerRegistry } from "@fluidframework/synthesize";
+import {
+    makeContainerRuntimeWithAgentScheduler,
+} from "./makeContainerRuntimeWithAgentScheduler";
 
 /**
  * BaseContainerRuntimeFactory produces container runtimes with a given data store and service registry, as well as

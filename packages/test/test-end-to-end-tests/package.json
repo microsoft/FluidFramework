@@ -71,7 +71,7 @@
     "@fluidframework/counter": "^0.38.0",
     "@fluidframework/datastore": "^0.38.0",
     "@fluidframework/datastore-definitions": "^0.38.0",
-    "@fluidframework/deprecated-aqueduct": "^0.38.0",
+    "@fluidframework/deprecated-agent-scheduler-container-runtime": "^0.38.0",
     "@fluidframework/driver-definitions": "^0.38.0",
     "@fluidframework/driver-utils": "^0.38.0",
     "@fluidframework/ink": "^0.38.0",

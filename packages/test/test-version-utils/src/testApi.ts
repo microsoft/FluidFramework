@@ -10,11 +10,12 @@ import { Loader } from "@fluidframework/container-loader";
 import { DriverApi } from "@fluidframework/test-drivers";
 
 // ContainerRuntime API
-import { ContainerRuntime, makeContainerRuntimeWithAgentScheduler } from "@fluidframework/container-runtime";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 
 // Data Runtime API
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
+import { makeContainerRuntimeWithAgentScheduler } from "@fluidframework/deprecated-agent-scheduler-container-runtime";
 import { Ink } from "@fluidframework/ink";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -62,6 +63,7 @@ interface IContainerRuntimeApi {
     version: string;
     ContainerRuntime: typeof ContainerRuntime;
     ContainerRuntimeFactoryWithDefaultDataStore: typeof ContainerRuntimeFactoryWithDefaultDataStore;
+    // TODO For back-compat added in 0.38 -- remove in 0.40
     makeContainerRuntimeWithAgentScheduler: typeof makeContainerRuntimeWithAgentScheduler;
 }
 
@@ -112,14 +114,27 @@ export function getContainerRuntimeApi(requested?: number | string): typeof Cont
         return ContainerRuntimeApi;
     }
     const { version, modulePath } = checkInstalled(requestedStr);
+
+    let _makeContainerRuntimeWithAgentScheduler;
+    try {
+        // Try to get the specific back-compat function, but fall back to ContainerRuntime.load in versions < 0.38
+        // Try/catch because the package won't exist.
+        _makeContainerRuntimeWithAgentScheduler =
+            loadPackage(
+                modulePath,
+                "@fluidframework/deprecated-agent-scheduler-container-runtime",
+            ).makeContainerRuntimeWithAgentScheduler;
+    } catch {
+        _makeContainerRuntimeWithAgentScheduler =
+            loadPackage(modulePath, "@fluidframework/container-runtime").ContainerRuntime.load;
+    }
+
     return {
         version,
         ContainerRuntime: loadPackage(modulePath, "@fluidframework/container-runtime").ContainerRuntime,
         ContainerRuntimeFactoryWithDefaultDataStore:
             loadPackage(modulePath, "@fluidframework/aqueduct").ContainerRuntimeFactoryWithDefaultDataStore,
-        makeContainerRuntimeWithAgentScheduler:
-            loadPackage(modulePath, "@fluidframework/container-runtime").makeContainerRuntimeWithAgentScheduler
-            ?? loadPackage(modulePath, "@fluidframework/container-runtime").ContainerRuntime.load,
+        makeContainerRuntimeWithAgentScheduler: _makeContainerRuntimeWithAgentScheduler,
     };
 }
 

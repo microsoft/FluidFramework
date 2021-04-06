@@ -14,7 +14,7 @@ import {
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import {
     AgentSchedulerContainerRuntimeFactoryWithDefaultDataStore,
-} from "@fluidframework/deprecated-aqueduct";
+} from "@fluidframework/deprecated-agent-scheduler-container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedDirectory } from "@fluidframework/map";

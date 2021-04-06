@@ -4,9 +4,6 @@
  */
 
 import { EventEmitter } from "events";
-import {
-    AgentSchedulerFactory,
-} from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
@@ -475,8 +472,6 @@ export class ScheduleManager {
     }
 }
 
-export const agentSchedulerId = "_scheduler";
-
 /** This is a temporary helper function for parsing runtimeOptions in the old format. */
 function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions): IContainerRuntimeOptions | undefined {
     if (runtimeOptions === undefined) {
@@ -499,41 +494,6 @@ function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions):
 
     return { summaryOptions, gcOptions };
 }
-
-/**
- * Produce a ContainerRuntime with AgentScheduler, compatible with ContainerRuntime.load() from versions prior to 0.38.
- * @deprecated This is provided as a migration tool only.  If you require back compat with documents produced prior to
- * 0.38, you'll need to add AgentScheduler to your ContainerRuntime registry.  If you want AgentScheduler
- * functionality, you should instantiate it in your container code as your scenario demands.
- */
-export const makeContainerRuntimeWithAgentScheduler = async (
-    context: IContainerContext,
-    registryEntries: NamedFluidDataStoreRegistryEntries,
-    requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
-    runtimeOptions?: IContainerRuntimeOptions,
-    containerScope?: IFluidObject,
-) => {
-    const augmentedRegistry = [
-        ...registryEntries,
-        AgentSchedulerFactory.registryEntry,
-    ];
-
-    const runtime = await ContainerRuntime.load(
-        context,
-        augmentedRegistry,
-        requestHandler,
-        runtimeOptions,
-        containerScope,
-    );
-
-    // Create all internal data stores if not already existing on storage or loaded a detached
-    // container from snapshot(ex. draft mode).
-    if (!context.existing) {
-        await runtime.createRootDataStore(AgentSchedulerFactory.type, agentSchedulerId);
-    }
-
-    return runtime;
-};
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.

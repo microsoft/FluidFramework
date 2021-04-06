@@ -56,7 +56,7 @@
     "@fluidframework/core-interfaces": "^0.38.0",
     "@fluidframework/datastore": "^0.38.0",
     "@fluidframework/datastore-definitions": "^0.38.0",
-    "@fluidframework/deprecated-aqueduct": "^0.38.0",
+    "@fluidframework/deprecated-agent-scheduler-container-runtime": "^0.38.0",
     "@fluidframework/driver-definitions": "^0.38.0",
     "@fluidframework/local-driver": "^0.38.0",
     "@fluidframework/map": "^0.38.0",
