@@ -9,6 +9,7 @@ import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     TestFluidObject,
+    ITestContainerConfig,
     ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import {
@@ -16,6 +17,10 @@ import {
     ITestDataObject,
     TestDataObjectType,
 } from "@fluidframework/test-version-utils";
+
+const testContainerConfig: ITestContainerConfig = {
+    useContainerRuntimeWithAgentScheduler: true,
+};
 
 describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -29,14 +34,14 @@ describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
 
     beforeEach(async () => {
         // Create a Container for the first client.
-        const firstContainer = await provider.makeTestContainer({ useContainerRuntimeWithAgentScheduler: true });
+        const firstContainer = await provider.makeTestContainer(testContainerConfig);
         firstContainerObject1 = await requestFluidObject<ITestDataObject>(firstContainer, "default");
         const containerRuntime1 = firstContainerObject1._context.containerRuntime;
         const dataStore = await containerRuntime1.createDataStore(TestDataObjectType);
         firstContainerObject2 = await requestFluidObject<ITestDataObject>(dataStore, "");
 
         // Load the Container that was created by the first client.
-        const secondContainer = await provider.loadTestContainer({ useContainerRuntimeWithAgentScheduler: true });
+        const secondContainer = await provider.loadTestContainer(testContainerConfig);
         secondContainerObject1 = await requestFluidObject<ITestDataObject>(secondContainer, "default");
 
         await provider.ensureSynchronized();

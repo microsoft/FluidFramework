@@ -8,8 +8,17 @@ import { IAgentScheduler, TaskSubscription } from "@fluidframework/agent-schedul
 import { IContainer } from "@fluidframework/container-definitions";
 import { agentSchedulerId } from "@fluidframework/deprecated-agent-scheduler-container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider, timeoutPromise, defaultTimeoutDurationMs } from "@fluidframework/test-utils";
+import {
+    defaultTimeoutDurationMs,
+    ITestContainerConfig,
+    ITestObjectProvider,
+    timeoutPromise,
+} from "@fluidframework/test-utils";
 import { describeFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";
+
+const testContainerConfig: ITestContainerConfig = {
+    useContainerRuntimeWithAgentScheduler: true,
+};
 
 describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
     let leaderTimeout = defaultTimeoutDurationMs;
@@ -23,7 +32,7 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
         let scheduler: IAgentScheduler;
 
         beforeEach(async () => {
-            const container = await provider.makeTestContainer({ useContainerRuntimeWithAgentScheduler: true });
+            const container = await provider.makeTestContainer(testContainerConfig);
             scheduler = await requestFluidObject<IAgentScheduler>(container, agentSchedulerId);
             const leadershipTaskSubscription = new TaskSubscription(scheduler, "leader");
             leadershipTaskSubscription.volunteer();
@@ -104,7 +113,7 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 
         beforeEach(async () => {
             // Create a new Container for the first document.
-            container1 = await provider.makeTestContainer({ useContainerRuntimeWithAgentScheduler: true });
+            container1 = await provider.makeTestContainer(testContainerConfig);
             scheduler1 = await requestFluidObject<IAgentScheduler>(container1, agentSchedulerId);
             const leadershipTaskSubscription1 = new TaskSubscription(scheduler1, "leader");
             leadershipTaskSubscription1.volunteer();
@@ -120,7 +129,7 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
                 });
             }
             // Load existing Container for the second document.
-            container2 = await provider.loadTestContainer({ useContainerRuntimeWithAgentScheduler: true });
+            container2 = await provider.loadTestContainer(testContainerConfig);
             scheduler2 = await requestFluidObject<IAgentScheduler>(container2, agentSchedulerId);
             const leadershipTaskSubscription2 = new TaskSubscription(scheduler2, "leader");
             leadershipTaskSubscription2.volunteer();
