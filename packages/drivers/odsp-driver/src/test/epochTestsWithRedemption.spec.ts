@@ -39,7 +39,7 @@ class DeferralWithCallback extends Deferred<void> {
 describe("Tests for Epoch Tracker With Redemption", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
     const driveId = "driveId";
-    const itemId = "fileId";
+    const itemId = "itemId";
     let epochTracker: EpochTrackerWithRedemption;
     const hashedDocumentId = getHashedDocumentId(driveId, itemId);
     let epochCallback: DeferralWithCallback;
