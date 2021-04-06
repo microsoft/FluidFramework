@@ -39,7 +39,7 @@ function getLastEditDetailsFromMessage(
  * Helper function to set up a data object that provides IFluidLastEditedTracker to track last edited in a Container.
  * It does the following:
  * - Registers an "op" listener on the runtime. On each message, it calls the shouldDiscardMessageFn to check
- *   if the message should be discarded. It also discards all scheduler message. If a message is not discarded,
+ *   if the message should be discarded. If a message is not discarded,
  *   it passes the last edited information from the message to the last edited tracker.
  * - The last edited information from the last message received before the lastEditedTracker is
  *   loaded is stored and passed tothe tracker once it loads.
@@ -56,12 +56,8 @@ export function setupLastEditedTrackerForContainer(
     // it passes the last edited information to its
     // last edited tracker. If the lastEditedTracker hasn't loaded, store the last edited information temporarily.
     runtime.on("op", (message: ISequencedDocumentMessage) => {
-        // If this is a scheduler messages or it should be discarded as per shouldDiscardMessageFn, return.
-        // To check for this, we use the runtime's isMessageDirtyable API. If it is not available, we assume
-        // that the message should not be discarded.
-        const isDirtyable = runtime.IContainerRuntimeDirtyable === undefined
-            ? true : runtime.IContainerRuntimeDirtyable.isMessageDirtyable(message);
-        if (shouldDiscardMessageFn(message) || !isDirtyable) {
+        // If this should be discarded as per shouldDiscardMessageFn, return.
+        if (shouldDiscardMessageFn(message)) {
             return;
         }
 

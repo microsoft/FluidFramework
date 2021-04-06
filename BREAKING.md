@@ -2,7 +2,8 @@
 - [IPersistedCache changes](#IPersistedCache-changes)
 - [ODSP Driver Type Unification](#ODSP-Driver-Type-Unification)
 - [AgentScheduler removed as a default member of ContainerRuntime](#AgentScheduler-removed-as-a-default-member-of-ContainerRuntime)
-- [Leader API surface removed](Leader-API-surface-removed)
+- [Leader API surface removed](#Leader-API-surface-removed)
+- [IContainerRuntimeDirtyable removed](#IContainerRuntimeDirtyable-removed)
 
 ### IPersistedCache changes
 IPersistedCache implementation no longer needs to implement updateUsage() method (removed form interface).
@@ -68,6 +69,30 @@ To facilitate migration, `makeContainerRuntimeWithAgentScheduler()` is provided 
 
 ### Leader API surface removed
 Since the `AgentScheduler` is no longer built into `ContainerRuntime`, the leadership election functionality which depended upon it is also no longer built into the runtime.  For similar functionality, you can use the `TaskSubscription` from the `@fluidframework/agent-scheduler` package which exposes a `.haveTask()` similar to the `.leader` property and `"gotTask"`/`"lostTask"` similar to the `"leader"`/`"notleader"` events previously available on the `ContainerRuntime` and data store interfaces.
+
+### IContainerRuntimeDirtyable removed
+Since the `AgentScheduler` is no longer built into `ContainerRuntime`, the `ContainerRuntime` no longer excludes any messages from dirty consideration.  As a result, `IContainerRuntimeDirtyable` has been removed and `ContainerRuntime` no longer implements it.  If you currently check `IContainerRuntimeDirtyable.isMessageDirtyable()`, you should consider all such messages to be dirtyable from the `ContainerRuntime`'s perspective.
+
+If you currently rely on this to suppress `AgentScheduler` ops from impacting last-edited determination, you should move the logic to your `shouldDiscardMessage()` check.
+
+```typescript
+import { ContainerMessageType } from "@fluidframework/container-runtime";
+import { IEnvelope, InboundAttachMessage } from "@fluidframework/runtime-definitions";
+
+// In shouldDiscardMessage()...
+if (type === ContainerMessageType.Attach) {
+    const attachMessage = contents as InboundAttachMessage;
+    if (attachMessage.id === "_scheduler") {
+        return false;
+    }
+} else if (type === ContainerMessageType.FluidDataStoreOp) {
+    const envelope = contents as IEnvelope;
+    if (envelope.address === "_scheduler") {
+        return false;
+    }
+}
+// Otherwise, proceed with other discard logic...
+```
 
 ## 0.37 Breaking changes
 

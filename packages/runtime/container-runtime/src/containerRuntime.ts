@@ -30,7 +30,6 @@ import {
 } from "@fluidframework/container-definitions";
 import {
     IContainerRuntime,
-    IContainerRuntimeDirtyable,
     IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
 import {
@@ -489,13 +488,11 @@ function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions):
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     implements
         IContainerRuntime,
-        IContainerRuntimeDirtyable,
         IRuntime,
         ISummarizerRuntime,
         ISummarizerInternalsProvider
 {
     public get IContainerRuntime() { return this; }
-    public get IContainerRuntimeDirtyable() { return this; }
     public get IFluidRouter() { return this; }
 
     // back-compat: Used by loader in <= 0.35
@@ -1408,25 +1405,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * Will return true for any message that affect the dirty state of this document
-     * This function can be used to filter out any runtime operations that should not be affecting whether or not
-     * the IFluidDataStoreRuntime.isDirty call returns true/false
-     * @param type - The type of ContainerRuntime message that is being checked
-     * @param contents - The contents of the message that is being verified
-     */
-    public isMessageDirtyable(message: ISequencedDocumentMessage) {
-        assert(
-            isRuntimeMessage(message) === true,
-            0x12c /* "Message passed for dirtyable check should be a container runtime message" */,
-        );
-        return this.isContainerMessageDirtyable(message.type as ContainerMessageType, message.contents);
-    }
-
-    private isContainerMessageDirtyable(type: ContainerMessageType, contents: any) {
-        return true;
-    }
-
-    /**
      * Submits the signal to be sent to other clients.
      * @param type - Type of the signal.
      * @param content - Content of the signal.
@@ -1792,9 +1770,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             localOpMetadata,
             opMetadataInternal,
         );
-        if (this.isContainerMessageDirtyable(type, content)) {
-            this.updateDocumentDirtyState(true);
-        }
+
+        this.updateDocumentDirtyState(true);
     }
 
     private submitChunkedMessage(type: ContainerMessageType, content: string, maxOpSize: number): number {

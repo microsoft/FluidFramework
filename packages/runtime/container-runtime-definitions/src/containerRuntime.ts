@@ -33,7 +33,6 @@ import {
     IFluidDataStoreContextDetached,
     IProvideFluidDataStoreRegistry,
  } from "@fluidframework/runtime-definitions";
-import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
 
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -67,7 +66,6 @@ export type IContainerRuntimeBaseWithCombinedEvents =
  */
 export interface IContainerRuntime extends
     IProvideContainerRuntime,
-    Partial<IProvideContainerRuntimeDirtyable>,
     IProvideFluidDataStoreRegistry,
     IContainerRuntimeBaseWithCombinedEvents {
     readonly id: string;
