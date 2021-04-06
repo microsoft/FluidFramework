@@ -8,18 +8,16 @@ import { Loader } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { ITestDriver, TestDriverTypes, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
-import { createFluidTestDriver, pairwiseOdspHostStoragePolicy } from "@fluidframework/test-drivers";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { createFluidTestDriver, generateOdspHostStoragePolicy } from "@fluidframework/test-drivers";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import random from "random-js";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { pkgName, pkgVersion } from "./packageVersion";
-import { createFluidExport, ILoadTest } from "./loadTestDataStore";
+import { createFluidExport } from "./loadTestDataStore";
 import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
-import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
-import { pairwiseLoaderOptions, pairwiseRuntimeOptions } from "./optionsMatrix";
+import { generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
@@ -85,17 +83,19 @@ const codeDetails: IFluidCodeDetails = {
     config: {},
 };
 
-const createCodeLoader =
+export const createCodeLoader =
     (options: IContainerRuntimeOptions)=>
         new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
 
-export async function initialize(testDriver: ITestDriver, randEng: Random.Engine) {
-    const options = random.pick(randEng, pairwiseLoaderOptions.value);
+export async function initialize(testDriver: ITestDriver, seed: number) {
+    const randEng = random.engines.mt19937();
+    randEng.seed(seed);
+    const options = random.pick(randEng, generateLoaderOptions(seed));
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
-        codeLoader: createCodeLoader(random.pick(randEng, pairwiseRuntimeOptions.value)),
+        codeLoader: createCodeLoader(random.pick(randEng, generateRuntimeOptions(seed))),
         logger: ChildLogger.create(await loggerP, undefined, {all: { driverType: testDriver.type }}),
         options,
     });
@@ -113,36 +113,14 @@ export async function initialize(testDriver: ITestDriver, randEng: Random.Engine
     return testDriver.createContainerUrl(testId);
 }
 
-export async function load(
-    testDriver: ITestDriver,
-    documentServiceFactory: FaultInjectionDocumentServiceFactory,
-    url: string,
-    runId: number)
-{
-    const loaderOptions = pairwiseLoaderOptions.value[runId % pairwiseLoaderOptions.value.length];
-    const containerOptions = pairwiseRuntimeOptions.value[runId % pairwiseRuntimeOptions.value.length];
-
-    // Construct the loader
-    const loader = new Loader({
-        urlResolver: testDriver.createUrlResolver(),
-        documentServiceFactory,
-        codeLoader: createCodeLoader(containerOptions),
-        logger: ChildLogger.create(await loggerP, undefined, {all: { runId, driverType: testDriver.type }}),
-        options: loaderOptions,
-    });
-
-    const container = await loader.resolve({ url });
-    return {documentServiceFactory, container, test: await requestFluidObject<ILoadTest>(container,"/")};
-}
-
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export async function createTestDriver(driver: TestDriverTypes, optionsIndex: number) {
+export async function createTestDriver(driver: TestDriverTypes, seed: number, runId: number | undefined) {
+    const options = generateOdspHostStoragePolicy(seed);
     return createFluidTestDriver(
         driver,
         {
             odsp: {
                 directory: "stress",
-                options: pairwiseOdspHostStoragePolicy.value[optionsIndex % pairwiseOdspHostStoragePolicy.value.length],
+                options: options[ (runId ?? seed) % options.length],
             },
         });
 }

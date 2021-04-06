@@ -5,11 +5,14 @@
 
 import commander from "commander";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { Container } from "@fluidframework/container-loader";
+import { Container, Loader } from "@fluidframework/container-loader";
 import random from "random-js";
-import { IRunConfig } from "./loadTestDataStore";
-import { createTestDriver, getProfile, load, loggerP, safeExit } from "./utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ILoadTest, IRunConfig } from "./loadTestDataStore";
+import { createCodeLoader, createTestDriver, getProfile, loggerP, safeExit } from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
+import { generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
 
 function printStatus(runConfig: IRunConfig, message: string) {
     if(runConfig.verbose) {
@@ -57,7 +60,7 @@ async function main() {
     }
 
     const randEng = random.engines.mt19937();
-    randEng.seed(seed);
+    randEng.seed(seed + runId);
 
     const result = await runnerProcess(
         driver,
@@ -65,6 +68,7 @@ async function main() {
             runId,
             testConfig: profile,
             verbose,
+            seed,
             randEng,
         },
         url);
@@ -81,26 +85,40 @@ async function runnerProcess(
     url: string,
 ): Promise<number> {
     try {
-        const testDriver = await createTestDriver(driver, runConfig.runId);
+        const loaderOptions = generateLoaderOptions(runConfig.seed);
+        const containerOptions = generateRuntimeOptions(runConfig.seed);
+
+        const testDriver = await createTestDriver(driver, runConfig.seed, runConfig.runId);
+        const logger = ChildLogger.create(
+            await loggerP, undefined, {all: { runId: runConfig.runId, driverType: testDriver.type }});
+        const documentServiceFactoryReused =
+            new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
 
         let reset = true;
         let done = false;
-        const documentServiceFactoryReused =
-            new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
         let counter = 0;
-
         while(!done) {
-            counter++;
             // Switch between creating new factory vs. reusing factory.
             // Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
             // At the same time we want to test newly created factory.
-            const factory = counter % 1 === 0 ?
+            const documentServiceFactory = counter % 1 === 0 ?
                 documentServiceFactoryReused :
                 new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
 
-            const {container, test} = await load(testDriver, factory, url, runConfig.runId);
+            // Construct the loader
+            const loader = new Loader({
+                urlResolver: testDriver.createUrlResolver(),
+                documentServiceFactory,
+                codeLoader: createCodeLoader(containerOptions[runConfig.runId % containerOptions.length]),
+                logger,
+                options: loaderOptions,
+            });
+
+            const container = await loader.resolve({ url });
+            const test = await requestFluidObject<ILoadTest>(container,"/");
+
             scheduleContainerClose(container, runConfig);
-            scheduleFaultInjection(factory, container, runConfig);
+            scheduleFaultInjection(documentServiceFactory, container, runConfig);
             try{
                 printProgress(runConfig);
                 printStatus(runConfig, `running`);
@@ -113,6 +131,7 @@ async function runnerProcess(
             }
             finally {
                 reset = false;
+                counter++;
                 if(!container.closed) {
                     container.close();
                 }

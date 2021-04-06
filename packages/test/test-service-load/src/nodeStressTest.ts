@@ -6,8 +6,6 @@
 import child_process from "child_process";
 import commander from "commander";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import random from "random-js";
-import { pairwiseOdspHostStoragePolicy } from "@fluidframework/test-drivers";
 import { ILoadTestConfig } from "./testConfigFile";
 import { createTestDriver, getProfile, initialize, safeExit } from "./utils";
 
@@ -50,18 +48,17 @@ async function orchestratorProcess(
     profile: ILoadTestConfig & { name: string },
     args: { testId?: string, debug?: true, verbose?: true, seed?: number },
 ) {
-    const randEng = random.engines.mt19937();
     const seed = args.seed ?? Date.now();
-    randEng.seed(seed);
 
     const testDriver = await createTestDriver(
         driver,
-        random.integer(0, pairwiseOdspHostStoragePolicy.value.length)(randEng));
+        seed,
+        undefined);
 
     // Create a new file if a testId wasn't provided
     const url = args.testId !== undefined
         ? await testDriver.createContainerUrl(args.testId)
-        : await initialize(testDriver, randEng);
+        : await initialize(testDriver, seed);
 
     const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
     console.log(`Connecting to ${args.testId ? "existing" : "new"} with seed 0x${seed.toString(16)}`);
@@ -77,7 +74,7 @@ async function orchestratorProcess(
             "--profile", profile.name,
             "--runId", i.toString(),
             "--url", url,
-            "--seed", `0x${random.integer(0,Number.MAX_SAFE_INTEGER)(randEng).toString(16)}`,
+            "--seed", `0x${seed.toString(16)}`,
         ];
         if (args.debug) {
             const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
