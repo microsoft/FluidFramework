@@ -11,6 +11,8 @@ interface SimpleOptions{
     rBoolean: boolean,
     number?: number,
     string?: string,
+    array?: number[];
+
 }
 const optionsToString = <T>(... options: T[]) =>
     options.map((o)=>JSON.stringify(o))
@@ -18,19 +20,31 @@ const optionsToString = <T>(... options: T[]) =>
 
 const simpleOptionsMatrix: OptionsMatrix<SimpleOptions> = {
     number:[undefined, 7],
-    oBoolean: [undefined, true],
+    oBoolean: [undefined, true, false],
     rBoolean: [true, false],
     string: [undefined],
+    array:[undefined, [0]],
 };
+
 function  validateSimpleOption(option: SimpleOptions) {
-    assert("number" in option, `number not defined:${option}`);
-    assert(option.number === undefined || option.number === 7, `number not expected value:${option}`);
+    assert("number" in option, `number not defined:${optionsToString(option)}`);
+    assert(option.number === undefined || option.number === 7,
+         `number not expected value:${optionsToString(option)}`);
+
     assert("oBoolean" in option, `oBoolean not defined:${option}`);
-    assert(option.oBoolean === undefined || option.oBoolean === true, `oBoolean not expected value:${option}`);
+    assert(option.oBoolean === undefined || option.oBoolean === true || option.oBoolean === false,
+         `oBoolean not expected value:${optionsToString(option)}`);
+
     assert("rBoolean" in option, `rBoolean not defined:${option}`);
-    assert(option.rBoolean === true || option.rBoolean === false, `rBoolean not expected value:${option}`);
+    assert(option.rBoolean === true || option.rBoolean === false,
+         `rBoolean not expected value:${optionsToString(option)}`);
+
     // string only has undefined as a value, so should be pruned from exploration
     assert(!("string" in option), `string is defined:${option}`);
+
+    assert("array" in option, `array not defined:${option}`);
+    assert(option.array === undefined || option.array[0] === 0,
+         `array not expected value:${optionsToString(option)}`);
 }
 
 const simpleValues = generatePairwiseOptions<SimpleOptions>(simpleOptionsMatrix);
@@ -44,7 +58,7 @@ interface ComplexOptions {
 const complexOptionsMatrix: OptionsMatrix<ComplexOptions> = {
     boolean: [undefined, true, false],
     oSimple: [undefined],
-    rSimple: [simpleOptionsMatrix],
+    rSimple: simpleValues,
 };
 
 const complexValues = generatePairwiseOptions<ComplexOptions>(complexOptionsMatrix);
@@ -62,17 +76,11 @@ function validateComplexOption(option: ComplexOptions) {
     assert(!("oSimple" in option), `oSimple is defined:${option}`);
 }
 
-// no-recursive type for validation
-export type ValuesMatrix<T extends Record<string, any>> =
-    Required<{
-        [K in keyof T]: readonly (T[K])[]
-    }>;
-
 /**
  * No pruning or optimizations, just calculate and validate all pairs
  */
 function  validatePairsExhaustively<T>(
-    matrix: ValuesMatrix<T>, values: T[]) {
+    matrix: OptionsMatrix<T>, values: T[]) {
     const keys = Object.keys(matrix);
     for(const i of keys) {
         for(const j of keys) {
@@ -83,8 +91,7 @@ function  validatePairsExhaustively<T>(
                 for(const jv of matrix[j]) {
                     let found = false;
                     for(const val of values) {
-                        if(JSON.stringify(val[i]) === JSON.stringify(iv)
-                            && JSON.stringify(val[j]) === JSON.stringify(jv)) {
+                        if(val[i] === iv && val[j] === jv) {
                             found = true;
                             break;
                         }
@@ -101,8 +108,7 @@ function  validatePairsExhaustively<T>(
 
 describe("generatePairwiseOptions",()=>{
     it("SimpleOptions",()=>{
-        assert.strictEqual(simpleValues.length, 6, optionsToString(...simpleValues));
-
+        assert.strictEqual(simpleValues.length, 10, optionsToString(...simpleValues));
         for(const option of simpleValues) {
             validateSimpleOption(option);
         }
@@ -110,19 +116,14 @@ describe("generatePairwiseOptions",()=>{
     });
 
     it("ComplexOptions",()=>{
-        assert.strictEqual(complexValues.length, 18, optionsToString(...complexValues));
+        assert.strictEqual(complexValues.length, 30, optionsToString(...complexValues));
 
         for(const option of complexValues) {
             validateComplexOption(option);
         }
 
-        validatePairsExhaustively<ComplexOptions>({
-            boolean: complexOptionsMatrix.boolean,
-            oSimple:  [undefined],
-            // this option is the pairwise set used on the simple test and is validate there
-            // reusing here validates we correctly compute the recursive matrix
-            rSimple: simpleValues,
-            },
+        validatePairsExhaustively<ComplexOptions>(
+            complexOptionsMatrix,
             complexValues);
     });
 });
