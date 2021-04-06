@@ -62,10 +62,12 @@ getFileLink(
 ### AgentScheduler removed as a default member of ContainerRuntime
 Prior to 0.38, `ContainerRuntime` would automatically add an `AgentScheduler` to the container upon creation.  This is no longer added by default.  If you support back compat with documents created prior to 0.38, they will require the `AgentScheduler` to be present in the registry for compatibility.
 
-To facilitate migration, `makeContainerRuntimeWithAgentScheduler()` is provided in the `@fluidframework/container-runtime` package that produces a runtime which is compatible with the old `ContainerRuntime.load()`, including adding an `AgentScheduler` and subscribing to leadership by default.  This helper is deprecated for new use and will be removed in an upcoming release.  Container authors should plan to incorporate these behaviors into their container code if they are desirable, and move to the new `ContainerRuntime.load()`.
+To facilitate migration, `makeContainerRuntimeWithAgentScheduler()` is provided in the `@fluidframework/deprecated-agent-scheduler-container-runtime` package that produces a runtime which is compatible with the old `ContainerRuntime.load()` by adding an `AgentScheduler`.  This helper is deprecated for new use and will be removed in an upcoming release.  Container authors should plan to incorporate the `AgentScheduler` into their container code if needed, and move to the new `ContainerRuntime.load()`.
+
+`AgentSchedulerBaseContainerRuntimeFactory` and `AgentSchedulerContainerRuntimeFactoryWithDefaultDataStore` are also provided for back-compat with the aqueduct container runtime factories.  Similarly to `makeContainerRuntimeWithAgentScheduler()`, container authors should plan to incorporate the `AgentScheduler` into their subclasses (adding it to the registry and instantiating on `containerInitializingFirstTime()`).
 
 ### Leader API surface removed
-Since the `AgentScheduler` is no longer built into `ContainerRuntime`, the leadership election functionality which depended upon it is also no longer built into the runtime.  For leader election, you can use the `LeadershipManager` from the `@fluidframework/agent-scheduler` package which exposes a `.leader` property and `"leader"`/`"notleader"` events matching those previously available on the `ContainerRuntime` and data store interfaces.
+Since the `AgentScheduler` is no longer built into `ContainerRuntime`, the leadership election functionality which depended upon it is also no longer built into the runtime.  For similar functionality, you can use the `TaskSubscription` from the `@fluidframework/agent-scheduler` package which exposes a `.haveTask()` similar to the `.leader` property and `"gotTask"`/`"lostTask"` similar to the `"leader"`/`"notleader"` events previously available on the `ContainerRuntime` and data store interfaces.
 
 ## 0.37 Breaking changes
 
