@@ -94,14 +94,12 @@ async function runnerProcess(
         const documentServiceFactoryReused =
             new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
 
-        let reset = true;
         let done = false;
-        let counter = 0;
-        while(!done) {
+        for(let iteration = 0; !done; iteration++) {
             // Switch between creating new factory vs. reusing factory.
             // Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
             // At the same time we want to test newly created factory.
-            const documentServiceFactory = counter % 1 === 0 ?
+            const documentServiceFactory = iteration % 2 === 0 ?
                 documentServiceFactoryReused :
                 new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
 
@@ -122,7 +120,7 @@ async function runnerProcess(
             try{
                 printProgress(runConfig);
                 printStatus(runConfig, `running`);
-                done = await test.run(runConfig, reset);
+                done = await test.run(runConfig, iteration === 0 /* reset */);
                 printStatus(runConfig, done ?  `finished` : "closed");
             }catch(error) {
                 await loggerP.then(
@@ -130,8 +128,6 @@ async function runnerProcess(
                 throw error;
             }
             finally {
-                reset = false;
-                counter++;
                 if(!container.closed) {
                     container.close();
                 }
