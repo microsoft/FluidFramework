@@ -60,7 +60,10 @@ async function main() {
     }
 
     const randEng = random.engines.mt19937();
-    randEng.seed(seed + runId);
+    // combine the runId with the seed for generating local randoms
+    // this makes runners repeatable, but ensures each runner
+    // will get its own set of randoms
+    randEng.seedWithArray([seed, runId]);
 
     const result = await runnerProcess(
         driver,
@@ -68,10 +71,10 @@ async function main() {
             runId,
             testConfig: profile,
             verbose,
-            seed,
             randEng,
         },
-        url);
+        url,
+        seed);
 
     await safeExit(result, url, runId);
 }
@@ -83,12 +86,13 @@ async function runnerProcess(
     driver: TestDriverTypes,
     runConfig: IRunConfig,
     url: string,
+    seed: number,
 ): Promise<number> {
     try {
-        const loaderOptions = generateLoaderOptions(runConfig.seed);
-        const containerOptions = generateRuntimeOptions(runConfig.seed);
+        const loaderOptions = generateLoaderOptions(seed);
+        const containerOptions = generateRuntimeOptions(seed);
 
-        const testDriver = await createTestDriver(driver, runConfig.seed, runConfig.runId);
+        const testDriver = await createTestDriver(driver, seed, runConfig.runId);
         const logger = ChildLogger.create(
             await loggerP, undefined, {all: { runId: runConfig.runId, driverType: testDriver.type }});
         const documentServiceFactoryReused =

@@ -21,7 +21,6 @@ export interface IRunConfig {
     runId: number,
     testConfig: ILoadTestConfig,
     verbose: boolean,
-    seed: number,
     randEng: random.Engine,
 }
 
