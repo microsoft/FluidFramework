@@ -360,7 +360,7 @@ export class DeltaManager
 
     public shouldJoinWrite(): boolean {
         // We don't have to wait for ack for topmost NoOps. So subtract those.
-        return (this.clientSequenceNumber - this.lastNoOps) !== this.clientSequenceNumberObserved;
+        return this.clientSequenceNumberObserved < (this.clientSequenceNumber - this.lastNoOps);
     }
 
     public async connectToStorage(): Promise<IDocumentStorageService> {
