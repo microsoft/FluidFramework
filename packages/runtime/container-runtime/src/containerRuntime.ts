@@ -39,7 +39,6 @@ import {
 } from "@fluidframework/container-runtime-definitions";
 import {
     assert,
-    Deferred,
     Trace,
     TypedEventEmitter,
     unreachableCase,
@@ -668,9 +667,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.attachState;
     }
 
-    public nextSummarizerP?: Promise<Summarizer>;
-    public nextSummarizerD?: Deferred<Summarizer>;
-
     // Back compat: 0.28, can be removed in 0.29
     public readonly IFluidSerializer: IFluidSerializer;
 
@@ -880,9 +876,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             context,
             this.runtimeOptions.summaryOptions.generateSummaries !== false,
             this.logger,
-            (summarizer) => { this.nextSummarizerP = summarizer; },
-            undefined,
-            undefined,
             this.runtimeOptions.summaryOptions.initialSummarizerDelayMs);
 
         if (this.connected) {
