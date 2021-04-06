@@ -52,7 +52,7 @@ export class AgentSchedulerContainerRuntimeFactoryWithDefaultDataStore
     }
 
     /**
-     * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
+     * {@inheritDoc @fluidframework/aqueduct#BaseContainerRuntimeFactory.containerInitializingFirstTime}
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
         await runtime.createRootDataStore(
