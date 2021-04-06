@@ -23,7 +23,6 @@ import {
     IContainer,
     IContainerEvents,
     IDeltaManager,
-    IRuntimeState,
     ICriticalContainerError,
     ContainerWarning,
     AttachState,
@@ -44,14 +43,12 @@ import {
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import {
-    BlobCacheStorageService,
     readAndParse,
     OnlineStatus,
     isOnline,
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
     readAndParseFromBlobs,
-    buildSnapshotTree,
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
@@ -280,6 +277,10 @@ export class CollabWindowTracker {
         this.lastNoopTime = undefined;
     }
 }
+
+const getCodeProposal =
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    (quorum: IQuorum) => quorum.get("code") ?? quorum.get("code2");
 
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
@@ -938,17 +939,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.emit("warning", warning);
     }
 
-    public async reloadContext(): Promise<void> {
-        return this.reloadContextCore().catch((error) => {
-            this.close(CreateContainerError(error));
-            throw error;
-        });
-    }
-
-    public hasNullRuntime() {
-        return this.context.hasNullRuntime();
-    }
-
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
         if (this.resolvedUrl === undefined) {
             return undefined;
@@ -979,90 +969,21 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             .catch(()=>false);
     }
 
-    private async reloadContextCore(): Promise<void> {
+    private async processCodeProposal(): Promise<void> {
         const codeDetails = this.getCodeDetailsFromQuorum();
 
         await Promise.all([
             this.deltaManager.inbound.pause(),
             this.deltaManager.inboundSignal.pause()]);
 
-        if ((await this.context.satisfies(codeDetails) === true) && !this.hasNullRuntime()) {
+        if ((await this.context.satisfies(codeDetails) === true)) {
             this.deltaManager.inbound.resume();
             this.deltaManager.inboundSignal.resume();
             return;
         }
 
-        // By default, close the container and let the host reload.
-        // If hotSwapContext is true in the loader options, then try
-        // to reload the context without closing the container.
-        type ReloadState = { hotSwap: true; prevState: IRuntimeState } | { hotSwap: false };
-        let state: ReloadState = { hotSwap: false };
-        if (this.options.hotSwapContext === true) {
-            const prevState = await this.context.snapshotRuntimeState();
-            state = { hotSwap: true, prevState };
-        }
-        this.context.dispose(new Error("ContextDisposedForReload"));
-
-        // We always hot-swap, but we don't fire the contextDisposed event
-        // if we are transitioning from a null runtime to a real runtime
-        // with detached container we no longer need the null runtime, but for legacy
-        // reasons need to keep it around (old documents without summary before code proposal).
-        // client's shouldn't need to care about this transition, as it is a implementation detail.
-        // if we didn't do this check, the clients would need to do it themselves,
-        // which would futher spread the usage of the hasNullRuntime property
-        // making it harder to deprecate.
-        if (this.hasNullRuntime()) {
-            if (!state.hotSwap) {
-                state = { hotSwap: true, prevState: {} };
-            }
-        } else {
-            this.emit("contextDisposed", codeDetails, this.context?.codeDetails);
-        }
-
-        if (this.closed) {
-            return;
-        }
-        if (!state.hotSwap) {
-            this.close();
-            return;
-        }
-        let snapshot: ISnapshotTree | undefined;
-        const blobs = new Map();
-        if (state.prevState.snapshot !== undefined) {
-            snapshot = buildSnapshotTree(state.prevState.snapshot.entries, blobs);
-
-            /**
-             * Should be removed / updated after issue #2914 is fixed.
-             * There are currently two scenarios where this is called:
-             * 1. When a new code proposal is accepted - This should be set to true before `this.loadContext` is
-             * called which creates and loads the ContainerRuntime. This is because for "read" mode clients this
-             * flag is false which causes ContainerRuntime to create the internal components again.
-             * 2. When the first client connects in "write" mode - This happens when a client does not create the
-             * Container in detached mode. In this case, when the code proposal is accepted, we come here and we
-             * need to create the internal data stores in ContainerRuntime.
-             * Once we move to using detached container everywhere, this can move outside this block.
-             */
-            this._existing = true;
-        }
-
-        if (blobs.size > 0) {
-            const blobSize = this.storageService.policies?.minBlobSize;
-            this._storageService =
-                new BlobCacheStorageService(this.storageService, blobs);
-            // ensure we did not lose that policy in the process of wrapping
-            assert(blobSize === this._storageService.policies?.minBlobSize, 0x0da /* "blob size policy" */);
-        }
-        const attributes: IDocumentAttributes = {
-            branch: this.id,
-            minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
-            sequenceNumber: this._deltaManager.lastSequenceNumber,
-            term: this._deltaManager.referenceTerm,
-        };
-
-        await this.loadContext(codeDetails, attributes, snapshot, state.prevState);
-
-        this.deltaManager.inbound.resume();
-        this.deltaManager.inboundSignal.resume();
+        this.close(CreateContainerError(
+            new Error("ExistingContextDoesNotSatisfyIncomingProposal")));
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
@@ -1241,7 +1162,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         [this._protocolHandler] = await Promise.all([protocolHandlerP, loadDetailsP]);
 
         const codeDetails = this.getCodeDetailsFromQuorum();
-        await this.loadContext(codeDetails, attributes, snapshot, undefined, pendingLocalState);
+        await this.loadContext(codeDetails, attributes, snapshot, pendingLocalState);
 
         // Propagate current connection state through the system.
         this.propagateConnectionState();
@@ -1261,12 +1182,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async createDetached(source: IFluidCodeDetails) {
-        if (!isFluidCodeDetails(source)) {
-            this.logger.send({
-                    eventName: "DetachCreateNotIFluidCodeDetails",
-                    category: "warning",
-            });
-        }
         const attributes: IDocumentAttributes = {
             branch: "",
             sequenceNumber: detachedContainerRefSeqNumber,
@@ -1293,7 +1208,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._existing = false;
 
         // Need to just seed the source data in the code quorum. Quorum itself is empty
-        this._protocolHandler = this.initializeProtocolState(
+        this._protocolHandler = await this.initializeProtocolState(
             attributes,
             members,
             proposals,
@@ -1387,7 +1302,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         }
 
-        const protocolHandler = this.initializeProtocolState(
+        const protocolHandler = await this.initializeProtocolState(
             attributes,
             members,
             proposals,
@@ -1396,12 +1311,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return protocolHandler;
     }
 
-    private initializeProtocolState(
+    private async initializeProtocolState(
         attributes: IDocumentAttributes,
         members: [string, ISequencedClient][],
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, any][],
-    ): ProtocolOpHandler {
+    ): Promise<ProtocolOpHandler> {
         const protocol = new ProtocolOpHandler(
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
@@ -1427,6 +1342,26 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.connectionStateHandler.receivedRemoveMemberEvent(clientId);
         });
 
+        // back compat for old containers where the code details
+        // we're delay added. All new creates should be detached
+        // and start with an initial code details.
+        if(getCodeProposal(protocol.quorum) === undefined) {
+            this.logger.sendTelemetryEvent({
+                eventName:"NoCodeProposal",
+            });
+            await new Promise<void>((resolve)=>{
+                const waitForCode = ()=>{
+                    if(getCodeProposal(protocol.quorum) !== undefined) {
+                        resolve();
+                    }
+                    protocol.quorum.off("approveProposal", waitForCode);
+                    this.off("closed", resolve);
+                };
+                protocol.quorum.on("approveProposal", waitForCode);
+                this.once("closed", resolve);
+            });
+        }
+
         protocol.quorum.on("addProposal", (proposal: IPendingProposal) => {
             if (proposal.key === "code" || proposal.key === "code2") {
                 this.emit("codeDetailsProposed", proposal.value, proposal);
@@ -1440,13 +1375,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 if (key === "code" || key === "code2") {
                     debug(`codeProposal ${JSON.stringify(value)}`);
                     if (!isFluidCodeDetails(value)) {
-                        this.logger.send({
+                        this.logger.sendErrorEvent({
                                 eventName: "CodeProposalNotIFluidCodeDetails",
-                                category: "warning",
                         });
                     }
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    this.reloadContext();
+                    this.processCodeProposal().catch((error) => {
+                        this.close(CreateContainerError(error));
+                        throw error;
+                    });
                 }
             });
 
@@ -1492,12 +1428,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private getCodeDetailsFromQuorum(): IFluidCodeDetails {
         const quorum = this.protocolHandler.quorum;
 
-        let pkg = quorum.get("code");
-
-        // Back compat
-        if (pkg === undefined) {
-            pkg = quorum.get("code2");
-        }
+        const pkg = getCodeProposal(quorum);
 
         return pkg as IFluidCodeDetails;
     }
@@ -1798,7 +1729,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         codeDetails: IFluidCodeDetails,
         attributes: IDocumentAttributes,
         snapshot?: ISnapshotTree,
-        previousRuntimeState: IRuntimeState = {},
         pendingLocalState?: unknown,
     ) {
         assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
@@ -1810,7 +1740,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
         const loader = new RelativeLoader(this.loader, () => this.containerUrl);
-        const previousCodeDetails = this._context?.codeDetails;
         this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,
@@ -1826,7 +1755,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (message) => this.submitSignal(message),
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,
-            previousRuntimeState,
             (dirty: boolean) => {
                 this._dirtyContainer = dirty;
                 this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
@@ -1835,7 +1763,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         );
 
         loader.resolveContainer(this);
-        this.emit("contextChanged", codeDetails, previousCodeDetails);
+        this.emit("contextChanged", codeDetails);
     }
 
     /**
