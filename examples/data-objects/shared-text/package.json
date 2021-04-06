@@ -57,7 +57,6 @@
     "@fluidframework/core-interfaces": "^0.38.0",
     "@fluidframework/datastore": "^0.38.0",
     "@fluidframework/datastore-definitions": "^0.38.0",
-    "@fluidframework/deprecated-agent-scheduler-container-runtime": "^0.38.0",
     "@fluidframework/ink": "^0.38.0",
     "@fluidframework/map": "^0.38.0",
     "@fluidframework/merge-tree": "^0.38.0",
