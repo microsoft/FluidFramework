@@ -45,6 +45,7 @@ import { getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
 import { TokenFetchOptions } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
+import { RateLimiter } from "./rateLimiter";
 
 /* eslint-disable max-len */
 
@@ -245,6 +246,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private readonly maxSnapshotSizeLimit = 500000000; // 500 MB
     private readonly maxSnapshotFetchTimeout = 120000; // 2 min
 
+    // limits the amount of parallel "attachment" blob uploads
+    private readonly createBlobRateLimiter = new RateLimiter(1);
+
     private readonly blobCache = new BlobCache();
 
     public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
@@ -301,17 +305,19 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 {
                     eventName: "createBlob",
                     size: file.byteLength,
+                    waitQueueLength: this.createBlobRateLimiter.waitQueueLength,
                 },
                 async (event) => {
-                    const res = await this.epochTracker.fetchAndParseAsJSON<api.ICreateBlobResponse>(
-                        url,
-                        {
-                            body: file,
-                            headers,
-                            method: "POST",
-                        },
-                        "createBlob",
-                    );
+                    const res = await this.createBlobRateLimiter.schedule(async () =>
+                        this.epochTracker.fetchAndParseAsJSON<api.ICreateBlobResponse>(
+                            url,
+                            {
+                                body: file,
+                                headers,
+                                method: "POST",
+                            },
+                            "createBlob",
+                    ));
                     event.end({
                         blobId: res.content.id,
                         ...res.commonSpoHeaders,
