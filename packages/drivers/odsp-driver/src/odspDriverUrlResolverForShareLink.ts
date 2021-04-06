@@ -114,6 +114,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
                     odspFluidInfo.fileId,
                     odspFluidInfo.dataStorePath,
                     odspFluidInfo.containerPackageName,
+                    odspFluidInfo.fileVersion,
                 );
             }
         } catch {
