@@ -55,6 +55,7 @@
     "@fluidframework/mocha-test-setup": "^0.38.0",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",
+    "@types/random-js": "^1.0.31",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
     "concurrently": "^5.2.0",
@@ -67,7 +68,6 @@
     "eslint-plugin-unicorn": "~26.0.1",
     "mocha": "^8.1.1",
     "nyc": "^15.0.0",
-    "@types/random-js": "^1.0.31",
     "rimraf": "^2.6.2",
     "typescript": "~4.1.3"
   }
