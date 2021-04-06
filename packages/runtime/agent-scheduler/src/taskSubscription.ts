@@ -6,36 +6,34 @@
 import { EventEmitter } from "events";
 import { IAgentScheduler } from "./agent";
 
-const leadershipTaskId = "leader";
-
-export class LeadershipManager extends EventEmitter {
+export class TaskSubscription extends EventEmitter {
     private subscribed: boolean = false;
 
-    public get leader() {
-        return this.agentScheduler.pickedTasks().includes(leadershipTaskId);
+    public haveTask() {
+        return this.agentScheduler.pickedTasks().includes(this.taskId);
     }
 
-    constructor(private readonly agentScheduler: IAgentScheduler) {
+    constructor(private readonly agentScheduler: IAgentScheduler, public readonly taskId: string) {
         super();
-        agentScheduler.on("picked", (taskId: string) => {
-            if (taskId === leadershipTaskId) {
-                this.emit("leader");
+        agentScheduler.on("picked", (_taskId: string) => {
+            if (_taskId === this.taskId) {
+                this.emit("gotTask");
             }
         });
-        agentScheduler.on("lost", (taskId: string) => {
-            if (taskId === leadershipTaskId) {
-                this.emit("notleader");
+        agentScheduler.on("lost", (_taskId: string) => {
+            if (_taskId === this.taskId) {
+                this.emit("lostTask");
             }
         });
     }
 
-    public volunteerForLeadership() {
+    public volunteer() {
         if (!this.subscribed) {
             // AgentScheduler throws if the same task is picked twice but we don't care because our
             // worker does nothing.  We only care that the AgentScheduler is trying to pick.
             // We also don't care if we throw due to failing the interactive check, because then we'll
             // just appear to never get the leadership.
-            this.agentScheduler.pick(leadershipTaskId, async () => { }).catch(() => { });
+            this.agentScheduler.pick(this.taskId, async () => { }).catch(() => { });
             this.subscribed = true;
         }
     }

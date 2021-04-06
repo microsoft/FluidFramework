@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IAgentScheduler, LeadershipManager } from "@fluidframework/agent-scheduler";
+import { IAgentScheduler, TaskSubscription } from "@fluidframework/agent-scheduler";
 import { IContainer } from "@fluidframework/container-definitions";
 import { agentSchedulerId } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -25,8 +25,8 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
         beforeEach(async () => {
             const container = await provider.makeTestContainer({ useContainerRuntimeWithAgentScheduler: true });
             scheduler = await requestFluidObject<IAgentScheduler>(container, agentSchedulerId);
-            const leadershipManager = new LeadershipManager(scheduler);
-            leadershipManager.volunteerForLeadership();
+            const leadershipTaskSubscription = new TaskSubscription(scheduler, "leader");
+            leadershipTaskSubscription.volunteer();
 
             const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
 
@@ -34,9 +34,9 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
             // tasks. Sending an op will switch it to "write" mode.
             dataObject._root.set("tempKey", "tempValue");
 
-            if (!leadershipManager.leader) {
+            if (!leadershipTaskSubscription.haveTask()) {
                 // Wait until we are the leader before we proceed.
-                await timeoutPromise((res) => leadershipManager.on("leader", res), {
+                await timeoutPromise((res) => leadershipTaskSubscription.on("gotTask", res), {
                     durationMs: leaderTimeout,
                 });
             }
@@ -106,24 +106,24 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
             // Create a new Container for the first document.
             container1 = await provider.makeTestContainer({ useContainerRuntimeWithAgentScheduler: true });
             scheduler1 = await requestFluidObject<IAgentScheduler>(container1, agentSchedulerId);
-            const leadershipManager1 = new LeadershipManager(scheduler1);
-            leadershipManager1.volunteerForLeadership();
+            const leadershipTaskSubscription1 = new TaskSubscription(scheduler1, "leader");
+            leadershipTaskSubscription1.volunteer();
             const dataObject1 = await requestFluidObject<ITestDataObject>(container1, "default");
 
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
             // tasks. Sending an op will switch it to "write" mode.
             dataObject1._root.set("tempKey1", "tempValue1");
-            if (!leadershipManager1.leader) {
+            if (!leadershipTaskSubscription1.haveTask()) {
                 // Wait until we are the leader before we proceed.
-                await timeoutPromise((res) => leadershipManager1.on("leader", res), {
+                await timeoutPromise((res) => leadershipTaskSubscription1.on("gotTask", res), {
                     durationMs: leaderTimeout,
                 });
             }
             // Load existing Container for the second document.
             container2 = await provider.loadTestContainer({ useContainerRuntimeWithAgentScheduler: true });
             scheduler2 = await requestFluidObject<IAgentScheduler>(container2, agentSchedulerId);
-            const leadershipManager2 = new LeadershipManager(scheduler2);
-            leadershipManager2.volunteerForLeadership();
+            const leadershipTaskSubscription2 = new TaskSubscription(scheduler2, "leader");
+            leadershipTaskSubscription2.volunteer();
             const dataObject2 = await requestFluidObject<ITestDataObject>(container2, "default");
 
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
