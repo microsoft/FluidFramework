@@ -1162,7 +1162,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         [this._protocolHandler] = await Promise.all([protocolHandlerP, loadDetailsP]);
 
         const codeDetails = this.getCodeDetailsFromQuorum();
-        await this.loadContext(codeDetails, attributes, snapshot, undefined);
+        await this.loadContext(codeDetails, attributes, snapshot, pendingLocalState);
 
         // Propagate current connection state through the system.
         this.propagateConnectionState();
