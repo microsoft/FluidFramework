@@ -983,7 +983,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         this.close(CreateContainerError(
-            new Error("Existing context does not satisfy incoming code proposal")));
+            new Error("ExistingContextDoesNotSatisfyIncomingProposal")));
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
