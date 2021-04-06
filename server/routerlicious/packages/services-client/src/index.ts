@@ -11,6 +11,7 @@ export * from "./historian";
 export * from "./interfaces";
 export * from "./restWrapper";
 export * from "./storage";
+export * from "./summaryTreeUploadManager";
 export * from "./utils";
 export * from "./scopes";
 export * from "./promiseTimeout";

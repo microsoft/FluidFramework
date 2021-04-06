@@ -46,7 +46,7 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
         containerPackageName?: string
     }
 
-    fileVersion?: string;
+    fileVersion: string | undefined;
 }
 
 /**

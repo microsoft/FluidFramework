@@ -16,7 +16,6 @@ import { Lazy } from "@fluidframework/common-utils";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
     cache: booleanCases,
-    hotSwapContext: booleanCases,
     provideScopeLoader: booleanCases,
     maxClientLeaveWaitTime: numberCases,
     noopCountFrequency: numberCases,
@@ -39,17 +38,17 @@ const summaryConfigurationMatrix: OptionsMatrix<Partial<ISummaryConfiguration>> 
     maxTime: numberCases,
 };
 
-const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
+const summaryOptionsMatrix = new Lazy<OptionsMatrix<ISummaryRuntimeOptions>>(()=>({
     disableIsolatedChannels: booleanCases,
     generateSummaries: booleanCases,
     initialSummarizerDelayMs: numberCases,
-    summaryConfigOverrides:[undefined, summaryConfigurationMatrix],
-};
+    summaryConfigOverrides:[undefined, ...generatePairwiseOptions(summaryConfigurationMatrix)],
+}));
 
-const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptions> = {
-    gcOptions: [undefined, gcOptionsMatrix],
-    summaryOptions: [undefined, summaryOptionsMatrix],
-};
+const runtimeOptionsMatrix = new Lazy<OptionsMatrix<IContainerRuntimeOptions>>(()=>({
+    gcOptions: [undefined, ...generatePairwiseOptions(gcOptionsMatrix)],
+    summaryOptions: [undefined, ...generatePairwiseOptions(summaryOptionsMatrix.value)],
+}));
 
 export const pairwiseRuntimeOptions = new Lazy<IContainerRuntimeOptions[]>(()=>
-    generatePairwiseOptions<IContainerRuntimeOptions>(runtimeOptionsMatrix));
+    generatePairwiseOptions<IContainerRuntimeOptions>(runtimeOptionsMatrix.value));

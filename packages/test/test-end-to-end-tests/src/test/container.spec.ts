@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import {
     IGenericError,
     ContainerErrorType,
@@ -21,6 +21,7 @@ import {
     LoaderContainerTracker,
     TestContainerRuntimeFactory,
     ITestObjectProvider,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -34,7 +35,7 @@ import {
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
-
+const codeDetails: IFluidCodeDetails = {package: "test"};
 // REVIEW: enable compat testing?
 describeNoCompat("Container", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -48,6 +49,18 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             this.skip();
         }
     });
+    before(async ()=>{
+        const loader = new Loader({
+            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver.type } }),
+            urlResolver: provider.urlResolver,
+            documentServiceFactory:
+                provider.documentServiceFactory,
+            codeLoader: new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
+        });
+        loaderContainerTracker.add(loader);
+        const container = await loader.createDetachedContainer(codeDetails);
+        await container.attach(provider.driver.createCreateNewRequest("containerTest"));
+    });
     afterEach(() => {
         loaderContainerTracker.reset();
     });
@@ -58,7 +71,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             urlResolver: props?.urlResolver ?? provider.urlResolver,
             documentServiceFactory:
                 props?.documentServiceFactory ?? provider.documentServiceFactory,
-            codeLoader: props?.codeLoader ?? new LocalCodeLoader([]),
+            codeLoader: props?.codeLoader ?? new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
         });
         loaderContainerTracker.add(loader);
 

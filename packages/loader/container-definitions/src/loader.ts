@@ -87,8 +87,7 @@ export interface IContainerEvents extends IEvent {
      */
     (event: "connect", listener: (opsBehind?: number) => void);
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
-    (event: "contextDisposed" | "contextChanged",
-        listener: (codeDetails: IFluidCodeDetails, previousCodeDetails: IFluidCodeDetails | undefined) => void);
+    (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
     (event: "disconnected" | "attaching" | "attached", listener: () => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
@@ -220,15 +219,6 @@ export interface IHostLoader extends ILoader {
 export type ILoaderOptions = {
     [key in string | number]: any;
 } & {
-    /**
-     * Affects the behavior of the Container when a new code proposal
-     * is accepted that the current loaded code does not satisfy.
-     * True to reload the context without closing the container, or
-     * false to only close the container.
-     * Defaults to false.
-     */
-    hotSwapContext?: boolean;
-
     /**
      * Set caching behavior for the loader.  If true, we will load a container from cache if one
      * with the same id/version exists or create a new container and cache it if it does not. If

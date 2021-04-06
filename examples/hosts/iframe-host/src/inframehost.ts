@@ -10,7 +10,6 @@ import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
-    IRuntimeState,
     IProxyLoaderFactory,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -81,7 +80,7 @@ class ProxyRuntime implements IRuntime {
     }
     async setConnectionState(connected: boolean, clientId?: string) {
     }
-    async stop(): Promise<IRuntimeState> {
+    async stop(): Promise<{snapshot?: never, state?: never}> {
         throw new Error("Method not implemented.");
     }
     async process(message: ISequencedDocumentMessage, local: boolean, context: any) {
