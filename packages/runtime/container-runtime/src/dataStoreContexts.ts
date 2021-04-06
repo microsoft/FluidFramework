@@ -67,6 +67,12 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
         return this._contexts.get(id);
     }
 
+    public delete(id: string): boolean {
+        this.deferredContexts.delete(id);
+        this.notBoundContexts.delete(id);
+        return this._contexts.delete(id);
+    }
+
     /**
      * Return the unbound local context with the given id,
      * or undefined if it's not found or not unbound.

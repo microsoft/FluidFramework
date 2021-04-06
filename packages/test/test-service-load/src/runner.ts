@@ -73,14 +73,26 @@ async function runnerProcess(
     url: string,
 ): Promise<number> {
     try {
-        const testDriver = await createTestDriver(driver);
+        const testDriver = await createTestDriver(driver, runConfig.runId);
 
         let reset = true;
         let done = false;
+        const documentServiceFactoryReused =
+            new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
+        let counter = 0;
+
         while(!done) {
-            const {documentServiceFactory, container, test} = await load(testDriver, url, runConfig.runId);
+            counter++;
+            // Switch between creating new factory vs. reusing factory.
+            // Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
+            // At the same time we want to test newly created factory.
+            const factory = counter % 1 === 0 ?
+                documentServiceFactoryReused :
+                new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
+
+            const {container, test} = await load(testDriver, factory, url, runConfig.runId);
             scheduleContainerClose(container, runConfig);
-            scheduleFaultInjection(documentServiceFactory, container, runConfig);
+            scheduleFaultInjection(factory, container, runConfig);
             try{
                 printProgress(runConfig);
                 printStatus(runConfig, `running`);
@@ -91,7 +103,7 @@ async function runnerProcess(
                     async (l)=>l.sendErrorEvent({eventName: "RunnerFailed", runId: runConfig.runId}, error));
                 throw error;
             }
-            finally{
+            finally {
                 reset = false;
                 if(!container.closed) {
                     container.close();

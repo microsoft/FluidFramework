@@ -14,6 +14,7 @@ import { IOdspResolvedUrl, OdspDocumentInfo, OdspFluidDataStoreLocator, SharingL
 import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 import { createOdspUrl } from "./createOdspUrl";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
+import { getOdspResolvedUrl } from "./odspUtils";
 import {
     IdentityType,
     isTokenFromCache,
@@ -55,6 +56,9 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         }
     }
 
+    /**
+     * @deprecated - use createOdspCreateContainerRequest
+     */
     public createCreateNewRequest(
         siteUrl: string,
         driveId: string,
@@ -108,13 +112,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 
             const odspFluidInfo = getLocatorFromOdspUrl(url);
             if (odspFluidInfo) {
-                requestToBeResolved.url = createOdspUrl(
-                    odspFluidInfo.siteUrl,
-                    odspFluidInfo.driveId,
-                    odspFluidInfo.fileId,
-                    odspFluidInfo.dataStorePath,
-                    odspFluidInfo.containerPackageName,
-                );
+                requestToBeResolved.url = createOdspUrl(odspFluidInfo);
             }
         } catch {
             // If the locator throws some error, then try to resolve the request as it is.
@@ -168,9 +166,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         }
         const newLinkPromise = getFileLink(
             this.instrumentedTokenFetcher,
-            resolvedUrl.siteUrl,
-            resolvedUrl.driveId,
-            resolvedUrl.itemId,
+            resolvedUrl,
             this.identityType,
             this.logger,
         ).then((fileLink) => {
@@ -194,25 +190,27 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
      */
     public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
-        relativeUrl: string,
+        dataStorePath: string,
         codeDetails?: IFluidCodeDetails,
     ): Promise<string> {
-        const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
+        const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
         const shareLink = await this.getShareLinkPromise(odspResolvedUrl);
 
         const shareLinkUrl = new URL(shareLink);
 
-        const packageName = isFluidPackage(codeDetails?.package) ? codeDetails?.package.name : codeDetails?.package ??
-        odspResolvedUrl.codeHint?.containerPackageName;
+        const containerPackageName =
+            isFluidPackage(codeDetails?.package) ? codeDetails?.package.name : codeDetails?.package ??
+            odspResolvedUrl.codeHint?.containerPackageName;
 
         storeLocatorInOdspUrl(shareLinkUrl, {
             siteUrl: odspResolvedUrl.siteUrl,
             driveId: odspResolvedUrl.driveId,
-            fileId: odspResolvedUrl.itemId,
-            dataStorePath: relativeUrl,
+            itemId: odspResolvedUrl.itemId,
+            dataStorePath,
             appName: this.appName,
-            containerPackageName: packageName,
+            containerPackageName,
+            fileVersion: odspResolvedUrl.fileVersion,
         });
 
         return shareLinkUrl.href;
@@ -224,12 +222,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     public static createDocumentUrl(baseUrl: string, driverInfo: OdspDocumentInfo) {
         const url = new URL(baseUrl);
 
-        storeLocatorInOdspUrl(url, {
-            siteUrl: driverInfo.siteUrl,
-            driveId: driverInfo.driveId,
-            fileId: driverInfo.fileId,
-            dataStorePath: driverInfo.dataStorePath,
-        });
+        storeLocatorInOdspUrl(url, driverInfo);
 
         return url.href;
     }

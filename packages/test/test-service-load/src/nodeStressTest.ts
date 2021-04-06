@@ -46,7 +46,7 @@ async function orchestratorProcess(
     profile: ILoadTestConfig & { name: string },
     args: { testId?: string, debug?: true, verbose?: true },
 ) {
-    const testDriver = await createTestDriver(driver);
+    const testDriver = await createTestDriver(driver, undefined);
 
     // Create a new file if a testId wasn't provided
     const url = args.testId !== undefined

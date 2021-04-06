@@ -1,3 +1,63 @@
+## 0.38 Breaking changes
+- [IPersistedCache changes](#IPersistedCache-changes)
+- [ODSP Driver Type Unification](#ODSP-Driver-Type-Unification)
+
+### IPersistedCache changes
+IPersistedCache implementation no longer needs to implement updateUsage() method (removed form interface).
+Same goes for sequence number / maxOpCount arguments.
+put() changed from fire-and-forget to promise, with intention of returning write errors back to caller. Driver could use this information to stop recording any data about given file if driver needs to follow all-or-nothing strategy in regards to info about a file.
+Please note that format of data stored by driver changed. It will ignore cache entries recorded by previous versions of driver.
+
+## ODSP Driver Type Unification
+This change reuses existing contracts to reduce redundancy improve consistency.
+
+The breaking protion of  this change does rename some parameters to some helper functions, but the change are purely mechanical. In most cases you will likely find you are pulling properties off an object individually to pass them as params, whereas now you can just pass the object itself.
+
+``` typescript
+// before:
+createOdspUrl(
+    siteUrl,
+    driveId,
+    fileId,
+    "/",
+    containerPackageName,
+);
+fetchJoinSession(
+    driveId,
+    itemId,
+    siteUrl,
+    ...
+)
+getFileLink(
+    getToken,
+    something.driveId,
+    something.itemId,
+    something.siteUrl,
+    ...
+)
+
+// After:
+createOdspUrl({
+    siteUrl,
+    driveId,
+    itemId: fileId,
+    dataStorePath: "/",
+    containerPackageName,
+});
+
+fetchJoinSession(
+    {driveId, itemId, siteUrl},
+    ...
+);
+
+getFileLink(
+    getToken,
+    something,
+    ...
+)
+```
+
+
 ## 0.37 Breaking changes
 
 -   [OpProcessingController marked for deprecation](#opprocessingcontroller-marked-for-deprecation)

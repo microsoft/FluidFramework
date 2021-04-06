@@ -7,7 +7,7 @@ import assert from "assert";
 import os from "os";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
-import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver";
+import type { HostStoragePolicy, OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver";
 import {
     OdspTokenConfig,
     OdspTokenManager,
@@ -35,6 +35,7 @@ type TokenConfig = IOdspTestLoginInfo & IClientConfig;
 interface IOdspTestDriverConfig extends TokenConfig {
     directory: string;
     driveId: string;
+    options: HostStoragePolicy | undefined
 }
 
 export class OdspTestDriver implements ITestDriver {
@@ -51,7 +52,7 @@ export class OdspTestDriver implements ITestDriver {
     }
 
     public static async createFromEnv(
-        config?: { directory?: string, username?: string },
+        config?: { directory?: string, username?: string, options?: HostStoragePolicy },
         api: OdspDriverApiType = OdspDriverApi,
     ) {
         const loginAccounts = process.env.login__odsp__test__accounts;
@@ -72,10 +73,12 @@ export class OdspTestDriver implements ITestDriver {
             },
             config?.directory ?? "",
             api,
+            config?.options,
         );
     }
 
-    private static async create(loginConfig: IOdspTestLoginInfo, directory: string, api = OdspDriverApi) {
+    private static async create(
+        loginConfig: IOdspTestLoginInfo, directory: string, api = OdspDriverApi, options?: HostStoragePolicy) {
         const tokenConfig: TokenConfig = {
             ...loginConfig,
             ...getMicrosoftConfiguration(),
@@ -100,6 +103,7 @@ export class OdspTestDriver implements ITestDriver {
             ...tokenConfig,
             directory: directoryParts.join("/"),
             driveId,
+            options,
         };
 
         return new OdspTestDriver(
@@ -145,11 +149,11 @@ export class OdspTestDriver implements ITestDriver {
 
             this.testIdToUrl.set(
                 testId,
-                this.api.createOdspUrl(
+                this.api.createOdspUrl({
+                    ... driveItem,
                     siteUrl,
-                    driveItem.drive,
-                    driveItem.item,
-                    "/"));
+                    dataStorePath: "/",
+                }));
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.testIdToUrl.get(testId)!;
@@ -159,6 +163,8 @@ export class OdspTestDriver implements ITestDriver {
         return new this.api.OdspDocumentServiceFactory(
             this.getStorageToken.bind(this),
             this.getPushToken.bind(this),
+            undefined,
+            this.config.options,
         );
     }
 

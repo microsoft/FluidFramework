@@ -10,7 +10,7 @@ import { IOdspResolvedUrl } from "./contracts";
 import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
-import { getHashedDocumentId } from "./odspUtils";
+import { getHashedDocumentId, getOdspResolvedUrl } from "./odspUtils";
 
 function getUrlBase(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
     const siteOrigin = new URL(siteUrl).origin;
@@ -72,6 +72,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 },
                 tokens: {},
                 type: "fluid",
+                odspResolvedUrl: true,
                 url: `fluid-odsp://${siteURL}?${queryString}&version=null`,
                 siteUrl: siteURL,
                 hashedDocumentId: "",
@@ -103,6 +104,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 
         return {
             type: "fluid",
+            odspResolvedUrl: true,
             endpoints: {
                 snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId, fileVersion),
                 attachmentPOSTStorageUrl: getAttachmentPOSTUrl(siteUrl, driveId, itemId, fileVersion),
@@ -127,24 +129,25 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         relativeUrl: string,
         codeDetails?: IFluidCodeDetails,
     ): Promise<string> {
-        let url = relativeUrl;
-        if (url.startsWith("/")) {
-            url = url.substr(1);
+        let dataStorePath = relativeUrl;
+        if (dataStorePath.startsWith("/")) {
+            dataStorePath = dataStorePath.substr(1);
         }
-        const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-        const packageName = isFluidPackage(codeDetails?.package) ? codeDetails?.package.name : codeDetails?.package ??
-             odspResolvedUrl.codeHint?.containerPackageName;
+        const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+        const containerPackageName =
+            isFluidPackage(codeDetails?.package) ? codeDetails?.package.name : codeDetails?.package ??
+            odspResolvedUrl.codeHint?.containerPackageName;
 
-        return createOdspUrl(
-            odspResolvedUrl.siteUrl,
-            odspResolvedUrl.driveId,
-            odspResolvedUrl.itemId,
-            url,
-            packageName,
-            odspResolvedUrl.fileVersion,
-        );
+        return createOdspUrl({
+            ... odspResolvedUrl,
+            containerPackageName,
+            dataStorePath,
+        });
     }
 
+    /**
+     * @deprecated - use createOdspCreateContainerRequest
+     */
     public createCreateNewRequest(
         siteUrl: string,
         driveId: string,
