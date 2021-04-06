@@ -1740,7 +1740,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
         const loader = new RelativeLoader(this.loader, () => this.containerUrl);
-        const previousCodeDetails = this._context?.codeDetails;
         this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,
@@ -1764,7 +1763,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         );
 
         loader.resolveContainer(this);
-        this.emit("contextChanged", codeDetails, previousCodeDetails);
+        this.emit("contextChanged", codeDetails);
     }
 
     /**

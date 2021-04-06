@@ -122,7 +122,7 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
     it("Code Proposal", async () => {
         const proposal: IFluidCodeDetails = { package: packageV2 };
         for (let i = 0; i < containers.length; i++) {
-            containers[i].once("contextDisposed", (c) => {
+            containers[i].once("codeDetailsProposed", (c) => {
                 assert.deepStrictEqual(
                     c,
                     proposal,
@@ -152,10 +152,6 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 
     it("Code Proposal Rejection", async () => {
         for (let i = 0; i < containers.length; i++) {
-            containers[i].once("contextDisposed", () => {
-                throw Error(`context should not dispose for containers[${i}]`);
-            });
-
             containers[i].once("contextChanged", () => {
                 throw Error(`context should not change for containers[${i}]`);
             });
@@ -188,10 +184,6 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 
     it("Code Proposal With Compatible Existing", async () => {
         for (let i = 0; i < containers.length; i++) {
-            containers[i].once("contextDisposed", () => {
-                throw Error(`context should not dispose for containers[${i}]`);
-            });
-
             containers[i].once("contextChanged", () => {
                 throw Error(`context should not change for containers[${i}]`);
             });
