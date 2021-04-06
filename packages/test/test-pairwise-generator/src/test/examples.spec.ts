@@ -78,9 +78,7 @@ describe("generatePairwiseOptions.examples",()=>{
         // in this example we generate pairwise options for keys on the main object to
         // create the values which will then be pairwise matched with eachother
         const complexObjectMatrix: OptionsMatrix<MyComplexObject> = {
-            numbers: [
-                undefined,
-                ... generatePairwiseOptions<ArrayLike<number>>(arrayMatrix).map((a)=>Array.from(a))],
+            numbers: [undefined, ... generatePairwiseOptions<ArrayLike<number>>(arrayMatrix).map((a)=>Array.from(a))],
             subObject: generatePairwiseOptions<{str: string}>({str:["a","b","c"]}),
         };
 

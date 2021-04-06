@@ -16,7 +16,6 @@ import { Lazy } from "@fluidframework/common-utils";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
     cache: booleanCases,
-    hotSwapContext: booleanCases,
     provideScopeLoader: booleanCases,
     maxClientLeaveWaitTime: numberCases,
     noopCountFrequency: numberCases,

@@ -328,9 +328,7 @@ export class OdspDocumentService implements IDocumentService {
     private async joinSession(): Promise<ISocketStorageDiscovery> {
         const executeFetch = async () =>
             fetchJoinSession(
-                this.odspResolvedUrl.driveId,
-                this.odspResolvedUrl.itemId,
-                this.odspResolvedUrl.siteUrl,
+                this.odspResolvedUrl,
                 "opStream/joinSession",
                 "POST",
                 this.logger,
