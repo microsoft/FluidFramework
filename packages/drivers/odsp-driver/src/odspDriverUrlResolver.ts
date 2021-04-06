@@ -83,6 +83,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 codeHint: {
                     containerPackageName: packageName ? packageName : undefined,
                 },
+                fileVersion: undefined,
             };
         }
         const { siteUrl, driveId, itemId, path, containerPackageName, fileVersion } = decodeOdspUrl(request.url);
@@ -121,6 +122,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             codeHint: {
                 containerPackageName,
             },
+            fileVersion,
         };
     }
 
