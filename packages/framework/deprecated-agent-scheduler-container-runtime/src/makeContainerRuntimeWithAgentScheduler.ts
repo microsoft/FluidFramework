@@ -40,7 +40,7 @@ export const agentSchedulerId = "_scheduler";
 
     // Create all internal data stores if not already existing on storage or loaded a detached
     // container from snapshot(ex. draft mode).
-    if (!context.existing) {
+    if (context.existing !== true) {
         await runtime.createRootDataStore(AgentSchedulerFactory.type, agentSchedulerId);
     }
 
