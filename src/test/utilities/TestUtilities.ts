@@ -5,7 +5,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { expect } from 'chai';
-import { Container } from '@fluidframework/container-loader';
+import { Container, Loader } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
 import {
 	MockContainerRuntimeFactory,
@@ -187,7 +187,7 @@ export async function setUpLocalServerTestSharedTree(
 		container = await provider.loadTestContainer();
 	} else {
 		const driver = new LocalServerTestDriver();
-		provider = new TestObjectProvider(driver, runtimeFactory);
+		provider = new TestObjectProvider(Loader, driver, runtimeFactory);
 		container = (await provider.makeTestContainer()) as Container;
 	}
 

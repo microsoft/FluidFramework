@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from '@fluidframework/common-utils';
+import { bufferToString } from '@fluidframework/common-utils';
 import { IFluidHandle, IFluidSerializer } from '@fluidframework/core-interfaces';
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from '@fluidframework/protocol-definitions';
 import { IFluidDataStoreRuntime, IChannelStorageService } from '@fluidframework/datastore-definitions';
@@ -428,8 +428,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 		const summaryLoadPerformanceEvent = PerformanceEvent.start(this.logger, { eventName: 'SummaryLoad' });
 
 		try {
-			const header = await storage.read(snapshotFileName);
-			const summary = deserialize(fromBase64ToUtf8(header), this.serializer);
+			const newBlob = await storage.readBlob(snapshotFileName);
+			const blobData = bufferToString(newBlob, 'utf8');
+
+			const summary = deserialize(blobData, this.serializer);
 			if (typeof summary === 'string') {
 				fail(summary);
 			}
