@@ -33,6 +33,11 @@ function getAttachmentGETUrl(siteUrl: string, driveId: string, itemId: string, f
     return `${urlBase}opStream/attachments`;
 }
 
+function getDeltaStorageUrl(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
+    const urlBase = getUrlBase(siteUrl, driveId, itemId, fileVersion);
+    return `${urlBase}opStream`;
+}
+
 /**
  * Utility that enables us to handle paths provided with a beginning slash.
  * For example if a value of '/id1/id2' is provided, id1/id2 is returned.
@@ -69,6 +74,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                     snapshotStorageUrl: "",
                     attachmentGETStorageUrl: "",
                     attachmentPOSTStorageUrl: "",
+                    deltaStorageUrl: "",
                 },
                 tokens: {},
                 type: "fluid",
@@ -107,6 +113,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId, fileVersion),
                 attachmentPOSTStorageUrl: getAttachmentPOSTUrl(siteUrl, driveId, itemId, fileVersion),
                 attachmentGETStorageUrl: getAttachmentGETUrl(siteUrl, driveId, itemId, fileVersion),
+                deltaStorageUrl: getDeltaStorageUrl(siteUrl, driveId, itemId, fileVersion),
             },
             tokens: {},
             url: documentUrl,
