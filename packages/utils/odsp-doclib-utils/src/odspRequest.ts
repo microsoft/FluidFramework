@@ -13,7 +13,7 @@ export async function getAsync(
     url: string,
     authRequestInfo: IOdspAuthRequestInfo,
 ): Promise<Response> {
-    return authRequest(authRequestInfo, async (config: RequestInit) => fetch(url, config) as Response);
+    return authRequest(authRequestInfo, async (config: RequestInit) => fetch(url, config) as Promise<Response>);
 }
 
 export async function putAsync(
@@ -25,7 +25,7 @@ export async function putAsync(
             ...config,
             method: "PUT",
         };
-        return fetch(url, putConfig) as Response;
+        return fetch(url, putConfig) as Promise<Response>;
     });
 }
 
@@ -40,13 +40,13 @@ export async function postAsync(
             body,
             method: "POST",
         };
-        return fetch(url, postConfig) as Response;
+        return fetch(url, postConfig) as Promise<Response>;
     });
 }
 
 export async function unauthPostAsync(url: string, body: any): Promise<Response> {
     return safeRequestCore(async () => {
-        return fetch(url, { body, method: "POST" }) as Response;
+        return fetch(url, { body, method: "POST" }) as Promise<Response>;
     });
 }
 
