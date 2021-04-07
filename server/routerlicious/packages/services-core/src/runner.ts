@@ -97,9 +97,11 @@ export function runService<T extends IResources>(
     runnerFactory: IRunnerFactory<T>,
     logger: ILogger | undefined,
     group: string,
-    configOrPath: nconf.Provider | string) {
-    // eslint-disable-next-line max-len
-    const config = typeof configOrPath === "string" ? nconf.argv().env({ separator: "__", parseValues: true }).file(configOrPath).use("memory") : configOrPath;
+    configOrPath: nconf.Provider | string,
+) {
+    const config = typeof configOrPath === "string"
+        ? nconf.argv().env({ separator: "__", parseValues: true }).file(configOrPath).use("memory")
+        : configOrPath;
 
     const runningP = run(config, resourceFactory, runnerFactory, logger);
 

@@ -19,7 +19,7 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { performance, bufferToString } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import { DeltaManager } from "./deltaManager";
 
@@ -45,58 +45,53 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
     }
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
-        return this.readWithRetry(
+        return this.runWithRetry(
             async () => this.internalStorageService.getSnapshotTree(version),
             "getSnapshotTree",
         );
     }
 
-    public async read(blobId: string): Promise<string> {
-        return this.readWithRetry(async () =>
-        bufferToString(await this.internalStorageService.readBlob(blobId),"base64"), "read");
-    }
-
     public async readBlob(id: string): Promise<ArrayBufferLike> {
-        return this.readWithRetry(async () => this.internalStorageService.readBlob(id), "readBlob");
+        return this.runWithRetry(async () => this.internalStorageService.readBlob(id), "readBlob");
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
-        return this.readWithRetry(
+        return this.runWithRetry(
             async () => this.internalStorageService.getVersions(versionId, count),
             "getVersions",
         );
     }
 
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
-        return this.readWithRetry(
+        return this.runWithRetry(
             async () => this.internalStorageService.write(tree, parents, message, ref),
             "write",
         );
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
-        return this.readWithRetry(
+        return this.runWithRetry(
             async () => this.internalStorageService.uploadSummaryWithContext(summary, context),
             "uploadSummaryWithContext",
         );
     }
 
     public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
-        return this.readWithRetry(
+        return this.runWithRetry(
             async () => this.internalStorageService.downloadSummary(handle),
             "downloadSummary",
         );
     }
 
     public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
-        return this.readWithRetry(async () => this.internalStorageService.createBlob(file), "createBlob");
+        return this.runWithRetry(async () => this.internalStorageService.createBlob(file), "createBlob");
     }
 
     private async delay(timeMs: number): Promise<void> {
         return new Promise((resolve) => setTimeout(() => resolve(), timeMs));
     }
 
-    private async readWithRetry<T>(api: () => Promise<T>, fetchCallName: string): Promise<T> {
+    private async runWithRetry<T>(api: () => Promise<T>, fetchCallName: string): Promise<T> {
         let result: T | undefined;
         let success = false;
         let retryAfter = 1; // has to be positive!

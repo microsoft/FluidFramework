@@ -5,6 +5,7 @@
 
 export * from "./insecureTokenProvider";
 export * from "./insecureUrlResolver";
+export * from "./mocksDataStoreContext";
 export * from "./mockDeltas";
 export * from "./mockLogger";
 export * from "./mocks";

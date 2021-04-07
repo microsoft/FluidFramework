@@ -6,6 +6,7 @@
 /* eslint-disable no-null/no-null */
 
 import assert from "assert";
+import { inspect } from "util";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import {
     IDocumentMessage,
@@ -221,9 +222,11 @@ export class ScribeLambda extends SequencedLambda {
                                         },
                                     );
                                 } else {
-                                    await this.sendSummaryNack(summaryResponse.message as ISummaryNack);
+                                    const nackMessage = summaryResponse.message as ISummaryNack;
+                                    await this.sendSummaryNack(nackMessage);
                                     this.context.log?.error(
-                                        `Client summary failure @${value.operation.sequenceNumber}`,
+                                        `Client summary failure @${value.operation.sequenceNumber}. `
+                                        + `Error: ${nackMessage.errorMessage}`,
                                         {
                                             messageMetaData: {
                                                 documentId: this.documentId,
@@ -235,6 +238,7 @@ export class ScribeLambda extends SequencedLambda {
                                 }
                             }
                         } catch (ex) {
+                            this.context.log?.error(`Failed to summarize the document. Exception: ${inspect(ex)}`);
                             this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
                             // If this flag is set, we should ignore any storage specific error and move forward
                             // to process the next message.

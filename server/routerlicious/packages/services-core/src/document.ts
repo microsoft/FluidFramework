@@ -67,6 +67,9 @@ export interface IDeliState {
 
     // Term at logOffset
     term: number;
+
+    // Last sent minimum sequence number
+    lastSentMSN: number | undefined;
 }
 
 // TODO: We should probably rename this to IScribeState

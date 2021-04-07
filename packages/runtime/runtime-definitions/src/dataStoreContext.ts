@@ -69,8 +69,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
  */
 export interface IContainerRuntimeBase extends
     IEventProvider<IContainerRuntimeBaseEvents>,
-    IProvideFluidHandleContext
-{
+    IProvideFluidHandleContext {
 
     readonly logger: ITelemetryLogger;
     readonly clientDetails: IClientDetails;
@@ -102,7 +101,12 @@ export interface IContainerRuntimeBase extends
      * @deprecated 0.16 Issue #1537, #3631
      * @internal
      */
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IFluidRouter>;
+    _createDataStoreWithProps(
+        pkg: string | string[],
+        props?: any,
+        id?: string,
+        isRoot?: boolean,
+    ): Promise<IFluidRouter>;
 
     /**
      * Creates data store. Returns router of data store. Data store is not bound to container,
@@ -231,7 +235,9 @@ export interface IFluidDataStoreContextEvents extends IEvent {
  * get information and call functionality to the container.
  */
 export interface IFluidDataStoreContext extends
-IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegistry> {
+    IEventProvider<IFluidDataStoreContextEvents>,
+    Partial<IProvideFluidDataStoreRegistry>,
+    IProvideFluidHandleContext {
     readonly documentId: string;
     readonly id: string;
     /**
@@ -258,6 +264,8 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     readonly baseSnapshot: ISnapshotTree | undefined;
+    readonly logger: ITelemetryLogger;
+    readonly clientDetails: IClientDetails;
     /**
      * @deprecated 0.37 Use the provideScopeLoader flag to make the loader
      * available through scope instead

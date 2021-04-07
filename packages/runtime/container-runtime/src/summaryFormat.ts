@@ -75,6 +75,8 @@ export interface IContainerRuntimeMetadata {
     readonly summaryFormatVersion: 1;
     /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
     readonly disableIsolatedChannels?: true;
+    /** 1 to enable GC, 0 to disable GC, undefined defaults to disabled. */
+    readonly gcFeature?: 0 | 1;
 }
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
@@ -82,6 +84,7 @@ export function getMetadataFormatVersion(metadata: IContainerRuntimeMetadata | u
     /**
      * Version 1+: Introduces .metadata blob and .channels trees for isolation of
      * data store trees from container-level objects.
+     * Also introduces enableGC option stored in the summary.
      *
      * Version 0: metadata blob missing; format version is missing from summary.
      * This indicates it is an older version.
@@ -96,6 +99,16 @@ export const blobsTreeName = ".blobs";
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function rootHasIsolatedChannels(metadata: IContainerRuntimeMetadata | undefined): boolean {
     return !!metadata && !metadata.disableIsolatedChannels;
+}
+
+export function gcFeature(
+    metadata: IContainerRuntimeMetadata | undefined,
+): Required<IContainerRuntimeMetadata>["gcFeature"] {
+    if (!metadata) {
+        // Force to 0/disallowed in prior versions
+        return 0;
+    }
+    return metadata.gcFeature ?? 0;
 }
 
 export const protocolTreeName = ".protocol";

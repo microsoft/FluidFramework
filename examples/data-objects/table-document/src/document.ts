@@ -29,6 +29,10 @@ export interface ITableDocumentEvents extends IEvent {
         listener: (delta: SequenceDeltaEvent, target: SharedNumberSequence | SparseMatrix) => void);
 }
 
+/**
+ * @deprecated - TableDocument is an abandoned prototype.  Please use SharedMatrix with
+ *               the IMatrixProducer/Consumer interfaces instead.
+ */
 // eslint-disable-next-line @typescript-eslint/ban-types
 export class TableDocument extends DataObject<{}, {}, ITableDocumentEvents> implements ITable {
     public static getFactory() { return TableDocument.factory; }

@@ -20,7 +20,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
-import { ISummarizer, Summarizer, createSummarizingWarning, ISummarizingWarning } from "./summarizer";
+import { ISummarizer, createSummarizingWarning, ISummarizingWarning } from "./summarizer";
 
 export const summarizerClientType = "summarizer";
 
@@ -168,9 +168,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         private readonly context: IContainerContext,
         private readonly summariesEnabled: boolean,
         parentLogger: ITelemetryLogger,
-        private readonly setNextSummarizer: (summarizer: Promise<Summarizer>) => void,
-        private nextSummarizerP?: Promise<Summarizer>,
-        immediateSummary: boolean = false,
         initialDelayMs: number = defaultInitialDelayMs,
     ) {
         super();
@@ -203,7 +200,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             this.refreshSummarizer();
         });
 
-        this.initialDelayTimer = immediateSummary ? undefined : new PromiseTimer(initialDelayMs, () => { });
+        this.initialDelayTimer = new PromiseTimer(initialDelayMs, () => { });
         this.initialDelayP = this.initialDelayTimer?.start() ?? Promise.resolve();
 
         this.refreshSummarizer();
@@ -249,10 +246,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             return { shouldSummarize: false, stopReason: "parentShouldNotSummarize" };
         } else if (this.disposed) {
             return { shouldSummarize: false, stopReason: "disposed" };
-        } else if (this.nextSummarizerP !== undefined) {
-            // This client has just come from a context reload, which means its
-            // summarizer client did as well.  We need to call start to rebind them.
-            return { shouldSummarize: true, shouldStart: true };
         } else if (this.quorumHeap.getSummarizerCount() > 0) {
             // Need to wait for any other existing summarizer clients to close,
             // because they can live longer than their parent container.
@@ -335,7 +328,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         }
 
         this.createSummarizer(delayMs).then((summarizer) => {
-            this.setNextSummarizer(summarizer.setSummarizer());
             summarizer.on("summarizingError",
                 (warning: ISummarizingWarning) => this.raiseContainerWarning(warning));
             this.run(summarizer);
@@ -361,7 +353,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             async () => summarizer.run(clientId),
         ).finally(() => {
             this.runningSummarizer = undefined;
-            this.nextSummarizerP = undefined;
             this.tryRestart();
         });
 
@@ -410,10 +401,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 shouldInitialDelay ? this.initialDelayP : Promise.resolve(),
                 shouldDelay ? new Promise((resolve) => setTimeout(resolve, delayMs)) : Promise.resolve(),
             ]);
-        }
-
-        if (this.nextSummarizerP) {
-            return this.nextSummarizerP;
         }
 
         const loader = this.context.loader;

@@ -141,6 +141,8 @@ export class OpStorage extends ReadDocumentStorageServiceBase {
 export class StaticStorageDocumentService implements IDocumentService {
     constructor(private readonly storage: IDocumentStorageService) { }
 
+    public dispose() {}
+
     // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public get resolvedUrl(): IResolvedUrl {
         throw new Error("Not implemented");

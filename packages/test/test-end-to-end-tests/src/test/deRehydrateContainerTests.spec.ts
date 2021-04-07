@@ -113,7 +113,9 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             [sparseMatrixId, SparseMatrix.getFactory()],
             [sharedCounterId, SharedCounter.getFactory()],
         ]);
-        const codeLoader = new LocalCodeLoader([[codeDetails, factory]], { disableIsolatedChannels });
+        const codeLoader = new LocalCodeLoader(
+            [[codeDetails, factory]],
+            { summaryOptions: { disableIsolatedChannels } });
         const testLoader = new Loader({
             urlResolver: provider.urlResolver,
             documentServiceFactory: provider.documentServiceFactory,

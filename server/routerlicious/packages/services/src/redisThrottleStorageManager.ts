@@ -3,29 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import * as util from "util";
 import {
     IThrottleStorageManager,
     IThrottlingMetrics,
 } from "@fluidframework/server-services-core";
-import { RedisClient } from "redis";
+import { Redis } from "ioredis";
+import * as winston from "winston";
 
 /**
  * Manages storage of throttling metrics in redis hashes with an expiry of 'expireAfterSeconds'.
  */
 export class RedisThrottleStorageManager implements IThrottleStorageManager {
-    private readonly setAsync: any;
-    private readonly getAsync: any;
-    private readonly expire: any;
-
     constructor(
-        client: RedisClient,
+        private readonly client: Redis,
         private readonly expireAfterSeconds = 60 * 60 * 24,
         private readonly prefix = "throttle",
     ) {
-        this.setAsync = util.promisify(client.hmset.bind(client));
-        this.getAsync = util.promisify(client.hgetall.bind(client));
-        this.expire = util.promisify(client.expire.bind(client));
+        client.on("error", (error) => {
+            winston.error("Throttle Manager Redis Error:", error);
+        });
     }
 
     public async setThrottlingMetric(
@@ -33,18 +29,18 @@ export class RedisThrottleStorageManager implements IThrottleStorageManager {
         throttlingMetric: IThrottlingMetrics,
     ): Promise<void> {
         const key = this.getKey(id);
-        const result = await this.setAsync(key, throttlingMetric);
 
+        const result = await this.client.hmset(key, throttlingMetric as { [key: string]: any });
         if (result !== "OK") {
             return Promise.reject(result);
         }
-        await this.expire(key, this.expireAfterSeconds);
+
+        await this.client.expire(key, this.expireAfterSeconds);
     }
 
     public async getThrottlingMetric(id: string): Promise<IThrottlingMetrics | undefined> {
-        const throttlingMetric = await this.getAsync(this.getKey(id));
-
-        if (!throttlingMetric) {
+        const throttlingMetric = await this.client.hgetall(this.getKey(id));
+        if (Object.keys(throttlingMetric).length === 0) {
             return undefined;
         }
 
