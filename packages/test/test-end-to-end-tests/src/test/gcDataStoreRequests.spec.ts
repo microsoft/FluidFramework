@@ -12,8 +12,7 @@ import {
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { ISharedDirectory } from "@fluidframework/map";
-import { ISequencedDocumentMessage, ISummaryConfiguration } from "@fluidframework/protocol-definitions";
+import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
@@ -69,36 +68,20 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
     );
 
     let mainContainer: IContainer;
+    let mainDataStore: TestDataObject;
     let summaryCollection: SummaryCollection;
 
     /**
-     * Waits for a summary that contains the op with given sequence number.
+     * Waits for a summary with the current state of the document (including all in-flight changes). It basically
+     * synchronizes all containers and waits for a summary that contains the last processed sequence number.
      * @returns the version of this summary. This version can be used to load a Container with the summary associated
      * with it.
      */
-     async function waitForSummary(sequenceNumber: number): Promise<string> {
-        const ackedSummary: IAckedSummary = await summaryCollection.waitSummaryAck(sequenceNumber);
+     async function waitForSummary(): Promise<string> {
+        await provider.ensureSynchronized();
+        const ackedSummary: IAckedSummary =
+            await summaryCollection.waitSummaryAck(mainContainer.deltaManager.lastSequenceNumber);
         return ackedSummary.summaryAckNack.contents.handle;
-    }
-
-    /**
-     * Wait for an op with the given key in the given shared directory.
-     * @returns the sequence number of this op.
-     */
-    async function waitForDirectoryOp(directory: ISharedDirectory, key: string): Promise<number> {
-        let sequenceNumber: number | undefined;
-        await new Promise((resolve) => {
-            const listener = (op: ISequencedDocumentMessage) => {
-                if (op.contents.key === key) {
-                    sequenceNumber = op.sequenceNumber;
-                    resolve(true);
-                    directory.off("op", listener);
-                }
-            };
-            directory.on("op", listener);
-        });
-        assert(sequenceNumber !== undefined);
-        return sequenceNumber;
     }
 
     const createContainer = async (): Promise<IContainer> => provider.createContainer(runtimeFactory);
@@ -115,34 +98,33 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
         // Create a Container for the first client.
         mainContainer = await createContainer();
 
+        // Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
+        // re-sent. Do it here so that the extra events don't mess with rest of the test.
+        mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
+        mainDataStore._root.set("test", "value");
+
+        await provider.ensureSynchronized();
+
         // Create and setup a summary collection that will be used to track and wait for summaries.
-        summaryCollection = new SummaryCollection(
-            mainContainer.deltaManager.initialSequenceNumber,
-            new TelemetryNullLogger(),
-        );
-        mainContainer.deltaManager.inbound.on("op",
-            (op) => summaryCollection.handleOp(op));
+        summaryCollection = new SummaryCollection(mainContainer.deltaManager, new TelemetryNullLogger());
     });
 
     it("should fail requests with externalRequest flag for unreferenced data stores", async () => {
         const directoryKey = "dataStore2";
-        const dataStore1 = await requestFluidObject<TestDataObject>(mainContainer, "default");
 
         // Create a second data store (dataStore2) and add its handle to mark it as referenced.
-        const dataStore2 = await factory.createInstance(dataStore1._context.containerRuntime);
-        dataStore1._root.set(directoryKey, dataStore2.handle);
+        const dataStore2 = await factory.createInstance(mainDataStore._context.containerRuntime);
+        mainDataStore._root.set(directoryKey, dataStore2.handle);
 
-        // Wait for the set to be processed. Then wait for a summary that includes the sequence number of the above op.
-        let sequenceNumber = await waitForDirectoryOp(dataStore1._root, directoryKey);
-        await waitForSummary(sequenceNumber);
+        // Wait for summary that contains the above set.
+        await waitForSummary();
 
         // Now delete the handle so that dataStore2 is marked as unreferenced.
-        dataStore1._root.delete(directoryKey);
+        mainDataStore._root.delete(directoryKey);
 
-        // Wait for the delete to be processed. Then wait for a summary that includes the sequence number of the above
-        // op. Also, get this summary's version so that we can load a new container with it.
-        sequenceNumber = await waitForDirectoryOp(dataStore1._root, directoryKey);
-        const summaryVersion = await waitForSummary(sequenceNumber);
+        // Wait for the summary that contains the above delete. Also, get this summary's version so that we can load
+        // a new container with it.
+        const summaryVersion = await waitForSummary();
 
         // Load a new container with the version of the summary above. The initial summary for dataStore2 will
         // have it marked as unreferenced.
@@ -164,23 +146,20 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
 
     it("should succeed requests with externalRequest flag for data stores that are re-referenced", async () => {
         const directoryKey = "dataStore2";
-        const dataStore1 = await requestFluidObject<TestDataObject>(mainContainer, "default");
 
         // Create a second data store (dataStore2) and add its handle to mark it as referenced.
-        const dataStore2 = await factory.createInstance(dataStore1._context.containerRuntime);
-        dataStore1._root.set(directoryKey, dataStore2.handle);
+        const dataStore2 = await factory.createInstance(mainDataStore._context.containerRuntime);
+        mainDataStore._root.set(directoryKey, dataStore2.handle);
 
-        // Wait for the set to be processed. Then wait for a summary that includes the sequence number of the above op.
-        let sequenceNumber = await waitForDirectoryOp(dataStore1._root, directoryKey);
-        await waitForSummary(sequenceNumber);
+        // Wait for summary that contains the above set.
+        await waitForSummary();
 
         // Now delete the handle so that dataStore2 is marked as unreferenced.
-        dataStore1._root.delete(directoryKey);
+        mainDataStore._root.delete(directoryKey);
 
-        // Wait for the delete to be processed. Then wait for a summary that includes the sequence number of the above
-        // op. Also, get this summary's version so that we can load a new container with it.
-        sequenceNumber = await waitForDirectoryOp(dataStore1._root, directoryKey);
-        let summaryVersion = await waitForSummary(sequenceNumber);
+        // Wait for the summary that contains the above delete. Also, get this summary's version so that we can load
+        // a new container with it.
+        let summaryVersion = await waitForSummary();
 
         // Load a new container with the version of the summary above. The initial summary for dataStore2 will
         // have it marked as unreferenced.
@@ -196,12 +175,11 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
         assert(response.status === 404, "dataStore2 should have failed to load");
 
         // Add the handle of dataStore2 to mark it as referenced again.
-        dataStore1._root.set(directoryKey, dataStore2.handle);
+        mainDataStore._root.set(directoryKey, dataStore2.handle);
 
-        // Wait for the set to be processed. Then wait for a summary that includes the sequence number of the above
-        // op. Also, get this summary's version so that we can load a new container with it.
-        sequenceNumber = await waitForDirectoryOp(dataStore1._root, directoryKey);
-        summaryVersion = await waitForSummary(sequenceNumber);
+        // Wait for the summary that contains the above set. Also, get this summary's version so that we can load
+        // a new container with it.
+        summaryVersion = await waitForSummary();
 
         // Load a new container with the version of the summary above. The initial summary for dataStore2 will
         // have it marked as unreferenced.
