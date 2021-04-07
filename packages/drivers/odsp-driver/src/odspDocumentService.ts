@@ -216,8 +216,12 @@ export class OdspDocumentService implements IDocumentService {
      */
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
         const urlProvider = async () => {
-            const websocketEndpoint = await this.joinSession();
-            return websocketEndpoint.deltaStorageUrl;
+            if(this.policies.storageOnly === true) {
+                return this.odspResolvedUrl.endpoints.deltaStorageUrl;
+            }else{
+                const websocketEndpoint = await this.joinSession();
+                return websocketEndpoint.deltaStorageUrl;
+            }
         };
 
         let snapshotOps = this.storageManager?.ops;
