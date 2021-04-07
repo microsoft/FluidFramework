@@ -9,6 +9,7 @@ import { configureLogging } from "@fluidframework/server-services-utils";
 import commander from "commander";
 import nconf from "nconf";
 import * as winston from "winston";
+import { runService } from "../runner";
 
 export function execute(
     factoryFn: (name: string, lambda: string) => core.IResourcesFactory<IKafkaResources>,
@@ -24,7 +25,7 @@ export function execute(
             configureLogging(configOrPath);
 
             action = true;
-            core.runService(
+            runService(
                 factoryFn(name, lambda),
                 new KafkaRunnerFactory(),
                 winston,
