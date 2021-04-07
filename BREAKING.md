@@ -83,12 +83,12 @@ import { IEnvelope, InboundAttachMessage } from "@fluidframework/runtime-definit
 if (type === ContainerMessageType.Attach) {
     const attachMessage = contents as InboundAttachMessage;
     if (attachMessage.id === "_scheduler") {
-        return false;
+        return true;
     }
 } else if (type === ContainerMessageType.FluidDataStoreOp) {
     const envelope = contents as IEnvelope;
     if (envelope.address === "_scheduler") {
-        return false;
+        return true;
     }
 }
 // Otherwise, proceed with other discard logic...
