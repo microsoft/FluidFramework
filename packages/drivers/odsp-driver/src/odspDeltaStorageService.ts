@@ -17,7 +17,7 @@ import { TokenFetchOptions } from "./tokenFetch";
  */
 export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService {
     constructor(
-        private readonly deltaFeedUrlProvider: () => Promise<string>,
+        private readonly deltaFeedUrl: string,
         private readonly getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
         private readonly epochTracker: EpochTracker,
         private readonly logger: ITelemetryLogger,
@@ -68,6 +68,6 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
 
         const filter = encodeURIComponent(`sequenceNumber ge ${fromInclusive} and sequenceNumber le ${toInclusive}`);
         const queryString = `?filter=${filter}`;
-        return `${await this.deltaFeedUrlProvider()}${queryString}`;
+        return `${this.deltaFeedUrl}${queryString}`;
     }
 }
