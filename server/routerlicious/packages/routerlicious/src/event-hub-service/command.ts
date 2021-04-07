@@ -5,8 +5,7 @@
 
 import { IKafkaResources, KafkaRunnerFactory } from "@fluidframework/server-lambdas-driver";
 import * as core from "@fluidframework/server-services-core";
-import { configureLogging } from "@fluidframework/server-services";
-import { IResourcesFactory } from "@fluidframework/server-services-utils";
+import { configureLogging } from "@fluidframework/server-services-utils";
 import commander from "commander";
 import nconf from "nconf";
 import * as winston from "winston";
