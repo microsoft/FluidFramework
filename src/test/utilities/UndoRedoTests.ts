@@ -8,7 +8,7 @@ import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 import { noop } from '../../Common';
 import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
-import { Change, ChangeNode, StablePlace } from '../../PersistedTypes';
+import { Change, ChangeNode, StablePlace, TraitLocation } from '../../PersistedTypes';
 import { SharedTree } from '../../SharedTree';
 import { makeEmptyNode, setUpTestSharedTree } from './TestUtilities';
 
@@ -52,6 +52,11 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 		definition,
 		identifier: uuidv4() as NodeId,
 		traits: { [leftTraitLabel]: [left], [rightTraitLabel]: [right] },
+	};
+
+	const leftTrait: TraitLocation = {
+		parent: initialTree.identifier,
+		label: leftTraitLabel,
 	};
 
 	const treeOptions = {
@@ -131,49 +136,66 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 			expect(leftTraitAfterRedo.length).to.equal(2);
 		});
 
-		it('works for Detach', () => {
-			const newNode = makeEmptyNode();
+		// Scope of detach code and fixtures
+		{
+			const leftTraitNodes = [makeEmptyNode(), left, makeEmptyNode()];
+			const leftTraitPlaces = [
+				{ index: 0, place: StablePlace.atStartOf(leftTrait) },
+				{ index: 0, place: StablePlace.before(leftTraitNodes[0]) },
+				{ index: 1, place: StablePlace.after(leftTraitNodes[0]) },
+				{ index: 1, place: StablePlace.before(leftTraitNodes[1]) },
+				{ index: 2, place: StablePlace.after(leftTraitNodes[1]) },
+				{ index: 2, place: StablePlace.before(leftTraitNodes[2]) },
+				{ index: 3, place: StablePlace.after(leftTraitNodes[2]) },
+				{ index: 3, place: StablePlace.atEndOf(leftTrait) },
+			];
+			for (let startIndex = 0; startIndex < leftTraitPlaces.length; ++startIndex) {
+				for (let endIndex = startIndex; endIndex < leftTraitPlaces.length; ++endIndex) {
+					it(`works for Detach [${startIndex} -> ${endIndex}]`, () => {
+						tree.editor.insert(leftTraitNodes[0], StablePlace.before(left));
+						afterEdit();
+						tree.editor.insert(leftTraitNodes[2], StablePlace.after(left));
+						afterEdit();
+						expect(tree.currentView.getTrait(leftTrait).length).to.equal(3);
 
-			tree.editor.insert(newNode, StablePlace.after(left));
-			afterEdit();
-			const deleteId = tree.editor.delete(newNode);
-			afterEdit();
-			expect(tree.edits.length).to.equal(3);
+						const range = {
+							start: leftTraitPlaces[startIndex].place,
+							end: leftTraitPlaces[endIndex].place,
+						};
+						const countDetached = leftTraitPlaces[endIndex].index - leftTraitPlaces[startIndex].index;
+						const deleteId = tree.editor.delete(range);
+						afterEdit();
 
-			if (!localMode) {
-				containerRuntimeFactory.processAllMessages();
+						expect(tree.edits.length).to.equal(4);
+						expect(tree.currentView.getTrait(leftTrait).length).to.equal(3 - countDetached);
+
+						if (!localMode) {
+							containerRuntimeFactory.processAllMessages();
+						}
+
+						// Undo testing
+						const undoId: EditId = undo(undoTree, deleteId);
+
+						if (!localMode) {
+							containerRuntimeFactory.processAllMessages();
+						}
+
+						expect(tree.edits.length).to.equal(5);
+						expect(tree.currentView.getTrait(leftTrait).length).to.equal(3);
+
+						// Redo testing
+						redo(undoTree, undoId);
+
+						if (!localMode) {
+							containerRuntimeFactory.processAllMessages();
+						}
+
+						expect(tree.edits.length).to.equal(6);
+						expect(tree.currentView.getTrait(leftTrait).length).to.equal(3 - countDetached);
+					});
+				}
 			}
-
-			// Undo testing
-			const undoId: EditId = undo(undoTree, deleteId);
-
-			if (!localMode) {
-				containerRuntimeFactory.processAllMessages();
-			}
-
-			expect(tree.edits.length).to.equal(4);
-
-			const leftTraitAfterUndo = tree.currentView.getTrait({
-				parent: initialTree.identifier,
-				label: leftTraitLabel,
-			});
-			expect(leftTraitAfterUndo.length).to.equal(2);
-
-			// Redo testing
-			redo(undoTree, undoId);
-
-			if (!localMode) {
-				containerRuntimeFactory.processAllMessages();
-			}
-
-			expect(tree.edits.length).to.equal(5);
-
-			const leftTraitAfterRedo = tree.currentView.getTrait({
-				parent: initialTree.identifier,
-				label: leftTraitLabel,
-			});
-			expect(leftTraitAfterRedo.length).to.equal(1);
-		});
+		}
 
 		it('works for SetValue', () => {
 			const newNode = makeEmptyNode();

@@ -182,9 +182,15 @@ function createInvertedDetach(
 	let insertDestination: StablePlace;
 
 	if (start.side === Side.After) {
-		insertDestination = start;
+		insertDestination =
+			start.sibling === undefined
+				? { side: Side.After, referenceTrait }
+				: { side: Side.After, referenceSibling: start.sibling };
 	} else if (end.side === Side.Before) {
-		insertDestination = end;
+		insertDestination =
+			end.sibling === undefined
+				? { side: Side.Before, referenceTrait }
+				: { side: Side.Before, referenceSibling: end.sibling };
 	} else {
 		const referenceSibling = leftOfDetached.pop();
 		insertDestination = {
