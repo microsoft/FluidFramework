@@ -53,6 +53,7 @@ describe("Odsp Driver Resolver", () => {
                 snapshotStorageUrl: "",
                 attachmentGETStorageUrl: "",
                 attachmentPOSTStorageUrl: "",
+                deltaStorageUrl: "",
             },
             tokens: {},
             type: "fluid",
