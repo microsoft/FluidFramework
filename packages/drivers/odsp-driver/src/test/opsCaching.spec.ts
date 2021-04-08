@@ -89,7 +89,9 @@ async function runTestNoTimer(
     batchSize: number,
     initialSeq: number,
     mockData: MyDataInput[],
-    expected: { [key: number]: (MyDataInput | undefined)[] })
+    expected: { [key: number]: (MyDataInput | undefined)[]},
+    initialWritesExpected: number,
+    totalWritesExpected: number)
 {
     const mockCache = new MockCache();
 
@@ -104,12 +106,23 @@ async function runTestNoTimer(
 
     cache.addOps(mockData);
 
-    // Validate that writing same ops is not going to change anything
     const writes = mockCache.writeCount;
+    assert.equal(writes, initialWritesExpected);
+
+    // Validate that writing same ops is not going to change anything
     cache.addOps(mockData);
     assert.equal(writes, mockCache.writeCount);
 
     await validate(mockCache, expected, cache, initialSeq);
+
+    // ensure all ops are flushed properly
+    cache.flushOps();
+    assert.equal(mockCache.opsWritten, mockData.length);
+
+    // ensure adding same ops and flushing again is doing nothing
+    cache.addOps(mockData);
+    cache.flushOps();
+    assert.equal(mockCache.opsWritten, mockData.length);
 }
 
 export async function runTestWithTimer(
@@ -150,7 +163,7 @@ export async function runTest(
     initialWritesExpected: number,
     totalWritesExpected: number)
 {
-    await runTestNoTimer(batchSize, initialSeq, mockData, expected);
+    await runTestNoTimer(batchSize, initialSeq, mockData, expected, initialWritesExpected, totalWritesExpected);
     await runTestWithTimer(batchSize, initialSeq, mockData, expected, initialWritesExpected, totalWritesExpected);
 }
 
