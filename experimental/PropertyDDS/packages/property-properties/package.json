@@ -1,0 +1,34 @@
+{
+  "name": "@fluid-experimental/property-properties",
+  "version": "0.1.0",
+  "description": "",
+  "license": "MIT",
+  "author": "",
+  "main": "src/index.js",
+  "scripts": {
+    "coverage": "npx nyc --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test && npx nyc --no-clean --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test:changeset && npx nyc --no-clean --cwd .. --nycrc-path `pwd`/.nycrc npm run test:common",
+    "test": "npm run test:mocha",
+    "test:changeset": "cd ../property-changeset && mocha",
+    "test:common": "cd ../property-common && mocha",
+    "test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+    "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
+  },
+  "dependencies": {
+    "ajv": "7.1.1",
+    "async": "^2.6.1",
+    "lodash": "^4.17.21",
+    "@fluid-experimental/property-changeset": "0.1.0",
+    "@fluid-experimental/property-common": "0.1.0",
+    "semver": "^7.3.4",
+    "traverse": "0.6.6"
+  },
+  "devDependencies": {
+    "@fluidframework/mocha-test-setup": "^0.38.0",
+    "chai": "^4.2.0",
+    "cross-env": "^7.0.2",
+    "mocha": "^8.1.1",
+    "nock": "^10.0.1",
+    "nyc": "^15.0.0",
+    "sinon": "^7.4.2"
+  }
+}

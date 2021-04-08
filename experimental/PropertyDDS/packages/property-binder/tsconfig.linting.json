@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "typeRoots": [
+      "./node_modules/@types",
+      "../types/@adsktypes"
+    ],
+    "types": [
+      "underscore"
+    ],
+    "allowJs": true
+  },
+  "include": [
+    "./src/**/*.ts",
+    "./test/**/*.js*",
+    "./src/index.ts"
+  ],
+  "exclude": [
+    "dist/**"
+  ]
+}

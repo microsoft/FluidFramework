@@ -1,0 +1,9 @@
+{
+  "name": "platform-dependent",
+  "version": "1.0.0",
+  "description": "Helper package that separates code for browser and server.",
+  "main": "server.js",
+  "browser": "browser.js",
+  "author": "Autodesk Inc",
+  "license": "UNLICENSED"
+}

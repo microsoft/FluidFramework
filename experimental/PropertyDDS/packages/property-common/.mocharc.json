@@ -1,0 +1,8 @@
+{
+  "R": "spec",
+  "recursive": true,
+  "timeout": "180s",
+  "exit": true,
+  "full-trace": true,
+  "spec": ["test/setup.js", "test/**/*.spec.js"]
+}

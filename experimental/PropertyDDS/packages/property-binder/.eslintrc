@@ -1,0 +1,13 @@
+{
+  "parser": "babel-eslint",
+  "extends": "@adsk/eslint-config-lynx",
+  "rules": {
+    "linebreak-style": 0,
+    "prefer-const": ["warn"],
+    "no-multi-spaces": ["error", {"ignoreEOLComments": true}],
+    "no-multiple-empty-lines": ["warn", {"max": 1}],
+    "indent": ["error", 2],
+    "indent-legacy": 0,
+    "lines-between-class-members": ["error", "always"]
+  }
+}

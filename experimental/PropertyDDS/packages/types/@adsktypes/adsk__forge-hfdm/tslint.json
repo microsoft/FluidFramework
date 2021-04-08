@@ -1,0 +1,9 @@
+{
+  "defaultSeverity": "error",
+  "extends": [
+    "tslint:recommended"
+  ],
+  "rules": {
+    "comment-format": true
+  }
+}

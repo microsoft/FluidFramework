@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.linting",
+  "exclude": [
+    "node_modules",
+    "test/**/*.js"
+  ],
+  "compilerOptions": {
+    "allowJs": false
+  }
+}

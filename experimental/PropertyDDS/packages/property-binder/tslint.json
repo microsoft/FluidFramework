@@ -1,0 +1,12 @@
+{
+  "extends": [
+    "@adsk/forge-appfw-configs/tslint.json",
+    "tslint-no-unused-expression-chai"
+  ],
+  "rules": {
+    "variable-name": ["allow-pascal-case"]
+  },
+  "jsRules": {
+    "variable-name": ["allow-pascal-case"]
+  }
+}

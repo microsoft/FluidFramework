@@ -1,0 +1,16 @@
+{
+  "files": [
+      "index.d.ts",
+      "test/index.ts"
+  ],
+  "compilerOptions": {
+    "strict": true,
+    "module": "commonjs",
+    "lib": [ "es6" ],
+    "baseUrl": "./",
+    "typeRoots": [
+        "./"
+    ],
+    "types": [],
+  }
+}

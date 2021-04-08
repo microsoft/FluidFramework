@@ -1,0 +1,24 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react",
+    "noUnusedLocals": true,
+    "resolveJsonModule": true,
+    "typeRoots": [
+      "../node_modules/@types",
+      "../types/@adsktypes"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "src/*": ["src/*"]
+    }
+  },
+  "include": [
+    "./src/**/*",
+    "./custom.d.ts"
+  ],
+  "exclude": [
+    "./src/**/*.stories.*"
+  ]
+}
+
