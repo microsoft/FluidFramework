@@ -56,8 +56,8 @@ describe('Stateless Binder', function () {
       this.onPreModify = jest.fn();
       this.onPreRemove = jest.fn();
       // we need to amend these functions with spies (this way we won't have to reset() them)
-      this.onModify = jest.fn(this, 'onModify');
-      this.onRemove = jest.fn(this, 'onRemove');
+      this.onModify = jest.spyOn(this, 'onModify');
+      this.onRemove = jest.spyOn(this, 'onRemove');
     }
 
     /**
@@ -92,8 +92,8 @@ describe('Stateless Binder', function () {
       this.onPreModify = jest.fn();
       this.onPreRemove = jest.fn();
       // we need to amend these functions with spies (this way we won't have to reset() them)
-      this.onModify = jest.fn(this, 'onModify');
-      this.onRemove = jest.fn(this, 'onRemove');
+      this.onModify = jest.spyOn(this, 'onModify');
+      this.onRemove = jest.spyOn(this, 'onRemove');
     }
 
     /**
@@ -200,13 +200,13 @@ describe('Stateless Binder', function () {
     workspace.get(['animalmap', 'thechinchilla', 'furLength']).setValue(10);
 
     expect(catSingleton.onModify).toHaveBeenCalledTimes(2);
-    catSingleton.modifiedNames.should.deep.equal(['Mark', 'Harry']);
+    expect(catSingleton.modifiedNames).toEqual(['Mark', 'Harry']);
     expect(dogSingleton.onModify).toHaveBeenCalledTimes(1);
-    dogSingleton.modifiedNames.should.deep.equal(['Karen']);
+    expect(dogSingleton.modifiedNames).toEqual(['Karen']);
     expect(chinchillaSingleton.onModify).toHaveBeenCalledTimes(1);
-    chinchillaSingleton.modifiedNames.should.deep.equal(['Andres']);
+    expect(chinchillaSingleton.modifiedNames).toEqual(['Andres']);
     expect(animalSingleton.onModify).toHaveBeenCalledTimes(4);
-    animalSingleton.modifiedNames.should.deep.equal(['Mark', 'Harry', 'Karen', 'Andres']);
+    expect(animalSingleton.modifiedNames).toEqual(['Mark', 'Harry', 'Karen', 'Andres']);
   });
   // #endregion Modify callback counts
 
@@ -306,7 +306,7 @@ describe('Stateless Binder', function () {
     workspace.get(['harrycat', 'attitude']).setValue(2);
 
     expect(deprecatedCat.onModify).toHaveBeenCalledTimes(2);
-    deprecatedCat.modifiedNames.should.deep.equal(['Mark', 'Harry']);
+    expect(deprecatedCat.modifiedNames).toEqual(['Mark', 'Harry']);
 
     singletonHandle.destroy();
 

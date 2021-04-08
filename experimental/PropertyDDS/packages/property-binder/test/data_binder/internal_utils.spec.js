@@ -6,7 +6,7 @@ import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-prop
 /* globals expect, sinon  */
 import { forEachProperty, minimalRootPaths, visitTypeHierarchy } from '../../src/data_binder/internal_utils';
 import { catchConsoleErrors } from './catch_console_errors';
-import { PrimitiveChildrenTemplate, AnimalSchema } from './testTemplates';
+import { PrimitiveChildrenTemplate, AnimalSchema, registerTestTemplates } from './testTemplates';
 import { SharedPropertyTree as MockWorkspace } from './shared_property_tree';
 
 describe('minimalRootPaths', () => {
@@ -55,6 +55,8 @@ describe('minimalRootPaths', () => {
 });
 
 describe('forEachProperty', () => {
+
+  beforeAll(registerTestTemplates);
 
   // Silence the actual console.error, so the test logs are clean
   console.error = function () {

@@ -251,7 +251,7 @@ describe('DataBinder.registerOnPath()', function () {
       // SnippetEnd{DataBinder.registerOnPath}
     });
 
-    it.skip('insert on creation - valid reference', function () {
+    it('insert on creation - valid reference', function () {
       var pathSpy = jest.fn();
 
       workspace.insert('node', PropertyFactory.create('NodeProperty', 'single'));
@@ -282,7 +282,7 @@ describe('DataBinder.registerOnPath()', function () {
       expect(worked).toEqual(true);
     });
 
-    it.skip('modify already existing path with references', function () {
+    it('modify already existing path with references', function () {
       workspace.insert('text', PropertyFactory.create('String', 'single'));
       const refObject = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
       workspace.insert('myChild1', refObject);
@@ -303,7 +303,7 @@ describe('DataBinder.registerOnPath()', function () {
       expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
-    it.skip('should handle references to references - insert', function () {
+    it('should handle references to references - insert', function () {
       const pathSpy = jest.fn();
       const removePathSpy = jest.fn();
 
@@ -324,44 +324,44 @@ describe('DataBinder.registerOnPath()', function () {
       workspace.insert('myChild1', refObject);
 
       expect(pathSpy).toHaveBeenCalledTimes(0);
-      removeexpect(pathSpy).toHaveBeenCalledTimes(0);
+      expect(removePathSpy).toHaveBeenCalledTimes(0);
 
       workspace.get(['myChild1', 'single_ref'], RESOLVE_NO_LEAFS).setValue('/ref2');
       expect(pathSpy).toHaveBeenCalledTimes(1);
-      removeexpect(pathSpy).toHaveBeenCalledTimes(0);
+      expect(removePathSpy).toHaveBeenCalledTimes(0);
 
       // Break the link by breaking ref2
       workspace.get('ref2', RESOLVE_NO_LEAFS).setValue('/garbage');
       expect(pathSpy).toHaveBeenCalledTimes(1);
-      removeexpect(pathSpy).toHaveBeenCalledTimes(1);
+      expect(removePathSpy).toHaveBeenCalledTimes(1);
 
       // put it back
       workspace.get('ref2', RESOLVE_NO_LEAFS).setValue('/ref1');
       expect(pathSpy).toHaveBeenCalledTimes(2);
-      removeexpect(pathSpy).toHaveBeenCalledTimes(1);
+      expect(removePathSpy).toHaveBeenCalledTimes(1);
 
       // Break again
       workspace.get('ref2', RESOLVE_NO_LEAFS).setValue('/garbage');
       expect(pathSpy).toHaveBeenCalledTimes(2);
-      removeexpect(pathSpy).toHaveBeenCalledTimes(2);
+      expect(removePathSpy).toHaveBeenCalledTimes(2);
 
       // put it back again
       workspace.get('ref2', RESOLVE_NO_LEAFS).setValue('/ref1');
       expect(pathSpy).toHaveBeenCalledTimes(3);
-      removeexpect(pathSpy).toHaveBeenCalledTimes(2);
+      expect(removePathSpy).toHaveBeenCalledTimes(2);
 
       // Break deeper
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/garbage');
       expect(pathSpy).toHaveBeenCalledTimes(3);
-      removeexpect(pathSpy).toHaveBeenCalledTimes(3);
+      expect(removePathSpy).toHaveBeenCalledTimes(3);
 
       // put it back again
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/text');
       expect(pathSpy).toHaveBeenCalledTimes(4);
-      removeexpect(pathSpy).toHaveBeenCalledTimes(3);
+      expect(removePathSpy).toHaveBeenCalledTimes(3);
     });
 
-    it.skip('should handle references to references - insert, changing from valid to valid', function () {
+    it('should handle references to references - insert, changing from valid to valid', function () {
       const insertSpy = jest.fn();
       const removeSpy = jest.fn();
 
@@ -404,7 +404,7 @@ describe('DataBinder.registerOnPath()', function () {
       expect(removeSpy).toHaveBeenCalledTimes(3);
     });
 
-    it.skip('insert callback on subpath through a reference, retroactive', function () {
+    it('insert callback on subpath through a reference, retroactive', function () {
       const textProperty = PropertyFactory.create('String');
 
       const pathSpy = jest.fn(function (context) {
@@ -420,7 +420,7 @@ describe('DataBinder.registerOnPath()', function () {
       expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
-    it.skip('remove callback on subpath through a reference', function () {
+    it('remove callback on subpath through a reference', function () {
       const removeSpy = jest.fn();
       const insertSpy = jest.fn();
       dataBinder.registerOnPath('ref.text', ['insert'], insertSpy);
@@ -468,7 +468,7 @@ describe('DataBinder.registerOnPath()', function () {
       expect(removeSpy).toHaveBeenCalledTimes(3);
     });
 
-    it.skip('collectionInsert callback on subpath through a reference', function () {
+    it('collectionInsert callback on subpath through a reference', function () {
       const dataProp = PropertyFactory.create(PrimitiveChildrenTemplate.typeid);
 
       const pathSpy = jest.fn();
@@ -493,7 +493,7 @@ describe('DataBinder.registerOnPath()', function () {
       expect(pathSpy).toHaveBeenCalledTimes(2);
     });
 
-    it.skip('collectionInsert callback on subpath through a reference, retroactive', function () {
+    it('collectionInsert callback on subpath through a reference, retroactive', function () {
       const dataProp = PropertyFactory.create(PrimitiveChildrenTemplate.typeid);
 
       const pathSpy = jest.fn();
@@ -514,7 +514,7 @@ describe('DataBinder.registerOnPath()', function () {
       expect(pathSpy).toHaveBeenCalledTimes(2);
     });
 
-    it.skip('referenceInsert callback on subpath through a reference, invalid target', function () {
+    it('referenceInsert callback on subpath through a reference, invalid target', function () {
       const theRefProp = PropertyFactory.create('Reference');
 
       const pathSpy = jest.fn();
@@ -535,7 +535,7 @@ describe('DataBinder.registerOnPath()', function () {
       expect(pathSpy).toHaveBeenCalledTimes(2);
     });
 
-    it.skip('referenceInsert callback on subpath through a reference, invalid target, retroactive', function () {
+    it('referenceInsert callback on subpath through a reference, invalid target, retroactive', function () {
       const theRefProp = PropertyFactory.create('Reference');
 
       const pathSpy = jest.fn();
@@ -554,7 +554,8 @@ describe('DataBinder.registerOnPath()', function () {
       workspace.get('ref1', RESOLVE_NO_LEAFS).setValue('/node');
       expect(pathSpy).toHaveBeenCalledTimes(2);
     });
-    it.skip('referenceInsert callback on subpath through a reference, valid target', function () {
+
+    it('referenceInsert callback on subpath through a reference, valid target', function () {
       const theRefProp = PropertyFactory.create('Reference', 'single', '/');
 
       const pathSpy = jest.fn();
@@ -575,7 +576,7 @@ describe('DataBinder.registerOnPath()', function () {
       expect(pathSpy).toHaveBeenCalledTimes(2);
     });
 
-    it.skip('referenceInsert callback on subpath through a reference, valid target, retroactive', function () {
+    it('referenceInsert callback on subpath through a reference, valid target, retroactive', function () {
       const theRefProp = PropertyFactory.create('Reference', 'single', '/');
 
       const pathSpy = jest.fn();
@@ -595,7 +596,7 @@ describe('DataBinder.registerOnPath()', function () {
       expect(pathSpy).toHaveBeenCalledTimes(2);
     });
 
-    it.skip('insert callback on subpath through a reference', function () {
+    it('insert callback on subpath through a reference', function () {
       const textProperty = PropertyFactory.create('String');
       const textProperty2 = PropertyFactory.create('String');
       let expectedProperty = textProperty;
@@ -626,7 +627,7 @@ describe('DataBinder.registerOnPath()', function () {
       expect(pathSpy).toHaveBeenCalledTimes(2);
     });
 
-    it.skip('should handle references to references - 1', function () {
+    it('should handle references to references - 1', function () {
       const pathSpy = jest.fn();
 
       dataBinder.registerOnPath('myChild1.single_ref', ['modify'], pathSpy);
@@ -658,7 +659,7 @@ describe('DataBinder.registerOnPath()', function () {
       expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
-    it.skip('should handle references to references - 2', function () {
+    it('should handle references to references - 2', function () {
       const pathSpy = jest.fn();
       const refPathSpy = jest.fn();
 
@@ -679,19 +680,19 @@ describe('DataBinder.registerOnPath()', function () {
       const refObject = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
       workspace.insert('myChild1', refObject);
 
-      refexpect(pathSpy).toHaveBeenCalledTimes(0);
+      expect(refPathSpy).toHaveBeenCalledTimes(0);
       expect(pathSpy).toHaveBeenCalledTimes(0);
 
       // This should cause the referenceModify to fire, but not the normal modify
       workspace.get(['myChild1', 'single_ref'], RESOLVE_NO_LEAFS).setValue('/ref3');
 
-      refexpect(pathSpy).toHaveBeenCalledTimes(1);
+      expect(refPathSpy).toHaveBeenCalledTimes(1);
       expect(pathSpy).toHaveBeenCalledTimes(0);
 
       // This should cause the modify to fire, but not the referenceModify
       workspace.get('text').setValue('hello');
 
-      refexpect(pathSpy).toHaveBeenCalledTimes(1);
+      expect(refPathSpy).toHaveBeenCalledTimes(1);
       refPathSpy.mockClear();
 
       expect(pathSpy).toHaveBeenCalledTimes(1);
@@ -701,7 +702,7 @@ describe('DataBinder.registerOnPath()', function () {
       workspace.get('ref2', RESOLVE_NO_LEAFS).setValue('/garbage');
 
       // We are only bound to single_ref for referenceModify, so this shouldn't fire
-      refexpect(pathSpy).toHaveBeenCalledTimes(0);
+      expect(refPathSpy).toHaveBeenCalledTimes(0);
 
       // Modifying text shouldn't make it through now
       workspace.get('text').setValue('hello');
@@ -715,7 +716,7 @@ describe('DataBinder.registerOnPath()', function () {
       expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
-    it.skip('modify non-existing path with references', function () {
+    it('modify non-existing path with references', function () {
       var pathSpy = jest.fn();
       var refSpy = jest.fn();
       dataBinder.registerOnPath('myChild1.single_ref', ['modify'], pathSpy);
@@ -733,7 +734,7 @@ describe('DataBinder.registerOnPath()', function () {
       expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
-    it.skip('modify path with references that goes invalid and comes back', function () {
+    it('modify path with references that goes invalid and comes back', function () {
       var pathSpy = jest.fn();
 
       workspace.insert('node', PropertyFactory.create('NodeProperty', 'single'));
@@ -764,7 +765,7 @@ describe('DataBinder.registerOnPath()', function () {
       expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
-    it.skip('modify path through a reference', function () {
+    it('modify path through a reference', function () {
       var pathSpy = jest.fn();
 
       workspace.insert('node', PropertyFactory.create('NodeProperty', 'single'));
@@ -783,7 +784,7 @@ describe('DataBinder.registerOnPath()', function () {
       expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
-    it.skip('modify path through a reference - reverse order', function () {
+    it('modify path through a reference - reverse order', function () {
       var pathSpy = jest.fn();
 
       workspace.insert('node', PropertyFactory.create('NodeProperty', 'single'));
@@ -967,7 +968,7 @@ describe('DataBinder.registerOnPath()', function () {
       expect(pathSpy).toHaveBeenCalledTimes(2); // the insert and the modify
     });
 
-    it.skip('Registering on a reference to /', function () {
+    it('Registering on a reference to /', function () {
       var pathSpy = jest.fn();
 
       workspace.insert('referenceToElement2', PropertyFactory.create('Reference', 'single'));
@@ -1197,6 +1198,7 @@ describe('DataBinder.registerOnPath()', function () {
         expect(pathSpy).toHaveBeenCalledTimes(2);
       });
 
+    // TODO: stop previously working test
     it.skip('never existing path with remove callback (LYNXDEV-3563)', function () {
       var pathSpy = jest.fn();
       dataBinder.registerOnPath('a.b.c.d', ['insert', 'modify', 'remove'], pathSpy);

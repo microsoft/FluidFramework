@@ -749,7 +749,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     arrayModifySpy.mockClear();
   });
 
-  it.skip('registerOnProperty', function () {
+  it('registerOnProperty', function () {
     var stringProperty = PropertyFactory.create('String');
     var primitiveChildrenDataBinding = undefined;
     var checkProperty = function (property) {
@@ -827,7 +827,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
     // TODO: This creates a stack overflow! (this probably refers to a bug in HFDM that's likely fixed now)
     workspace.get('node').insert('string', PropertyFactory.create('Reference', undefined, '/node.string2'));
-    //expect(false).to.be.true;
+    //expect(false).toEqual(true);
     // this should not have been changed to true
     expect(invalidProperty).toEqual(false);
     // this must have been changed to true
@@ -1090,7 +1090,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(order).toEqual('dp');
   });
 
-  it.skip('derived DataBindings with unrelated templates', function () {
+  it('derived DataBindings with unrelated templates', function () {
     var parentModifySpy = jest.fn();
     var derivedModifySpy = jest.fn();
 
@@ -1124,12 +1124,12 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(derivedModifySpy).toHaveBeenCalledTimes(0);
     parentModifySpy.mockClear();
     derivedModifySpy.mockClear();
-    expect(parentDataBinding.onModify).toHaveBeenCalledTimes(1);
+    expect(myParentDataBinding.onModify).toHaveBeenCalledTimes(1);
     expect(myDerivedDataBinding.onModify).toHaveBeenCalledTimes(0);
     myParentDataBinding.onModify.mockClear();
     myDerivedDataBinding.onModify.mockClear();
     workspace.get(['myChildTemplate', 'text']).setValue('newValue');
-    expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
+    expect(myParentDataBinding.onModify).toHaveBeenCalledTimes(0);
     expect(myDerivedDataBinding.onModify).toHaveBeenCalledTimes(1);
     myParentDataBinding.onModify.mockClear();
     myDerivedDataBinding.onModify.mockClear();
@@ -1141,7 +1141,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     // unregister parent
     unregisterAllOnPathListeners(ParentDataBinding);
     workspace.get(['myChildTemplate', 'text']).setValue('newValue2');
-    expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
+    expect(myParentDataBinding.onModify).toHaveBeenCalledTimes(0);
     expect(myDerivedDataBinding.onModify).toHaveBeenCalledTimes(1);
     myParentDataBinding.onModify.mockClear();
     myDerivedDataBinding.onModify.mockClear();
@@ -1176,7 +1176,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(pathSpy).toHaveBeenCalledTimes(3);
   });
 
-  it.skip('derived DataBindings with unrelated templates and replacing parent callback', function () {
+  it('derived DataBindings with unrelated templates and replacing parent callback', function () {
     var parentModifySpy = jest.fn();
     var derivedModifySpy = jest.fn();
     var parentInsertSpy = jest.fn();
@@ -1228,12 +1228,12 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(derivedModifySpy).toHaveBeenCalledTimes(0);
     parentModifySpy.mockClear();
     derivedModifySpy.mockClear();
-    expect(parentDataBinding.onModify).toHaveBeenCalledTimes(1);
+    expect(myParentDataBinding.onModify).toHaveBeenCalledTimes(1);
     expect(myDerivedDataBinding.onModify).toHaveBeenCalledTimes(0);
     myParentDataBinding.onModify.mockClear();
     myDerivedDataBinding.onModify.mockClear();
     workspace.get(['myNodeContainerTemplate', 'text']).setValue('newValue');
-    expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
+    expect(myParentDataBinding.onModify).toHaveBeenCalledTimes(0);
     expect(myDerivedDataBinding.onModify).toHaveBeenCalledTimes(1);
     myParentDataBinding.onModify.mockClear();
     myDerivedDataBinding.onModify.mockClear();
@@ -1264,7 +1264,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
   });
 
-  it.skip('should handle double references in a relative path', function () {
+  it('should handle double references in a relative path', function () {
     dataBinder.attachTo(workspace);
 
     // Add our child (referenced) pset
@@ -2079,12 +2079,10 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(pathRemoveSpy).toHaveBeenCalledTimes(1);
   });
 
-  it.skip('relative path callback on nested reference (LYNXDEV-6013)', function () {
+  it('relative path callback on nested reference (LYNXDEV-6013)', function () {
 
-    const modifySpy = jest.fn(function (in_context) {
-    });
-    const insertRemoveSpy = jest.fn(function (in_context) {
-    });
+    const modifySpy = jest.fn(function (in_context) { });
+    const insertRemoveSpy = jest.fn(function (in_context) { });
     class myDerivedDataBinding extends DataBinding {
       constructor(params) { // eslint-disable-line no-useless-constructor
         super(params);

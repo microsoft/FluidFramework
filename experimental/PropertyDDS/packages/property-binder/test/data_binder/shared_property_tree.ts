@@ -363,7 +363,9 @@ export class SharedPropertyTree extends EventEmitter {
   get(...args) { return this.root.get(...args) }
   getIds() { return this.root.getIds() }
   getEntriesReadOnly() { return this.root.getEntriesReadOnly() }
-  insert(in_id, in_property) { return this.root.insert(in_id, in_property); }
+  insert(in_id, in_property) {
+    this.root.insert(in_id, in_property);
+  }
   remove(in_id) { return this.root.remove(in_id); }
   register(eventName, callback) {
     this.on(eventName, callback)
@@ -372,9 +374,12 @@ export class SharedPropertyTree extends EventEmitter {
   unregister(eventName, callback) { return callback(); }
   getTemplate = () => { };
   resolvePath(x) { return this.root.resolvePath(x) }
+
   public get pset() {
     return this.root;
   }
+
+
 
   pushModifiedEventScope() {
     this.pushNotificationDelayScope();

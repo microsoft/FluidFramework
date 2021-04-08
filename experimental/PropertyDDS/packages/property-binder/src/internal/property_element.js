@@ -354,7 +354,7 @@ PropertyElement.prototype.becomeChild = function(in_child, in_options = RESOLVE_
     const nextToken = in_child[i + 1]; // will be undefined at the last element
 
     if (token === '/') {
-      this._property = this._property.getWorkspace().getRoot();
+      this._property = this._property.getRoot().getWorkspace().getRoot();
       this._childToken = undefined;
     } else if (token === '*') {
       if (nextToken !== undefined) {

@@ -544,12 +544,15 @@ BaseProperty.prototype._getCheckedOutRepositoryInfo = function() {
  * Returns the Workspace
  * @return {property-properties.Workspace|undefined} The workspace containing the property.
  */
-BaseProperty.prototype.getWorkspace = function() {
-  var checkoutView = this._getCheckoutView();
-  if (checkoutView) {
-    return checkoutView._getWorkspace();
-  } else {
-    return undefined;
+BaseProperty.prototype.getWorkspace = function () {
+  try {
+    const root = this.getRoot();
+    if (root === this) {
+      return undefined;
+    }
+    return root.getWorkspace();
+  } catch (e) {
+    return undefined
   }
 };
 
@@ -1012,14 +1015,8 @@ BaseProperty.prototype._getDirtyChildren = function(in_flags) {
  * Returns the root of the property hierarchy
  * @return {property-properties.NodeProperty} The root property
  */
-BaseProperty.prototype.getRoot = function() {
-  var root;
-  if (!this._parent) {
-    root = this;
-  } else {
-    root = this._parent.getRoot();
-  }
-  return root;
+BaseProperty.prototype.getRoot = function () {
+  return this._parent ? this._parent.getRoot() : this;
 };
 
 /**

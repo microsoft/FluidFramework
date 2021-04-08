@@ -188,7 +188,7 @@ describe('Property element', function () {
       const computed = propElem.getValue();
       const expected = data[child];
       // console.log(computed, ' expecting ', expected);
-      computed.should.deep.equal(expected);
+      expect(computed).toEqual(expected);
       if (propElem.getTypeId() !== 'String') {
         _.each(data[child], (value, key) => {
           test(data[child], key);
@@ -205,28 +205,26 @@ describe('Property element', function () {
     const propElem = new PropertyElement(myData);
     propElem.getChild('arrayOfNumbers').setValue([1, 2, 3]);
     propElem.getChild(['arrayOfNumbers', 1]).setValue(42);
-    propElem.getChild('arrayOfNumbers').getValue().should.deep.equal([1, 42, 3]);
+    expect(propElem.getChild('arrayOfNumbers').getValue()).toEqual([1, 42, 3]);
 
     propElem.getChild('arrayOfStrings').setValue(['a', 'b', 'c']);
     propElem.getChild(['arrayOfStrings', 1]).setValue('INTERRUPTING COW');
-    propElem.getChild('arrayOfStrings').getValue().should.deep.equal(['a', 'INTERRUPTING COW', 'c']);
+    expect(propElem.getChild('arrayOfStrings').getValue()).toEqual(['a', 'INTERRUPTING COW', 'c']);
 
     propElem.getChild('mapOfNumbers').setValue({ a: 1, b: 2, c: 3 });
     propElem.getChild(['mapOfNumbers', 'b']).setValue(42);
-    propElem.getChild('mapOfNumbers').getValue().should.deep.equal({ a: 1, b: 42, c: 3 });
+    expect(propElem.getChild('mapOfNumbers').getValue()).toEqual({ a: 1, b: 42, c: 3 });
 
     propElem.getChild('mapOfStrings').setValue({ a: 'A', b: 'B', c: 'C' });
     propElem.getChild(['mapOfStrings', 'b']).setValue('INTERRUPTING... not funny second time');
-    propElem.getChild('mapOfStrings').getValue().should.deep.equal(
+    expect(propElem.getChild('mapOfStrings').getValue()).toEqual(
       { a: 'A', b: 'INTERRUPTING... not funny second time', c: 'C' }
     );
 
-    propElem.getChild('nested').setValue({
-      aNumber: 12
-    });
-    propElem.getChild('nested').getValue().should.deep.equal({ aNumber: 12 });
+    propElem.getChild('nested').setValue({      aNumber: 12    });
+    expect(propElem.getChild('nested').getValue()).toEqual({ aNumber: 12 });
 
-    myData.getValues().should.deep.equal(propElem.getValue());
+    expect(myData.getValues()).toEqual(propElem.getValue());
   });
 
   it('isPrimitiveCollection basic', function () {

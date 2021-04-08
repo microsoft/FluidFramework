@@ -183,11 +183,11 @@ describe('ES6 DataBinding', function () {
     testProp.insert('singleRef', PropertyFactory.create('Reference'));
     expect(referenceInsertCallback).toHaveBeenCalledTimes(1);
   });
-  it.skip('should call referenceModify when modifying a reference', function () {
+  it('should call referenceModify when modifying a reference', function () {
     testProp.get('singleRef', NEVER).setValue('/myChild');
     expect(referenceModifyCallback).toHaveBeenCalledTimes(1);
   });
-  it.skip('should not call reference events when the referenced property is modified', function () {
+  it('should not call reference events when the referenced property is modified', function () {
     testProp.get('singleRef').get('name').value = 'newName';
     // From the relative path .text plus the referenced property itself
     expect(referencedModifyCallback).toHaveBeenCalledTimes(2);

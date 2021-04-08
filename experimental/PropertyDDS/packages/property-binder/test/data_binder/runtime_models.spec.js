@@ -166,7 +166,7 @@ describe('DataBinder runtime representations', function () {
       // new fido is a different fido.
       expect(makerCalled).toEqual(true);
       expect(fido2).toBeDefined();
-      expect(fido).not.toEqual(fido2);
+      expect(fido).not.toBe(fido2);
     });
 
     it('should be possible to get a runtime representation from the databinding', function () {
@@ -655,7 +655,7 @@ describe('DataBinder runtime representations', function () {
       expect(myDataBinder.getRepresentation(dogMap, 'PETSTORE')).toBeUndefined();
     });
 
-    it('should be possible to associate a runtime representation and get it', function () {
+    it      ('should be possible to associate a runtime representation and get it', function () {
       myDataBinder.attachTo(workspace);
 
       myDataBinder.defineRepresentation('PETSTORE', 'Test:Animal-1.0.0', () => new AnimalRepresentation());
@@ -794,16 +794,16 @@ describe('DataBinder runtime representations', function () {
 
     it('should supply the empty context for classic function callbacks', function () {
       const myDogGenerator = jest.fn(function () {
-        expect(this).toBeUndefined();
+        expect(this).toBeNull();
         return new DogRepresentation();
       });
 
       const dogInitializer = jest.fn(function () {
-        expect(this).toBeUndefined();
+        expect(this).toBeNull();
       });
 
       const dogDestroyer = jest.fn(function () {
-        expect(this).toBeUndefined();
+        expect(this).toBeNull();
       });
 
       // Define a runtime representation for dogs with all possible callbacks
@@ -953,19 +953,19 @@ describe('DataBinder runtime representations', function () {
       expect(fidoRepresentation._catModel).toBeInstanceOf(CatRepresentation);
       // If cats are stateless -> the representation will be created on demand hence not whiskers
       if (in_catIsStateless) {
-        expect(fidoRepresentation._catModel).not.toEqual(whiskersRepresentation);
+        expect(fidoRepresentation._catModel).not.toBe(whiskersRepresentation);
       } else {
-        expect(fidoRepresentation._catModel).toEqual(whiskersRepresentation);
+        expect(fidoRepresentation._catModel).toBe(whiskersRepresentation);
       }
       // If dogs are stateless, the cat generator should get the same representation as fido because it's
       // called from the dog initializer. If dogs are not stateless, it'll be the same representation anyway
       // because it's associated with the same Property.
-      expect(dogModel).toEqual(fidoRepresentation);
+      expect(dogModel).toBe(fidoRepresentation);
       // these should work and give different representations as well
       const hectorRepresentation = myDataBinder.getRepresentation(hector, 'PETSTORE');
-      expect(hectorRepresentation).not.toEqual(fidoRepresentation);
+      expect(hectorRepresentation).not.toBe(fidoRepresentation);
       const tigerRepresentation = myDataBinder.getRepresentation(tiger, 'PETSTORE');
-      expect(tigerRepresentation).not.toEqual(whiskersRepresentation);
+      expect(tigerRepresentation).not.toBe(whiskersRepresentation);
 
     };
     const testStatelessHierarcy = function (in_animalIsStateless, in_dogIsStateless, in_catIsStateless) {
@@ -1031,15 +1031,15 @@ describe('DataBinder runtime representations', function () {
       // Also get the representation for the second dog
       const hectorRepresentation = myDataBinder.getRepresentation(hector, 'PETSTORE');
       // Dog representations are stateless and created on the fly -> should be different
-      expect(fidoRepresentation).not.toEqual(hectorRepresentation);
+      expect(fidoRepresentation).not.toBe(hectorRepresentation);
       // insert yet another dog
       const molly = PropertyFactory.create('Test:Dog-1.0.0', 'single');
       workspace.insert('Molly', molly);
       // Also get the representation for this dog
       const mollyRepresentation = myDataBinder.getRepresentation(molly, 'PETSTORE');
       // Dog representations are stateless and created on the fly -> should again be different
-      expect(fidoRepresentation).not.toEqual(mollyRepresentation);
-      expect(hectorRepresentation).not.toEqual(mollyRepresentation);
+      expect(fidoRepresentation).not.toBe(mollyRepresentation);
+      expect(hectorRepresentation).not.toBe(mollyRepresentation);
     });
 
     it('should not be possible to redefine a stateless runtime representation', function () {
@@ -1162,7 +1162,7 @@ describe('DataBinder runtime representations', function () {
       const hector = myDataBinder.getRepresentation(workspace.get('Hector'), 'PETSTORE');
       expect(hector).toBeDefined();
       expect(hector).toBeInstanceOf(DogRepresentation);
-      expect(hector).not.toEqual(fido);
+      expect(hector).not.toBe(fido);
       // generator & initializer should have been called again
       expect(dogInitializer).toHaveBeenCalledTimes(2);
       expect(dogSpyGenerator).toHaveBeenCalledTimes(2);
@@ -1223,7 +1223,7 @@ describe('DataBinder runtime representations', function () {
       // new fido is a different fido.
       expect(maker).toHaveBeenCalledTimes(1);
       expect(fido2).toBeDefined();
-      expect(fido).not.toEqual(fido2);
+      expect(fido).not.toBe(fido2);
     });
 
     it('should be able to redefine stateless runtime representations after detach(true)/reattach', function () {
@@ -1262,7 +1262,7 @@ describe('DataBinder runtime representations', function () {
       expect(maker).toHaveBeenCalledTimes(1);
       expect(fido2).toBeDefined();
       // ... and obviously it's a new representation (with a new definition)
-      expect(fido).not.toEqual(fido2);
+      expect(fido).not.toBe(fido2);
     });
 
     it('should be possible unregister & redefine stateless representations', function () {
@@ -1296,7 +1296,7 @@ describe('DataBinder runtime representations', function () {
       expect(newFido).toBeDefined();
       // note that after we undefine & redefine it will be a *different* stateless representation
       expect(newFido).toBeInstanceOf(DogRepresentation);
-      expect(newFido).not.toEqual(fido);
+      expect(newFido).not.toBe(fido);
     });
   });
 });
