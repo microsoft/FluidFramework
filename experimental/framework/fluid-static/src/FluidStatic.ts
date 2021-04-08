@@ -4,10 +4,11 @@
  */
 
 import { EventEmitter } from "events";
-import { getContainer, IGetContainerService } from "@fluid-experimental/get-container";
+import { getContainer, IGetContainerConfig, IGetContainerService } from "@fluid-experimental/get-container";
 import { DataObject } from "@fluidframework/aqueduct";
 import { Container } from "@fluidframework/container-loader";
 import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
+import { IFluidResolvedUrl, IWebResolvedUrl } from "@fluidframework/driver-definitions";
 import {
     DOProviderContainerRuntimeFactory,
     IdToDataObjectCollection,
@@ -87,8 +88,15 @@ export class FluidContainer extends EventEmitter implements Pick<Container, "aud
     public async getDataObject<T extends DataObject>(id: string) {
         return this.rootDataObject.getDataObject<T>(id);
     }
-}
 
+    public get resolvedUrl(): IWebResolvedUrl | IFluidResolvedUrl | undefined {
+        return this.container.resolvedUrl;
+    }
+
+    public get absoluteUrl(): Promise<string | undefined> {
+        return this.container.getAbsoluteUrl("/");
+    }
+}
 /**
  * FluidInstance provides the ability to have a Fluid object with a specific backing server outside of the
  * global context.
@@ -107,9 +115,10 @@ export class FluidInstance {
 
     public async createContainer(id: string, config: ContainerCreateConfig): Promise<FluidContainer> {
         const registryEntries = this.getRegistryEntries(config.dataObjects);
+        const getContainerConfig: IGetContainerConfig = { containerId: id, ...config };
         const container = await getContainer(
             this.containerService,
-            id,
+            getContainerConfig,
             new DOProviderContainerRuntimeFactory(registryEntries, config.initialDataObjects),
             true, /* createNew */
         );
@@ -119,9 +128,10 @@ export class FluidInstance {
 
     public async getContainer(id: string, config: ContainerConfig): Promise<FluidContainer> {
         const registryEntries = this.getRegistryEntries(config.dataObjects);
+        const getContainerConfig: IGetContainerConfig = { containerId: id, ...config };
         const container = await getContainer(
             this.containerService,
-            id,
+            getContainerConfig,
             new DOProviderContainerRuntimeFactory(registryEntries),
             false, /* createNew */
         );

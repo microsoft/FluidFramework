@@ -10,11 +10,13 @@ import {
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { InsecureTinyliciousTokenProvider, InsecureTinyliciousUrlResolver } from "@fluidframework/tinylicious-driver";
-import { getContainer, IGetContainerService } from "./getContainer";
+import { getContainer, IGetContainerConfig, IGetContainerService } from "./getContainer";
 
 export class TinyliciousService implements IGetContainerService {
     public readonly documentServiceFactory: IDocumentServiceFactory;
     public readonly urlResolver: IUrlResolver = new InsecureTinyliciousUrlResolver();
+    public readonly generateCreateNewRequest = (config: IGetContainerConfig) => ({ url: config.containerId });
+    public readonly generateLoadExistingRequest = (config: IGetContainerConfig) => ({ url: config.containerId });
 
     constructor() {
         const tokenProvider = new InsecureTinyliciousTokenProvider();
@@ -36,7 +38,7 @@ export async function getTinyliciousContainer(
 
     return getContainer(
         service,
-        documentId,
+        { containerId: documentId },
         containerRuntimeFactory,
         createNew,
     );

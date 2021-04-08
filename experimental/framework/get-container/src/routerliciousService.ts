@@ -14,7 +14,7 @@ import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicio
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { IUser } from "@fluidframework/protocol-definitions";
 import jwt from "jsonwebtoken";
-import { IGetContainerService } from "./getContainer";
+import { IGetContainerConfig, IGetContainerService } from "./getContainer";
 
 export interface IRouterliciousConfig {
     orderer: string,
@@ -62,6 +62,8 @@ class SimpleUrlResolver implements IUrlResolver {
 export class RouterliciousService implements IGetContainerService {
     public readonly documentServiceFactory: IDocumentServiceFactory;
     public readonly urlResolver: IUrlResolver;
+    public readonly generateCreateNewRequest = (config: IGetContainerConfig) => ({ url: config.containerId });
+    public readonly generateLoadExistingRequest = (config: IGetContainerConfig) => ({ url: config.containerId });
 
     constructor(config: IRouterliciousConfig) {
         const user = {
