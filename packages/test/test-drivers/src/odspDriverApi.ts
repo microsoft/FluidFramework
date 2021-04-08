@@ -49,6 +49,8 @@ export const odspHostPolicyMatrix: OptionsMatrix<HostStoragePolicy> = {
     blobDeduping: booleanCases,
     concurrentSnapshotFetch: booleanCases,
     snapshotOptions:[undefined, odspSnapshotOptions],
+    opsBatchSize: numberCases,
+    concurrentOpsBatches: numberCases,
     opsCaching: [undefined, odspOpsCaching],
 };
 
