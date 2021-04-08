@@ -120,7 +120,7 @@ export class SharedPropertyTree extends SharedObject {
 	 * @returns newly create shared map (but not attached yet)
 	 */
 	public static create(runtime: IFluidDataStoreRuntime, id?: string, queryString?: string) {
-		return runtime.createChannel(id, PropertyTreeFactory.Type, queryString) as SharedPropertyTree;
+		return runtime.createChannel(id, PropertyTreeFactory.Type) as SharedPropertyTree;
 	}
 
 	/**

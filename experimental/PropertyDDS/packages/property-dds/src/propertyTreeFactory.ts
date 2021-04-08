@@ -9,7 +9,6 @@ import {
 	IChannelServices,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { parseQueryString } from "@fluidframework/common-utils";
 import { SharedPropertyTree, SharedPropertyTreeOptions } from "./propertyTree";
 
 /**
@@ -39,32 +38,15 @@ export class PropertyTreeFactory implements IChannelFactory {
 		attributes: IChannelAttributes,
 		url?: string,
 	): Promise<SharedPropertyTree> {
-		let options;
-		if (url !== undefined) {
-			const parsedOptions = parseQueryString(url, new Set(["options"]));
-			options = parsedOptions.options;
-		}
-
+		const options = {};
 		// default object
-		if (options === undefined) {
-			options = {};
-		}
 		const instance = new SharedPropertyTree(id, runtime, attributes, options as SharedPropertyTreeOptions);
 		await instance.load(services);
 		return instance;
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string, requestUrl?: string): SharedPropertyTree {
-		let options;
-		if (requestUrl !== undefined) {
-			const parsedOptions = parseQueryString(requestUrl, new Set(["options"]));
-			options = parsedOptions.options;
-		}
-
-		// default object
-		if (options === undefined) {
-			options = {};
-		}
+		const options = {};
 		const cell = new SharedPropertyTree(id, document, this.attributes, options as SharedPropertyTreeOptions);
 
 		cell.initializeLocal();

@@ -6,7 +6,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
 	createAndAttachContainer,
-	createLocalLoader,
+    createLoader,
 	OpProcessingController,
 	ITestFluidObject,
 	TestFluidObjectFactory,
@@ -35,12 +35,12 @@ describe("PropertyTree", () => {
 	let sharedPropertyTree2: SharedPropertyTree;
 
 	async function createContainer(): Promise<IContainer> {
-		const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+		const loader = createLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
 		return createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
 	}
 
 	async function loadContainer(): Promise<IContainer> {
-		const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+		const loader: ILoader = createLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
 		return loader.resolve({ url: documentLoadUrl });
 	}
 

@@ -34,7 +34,7 @@ function createDerivedGuid(referenceGuid: string, identifier: string) {
         `${hexHash.substr(12, 4)}-${hexHash.substr(16, 4)}-${hexHash.substr(20, 12)}`
     );
 }
-console.assert = assert;
+console.assert = (condition: boolean,...data: any[]) => {assert(!!condition,"Console Assert");};
 
 function getFunctionSource(fun: any): string {
     let source = fun.toString() as string;
