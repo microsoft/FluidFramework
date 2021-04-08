@@ -199,16 +199,20 @@ export async function waitContainerToCatchUp(container: Container) {
             deltaManager.on("op", callbackOps);
         };
 
-        if (container.connectionState !== ConnectionState.Disconnected) {
+        // We can leverage DeltaManager's "connect" event here and test for ConnectionState.Disconnected
+        // But that works only if service provides us checkPointSequenceNumber
+        // Our internal testing is based on R11S that does not, but almost all tests connect as "write" and
+        // use this function to catch up, so leveraging our own join op as a fence/barrier
+        if (container.connectionState === ConnectionState.Connected) {
             waitForOps();
             return;
         }
 
         const callback = () => {
-            deltaManager.off(connectEventName, callback);
+            container.off(connectedEventName, callback);
             waitForOps();
         };
-        deltaManager.on(connectEventName, callback);
+        container.on(connectedEventName, callback);
 
         container.resume();
     });

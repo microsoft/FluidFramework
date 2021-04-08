@@ -17,7 +17,11 @@ import {
     IDocumentStorageService,
     IDocumentServicePolicies,
 } from "@fluidframework/driver-definitions";
-import { canRetryOnError } from "@fluidframework/driver-utils";
+import {
+    canRetryOnError,
+    requestOps,
+    streamObserver,
+} from "@fluidframework/driver-utils";
 import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
@@ -223,41 +227,70 @@ export class OdspDocumentService implements IDocumentService {
             this.logger,
         );
 
-        let missed = false;
+        // batch size, please see issue #5211 for data around batch sizing
+        const batchSize = this.hostPolicy.opsBatchSize ?? 5000;
+        const concurrency = this.hostPolicy.concurrentOpsBatches ?? 1;
+
         return {
-            get: async (from: number, to: number) => {
-                if (snapshotOps !== undefined && snapshotOps.length !== 0) {
-                    const messages = snapshotOps.filter((op) => op.sequenceNumber > from).map((op) => op.op);
-                    snapshotOps = undefined;
-                    if (messages.length > 0 && messages[0].sequenceNumber === from + 1) {
-                        // Consider not caching these ops as they will be cached as part of snapshot cache entry
-                        this.opsReceived(messages);
-                        return { messages, partialResult: true };
-                    } else {
-                        this.logger.sendErrorEvent({
-                            eventName: "SnapshotOpsNotUsed",
-                            length: messages.length,
-                            first: messages[0].sequenceNumber,
-                            from,
-                            to,
-                        });
-                    }
-                }
+            fetchMessages: (
+                from: number,
+                to: number | undefined,
+                abortSignal?: AbortSignal,
+                cachedOnly?: boolean) => {
+                    let missed = false;
+                    const stream = requestOps(
+                        async (f: number, t: number) => {
+                            if (snapshotOps !== undefined && snapshotOps.length !== 0) {
+                                const messages = snapshotOps.filter((op) =>
+                                    op.sequenceNumber > from).map((op) => op.op);
+                                snapshotOps = undefined;
+                                if (messages.length > 0 && messages[0].sequenceNumber === from + 1) {
+                                    // Consider not caching these ops as they will be cached as part of
+                                    // snapshot cache entry
+                                    this.opsReceived(messages);
+                                    return { messages, partialResult: true };
+                                } else {
+                                    this.logger.sendErrorEvent({
+                                        eventName: "SnapshotOpsNotUsed",
+                                        length: messages.length,
+                                        first: messages[0].sequenceNumber,
+                                        from,
+                                        to,
+                                    });
+                                }
+                            }
+                                    // We always write ops sequentially. Once there is a miss, stop consulting cache.
+                            // This saves a bit of processing time
+                            if (!missed) {
+                                const messagesFromCache = await this.opsCache?.get(from, to);
+                                if (messagesFromCache !== undefined && messagesFromCache.length !== 0) {
+                                    return {
+                                        messages: messagesFromCache as ISequencedDocumentMessage[],
+                                        partialResult: true,
+                                    };
+                                }
+                                missed = true;
+                            }
 
-                // We always write ops sequentially. Once there is a miss, stop consulting cache.
-                // This saves a bit of processing time
-                if (!missed) {
-                    const messagesFromCache = await this.opsCache?.get(from, to);
-                    if (messagesFromCache !== undefined && messagesFromCache.length !== 0) {
-                        return { messages: messagesFromCache as ISequencedDocumentMessage[], partialResult: true };
-                    }
-                    missed = true;
-                }
+                            // Proper implementaiton Coming in future
+                            if (cachedOnly) {
+                                return { messages: [], partialResult: false };
+                            }
 
-                const result = await service.get(from, to);
-                this.opsReceived(result.messages);
-                return result;
-            },
+                            return service.get(f, t);
+                        },
+                        // Staging: starting with no concurrency, listening for feedback first.
+                        // In future releases we will switch to actual concurrency
+                        concurrency,
+                        from, // inclusive
+                        to, // exclusive
+                        batchSize,
+                        this.logger,
+                        abortSignal,
+                    );
+
+                    return streamObserver(stream, (ops) => this.opsReceived(ops));
+                },
         };
     }
 

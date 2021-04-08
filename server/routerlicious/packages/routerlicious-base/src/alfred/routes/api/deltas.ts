@@ -24,7 +24,7 @@ import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Constants } from "../../../utils";
 
-export async function getDeltas(
+async function getDeltas(
     mongoManager: MongoManager,
     collectionName: string,
     tenantId: string,
