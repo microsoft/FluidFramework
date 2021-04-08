@@ -212,7 +212,12 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
                 const leftTasks: string[] = [];
                 for (const taskUrl of this.consensusRegisterCollection.keys()) {
                     if (this.getTaskClientId(taskUrl) === clientId) {
-                        leftTasks.push(taskUrl);
+                        if (this.locallyRunnableTasks.has(taskUrl)) {
+                            debug(`Requesting ${taskUrl}`);
+                            await this.writeCore(taskUrl, this.clientId);
+                        } else {
+                            leftTasks.push(taskUrl);
+                        }
                     }
                 }
                 await this.clearTasks(leftTasks);
