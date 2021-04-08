@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React from 'react';
-import ReactDOM from 'react-dom';
+
 
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 import { getFRSContainer, hasFRSEndpoints } from "./utils/getFRSContainer";
@@ -12,28 +11,11 @@ import { getFRSContainer, hasFRSEndpoints } from "./utils/getFRSContainer";
 import { PropertyTreeContainerRuntimeFactory as ContainerFactory } from "./containerCode";
 import { IPropertyTree } from "./dataObject";
 import { getTinyliciousContainer } from "@fluid-experimental/get-container";
-import { SquaresApp } from "./demo/squaresApp";
-import { handlePropertyDataCreationOptionGeneration, renderButtons } from "./view";
-
-import {
-    InspectorTable, IInspectorTableProps, handlePropertyDataCreation, ModalManager, ModalRoot
-} from '@fluid-experimental/property-inspector-table';
-import { PropertyProxy } from '@fluid-experimental/property-proxy';
 import _ from 'lodash';
 
 
 import { renderCheckoutView } from "./checkout_view";
-import { FluidBinder } from '@fluid-experimental/property-binder';
-
-
-const tableProps: Partial<IInspectorTableProps> = {
-    columns: ['name', 'value', 'type'],
-    dataCreationHandler: handlePropertyDataCreation,
-    dataCreationOptionGenerationHandler: handlePropertyDataCreationOptionGeneration,
-    expandColumnKey: 'name',
-    width: 1000,
-    height: 600
-};
+import { renderApp, renderInspector } from "./view";
 
 
 // In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading
@@ -71,33 +53,11 @@ async function start(): Promise<void> {
 
     const propertyTree: IPropertyTree = await getDefaultObjectFromContainer<IPropertyTree>(container, { options });
 
-    // Creating a FluidBinder instance.
-    const fluidBinder = new FluidBinder();
+    // Render the actual sample
+    const fluidBinder = renderApp(propertyTree, content);
 
-    // We create the squares demo app.
-    const squaresApp = new SquaresApp(fluidBinder, content, propertyTree);
-    squaresApp.init();
-
-    // Attaching FluidBinder to a PropertyTree instance in order to start listening to changes.
-    fluidBinder.attachTo(propertyTree);
-
-    // Rendering buttons
-    renderButtons(propertyTree, content);
-
-    // Listening to any change the root path of the PropertyDDS, and rendering the latest state of the
-    // inspector tree-table.
-    fluidBinder.registerOnPath('/', ['insert', 'remove', 'modify'], _.debounce(() => {
-        // Create an ES6 proxy for the DDS, this enables JS object interface for interacting with the DDS.
-        // Note: This is what currently inspector table expect for "data" prop.
-        const proxifiedDDS = PropertyProxy.proxify(propertyTree.pset);
-        ReactDOM.render
-            (
-                <ModalManager>
-                    <ModalRoot />
-                    <InspectorTable data={proxifiedDDS} {...tableProps} />
-                </ModalManager>,
-                document.getElementById('root'))
-    }, 20));
+    // Render property inspector
+    renderInspector(fluidBinder, propertyTree);
 
     // Reload the page on any further hash changes, e.g. in case you want to paste in a different document ID.
     window.addEventListener("hashchange", () => {

@@ -10,7 +10,12 @@
     "build:dev": "webpack --env.clean",
     "start": "webpack-dev-server --open",
     "start:tinylicious": "concurrently \"npm:start:server\" \"npm:start\"",
-    "start:server": "tinylicious"
+    "start:server": "tinylicious",
+    "start:test": "webpack-dev-server --config webpack.test.js",
+    "test": "npm run test:jest",
+    "test:watch": "npm run test:jest -- --watch",
+    "test:jest": "jest",
+    "test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest"
   },
   "dependencies": {
     "@fluid-experimental/property-common": "0.1.0",
@@ -56,6 +61,17 @@
     "css-loader": "^1.0.0",
     "sass-loader": "^7.1.0",
     "style-loader": "^1.0.0",
-    "node-sass": "^4.9.3"
-  }
+    "node-sass": "^4.9.3",
+    "jest": "^26.6.3",
+    "jest-junit": "^10.0.0",
+    "jest-puppeteer": "^4.3.0",
+    "puppeteer": "^1.20.0"
+  },
+  "jest-junit": {
+    "outputDirectory": "nyc",
+    "outputName": "jest-junit-report.xml"
+  },
+  "test": "npm run test:jest",
+  "test:jest": "jest",
+  "test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest"
 }
