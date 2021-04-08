@@ -44,10 +44,13 @@ type WithUndefined<T> = {
     [key in keyof T]: T[key] | undefined;
 };
 
+/**
+ * Helper class to expose map values through typed interface
+ */
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function getMapValues<T>(map: Map<string, any>) {
+function getMapValuesCore<T>(map: SharedMap) {
     return new Proxy(map, {
-        get: (target: Map<string, any>, prop, receiver) => {
+        get: (target: SharedMap, prop, receiver) => {
             if (typeof prop === "string") {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return target.get(prop);
@@ -55,14 +58,33 @@ export function getMapValues<T>(map: Map<string, any>) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return Reflect.get(target, prop, receiver);
         },
-        set: (target, prop, value, receiver) => {
+        set: (target: SharedMap, prop, value, receiver) => {
             if (typeof prop === "string") {
                 target.set(prop, value);
             }
             Reflect.set(target, prop, value, receiver);
             return true;
         },
-    }) as any as WithUndefined<T>;
+    });
+}
+
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+function getMapValues<T>(map: SharedMap) {
+    return getMapValuesCore<T>(map) as any as WithUndefined<T>;
+}
+
+/**
+ * We might want to use a factory or workflow that ensures initialization is done, and thus
+ * allow dropping undefined from each property.
+ * This is just an example, it's not used yet.
+ */
+export class SharedMapInitialized<T> extends SharedMap {
+    readonly typedValues: T;
+
+    constructor(values: T, id, runtime, attributes) {
+        super(id, runtime, attributes);
+        this.typedValues = getMapValuesCore<T>(this) as any as T;
+    }
 }
 
 describe("Map", () => {
