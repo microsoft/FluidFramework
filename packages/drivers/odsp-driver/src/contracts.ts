@@ -274,6 +274,10 @@ export interface HostStoragePolicy {
 
     blobDeduping?: boolean;
 
+    // Options overwriting default ops fetching from storage.
+    opsBatchSize?: number;
+    concurrentOpsBatches?: number;
+
     /**
      * Policy controlling ops caching (leveraging IPersistedCache passed to driver factory)
      */

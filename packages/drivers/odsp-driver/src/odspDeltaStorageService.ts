@@ -15,7 +15,7 @@ import { TokenFetchOptions } from "./tokenFetch";
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.
  */
-export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService {
+export class OdspDeltaStorageService {
     constructor(
         private readonly deltaFeedUrl: string,
         private readonly getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
@@ -63,10 +63,7 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
     }
 
     public async buildUrl(from: number, to: number) {
-        const fromInclusive = from + 1;
-        const toInclusive = to - 1;
-
-        const filter = encodeURIComponent(`sequenceNumber ge ${fromInclusive} and sequenceNumber le ${toInclusive}`);
+        const filter = encodeURIComponent(`sequenceNumber ge ${from} and sequenceNumber le ${to - 1}`);
         const queryString = `?filter=${filter}`;
         return `${this.deltaFeedUrl}${queryString}`;
     }

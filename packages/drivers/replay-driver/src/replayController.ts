@@ -64,7 +64,7 @@ export abstract class ReplayController extends ReadDocumentStorageServiceBase {
      * Note: this API is called while replay() is in progress - next batch of ops is downloaded in parallel
      * @param currentOp - current op
      */
-    public abstract fetchTo(currentOp: number): number;
+    public abstract fetchTo(currentOp: number): number | undefined;
 
     /**
      * Returns true if no more ops should be processed (or downloaded for future processing).

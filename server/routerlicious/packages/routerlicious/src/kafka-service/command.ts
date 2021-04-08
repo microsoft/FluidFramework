@@ -4,13 +4,15 @@
  */
 
 import { IKafkaResources, KafkaRunnerFactory } from "@fluidframework/server-lambdas-driver";
-import { configureLogging, runService, IResourcesFactory } from "@fluidframework/server-services-utils";
+import * as core from "@fluidframework/server-services-core";
+import { configureLogging } from "@fluidframework/server-services-utils";
 import commander from "commander";
 import nconf from "nconf";
 import * as winston from "winston";
+import { runService } from "../runner";
 
 export function execute(
-    factoryFn: (name: string, lambda: string) => IResourcesFactory<IKafkaResources>,
+    factoryFn: (name: string, lambda: string) => core.IResourcesFactory<IKafkaResources>,
     configOrPath: nconf.Provider | string) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
     const packageDetails = require("../../package.json");
