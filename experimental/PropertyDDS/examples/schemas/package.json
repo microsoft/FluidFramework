@@ -1,0 +1,15 @@
+{
+  "name": "@fluid-experimental/schemas",
+  "version": "1.0.0",
+  "description": "Centralized package for storing schemas used by the samples.",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "repository": "microsoft/AutoFluid",
+  "license": "MIT",
+  "author": "Microsoft"
+}
