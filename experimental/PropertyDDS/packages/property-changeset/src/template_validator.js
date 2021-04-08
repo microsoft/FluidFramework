@@ -890,16 +890,14 @@ var _validateSyntaxAsync = function(in_template) {
     };
     recursiveContextCheck(in_template);
 
-    contextCheckAsyncQueue.drain(
-      function() {
-        var result = that._resultBuilder.result;
-        _processValidationResults.call(that, in_template);
-        result.unresolvedTypes = _unresolvedTypes.call(that, in_template);
+    contextCheckAsyncQueue.drain = function() {
+      var result = that._resultBuilder.result;
+      _processValidationResults.call(that, in_template);
+      result.unresolvedTypes = _unresolvedTypes.call(that, in_template);
 
-        that.asyncValidationInProgress = false;
-        resolve(result);
-      }
-    );
+      that.asyncValidationInProgress = false;
+      resolve(result);
+    }
   });
 
 };
