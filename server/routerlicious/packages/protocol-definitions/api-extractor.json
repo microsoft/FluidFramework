@@ -8,6 +8,5 @@
   "apiReport": {
     "enabled": true,
     "reportFolder": "<projectFolder>/../../../../api-report/",
-    // "reportTempFolder": "<projectFolder>/../../../../_api-extractor-temp/"
   }
 }
