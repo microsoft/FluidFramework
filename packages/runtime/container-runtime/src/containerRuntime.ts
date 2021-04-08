@@ -245,6 +245,14 @@ export interface ISummaryRuntimeOptions {
 export interface IContainerRuntimeOptions {
     summaryOptions?: ISummaryRuntimeOptions;
     gcOptions?: IGCRuntimeOptions;
+    /**
+     * Control whether the ContainerRuntime includes AgentScheduler in its registry, whether an instance is created
+     * at _scheduler, and whether it subscribes to leadership.  This option will be removed in a future release, so it
+     * is recommended to opt-out in preparation for that change.  If you still require AgentScheduler and/or leader
+     * election, you should explicitly include AgentSchedulerFactory in the container registry, explicitly instantiate
+     * an instance of it using createRootDataStore, and explicitly register for leadership election using
+     * TaskSubscription.
+     */
     agentSchedulerAndLeaderElection?: boolean;
 }
 
@@ -515,7 +523,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         ISummarizerInternalsProvider
 {
     public get IContainerRuntime() { return this; }
-    public get IContainerRuntimeDirtyable() { return this; }
+    /**
+     * @deprecated 0.38 The IContainerRuntimeDirtyable interface and isMessageDirtyable() method will be removed in
+     * an upcoming release.
+     */
+    public get IContainerRuntimeDirtyable() {
+        console.error(`The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated`);
+        return this;
+    }
     public get IFluidRouter() { return this; }
 
     // back-compat: Used by loader in <= 0.35
@@ -564,6 +579,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             agentSchedulerAndLeaderElection: true,
         };
         const combinedRuntimeOptions = { ...defaultRuntimeOptions, ...backCompatRuntimeOptions };
+        if (combinedRuntimeOptions.agentSchedulerAndLeaderElection) {
+            console.error("ContainerRuntime with AgentScheduler built-in is deprecated");
+        }
 
         const registry = combinedRuntimeOptions.agentSchedulerAndLeaderElection
             ? new ContainerRuntimeDataStoreRegistry(registryEntries)
@@ -1457,8 +1475,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * the IFluidDataStoreRuntime.isDirty call returns true/false
      * @param type - The type of ContainerRuntime message that is being checked
      * @param contents - The contents of the message that is being verified
+     * @deprecated 0.38 The IContainerRuntimeDirtyable interface and isMessageDirtyable() method will be removed in
+     * an upcoming release.
      */
     public isMessageDirtyable(message: ISequencedDocumentMessage) {
+        console.error(`The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated`);
         assert(
             isRuntimeMessage(message) === true,
             0x12c /* "Message passed for dirtyable check should be a container runtime message" */,
