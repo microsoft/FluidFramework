@@ -50,6 +50,7 @@
     "@fluid-experimental/property-common": "^0.1.0",
     "@fluidframework/runtime-utils": "^0.38.0",
     "@fluidframework/server-local-server": "^0.1022.0-0",
+    "@fluidframework/driver-definitions":"^0.38.0",
     "@fluidframework/test-runtime-utils": "^0.38.0",
     "@fluidframework/local-driver": "^0.38.0",
     "@fluidframework/test-utils": "^0.38.0",

@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import * as crypto from "crypto";
 import { expect } from "chai";
-import { IContainer, ILoader } from "@fluidframework/container-definitions";
+import { IContainer, ILoader, IHostLoader, ILoaderOptions, } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { LocalResolver } from "@fluidframework/local-driver";
+import { LocalResolver, LocalDocumentServiceFactory,  } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
 	createAndAttachContainer,
-	createLocalLoader,
+	createLoader,
 	OpProcessingController,
 	ITestFluidObject,
 	TestFluidObjectFactory,
@@ -22,6 +23,23 @@ import {
     NamedProperty } from "@fluid-experimental/property-properties";
 import { assert } from "@fluidframework/common-utils";
 import { SharedPropertyTree } from "../propertyTree";
+
+function createLocalLoader(
+    packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
+    deltaConnectionServer: ILocalDeltaConnectionServer,
+    urlResolver: IUrlResolver,
+    options?: ILoaderOptions,
+): IHostLoader {
+    const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+
+    return createLoader(
+        packageEntries,
+        documentServiceFactory,
+        urlResolver,
+        undefined,
+        options,
+    );
+}
 
 function createDerivedGuid(referenceGuid: string, identifier: string) {
     const hash = crypto.createHash("sha1");
@@ -69,12 +87,12 @@ describe("PropertyDDS", () => {
         let errorHandler: (Error) => void;
 
 		async function createContainer(): Promise<IContainer> {
-			const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+			const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
 			return createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
 		}
 
 		async function loadContainer(): Promise<IContainer> {
-			const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+			const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
 			return loader.resolve({ url: documentLoadUrl });
 		}
 

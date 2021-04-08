@@ -1,9 +1,10 @@
 import { expect } from "chai";
-import { IContainer, ILoader } from "@fluidframework/container-definitions";
+import { IContainer, ILoader, IHostLoader, ILoaderOptions  } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails, IFluidSerializer } from "@fluidframework/core-interfaces";
-import { LocalResolver } from "@fluidframework/local-driver";
+import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
 import {
 	createAndAttachContainer,
     createLoader,
@@ -34,13 +35,30 @@ describe("PropertyTree", () => {
 	let sharedPropertyTree1: SharedPropertyTree;
 	let sharedPropertyTree2: SharedPropertyTree;
 
+    function createLocalLoader(
+        packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
+        deltaConnectionServer: ILocalDeltaConnectionServer,
+        urlResolver: IUrlResolver,
+        options?: ILoaderOptions,
+    ): IHostLoader {
+        const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+
+        return createLoader(
+            packageEntries,
+            documentServiceFactory,
+            urlResolver,
+            undefined,
+            options,
+        );
+    }
+
 	async function createContainer(): Promise<IContainer> {
-		const loader = createLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+		const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
 		return createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
 	}
 
 	async function loadContainer(): Promise<IContainer> {
-		const loader: ILoader = createLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+		const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
 		return loader.resolve({ url: documentLoadUrl });
 	}
 
