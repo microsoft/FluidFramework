@@ -45,6 +45,7 @@ import { getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
 import { TokenFetchOptions } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
+import { RateLimiter } from "./rateLimiter";
 
 /* eslint-disable max-len */
 
@@ -245,6 +246,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private readonly maxSnapshotSizeLimit = 500000000; // 500 MB
     private readonly maxSnapshotFetchTimeout = 120000; // 2 min
 
+    // limits the amount of parallel "attachment" blob uploads
+    private readonly createBlobRateLimiter = new RateLimiter(1);
+
     private readonly blobCache = new BlobCache();
 
     public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
@@ -301,17 +305,19 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 {
                     eventName: "createBlob",
                     size: file.byteLength,
+                    waitQueueLength: this.createBlobRateLimiter.waitQueueLength,
                 },
                 async (event) => {
-                    const res = await this.epochTracker.fetchAndParseAsJSON<api.ICreateBlobResponse>(
-                        url,
-                        {
-                            body: file,
-                            headers,
-                            method: "POST",
-                        },
-                        "createBlob",
-                    );
+                    const res = await this.createBlobRateLimiter.schedule(async () =>
+                        this.epochTracker.fetchAndParseAsJSON<api.ICreateBlobResponse>(
+                            url,
+                            {
+                                body: file,
+                                headers,
+                                method: "POST",
+                            },
+                            "createBlob",
+                    ));
                     event.end({
                         blobId: res.content.id,
                         ...res.commonSpoHeaders,
@@ -785,6 +791,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 overalltime: overallTime,
                 networktime: networkTime,
                 clienttime: clientTime,
+                // Sharing link telemetry regarding sharing link redeem status and performance. Ex: FRL; dur=100, FRS; desc=S, FRP; desc=False
+                // Here, FRL is the duration taken for redeem, FRS is the redeem status (S means success), and FRP is a flag to indicate if the permission has changed.
+                sltelemetry: response.headers.get("x-fluid-sltelemetry"),
                 ...response.commonSpoHeaders,
             });
             return value;

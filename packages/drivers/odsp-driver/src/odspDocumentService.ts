@@ -219,14 +219,9 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document delta storage service for sharepoint driver.
      */
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
-        const urlProvider = async () => {
-            const websocketEndpoint = await this.joinSession();
-            return websocketEndpoint.deltaStorageUrl;
-        };
-
         let snapshotOps = this.storageManager?.ops;
         const service = new OdspDeltaStorageService(
-            urlProvider,
+            this.odspResolvedUrl.endpoints.deltaStorageUrl,
             this.getStorageToken,
             this.epochTracker,
             this.logger,

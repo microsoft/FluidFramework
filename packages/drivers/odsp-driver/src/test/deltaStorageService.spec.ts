@@ -28,7 +28,7 @@ describe("DeltaStorageService", () => {
     it("Should build the correct sharepoint delta url with auth", async () => {
         const logger = new TelemetryUTLogger();
         const deltaStorageService = new OdspDeltaStorageService(
-            async () => testDeltaStorageUrl,
+            testDeltaStorageUrl,
             async (_refresh) => "?access_token=123",
             createUtEpochTracker(fileEntry, logger),
             logger);
@@ -78,7 +78,7 @@ describe("DeltaStorageService", () => {
         before(() => {
             const logger = new TelemetryUTLogger();
             deltaStorageService = new OdspDeltaStorageService(
-                async () => testDeltaStorageUrl,
+                testDeltaStorageUrl,
                 async (_refresh) => "",
                 createUtEpochTracker(fileEntry, logger),
                 logger);
@@ -134,7 +134,7 @@ describe("DeltaStorageService", () => {
         before(() => {
             const logger = new TelemetryUTLogger();
             deltaStorageService = new OdspDeltaStorageService(
-                async () => testDeltaStorageUrl,
+                testDeltaStorageUrl,
                 async (_refresh) => "",
                 createUtEpochTracker(fileEntry, logger),
                 logger);

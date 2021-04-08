@@ -5,7 +5,7 @@
 
 import { KafkaResources, KafkaResourcesFactory } from "@fluidframework/server-services-ordering-kafkanode";
 import { RdkafkaResourcesFactory } from "@fluidframework/server-services-ordering-rdkafka";
-import { IResourcesFactory } from "@fluidframework/server-services-utils";
+import { IResourcesFactory } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 
 /**
