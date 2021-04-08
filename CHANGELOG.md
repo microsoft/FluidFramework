@@ -1,5 +1,17 @@
 # Change Log
 
+## 0.82.1
+
+* fix: undo support for detach edits
+  * Associated pull request: [29441](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29441)
+  * Commit: [a23aac7ae421e8839741cb260d50d18f3432cda8](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/a23aac7ae421e8839741cb260d50d18f3432cda8)
+* build: BREAKING CHANGE update FluidFramework packages to 0.36.1
+  * Associated pull request: [29353](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29353)
+  * Commit: [cdf96a0f961089540dfab520e3746c952ff3d2d3](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/cdf96a0f961089540dfab520e3746c952ff3d2d3)
+* feat: implement opt-in blobed payload support in shared-tree and fluid-document-store
+  * Associated pull request: [28670](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/28670)
+  * Commit: [152b071162f38739a77b0181caf2d2b5db116296](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/152b071162f38739a77b0181caf2d2b5db116296)
+
 ## 0.80.1
 
 * fix: Log SharedTree history size after summary load completes
