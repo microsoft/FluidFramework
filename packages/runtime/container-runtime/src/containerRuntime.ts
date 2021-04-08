@@ -507,7 +507,11 @@ function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions):
         runFullGC: oldRuntimeOptions.runFullGC,
     };
 
-    return { summaryOptions, gcOptions };
+    return {
+        summaryOptions,
+        gcOptions,
+        agentSchedulerAndLeaderElection: runtimeOptions?.agentSchedulerAndLeaderElection,
+    };
 }
 
 /**
