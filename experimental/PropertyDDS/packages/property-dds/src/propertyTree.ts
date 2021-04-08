@@ -13,7 +13,7 @@ import {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 
-import { fromBase64ToUtf8, assert } from "@fluidframework/common-utils";
+import { bufferToString, assert } from "@fluidframework/common-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 
@@ -413,8 +413,8 @@ export class SharedPropertyTree extends SharedObject {
 
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const runtime = this.runtime;
-		const handleTableChunk = await storage.read("properties");
-		const utf8 = fromBase64ToUtf8(handleTableChunk);
+		const handleTableChunk = await storage.readBlob("properties");
+		const utf8 = bufferToString(handleTableChunk, "utf8");
 
 		const serializer = runtime.IFluidSerializer;
 		const snapshot: ISnapshot = serializer !== undefined ? serializer.parse(utf8) : JSON.parse(utf8);
@@ -425,7 +425,7 @@ export class SharedPropertyTree extends SharedObject {
 				// We load all chunks
 				const chunks = await Promise.all(
 					_.range(snapshot.numChunks).map(async (i) => {
-						return fromBase64ToUtf8(await storage.read(`summaryChunk_${i}`));
+						return bufferToString(await storage.readBlob(`summaryChunk_${i}`), "utf8");
 					}),
 				);
 
@@ -779,4 +779,8 @@ export class SharedPropertyTree extends SharedObject {
 
 		return true;
 	}
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
+    }
 }
