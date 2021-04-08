@@ -811,8 +811,8 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
             var modifyCounter = 0;
 
             async.whilst(
-              function(callback) {
-                callback(null, !arrayIterator.atEnd());
+              function() {
+                return !arrayIterator.atEnd();
               },
               function(n4) {
                 switch (arrayIterator.type) {
