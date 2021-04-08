@@ -242,21 +242,22 @@ export class OdspDocumentService implements IDocumentService {
                         async (f: number, t: number) => {
                             if (snapshotOps !== undefined && snapshotOps.length !== 0) {
                                 const messages = snapshotOps.filter((op) =>
-                                    op.sequenceNumber > from).map((op) => op.op);
-                                snapshotOps = undefined;
+                                    op.sequenceNumber >= from).map((op) => op.op);
                                 if (messages.length > 0 && messages[0].sequenceNumber === from + 1) {
                                     // Consider not caching these ops as they will be cached as part of
                                     // snapshot cache entry
                                     this.opsReceived(messages);
+                                    snapshotOps = undefined;
                                     return { messages, partialResult: true };
                                 } else {
                                     this.logger.sendErrorEvent({
                                         eventName: "SnapshotOpsNotUsed",
-                                        length: messages.length,
-                                        first: messages[0].sequenceNumber,
+                                        length: snapshotOps.length,
+                                        first: snapshotOps[0].sequenceNumber,
                                         from,
                                         to,
                                     });
+                                    snapshotOps = undefined;
                                 }
                             }
                                     // We always write ops sequentially. Once there is a miss, stop consulting cache.
