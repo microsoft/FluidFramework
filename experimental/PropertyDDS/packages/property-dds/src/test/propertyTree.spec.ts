@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { IContainer, ILoader, IHostLoader, ILoaderOptions  } from "@fluidframework/container-definitions";
+import { IContainer, ILoader, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails, IFluidSerializer } from "@fluidframework/core-interfaces";
 import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -7,7 +7,7 @@ import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidf
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import {
 	createAndAttachContainer,
-    createLoader,
+	createLoader,
 	OpProcessingController,
 	ITestFluidObject,
 	TestFluidObjectFactory,
@@ -35,22 +35,16 @@ describe("PropertyTree", () => {
 	let sharedPropertyTree1: SharedPropertyTree;
 	let sharedPropertyTree2: SharedPropertyTree;
 
-    function createLocalLoader(
-        packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
-        deltaConnectionServer: ILocalDeltaConnectionServer,
-        urlResolver: IUrlResolver,
-        options?: ILoaderOptions,
-    ): IHostLoader {
-        const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+	function createLocalLoader(
+		packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
+		deltaConnectionServer: ILocalDeltaConnectionServer,
+		urlResolver: IUrlResolver,
+		options?: ILoaderOptions,
+	): IHostLoader {
+		const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
 
-        return createLoader(
-            packageEntries,
-            documentServiceFactory,
-            urlResolver,
-            undefined,
-            options,
-        );
-    }
+		return createLoader(packageEntries, documentServiceFactory, urlResolver, undefined, options);
+	}
 
 	async function createContainer(): Promise<IContainer> {
 		const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);

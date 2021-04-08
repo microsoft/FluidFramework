@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import * as crypto from "crypto";
 import { expect } from "chai";
-import { IContainer, ILoader, IHostLoader, ILoaderOptions, } from "@fluidframework/container-definitions";
+import { IContainer, ILoader, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { LocalResolver, LocalDocumentServiceFactory,  } from "@fluidframework/local-driver";
+import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -17,50 +17,47 @@ import {
 import { DeterministicRandomGenerator } from "@fluid-experimental/property-common";
 import * as _ from "lodash";
 import {
-    StringArrayProperty,
-    PropertyFactory,
-    ArrayProperty,
-    NamedProperty } from "@fluid-experimental/property-properties";
+	StringArrayProperty,
+	PropertyFactory,
+	ArrayProperty,
+	NamedProperty,
+} from "@fluid-experimental/property-properties";
 import { assert } from "@fluidframework/common-utils";
 import { SharedPropertyTree } from "../propertyTree";
 
 function createLocalLoader(
-    packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
-    deltaConnectionServer: ILocalDeltaConnectionServer,
-    urlResolver: IUrlResolver,
-    options?: ILoaderOptions,
+	packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
+	deltaConnectionServer: ILocalDeltaConnectionServer,
+	urlResolver: IUrlResolver,
+	options?: ILoaderOptions,
 ): IHostLoader {
-    const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+	const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
 
-    return createLoader(
-        packageEntries,
-        documentServiceFactory,
-        urlResolver,
-        undefined,
-        options,
-    );
+	return createLoader(packageEntries, documentServiceFactory, urlResolver, undefined, options);
 }
 
 function createDerivedGuid(referenceGuid: string, identifier: string) {
-    const hash = crypto.createHash("sha1");
-    hash.write(`${referenceGuid}:${identifier}`);
-    hash.end();
+	const hash = crypto.createHash("sha1");
+	hash.write(`${referenceGuid}:${identifier}`);
+	hash.end();
 
-    const hexHash = hash.digest("hex");
-    return (
-        `${hexHash.substr(0, 8)}-${hexHash.substr(8, 4)}-` +
-        `${hexHash.substr(12, 4)}-${hexHash.substr(16, 4)}-${hexHash.substr(20, 12)}`
-    );
+	const hexHash = hash.digest("hex");
+	return (
+		`${hexHash.substr(0, 8)}-${hexHash.substr(8, 4)}-` +
+		`${hexHash.substr(12, 4)}-${hexHash.substr(16, 4)}-${hexHash.substr(20, 12)}`
+	);
 }
-console.assert = (condition: boolean,...data: any[]) => {assert(!!condition,"Console Assert");};
+console.assert = (condition: boolean, ...data: any[]) => {
+	assert(!!condition, "Console Assert");
+};
 
 function getFunctionSource(fun: any): string {
-    let source = fun.toString() as string;
-    source = source.replace(/^.*=>\s*{?\n?\s*/m, "");
-    source = source.replace(/}\s*$/m, "");
-    source = source.replace(/^\s*/gm, "");
+	let source = fun.toString() as string;
+	source = source.replace(/^.*=>\s*{?\n?\s*/m, "");
+	source = source.replace(/}\s*$/m, "");
+	source = source.replace(/^\s*/gm, "");
 
-    return source;
+	return source;
 }
 
 describe("PropertyDDS", () => {
@@ -84,7 +81,7 @@ describe("PropertyDDS", () => {
 		let sharedPropertyTree1: SharedPropertyTree;
 		let sharedPropertyTree2: SharedPropertyTree;
 
-        let errorHandler: (Error) => void;
+		let errorHandler: (Error) => void;
 
 		async function createContainer(): Promise<IContainer> {
 			const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
@@ -96,60 +93,65 @@ describe("PropertyDDS", () => {
 			return loader.resolve({ url: documentLoadUrl });
 		}
 
-        function createRandomTests(operations: {
-                    getParameters: (random: DeterministicRandomGenerator) => Record<string,(number|(() => void))>,
-                    op: (parameters: Record<string, any>) => Promise<void>,
-                    probability: number
-                }[],
-                final: () => Promise<void>,
-                count = 100,
-                startTest = 0,
-                maxOperations = 30) {
-            for (let i = startTest; i < count; i++) {
-                it(`Test ${i}`, async () => {
-                    let testString = "";
+		function createRandomTests(
+			operations: {
+				getParameters: (random: DeterministicRandomGenerator) => Record<string, number | (() => void)>;
+				op: (parameters: Record<string, any>) => Promise<void>;
+				probability: number;
+			}[],
+			final: () => Promise<void>,
+			count = 100,
+			startTest = 0,
+			maxOperations = 30,
+		) {
+			for (let i = startTest; i < count; i++) {
+				it(`Test ${i}`, async () => {
+					let testString = "";
 
-                    errorHandler = (err) => {
-                        console.error(`Failed Test code: ${testString}`);
-                    };
-                    const seed = createDerivedGuid("", String(i));
-                    const random = new DeterministicRandomGenerator(seed);
-                    const operationCumSums = [] as number[];
-                    for (const operation of operations) {
-                        operationCumSums.push((operationCumSums[operationCumSums.length - 1] ?? 0) +
-                                               operation.probability);
-                    }
+					errorHandler = (err) => {
+						console.error(`Failed Test code: ${testString}`);
+					};
+					const seed = createDerivedGuid("", String(i));
+					const random = new DeterministicRandomGenerator(seed);
+					const operationCumSums = [] as number[];
+					for (const operation of operations) {
+						operationCumSums.push(
+							(operationCumSums[operationCumSums.length - 1] ?? 0) + operation.probability,
+						);
+					}
 
-                    try {
-                        const numOperations = random.irandom(maxOperations);
-                        const maxCount = operationCumSums[operationCumSums.length - 1];
-                        for (const j of _.range(numOperations)) {
-                            const operationId = 1 + (random.irandom(maxCount) as number);
-                            const selectedOperation = _.sortedIndex(operationCumSums, operationId);
+					try {
+						const numOperations = random.irandom(maxOperations);
+						const maxCount = operationCumSums[operationCumSums.length - 1];
+						for (const j of _.range(numOperations)) {
+							const operationId = 1 + (random.irandom(maxCount) as number);
+							const selectedOperation = _.sortedIndex(operationCumSums, operationId);
 
-                            const parameters = operations[selectedOperation].getParameters(random);
+							const parameters = operations[selectedOperation].getParameters(random);
 
-                            // Create the source code for the test
-                            let operationSource = getFunctionSource(operations[selectedOperation].op.toString());
-                            for (const [key, value] of Object.entries(parameters)) {
-                                const valueString = _.isFunction(value) ? getFunctionSource(value) : value.toString();
-                                operationSource = operationSource.replace(new RegExp(`parameters.${key}\\(?\\)?`),
-                                                                          valueString);
-                            }
-                            testString += operationSource;
+							// Create the source code for the test
+							let operationSource = getFunctionSource(operations[selectedOperation].op.toString());
+							for (const [key, value] of Object.entries(parameters)) {
+								const valueString = _.isFunction(value) ? getFunctionSource(value) : value.toString();
+								operationSource = operationSource.replace(
+									new RegExp(`parameters.${key}\\(?\\)?`),
+									valueString,
+								);
+							}
+							testString += operationSource;
 
-                            await operations[selectedOperation].op(parameters);
-                        }
+							await operations[selectedOperation].op(parameters);
+						}
 
-                        testString += getFunctionSource(final);
-                        await final();
-                    } catch (e) {
-                        console.error(`Failed Test code: ${testString}`);
-                        throw e;
-                    }
-                });
-            }
-        }
+						testString += getFunctionSource(final);
+						await final();
+					} catch (e) {
+						console.error(`Failed Test code: ${testString}`);
+						throw e;
+					}
+				});
+			}
+		}
 
 		beforeEach(async () => {
 			deltaConnectionServer = LocalDeltaConnectionServer.create();
@@ -159,20 +161,20 @@ describe("PropertyDDS", () => {
 			container1 = await createContainer();
 			dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 			sharedPropertyTree1 = await dataObject1.getSharedObject<SharedPropertyTree>(propertyDdsId);
-            (sharedPropertyTree1 as any).__id = 1; // Add an id to simplyify debugging via conditional breakpoints
+			(sharedPropertyTree1 as any).__id = 1; // Add an id to simplyify debugging via conditional breakpoints
 
 			// Load the Container that was created by the first client.
 			container2 = await loadContainer();
 			dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 			sharedPropertyTree2 = await dataObject2.getSharedObject<SharedPropertyTree>(propertyDdsId);
-            (sharedPropertyTree2 as any).__id = 2; // Add an id to simplyify debugging via conditional breakpoints
+			(sharedPropertyTree2 as any).__id = 2; // Add an id to simplyify debugging via conditional breakpoints
 
 			// Attach error handlers to make debugging easier and ensure that internal failures cause the test to fail
-            errorHandler = (err) => {}; // This enables the create random tests function to register its own handler
+			errorHandler = (err) => {}; // This enables the create random tests function to register its own handler
 			container1.on("closed", (err: any) => {
 				if (err !== undefined) {
 					errorHandler(err);
-                    throw err;
+					throw err;
 				}
 			});
 			container2.on("closed", (err: any) => {
@@ -186,750 +188,745 @@ describe("PropertyDDS", () => {
 			opProcessingController.addDeltaManagers(container1.deltaManager, container2.deltaManager);
 		});
 
-        describe("with non overlapping inserts", () => {
-            let ACount: number;
-            let CCount: number;
-
-            beforeEach(async () => {
-                // Insert and prepare an array within the container
-                await opProcessingController.pauseProcessing();
-                sharedPropertyTree1.root.insert("array", PropertyFactory.create("String", "array"));
-
-                const array = sharedPropertyTree1.root.get("array") as StringArrayProperty;
-                array.push("B1");
-                array.push("B2");
-                array.push("B3");
-                sharedPropertyTree1.commit();
-
-                ACount = 0;
-                CCount = 0;
-
-                // Make sure both shared trees are in sync
-                await opProcessingController.process(container1.deltaManager);
-                await opProcessingController.process(container2.deltaManager);
-            });
-
-            afterEach(() => {
-                const result = _.range(1, ACount + 1)
-                    .map((i) => `A${i}`)
-                    .concat(["B1", "B2", "B3"])
-                    .concat(_.range(1, CCount + 1).map((i) => `C${i}`));
-
-                const array1 = sharedPropertyTree1.root.get("array") as StringArrayProperty;
-                const array2 = sharedPropertyTree2.root.get("array") as StringArrayProperty;
-                for (const array of [array1, array2]) {
-                    for (const [i, value] of result.entries()) {
-                        expect(array.get(i)).to.equal(value);
-                    }
-                }
-            });
-            function insertInArray(tree: SharedPropertyTree, letter: string) {
-                const array = tree.root.get("array") as StringArrayProperty;
-
-                // Find the insert position
-                let insertPosition: number;
-                let insertString: string;
-                if (letter === "A") {
-                    // We insert all As in front of B1
-                    const values: string[] = array.getValues();
-                    insertPosition = values.indexOf("B1");
-
-                    // For these letters we can just use the position to get the number for the inserted string
-                    insertString = `A${insertPosition + 1}`;
-
-                    ACount++;
-                } else {
-                    // Alway insert B at the end
-                    insertPosition = array.getLength();
-
-                    // Get the number from the previous entry
-                    const previous = array.get(insertPosition - 1) as string;
-                    const entryNumber = previous[0] === "B" ? 1 : Number.parseInt(previous[1], 10) + 1;
-                    insertString = `C${entryNumber}`;
-
-                    CCount++;
-                }
-
-                array.insert(insertPosition, insertString);
-                tree.commit();
-            }
-
-            it("Should work when doing two batches with synchronization inbetween", async () => {
-                insertInArray(sharedPropertyTree1, "A");
-                insertInArray(sharedPropertyTree1, "A");
-                insertInArray(sharedPropertyTree1, "A");
-
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-
-                insertInArray(sharedPropertyTree2, "C");
-                insertInArray(sharedPropertyTree2, "C");
-                insertInArray(sharedPropertyTree2, "C");
-
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-            });
-
-            it("Should work when doing two batches without synchronization inbetween", async () => {
-                insertInArray(sharedPropertyTree1, "A");
-                insertInArray(sharedPropertyTree1, "A");
-                insertInArray(sharedPropertyTree1, "A");
-
-                insertInArray(sharedPropertyTree2, "C");
-                insertInArray(sharedPropertyTree2, "C");
-                insertInArray(sharedPropertyTree2, "C");
-
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-            });
-
-            it("Should work when creating local branches with different remote heads", async () => {
-                insertInArray(sharedPropertyTree2, "C");
-                insertInArray(sharedPropertyTree1, "A");
-                await opProcessingController.processOutgoing(container1.deltaManager);
-                await opProcessingController.processIncoming(container2.deltaManager);
-                insertInArray(sharedPropertyTree2, "C");
-                insertInArray(sharedPropertyTree1, "A");
-                await opProcessingController.processOutgoing(container1.deltaManager);
-                await opProcessingController.processIncoming(container2.deltaManager);
-                insertInArray(sharedPropertyTree2, "C");
-                insertInArray(sharedPropertyTree1, "A");
-
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-            });
-
-            it("Should work when synchronizing after each operation", async () => {
-                insertInArray(sharedPropertyTree1, "A");
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                insertInArray(sharedPropertyTree1, "A");
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                insertInArray(sharedPropertyTree1, "A");
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-
-                insertInArray(sharedPropertyTree2, "C");
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                insertInArray(sharedPropertyTree2, "C");
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                insertInArray(sharedPropertyTree2, "C");
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-            });
-
-            it("Should work when synchronizing after pairs of operations", async () => {
-                insertInArray(sharedPropertyTree1, "A");
-                insertInArray(sharedPropertyTree2, "C");
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                insertInArray(sharedPropertyTree1, "A");
-                insertInArray(sharedPropertyTree2, "C");
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                insertInArray(sharedPropertyTree1, "A");
-                insertInArray(sharedPropertyTree2, "C");
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-            });
-
-            it("works with overlapping sequences", async () => {
-                insertInArray(sharedPropertyTree2, "C");
-                await opProcessingController.processOutgoing(container2.deltaManager);
-
-                // Insert five operations to make this overlap with the insert position of C
-                insertInArray(sharedPropertyTree1, "A");
-                insertInArray(sharedPropertyTree1, "A");
-                insertInArray(sharedPropertyTree1, "A");
-                insertInArray(sharedPropertyTree1, "A");
-                insertInArray(sharedPropertyTree1, "A");
-                await opProcessingController.processIncoming(container1.deltaManager);
-                insertInArray(sharedPropertyTree1, "A");
-                await opProcessingController.processIncoming(container2.deltaManager);
-
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-            });
-
-            it("Should work when the remote head points to a change that is not the reference change", async () => {
-                insertInArray(sharedPropertyTree2, "C");
-                await opProcessingController.processOutgoing(container2.deltaManager);
-                insertInArray(sharedPropertyTree1, "A");
-                await opProcessingController.processOutgoing(container1.deltaManager);
-                insertInArray(sharedPropertyTree2, "C");
-                await opProcessingController.processIncoming(container2.deltaManager);
-                insertInArray(sharedPropertyTree2, "C");
-                insertInArray(sharedPropertyTree2, "C");
-
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-            });
-
-            describe("Randomized Tests", () => {
-                const count = 100;
-                const startTest = 0;
-                const logTest = true;
-
-                for (let i = startTest; i < count; i++) {
-                    it(`Test ${i}`, async () => {
-                        const seed = createDerivedGuid("", String(i));
-                        const random = new DeterministicRandomGenerator(seed);
-                        let testString = "";
-
-                        const numOperations = random.irandom(30);
-                        for (const j of _.range(numOperations)) {
-                            const operation = random.irandom(6);
-                            switch (operation) {
-                                case 0:
-                                    insertInArray(sharedPropertyTree1, "A");
-                                    if (logTest) {
-                                        testString += 'insertInArray(sharedPropertyTree1, "A");\n';
-                                    }
-                                    break;
-                                case 1:
-                                    insertInArray(sharedPropertyTree2, "C");
-                                    if (logTest) {
-                                        testString += 'insertInArray(sharedPropertyTree2, "C");\n';
-                                    }
-                                    break;
-                                case 2:
-                                    await opProcessingController.processOutgoing(container1.deltaManager);
-                                    if (logTest) {
-                                        testString +=
-                                            "await opProcessingController.processOutgoing(container1.deltaManager);\n";
-                                    }
-                                    break;
-                                case 3:
-                                    await opProcessingController.processIncoming(container1.deltaManager);
-                                    if (logTest) {
-                                        testString +=
-                                            "await opProcessingController.processIncoming(container1.deltaManager);\n";
-                                    }
-                                    break;
-                                case 4:
-                                    await opProcessingController.processOutgoing(container2.deltaManager);
-                                    if (logTest) {
-                                        testString +=
-                                            "await opProcessingController.processOutgoing(container2.deltaManager);\n";
-                                    }
-                                    break;
-                                case 5:
-                                    await opProcessingController.processIncoming(container2.deltaManager);
-                                    if (logTest) {
-                                        testString +=
-                                            "await opProcessingController.processIncoming(container2.deltaManager);\n";
-                                    }
-                                    break;
-                                default:
-                                    throw new Error("Should never happen");
-                            }
-                        }
-
-                        await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                        if (logTest) {
-                            testString +=
-                                "await opProcessingController.process(container1.deltaManager, " +
-                                "container2.deltaManager);\n";
-                        }
-                    });
-                }
-            });
-        });
-
-        describe("with inserts and deletes at arbitrary positions", () => {
-            let createdProperties: Set<string>;
-            let deletedProperties: Set<string>;
-            beforeEach(async () => {
-                createdProperties = new Set();
-                deletedProperties = new Set();
-                (PropertyFactory as any)._reregister({
-                    typeid: "test:namedEntry-1.0.0",
-                    inherits: ["NamedProperty"],
-                    properties: [
-
-                    ],
-                });
-
-                await opProcessingController.pauseProcessing();
-                sharedPropertyTree1.root.insert("array", PropertyFactory.create("test:namedEntry-1.0.0", "array"));
-                sharedPropertyTree1.commit();
-
-                // Make sure both shared trees are in sync
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-            });
-            afterEach(async () => {
-                // We expect the internal representation to be the same between both properties
-                expect((sharedPropertyTree1 as any).remoteTipView).to.deep.equal(
-                       (sharedPropertyTree2 as any).remoteTipView);
-
-                // We expect the property tree to be the same between both
-                expect(sharedPropertyTree1.root.serialize()).to.deep.equal(sharedPropertyTree2.root.serialize());
-
-                // We expect the property tree to correspond to the remote tip view
-                expect((sharedPropertyTree1 as any).remoteTipView).to.deep.equal(sharedPropertyTree2.root.serialize());
-
-                // We expect all properties from the set to be present
-                const array = sharedPropertyTree1.root.get<ArrayProperty>("array");
-                assert(array !== undefined, "property undefined");
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-                for (const property of array.getValues() as any[]) {
-                    expect(!deletedProperties.has(property.guid)).to.be.true;
-                    expect(createdProperties.has(property.guid)).to.be.true;
-                    createdProperties.delete(property.guid);
-                }
-                expect(createdProperties.size).to.equal(0);
-            });
-            function insertProperties(tree: SharedPropertyTree, index: number, count = 1, commit = true) {
-                for (let i = 0; i < count; i++) {
-                    const property = PropertyFactory.create<NamedProperty>("test:namedEntry-1.0.0");
-                    tree.root.get<ArrayProperty>("array")?.insert(index + i, property);
-                    createdProperties.add(property.getGuid());
-                }
-
-                if (commit) {
-                    tree.commit();
-                }
-            }
-            function removeProperties(tree: SharedPropertyTree, index: number, count = 1, commit = true) {
-                const array = tree.root.get<ArrayProperty>("array");
-                assert(array !== undefined, "property undefined");
-
-                for (let i = 0; i < count; i++) {
-                    if (index >= array.getLength()) {
-                        break;
-                    }
-                    const property = array.get<NamedProperty>(index);
-                    assert(property !== undefined, "property undefined");
-                    array.remove(index);
-                    createdProperties.delete(property.getGuid());
-                    deletedProperties.add(property.getGuid());
-                }
-                if (commit) {
-                    tree.commit();
-                }
-            }
-
-            it("inserting properties into both trees", async () => {
-                insertProperties(sharedPropertyTree1, 0);
-                insertProperties(sharedPropertyTree1, 1);
-                insertProperties(sharedPropertyTree2, 0);
-                insertProperties(sharedPropertyTree2, 1);
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-            });
-
-            it("inserting properties in one tree and deleting in the other", async () => {
-                insertProperties(sharedPropertyTree1, 0);
-                insertProperties(sharedPropertyTree1, 1);
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                removeProperties(sharedPropertyTree2, 0);
-                removeProperties(sharedPropertyTree2, 0);
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-            });
-
-            it("inserting properties in one tree and deleting in both", async () => {
-                insertProperties(sharedPropertyTree1, 0);
-                insertProperties(sharedPropertyTree1, 1);
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                removeProperties(sharedPropertyTree1, 0);
-                removeProperties(sharedPropertyTree2, 0);
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-            });
-            it("Multiple inserts in sequence in tree 1", async () => {
-                insertProperties(sharedPropertyTree1, 0, 1, true);
-                insertProperties(sharedPropertyTree1, 0, 1, true);
-                insertProperties(sharedPropertyTree1, 1, 1, true);
-                insertProperties(sharedPropertyTree2, 0, 1, true);
-
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-            });
-
-            describe("Random tests", () => {
-                createRandomTests([
-                    {
-                        getParameters: (random: DeterministicRandomGenerator) => {
-                            const tree = random.irandom(2) === 0 ?
-                                    () => sharedPropertyTree1 :
-                                    () => sharedPropertyTree2;
-                            const array = tree().root.get<ArrayProperty>("array");
-                            return {
-                                position: random.irandom(array?.getLength()) || 0,
-                                count: random.irandom(3) as number + 1,
-                                tree,
-                            };
-                        },
-                        op: async (parameters) => {
-                            insertProperties(parameters.tree(), parameters.position, parameters.count, true);
-                        },
-                        probability: 1,
-                    },
-                    {
-                        getParameters: (random: DeterministicRandomGenerator) => {
-                            const tree = random.irandom(2) === 0 ?
-                                    () => sharedPropertyTree1 :
-                                    () => sharedPropertyTree2;
-                            const array = tree().root.get<ArrayProperty>("array");
-                            return {
-                                position: random.irandom(array?.getLength()) || 0,
-                                count: random.irandom(3) as number + 1,
-                                tree,
-                            };
-                        },
-                        op: async (parameters) => {
-                            removeProperties(parameters.tree(), parameters.position, parameters.count, true);
-                        },
-                        probability: 1,
-                    },
-                    {
-                        getParameters: (random: DeterministicRandomGenerator) => {
-                            const container = random.irandom(2) === 0 ?
-                                    () => container1 :
-                                    () => container2;
-                            return {
-                                container,
-                            };
-                        },
-                        op: async (parameters) => {
-                            await opProcessingController.processOutgoing(parameters.container().deltaManager);
-                        },
-                        probability: 1,
-                    },
-                    {
-                        getParameters: (random: DeterministicRandomGenerator) => {
-                            const container = random.irandom(2) === 0 ?
-                                    () => container1 :
-                                    () => container2;
-                            return {
-                                container,
-                            };
-                        },
-                        op: async (parameters) => {
-                            await opProcessingController.processIncoming(parameters.container().deltaManager);
-                        },
-                        probability: 1,
-                    },
-                ],
-                async () => {
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                },
-                1000,
-                0,
-                25);
-            });
-            describe("Failed Random Tests", () => {
-                it("Test Failure 1", async () => {
-                    insertProperties(sharedPropertyTree1, 0, 1, true);
-                    insertProperties(sharedPropertyTree1, 0, 3, true);
-                    insertProperties(sharedPropertyTree1, 3, 3, true);
-                    insertProperties(sharedPropertyTree1, 6, 2, true);
-                    insertProperties(sharedPropertyTree1, 0, 3, true);
-                    insertProperties(sharedPropertyTree1, 0, 2, true);
-                    insertProperties(sharedPropertyTree1, 2, 2, true);
-                    insertProperties(sharedPropertyTree1, 8, 2, true);
-                    insertProperties(sharedPropertyTree1, 2, 2, true);
-                    insertProperties(sharedPropertyTree1, 16, 3, true);
-                    insertProperties(sharedPropertyTree1, 9, 1, true);
-                    insertProperties(sharedPropertyTree1, 4, 2, true);
-                    insertProperties(sharedPropertyTree1, 13, 3, true);
-                    insertProperties(sharedPropertyTree1, 9, 3, true);
-                    insertProperties(sharedPropertyTree1, 16, 2, true);
-                    insertProperties(sharedPropertyTree1, 12, 2, true);
-                    insertProperties(sharedPropertyTree2, 0, 2, true);
-                    insertProperties(sharedPropertyTree1, 12, 2, true);
-                    insertProperties(sharedPropertyTree1, 12, 3, true);
-                    insertProperties(sharedPropertyTree1, 25, 3, true);
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-
-                it("Test Failure 2", async () => {
-                    insertProperties(sharedPropertyTree1, 0, 1, true);
-                    insertProperties(sharedPropertyTree1, 0, 1, true);
-                    insertProperties(sharedPropertyTree1, 1, 1, true);
-                    insertProperties(sharedPropertyTree1, 1, 1, true);
-                    insertProperties(sharedPropertyTree1, 0, 1, true);
-                    insertProperties(sharedPropertyTree1, 2, 1, true);
-                    insertProperties(sharedPropertyTree1, 4, 1, true);
-                    insertProperties(sharedPropertyTree1, 2, 1, true);
-                    insertProperties(sharedPropertyTree1, 0, 1, true);
-                    insertProperties(sharedPropertyTree1, 6, 1, true);
-                    insertProperties(sharedPropertyTree1, 0, 1, true);
-                    insertProperties(sharedPropertyTree1, 6, 1, true);
-                    insertProperties(sharedPropertyTree1, 9, 1, true);
-                    insertProperties(sharedPropertyTree1, 0, 1, true);
-                    insertProperties(sharedPropertyTree1, 2, 1, true);
-                    insertProperties(sharedPropertyTree1, 9, 1, true);
-                    insertProperties(sharedPropertyTree2, 0, 1, true);
-                    insertProperties(sharedPropertyTree1, 4, 1, true);
-                    insertProperties(sharedPropertyTree1, 0, 1, true);
-                    insertProperties(sharedPropertyTree1, 3, 1, true);
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-
-                it("Test Failure 3", async () => {
-                    insertProperties(sharedPropertyTree1, 0, 1, true);
-                    insertProperties(sharedPropertyTree2, 0, 1, true);
-                    insertProperties(sharedPropertyTree2, 0, 1, true);
-
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-
-                it("Test Failure 4", async () => {
-                    insertProperties(sharedPropertyTree1, 0, 1, true);
-                    insertProperties(sharedPropertyTree2, 0, 1, true);
-                    insertProperties(sharedPropertyTree2, 0, 1, true);
-                    insertProperties(sharedPropertyTree2, 1, 1, true);
-
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-
-                it("Test Failure 5", async () => {
-                    insertProperties(sharedPropertyTree1, 0, 8, true);
-                    removeProperties(sharedPropertyTree1, 4, 3, true);
-
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-
-                it("Test Failure 6", async () => {
-                    insertProperties(sharedPropertyTree1, 0, 2, true);
-                    removeProperties(sharedPropertyTree1, 0, 2, true);
-                    insertProperties(sharedPropertyTree2, 0, 1, true);
-                    removeProperties(sharedPropertyTree2, 0, 1, true);
-
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-
-                it("Test Failure 7", async () => {
-                    insertProperties(sharedPropertyTree2, 0, 8, true);
-                    insertProperties(sharedPropertyTree1, 0, 2, true);
-                    await opProcessingController.processOutgoing(container1.deltaManager);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    insertProperties(sharedPropertyTree1, 1, 4, true);
-                    await opProcessingController.processOutgoing(container1.deltaManager);
-                    removeProperties(sharedPropertyTree1, 4, 3, true);
-                    removeProperties(sharedPropertyTree1, 0, 2, true);
-                    insertProperties(sharedPropertyTree1, 0, 4, true);
-
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-
-                it("Test Failure 8", async () => {
-                    insertProperties(sharedPropertyTree2, 0, 3, true);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    await opProcessingController.processIncoming(container1.deltaManager);
-                    removeProperties(sharedPropertyTree2, 0, 3, true);
-                    insertProperties(sharedPropertyTree2, 0, 3, true);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    insertProperties(sharedPropertyTree1, 0, 1, true);
-
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-
-                it("Test Failure 9", async () => {
-                    insertProperties(sharedPropertyTree2, 0, 9, true);
-                    insertProperties(sharedPropertyTree2, 4, 1, true);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    insertProperties(sharedPropertyTree2, 0, 1, true);
-                    await opProcessingController.processIncoming(container2.deltaManager);
-                    insertProperties(sharedPropertyTree2, 1, 2, true);
-
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-
-                it("Test Failure 10", async () => {
-                    insertProperties(sharedPropertyTree2, 0, 3, true);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    await opProcessingController.processIncoming(container1.deltaManager);
-                    removeProperties(sharedPropertyTree2, 0, 3, true);
-                    insertProperties(sharedPropertyTree2, 0, 3, true);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    insertProperties(sharedPropertyTree1, 0, 1, true);
-                    removeProperties(sharedPropertyTree1, 0, 1, true);
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-                it("Test Failure 11", async () => {
-                    insertProperties(sharedPropertyTree2, 0, 6, true);
-                    insertProperties(sharedPropertyTree1, 0, 1, true);
-                    await opProcessingController.processOutgoing(container1.deltaManager);
-                    await opProcessingController.processIncoming(container2.deltaManager);
-                    insertProperties(sharedPropertyTree2, 4, 2, true);
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-                it("Test Failure 12", async () => {
-                    insertProperties(sharedPropertyTree1, 0, 2, true);
-                    insertProperties(sharedPropertyTree2, 0, 3, true);
-                    await opProcessingController.processOutgoing(container1.deltaManager);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    removeProperties(sharedPropertyTree2, 2, 2, true);
-                    await opProcessingController.processIncoming(container2.deltaManager);
-                    insertProperties(sharedPropertyTree2, 1, 2, true);
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-                it("Test Failure 13", async () => {
-                    insertProperties(sharedPropertyTree1, 0, 2, true);
-                    await opProcessingController.processOutgoing(container1.deltaManager);
-                    await opProcessingController.processIncoming(container2.deltaManager);
-                    insertProperties(sharedPropertyTree2, 1, 3, true);
-                    removeProperties(sharedPropertyTree2, 4, 1, true);
-                    insertProperties(sharedPropertyTree2, 4, 3, true);
-                    insertProperties(sharedPropertyTree1, 1, 2, true);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    await opProcessingController.processOutgoing(container1.deltaManager);
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-                it("Test Failure 14", async () => {
-                    insertProperties(sharedPropertyTree1, 0, 1, true);
-                    await opProcessingController.processOutgoing(container1.deltaManager);
-                    insertProperties(sharedPropertyTree2, 0, 2, true);
-                    await opProcessingController.processIncoming(container2.deltaManager);
-                    removeProperties(sharedPropertyTree2, 0, 1, true);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    insertProperties(sharedPropertyTree1, 0, 1, true);
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-                it("Test Failure 15", async () => {
-                    insertProperties(sharedPropertyTree2, 0, 1, true);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    await opProcessingController.processIncoming(container1.deltaManager);
-                    insertProperties(sharedPropertyTree2, 0, 2, true);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    insertProperties(sharedPropertyTree1, 0, 2, true);
-                    removeProperties(sharedPropertyTree1, 1, 3, true);
-                    insertProperties(sharedPropertyTree1, 0, 1, true);
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-                it("Test Failure 16", async () => {
-                    insertProperties(sharedPropertyTree1, 0, 3, true);
-                    await opProcessingController.processOutgoing(container1.deltaManager);
-                    insertProperties(sharedPropertyTree2, 0, 1, true);
-                    removeProperties(sharedPropertyTree2, 0, 1, true);
-                    removeProperties(sharedPropertyTree1, 0, 3, true);
-                    insertProperties(sharedPropertyTree1, 0, 3, true);
-                    await opProcessingController.processIncoming(container2.deltaManager);
-                    insertProperties(sharedPropertyTree2, 2, 2, true);
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-                it("Test Failure 17", async () => {
-                    insertProperties(sharedPropertyTree1, 0, 3, true);
-                    await opProcessingController.processOutgoing(container1.deltaManager);
-                    insertProperties(sharedPropertyTree1, 2, 4, true);
-                    removeProperties(sharedPropertyTree1, 0, 3, true);
-                    removeProperties(sharedPropertyTree1, 1, 3, true);
-                    insertProperties(sharedPropertyTree1, 0, 2, true);
-
-                    await opProcessingController.processIncoming(container2.deltaManager);
-                    insertProperties(sharedPropertyTree2, 1, 1, true);
-
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-                it("Test Failure 18", async () => {
-                    insertProperties(sharedPropertyTree2, 0, 3, true);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    await opProcessingController.processIncoming(container1.deltaManager);
-                    removeProperties(sharedPropertyTree2, 0, 3, true);
-                    insertProperties(sharedPropertyTree2, 0, 3, true);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    removeProperties(sharedPropertyTree1, 1, 2, true);
-                    insertProperties(sharedPropertyTree1, 0, 1, true);
-
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-                it("Test Failure 19", async () => {
-                    insertProperties(sharedPropertyTree1, 0, 3, true);
-                    insertProperties(sharedPropertyTree2, 0, 1, true);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    await opProcessingController.processOutgoing(container1.deltaManager);
-                    await opProcessingController.processIncoming(container2.deltaManager);
-                    removeProperties(sharedPropertyTree2, 1, 3, true);
-                    await opProcessingController.processOutgoing(container1.deltaManager);
-                    removeProperties(sharedPropertyTree1, 0, 1, true);
-                    insertProperties(sharedPropertyTree1, 0, 3, true);
-                    removeProperties(sharedPropertyTree2, 0, 2, true);
-
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-
-                it("Test Failure 20", async () => {
-                    insertProperties(sharedPropertyTree1, 0, 2, true);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    insertProperties(sharedPropertyTree2, 0, 2, true);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    removeProperties(sharedPropertyTree2, 1, 3, true);
-                    await opProcessingController.processIncoming(container1.deltaManager);
-                    removeProperties(sharedPropertyTree1, 1, 3, true);
-                    insertProperties(sharedPropertyTree1, 1, 2, true);
-                    removeProperties(sharedPropertyTree2, 0, 1, true);
-
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-
-                it("Test Failure 21", async () => {
-                    insertProperties(sharedPropertyTree1, 0, 7, true);
-                    await opProcessingController.processOutgoing(container1.deltaManager);
-                    await opProcessingController.processIncoming(container2.deltaManager);
-                    insertProperties(sharedPropertyTree1, 4, 2, true);
-                    await opProcessingController.processOutgoing(container1.deltaManager);
-                    insertProperties(sharedPropertyTree2, 5, 1, true);
-                    removeProperties(sharedPropertyTree2, 6, 2, true);
-                    insertProperties(sharedPropertyTree1, 6, 1, true);
-                    removeProperties(sharedPropertyTree1, 8, 1, true);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    removeProperties(sharedPropertyTree1, 7, 2, true);
-
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-
-                it("Test Failure 22", async () => {
-                    await opProcessingController.processOutgoing(container1.deltaManager);
-                    insertProperties(sharedPropertyTree2, 0, 3, true);
-                    await opProcessingController.processIncoming(container2.deltaManager);
-                    await opProcessingController.processIncoming(container2.deltaManager);
-                    insertProperties(sharedPropertyTree2, 1, 2, true);
-                    removeProperties(sharedPropertyTree1, 0, 2, true);
-                    await opProcessingController.processOutgoing(container1.deltaManager);
-                    insertProperties(sharedPropertyTree1, 0, 1, true);
-                    await opProcessingController.processOutgoing(container1.deltaManager);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    await opProcessingController.processOutgoing(container1.deltaManager);
-                    await opProcessingController.processIncoming(container1.deltaManager);
-                    insertProperties(sharedPropertyTree1, 5, 2, true);
-                    await opProcessingController.processIncoming(container1.deltaManager);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    removeProperties(sharedPropertyTree2, 1, 1, true);
-                    removeProperties(sharedPropertyTree1, 6, 2, true);
-                    await opProcessingController.processIncoming(container2.deltaManager);
-                    insertProperties(sharedPropertyTree1, 3, 2, true);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    removeProperties(sharedPropertyTree2, 2, 3, true);
-                    removeProperties(sharedPropertyTree1, 3, 2, true);
-                    insertProperties(sharedPropertyTree2, 1, 3, true);
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-                });
-
-                it("Test failure 23", async () => {
-                    insertProperties(sharedPropertyTree2, 0, 4, true);
-                    insertProperties(sharedPropertyTree1, 0, 3, true);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    insertProperties(sharedPropertyTree2, 1, 3, true);
-                    removeProperties(sharedPropertyTree2, 0, 2, true);
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-               });
-
-               it("Test failure 24", async () => {
-                    insertProperties(sharedPropertyTree2, 0, 6, true);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    await opProcessingController.processIncoming(container1.deltaManager);
-                    removeProperties(sharedPropertyTree2, 4, 1, true);
-                    removeProperties(sharedPropertyTree1, 3, 3, true);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    await opProcessingController.processIncoming(container1.deltaManager);
-                    removeProperties(sharedPropertyTree1, 2, 3, true);
-
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-               });
-
-               it("Test failure 25", async () => {
-                    insertProperties(sharedPropertyTree1, 0, 3, true);
-                    await opProcessingController.processOutgoing(container2.deltaManager);
-                    await opProcessingController.processOutgoing(container1.deltaManager);
-                    insertProperties(sharedPropertyTree2, 0, 3, true);
-                    await opProcessingController.processIncoming(container2.deltaManager);
-                    insertProperties(sharedPropertyTree2, 2, 1, true);
-                    removeProperties(sharedPropertyTree2, 0, 1, true);
-                    await opProcessingController.processOutgoing(container1.deltaManager);
-                    await opProcessingController.processIncoming(container2.deltaManager);
-                    insertProperties(sharedPropertyTree1, 1, 2, true);
-                    removeProperties(sharedPropertyTree2, 1, 2, true);
-                    await opProcessingController.processIncoming(container1.deltaManager);
-                    await opProcessingController.process(container1.deltaManager, container2.deltaManager);
-               });
-            });
-        });
+		describe("with non overlapping inserts", () => {
+			let ACount: number;
+			let CCount: number;
+
+			beforeEach(async () => {
+				// Insert and prepare an array within the container
+				await opProcessingController.pauseProcessing();
+				sharedPropertyTree1.root.insert("array", PropertyFactory.create("String", "array"));
+
+				const array = sharedPropertyTree1.root.get("array") as StringArrayProperty;
+				array.push("B1");
+				array.push("B2");
+				array.push("B3");
+				sharedPropertyTree1.commit();
+
+				ACount = 0;
+				CCount = 0;
+
+				// Make sure both shared trees are in sync
+				await opProcessingController.process(container1.deltaManager);
+				await opProcessingController.process(container2.deltaManager);
+			});
+
+			afterEach(() => {
+				const result = _.range(1, ACount + 1)
+					.map((i) => `A${i}`)
+					.concat(["B1", "B2", "B3"])
+					.concat(_.range(1, CCount + 1).map((i) => `C${i}`));
+
+				const array1 = sharedPropertyTree1.root.get("array") as StringArrayProperty;
+				const array2 = sharedPropertyTree2.root.get("array") as StringArrayProperty;
+				for (const array of [array1, array2]) {
+					for (const [i, value] of result.entries()) {
+						expect(array.get(i)).to.equal(value);
+					}
+				}
+			});
+			function insertInArray(tree: SharedPropertyTree, letter: string) {
+				const array = tree.root.get("array") as StringArrayProperty;
+
+				// Find the insert position
+				let insertPosition: number;
+				let insertString: string;
+				if (letter === "A") {
+					// We insert all As in front of B1
+					const values: string[] = array.getValues();
+					insertPosition = values.indexOf("B1");
+
+					// For these letters we can just use the position to get the number for the inserted string
+					insertString = `A${insertPosition + 1}`;
+
+					ACount++;
+				} else {
+					// Alway insert B at the end
+					insertPosition = array.getLength();
+
+					// Get the number from the previous entry
+					const previous = array.get(insertPosition - 1) as string;
+					const entryNumber = previous[0] === "B" ? 1 : Number.parseInt(previous[1], 10) + 1;
+					insertString = `C${entryNumber}`;
+
+					CCount++;
+				}
+
+				array.insert(insertPosition, insertString);
+				tree.commit();
+			}
+
+			it("Should work when doing two batches with synchronization inbetween", async () => {
+				insertInArray(sharedPropertyTree1, "A");
+				insertInArray(sharedPropertyTree1, "A");
+				insertInArray(sharedPropertyTree1, "A");
+
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+
+				insertInArray(sharedPropertyTree2, "C");
+				insertInArray(sharedPropertyTree2, "C");
+				insertInArray(sharedPropertyTree2, "C");
+
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+			});
+
+			it("Should work when doing two batches without synchronization inbetween", async () => {
+				insertInArray(sharedPropertyTree1, "A");
+				insertInArray(sharedPropertyTree1, "A");
+				insertInArray(sharedPropertyTree1, "A");
+
+				insertInArray(sharedPropertyTree2, "C");
+				insertInArray(sharedPropertyTree2, "C");
+				insertInArray(sharedPropertyTree2, "C");
+
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+			});
+
+			it("Should work when creating local branches with different remote heads", async () => {
+				insertInArray(sharedPropertyTree2, "C");
+				insertInArray(sharedPropertyTree1, "A");
+				await opProcessingController.processOutgoing(container1.deltaManager);
+				await opProcessingController.processIncoming(container2.deltaManager);
+				insertInArray(sharedPropertyTree2, "C");
+				insertInArray(sharedPropertyTree1, "A");
+				await opProcessingController.processOutgoing(container1.deltaManager);
+				await opProcessingController.processIncoming(container2.deltaManager);
+				insertInArray(sharedPropertyTree2, "C");
+				insertInArray(sharedPropertyTree1, "A");
+
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+			});
+
+			it("Should work when synchronizing after each operation", async () => {
+				insertInArray(sharedPropertyTree1, "A");
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				insertInArray(sharedPropertyTree1, "A");
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				insertInArray(sharedPropertyTree1, "A");
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+
+				insertInArray(sharedPropertyTree2, "C");
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				insertInArray(sharedPropertyTree2, "C");
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				insertInArray(sharedPropertyTree2, "C");
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+			});
+
+			it("Should work when synchronizing after pairs of operations", async () => {
+				insertInArray(sharedPropertyTree1, "A");
+				insertInArray(sharedPropertyTree2, "C");
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				insertInArray(sharedPropertyTree1, "A");
+				insertInArray(sharedPropertyTree2, "C");
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				insertInArray(sharedPropertyTree1, "A");
+				insertInArray(sharedPropertyTree2, "C");
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+			});
+
+			it("works with overlapping sequences", async () => {
+				insertInArray(sharedPropertyTree2, "C");
+				await opProcessingController.processOutgoing(container2.deltaManager);
+
+				// Insert five operations to make this overlap with the insert position of C
+				insertInArray(sharedPropertyTree1, "A");
+				insertInArray(sharedPropertyTree1, "A");
+				insertInArray(sharedPropertyTree1, "A");
+				insertInArray(sharedPropertyTree1, "A");
+				insertInArray(sharedPropertyTree1, "A");
+				await opProcessingController.processIncoming(container1.deltaManager);
+				insertInArray(sharedPropertyTree1, "A");
+				await opProcessingController.processIncoming(container2.deltaManager);
+
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+			});
+
+			it("Should work when the remote head points to a change that is not the reference change", async () => {
+				insertInArray(sharedPropertyTree2, "C");
+				await opProcessingController.processOutgoing(container2.deltaManager);
+				insertInArray(sharedPropertyTree1, "A");
+				await opProcessingController.processOutgoing(container1.deltaManager);
+				insertInArray(sharedPropertyTree2, "C");
+				await opProcessingController.processIncoming(container2.deltaManager);
+				insertInArray(sharedPropertyTree2, "C");
+				insertInArray(sharedPropertyTree2, "C");
+
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+			});
+
+			describe("Randomized Tests", () => {
+				const count = 100;
+				const startTest = 0;
+				const logTest = true;
+
+				for (let i = startTest; i < count; i++) {
+					it(`Test ${i}`, async () => {
+						const seed = createDerivedGuid("", String(i));
+						const random = new DeterministicRandomGenerator(seed);
+						let testString = "";
+
+						const numOperations = random.irandom(30);
+						for (const j of _.range(numOperations)) {
+							const operation = random.irandom(6);
+							switch (operation) {
+								case 0:
+									insertInArray(sharedPropertyTree1, "A");
+									if (logTest) {
+										testString += 'insertInArray(sharedPropertyTree1, "A");\n';
+									}
+									break;
+								case 1:
+									insertInArray(sharedPropertyTree2, "C");
+									if (logTest) {
+										testString += 'insertInArray(sharedPropertyTree2, "C");\n';
+									}
+									break;
+								case 2:
+									await opProcessingController.processOutgoing(container1.deltaManager);
+									if (logTest) {
+										testString +=
+											"await opProcessingController.processOutgoing(container1.deltaManager);\n";
+									}
+									break;
+								case 3:
+									await opProcessingController.processIncoming(container1.deltaManager);
+									if (logTest) {
+										testString +=
+											"await opProcessingController.processIncoming(container1.deltaManager);\n";
+									}
+									break;
+								case 4:
+									await opProcessingController.processOutgoing(container2.deltaManager);
+									if (logTest) {
+										testString +=
+											"await opProcessingController.processOutgoing(container2.deltaManager);\n";
+									}
+									break;
+								case 5:
+									await opProcessingController.processIncoming(container2.deltaManager);
+									if (logTest) {
+										testString +=
+											"await opProcessingController.processIncoming(container2.deltaManager);\n";
+									}
+									break;
+								default:
+									throw new Error("Should never happen");
+							}
+						}
+
+						await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+						if (logTest) {
+							testString +=
+								"await opProcessingController.process(container1.deltaManager, " +
+								"container2.deltaManager);\n";
+						}
+					});
+				}
+			});
+		});
+
+		describe("with inserts and deletes at arbitrary positions", () => {
+			let createdProperties: Set<string>;
+			let deletedProperties: Set<string>;
+			beforeEach(async () => {
+				createdProperties = new Set();
+				deletedProperties = new Set();
+				(PropertyFactory as any)._reregister({
+					typeid: "test:namedEntry-1.0.0",
+					inherits: ["NamedProperty"],
+					properties: [],
+				});
+
+				await opProcessingController.pauseProcessing();
+				sharedPropertyTree1.root.insert("array", PropertyFactory.create("test:namedEntry-1.0.0", "array"));
+				sharedPropertyTree1.commit();
+
+				// Make sure both shared trees are in sync
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+			});
+			afterEach(async () => {
+				// We expect the internal representation to be the same between both properties
+				expect((sharedPropertyTree1 as any).remoteTipView).to.deep.equal(
+					(sharedPropertyTree2 as any).remoteTipView,
+				);
+
+				// We expect the property tree to be the same between both
+				expect(sharedPropertyTree1.root.serialize()).to.deep.equal(sharedPropertyTree2.root.serialize());
+
+				// We expect the property tree to correspond to the remote tip view
+				expect((sharedPropertyTree1 as any).remoteTipView).to.deep.equal(sharedPropertyTree2.root.serialize());
+
+				// We expect all properties from the set to be present
+				const array = sharedPropertyTree1.root.get<ArrayProperty>("array");
+				assert(array !== undefined, "property undefined");
+				// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+				for (const property of array.getValues() as any[]) {
+					expect(!deletedProperties.has(property.guid)).to.be.true;
+					expect(createdProperties.has(property.guid)).to.be.true;
+					createdProperties.delete(property.guid);
+				}
+				expect(createdProperties.size).to.equal(0);
+			});
+			function insertProperties(tree: SharedPropertyTree, index: number, count = 1, commit = true) {
+				for (let i = 0; i < count; i++) {
+					const property = PropertyFactory.create<NamedProperty>("test:namedEntry-1.0.0");
+					tree.root.get<ArrayProperty>("array")?.insert(index + i, property);
+					createdProperties.add(property.getGuid());
+				}
+
+				if (commit) {
+					tree.commit();
+				}
+			}
+			function removeProperties(tree: SharedPropertyTree, index: number, count = 1, commit = true) {
+				const array = tree.root.get<ArrayProperty>("array");
+				assert(array !== undefined, "property undefined");
+
+				for (let i = 0; i < count; i++) {
+					if (index >= array.getLength()) {
+						break;
+					}
+					const property = array.get<NamedProperty>(index);
+					assert(property !== undefined, "property undefined");
+					array.remove(index);
+					createdProperties.delete(property.getGuid());
+					deletedProperties.add(property.getGuid());
+				}
+				if (commit) {
+					tree.commit();
+				}
+			}
+
+			it("inserting properties into both trees", async () => {
+				insertProperties(sharedPropertyTree1, 0);
+				insertProperties(sharedPropertyTree1, 1);
+				insertProperties(sharedPropertyTree2, 0);
+				insertProperties(sharedPropertyTree2, 1);
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+			});
+
+			it("inserting properties in one tree and deleting in the other", async () => {
+				insertProperties(sharedPropertyTree1, 0);
+				insertProperties(sharedPropertyTree1, 1);
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				removeProperties(sharedPropertyTree2, 0);
+				removeProperties(sharedPropertyTree2, 0);
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+			});
+
+			it("inserting properties in one tree and deleting in both", async () => {
+				insertProperties(sharedPropertyTree1, 0);
+				insertProperties(sharedPropertyTree1, 1);
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				removeProperties(sharedPropertyTree1, 0);
+				removeProperties(sharedPropertyTree2, 0);
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+			});
+			it("Multiple inserts in sequence in tree 1", async () => {
+				insertProperties(sharedPropertyTree1, 0, 1, true);
+				insertProperties(sharedPropertyTree1, 0, 1, true);
+				insertProperties(sharedPropertyTree1, 1, 1, true);
+				insertProperties(sharedPropertyTree2, 0, 1, true);
+
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+			});
+
+			describe("Random tests", () => {
+				createRandomTests(
+					[
+						{
+							getParameters: (random: DeterministicRandomGenerator) => {
+								const tree =
+									random.irandom(2) === 0 ? () => sharedPropertyTree1 : () => sharedPropertyTree2;
+								const array = tree().root.get<ArrayProperty>("array");
+								return {
+									position: random.irandom(array?.getLength()) || 0,
+									count: (random.irandom(3) as number) + 1,
+									tree,
+								};
+							},
+							op: async (parameters) => {
+								insertProperties(parameters.tree(), parameters.position, parameters.count, true);
+							},
+							probability: 1,
+						},
+						{
+							getParameters: (random: DeterministicRandomGenerator) => {
+								const tree =
+									random.irandom(2) === 0 ? () => sharedPropertyTree1 : () => sharedPropertyTree2;
+								const array = tree().root.get<ArrayProperty>("array");
+								return {
+									position: random.irandom(array?.getLength()) || 0,
+									count: (random.irandom(3) as number) + 1,
+									tree,
+								};
+							},
+							op: async (parameters) => {
+								removeProperties(parameters.tree(), parameters.position, parameters.count, true);
+							},
+							probability: 1,
+						},
+						{
+							getParameters: (random: DeterministicRandomGenerator) => {
+								const container = random.irandom(2) === 0 ? () => container1 : () => container2;
+								return {
+									container,
+								};
+							},
+							op: async (parameters) => {
+								await opProcessingController.processOutgoing(parameters.container().deltaManager);
+							},
+							probability: 1,
+						},
+						{
+							getParameters: (random: DeterministicRandomGenerator) => {
+								const container = random.irandom(2) === 0 ? () => container1 : () => container2;
+								return {
+									container,
+								};
+							},
+							op: async (parameters) => {
+								await opProcessingController.processIncoming(parameters.container().deltaManager);
+							},
+							probability: 1,
+						},
+					],
+					async () => {
+						await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+					},
+					1000,
+					0,
+					25,
+				);
+			});
+			describe("Failed Random Tests", () => {
+				it("Test Failure 1", async () => {
+					insertProperties(sharedPropertyTree1, 0, 1, true);
+					insertProperties(sharedPropertyTree1, 0, 3, true);
+					insertProperties(sharedPropertyTree1, 3, 3, true);
+					insertProperties(sharedPropertyTree1, 6, 2, true);
+					insertProperties(sharedPropertyTree1, 0, 3, true);
+					insertProperties(sharedPropertyTree1, 0, 2, true);
+					insertProperties(sharedPropertyTree1, 2, 2, true);
+					insertProperties(sharedPropertyTree1, 8, 2, true);
+					insertProperties(sharedPropertyTree1, 2, 2, true);
+					insertProperties(sharedPropertyTree1, 16, 3, true);
+					insertProperties(sharedPropertyTree1, 9, 1, true);
+					insertProperties(sharedPropertyTree1, 4, 2, true);
+					insertProperties(sharedPropertyTree1, 13, 3, true);
+					insertProperties(sharedPropertyTree1, 9, 3, true);
+					insertProperties(sharedPropertyTree1, 16, 2, true);
+					insertProperties(sharedPropertyTree1, 12, 2, true);
+					insertProperties(sharedPropertyTree2, 0, 2, true);
+					insertProperties(sharedPropertyTree1, 12, 2, true);
+					insertProperties(sharedPropertyTree1, 12, 3, true);
+					insertProperties(sharedPropertyTree1, 25, 3, true);
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+
+				it("Test Failure 2", async () => {
+					insertProperties(sharedPropertyTree1, 0, 1, true);
+					insertProperties(sharedPropertyTree1, 0, 1, true);
+					insertProperties(sharedPropertyTree1, 1, 1, true);
+					insertProperties(sharedPropertyTree1, 1, 1, true);
+					insertProperties(sharedPropertyTree1, 0, 1, true);
+					insertProperties(sharedPropertyTree1, 2, 1, true);
+					insertProperties(sharedPropertyTree1, 4, 1, true);
+					insertProperties(sharedPropertyTree1, 2, 1, true);
+					insertProperties(sharedPropertyTree1, 0, 1, true);
+					insertProperties(sharedPropertyTree1, 6, 1, true);
+					insertProperties(sharedPropertyTree1, 0, 1, true);
+					insertProperties(sharedPropertyTree1, 6, 1, true);
+					insertProperties(sharedPropertyTree1, 9, 1, true);
+					insertProperties(sharedPropertyTree1, 0, 1, true);
+					insertProperties(sharedPropertyTree1, 2, 1, true);
+					insertProperties(sharedPropertyTree1, 9, 1, true);
+					insertProperties(sharedPropertyTree2, 0, 1, true);
+					insertProperties(sharedPropertyTree1, 4, 1, true);
+					insertProperties(sharedPropertyTree1, 0, 1, true);
+					insertProperties(sharedPropertyTree1, 3, 1, true);
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+
+				it("Test Failure 3", async () => {
+					insertProperties(sharedPropertyTree1, 0, 1, true);
+					insertProperties(sharedPropertyTree2, 0, 1, true);
+					insertProperties(sharedPropertyTree2, 0, 1, true);
+
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+
+				it("Test Failure 4", async () => {
+					insertProperties(sharedPropertyTree1, 0, 1, true);
+					insertProperties(sharedPropertyTree2, 0, 1, true);
+					insertProperties(sharedPropertyTree2, 0, 1, true);
+					insertProperties(sharedPropertyTree2, 1, 1, true);
+
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+
+				it("Test Failure 5", async () => {
+					insertProperties(sharedPropertyTree1, 0, 8, true);
+					removeProperties(sharedPropertyTree1, 4, 3, true);
+
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+
+				it("Test Failure 6", async () => {
+					insertProperties(sharedPropertyTree1, 0, 2, true);
+					removeProperties(sharedPropertyTree1, 0, 2, true);
+					insertProperties(sharedPropertyTree2, 0, 1, true);
+					removeProperties(sharedPropertyTree2, 0, 1, true);
+
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+
+				it("Test Failure 7", async () => {
+					insertProperties(sharedPropertyTree2, 0, 8, true);
+					insertProperties(sharedPropertyTree1, 0, 2, true);
+					await opProcessingController.processOutgoing(container1.deltaManager);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					insertProperties(sharedPropertyTree1, 1, 4, true);
+					await opProcessingController.processOutgoing(container1.deltaManager);
+					removeProperties(sharedPropertyTree1, 4, 3, true);
+					removeProperties(sharedPropertyTree1, 0, 2, true);
+					insertProperties(sharedPropertyTree1, 0, 4, true);
+
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+
+				it("Test Failure 8", async () => {
+					insertProperties(sharedPropertyTree2, 0, 3, true);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					await opProcessingController.processIncoming(container1.deltaManager);
+					removeProperties(sharedPropertyTree2, 0, 3, true);
+					insertProperties(sharedPropertyTree2, 0, 3, true);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					insertProperties(sharedPropertyTree1, 0, 1, true);
+
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+
+				it("Test Failure 9", async () => {
+					insertProperties(sharedPropertyTree2, 0, 9, true);
+					insertProperties(sharedPropertyTree2, 4, 1, true);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					insertProperties(sharedPropertyTree2, 0, 1, true);
+					await opProcessingController.processIncoming(container2.deltaManager);
+					insertProperties(sharedPropertyTree2, 1, 2, true);
+
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+
+				it("Test Failure 10", async () => {
+					insertProperties(sharedPropertyTree2, 0, 3, true);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					await opProcessingController.processIncoming(container1.deltaManager);
+					removeProperties(sharedPropertyTree2, 0, 3, true);
+					insertProperties(sharedPropertyTree2, 0, 3, true);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					insertProperties(sharedPropertyTree1, 0, 1, true);
+					removeProperties(sharedPropertyTree1, 0, 1, true);
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+				it("Test Failure 11", async () => {
+					insertProperties(sharedPropertyTree2, 0, 6, true);
+					insertProperties(sharedPropertyTree1, 0, 1, true);
+					await opProcessingController.processOutgoing(container1.deltaManager);
+					await opProcessingController.processIncoming(container2.deltaManager);
+					insertProperties(sharedPropertyTree2, 4, 2, true);
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+				it("Test Failure 12", async () => {
+					insertProperties(sharedPropertyTree1, 0, 2, true);
+					insertProperties(sharedPropertyTree2, 0, 3, true);
+					await opProcessingController.processOutgoing(container1.deltaManager);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					removeProperties(sharedPropertyTree2, 2, 2, true);
+					await opProcessingController.processIncoming(container2.deltaManager);
+					insertProperties(sharedPropertyTree2, 1, 2, true);
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+				it("Test Failure 13", async () => {
+					insertProperties(sharedPropertyTree1, 0, 2, true);
+					await opProcessingController.processOutgoing(container1.deltaManager);
+					await opProcessingController.processIncoming(container2.deltaManager);
+					insertProperties(sharedPropertyTree2, 1, 3, true);
+					removeProperties(sharedPropertyTree2, 4, 1, true);
+					insertProperties(sharedPropertyTree2, 4, 3, true);
+					insertProperties(sharedPropertyTree1, 1, 2, true);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					await opProcessingController.processOutgoing(container1.deltaManager);
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+				it("Test Failure 14", async () => {
+					insertProperties(sharedPropertyTree1, 0, 1, true);
+					await opProcessingController.processOutgoing(container1.deltaManager);
+					insertProperties(sharedPropertyTree2, 0, 2, true);
+					await opProcessingController.processIncoming(container2.deltaManager);
+					removeProperties(sharedPropertyTree2, 0, 1, true);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					insertProperties(sharedPropertyTree1, 0, 1, true);
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+				it("Test Failure 15", async () => {
+					insertProperties(sharedPropertyTree2, 0, 1, true);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					await opProcessingController.processIncoming(container1.deltaManager);
+					insertProperties(sharedPropertyTree2, 0, 2, true);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					insertProperties(sharedPropertyTree1, 0, 2, true);
+					removeProperties(sharedPropertyTree1, 1, 3, true);
+					insertProperties(sharedPropertyTree1, 0, 1, true);
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+				it("Test Failure 16", async () => {
+					insertProperties(sharedPropertyTree1, 0, 3, true);
+					await opProcessingController.processOutgoing(container1.deltaManager);
+					insertProperties(sharedPropertyTree2, 0, 1, true);
+					removeProperties(sharedPropertyTree2, 0, 1, true);
+					removeProperties(sharedPropertyTree1, 0, 3, true);
+					insertProperties(sharedPropertyTree1, 0, 3, true);
+					await opProcessingController.processIncoming(container2.deltaManager);
+					insertProperties(sharedPropertyTree2, 2, 2, true);
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+				it("Test Failure 17", async () => {
+					insertProperties(sharedPropertyTree1, 0, 3, true);
+					await opProcessingController.processOutgoing(container1.deltaManager);
+					insertProperties(sharedPropertyTree1, 2, 4, true);
+					removeProperties(sharedPropertyTree1, 0, 3, true);
+					removeProperties(sharedPropertyTree1, 1, 3, true);
+					insertProperties(sharedPropertyTree1, 0, 2, true);
+
+					await opProcessingController.processIncoming(container2.deltaManager);
+					insertProperties(sharedPropertyTree2, 1, 1, true);
+
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+				it("Test Failure 18", async () => {
+					insertProperties(sharedPropertyTree2, 0, 3, true);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					await opProcessingController.processIncoming(container1.deltaManager);
+					removeProperties(sharedPropertyTree2, 0, 3, true);
+					insertProperties(sharedPropertyTree2, 0, 3, true);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					removeProperties(sharedPropertyTree1, 1, 2, true);
+					insertProperties(sharedPropertyTree1, 0, 1, true);
+
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+				it("Test Failure 19", async () => {
+					insertProperties(sharedPropertyTree1, 0, 3, true);
+					insertProperties(sharedPropertyTree2, 0, 1, true);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					await opProcessingController.processOutgoing(container1.deltaManager);
+					await opProcessingController.processIncoming(container2.deltaManager);
+					removeProperties(sharedPropertyTree2, 1, 3, true);
+					await opProcessingController.processOutgoing(container1.deltaManager);
+					removeProperties(sharedPropertyTree1, 0, 1, true);
+					insertProperties(sharedPropertyTree1, 0, 3, true);
+					removeProperties(sharedPropertyTree2, 0, 2, true);
+
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+
+				it("Test Failure 20", async () => {
+					insertProperties(sharedPropertyTree1, 0, 2, true);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					insertProperties(sharedPropertyTree2, 0, 2, true);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					removeProperties(sharedPropertyTree2, 1, 3, true);
+					await opProcessingController.processIncoming(container1.deltaManager);
+					removeProperties(sharedPropertyTree1, 1, 3, true);
+					insertProperties(sharedPropertyTree1, 1, 2, true);
+					removeProperties(sharedPropertyTree2, 0, 1, true);
+
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+
+				it("Test Failure 21", async () => {
+					insertProperties(sharedPropertyTree1, 0, 7, true);
+					await opProcessingController.processOutgoing(container1.deltaManager);
+					await opProcessingController.processIncoming(container2.deltaManager);
+					insertProperties(sharedPropertyTree1, 4, 2, true);
+					await opProcessingController.processOutgoing(container1.deltaManager);
+					insertProperties(sharedPropertyTree2, 5, 1, true);
+					removeProperties(sharedPropertyTree2, 6, 2, true);
+					insertProperties(sharedPropertyTree1, 6, 1, true);
+					removeProperties(sharedPropertyTree1, 8, 1, true);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					removeProperties(sharedPropertyTree1, 7, 2, true);
+
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+
+				it("Test Failure 22", async () => {
+					await opProcessingController.processOutgoing(container1.deltaManager);
+					insertProperties(sharedPropertyTree2, 0, 3, true);
+					await opProcessingController.processIncoming(container2.deltaManager);
+					await opProcessingController.processIncoming(container2.deltaManager);
+					insertProperties(sharedPropertyTree2, 1, 2, true);
+					removeProperties(sharedPropertyTree1, 0, 2, true);
+					await opProcessingController.processOutgoing(container1.deltaManager);
+					insertProperties(sharedPropertyTree1, 0, 1, true);
+					await opProcessingController.processOutgoing(container1.deltaManager);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					await opProcessingController.processOutgoing(container1.deltaManager);
+					await opProcessingController.processIncoming(container1.deltaManager);
+					insertProperties(sharedPropertyTree1, 5, 2, true);
+					await opProcessingController.processIncoming(container1.deltaManager);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					removeProperties(sharedPropertyTree2, 1, 1, true);
+					removeProperties(sharedPropertyTree1, 6, 2, true);
+					await opProcessingController.processIncoming(container2.deltaManager);
+					insertProperties(sharedPropertyTree1, 3, 2, true);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					removeProperties(sharedPropertyTree2, 2, 3, true);
+					removeProperties(sharedPropertyTree1, 3, 2, true);
+					insertProperties(sharedPropertyTree2, 1, 3, true);
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+
+				it("Test failure 23", async () => {
+					insertProperties(sharedPropertyTree2, 0, 4, true);
+					insertProperties(sharedPropertyTree1, 0, 3, true);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					insertProperties(sharedPropertyTree2, 1, 3, true);
+					removeProperties(sharedPropertyTree2, 0, 2, true);
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+
+				it("Test failure 24", async () => {
+					insertProperties(sharedPropertyTree2, 0, 6, true);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					await opProcessingController.processIncoming(container1.deltaManager);
+					removeProperties(sharedPropertyTree2, 4, 1, true);
+					removeProperties(sharedPropertyTree1, 3, 3, true);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					await opProcessingController.processIncoming(container1.deltaManager);
+					removeProperties(sharedPropertyTree1, 2, 3, true);
+
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+
+				it("Test failure 25", async () => {
+					insertProperties(sharedPropertyTree1, 0, 3, true);
+					await opProcessingController.processOutgoing(container2.deltaManager);
+					await opProcessingController.processOutgoing(container1.deltaManager);
+					insertProperties(sharedPropertyTree2, 0, 3, true);
+					await opProcessingController.processIncoming(container2.deltaManager);
+					insertProperties(sharedPropertyTree2, 2, 1, true);
+					removeProperties(sharedPropertyTree2, 0, 1, true);
+					await opProcessingController.processOutgoing(container1.deltaManager);
+					await opProcessingController.processIncoming(container2.deltaManager);
+					insertProperties(sharedPropertyTree1, 1, 2, true);
+					removeProperties(sharedPropertyTree2, 1, 2, true);
+					await opProcessingController.processIncoming(container1.deltaManager);
+					await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				});
+			});
+		});
 	});
 });

@@ -292,7 +292,7 @@ describe("PropertyTree", () => {
 			expect(unrebasedRemoteChanges.E).to.deep.equal(prundedData.unrebasedRemoteChanges.E);
 		});
 
-        it("Prune should not prune partially rebased commit chains", () => {
+		it("Prune should not prune partially rebased commit chains", () => {
 			/**
 			 * REMOTE CHANGES:       (A,0) <- (B,1) <- (C,2)
 			 * UNREBASED CHANGES:     \-(B,1) <- (C,2)
@@ -315,7 +315,7 @@ describe("PropertyTree", () => {
 					remoteHeadGuid: "A",
 					localBranchStart: undefined,
 				},
-                {
+				{
 					op: OpKind.ChangeSet,
 					changeSet: {},
 					guid: "C",

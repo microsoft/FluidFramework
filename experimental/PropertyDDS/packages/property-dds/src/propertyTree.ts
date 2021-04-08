@@ -559,8 +559,8 @@ export class SharedPropertyTree extends SharedObject {
 			this.popNotificationDelayScope();
 		}
 
-            // This is disabled for performance reasons. Only used during debugging
-            // assert(JSON.stringify(this.root.serialize()) === JSON.stringify(this.tipView));
+		// This is disabled for performance reasons. Only used during debugging
+		// assert(JSON.stringify(this.root.serialize()) === JSON.stringify(this.tipView));
 	}
 	private rebaseToRemoteChanges(change: IRemotePropertyTreeMessage) {
 		this.unrebasedRemoteChanges[change.guid] = _.cloneDeep(change);
@@ -571,8 +571,8 @@ export class SharedPropertyTree extends SharedObject {
 		}
 
 		const commitsOnOtherLocalBranch: Record<string, IPropertyTreeMessage> = {};
-        let rebaseBaseChangeSet = new ChangeSet({});
-        const changesOnOtherLocalBranch: IPropertyTreeMessage[] = [];
+		let rebaseBaseChangeSet = new ChangeSet({});
+		const changesOnOtherLocalBranch: IPropertyTreeMessage[] = [];
 		if (change.referenceGuid !== change.remoteHeadGuid) {
 			// Extract all changes inbetween the remoteHeadGuid and the referenceGuid
 			let currentGuid = change.referenceGuid;
@@ -618,27 +618,28 @@ export class SharedPropertyTree extends SharedObject {
 			// Then apply all changes on the local remote branch
 			const endIndex = _.findIndex(this.remoteChanges, (c) => c.guid === change.remoteHeadGuid);
 			const relevantRemoteChanges = this.remoteChanges.slice(startIndex + 1, endIndex + 1);
-            let rebaseBaseChangeSetForAlreadyRebasedChanges = new ChangeSet({});
+			let rebaseBaseChangeSetForAlreadyRebasedChanges = new ChangeSet({});
 
-            for (const c of relevantRemoteChanges) {
-                let changeset = c.changeSet;
-                let applyAfterMetaInformation: Map<any,any>|undefined;
+			for (const c of relevantRemoteChanges) {
+				let changeset = c.changeSet;
+				let applyAfterMetaInformation: Map<any, any> | undefined;
 
-                if (alreadyRebasedChanges[0]?.guid === c.guid) {
-                    const invertedChange = new ChangeSet(_.cloneDeep(alreadyRebasedChanges[0].changeSet));
-                    invertedChange._toInverseChangeSet();
-                    invertedChange.applyChangeSet(rebaseBaseChangeSetForAlreadyRebasedChanges);
-                    applyAfterMetaInformation = new Map();
-                    const conflicts2 = [];
-                    changeset = _.cloneDeep(alreadyRebasedChanges[0].changeSet);
-                    rebaseBaseChangeSetForAlreadyRebasedChanges._rebaseChangeSet(changeset,
-                                                    conflicts2, {applyAfterMetaInformation});
+				if (alreadyRebasedChanges[0]?.guid === c.guid) {
+					const invertedChange = new ChangeSet(_.cloneDeep(alreadyRebasedChanges[0].changeSet));
+					invertedChange._toInverseChangeSet();
+					invertedChange.applyChangeSet(rebaseBaseChangeSetForAlreadyRebasedChanges);
+					applyAfterMetaInformation = new Map();
+					const conflicts2 = [];
+					changeset = _.cloneDeep(alreadyRebasedChanges[0].changeSet);
+					rebaseBaseChangeSetForAlreadyRebasedChanges._rebaseChangeSet(changeset, conflicts2, {
+						applyAfterMetaInformation,
+					});
 
-                    rebaseBaseChangeSetForAlreadyRebasedChanges = invertedChange;
-                    alreadyRebasedChanges.shift();
-                }
-                rebaseBaseChangeSetForAlreadyRebasedChanges.applyChangeSet(changeset, {applyAfterMetaInformation});
-            }
+					rebaseBaseChangeSetForAlreadyRebasedChanges = invertedChange;
+					alreadyRebasedChanges.shift();
+				}
+				rebaseBaseChangeSetForAlreadyRebasedChanges.applyChangeSet(changeset, { applyAfterMetaInformation });
+			}
 
 			// Now we have to rebase all changes from the remote local branch with respect to this base changeset
 			this.rebaseChangeArrays(rebaseBaseChangeSetForAlreadyRebasedChanges, changesOnOtherLocalBranch);
@@ -653,38 +654,38 @@ export class SharedPropertyTree extends SharedObject {
 
 		const baseCommitID = _.findIndex(this.remoteChanges, (c) => c.guid === change.remoteHeadGuid);
 
-        const conflicts = [] as any[];
+		const conflicts = [] as any[];
 		for (let i = baseCommitID + 1; i < this.remoteChanges.length; i++) {
-            let applyAfterMetaInformation = commitsOnOtherLocalBranch[this.remoteChanges[i].guid] !== undefined
-						? this.remoteChanges[i].rebaseMetaInformation
-                        : undefined;
+			let applyAfterMetaInformation =
+				commitsOnOtherLocalBranch[this.remoteChanges[i].guid] !== undefined
+					? this.remoteChanges[i].rebaseMetaInformation
+					: undefined;
 
-            let changeset = this.remoteChanges[i].changeSet;
-            if (changesOnOtherLocalBranch[0]?.guid === this.remoteChanges[i].guid) {
-                const invertedChange = new ChangeSet(_.cloneDeep(changesOnOtherLocalBranch[0].changeSet));
-                invertedChange._toInverseChangeSet();
-                invertedChange.applyChangeSet(rebaseBaseChangeSet);
+			let changeset = this.remoteChanges[i].changeSet;
+			if (changesOnOtherLocalBranch[0]?.guid === this.remoteChanges[i].guid) {
+				const invertedChange = new ChangeSet(_.cloneDeep(changesOnOtherLocalBranch[0].changeSet));
+				invertedChange._toInverseChangeSet();
+				invertedChange.applyChangeSet(rebaseBaseChangeSet);
 
-                applyAfterMetaInformation = new Map();
-                changeset = _.cloneDeep(changesOnOtherLocalBranch[0].changeSet);
-                rebaseBaseChangeSet._rebaseChangeSet(changeset,
-                                                     conflicts, {applyAfterMetaInformation});
+				applyAfterMetaInformation = new Map();
+				changeset = _.cloneDeep(changesOnOtherLocalBranch[0].changeSet);
+				rebaseBaseChangeSet._rebaseChangeSet(changeset, conflicts, { applyAfterMetaInformation });
 
-                // This is disabled for performance reasons. Only used during debugging
-                // assert(_.isEqual(changeset,this.remoteChanges[i].changeSet),
-                //                 "Failed Rebase in rebaseToRemoteChanges");
-                rebaseBaseChangeSet = invertedChange;
-                changesOnOtherLocalBranch.shift();
-            }
+				// This is disabled for performance reasons. Only used during debugging
+				// assert(_.isEqual(changeset,this.remoteChanges[i].changeSet),
+				//                 "Failed Rebase in rebaseToRemoteChanges");
+				rebaseBaseChangeSet = invertedChange;
+				changesOnOtherLocalBranch.shift();
+			}
 
-            rebaseBaseChangeSet.applyChangeSet(changeset, {
-                applyAfterMetaInformation,
+			rebaseBaseChangeSet.applyChangeSet(changeset, {
+				applyAfterMetaInformation,
 			});
 		}
 
 		change.rebaseMetaInformation = new Map();
 		rebaseBaseChangeSet._rebaseChangeSet(change.changeSet, conflicts, {
-            applyAfterMetaInformation: change.rebaseMetaInformation,
+			applyAfterMetaInformation: change.rebaseMetaInformation,
 		});
 	}
 
@@ -695,14 +696,14 @@ export class SharedPropertyTree extends SharedObject {
 			copiedChangeSet._toInverseChangeSet();
 
 			const conflicts = [] as any[];
-            change.rebaseMetaInformation = new Map();
+			change.rebaseMetaInformation = new Map();
 			rebaseBaseChangeSet._rebaseChangeSet(change.changeSet, conflicts, {
-                applyAfterMetaInformation: change.rebaseMetaInformation,
+				applyAfterMetaInformation: change.rebaseMetaInformation,
 			});
 
 			copiedChangeSet.applyChangeSet(rebaseBaseChangeSet);
 			copiedChangeSet.applyChangeSet(change.changeSet, {
-                applyAfterMetaInformation: change.rebaseMetaInformation,
+				applyAfterMetaInformation: change.rebaseMetaInformation,
 			});
 			rebaseBaseChangeSet = copiedChangeSet;
 		}
@@ -719,9 +720,9 @@ export class SharedPropertyTree extends SharedObject {
 		const conflicts = [] as any[];
 
 		if (this.localChanges.length > 0 && this.localChanges[0].guid === change.guid) {
-            // This is disabled for performance reasons. Only used during debugging
-            // assert(JSON.stringify(this.localChanges[0].changeSet) === JSON.stringify(change.changeSet),
-            //        "Local change different than rebased remote change.");
+			// This is disabled for performance reasons. Only used during debugging
+			// assert(JSON.stringify(this.localChanges[0].changeSet) === JSON.stringify(change.changeSet),
+			//        "Local change different than rebased remote change.");
 
 			// If we got a confirmation of the commit on the tip of the localChanges array,
 			// there will be no update of the tip view at all. We just move it from local changes
