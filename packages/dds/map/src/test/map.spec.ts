@@ -32,6 +32,39 @@ function createLocalMap(id: string) {
     return map;
 }
 
+export interface ITest {
+    test: IFluidHandle<SharedMap>;
+    object: IFluidHandle<SharedMap>;
+    first: "second";
+    third: "fourth"
+    fifth: "sixth";
+}
+
+type WithUndefined<T> = {
+    [key in keyof T]: T[key] | undefined;
+};
+
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+export function getMapValues<T>(map: Map<string, any>) {
+    return new Proxy(map, {
+        get: (target: Map<string, any>, prop, receiver) => {
+            if (typeof prop === "string") {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                return target.get(prop);
+            }
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return Reflect.get(target, prop, receiver);
+        },
+        set: (target, prop, value, receiver) => {
+            if (typeof prop === "string") {
+                target.set(prop, value);
+            }
+            Reflect.set(target, prop, value, receiver);
+            return true;
+        },
+    }) as any as WithUndefined<T>;
+}
+
 describe("Map", () => {
     describe("Local state", () => {
         let map: SharedMap;
@@ -118,11 +151,12 @@ describe("Map", () => {
 
         describe("Serialize", () => {
             it("Should serialize the map as a JSON object", () => {
-                map.set("first", "second");
-                map.set("third", "fourth");
-                map.set("fifth", "sixth");
+                const values = getMapValues<ITest>(map);
+                values.first = "second";
+                values.third  = "fourth";
+                values.fifth = "sixth";
                 const subMap = createLocalMap("subMap");
-                map.set("object", subMap.handle);
+                values.object = subMap.handle;
 
                 const parsed = map.getSerializableStorage();
 
@@ -138,12 +172,13 @@ describe("Map", () => {
             });
 
             it("Should serialize an undefined value", () => {
-                map.set("first", "second");
-                map.set("third", "fourth");
-                map.set("fifth", undefined);
+                const values = getMapValues<ITest>(map);
+                values.first = "second";
+                values.third  = "fourth";
+                values.fifth = undefined;
                 assert.ok(map.has("fifth"));
                 const subMap = createLocalMap("subMap");
-                map.set("object", subMap.handle);
+                values.object = subMap.handle;
 
                 const parsed = map.getSerializableStorage();
 
@@ -398,12 +433,13 @@ describe("Map", () => {
 
                 it("Should be able to set a shared object handle as a key", () => {
                     const subMap = createLocalMap("subMap");
-                    map1.set("test", subMap.handle);
+                    const values = getMapValues<ITest>(map1);
+                    values.test = subMap.handle;
 
                     containerRuntimeFactory.processAllMessages();
 
                     // Verify the local SharedMap
-                    const localSubMap = map1.get<IFluidHandle>("test");
+                    const localSubMap = values.test;
                     assert(localSubMap);
                     assert.equal(
                         localSubMap.absolutePath, subMap.handle.absolutePath, "could not get the handle's path");

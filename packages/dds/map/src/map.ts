@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
+import { IFluidSerializer, IFluidHandle } from "@fluidframework/core-interfaces";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
@@ -103,6 +103,8 @@ export class MapFactory implements IChannelFactory {
  * However, the keys of a SharedMap must be strings.
  */
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
+    declare public readonly handle: IFluidHandle<SharedMap>;
+
     /**
      * Create a new shared map.
      * @param runtime - The data store runtime that the new shared map belongs to.
