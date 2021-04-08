@@ -245,6 +245,7 @@ export interface ISummaryRuntimeOptions {
 export interface IContainerRuntimeOptions {
     summaryOptions?: ISummaryRuntimeOptions;
     gcOptions?: IGCRuntimeOptions;
+    agentSchedulerAndLeaderElection?: boolean;
 }
 
 interface IRuntimeMessageMetadata {
@@ -556,7 +557,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
-        const registry = new ContainerRuntimeDataStoreRegistry(registryEntries);
+        const backCompatRuntimeOptions = getBackCompatRuntimeOptions(runtimeOptions);
+        const defaultRuntimeOptions: Required<IContainerRuntimeOptions> = {
+            summaryOptions: { generateSummaries: true },
+            gcOptions: {},
+            agentSchedulerAndLeaderElection: true,
+        };
+        const combinedRuntimeOptions = { ...defaultRuntimeOptions, ...backCompatRuntimeOptions };
+
+        const registry = combinedRuntimeOptions.agentSchedulerAndLeaderElection
+            ? new ContainerRuntimeDataStoreRegistry(registryEntries)
+            : new FluidDataStoreRegistry(registryEntries);
 
         const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
             const blobId = context.baseSnapshot?.blobs[blobName];
@@ -569,30 +580,26 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
         const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
 
-        const backCompatRuntimeOptions = getBackCompatRuntimeOptions(runtimeOptions);
-        const defaultRuntimeOptions: Required<IContainerRuntimeOptions> = {
-            summaryOptions: { generateSummaries: true },
-            gcOptions: {},
-        };
-
         const runtime = new ContainerRuntime(
             context,
             registry,
             metadata,
             chunks,
-            { ...defaultRuntimeOptions, ...backCompatRuntimeOptions },
+            combinedRuntimeOptions,
             containerScope,
             logger,
             requestHandler,
             storage);
 
-        // Create all internal data stores if not already existing on storage or loaded a detached
-        // container from snapshot(ex. draft mode).
-        if (!context.existing) {
-            await runtime.createRootDataStore(AgentSchedulerFactory.type, agentSchedulerId);
-        }
+        if (combinedRuntimeOptions.agentSchedulerAndLeaderElection) {
+            // Create all internal data stores if not already existing on storage or loaded a detached
+            // container from snapshot(ex. draft mode).
+            if (!context.existing) {
+                await runtime.createRootDataStore(AgentSchedulerFactory.type, agentSchedulerId);
+            }
 
-        runtime.subscribeToLeadership();
+            runtime.subscribeToLeadership();
+        }
 
         return runtime;
     }
@@ -695,7 +702,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._connected;
     }
 
+    /**
+     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
+     */
     public get leader(): boolean {
+        console.error(`The ContainerRuntime.leader property and "leader"/"notleader" events are deprecated`);
         return this._leader;
     }
 
@@ -1983,7 +1994,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private updateLeader(leadership: boolean) {
         this._leader = leadership;
-        if (this.leader) {
+        if (this._leader) {
             assert(this.clientId === undefined || this.connected && this.deltaManager && this.deltaManager.active,
                 0x136 /* "Leader must either have undefined clientId or be connected with active delta manager!" */);
             this.emit("leader");

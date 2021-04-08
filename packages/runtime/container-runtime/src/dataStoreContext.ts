@@ -151,6 +151,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.connected;
     }
 
+    /**
+     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
+     */
     public get leader(): boolean {
         return this._containerRuntime.leader;
     }
