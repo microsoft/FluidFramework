@@ -54,12 +54,7 @@ async function start(): Promise<void> {
         await getFRSContainer(documentId, ContainerFactory, createNew)
         : await getTinyliciousContainer(documentId, ContainerFactory, createNew);
 
-    const options = {
-        paths: undefined,
-        clientFiltering: false
-    };
-
-    const propertyTree: IPropertyTree = await getDefaultObjectFromContainer<IPropertyTree>(container, {options});
+    const propertyTree: IPropertyTree = await getDefaultObjectFromContainer<IPropertyTree>(container);
 
     // Creating a FluidBinder instance.
     const fluidBinder = new FluidBinder();
