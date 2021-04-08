@@ -11,5 +11,8 @@
   },
   "repository": "microsoft/AutoFluid",
   "license": "MIT",
-  "author": "Microsoft"
+  "author": "Microsoft",
+  "devDependencies": {
+    "typescript": "~4.1.3"
+  }
 }

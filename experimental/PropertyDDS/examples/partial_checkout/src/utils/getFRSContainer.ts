@@ -69,14 +69,15 @@ export async function getFRSContainer(
         key);*/
 
     const urlResolver = new InsecureTinyliciousUrlResolver();
-
+    const containerService = {
+        documentServiceFactory: documentServiceFactory,
+        urlResolver: urlResolver
+    }
     return getContainer(
+        containerService,
         documentId,
-        createNew,
-        { url: documentId },
-        urlResolver,
-        documentServiceFactory,
         containerRuntimeFactory,
+        createNew
     );
 }
 
