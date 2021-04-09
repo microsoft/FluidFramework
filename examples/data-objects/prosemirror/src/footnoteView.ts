@@ -88,7 +88,7 @@ export class FootnoteView {
 
             for (const transaction of transactions) {
                 for (const step of transaction.steps) {
-                    outerTr.step(step).map(offsetMap);
+                    outerTr.step(step.map(offsetMap));
                 }
             }
 
