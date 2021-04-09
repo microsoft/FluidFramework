@@ -805,12 +805,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         let numBlobs = 0;
         let encodedBlobsSize = 0;
         let decodedBlobsSize = 0;
-        for (const tree of snapshot.trees) {
-            for(const treeEntry of tree.entries) {
-                if (treeEntry.type === "blob") {
-                    numBlobs++;
-                } else if (treeEntry.type === "tree") {
-                    numTrees++;
+        if (snapshot.trees !== undefined) {
+            for (const tree of snapshot.trees) {
+                for(const treeEntry of tree.entries) {
+                    if (treeEntry.type === "blob") {
+                        numBlobs++;
+                    } else if (treeEntry.type === "tree") {
+                        numTrees++;
+                    }
                 }
             }
         }
