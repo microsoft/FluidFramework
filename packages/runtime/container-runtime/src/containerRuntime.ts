@@ -1486,7 +1486,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * an upcoming release.
      */
     public isMessageDirtyable(message: ISequencedDocumentMessage) {
-        // The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated
+        // The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated 0.38
         this.logger.sendErrorEvent({ eventName: "UsedIsMessageDirtyable" });
         assert(
             isRuntimeMessage(message) === true,
