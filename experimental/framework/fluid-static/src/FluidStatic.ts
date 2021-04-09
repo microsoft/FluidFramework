@@ -4,20 +4,16 @@
  */
 
 import { getContainer, IGetContainerService } from "@fluid-experimental/get-container";
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { Container } from "@fluidframework/container-loader";
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
 
 import {
-    DOProviderContainerRuntimeFactory,
+    DOProviderContainerRuntimeFactory, FluidContainer,
 } from "./containerCode";
 
 import {
     ContainerConfig,
     LoadableObjectClass,
-    LoadableObjectRecord,
 } from "./types";
 
 import {
@@ -25,42 +21,11 @@ import {
     isSharedObjectClass,
 } from "./utils";
 
-export interface IFluidContainerEvents extends IEvent {
-    (event: "connected", listener: (clientId: string) => void): void;
-}
-
-/**
- * FluidContainer defines the interface that the developer will use to interact with Fluid.
- */
-export interface FluidContainer
-    extends Pick<Container, "audience" | "clientId">, IEventProvider<IFluidContainerEvents> {
-    /**
-     * The initialObjects defined in the container config
-     *
-     * Example.
-     * ```
-     * {
-     *   foo1: Foo,
-     *   bar2: Bar,
-     * }
-     * ```
-     */
-    readonly initialObjects: LoadableObjectRecord;
-
-    /**
-     * Creates a new instance of the provided LoadableObjectClass
-     *
-     * The returned object needs to be stored via handle by the caller.
-     * @param objectClass - The type
-     */
-    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
-}
-
 /**
  * FluidInstance provides the ability to have a Fluid object with a specific backing server outside of the
  * global context.
  */
-export class FluidInstance {
+class FluidInstance {
     private readonly containerService: IGetContainerService;
 
     public constructor(getContainerService: IGetContainerService) {
