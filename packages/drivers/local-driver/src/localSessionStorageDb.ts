@@ -227,8 +227,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
      * Query is expected to have a member "_id" which is a unique id.
      *
      * @param query - what to find in the database
-     *
-    */
+     */
     private findOneInternal(query: any): any {
         if (query._id) {
             const json = sessionStorage.getItem(`${this.collectionName}-${query._id}`);// form of data
