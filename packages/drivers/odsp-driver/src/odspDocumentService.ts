@@ -233,17 +233,17 @@ export class OdspDocumentService implements IDocumentService {
 
         return {
             fetchMessages: (
-                from: number,
-                to: number | undefined,
+                fromTotal: number,
+                toTotal: number | undefined,
                 abortSignal?: AbortSignal,
                 cachedOnly?: boolean) => {
                     let missed = false;
                     const stream = requestOps(
-                        async (f: number, t: number) => {
+                        async (from: number, to: number) => {
                             if (snapshotOps !== undefined && snapshotOps.length !== 0) {
                                 const messages = snapshotOps.filter((op) =>
                                     op.sequenceNumber >= from).map((op) => op.op);
-                                if (messages.length > 0 && messages[0].sequenceNumber === from + 1) {
+                                if (messages.length > 0 && messages[0].sequenceNumber === from) {
                                     // Consider not caching these ops as they will be cached as part of
                                     // snapshot cache entry
                                     this.opsReceived(messages);
@@ -278,13 +278,13 @@ export class OdspDocumentService implements IDocumentService {
                                 return { messages: [], partialResult: false };
                             }
 
-                            return service.get(f, t);
+                            return service.get(from, to);
                         },
                         // Staging: starting with no concurrency, listening for feedback first.
                         // In future releases we will switch to actual concurrency
                         concurrency,
-                        from, // inclusive
-                        to, // exclusive
+                        fromTotal, // inclusive
+                        toTotal, // exclusive
                         batchSize,
                         this.logger,
                         abortSignal,
