@@ -34,7 +34,7 @@ export interface IDatabaseManager {
 
 /**
  * Interface for a database of values that have type T.
- * In some implementations,T should have a member "_id" which is a string used
+ * In some implementations, T should have a member "_id" which is a string used
  * when adding or finding value in the database.
  */
 export interface ICollection<T> {
