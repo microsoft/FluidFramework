@@ -253,7 +253,7 @@ export interface IContainerRuntimeOptions {
      * an instance of it using createRootDataStore, and explicitly register for leadership election using
      * TaskSubscription.
      */
-    agentSchedulerAndLeaderElection?: boolean;
+    omitAgentSchedulerAndLeaderElection?: boolean;
 }
 
 interface IRuntimeMessageMetadata {
@@ -510,7 +510,7 @@ function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions):
     return {
         summaryOptions,
         gcOptions,
-        agentSchedulerAndLeaderElection: runtimeOptions?.agentSchedulerAndLeaderElection,
+        omitAgentSchedulerAndLeaderElection: runtimeOptions?.omitAgentSchedulerAndLeaderElection,
     };
 }
 
@@ -580,16 +580,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const defaultRuntimeOptions: Required<IContainerRuntimeOptions> = {
             summaryOptions: { generateSummaries: true },
             gcOptions: {},
-            agentSchedulerAndLeaderElection: true,
+            omitAgentSchedulerAndLeaderElection: false,
         };
         const combinedRuntimeOptions = { ...defaultRuntimeOptions, ...backCompatRuntimeOptions };
-        if (combinedRuntimeOptions.agentSchedulerAndLeaderElection) {
+        if (!combinedRuntimeOptions.omitAgentSchedulerAndLeaderElection) {
             console.error("ContainerRuntime with AgentScheduler built-in is deprecated");
         }
 
-        const registry = combinedRuntimeOptions.agentSchedulerAndLeaderElection
-            ? new ContainerRuntimeDataStoreRegistry(registryEntries)
-            : new FluidDataStoreRegistry(registryEntries);
+        const registry = combinedRuntimeOptions.omitAgentSchedulerAndLeaderElection
+            ? new FluidDataStoreRegistry(registryEntries)
+            : new ContainerRuntimeDataStoreRegistry(registryEntries);
 
         const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
             const blobId = context.baseSnapshot?.blobs[blobName];
@@ -613,7 +613,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             requestHandler,
             storage);
 
-        if (combinedRuntimeOptions.agentSchedulerAndLeaderElection) {
+        if (!combinedRuntimeOptions.omitAgentSchedulerAndLeaderElection) {
             // Create all internal data stores if not already existing on storage or loaded a detached
             // container from snapshot(ex. draft mode).
             if (!context.existing) {
