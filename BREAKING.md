@@ -1,6 +1,7 @@
 ## 0.38 Breaking changes
 - [IPersistedCache changes](#IPersistedCache-changes)
 - [ODSP Driver Type Unification](#ODSP-Driver-Type-Unification)
+- [LoaderHeader.pause](#LoaderHeader.pause)
 
 ### IPersistedCache changes
 IPersistedCache implementation no longer needs to implement updateUsage() method (removed form interface).
@@ -57,6 +58,15 @@ getFileLink(
 )
 ```
 
+### LoaderHeader.pause
+LoaderHeader.pause has been removed. instead of
+```typescript
+[LoaderHeader.pause]: true
+```
+use
+```typescript
+[LoaderHeader.loadMode]: { deltaConnection: "none" }
+```
 
 ## 0.37 Breaking changes
 

@@ -86,7 +86,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
                 docId: "documentId",
                 resolvedUrl: testResolved,
                 version: testRequest.headers?.[LoaderHeader.version],
-                pause: testRequest.headers?.[LoaderHeader.pause],
+                loadMode: testRequest.headers?.[LoaderHeader.loadMode],
             },
         );
     }

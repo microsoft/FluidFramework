@@ -5,7 +5,7 @@
 import crypto from "crypto";
 import fs from "fs";
 import { Loader } from "@fluidframework/container-loader";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { ITestDriver, TestDriverTypes, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import { createFluidTestDriver, pairwiseOdspHostStoragePolicy } from "@fluidframework/test-drivers";
@@ -113,7 +113,7 @@ export async function initialize(testDriver: ITestDriver) {
 export async function load(
     testDriver: ITestDriver,
     documentServiceFactory: FaultInjectionDocumentServiceFactory,
-    url: string,
+    request: IRequest,
     runId: number)
 {
     const options = pairwiseLoaderOptions.value[runId % pairwiseLoaderOptions.value.length];
@@ -126,7 +126,7 @@ export async function load(
         options,
     });
 
-    const container = await loader.resolve({ url });
+    const container = await loader.resolve(request);
     return {documentServiceFactory, container, test: await requestFluidObject<ILoadTest>(container,"/")};
 }
 
