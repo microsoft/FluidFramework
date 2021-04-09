@@ -20,26 +20,47 @@ export interface IFluidStaticDataObjectClass {
     readonly factory: IFluidDataStoreFactory;
 }
 
-export class RootDataObject extends DataObject {
-    protected async initializingFirstTime() { }
+interface RootDataObjectProps {
+    initialObjects: IdToDataObjectCollection;
+}
+
+// eslint-disable-next-line @typescript-eslint/ban-types
+export class RootDataObject extends DataObject<{}, RootDataObjectProps> {
+    protected async initializingFirstTime(props: RootDataObjectProps) {
+        // Create initial objects provided by the developer
+        const initialObjectsP: Promise<void>[] = [];
+        Object.entries(props.initialObjects).forEach(([id, dataObjectClass]) => {
+            const createObject = async () => {
+                const obj = await this.createInternal(dataObjectClass);
+                this.root.set(id, obj.handle);
+            };
+            initialObjectsP.push(createObject());
+        });
+
+        await Promise.all(initialObjectsP);
+    }
 
     protected async hasInitialized() { }
 
-    public async createDataObject<T extends DataObject>(
+    public async createDataObject<T extends IFluidLoadable>(
         dataObjectClass: IFluidStaticDataObjectClass,
         id: string,
     ) {
+        const obj = await this.createInternal(dataObjectClass);
+        this.root.set(id, obj.handle);
+        return obj;
+    }
+
+    public async getDataObject<T extends IFluidLoadable>(id: string) {
+        const handle = await this.root.wait<IFluidHandle<T>>(id);
+        return handle.get();
+    }
+
+    private async createInternal<T extends IFluidLoadable>(dataObjectClass: IFluidStaticDataObjectClass) {
         const factory = dataObjectClass.factory;
         const packagePath = [...this.context.packagePath, factory.type];
         const router = await this.context.containerRuntime.createDataStore(packagePath);
-        const object = await requestFluidObject<T>(router, "/");
-        this.root.set(id, object.handle);
-        return object;
-    }
-
-    public async getDataObject<T extends DataObject>(id: string) {
-        const handle = await this.root.wait<IFluidHandle<T>>(id);
-        return handle.get();
+        return requestFluidObject<T>(router, "/");
     }
 }
 
@@ -57,7 +78,9 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
         registryEntries: NamedFluidDataStoreRegistryEntry[],
         initialDataObjects: IdToDataObjectCollection = {},
     ) {
-        const rootDataObjectFactory = new DataObjectFactory(
+        const rootDataObjectFactory =
+            // eslint-disable-next-line @typescript-eslint/ban-types
+            new DataObjectFactory<RootDataObject, {}, RootDataObjectProps>(
             "rootDO",
             RootDataObject,
             [],
@@ -70,19 +93,10 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
     }
 
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        await runtime.createRootDataStore(
-            this.rootDataObjectFactory.type,
+        // The first time we create the container we create the RootDataObject
+        await this.rootDataObjectFactory.createRootInstance(
             rootDataStoreId,
-        );
-
-        const rootDataObject: RootDataObject = (await runtime.request({ url: "/" })).value;
-
-        const initialDataObjects: Promise<IFluidLoadable>[] = [];
-        // If the developer provides additional DataObjects we will create them
-        Object.entries(this.initialDataObjects).forEach(([id, dataObjectClass]) => {
-            initialDataObjects.push(rootDataObject.createDataObject(dataObjectClass, id));
-        });
-
-        await Promise.all(initialDataObjects);
+            runtime,
+            { initialObjects: this.initialDataObjects });
     }
 }
