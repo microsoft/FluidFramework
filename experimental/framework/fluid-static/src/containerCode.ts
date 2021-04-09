@@ -30,6 +30,9 @@ interface RootDataObjectProps {
     initialObjects: LoadableObjectClassRecord;
 }
 
+/**
+ * The RootDataObject is the implementation of the FluidContainer.
+ */
 export class RootDataObject
 // eslint-disable-next-line @typescript-eslint/ban-types
 extends DataObject<{}, RootDataObjectProps, IFluidContainerEvents>

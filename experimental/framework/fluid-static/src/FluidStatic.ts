@@ -30,7 +30,7 @@ export interface IFluidContainerEvents extends IEvent {
 }
 
 /**
- * FluidContainer defines the interace
+ * FluidContainer defines the interface that the developer will use to interact with Fluid.
  */
 export interface FluidContainer
     extends Pick<Container, "audience" | "clientId">, IEventProvider<IFluidContainerEvents> {
@@ -50,7 +50,7 @@ export interface FluidContainer
     /**
      * Creates a new instance of the provided LoadableObjectClass
      *
-     * The returned object needs to be
+     * The returned object needs to be stored via handle by the caller.
      * @param objectClass - The type
      */
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
