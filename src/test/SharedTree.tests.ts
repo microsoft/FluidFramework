@@ -6,13 +6,24 @@
 import { assert, expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
+import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { assertArrayOfOne, assertNotUndefined, isSharedTreeEvent } from '../Common';
 import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../Identifiers';
 import { SharedTree, SharedTreeEvent } from '../SharedTree';
-import { Change, ChangeType, EditNode, Delete, Insert, ChangeNode, StablePlace, StableRange } from '../PersistedTypes';
+import {
+	Change,
+	ChangeType,
+	EditNode,
+	Delete,
+	Insert,
+	ChangeNode,
+	StablePlace,
+	StableRange,
+	SharedTreeOpType,
+} from '../PersistedTypes';
 import { editsPerChunk } from '../EditLog';
 import { newEdit } from '../EditUtilities';
-import { noHistorySummarizer, serialize } from '../Summary';
+import { fullHistorySummarizer, noHistorySummarizer, serialize } from '../Summary';
 import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
 import { TreeNodeHandle } from '../TreeNodeHandle';
@@ -444,6 +455,20 @@ describe('SharedTree', () => {
 		});
 
 		runSharedTreeUndoRedoTestSuite({ localMode: false, ...undoRedoOptions });
+
+		// This is a regression test for documents corrupted by the following github issue:
+		// https://github.com/microsoft/FluidFramework/issues/4399
+		it('tolerates duplicate edits in trailing operations', () => {
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions });
+			const remoteRuntime = containerRuntimeFactory.createContainerRuntime(new MockFluidDataStoreRuntime());
+			const defaultEdits = tree.edits.length;
+			const edit = newEdit([]);
+			for (let submissions = 0; submissions < 2; submissions++) {
+				remoteRuntime.submit({ type: SharedTreeOpType.Edit, edit }, /* localOpMetadata */ undefined);
+			}
+			containerRuntimeFactory.processAllMessages();
+			expect(tree.edits.length).to.equal(defaultEdits + 1);
+		});
 	});
 
 	describe('SharedTree summarizing', () => {
@@ -529,6 +554,26 @@ describe('SharedTree', () => {
 
 			// Trees should have equal state since we deserialized the first tree's state into the second tree
 			expect(tree.equals(secondTree)).to.be.true;
+		});
+
+		it('asserts when loading a summary with duplicated edits', () => {
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
+			const { tree: secondTree } = setUpTestSharedTree();
+
+			tree.editor.insert(newNode, StablePlace.before(left));
+			containerRuntimeFactory.processAllMessages();
+			tree.summarizer = fullHistorySummarizer;
+			const summary = tree.saveSummary() as ReturnType<typeof fullHistorySummarizer>;
+			const sequencedEdits = assertNotUndefined(summary.sequencedEdits).slice();
+			sequencedEdits.push(sequencedEdits[0]);
+			const corruptedSummary = {
+				...summary,
+				sequencedEdits,
+			};
+			expect(() => secondTree.loadSummary(corruptedSummary))
+				.to.throw(Error)
+				.that.has.property('message')
+				.which.matches(/Duplicate/);
 		});
 
 		it('can be used without history preservation', async () => {

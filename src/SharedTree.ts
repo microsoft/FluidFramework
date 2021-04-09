@@ -11,7 +11,7 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { IErrorEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger, PerformanceEvent } from '@fluidframework/telemetry-utils';
-import { assert, fail, SharedTreeTelemetryProperties } from './Common';
+import { assert, assertNotUndefined, fail, SharedTreeTelemetryProperties } from './Common';
 import { editsPerChunk, EditLog, OrderedEditSet } from './EditLog';
 import {
 	Edit,
@@ -480,15 +480,32 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 	}
 
 	private processSequencedEdit(edit: Edit): void {
-		const wasLocalEdit = this.editLog.isLocalEdit(edit.id);
-		const [key, edits] = this.editLog.addSequencedEdit(edit);
+		const { id: editId } = edit;
+		const wasLocalEdit = this.editLog.isLocalEdit(editId);
+
+		// If the id of the supplied edit matches a nonlocal edit already present in the log, this would normally be indicative of an error.
+		// However, the @fluidframework packages prior to 0.37.x have a bug which can cause data corruption by sequencing duplicate edits--
+		// see discussion on the following github issue: https://github.com/microsoft/FluidFramework/issues/4399
+		// To work around this issue, we currently tolerate duplicate ops in loaded documents.
+		// This could be strengthened in the future to only apply to documents which may have been impacted.
+		const shouldIgnoreEdit = this.editLog.tryGetIndexOfId(editId) && !wasLocalEdit;
+		if (shouldIgnoreEdit) {
+			return;
+		}
+
+		this.editLog.addSequencedEdit(edit);
 		if (!wasLocalEdit) {
-			const eventArguments: EditCommittedEventArguments = { editId: edit.id, local: false, tree: this };
+			const eventArguments: EditCommittedEventArguments = { editId, local: false, tree: this };
 			this.emit(SharedTreeEvent.EditCommitted, eventArguments);
 		} else {
 			// If this client created the edit that filled up a chunk, it is responsible for uploading that chunk.
-			if (edits.length === editsPerChunk) {
-				this.uploadEditChunk(edits, key).catch((error: unknown) => this.emit('error', error));
+			const lastPair = this.editLog.getLastEditChunk();
+			if (lastPair !== undefined) {
+				const [key, chunk] = lastPair;
+				const edits = assertNotUndefined(chunk.edits);
+				if (edits.length === editsPerChunk) {
+					this.uploadEditChunk(edits, key).catch((error: unknown) => this.emit('error', error));
+				}
 			}
 		}
 	}

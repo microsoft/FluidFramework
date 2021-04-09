@@ -40,6 +40,11 @@ export interface OrderedEditSet {
 	getIdAtIndex(index: number): EditId;
 
 	/**
+	 * @returns the index of the edit with the given editId within this `OrderedEditSet`, or `undefined` if no such edit exists.
+	 */
+	tryGetIndexOfId(editId: EditId): number | undefined;
+
+	/**
 	 * @returns the edit at the given index within this `OrderedEditSet`.
 	 */
 	getEditAtIndex(index: number): Promise<Edit>;
@@ -235,10 +240,13 @@ export class EditLog implements OrderedEditSet {
 	}
 
 	/**
-	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.indexOf}
+	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.tryGetIndexOfId}
 	 */
-	public getIndexOfId(editId: EditId): number {
-		const orderedEdit = this.allEditIds.get(editId) ?? fail('edit not found');
+	public tryGetIndexOfId(editId: EditId): number | undefined {
+		const orderedEdit = this.allEditIds.get(editId);
+		if (orderedEdit === undefined) {
+			return undefined;
+		}
 
 		if (orderedEdit.isLocal) {
 			const firstLocal = assertNotUndefined(this.allEditIds.get(this.localEdits[0].id));
@@ -246,6 +254,13 @@ export class EditLog implements OrderedEditSet {
 			return this.numberOfSequencedEdits + orderedEdit.localSequence - firstLocal.localSequence;
 		}
 		return orderedEdit.index;
+	}
+
+	/**
+	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.getIndexOfId}
+	 */
+	public getIndexOfId(editId: EditId): number {
+		return this.tryGetIndexOfId(editId) ?? fail('edit not found');
 	}
 
 	/**
@@ -372,34 +387,9 @@ export class EditLog implements OrderedEditSet {
 	/**
 	 * Adds a sequenced (non-local) edit to the edit log.
 	 * If the id of the supplied edit matches a local edit already present in the log, the local edit will be replaced.
-	 * @returns the last edit chunk with the newly added sequenced edit.
 	 */
-	public addSequencedEdit(edit: Edit): [key: number, edits: EditWithoutId[]] {
+	public addSequencedEdit(edit: Edit): void {
 		const { id, editWithoutId } = separateEditAndId(edit);
-
-		const lastPair = this.editChunks.nextLowerPair(undefined);
-		// The key of the target edit chunk to be returned.
-		let key: number = this.numberOfSequencedEdits;
-		// The edits of the target edit chunk to be returned.
-		let edits: EditWithoutId[] = [editWithoutId];
-
-		if (lastPair === undefined) {
-			this.editChunks.set(key, { edits });
-		} else {
-			// Add to the last edit chunk if it has room, otherwise create a new chunk.
-			// If the chunk is undefined, this means a handle corresponding to a full chunk was received through a summary
-			// and so a new chunk should be created.
-			const { edits: lastEditChunk } = lastPair[1];
-			if (lastEditChunk !== undefined && lastEditChunk.length < editsPerChunk) {
-				lastEditChunk.push(editWithoutId);
-
-				// Override the return values with the key and edits of the last chunk.
-				key = lastPair[0];
-				edits = lastEditChunk;
-			} else {
-				this.editChunks.set(key, { edits });
-			}
-		}
 
 		// Remove the edit from local edits if it exists.
 		const encounteredEditId = this.allEditIds.get(id);
@@ -411,12 +401,40 @@ export class EditLog implements OrderedEditSet {
 			assert(oldLocalEditId === id, 'Causal ordering should be upheld');
 		}
 
+		// The key of the target edit chunk to be returned.
+		const key = this.numberOfSequencedEdits;
+		// The edits of the target edit chunk to be returned.
+		const edits = [editWithoutId];
+
+		const lastPair = this.editChunks.nextLowerPair(undefined);
+		if (lastPair === undefined) {
+			this.editChunks.set(key, { edits });
+		} else {
+			// Add to the last edit chunk if it has room, otherwise create a new chunk.
+			// If the chunk is undefined, this means a handle corresponding to a full chunk was received through a summary
+			// and so a new chunk should be created.
+			const { edits: lastEditChunk } = lastPair[1];
+			if (lastEditChunk !== undefined && lastEditChunk.length < editsPerChunk) {
+				lastEditChunk.push(editWithoutId);
+			} else {
+				this.editChunks.set(key, { edits });
+			}
+		}
+
 		this.sequencedEditIds.push(id);
 		const sequencedEditId: SequencedOrderedEditId = { index: this.numberOfSequencedEdits - 1, isLocal: false };
 		this.allEditIds.set(id, sequencedEditId);
 		this.emitAdd(edit, false, encounteredEditId !== undefined);
+	}
 
-		return [key, edits];
+	/**
+	 * @returns The last edit chunk i.e. the chunk which the most recent sequenced edits have been placed into, as well as its key.
+	 * Returns undefined iff there are no sequenced edits.
+	 * When defined, this chunk is guaranteed to contain at least one edit
+	 * (though it may be necessary to load the chunk via its handle to use it)
+	 */
+	public getLastEditChunk(): [key: number, edits: EditChunk] | undefined {
+		return this.editChunks.nextLowerPair(undefined);
 	}
 
 	/**

@@ -57,6 +57,22 @@ describe('EditLog', () => {
 		expect(log.getIndexOfId(id1)).to.equal(1);
 	});
 
+	describe('tryGetIndexOfId', () => {
+		it('can get the index from an existing edit', () => {
+			const editChunks = [{ key: 0, chunk: [editWithoutId0] }];
+			const editIds = [id0];
+			const log = new EditLog({ editChunks, editIds });
+			expect(log.tryGetIndexOfId(id0)).to.equal(0);
+		});
+
+		it('returns undefined when queried with a nonexistent edit', () => {
+			const editChunks = [{ key: 0, chunk: [editWithoutId0] }];
+			const editIds = ['f9379af1-6f1a-4f71-8f8c-859359621404' as EditId];
+			const log = new EditLog({ editChunks, editIds });
+			expect(log.tryGetIndexOfId('aa203fc3-bc28-437d-b01c-f9398dc859ef' as EditId)).to.equal(undefined);
+		});
+	});
+
 	it('can get an edit from an index', async () => {
 		const editChunks = [{ key: 0, chunk: [editWithoutId0, editWithoutId1] }];
 		const editIds = [id0, id1];
@@ -148,6 +164,15 @@ describe('EditLog', () => {
 		editFromId0 = await log.tryGetEdit(id0);
 		expect(editFromId0).to.not.be.undefined;
 		expect(assertNotUndefined(editFromId0).id).equals(edit0.id, 'Log should contain sequenced edit.');
+	});
+
+	it('Throws on duplicate sequenced edits', async () => {
+		const log = new EditLog();
+		log.addSequencedEdit(edit0);
+		expect(() => log.addSequencedEdit(edit0))
+			.to.throw(Error)
+			.that.has.property('message')
+			.which.matches(/Duplicate/);
 	});
 
 	it('can sequence multiple local edits', async () => {

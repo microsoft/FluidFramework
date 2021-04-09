@@ -344,6 +344,8 @@ export interface OrderedEditSet {
     length: number;
     // (undocumented)
     tryGetEdit(editId: EditId): Promise<Edit | undefined>;
+    // (undocumented)
+    tryGetIndexOfId(editId: EditId): number | undefined;
 }
 
 // @public
