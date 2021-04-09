@@ -209,7 +209,6 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
      * Values are expected to have a member "_id" which is a unique id, otherwise will be assigned one
      *
      * @param values - data to insert to the database
-     *
      */
     private insertInternal(...values: any[]) {
         for (const value of values) {
