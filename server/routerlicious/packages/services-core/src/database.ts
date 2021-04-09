@@ -86,10 +86,10 @@ export interface ICollection<T> {
      * Finds the value that satisfies query. If it exists, update the value to new set.
      * Otherwise inserts the set to the datbase.
      *
-     *  @param filter - data we want to find
-     *  @param set - new values to change to
-     *  @param addToSet - an operator that adds a value to the database unless the value already exists;
-     *   only used in mongodb.ts
+     * @param filter - data we want to find
+     * @param set - new values to change to
+     * @param addToSet - an operator that adds a value to the database unless the value already exists;
+     * only used in mongodb.ts
      */
     upsert(filter: any, set: any, addToSet: any): Promise<void>;
 
