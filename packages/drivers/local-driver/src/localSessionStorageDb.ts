@@ -230,7 +230,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
      */
     private findOneInternal(query: any): any {
         if (query._id) {
-            const json = sessionStorage.getItem(`${this.collectionName}-${query._id}`);// form of data
+            const json = sessionStorage.getItem(`${this.collectionName}-${query._id}`);
             if (json) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return JSON.parse(json);
