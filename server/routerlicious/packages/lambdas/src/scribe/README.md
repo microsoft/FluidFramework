@@ -28,4 +28,11 @@ summary is a summary that only includes a list of the operations since the prior
 While clients can parse service summaries, service summary do not provide the performance improvements of summarizing
 the container on the client.
 
-The service summary manages the case where there are no clients to write a summary.
+### Why Service Summary?
+
+The service must write a summary because op storage is not guaranteed to be persistent. The service summary,
+initiated by scribe, moves data from short term op storage to long term summary storage.
+
+While there are typically clients available to write the summary, there are many scenarios where there are no clients
+available. For example, there may be no clients to write a summary when there's an unexpected network outage or the
+only connected client suddenly disconnects due to low battery.
