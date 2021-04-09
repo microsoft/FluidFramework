@@ -141,9 +141,10 @@ Deli retrieves unsequenced messages from Kafka and then attaches a new sequence 
 are per-document monotonically increasing numbers. Sequenced messages are placed back into Apache Kafka for processing.
 The Deli microservice also runs the [Broadcaster](./packages/lambdas/src/broadcaster) lambda that directly put sequenced
 message into redis so that alfred can listen and broadcast back to the clients.
+
 #### [Scriptorium](./packages/routerlicious/src/scriptorium)
 
-Scriptorium retrieves sequenced messages from Kafka. It then broadcasts the new message and writes the message
+Scriptorium retrieves sequenced messages from Kafka. It then writes the message
 to a database for storage. We currently make use of Redis for broadcasting and MongoDB for storage.
 
 #### [Scribe](./packages/routerlicious/src/scribe)
@@ -158,6 +159,7 @@ Storage providers that implement this interface are then able to plug into the s
 support for [GitHub](https://developer.github.com/v3/git/) and [Git](../gitrest).
 
 More details on content-addressable file systems and Git can be found at
+
 * https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain
 * http://stefan.saasen.me/articles/git-clone-in-haskell-from-the-bottom-up/
 
